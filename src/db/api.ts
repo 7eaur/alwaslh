@@ -1,7 +1,7 @@
 import { supabase } from "@/db/supabase";
 import { Class, Subject, SubjectExtraClass, Lesson, AccessCode, StudentNote, Notification, Profile, QuizAttempt, Quiz, QuizProgress } from "@/types";
 import { createAiOptimizedImage } from "@/lib/file-processing";
-import { cachedApiCall, setCache, getCache, removeCache } from "@/lib/offline-cache";
+import { cachedApiCall } from "@/lib/offline-cache";
 import { parsePageNumber } from "@/lib/utils";
 import { getStudentIdentifier } from "@/lib/device";
 import { compressImageFile } from "@/lib/image-compression";
@@ -12,16 +12,11 @@ import {
   saveQuestionToFavorites,
   getSavedQuestions as getSavedQuestionsOffline,
   deleteLocalSavedQuestion,
-  addPendingNoteAction,
-  addPendingSavedQuestionAction,
-  getPendingNoteActions,
-  getPendingSavedQuestionActions,
-  removePendingNoteAction,
-  removePendingSavedQuestionAction,
   getLessonsOffline,
   saveLessonsOffline,
   saveQuizAttemptOffline,
   getQuizAttemptsOffline,
+  db,
 } from "@/lib/offline-db";
 
 // Admin API
@@ -487,6 +482,22 @@ export const studentApi = {
       }
     );
   },
+
+  async getQuizProgressRecords(studentId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('quiz_progress')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as QuizProgress[];
+    } catch (err) {
+      console.warn('[getQuizProgressRecords] فشل جلب السجلات:', err);
+      return [];
+    }
+  },
+
   async saveQuizProgress(progress: Partial<QuizProgress>) {
     const { data, error } = await supabase.from('quiz_progress')
       .upsert([progress] as any[])
@@ -537,143 +548,51 @@ export const studentApi = {
     );
   },
   async getNotes(studentId: string) {
-    const CACHE_KEY = `student_notes_${studentId}`;
-    try {
-      const data = await cachedApiCall(
-        CACHE_KEY,
-        async () => {
-          const { data, error } = await supabase.from('student_notes')
-            .select('*, lessons(title)')
-            .eq('student_id', studentId)
-            .order('created_at', { ascending: false });
-          if (error) throw error;
-          return data as any[];
+    const offline = await getNotesOffline(studentId);
+    const notesWithLesson = await Promise.all(
+      offline.map(async (n) => {
+        let title = n.lesson_title || '';
+        if (!title && n.lesson_id) {
+          try {
+            const lesson = await db.lessons.get(n.lesson_id);
+            if (lesson) title = lesson.title;
+          } catch { /* تجاهل */ }
         }
-      );
-      // حفظ محلي للعمل أوفلاين
-      if (Array.isArray(data)) {
-        for (const note of data) {
-          saveNoteOffline({
-            id: note.id,
-            student_code: studentId,
-            lesson_id: note.lesson_id,
-            type: note.type,
-            content: note.content,
-            media_url: note.media_url,
-            description: note.description,
-            synced: true
-          }).catch(() => {});
-        }
-      }
-      return data || [];
-    } catch (err) {
-      // أوفلاين: استرجاع من IndexedDB
-      const offline = await getNotesOffline(studentId);
-      return offline.map(n => ({
-        ...n,
-        lessons: { title: '' }
-      }));
-    }
+        return { ...n, lessons: { title } };
+      })
+    );
+    return notesWithLesson;
   },
   async saveNote(note: Partial<StudentNote>) {
     const deviceId = getStudentIdentifier();
     const noteId = (note.id as string) || crypto.randomUUID();
 
-    // حفظ محلي فوراً للعرض حتى بدون إنترنت
+    // حفظ الملاحظات محلياً فقط
     await saveNoteOffline({
       id: noteId,
       student_code: note.student_id || deviceId,
       lesson_id: note.lesson_id,
+      lesson_title: note.lesson_title,
       type: note.type || 'text',
       content: (note.content as string) || '',
       media_url: note.media_url,
       description: note.description,
-      synced: false
+      synced: true,
+      created_at: new Date().toISOString(),
     });
 
-    if (!navigator.onLine) {
-      // تسجيل عملية مزامنة مؤجلة
-      await addPendingNoteAction('create', { ...note, id: noteId });
-      removeCache(`student_notes_${note.student_id || deviceId}`);
-      return { ...note, id: noteId } as StudentNote;
-    }
-
-    try {
-      const { data, error } = await supabase.from('student_notes')
-        .upsert([{ ...note, id: noteId }] as any[])
-        .select()
-        .maybeSingle();
-      if (error) throw error;
-      // تحديث الحالة إلى متزامن
-      await saveNoteOffline({
-        id: noteId,
-        student_code: note.student_id || deviceId,
-        lesson_id: note.lesson_id,
-        type: note.type || 'text',
-        content: (note.content as string) || '',
-        media_url: note.media_url,
-        description: note.description,
-        synced: true
-      });
-      removeCache(`student_notes_${note.student_id || deviceId}`);
-      return data as StudentNote;
-    } catch (err) {
-      // عند فشل السيرفر نضيفها للمزامنة المؤجلة
-      await addPendingNoteAction('create', { ...note, id: noteId });
-      removeCache(`student_notes_${note.student_id || deviceId}`);
-      return { ...note, id: noteId } as StudentNote;
-    }
+    return { ...note, id: noteId } as StudentNote;
   },
   async updateNote(id: string, updates: Partial<StudentNote>) {
     const deviceId = getStudentIdentifier();
-    // تحديث محلي
     const existing = await getNotesOffline(deviceId).then(notes => notes.find(n => n.id === id));
     if (existing) {
-      await saveNoteOffline({ ...existing, ...updates, synced: false });
+      await saveNoteOffline({ ...existing, ...updates, synced: true });
     }
-
-    if (!navigator.onLine) {
-      await addPendingNoteAction('update', { id, ...updates });
-      removeCache(`student_notes_${deviceId}`);
-      return { id, ...updates } as StudentNote;
-    }
-
-    try {
-      const { data, error } = await supabase.from('student_notes')
-        .update(updates as any)
-        .eq('id', id)
-        .select()
-        .maybeSingle();
-      if (error) throw error;
-      if (existing) {
-        await saveNoteOffline({ ...existing, ...updates, synced: true });
-      }
-      removeCache(`student_notes_${deviceId}`);
-      return data as StudentNote;
-    } catch (err) {
-      await addPendingNoteAction('update', { id, ...updates });
-      removeCache(`student_notes_${deviceId}`);
-      return { id, ...updates } as StudentNote;
-    }
+    return { id, ...updates } as StudentNote;
   },
   async deleteNote(id: string) {
-    const deviceId = getStudentIdentifier();
     await deleteLocalNote(id);
-
-    if (!navigator.onLine) {
-      await addPendingNoteAction('delete', { id });
-      removeCache(`student_notes_${deviceId}`);
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from('student_notes').delete().eq('id', id);
-      if (error) throw error;
-      removeCache(`student_notes_${deviceId}`);
-    } catch (err) {
-      await addPendingNoteAction('delete', { id });
-      removeCache(`student_notes_${deviceId}`);
-    }
   },
   async getNotifications() {
     // نستخدم الكاش أولاً (false) ونحدّث في الخلفية عند وجود شبكة
@@ -1192,183 +1111,77 @@ export const aiApi = {
 export const savedQuestionsApi = {
   async saveQuestion(lessonId: string, question: any, questionIndex: number) {
     const deviceId = getStudentIdentifier();
-    const localId = crypto.randomUUID();
+    const localId = `${questionIndex}_${deviceId}`;
 
-    // حفظ محلي فوراً
-    await saveQuestionToFavorites(String(questionIndex), lessonId, deviceId);
-    await addPendingSavedQuestionAction('create', {
+    // جلب معلومات الدرس من المحلي
+    let lessonTitle = '';
+    let subjectName = '';
+    let className = '';
+    try {
+      const lesson = await db.lessons.get(lessonId);
+      if (lesson) {
+        lessonTitle = lesson.title || '';
+        const subject = await db.subjects.get(lesson.subject_id);
+        if (subject) {
+          subjectName = subject.name || '';
+          const cls = await db.classes.get(subject.class_id);
+          if (cls) className = cls.name || '';
+        }
+      }
+    } catch { /* تجاهل */ }
+
+    await saveQuestionToFavorites(
+      String(questionIndex),
+      lessonId,
+      deviceId,
+      question,
+      lessonTitle,
+      subjectName,
+      className
+    );
+
+    return {
       id: localId,
-      student_id: deviceId,
       lesson_id: lessonId,
       question,
-      question_index: questionIndex
-    });
-
-    if (!navigator.onLine) {
-      return { id: localId, lesson_id: lessonId, question, question_index: questionIndex };
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('saved_questions')
-        .insert([{
-          student_id: deviceId,
-          lesson_id: lessonId,
-          question: question,
-          question_index: questionIndex
-        }])
-        .select()
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.warn('[SavedQuestions] فشل الحفظ على السيرفر، سيتم المزامنة لاحقاً');
-      return { id: localId, lesson_id: lessonId, question, question_index: questionIndex };
-    }
+      question_index: questionIndex,
+      saved_at: new Date().toISOString(),
+      lessons: {
+        title: lessonTitle,
+        subjects: { name: subjectName, classes: { name: className } }
+      }
+    };
   },
 
   async getSavedQuestions() {
     const deviceId = getStudentIdentifier();
-    const CACHE_KEY = `saved_questions_student_${deviceId}`;
-
-    try {
-      const data = await cachedApiCall(
-        CACHE_KEY,
-        async () => {
-          const { data, error } = await supabase
-            .from('saved_questions')
-            .select(`
-              *,
-              lessons (
-                id,
-                title,
-                subject_id,
-                subjects (
-                  id,
-                  name,
-                  class_id,
-                  classes (
-                    id,
-                    name
-                  )
-                )
-              )
-            `)
-            .eq('student_id', deviceId)
-            .order('saved_at', { ascending: false });
-
-          if (error) {
-            console.error('Error fetching saved questions:', error);
-            throw error;
-          }
-          return data || [];
-        },
-        false
-      );
-
-      // حفظ محلي للاستخدام أوفلاين
-      if (Array.isArray(data)) {
-        const { saveQuestionToFavorites } = await import('@/lib/offline-db');
-        for (const q of data) {
-          saveQuestionToFavorites(
-            String(q.question_index || q.question?.id || ''),
-            q.lesson_id,
-            deviceId
-          ).catch(() => {});
+    const offline = await getSavedQuestionsOffline(deviceId);
+    return offline.map(q => ({
+      ...q,
+      question: q.question,
+      saved_at: q.saved_at,
+      lessons: {
+        title: q.lesson_title || '',
+        subjects: {
+          name: q.subject_name || '',
+          classes: { name: q.class_name || '' }
         }
       }
-      return data || [];
-    } catch (err) {
-      // أوفلاين: استرجاع من IndexedDB
-      const offline = await getSavedQuestionsOffline(deviceId);
-      return offline.map(q => ({
-        ...q,
-        lessons: { title: '' }
-      }));
-    }
+    }));
   },
 
   async deleteSavedQuestion(id: string) {
     await deleteLocalSavedQuestion(id);
-    await addPendingSavedQuestionAction('delete', { id });
-
-    if (!navigator.onLine) return;
-
-    try {
-      const { error } = await supabase
-        .from('saved_questions')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-    } catch (err) {
-      console.warn('[SavedQuestions] فشل الحذف على السيرفر، سيتم المزامنة لاحقاً');
-    }
   },
 
   async checkIfSaved(lessonId: string, questionIndex: number) {
     const deviceId = getStudentIdentifier();
-
-    // تحقق محلي أولاً
     const offline = await getSavedQuestionsOffline(deviceId);
-    const localSaved = offline.some(q => q.lesson_id === lessonId && q.question_id === String(questionIndex));
-    if (localSaved) return true;
-
-    if (!navigator.onLine) return false;
-
-    try {
-      const { data, error } = await supabase
-        .from('saved_questions')
-        .select('id')
-        .eq('student_id', deviceId)
-        .eq('lesson_id', lessonId)
-        .eq('question_index', questionIndex)
-        .maybeSingle();
-
-      if (error) return false;
-      return !!data;
-    } catch {
-      return localSaved;
-    }
+    return offline.some(q => q.lesson_id === lessonId && q.question_id === String(questionIndex));
   }
 };
 
-/** مزامنة الملاحظات والأسئلة المحفوظة المعلقة عند توفر الإنترنت */
+/** لم تعد الملاحظات والأسئلة المحفوظة تُرفع للسيرفر؛ تُحفظ محلياً فقط */
 export async function syncPendingStudentData(): Promise<void> {
-  if (!navigator.onLine) return;
-
-  // مزامنة الملاحظات
-  const pendingNotes = await getPendingNoteActions();
-  for (const item of pendingNotes) {
-    try {
-      const payload = JSON.parse(item.payload);
-      if (item.action === 'create') {
-        await supabase.from('student_notes').upsert([payload] as any[]);
-      } else if (item.action === 'update') {
-        const { id, ...updates } = payload;
-        await supabase.from('student_notes').update(updates as any).eq('id', id);
-      } else if (item.action === 'delete') {
-        await supabase.from('student_notes').delete().eq('id', payload.id);
-      }
-      await removePendingNoteAction(item.id);
-    } catch (err) {
-      console.warn('[SyncPending] فشل مزامنة ملاحظة:', item.id, err);
-    }
-  }
-
-  // مزامنة الأسئلة المحفوظة
-  const pendingQuestions = await getPendingSavedQuestionActions();
-  for (const item of pendingQuestions) {
-    try {
-      const payload = JSON.parse(item.payload);
-      if (item.action === 'create') {
-        await supabase.from('saved_questions').insert([payload]);
-      } else if (item.action === 'delete') {
-        await supabase.from('saved_questions').delete().eq('id', payload.id);
-      }
-      await removePendingSavedQuestionAction(item.id);
-    } catch (err) {
-      console.warn('[SyncPending] فشل مزامنة سؤال:', item.id, err);
-    }
-  }
+  // لا شيء
 }

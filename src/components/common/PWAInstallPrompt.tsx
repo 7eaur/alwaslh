@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const DISMISS_KEY = 'pwa_install_dismissed';
 const OPEN_FROM_HOME_DISMISS_KEY = 'pwa_open_from_home_dismissed';
+const INSTALLED_BANNER_SHOWN_KEY = 'pwa_installed_banner_shown';
 const DISMISS_DAYS = 7;
 
 type BrowserType = 'chrome' | 'edge' | 'samsung' | 'firefox' | 'safari' | 'other';
@@ -76,6 +77,20 @@ function wasOpenFromHomeDismissedRecently(): boolean {
   }
 }
 
+function wasInstalledBannerShown(): boolean {
+  try {
+    return localStorage.getItem(INSTALLED_BANNER_SHOWN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function markInstalledBannerShown() {
+  try {
+    localStorage.setItem(INSTALLED_BANNER_SHOWN_KEY, 'true');
+  } catch { /* تجاهل */ }
+}
+
 function getGlobalDeferredPrompt(): any | null {
   return (window as any).__deferredInstallPrompt || null;
 }
@@ -98,7 +113,7 @@ const PWAInstallPrompt: React.FC = () => {
     // إذا كان التطبيق مثبتاً فعلياً: نظهر رسالة "مثبت مسبقاً" مرة واحدة فقط
     if (isInstalled()) {
       setInstallFlag();
-      if (profile?.install_prompt_shown) {
+      if (profile?.install_prompt_shown || wasInstalledBannerShown()) {
         setShowInstalled(false);
       } else {
         setShowInstalled(true);
@@ -144,6 +159,17 @@ const PWAInstallPrompt: React.FC = () => {
       window.removeEventListener('appinstalled', installedHandler);
     };
   }, [profile?.install_prompt_shown]);
+
+  // إخفاء بانر "التطبيق مثبت" تلقائياً بعد ثانيتين
+  useEffect(() => {
+    if (!showInstalled) return;
+    const timer = setTimeout(() => {
+      setShowInstalled(false);
+      markInstalledBannerShown();
+      updateProfileFlag('install_prompt_shown', true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [showInstalled, updateProfileFlag]);
 
   function setGlobalDeferredPrompt(e: any) {
     (window as any).__deferredInstallPrompt = e;
@@ -237,6 +263,7 @@ const PWAInstallPrompt: React.FC = () => {
           <button
             onClick={() => {
               setShowInstalled(false);
+              markInstalledBannerShown();
               updateProfileFlag('install_prompt_shown', true);
             }}
             className="p-1 hover:bg-white/10 rounded-full transition-colors"

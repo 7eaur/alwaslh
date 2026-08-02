@@ -71,6 +71,9 @@ import {
 import { useAccessControl } from '@/hooks/useAccessControl';
 import { useAccess } from '@/context/AccessContext';
 
+const calculateProgressScore = (answers: number[], questions: QuizQuestion[]) =>
+  answers.reduce((acc, ans, idx) => (ans === questions[idx]?.correct_option_index ? acc + 1 : acc), 0);
+
 const StudentQuizzes: React.FC = () => {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const { canAccessContent } = useAccessControl();
@@ -502,7 +505,9 @@ const StudentQuizzes: React.FC = () => {
           current_index: currentIdx,
           user_answers: updatedAnswers,
           shuffled_questions: activeQuestions,
-          is_completed: false
+          is_completed: false,
+          total_questions: activeQuestions.length,
+          score: calculateProgressScore(updatedAnswers, activeQuestions),
         });
       } catch (err) {
         console.error('Failed to save progress:', err);
@@ -571,7 +576,9 @@ const StudentQuizzes: React.FC = () => {
             current_index: nextIdx,
             user_answers: userAnswers,
             shuffled_questions: activeQuestions,
-            is_completed: false
+            is_completed: false,
+            total_questions: activeQuestions.length,
+            score: calculateProgressScore(userAnswers, activeQuestions),
           });
         } catch (err) {}
       }
@@ -594,7 +601,10 @@ const StudentQuizzes: React.FC = () => {
             quiz_id: activeQuiz.id,
             current_index: currentIdx,
             user_answers: userAnswers,
-            is_completed: true
+            shuffled_questions: activeQuestions,
+            is_completed: true,
+            total_questions: activeQuestions.length,
+            score: calculateProgressScore(userAnswers, activeQuestions),
           });
           
           // Award achievements if performance is high

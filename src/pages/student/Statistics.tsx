@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import StudentLayout from '@/components/layout/StudentLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { studentApi, adminApi } from '@/db/api';
+import { studentApi } from '@/db/api';
 import { getStudentIdentifier } from '@/lib/device';
-import { useAccess } from '@/context/AccessContext';
 import { useAuth } from '@/context/AuthContext';
-import { db } from '@/lib/offline-db';
+import { QuizProgress } from '@/types';
+
 import {
   BarChart3,
   Trophy,
@@ -16,7 +16,8 @@ import {
   Award,
   Sparkles,
   XCircle,
-  Users
+  Users,
+  HelpCircle,
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,42 +40,54 @@ interface RankInfo {
 const StudentStatistics: React.FC = () => {
   const auth = useAuth();
   const studentId = auth.user?.id || getStudentIdentifier();
-  const { activatedClassIds } = useAccess();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     notesCount: 0,
-    quizzesCompleted: 0,
+    interactiveAnswered: 0,
+    interactiveCorrect: 0,
+    interactiveTotal: 0,
     averageScore: 0,
-    lessonsCount: 0,
+    completionRate: 0,
+    completedLessons: 0,
+    progressPoints: 0,
   });
-  const [attempts, setAttempts] = useState<any[]>([]);
+  const [progressRecords, setProgressRecords] = useState<QuizProgress[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
-  const [selectedAttempt, setSelectedAttempt] = useState<any | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<QuizProgress | null>(null);
   const [rank, setRank] = useState<RankInfo>({ rank: 0, total: 0, avgScore: 0 });
 
   useEffect(() => {
     const fetchStats = async () => {
       setLoading(true);
       try {
-        const [notes, quizAttempts, rankInfo] = await Promise.all([
+        const [notes, records, rankInfo] = await Promise.all([
           studentApi.getNotes(studentId),
-          studentApi.getQuizAttempts(studentId),
+          studentApi.getQuizProgressRecords(studentId),
           navigator.onLine ? studentApi.getStudentRank(studentId) : Promise.resolve({ rank: 0, total: 0, avgScore: 0 }),
         ]);
 
-        const totalScore = quizAttempts.reduce(
-          (acc: number, curr: any) => acc + (curr.score / (curr.total_questions || 1)) * 100,
-          0
-        );
-        const avgScore = quizAttempts.length > 0 ? Math.round(totalScore / quizAttempts.length) : 0;
+        const answered = records.reduce((sum: number, r: QuizProgress) => sum + (r.user_answers?.length || 0), 0);
+        const total = records.reduce((sum: number, r: QuizProgress) => sum + (r.total_questions || r.shuffled_questions?.length || 0), 0);
+        const correct = records.reduce((sum: number, r: QuizProgress) => {
+          const questions = r.shuffled_questions || [];
+          return sum + (r.user_answers || []).filter((ans, idx) => ans === questions[idx]?.correct_option_index).length;
+        }, 0);
+        const completedLessons = records.filter((r: QuizProgress) => r.is_completed).length;
+        const avgScore = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+        const completionRate = total > 0 ? Math.round((answered / total) * 100) : 0;
+        const progressPoints = answered + correct * 2;
 
-        setStats((prev) => ({
-          ...prev,
+        setStats({
           notesCount: notes.length,
-          quizzesCompleted: quizAttempts.length,
+          interactiveAnswered: answered,
+          interactiveCorrect: correct,
+          interactiveTotal: total,
           averageScore: avgScore,
-        }));
-        setAttempts(quizAttempts);
+          completionRate: completionRate,
+          completedLessons: completedLessons,
+          progressPoints: progressPoints,
+        });
+        setProgressRecords(records);
         setRank(rankInfo);
       } catch (err) {
         console.error('⚠️ [Statistics] خطأ في جلب الإحصائيات:', err);
@@ -82,20 +95,14 @@ const StudentStatistics: React.FC = () => {
         setLoading(false);
       }
 
-      // جلب البيانات الثانوية في الخلفية
+      // جلب الإنجازات في الخلفية
       try {
-        const [userAchievements, allLessons] = await Promise.all([
-          studentApi.getAchievements(studentId),
-          navigator.onLine ? adminApi.getLessons() : Promise.resolve([]),
-        ]);
-        setStats((prev) => ({ ...prev, lessonsCount: allLessons.length }));
-        setAchievements(userAchievements);
+        if (navigator.onLine) {
+          const userAchievements = await studentApi.getAchievements(studentId);
+          setAchievements(userAchievements);
+        }
       } catch (secondaryErr) {
-        console.error('⚠️ [Statistics] خطأ في جلب البيانات الثانوية:', secondaryErr);
-        try {
-          const offlineLessonsCount = await db.lessons.count();
-          setStats((prev) => ({ ...prev, lessonsCount: offlineLessonsCount }));
-        } catch { /* تجاهل */ }
+        console.error('⚠️ [Statistics] خطأ في جلب الإنجازات:', secondaryErr);
       }
     };
 
@@ -105,8 +112,8 @@ const StudentStatistics: React.FC = () => {
   const statCards = [
     { title: 'الملاحظات', value: stats.notesCount, icon: StickyNote, color: 'text-blue-500', bg: 'bg-blue-50' },
     { title: 'متوسط الدرجات', value: `${stats.averageScore}%`, icon: Target, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-    { title: 'الدروس المنجزة', value: stats.lessonsCount, icon: BookOpen, color: 'text-violet-500', bg: 'bg-violet-50' },
-    { title: 'الاختبارات', value: stats.quizzesCompleted, icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-50' },
+    { title: 'الدروس المنجزة', value: stats.completedLessons, icon: BookOpen, color: 'text-violet-500', bg: 'bg-violet-50' },
+    { title: 'الأسئلة التفاعلية', value: stats.interactiveAnswered, icon: HelpCircle, color: 'text-amber-500', bg: 'bg-amber-50' },
   ];
 
   return (
@@ -167,7 +174,7 @@ const StudentStatistics: React.FC = () => {
               ) : (
                 <>
                   <p className="text-lg font-bold text-muted-foreground">لم يتم حساب الترتيب بعد</p>
-                  <p className="text-sm text-muted-foreground">أكمل اختباراً ليظهر ترتيبك</p>
+                  <p className="text-sm text-muted-foreground">ابدأ بحل الأسئلة التفاعلية ليظهر ترتيبك</p>
                 </>
               )}
             </div>
@@ -205,37 +212,44 @@ const StudentStatistics: React.FC = () => {
           </Card>
         )}
 
-        {/* آخر الاختبارات */}
-        {attempts.length > 0 && (
+        {/* آخر الدروس التفاعلية */}
+        {progressRecords.length > 0 && (
           <Card className="border-none shadow-xl rounded-[40px] bg-white overflow-hidden">
             <CardHeader className="pb-0">
               <CardTitle className="text-xl font-black text-primary flex items-center gap-2">
                 <BookOpen className="h-6 w-6 text-secondary" />
-                آخر الاختبارات
+                آخر الدروس التفاعلية
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
               <div className="space-y-3">
-                {attempts.slice(0, 10).map((attempt, index) => {
-                  const percentage = attempt.total_questions ? Math.round((attempt.score / attempt.total_questions) * 100) : 0;
+                {progressRecords.slice(0, 10).map((record, index) => {
+                  const questions = record.shuffled_questions || [];
+                  const answered = record.user_answers?.length || 0;
+                  const correct = (record.user_answers || []).filter((ans, idx) => ans === questions[idx]?.correct_option_index).length;
+                  const total = record.total_questions || questions.length || 0;
+                  const percentage = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+                  const completion = total > 0 ? Math.round((answered / total) * 100) : 0;
                   return (
                     <button
                       key={index}
-                      onClick={() => setSelectedAttempt(attempt)}
+                      onClick={() => setSelectedRecord(record)}
                       className="w-full text-right p-4 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors border border-transparent hover:border-primary/10"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-sm text-primary">اختبار {index + 1}</span>
+                        <span className="font-bold text-sm text-primary">درس {index + 1}</span>
                         <span className={cn('text-sm font-black', percentage >= 80 ? 'text-emerald-500' : percentage >= 50 ? 'text-amber-500' : 'text-red-500')}>
                           {percentage}%
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{attempt.score} / {attempt.total_questions}</span>
+                        <span>{correct} / {answered} صحيحة</span>
                         <span>•</span>
-                        <span>{new Date(attempt.created_at).toLocaleDateString('ar-SA')}</span>
+                        <span>إنجاز {completion}%</span>
+                        <span>•</span>
+                        <span>{new Date(record.created_at).toLocaleDateString('ar-SA')}</span>
                       </div>
-                      <Progress value={percentage} className="h-2 mt-3" />
+                      <Progress value={completion} className="h-2 mt-3" />
                     </button>
                   );
                 })}
@@ -244,50 +258,51 @@ const StudentStatistics: React.FC = () => {
           </Card>
         )}
 
-        {/* لا توجد اختبارات */}
-        {!loading && attempts.length === 0 && (
+        {/* لا توجد أسئلة تفاعلية */}
+        {!loading && progressRecords.length === 0 && (
           <div className="text-center py-12 bg-muted/30 rounded-[40px]">
             <XCircle className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-lg font-bold text-muted-foreground">لا توجد اختبارات مكتملة بعد</p>
-            <p className="text-sm text-muted-foreground">ابدأ بحل اختبار لترى تقدمك</p>
+            <p className="text-lg font-bold text-muted-foreground">لا توجد أسئلة تفاعلية محلولة بعد</p>
+            <p className="text-sm text-muted-foreground">ابدأ بحل الأسئلة داخل الدروس لترى تقدمك</p>
           </div>
         )}
       </div>
 
-      {/* تفاصيل الاختبار */}
-      <Dialog open={!!selectedAttempt} onOpenChange={() => setSelectedAttempt(null)}>
-        <DialogContent className="max-w-[calc(100%-2rem)] md:max-w-lg rounded-[2rem] arabic-font p-6">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black text-primary">تفاصيل الاختبار</DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground">
-              {new Date(selectedAttempt?.created_at).toLocaleDateString('ar-SA')}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-4">
-            <div className="flex items-center justify-center gap-4 p-6 rounded-3xl bg-primary/5">
-              <div className="text-center">
-                <p className="text-3xl font-black text-primary">{selectedAttempt?.score}</p>
-                <p className="text-xs text-muted-foreground font-bold">الإجابات الصحيحة</p>
+      {/* تفاصيل الدرس التفاعلي */}
+      {selectedRecord && (
+        <Dialog open={!!selectedRecord} onOpenChange={() => setSelectedRecord(null)}>
+          <DialogContent className="max-w-[calc(100%-2rem)] md:max-w-lg rounded-[2rem] arabic-font p-6">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-black text-primary">تفاصيل الدرس التفاعلي</DialogTitle>
+              <DialogDescription className="text-sm text-muted-foreground">
+                {new Date(selectedRecord.created_at).toLocaleDateString('ar-SA')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 mt-4">
+              <div className="flex items-center justify-center gap-4 p-6 rounded-3xl bg-primary/5">
+                <div className="text-center">
+                  <p className="text-3xl font-black text-primary">{selectedRecord.score}</p>
+                  <p className="text-xs text-muted-foreground font-bold">الإجابات الصحيحة</p>
+                </div>
+                <div className="h-12 w-px bg-primary/20" />
+                <div className="text-center">
+                  <p className="text-3xl font-black text-primary">{selectedRecord.total_questions || selectedRecord.shuffled_questions?.length || 0}</p>
+                  <p className="text-xs text-muted-foreground font-bold">إجمالي الأسئلة</p>
+                </div>
               </div>
-              <div className="h-12 w-px bg-primary/20" />
-              <div className="text-center">
-                <p className="text-3xl font-black text-primary">{selectedAttempt?.total_questions}</p>
-                <p className="text-xs text-muted-foreground font-bold">إجمالي الأسئلة</p>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-bold text-sm">نسبة الإنجاز</span>
+                  <span className="font-black text-sm">
+                    {Math.round(stats.completionRate)}%
+                  </span>
+                </div>
+                <Progress value={stats.completionRate} className="h-3" />
               </div>
             </div>
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-sm">النسبة</span>
-                <span className="font-black text-sm">{selectedAttempt?.total_questions ? Math.round((selectedAttempt.score / selectedAttempt.total_questions) * 100) : 0}%</span>
-              </div>
-              <Progress
-                value={selectedAttempt?.total_questions ? Math.round((selectedAttempt.score / selectedAttempt.total_questions) * 100) : 0}
-                className="h-3"
-              />
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </StudentLayout>
   );
 };

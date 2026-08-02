@@ -50,7 +50,9 @@ export function useNewContentCheck() {
     };
 
     check();
-    const interval = setInterval(check, 5 * 60 * 1000); // كل 5 دقائق
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') check();
+    }, 5 * 60 * 1000); // كل 5 دقائق فقط عندما يكون التطبيق مرئياً
     return () => clearInterval(interval);
   }, [isOnline, toast]);
 }

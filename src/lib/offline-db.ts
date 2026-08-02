@@ -25,11 +25,16 @@ interface OfflineDB extends Dexie {
     lesson_id: string;
     saved_at: string;
     synced: boolean;
+    question?: any;
+    lesson_title?: string;
+    subject_name?: string;
+    class_name?: string;
   }, 'id'>;
   notes: EntityTable<{
     id: string;
     student_code: string;
     lesson_id?: string;
+    lesson_title?: string;
     type: 'text' | 'image' | 'audio' | 'capture' | 'voice_record';
     content: string;
     media_url?: string;
@@ -297,14 +302,26 @@ export async function getProgressOffline(lessonId: string, studentCode: string):
 }
 
 // دالة لحفظ سؤال في المحفوظات
-export async function saveQuestionToFavorites(questionId: string, lessonId: string, studentCode: string): Promise<void> {
+export async function saveQuestionToFavorites(
+  questionId: string,
+  lessonId: string,
+  studentCode: string,
+  question?: any,
+  lessonTitle?: string,
+  subjectName?: string,
+  className?: string
+): Promise<void> {
   await db.savedQuestions.put({
     id: `${questionId}_${studentCode}`,
     question_id: questionId,
     student_code: studentCode,
     lesson_id: lessonId,
     saved_at: new Date().toISOString(),
-    synced: false
+    synced: true,
+    question,
+    lesson_title: lessonTitle,
+    subject_name: subjectName,
+    class_name: className,
   });
 }
 
@@ -318,6 +335,7 @@ export async function saveNote(note: {
   id: string;
   student_code: string;
   lesson_id?: string;
+  lesson_title?: string;
   type: 'text' | 'image' | 'audio' | 'capture' | 'voice_record';
   content: string;
   media_url?: string;

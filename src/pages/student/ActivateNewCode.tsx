@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Plus, Key, CheckCircle2, Calendar, Loader2, ShieldCheck, BookOpen, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Plus, Key, CheckCircle2, Calendar, Loader2, ShieldCheck, BookOpen, Eye, EyeOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 // ألوان التدرج لكل صف (تطابق CodeCardExport)
@@ -132,20 +132,6 @@ const ActivateNewCode: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* تنبيه حفظ الكود */}
-        <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-4 flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-amber-800 text-sm">احتفظ بكود التفعيل</p>
-              <p className="text-amber-700 text-xs leading-relaxed">
-                يُحفظ الوصول محلياً على جهازك. إذا قمت بحذف بيانات التطبيق أو مسح ذاكرة التخزين،
-                قد تحتاج لإعادة إدخال الكود. يُفضل تسجيل الكود في مكان آمن.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* نموذج تفعيل كود صف */}
         <Card className="h-full">

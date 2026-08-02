@@ -19,7 +19,6 @@ import {
   ShieldCheck,
   RefreshCw,
   WifiOff,
-  AlertCircle,
   Clock,
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +28,6 @@ import { Button } from '@/components/ui/button';
 const StudentDashboard: React.FC = () => {
   const [allClasses, setAllClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { hasFullAccess, activatedClassIds, activatedClasses } = useAccess();
   const { lastLogin } = useAuth();
@@ -37,7 +35,6 @@ const StudentDashboard: React.FC = () => {
 
   const fetchClasses = useCallback(async (opts?: { force?: boolean; silent?: boolean }) => {
     if (!opts?.silent) setLoading(true);
-    setFetchError(null);
     try {
       // محاولة الكاش المحلي أولاً (IndexedDB أو localStorage) لعرض فوري
       if (!opts?.force) {
@@ -56,9 +53,7 @@ const StudentDashboard: React.FC = () => {
       }
 
       if (!navigator.onLine) {
-        if (allClasses.length === 0) {
-          setFetchError('لا يوجد اتصال بالإنترنت. أعد تشغيل كاسر الشبكة ثم حاول مرة أخرى.');
-        }
+        // لا نظهر رسالة خطأ عند قطع الإنترنت؛ نكتفي بالبيانات المحلية إن وُجدت
         return;
       }
 
@@ -73,13 +68,9 @@ const StudentDashboard: React.FC = () => {
       const classesData = (data as Class[]) ?? [];
       setAllClasses(classesData);
       localStorage.setItem('student_dashboard_classes', JSON.stringify(classesData));
-      if (classesData.length === 0) {
-        setFetchError('لا توجد صفوف دراسية متاحة حالياً.');
-      }
     } catch (err: any) {
       console.warn('خطأ في جلب الصفوف من السيرفر:', err);
-      const msg = err?.message || 'تعذر تحميل الصفوف. تأكد من تشغيل كاسر الشبكة.';
-      setFetchError(msg);
+      // نمنع ظهور رسائل الخطأ المتعلقة بالشبكة للمستخدم
     } finally {
       setLoading(false);
     }
@@ -190,26 +181,16 @@ const StudentDashboard: React.FC = () => {
          </h3>
 
          {/* إذا لم يكن هناك صفوف متاحة */}
-         {!loading && (visibleClasses.length === 0 || fetchError) && (
+         {!loading && visibleClasses.length === 0 && (
            <div className="text-center py-12 space-y-4">
              <div className="mx-auto h-20 w-20 rounded-3xl bg-muted flex items-center justify-center">
-               {fetchError ? (
-                 <AlertCircle className="h-10 w-10 text-destructive" />
-               ) : (
-                 <KeyRound className="h-10 w-10 text-muted-foreground" />
-               )}
+               <KeyRound className="h-10 w-10 text-muted-foreground" />
              </div>
              <p className="text-lg font-bold text-muted-foreground">
-               {fetchError
-                 ? 'تعذر تحميل الصفوف'
-                 : hasFullAccess
-                 ? 'لا توجد صفوف متاحة'
-                 : 'لا توجد صفوف مفعّلة'}
+               {hasFullAccess ? 'لا توجد صفوف متاحة' : 'لا توجد صفوف مفعّلة'}
              </p>
              <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-               {fetchError
-                 ? fetchError
-                 : hasFullAccess
+               {hasFullAccess
                  ? 'قد تحتاج لتحديث المحتوى أو التأكد من الاتصال بالإنترنت'
                  : 'أضف كود صف لتفعيل محتواه'}
              </p>

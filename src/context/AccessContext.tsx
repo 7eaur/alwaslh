@@ -591,7 +591,7 @@ export const AccessProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const onVisible = () => verify();
     document.addEventListener('visibilitychange', onVisible);
 
-    const interval = setInterval(verify, 120000); // كل دقيقتين
+    const interval = setInterval(verify, 600000); // كل 10 دقائق لتقليل استهلاك البطارية
 
     return () => {
       clearInterval(interval);

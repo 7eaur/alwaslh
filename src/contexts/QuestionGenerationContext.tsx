@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { adminApi, aiApi } from '@/db/api';
 import { supabase } from '@/db/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 interface GenerationTask {
   id: string;
@@ -35,6 +36,7 @@ export const QuestionGenerationProvider: React.FC<{
 }> = ({ children, onGenerationComplete }) => {
   const [tasks, setTasks] = useState<GenerationTask[]>([]);
   const { toast } = useToast();
+  const { isAdmin } = useAuth();
 
   const refreshTasks = useCallback(async () => {
     try {
@@ -51,10 +53,12 @@ export const QuestionGenerationProvider: React.FC<{
     }
   }, []);
 
-  // Poll for task updates every 10 seconds (only while visible) to save battery/data
+  // Poll for task updates every 30 seconds (only for admins while visible) to save battery/data
   useEffect(() => {
+    if (!isAdmin) return;
+
     let interval: ReturnType<typeof setInterval> | null = null;
-    const start = () => { if (!interval) interval = setInterval(refreshTasks, 10000); };
+    const start = () => { if (!interval) interval = setInterval(refreshTasks, 30000); };
     const stop = () => { if (interval) { clearInterval(interval); interval = null; } };
 
     const handleVisibility = () => {
@@ -73,10 +77,12 @@ export const QuestionGenerationProvider: React.FC<{
       stop();
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [refreshTasks]);
+  }, [refreshTasks, isAdmin]);
 
-  // Listen for realtime updates
+  // Listen for realtime updates (admins only)
   useEffect(() => {
+    if (!isAdmin) return;
+
     const channel = supabase
       .channel('question_generation_tasks_changes')
       .on(
@@ -120,7 +126,7 @@ export const QuestionGenerationProvider: React.FC<{
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refreshTasks, toast]);
+  }, [refreshTasks, toast, isAdmin]);
 
   const startGeneration = useCallback(async (lessonId: string, taskType: string, questionType?: string) => {
     try {

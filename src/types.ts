@@ -124,6 +124,7 @@ export interface StudentNote {
   id: string;
   student_id: string;
   lesson_id: string;
+  lesson_title?: string;
   content?: string;
   type: 'text' | 'image' | 'audio' | 'capture' | 'voice_record';
   media_url?: string;
@@ -192,6 +193,8 @@ export interface QuizProgress {
   user_answers: number[];
   shuffled_questions?: QuizQuestion[];
   is_completed: boolean;
+  score: number;
+  total_questions: number;
   updated_at: string;
   created_at: string;
 }

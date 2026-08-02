@@ -58,7 +58,6 @@ import { Progress } from '@/components/ui/progress';
 import { getStudentIdentifier } from '@/lib/device';
 import { cn, shuffleOptions, localizeScientificText } from '@/lib/utils';
 import { QuizAttempt, QuizProgress } from '@/types';
-import { storageApi } from '@/db/api';
 import {
   Dialog,
   DialogContent,
@@ -70,6 +69,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { db, getLessonsOffline, preloadImages } from '@/lib/offline-db';
+
+const calculateProgressScore = (answers: number[], questions: QuizQuestion[]) =>
+  answers.reduce((acc, ans, idx) => (ans === questions[idx]?.correct_option_index ? acc + 1 : acc), 0);
+
+const fileToBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
 const StudentLessonDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -317,12 +327,13 @@ const StudentLessonDetail: React.FC = () => {
     try {
       let mediaUrl: string | undefined;
       if (newNoteMediaFile) {
-        mediaUrl = await storageApi.uploadNoteMedia(newNoteMediaFile);
+        mediaUrl = await fileToBase64(newNoteMediaFile);
       }
 
       const noteData: Partial<StudentNote> = {
         student_id: deviceId,
         lesson_id: id,
+        lesson_title: lesson?.title,
         content: newNoteMediaFile ? newNoteMediaFile.name : newNoteContent,
         description: newNoteDescription,
         type: newNoteType === 'capture' ? 'image' : newNoteType,
@@ -395,7 +406,9 @@ const StudentLessonDetail: React.FC = () => {
           current_index: currentQuestionIdx,
           user_answers: updatedAnswers,
           shuffled_questions: shuffledQuestions,
-          is_completed: false
+          is_completed: false,
+          total_questions: shuffledQuestions.length,
+          score: calculateProgressScore(updatedAnswers, shuffledQuestions),
         });
       } catch (err) {
         console.error('Failed to save progress:', err);
@@ -453,7 +466,9 @@ const StudentLessonDetail: React.FC = () => {
             current_index: nextIdx,
             user_answers: userAnswers,
             shuffled_questions: shuffledQuestions,
-            is_completed: false
+            is_completed: false,
+            total_questions: shuffledQuestions.length,
+            score: calculateProgressScore(userAnswers, shuffledQuestions),
           });
         } catch (err) {}
       }
@@ -472,7 +487,10 @@ const StudentLessonDetail: React.FC = () => {
             lesson_id: id,
             current_index: currentQuestionIdx,
             user_answers: userAnswers,
-            is_completed: true
+            shuffled_questions: shuffledQuestions,
+            is_completed: true,
+            total_questions: shuffledQuestions.length,
+            score: calculateProgressScore(userAnswers, shuffledQuestions),
           });
           fetchLastAttempt();
         } catch (err) {
@@ -698,6 +716,9 @@ const StudentLessonDetail: React.FC = () => {
                         }}
                         onTouchEnd={() => { panStart.current = null; }}
                       >
+                        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] px-2.5 py-1 rounded-lg font-bold shadow-md z-10">
+                          صفحة {lesson.page_number ? lesson.page_number + i : i + 1}
+                        </div>
                         <div
                           style={{
                             transform: `scale(${imageScale}) translate(${imagePan.x / imageScale}px, ${imagePan.y / imageScale}px)`,
@@ -713,14 +734,11 @@ const StudentLessonDetail: React.FC = () => {
                         </div>
                       </div>
                       
-                      <div className="mt-4 flex items-center justify-between px-6">
+                      <div className="mt-4 flex items-center px-6">
                         <div className="flex items-center gap-2">
                            <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">محتوى الدرس الموثق</span>
                         </div>
-                        <Badge className="bg-primary/10 text-primary hover:bg-primary/20 transition-colors px-4 py-1.5 rounded-full font-black border-none text-[10px]">
-                           صفحة {lesson.page_number ? lesson.page_number + i : i + 1}
-                        </Badge>
                       </div>
                     </div>
                   </div>

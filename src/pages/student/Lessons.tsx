@@ -91,7 +91,7 @@ const LessonCard = React.memo(({
           <div className="absolute top-2 right-2 bg-primary text-white text-[9px] px-2 py-0.5 rounded-full font-black shadow-lg">
             {sub?.name || 'مادة'}
           </div>
-          <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm text-primary text-[9px] px-2 py-0.5 rounded-lg font-black shadow-sm border border-primary/10">
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[10px] px-2.5 py-0.5 rounded-lg font-bold shadow-md z-10">
             صفحة {lesson.page_number || '??'}
           </div>
         </div>
