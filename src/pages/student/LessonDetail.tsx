@@ -68,7 +68,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from '@/components/ui/badge';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import { db, getLessonsOffline, preloadImages } from '@/lib/offline-db';
+import { db, getLessonsOffline } from '@/lib/offline-db';
 
 const calculateProgressScore = (answers: number[], questions: QuizQuestion[]) =>
   answers.reduce((acc, ans, idx) => (ans === questions[idx]?.correct_option_index ? acc + 1 : acc), 0);
@@ -251,9 +251,7 @@ const StudentLessonDetail: React.FC = () => {
           setLesson(data);
           if (data) fetchAdjacentLessons(data);
           setLoading(false);
-          // تخزين صور الدرس مسبقاً إن لم تكن مخزنة بعد
-          const urls = Array.isArray(data.image_urls) ? data.image_urls : [];
-          if (urls.length > 0) preloadImages(urls).catch(() => {});
+          // لم نعد نحمل كل الصور مسبقاً لتوفير بيانات الإنترنت، تحميل الصور يتم عند الظهور فقط
         }
 
         // إذا كان متصل، تحديث البيانات في الخلفية
@@ -267,9 +265,7 @@ const StudentLessonDetail: React.FC = () => {
               fetchAdjacentLessons(data);
             }
           }
-          // حفظ الصور في التخزين المحلي لضمان الوصول بدون إنترنت
-          const onlineUrls = Array.isArray(data?.image_urls) ? data!.image_urls : [];
-          if (onlineUrls.length > 0) preloadImages(onlineUrls).catch(() => {});
+          // تحميل الصور يتم عند ظهورها في الشاشة فقط (CachedImage lazy)
           
           if (deviceId) {
             const notes = await studentApi.getNotes(deviceId);

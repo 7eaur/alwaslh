@@ -98,19 +98,25 @@ export function isOnline(): boolean {
   return navigator.onLine;
 }
 
+const DEFAULT_CACHE_TTL = 15 * 60 * 1000; // 15 دقيقة افتراضياً لتقليل استهلاك البيانات
+
 /**
  * دالة مساعدة لتنفيذ طلب API مع دعم التخزين المؤقت
  * السلوك:
- *   - متصل بالإنترنت → يجلب من السيرفر ويحدّث الكاش
+ *   - متصل + كاش طازج (أقل من ttl) → يستخدم الكاش ولا يجلب من السيرفر (توفير بيانات)
+ *   - متصل + كاش قديم أو غير موجود → يجلب من السيرفر ويحدّث الكاش
  *   - غير متصل      → يستخدم الكاش دائماً (بدون انتهاء صلاحية)
  *   - غير متصل + لا يوجد كاش → يرجع مصفوفة فارغة (لا throw)
  */
 export async function cachedApiCall<T>(
   cacheKey: string,
   apiCall: () => Promise<T>,
-  _forceRefresh: boolean = false
+  forceRefresh: boolean = false,
+  ttl: number = DEFAULT_CACHE_TTL
 ): Promise<T> {
   const cached = getCache<T>(cacheKey);
+  const cachedEntry = getCacheEntry<T>(cacheKey);
+  const isFresh = cachedEntry && (Date.now() - cachedEntry.timestamp) < ttl;
 
   // إذا كان غير متصل بالإنترنت → استخدم الكاش دائماً
   if (!isOnline()) {
@@ -120,7 +126,12 @@ export async function cachedApiCall<T>(
     return (Array.isArray(cached) ? [] : null) as unknown as T;
   }
 
-  // متصل بالإنترنت → اجلب من السيرفر
+  // إذا كان الكاش طازجاً ولم يُطلب التحديث القسري → استخدمه لتوفير بيانات الإنترنت
+  if (!forceRefresh && cached !== null && isFresh) {
+    return cached;
+  }
+
+  // متصل بالإنترنت ولا يوجد كاش طازج → اجلب من السيرفر
   try {
     const data = await apiCall();
     setCache(cacheKey, data);
@@ -134,6 +145,19 @@ export async function cachedApiCall<T>(
     // لا يوجد كاش ولا اتصال → أرجع فارغاً بدلاً من throw
     console.warn('[OfflineCache] لا كاش ولا اتصال للمفتاح:', cacheKey);
     return [] as unknown as T;
+  }
+}
+
+function getCacheEntry<T>(key: string): CacheEntry<T> | null {
+  try {
+    const cacheKey = `${CACHE_PREFIX}${key}`;
+    const cached = localStorage.getItem(cacheKey);
+    if (!cached) return null;
+    const entry: CacheEntry<T> = JSON.parse(cached);
+    if (entry.version !== CACHE_VERSION) return null;
+    return entry;
+  } catch {
+    return null;
   }
 }
 

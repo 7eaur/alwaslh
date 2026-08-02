@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { preloadAllContent } from '@/lib/offline-db';
 import { studentApi } from '@/db/api';
+import { clearAllCache } from '@/lib/offline-cache';
 import { cn } from '@/lib/utils';
 
 /**
@@ -27,6 +28,8 @@ export function RefreshButton() {
 
     setLoading(true);
     try {
+      // مسح التخزين المؤقت قبل التحديث اليدوي لضمان جلب أحدث البيانات
+      clearAllCache();
       await preloadAllContent(
         () => studentApi.getClasses(),
         (classId) => studentApi.getSubjects(classId),

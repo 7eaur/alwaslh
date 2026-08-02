@@ -460,7 +460,8 @@ export async function clearAllData(): Promise<void> {
 /** حفظ صورة في IndexedDB */
 export async function saveImageToDB(url: string): Promise<void> {
   try {
-    const response = await fetch(url, { cache: 'no-store' });
+    // نستخدم ذاكرة التخزين المؤقت للمتصفح لتقليل استهلاك البيانات عند إعادة فتح الصورة
+    const response = await fetch(url, { cache: 'default' });
     if (!response.ok) return;
     const blob = await response.blob();
     await db.images.put({ url, blob, saved_at: new Date().toISOString() });
