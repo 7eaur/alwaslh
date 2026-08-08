@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 180 5% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 180 5% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 180 5% 10%;
+    --primary: 179 100% 31%; /* #00a09d */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 100% 63%; /* #ff9f43 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 180 10% 96%;
+    --muted-foreground: 180 5% 45%;
+    --accent: 179 40% 97%;
+    --accent-foreground: 179 100% 31%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 180 10% 90%;
+    --input: 180 10% 90%;
+    --ring: 179 100% 31%;
+    --radius: 0.75rem;
+    
+    /* Custom for education theme */
+    --education-blue: 199 89% 48%;
+    --education-green: 158 64% 52%;
+    --success: 158 64% 52%;
+    --warning: 38 92% 50%;
+    --info: 199 89% 48%;
+    
+    --gradient-primary: linear-gradient(135deg, #00a09d 0%, #007a78 100%);
+    --gradient-card: linear-gradient(180deg, #ffffff 0%, #f0fdfc 100%);
+    --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 160, 157, 0.1), 0 4px 6px -2px rgba(0, 160, 157, 0.05);
+  }
+
+  .dark {
+    --background: 180 20% 4%;
+    --foreground: 180 5% 90%;
+    --card: 180 20% 8%;
+    --card-foreground: 180 5% 90%;
+    --popover: 180 20% 8%;
+    --popover-foreground: 180 5% 90%;
+    --primary: 179 100% 31%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 100% 63%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 180 20% 15%;
+    --muted-foreground: 180 5% 65%;
+    --accent: 180 20% 15%;
+    --accent-foreground: 179 100% 40%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 180 20% 15%;
+    --input: 180 20% 15%;
+    --ring: 179 100% 31%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    -webkit-tap-highlight-color: transparent; /* Fast feedback for mobile taps */
+  }
+  html {
+    /* منع سحب التحديث (Pull-to-Refresh) نهائياً على الجوال */
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    direction: rtl; /* Arabic support */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* منع سحب التحديث (Pull-to-Refresh) نهائياً على الجوال */
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+  }
+}
+
+/* Hardware acceleration for smooth animations */
+.animate-in, .animate-out, .transition-all, .transition-transform, .transition-opacity {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Optimization for images */
+img {
+  content-visibility: auto;
+}
+
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), #00c8c4);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  
+  .glass-card {
+    @apply bg-white/80 dark:bg-black/80 backdrop-blur-md border border-white/20 dark:border-white/10;
+  }
+
+  .arabic-font {
+    font-family: 'Cairo', sans-serif;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/30;
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.8); opacity: 0; }
+  70% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}

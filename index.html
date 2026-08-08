@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/jpeg" href="https://miaoda-conversation-file.s3cdn.medo.dev/user-9wofituwhou8/conv-a8tauoehdn9c/20260315/file-a9l4g2jirr40.jpg" />
+    <link rel="apple-touch-icon" href="https://miaoda-conversation-file.s3cdn.medo.dev/user-9wofituwhou8/conv-a8tauoehdn9c/20260315/file-a9l4g2jirr40.jpg" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0, user-scalable=no" />
+    <link rel="preconnect" href="https://api.wasila-thkia.com" />
+    <link rel="dns-prefetch" href="https://api.wasila-thkia.com" />
+    <link rel="preconnect" href="https://miaoda-conversation-file.s3cdn.medo.dev" />
+    <title>الوسيلة الذكية - منصة تعليمية ذكية</title>
+    <meta name="description" content="منصة تعليمية ذكية لإدارة المحتوى الدراسي وتوزيع الدروس على الطلاب من خلال نظام أكواد آمن" />
+    <meta name="theme-color" content="#00a09d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="الوسيلة الذكية" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/" />
+    <meta property="og:title" content="الوسيلة الذكية - منصة تعليمية ذكية" />
+    <meta property="og:description" content="منصة تعليمية ذكية لإدارة المحتوى الدراسي" />
+    <meta property="og:image" content="https://miaoda-conversation-file.s3cdn.medo.dev/user-9wofituwhou8/conv-a8tauoehdn9c/20260315/file-a9l4g2jirr40.jpg" />
+
+    <!-- معالج فشل التحميل والأخطاء العالمية - يُسجَّل أولاً -->
+    <script>
+      (function() {
+        var BUILD_ID = "v730"; // معرف فريد للإصدار الحالي - يُحدَّث عند كل تغيير جوهري
+        window.__APP_BUILD_ID = BUILD_ID;
+        var loader = null;
+        var hasError = false;
+
+        // التقاط حدث تثبيت PWA مبكراً لضمان توفيره عند النقر على "تثبيت"
+        window.__deferredInstallPrompt = null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+          e.preventDefault();
+          window.__deferredInstallPrompt = e;
+        });
+
+        // التحقق من الإصدار في التخزين المحلي لإجبار التنظيف عند التحديث الكبير
+        var previousBuildId = localStorage.getItem('app-build-id');
+        if (previousBuildId !== BUILD_ID && !sessionStorage.getItem('build-clean-done')) {
+          sessionStorage.setItem('build-clean-done', '1');
+          localStorage.setItem('app-build-id', BUILD_ID);
+          // حفظ أكواد الطالب قبل التنظيف
+          var studentAccess = localStorage.getItem('student_access_v2');
+          // حذف جميع Service Workers وتنظيف الكاش ثم إعادة التحميل بالإصدار الجديد
+          sessionStorage.clear();
+          localStorage.clear();
+          if (studentAccess) localStorage.setItem('student_access_v2', studentAccess);
+          localStorage.setItem('app-build-id', BUILD_ID);
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              return Promise.all(names.map(function(n) { return caches.delete(n); }));
+            }).then(function() {
+              if ('serviceWorker' in navigator) {
+                return navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  return Promise.all(regs.map(function(r) { return r.unregister(); }));
+                });
+              }
+            }).then(function() {
+              window.location.reload();
+            });
+          } else {
+            window.location.reload();
+          }
+        } else {
+          localStorage.setItem('app-build-id', BUILD_ID);
+        }
+
+        function getLoader() {
+          return loader || (loader = document.getElementById('html-loader'));
+        }
+
+        function isBrowserMode() {
+          if (navigator.standalone) return false;
+          if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) return false;
+          if (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) return false;
+          return true;
+        }
+
+        function showError(message, details) {
+          if (hasError && !details) return; 
+          hasError = true;
+          var l = getLoader();
+          if (!l) return;
+
+          var browserMode = isBrowserMode();
+          if (browserMode) {
+            // في المتصفح لا نظهر رسائل الكاش الطويلة، فقط زر إعادة المحاولة
+            l.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;text-align:center;background:rgba(0,0,0,0.15);border-radius:12px;">'
+              + '<p style="color:white;font-size:16px;font-weight:700;margin:0;font-family:Tahoma,sans-serif;">الوسيلة الذكية</p>'
+              + '<p style="color:rgba(255,255,255,0.9);font-size:13px;margin:0;font-family:Tahoma,sans-serif;">جاري التحميل أو التحقق من الاتصال...</p>'
+              + '<button onclick="window.__forceReload()" style="background:white;color:#00a09d;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">إعادة المحاولة</button>'
+              + '</div>';
+            return;
+          }
+
+          // في وضع التطبيق المثبت: رسالة مختصرة
+          l.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px;text-align:center;max-width:90%;background:rgba(0,0,0,0.2);border-radius:16px;">'
+            + '<p style="color:white;font-size:16px;font-weight:700;margin:0;font-family:Tahoma,sans-serif;">الوسيلة الذكية</p>'
+            + '<p style="color:#ffcfcf;font-size:13px;margin:0;font-family:Tahoma,sans-serif;">' + message + '</p>'
+            + '<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:8px;">'
+            + '<button onclick="window.__forceReload()" style="background:white;color:#00a09d;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">إعادة المحاولة</button>'
+            + '<button onclick="window.__deepClean()" style="background:rgba(255,255,255,0.2);color:white;border:1px solid white;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">تنظيف</button>'
+            + '</div>'
+            + '</div>';
+        }
+        window.__showError = showError;
+
+        window.__forceReload = function() {
+          var url = new URL(window.location.href);
+          url.searchParams.set('reload', Date.now());
+          window.location.href = url.toString();
+        };
+
+        window.__deepClean = function(noConfirm) {
+          if (noConfirm || confirm('سيتم تنظيف الكاش وحل مشاكل التحميل. هل تريد الاستمرار؟')) {
+            // حفظ بيانات جلسة الطالب قبل المسح لئلا يضطر لإعادة إدخال الكود
+            var studentAccess = localStorage.getItem('student_access_v2');
+            sessionStorage.clear();
+            localStorage.clear();
+            // إعادة بيانات الطالب بعد المسح
+            if (studentAccess) localStorage.setItem('student_access_v2', studentAccess);
+            localStorage.setItem('app-build-id', BUILD_ID);
+            
+            var p = Promise.resolve();
+            if ('caches' in window) {
+              p = caches.keys().then(function(names) {
+                return Promise.all(names.map(function(n) { return caches.delete(n); }));
+              });
+            }
+            
+            p.then(function() {
+              if ('serviceWorker' in navigator) {
+                return navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  return Promise.all(regs.map(function(r) { return r.unregister(); }));
+                });
+              }
+            }).then(function() {
+              setTimeout(function() { 
+                window.location.href = window.location.origin + '/?clean=' + Date.now(); 
+              }, 300);
+            });
+          }
+        };
+
+        // التقاط أخطاء تحميل الملفات (Scripts/CSS)
+        window.addEventListener('error', function(e) {
+          if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+            showError('تعذر تحميل ملفات التطبيق. يرجى الضغط على "تنظيف وحل المشكلة" بالأسفل.', e.target.src || e.target.href);
+          }
+        }, true);
+
+        // التقاط أخطاء الجافاسكريبت غير المعالجة
+        window.onerror = function(msg, url, line, col, error) {
+          // تجاهل أخطاء معينة شائعة لا تؤثر على التشغيل
+          if (msg.indexOf('ResizeObserver') !== -1) return;
+          showError('حدث خطأ تقني. جاري محاولة الإصلاح تلقائياً...', msg);
+          // إذا كان خطأ فادح في البداية، نحاول التنظيف التلقائي لمرة واحدة
+          var failCount = parseInt(sessionStorage.getItem('fatal-error-count') || '0', 10);
+          if (failCount < 1) {
+            sessionStorage.setItem('fatal-error-count', '1');
+            setTimeout(function() { window.__forceReload(); }, 2000);
+          }
+        };
+
+        // معالج Vite الخاص بالأخطاء أثناء التحميل المسبق
+        window.addEventListener('vite:preloadError', function(e) {
+          showError('فشل تحميل جزء من التطبيق. يرجى الضغط على "تنظيف وحل المشكلة".');
+          var count = parseInt(sessionStorage.getItem('reload-count') || '0', 10);
+          if (count < 2) {
+            sessionStorage.setItem('reload-count', String(count + 1));
+            window.__forceReload();
+          }
+        });
+      })();
+    </script>
+
+    <!-- تسجيل sw.js مع تحديث قسري وتنظيف أي تسجيل قديم -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          // حذف أي تسجيل قديم ثم تسجيل SW الجديد لتجنب الكاش المعلق
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            return Promise.all(regs.map(function(r) {
+              // نحذف التسجيلات القديمة لنفس المسار حتى ولو بنفس الاسم
+              if (r.scope.indexOf(window.location.origin) === 0) {
+                return r.unregister();
+              }
+              return Promise.resolve();
+            }));
+          }).then(function() {
+            return navigator.serviceWorker.register('/sw.js?v=730', { updateViaCache: 'none' });
+          }).then(function(reg) {
+            console.log('SW Registered v730');
+
+            // إذا كان هناك إصدار جديد في الانتظار، نجبر إعادة التحميل
+            reg.addEventListener('updatefound', function() {
+              var newWorker = reg.installing;
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                  window.location.reload();
+                }
+              });
+            });
+
+            // إذا كان التحديث موجوداً مسبقاً نجبره
+            if (reg.waiting) {
+              reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+          }).catch(function(err) {
+            console.error('SW Registration Failed', err);
+          });
+
+          // إذا تغيّر الـ controller نعيد التحميل لضمان تشغيل الإصدار الجديد
+          navigator.serviceWorker.addEventListener('controllerchange', function() {
+            window.location.reload();
+          });
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <!-- مؤشر تحميل HTML خالص يظهر فوراً قبل React -->
+    <div id="html-loader" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#00a09d;z-index:9999;gap:16px;">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="32" cy="32" r="28" stroke="rgba(255,255,255,0.3)" stroke-width="6"/>
+        <path d="M32 4a28 28 0 0 1 28 28" stroke="white" stroke-width="6" stroke-linecap="round">
+          <animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="0.8s" repeatCount="indefinite"/>
+        </path>
+      </svg>
+      <p style="color:white;font-size:20px;font-weight:700;margin:0;font-family:Tahoma,sans-serif;">الوسيلة الذكية</p>
+      <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:0;font-family:Tahoma,sans-serif;">جاري التحميل...</p>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- دالة إخفاء loader + Timeout + معالجة sw_reset -->
+    <script>
+      // تنظيف معاملات URL التي أضافها sw.js أو أكواد إعادة التحميل
+      (function() {
+        var url = new URL(window.location.href);
+        var changed = false;
+        ['sw_reset', 'r', 'c'].forEach(function(p) {
+          if (url.searchParams.has(p)) { url.searchParams.delete(p); changed = true; }
+        });
+        if (changed) history.replaceState(null, '', url.toString());
+        // إعادة تعيين عداد المحاولات عند التحميل النظيف
+        if (changed) sessionStorage.removeItem('reload-count');
+      })();
+
+      // دالة إخفاء loader - تُستدعى من React عند اكتمال التحميل
+      window.__hideHtmlLoader = function() {
+        var loader = document.getElementById('html-loader');
+        if (!loader) return;
+        loader.style.opacity = '0';
+        loader.style.transition = 'opacity 0.3s';
+        setTimeout(function() { if (loader && loader.parentNode) loader.parentNode.removeChild(loader); }, 350);
+        if (window.__clearHtmlLoaderTimer) window.__clearHtmlLoaderTimer();
+      };
+      
+      // Timeout: 15 ثانية - إذا لم يُحمَّل React نعيد التحميل تلقائياً لمرة واحدة، ثم نظهر خيارات
+      (function() {
+        var timer = setTimeout(function() {
+          var loader = document.getElementById('html-loader');
+          if (!loader || loader.innerHTML.indexOf('button') !== -1) return; // تم التحميل أو يوجد خطأ بالفعل
+          
+          var count = parseInt(sessionStorage.getItem('reload-count') || '0', 10);
+          if (count < 1) {
+            // محاولة إعادة تحميل تلقائية واحدة
+            sessionStorage.setItem('reload-count', '1');
+            location.reload();
+          } else {
+            // أظهر خيارات الإصلاح للمستخدم (مختصرة)
+            if (window.__showError) {
+               window.__showError('استغرق التحميل. يرجى إعادة المحاولة.');
+            } else {
+               // Fallback إذا لم يتم تعريف showError
+               loader.innerHTML = '<div style="color:white;text-align:center;padding:20px;">'
+                 + '<p style="font-size:14px;font-weight:700;margin-bottom:10px;">استغرق التحميل. يرجى إعادة المحاولة.</p>'
+                 + '<button onclick="location.reload()" style="background:white;color:#00a09d;border:none;padding:8px 16px;border-radius:8px;font-weight:700;cursor:pointer;">إعادة المحاولة</button>'
+                 + '</div>';
+            }
+          }
+        }, 15000);
+        window.__clearHtmlLoaderTimer = function() { clearTimeout(timer); };
+      })();
+    </script>
+  </body>
+</html>
+

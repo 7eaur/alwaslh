@@ -1,0 +1,24 @@
+{
+  "name": "الوسيلة الذكية",
+  "short_name": "الوسيلة الذكية",
+  "description": "منصة تعليمية ذكية لإدارة المحتوى الدراسي وتوزيع الدروس",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#00a09d",
+  "theme_color": "#00a09d",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://miaoda-conversation-file.s3cdn.medo.dev/user-9wofituwhou8/conv-a8tauoehdn9c/20260315/file-a9l4g2jirr40.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "https://miaoda-conversation-file.s3cdn.medo.dev/user-9wofituwhou8/conv-a8tauoehdn9c/20260315/file-a9l4g2jirr40.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+ALTER TABLE public.quiz_progress ADD COLUMN IF NOT EXISTS shuffled_questions jsonb DEFAULT '[]'::jsonb;

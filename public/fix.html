@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إصلاح الوسيلة الذكية</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #00a09d;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+            padding: 20px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        h1 { margin-top: 0; font-size: 24px; }
+        p { line-height: 1.6; color: rgba(255,255,255,0.9); }
+        .btn {
+            background: white;
+            color: #00a09d;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .status { margin-top: 20px; font-size: 14px; color: #ffcfcf; min-height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>إصلاح مشاكل التحميل</h1>
+        <p>سيقوم هذا الإجراء بمسح جميع بيانات الكاش والملفات القديمة لإجبار التطبيق على التحميل من جديد.</p>
+        
+        <button class="btn" id="fixBtn">بدء عملية الإصلاح</button>
+        
+        <div class="status" id="status"></div>
+    </div>
+
+    <script>
+        document.getElementById('fixBtn').onclick = async function() {
+            const btn = this;
+            const status = document.getElementById('status');
+            btn.disabled = true;
+            btn.innerText = 'جاري الإصلاح...';
+
+            try {
+                // 1. Clear Caches
+                status.innerText = 'جاري مسح الملفات المؤقتة...';
+                if ('caches' in window) {
+                    const names = await caches.keys();
+                    await Promise.all(names.map(name => caches.delete(name)));
+                }
+
+                // 2. Unregister all Service Workers
+                status.innerText = 'جاري حذف الأنظمة القديمة...';
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map(r => r.unregister()));
+                }
+
+                // 3. Clear Storage (مع الحفاظ على بيانات جلسة الطالب)
+                status.innerText = 'جاري مسح البيانات المحلية...';
+                var studentAccess = localStorage.getItem('student_access_v2');
+                localStorage.clear();
+                sessionStorage.clear();
+                // إعادة بيانات الطالب بعد المسح لئلا يضطر لإعادة إدخال الكود
+                if (studentAccess) localStorage.setItem('student_access_v2', studentAccess);
+
+                status.innerText = 'اكتمل الإصلاح! جاري إعادة التشغيل...';
+                status.style.color = '#7fff7f';
+
+                setTimeout(() => {
+                    window.location.href = '/?fixed=' + Date.now();
+                }, 1500);
+
+            } catch (err) {
+                status.innerText = 'حدث خطأ: ' + err.message;
+                btn.disabled = false;
+                btn.innerText = 'حاول مرة أخرى';
+            }
+        };
+    </script>
+</body>
+</html>
