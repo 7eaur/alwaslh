@@ -32,3 +32,5 @@ history/*.json
 package.json.[0-9]*
 .native-wind-cache
 .vite
+.deploy_key
+.deploy_key.pub
