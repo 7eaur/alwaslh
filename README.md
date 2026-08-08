@@ -1,41 +1,252 @@
-# Welcome to Your Miaoda Project
+# الوسيلة الذكية (Alwaseela Smart)
 
-## Project Info
+تطبيق ويب تعليمي (PWA) لإدارة المحتوى الدراسي وتوزيع الدروس على الطلاب عبر نظام أكواد آمن، مع دعم الذكاء الاصطناعي لتحليل المحتوى وتوليد الأسئلة والاختبارات التفاعلية.
+
+---
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         Frontend                             │
+│  React + TypeScript + Vite + Tailwind CSS + shadcn/ui       │
+│  PWA with offline caching (IndexedDB + localStorage)        │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+           ┌───────────────┼───────────────┐
+           │               │               │
+           ▼               ▼               ▼
+   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+   │   Supabase   │ │   Supabase   │ │  Cloudflare  │
+   │   PostgreSQL │ │ Edge Functions│ │   Worker     │
+   │   Auth       │ │   (Deno/TS)  │ │  (Proxy)     │
+   │   Storage    │ │               │ │  (Optional)  │
+   │   Realtime   │ │               │ │               │
+   └──────────────┘ └──────────────┘ └──────────────┘
+```
+
+### Frontend
+
+- **Framework:** React 18 + TypeScript
+- **Build Tool:** Vite
+- **Styling:** Tailwind CSS 3.4 + shadcn/ui
+- **Routing:** React Router v7
+- **State Management:** React Context + Hooks
+- **PWA:** Vite Plugin PWA + Workbox
+- **Storage Offline:** IndexedDB (Dexie) + localStorage
+- **Charts:** Recharts
+- **Forms:** React Hook Form + Zod
+- **Animations:** Framer Motion (motion)
+
+### Backend
+
+- **Database:** Supabase PostgreSQL
+- **Auth:** Supabase Auth
+- **Serverless Functions:** Supabase Edge Functions (Deno)
+- **Storage:** Supabase Storage
+- **Realtime:** Supabase Realtime subscriptions
+- **Migrations:** 45 SQL migration files في `supabase/migrations/`
+- **Secrets:** `PASSWORD_ENCRYPTION_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `INTEGRATIONS_API_KEY`
+
+---
 
 ## Project Directory
 
 ```
-├── README.md # Documentation
-├── components.json # Component library configuration
-├── index.html # Entry file
-├── package.json # Package management
-├── postcss.config.js # PostCSS configuration
-├── public # Static resources directory
-│   ├── favicon.png # Icon
-│   └── images # Image resources
-├── src # Source code directory
-│   ├── App.tsx # Entry file
-│   ├── components # Components directory
-│   ├── context # Context directory
-│   ├── db # Database configuration directory
-│   ├── hooks # Common hooks directory
-│   ├── index.css # Global styles
-│   ├── layout # Layout directory
-│   ├── lib # Utility library directory
-│   ├── main.tsx # Entry file
-│   ├── routes.tsx # Routing configuration
-│   ├── pages # Pages directory
-│   ├── services # Database interaction directory
-│   ├── types # Type definitions directory
-├── tsconfig.app.json # TypeScript frontend configuration file
-├── tsconfig.json # TypeScript configuration file
-├── tsconfig.node.json # TypeScript Node.js configuration file
-└── vite.config.ts # Vite configuration file
+├── README.md                    # هذا الملف
+├── .env.example                 # قالب متغيرات البيئة
+├── package.json                 # التبعيات ونصوص التشغيل
+├── pnpm-lock.yaml               # قفل إصدارات التبعيات
+├── pnpm-workspace.yaml          # إعدادات مساحة عمل pnpm
+├── index.html                   # نقطة الدخول HTML
+├── vite.config.ts              # إعدادات Vite
+├── vite.config.dev.ts          # إعدادات Vite للتطوير
+├── tailwind.config.js          # إعدادات Tailwind
+├── postcss.config.js           # إعدادات PostCSS
+├── biome.json                  # إعدادات Biome
+├── components.json             # إعدادات shadcn/ui
+├── tsconfig*.json              # إعدادات TypeScript
+├── public/                     # الأصول الثابتة
+├── src/                        # كود الواجهة الأمامية
+│   ├── components/             # المكونات
+│   ├── context/ / contexts/    # Providers
+│   ├── db/                     # API + Supabase client
+│   ├── hooks/                  # Hooks مخصصة
+│   ├── lib/                    # أدوات مساعدة
+│   ├── pages/                  # الصفحات
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── routes.tsx
+│   └── index.css
+├── supabase/                   # Backend
+│   ├── functions/              # Edge Functions
+│   ├── migrations/             # SQL Migrations
+│   ├── secrets/required.json   # أسماء Secrets المطلوبة
+│   └── config.toml
+├── tasks/                      # سكربتات ومهام إضافية
+│   └── cloudflare-worker/
+├── docs/                       # التوثيق
+│   ├── prd.md
+│   └── SOURCE_INVENTORY.md
+└── .rules/                     # قواعد التحقق من الجودة
 ```
 
-## Tech Stack
+---
 
-Vite, TypeScript, React, Supabase
+## Requirements
+
+- Node.js 18+ (يفضل 20 LTS)
+- pnpm 8+
+- حساب Supabase (مشروع فعّال)
+
+---
+
+## Installation
+
+```bash
+# استنساخ المستودع
+git clone git@github.com:7eaur/alwaslh.git
+cd alwaslh
+
+# تثبيت التبعيات
+pnpm install
+
+# إعداد متغيرات البيئة
+cp .env.example .env
+# عدّل .env بقيم مشروع Supabase الخاص بك
+```
+
+---
+
+## Environment Variables
+
+انظر `.env.example` للقالب الكامل.
+
+```text
+# الواجهة الأمامية
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+
+# Edge Functions
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+PASSWORD_ENCRYPTION_KEY=your-encryption-key
+INTEGRATIONS_API_KEY=your-integrations-api-key
+```
+
+---
+
+## Database
+
+### Migrations
+
+مigrations موجودة في `supabase/migrations/`. قم بتطبيقها عبر Supabase CLI أو لوحة التحكم:
+
+```bash
+supabase db reset
+# أو
+supabase migrations up
+```
+
+### Seeds
+
+لا توجد ملفات Seeder منفصلة حالياً. البيانات الأولية تُدخل عبر لوحة الإدارة أو Migrations.
+
+---
+
+## Workers
+
+لا يوجد Workers/Queues منفصلة. العمليات الثقيلة (مثل تحليل الدرس وتوليد الأسئلة) تتم عبر Supabase Edge Functions.
+
+---
+
+## Docker
+
+لا يوجد `Dockerfile` أو `docker-compose.yml` حالياً. التطبيق مصمم ليبنى كـ Static Site ويُستضاف على:
+
+- Vercel
+- Netlify
+- Cloudflare Pages
+- VPS + Nginx
+
+---
+
+## Tests
+
+لا يوجد دليل `tests/` منفصل. يُنصح بإضافة اختبارات مع:
+
+```bash
+vitest
+# أو
+jest
+```
+
+---
+
+## Lint
+
+```bash
+npm run lint
+```
+
+يقوم بـ:
+
+- TypeScript type check (`tsgo -p tsconfig.check.json`)
+- Biome linting
+- Tailwind CSS compilation check
+- Build sanity check (`.rules/testBuild.sh`)
+
+## Typecheck
+
+```bash
+npx tsgo -p tsconfig.check.json
+# أو
+npx tsc --noEmit
+```
+
+## Build
+
+```bash
+# ملاحظة: package.json لا يحتوي على build script فعّال
+# يمكنك البناء مباشرة عبر:
+npx vite build
+```
+
+## Deployment
+
+### Frontend (Static Hosting)
+
+```bash
+npx vite build
+# ارفع مجلد dist/ على خادمك الثابت
+```
+
+### Backend (Supabase)
+
+```bash
+supabase functions deploy
+supabase db push
+```
+
+---
+
+## Documentation
+
+- `docs/prd.md` — متطلبات المنتج
+- `docs/SOURCE_INVENTORY.md` — جرد الملفات والمكونات
+- `OFFLINE_MODE.md` — العمل بدون إنترنت
+- `OFFLINE_MODE_README.md` — دليل إضافي للأوفلاين
+
+---
+
+## Security Notes
+
+- لا تُرفع `.env` أو `.deploy_key`.
+- الـ Edge Functions تستخدم `Deno.env.get(...)` لقراءة Secrets.
+- الواجهة الأمامية تستخدم `import.meta.env.VITE_*` فقط.
+- لا توجد بيانات طلاب أو Sessions أو Tokens في Source Code.
+
+---
 
 ## Development Guidelines
 

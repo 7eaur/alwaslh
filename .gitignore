@@ -28,9 +28,20 @@ package-lock.json
 history/*.json
 .vite_cache
 /.skills
-/tasks
+/tasks/*
+!tasks/cloudflare-worker/
+!tasks/cloudflare-worker/worker.js
 package.json.[0-9]*
 .native-wind-cache
 .vite
 .deploy_key
 .deploy_key.pub
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Runtime / historical / session data
+historical_context.txt
+lint_final_txt
