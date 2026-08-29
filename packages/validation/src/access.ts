@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   CLASS_ACCESS_CODE_LENGTH,
   FULL_ACCESS_CODE_LENGTH,
-} from "../../domain/src/access";
+} from "@alwaslh/domain/access";
 
 const arabicIndicDigits = /[٠-٩]/g;
 const easternArabicIndicDigits = /[۰-۹]/g;
