@@ -1,0 +1,10 @@
+{
+  "name": "@alwaslh/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./access": "./src/access.ts",
+    "./content": "./src/content.ts"
+  }
+}
