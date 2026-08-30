@@ -48,7 +48,7 @@ class FlakyMemoryStorage implements MediaStorage {
 }
 
 class AbortAfterFirstWriteStorage extends FlakyMemoryStorage {
-  private writes = 0;
+  private abortWrites = 0;
 
   constructor(private readonly controller: AbortController) {
     super();
@@ -56,8 +56,8 @@ class AbortAfterFirstWriteStorage extends FlakyMemoryStorage {
 
   override async put(key: string, bytes: Uint8Array): Promise<void> {
     await super.put(key, bytes);
-    this.writes += 1;
-    if (this.writes === 1) this.controller.abort();
+    this.abortWrites += 1;
+    if (this.abortWrites === 1) this.controller.abort();
   }
 }
 
