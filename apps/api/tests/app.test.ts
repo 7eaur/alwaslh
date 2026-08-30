@@ -10,8 +10,11 @@ const config: AppConfig = {
   PORT: 3000,
   LOG_LEVEL: "silent",
   DATABASE_URL: "postgresql://user:pass@localhost:5432/test",
+  DATABASE_SSL: "disable",
+  DATABASE_POOL_MAX: 10,
   SESSION_COOKIE_NAME: "alwaslh_session",
   SESSION_TTL_HOURS: 168,
+  SESSION_COOKIE_SAME_SITE: "lax",
   ALLOWED_ORIGINS: "http://localhost:5173",
 };
 
