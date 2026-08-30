@@ -1,6 +1,6 @@
-import { AuthService } from "./service.js";
 import { loadConfig } from "../config.js";
 import { createDatabase } from "../db.js";
+import { AuthService } from "./service.js";
 
 const identifier = process.env.ADMIN_BOOTSTRAP_IDENTIFIER?.trim();
 const password = process.env.ADMIN_BOOTSTRAP_PASSWORD;
@@ -16,7 +16,9 @@ const auth = new AuthService(database, config.SESSION_TTL_HOURS);
 
 try {
   await database.transaction(async (tx) => {
-    const existing = await tx.query<{ count: string }>("select count(*)::text as count from profiles where role = 'admin'");
+    const existing = await tx.query<{ count: string }>(
+      "select count(*)::text as count from profiles where role = 'admin'",
+    );
     if (existing[0]?.count !== "0") {
       throw new Error("Admin bootstrap refused: an admin account already exists");
     }
