@@ -181,7 +181,8 @@ jobs:
             exit 1
           fi
       - name: Run PostgreSQL auth lifecycle and role-isolation integration tests
-        run: npm run test:integration --prefix apps/api
+        run: node --test --import tsx tests/integration/auth.integration.test.ts
+        working-directory: apps/api
 
   stage-7-access-entitlements:
     name: Stage 7 · Access codes & entitlements
