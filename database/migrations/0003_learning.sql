@@ -15,26 +15,29 @@ CREATE TABLE quizzes (
   published_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (length(btrim(title)) > 0)
+  CONSTRAINT quizzes_title_nonblank CHECK (length(btrim(title)) > 0),
+  CONSTRAINT quizzes_publish_state CHECK (status <> 'published' OR published_at IS NOT NULL)
 );
 
 CREATE TABLE quiz_lessons (
   quiz_id uuid NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
   lesson_id uuid NOT NULL REFERENCES lessons(id) ON DELETE RESTRICT,
-  position integer NOT NULL DEFAULT 0 CHECK (position >= 0),
+  position integer NOT NULL DEFAULT 0,
   PRIMARY KEY (quiz_id, lesson_id),
-  UNIQUE (quiz_id, position)
+  CONSTRAINT quiz_lessons_position_unique UNIQUE (quiz_id, position),
+  CONSTRAINT quiz_lessons_position_nonnegative CHECK (position >= 0)
 );
 
 CREATE TABLE quiz_versions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   quiz_id uuid NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
-  version_number integer NOT NULL CHECK (version_number > 0),
+  version_number integer NOT NULL,
   label text,
   shuffle_questions boolean NOT NULL DEFAULT true,
   shuffle_options boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (quiz_id, version_number)
+  CONSTRAINT quiz_versions_number_unique UNIQUE (quiz_id, version_number),
+  CONSTRAINT quiz_versions_number_positive CHECK (version_number > 0)
 );
 
 CREATE TABLE questions (
@@ -44,26 +47,35 @@ CREATE TABLE questions (
   type question_type NOT NULL,
   prompt text NOT NULL,
   explanation text,
-  difficulty smallint CHECK (difficulty IS NULL OR difficulty BETWEEN 1 AND 5),
-  source_page integer CHECK (source_page IS NULL OR source_page > 0),
+  difficulty smallint,
+  source_page integer,
   source_reference text,
-  position integer NOT NULL DEFAULT 0 CHECK (position >= 0),
+  position integer NOT NULL DEFAULT 0,
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (length(btrim(prompt)) > 0),
-  CHECK (quiz_version_id IS NOT NULL OR lesson_id IS NOT NULL)
+  CONSTRAINT questions_prompt_nonblank CHECK (length(btrim(prompt)) > 0),
+  CONSTRAINT questions_context_present CHECK (quiz_version_id IS NOT NULL OR lesson_id IS NOT NULL),
+  CONSTRAINT questions_difficulty_valid CHECK (difficulty IS NULL OR difficulty BETWEEN 1 AND 5),
+  CONSTRAINT questions_source_page_valid CHECK (source_page IS NULL OR source_page > 0),
+  CONSTRAINT questions_position_nonnegative CHECK (position >= 0)
 );
+
+CREATE UNIQUE INDEX ux_questions_quiz_version_position
+ON questions(quiz_version_id, position)
+WHERE quiz_version_id IS NOT NULL;
 
 CREATE TABLE question_options (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   question_id uuid NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
   label text NOT NULL,
   is_correct boolean NOT NULL DEFAULT false,
-  position integer NOT NULL CHECK (position >= 0),
+  position integer NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (question_id, position),
-  CHECK (length(btrim(label)) > 0)
+  CONSTRAINT question_options_question_id_id_unique UNIQUE (question_id, id),
+  CONSTRAINT question_options_position_unique UNIQUE (question_id, position),
+  CONSTRAINT question_options_label_nonblank CHECK (length(btrim(label)) > 0),
+  CONSTRAINT question_options_position_nonnegative CHECK (position >= 0)
 );
 
 CREATE UNIQUE INDEX ux_question_single_correct_option
@@ -76,25 +88,55 @@ CREATE TABLE practice_sessions (
   quiz_version_id uuid REFERENCES quiz_versions(id) ON DELETE SET NULL,
   lesson_id uuid REFERENCES lessons(id) ON DELETE SET NULL,
   status practice_session_status NOT NULL DEFAULT 'in_progress',
-  question_order uuid[] NOT NULL DEFAULT '{}'::uuid[],
   current_question_id uuid REFERENCES questions(id) ON DELETE SET NULL,
   started_at timestamptz NOT NULL DEFAULT now(),
   completed_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (
+  CONSTRAINT practice_sessions_exact_context CHECK (
     (quiz_version_id IS NOT NULL AND lesson_id IS NULL)
     OR
     (quiz_version_id IS NULL AND lesson_id IS NOT NULL)
   ),
-  CHECK ((status = 'completed') = (completed_at IS NOT NULL))
+  CONSTRAINT practice_sessions_completed_state CHECK (status <> 'completed' OR completed_at IS NOT NULL)
+);
+
+CREATE TABLE practice_session_questions (
+  session_id uuid NOT NULL REFERENCES practice_sessions(id) ON DELETE CASCADE,
+  question_id uuid NOT NULL REFERENCES questions(id) ON DELETE RESTRICT,
+  position integer NOT NULL,
+  PRIMARY KEY (session_id, question_id),
+  CONSTRAINT practice_session_questions_position_unique UNIQUE (session_id, position),
+  CONSTRAINT practice_session_questions_position_nonnegative CHECK (position >= 0)
+);
+
+CREATE TABLE practice_session_options (
+  session_id uuid NOT NULL,
+  question_id uuid NOT NULL,
+  option_id uuid NOT NULL,
+  position integer NOT NULL,
+  PRIMARY KEY (session_id, question_id, option_id),
+  CONSTRAINT practice_session_options_session_question_fk
+    FOREIGN KEY (session_id, question_id)
+    REFERENCES practice_session_questions(session_id, question_id) ON DELETE CASCADE,
+  CONSTRAINT practice_session_options_question_option_fk
+    FOREIGN KEY (question_id, option_id)
+    REFERENCES question_options(question_id, id) ON DELETE RESTRICT,
+  CONSTRAINT practice_session_options_position_unique UNIQUE (session_id, question_id, position),
+  CONSTRAINT practice_session_options_position_nonnegative CHECK (position >= 0)
 );
 
 CREATE TABLE practice_answers (
-  session_id uuid NOT NULL REFERENCES practice_sessions(id) ON DELETE CASCADE,
-  question_id uuid NOT NULL REFERENCES questions(id) ON DELETE RESTRICT,
-  selected_option_id uuid REFERENCES question_options(id) ON DELETE RESTRICT,
+  session_id uuid NOT NULL,
+  question_id uuid NOT NULL,
+  selected_option_id uuid,
   answered_at timestamptz NOT NULL DEFAULT now(),
-  PRIMARY KEY (session_id, question_id)
+  PRIMARY KEY (session_id, question_id),
+  CONSTRAINT practice_answers_session_question_fk
+    FOREIGN KEY (session_id, question_id)
+    REFERENCES practice_session_questions(session_id, question_id) ON DELETE CASCADE,
+  CONSTRAINT practice_answers_selected_option_fk
+    FOREIGN KEY (question_id, selected_option_id)
+    REFERENCES question_options(question_id, id) ON DELETE RESTRICT
 );
 
 CREATE TABLE quiz_attempts (
@@ -102,16 +144,18 @@ CREATE TABLE quiz_attempts (
   profile_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   quiz_id uuid NOT NULL REFERENCES quizzes(id) ON DELETE RESTRICT,
   quiz_version_id uuid NOT NULL REFERENCES quiz_versions(id) ON DELETE RESTRICT,
-  session_id uuid UNIQUE REFERENCES practice_sessions(id) ON DELETE SET NULL,
+  session_id uuid NOT NULL UNIQUE REFERENCES practice_sessions(id) ON DELETE RESTRICT,
   status attempt_status NOT NULL DEFAULT 'completed',
-  correct_count integer NOT NULL CHECK (correct_count >= 0),
-  question_count integer NOT NULL CHECK (question_count > 0),
+  correct_count integer NOT NULL,
+  question_count integer NOT NULL,
   score_percent numeric(5,2) GENERATED ALWAYS AS (
     round((correct_count::numeric / question_count::numeric) * 100, 2)
   ) STORED,
   completed_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (correct_count <= question_count)
+  CONSTRAINT quiz_attempts_correct_count_nonnegative CHECK (correct_count >= 0),
+  CONSTRAINT quiz_attempts_question_count_positive CHECK (question_count > 0),
+  CONSTRAINT quiz_attempts_correct_not_over_total CHECK (correct_count <= question_count)
 );
 
 CREATE TABLE saved_questions (
@@ -119,7 +163,7 @@ CREATE TABLE saved_questions (
   profile_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   question_id uuid NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (profile_id, question_id)
+  CONSTRAINT saved_questions_profile_question_unique UNIQUE (profile_id, question_id)
 );
 
 CREATE TABLE achievement_definitions (
@@ -131,9 +175,9 @@ CREATE TABLE achievement_definitions (
   rule_config jsonb NOT NULL DEFAULT '{}'::jsonb,
   enabled boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (length(btrim(code)) > 0),
-  CHECK (length(btrim(title)) > 0),
-  CHECK (length(btrim(rule_type)) > 0)
+  CONSTRAINT achievement_definitions_code_nonblank CHECK (length(btrim(code)) > 0),
+  CONSTRAINT achievement_definitions_title_nonblank CHECK (length(btrim(title)) > 0),
+  CONSTRAINT achievement_definitions_rule_type_nonblank CHECK (length(btrim(rule_type)) > 0)
 );
 
 CREATE TABLE student_achievements (
@@ -156,9 +200,10 @@ CREATE TABLE notifications (
   expires_at timestamptz,
   created_by_profile_id uuid REFERENCES profiles(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (length(btrim(title)) > 0),
-  CHECK (length(btrim(body)) > 0),
-  CHECK (expires_at IS NULL OR expires_at > published_at)
+  CONSTRAINT notifications_title_nonblank CHECK (length(btrim(title)) > 0),
+  CONSTRAINT notifications_body_nonblank CHECK (length(btrim(body)) > 0),
+  CONSTRAINT notifications_expiry_valid CHECK (expires_at IS NULL OR expires_at > published_at),
+  CONSTRAINT notifications_single_target CHECK (target_profile_id IS NULL OR target_class_id IS NULL)
 );
 
 CREATE TABLE notification_reads (
@@ -168,12 +213,13 @@ CREATE TABLE notification_reads (
   PRIMARY KEY (notification_id, profile_id)
 );
 
-CREATE INDEX idx_questions_quiz_version_position ON questions(quiz_version_id, position);
 CREATE INDEX idx_questions_lesson_position ON questions(lesson_id, position);
 CREATE INDEX idx_practice_sessions_profile_status ON practice_sessions(profile_id, status, updated_at DESC);
 CREATE INDEX idx_quiz_attempts_profile_completed ON quiz_attempts(profile_id, completed_at DESC);
 CREATE INDEX idx_notifications_profile_published ON notifications(target_profile_id, published_at DESC);
 CREATE INDEX idx_notifications_class_published ON notifications(target_class_id, published_at DESC);
+CREATE INDEX idx_notifications_global_published ON notifications(published_at DESC)
+WHERE target_profile_id IS NULL AND target_class_id IS NULL;
 
 CREATE TRIGGER quizzes_set_updated_at BEFORE UPDATE ON quizzes
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
