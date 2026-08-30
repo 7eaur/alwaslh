@@ -3,12 +3,12 @@ BEGIN;
 CREATE TYPE access_code_type AS ENUM ('full_access', 'class_access');
 CREATE TYPE access_code_status AS ENUM ('active', 'redeemed', 'expired', 'revoked');
 CREATE TYPE entitlement_scope AS ENUM ('all_content', 'class');
-CREATE TYPE entitlement_source AS ENUM ('full_code', 'class_code', 'admin', 'migration');
+CREATE TYPE entitlement_source AS ENUM ('full_code', 'class_code', 'admin');
 CREATE TYPE entitlement_status AS ENUM ('active', 'expired', 'revoked');
 
 CREATE TABLE full_access_codes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  code char(6) NOT NULL UNIQUE,
+  code text NOT NULL UNIQUE,
   status access_code_status NOT NULL DEFAULT 'active',
   valid_from timestamptz NOT NULL DEFAULT now(),
   expires_at timestamptz,
@@ -18,14 +18,14 @@ CREATE TABLE full_access_codes (
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (code ~ '^[0-9]{6}$'),
-  CHECK (expires_at IS NULL OR expires_at > valid_from),
-  CHECK ((status = 'redeemed') = (redeemed_at IS NOT NULL))
+  CONSTRAINT full_access_codes_format CHECK (code ~ '^[0-9]{6}$'),
+  CONSTRAINT full_access_codes_expiry_valid CHECK (expires_at IS NULL OR expires_at > valid_from),
+  CONSTRAINT full_access_codes_redeemed_state CHECK (status <> 'redeemed' OR redeemed_at IS NOT NULL)
 );
 
 CREATE TABLE class_access_codes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  code char(7) NOT NULL UNIQUE,
+  code text NOT NULL UNIQUE,
   class_id uuid NOT NULL REFERENCES classes(id) ON DELETE RESTRICT,
   status access_code_status NOT NULL DEFAULT 'active',
   valid_from timestamptz NOT NULL DEFAULT now(),
@@ -36,9 +36,9 @@ CREATE TABLE class_access_codes (
   metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (code ~ '^[0-9]{7}$'),
-  CHECK (expires_at IS NULL OR expires_at > valid_from),
-  CHECK ((status = 'redeemed') = (redeemed_at IS NOT NULL))
+  CONSTRAINT class_access_codes_format CHECK (code ~ '^[0-9]{7}$'),
+  CONSTRAINT class_access_codes_expiry_valid CHECK (expires_at IS NULL OR expires_at > valid_from),
+  CONSTRAINT class_access_codes_redeemed_state CHECK (status <> 'redeemed' OR redeemed_at IS NOT NULL)
 );
 
 CREATE TABLE student_entitlements (
@@ -54,13 +54,18 @@ CREATE TABLE student_entitlements (
   revoked_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (
+  CONSTRAINT student_entitlements_scope_shape CHECK (
     (scope = 'all_content' AND class_id IS NULL)
     OR
     (scope = 'class' AND class_id IS NOT NULL)
   ),
-  CHECK (expires_at IS NULL OR expires_at > starts_at),
-  CHECK ((status = 'revoked') = (revoked_at IS NOT NULL))
+  CONSTRAINT student_entitlements_expiry_valid CHECK (expires_at IS NULL OR expires_at > starts_at),
+  CONSTRAINT student_entitlements_revoked_state CHECK (status <> 'revoked' OR revoked_at IS NOT NULL),
+  CONSTRAINT student_entitlements_code_source CHECK (
+    (source IN ('full_code', 'class_code') AND source_id IS NOT NULL)
+    OR
+    (source = 'admin')
+  )
 );
 
 CREATE TABLE access_redemptions (
@@ -73,12 +78,12 @@ CREATE TABLE access_redemptions (
   idempotency_key text NOT NULL UNIQUE,
   redeemed_at timestamptz NOT NULL DEFAULT now(),
   request_metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
-  CHECK (
+  CONSTRAINT access_redemptions_code_shape CHECK (
     (code_type = 'full_access' AND full_access_code_id IS NOT NULL AND class_access_code_id IS NULL)
     OR
     (code_type = 'class_access' AND class_access_code_id IS NOT NULL AND full_access_code_id IS NULL)
   ),
-  CHECK (length(btrim(idempotency_key)) >= 12)
+  CONSTRAINT access_redemptions_idempotency_nonblank CHECK (length(btrim(idempotency_key)) >= 12)
 );
 
 CREATE UNIQUE INDEX ux_active_all_content_entitlement
@@ -92,6 +97,7 @@ WHERE scope = 'class' AND status = 'active';
 CREATE INDEX idx_entitlements_profile_status ON student_entitlements(profile_id, status, expires_at);
 CREATE INDEX idx_full_codes_status_expiry ON full_access_codes(status, expires_at);
 CREATE INDEX idx_class_codes_class_status_expiry ON class_access_codes(class_id, status, expires_at);
+CREATE INDEX idx_access_redemptions_profile_time ON access_redemptions(profile_id, redeemed_at DESC);
 
 CREATE TRIGGER full_access_codes_set_updated_at BEFORE UPDATE ON full_access_codes
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
