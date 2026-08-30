@@ -6,132 +6,27 @@
     "subjectRoots": 15,
     "documents": 48,
     "images": 5552,
-    "helperFiles": 76,
+    "helperFiles": 86,
     "extensions": {
       ".jpg": 4218,
       ".webp": 1334
     }
   },
   "subjects": [
-    {
-      "sourceRoot": "الأحياء ثالث ثانوي",
-      "classSlug": "third-secondary",
-      "className": "ثالث ثانوي",
-      "subjectSlug": "biology",
-      "subjectName": "الأحياء",
-      "expectedImages": 510
-    },
-    {
-      "sourceRoot": "الانجليزي ثالث ثانوي",
-      "classSlug": "third-secondary",
-      "className": "ثالث ثانوي",
-      "subjectSlug": "english",
-      "subjectName": "اللغة الإنجليزية",
-      "expectedImages": 309
-    },
-    {
-      "sourceRoot": "التربية الاسلاميه ثالث ثانوي",
-      "classSlug": "third-secondary",
-      "className": "ثالث ثانوي",
-      "subjectSlug": "islamic-education",
-      "subjectName": "التربية الإسلامية",
-      "expectedImages": 412
-    },
-    {
-      "sourceRoot": "الرياضيات ثالث ثانوي",
-      "classSlug": "third-secondary",
-      "className": "ثالث ثانوي",
-      "subjectSlug": "mathematics",
-      "subjectName": "الرياضيات",
-      "expectedImages": 787
-    },
-    {
-      "sourceRoot": "الفيزياء ثالث ثانوي",
-      "classSlug": "third-secondary",
-      "className": "ثالث ثانوي",
-      "subjectSlug": "physics",
-      "subjectName": "الفيزياء",
-      "expectedImages": 495
-    },
-    {
-      "sourceRoot": "القران الكريم ثالث ثانوي",
-      "classSlug": "third-secondary",
-      "className": "ثالث ثانوي",
-      "subjectSlug": "quran",
-      "subjectName": "القرآن الكريم",
-      "expectedImages": 199
-    },
-    {
-      "sourceRoot": "الكيمياء ثالث ثانوي",
-      "classSlug": "third-secondary",
-      "className": "ثالث ثانوي",
-      "subjectSlug": "chemistry",
-      "subjectName": "الكيمياء",
-      "expectedImages": 438
-    },
-    {
-      "sourceRoot": "اللغة العربية ثالث ثانوي",
-      "classSlug": "third-secondary",
-      "className": "ثالث ثانوي",
-      "subjectSlug": "arabic",
-      "subjectName": "اللغة العربية",
-      "expectedImages": 442
-    },
-    {
-      "sourceRoot": "تاسع إجتماعيات",
-      "classSlug": "grade-9",
-      "className": "الصف التاسع",
-      "subjectSlug": "social-studies",
-      "subjectName": "الاجتماعيات",
-      "expectedImages": 391
-    },
-    {
-      "sourceRoot": "تاسع التربية الإسلامية",
-      "classSlug": "grade-9",
-      "className": "الصف التاسع",
-      "subjectSlug": "islamic-education",
-      "subjectName": "التربية الإسلامية",
-      "expectedImages": 347
-    },
-    {
-      "sourceRoot": "تاسع القران الكريم",
-      "classSlug": "grade-9",
-      "className": "الصف التاسع",
-      "subjectSlug": "quran",
-      "subjectName": "القرآن الكريم",
-      "expectedImages": 126
-    },
-    {
-      "sourceRoot": "تاسع اللغه العربية",
-      "classSlug": "grade-9",
-      "className": "الصف التاسع",
-      "subjectSlug": "arabic",
-      "subjectName": "اللغة العربية",
-      "expectedImages": 356
-    },
-    {
-      "sourceRoot": "تاسع انجليزي",
-      "classSlug": "grade-9",
-      "className": "الصف التاسع",
-      "subjectSlug": "english",
-      "subjectName": "اللغة الإنجليزية",
-      "expectedImages": 75
-    },
-    {
-      "sourceRoot": "تاسع رياضيات",
-      "classSlug": "grade-9",
-      "className": "الصف التاسع",
-      "subjectSlug": "mathematics",
-      "subjectName": "الرياضيات",
-      "expectedImages": 341
-    },
-    {
-      "sourceRoot": "تاسع علوم",
-      "classSlug": "grade-9",
-      "className": "الصف التاسع",
-      "subjectSlug": "science",
-      "subjectName": "العلوم",
-      "expectedImages": 324
-    }
+    {"sourceRoot":"الأحياء ثالث ثانوي","classSlug":"third-secondary","className":"ثالث ثانوي","subjectSlug":"biology","subjectName":"الأحياء","expectedImages":510},
+    {"sourceRoot":"الانجليزي ثالث ثانوي","classSlug":"third-secondary","className":"ثالث ثانوي","subjectSlug":"english","subjectName":"اللغة الإنجليزية","expectedImages":309},
+    {"sourceRoot":"التربية الاسلاميه ثالث ثانوي","classSlug":"third-secondary","className":"ثالث ثانوي","subjectSlug":"islamic-education","subjectName":"التربية الإسلامية","expectedImages":412},
+    {"sourceRoot":"الرياضيات ثالث ثانوي","classSlug":"third-secondary","className":"ثالث ثانوي","subjectSlug":"mathematics","subjectName":"الرياضيات","expectedImages":787},
+    {"sourceRoot":"الفيزياء ثالث ثانوي","classSlug":"third-secondary","className":"ثالث ثانوي","subjectSlug":"physics","subjectName":"الفيزياء","expectedImages":495},
+    {"sourceRoot":"القران الكريم ثالث ثانوي","classSlug":"third-secondary","className":"ثالث ثانوي","subjectSlug":"quran","subjectName":"القرآن الكريم","expectedImages":199},
+    {"sourceRoot":"الكيمياء ثالث ثانوي","classSlug":"third-secondary","className":"ثالث ثانوي","subjectSlug":"chemistry","subjectName":"الكيمياء","expectedImages":438},
+    {"sourceRoot":"اللغة العربية ثالث ثانوي","classSlug":"third-secondary","className":"ثالث ثانوي","subjectSlug":"arabic","subjectName":"اللغة العربية","expectedImages":442},
+    {"sourceRoot":"تاسع إجتماعيات","classSlug":"grade-9","className":"الصف التاسع","subjectSlug":"social-studies","subjectName":"الاجتماعيات","expectedImages":391},
+    {"sourceRoot":"تاسع التربية الإسلامية","classSlug":"grade-9","className":"الصف التاسع","subjectSlug":"islamic-education","subjectName":"التربية الإسلامية","expectedImages":347},
+    {"sourceRoot":"تاسع القران الكريم","classSlug":"grade-9","className":"الصف التاسع","subjectSlug":"quran","subjectName":"القرآن الكريم","expectedImages":126},
+    {"sourceRoot":"تاسع اللغه العربية","classSlug":"grade-9","className":"الصف التاسع","subjectSlug":"arabic","subjectName":"اللغة العربية","expectedImages":356},
+    {"sourceRoot":"تاسع انجليزي","classSlug":"grade-9","className":"الصف التاسع","subjectSlug":"english","subjectName":"اللغة الإنجليزية","expectedImages":75},
+    {"sourceRoot":"تاسع رياضيات","classSlug":"grade-9","className":"الصف التاسع","subjectSlug":"mathematics","subjectName":"الرياضيات","expectedImages":341},
+    {"sourceRoot":"تاسع علوم","classSlug":"grade-9","className":"الصف التاسع","subjectSlug":"science","subjectName":"العلوم","expectedImages":324}
   ]
 }
