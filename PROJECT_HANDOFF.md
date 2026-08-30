@@ -26,11 +26,12 @@
 6. لا plaintext/reversible passwords ولا device fingerprint credential.
 7. Full access code = **6 digits**. Class access code = **7 digits**.
 8. الأكواد والتفعيل transactional + idempotent + race-safe.
-9. Student offline data account-scoped مع revisions/tombstones لاحقًا.
-10. AI jobs durable في backend/workers؛ Gemini keys server-only.
-11. `alwaslh-go` Content Source فقط؛ importer يحفظ order/checksum/source metadata.
-12. Feature parity تقاس بالنتيجة للمستخدم وليس بطريقة التنفيذ القديمة.
-13. لا Stage تُغلق بدون CLI/CI evidence. الحالات: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; أي شيء غير منفذ = `NOT YET VERIFIED`.
+9. بعد التفعيل الأول يصبح Full Code ذو 6 أرقام **معرّف حساب الطالب** للدخول اللاحق، لكنه ليس سرًا ولا يكفي للمصادقة دون كلمة المرور.
+10. Student offline data account-scoped مع revisions/tombstones لاحقًا.
+11. AI jobs durable في backend/workers؛ Gemini keys server-only.
+12. `alwaslh-go` Content Source فقط؛ importer يحفظ order/checksum/source metadata.
+13. Feature parity تقاس بالنتيجة للمستخدم وليس بطريقة التنفيذ القديمة.
+14. لا Stage تُغلق بدون CLI/CI evidence. الحالات: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; أي شيء غير منفذ = `NOT YET VERIFIED`.
 
 ## 4. Canonical target tree
 
@@ -70,12 +71,14 @@ Student PWA ┘       │
 
 ## 5. Current verified stage state
 
-Latest full green verification on Stage 7 branch:
+Latest full green **Backend Stage 8** verification:
 
-- Branch: `rebuild/access-entitlements`
-- Commit: `0a7929daf2f79baccca31b8110a6c6e372d49024`
-- GitHub Actions run: `33288330856`
-- Result: **Stages 1–7 SUCCESS** on clean CI, including PostgreSQL 16 runtime tests.
+- Branch: `rebuild/student-activation-backend`
+- Commit: `a87c7f766481708e018dcaa1ae6e6643c0667fef`
+- GitHub Actions run: `33289741640`
+- Result: **Stages 1–8 backend jobs SUCCESS** on clean CI, including PostgreSQL 16 runtime/integration tests.
+
+Important distinction: **Stage 8 overall is not yet closed** because the parallel Student Activation UI and combined browser E2E still need verification/integration.
 
 ### Stage 1 — Product Contract ✅ CLI PASS
 - Repository/product audit done.
@@ -86,11 +89,9 @@ Latest full green verification on Stage 7 branch:
 - Identity evolved from original teal/open-book logo.
 - Owned SVG/PNG/PWA assets; no TailAdmin/Miaoda dependency.
 - Palette/typography/accessibility tokens are canonical under `packages/brand`.
-- `scripts/verify-brand.py` checks assets, SVG parse, PWA dimensions, identity JSON, typography/accessibility tokens.
 
 ### Stage 3 — UX Architecture ✅ CLI PASS
 - Admin IA, Student mobile IA, critical flows/states, parity mapping, responsive/accessibility contracts and wireframes documented.
-- `scripts/verify-ux.py` enforces contracts.
 
 ### Stage 4 — PostgreSQL Data Platform ✅ CLI/RUNTIME PASS
 Canonical migrations currently:
@@ -100,86 +101,140 @@ Canonical migrations currently:
 - `0004_ai_and_sync.sql`
 - `0005_auth.sql`
 - `0006_access_contract.sql`
+- `0007_activation_contract.sql`
 
-CI applies migrations to clean PostgreSQL 16 with failure-on-error and validates constraints/indexes/schema behavior.
+CI applies migrations to clean PostgreSQL 16 and validates constraints/indexes/schema behavior.
 
 ### Stage 5 — Engineering Foundation ✅ CLI/RUNTIME PASS
-Implemented:
-- `apps/api` runtime.
-- PostgreSQL pool/transaction boundary.
-- migration runner + idempotent migration tracking.
-- environment validation.
-- structured public error envelope/logging foundation.
-- lint + strict TypeScript + unit tests + production API build.
-- Admin production build and Student production build.
-- CI clean-run gate.
+- real `apps/api` runtime;
+- PostgreSQL pool/transactions/migration runner;
+- env validation, logging/public errors;
+- lint + strict TypeScript + unit tests + API build;
+- isolated Admin and Student production builds;
+- clean CI gate.
 
 ### Stage 6 — Auth & Authorization ✅ CLI/RUNTIME PASS
-Implemented and tested:
-- password hashing with salted `scrypt` server-side.
-- random opaque sessions; only SHA-256 token digest persisted.
-- HttpOnly session cookie.
-- Admin/Student role isolation.
-- Origin/CSRF-oriented mutation protection.
-- PostgreSQL-backed brute-force lockout state.
-- recovery is one-time and resets credentials; original password is never exposed.
-- password reset invalidates sessions.
-- first Admin creation is explicit CLI bootstrap; no public/default-admin bootstrap.
-- PostgreSQL integration tests verify login/session/recovery/role isolation/bootstrap refusal on repeat.
+- salted `scrypt` password hashes;
+- opaque random sessions; SHA-256 token digest persisted;
+- HttpOnly cookies;
+- Admin/Student role isolation;
+- mutation Origin protection;
+- PostgreSQL-backed login lockout;
+- one-time password reset/recovery; original secret never exposed;
+- password reset revokes sessions;
+- first Admin via explicit CLI bootstrap only.
 
-Stage 6 branch/PR:
-- branch `rebuild/auth-authorization`
-- PR #3 stacked on foundation.
+Branch/PR: `rebuild/auth-authorization` / PR #3.
 
 ### Stage 7 — Access Codes & Entitlements ✅ CLI/RUNTIME PASS
-Implemented and tested:
-- cryptographically secure 6-digit full-access codes.
-- cryptographically secure 7-digit class-access codes.
-- Arabic/Persian digit normalization.
-- configurable entitlement duration stored with generated code.
-- transactional row-locked redemption.
-- idempotency keys with advisory transaction locks.
-- idempotency result is profile-bound; another student cannot reuse a known key.
-- finite renewal extends the existing entitlement rather than creating conflicting grants.
-- class code is **not consumed** when active full access already covers the student.
-- Admin revoke flow.
-- atomic code creation + audit event.
-- access audit events.
-- active entitlement uniqueness constraints.
-- integration tests cover generation, Arabic digits, renewal, idempotency, revoke, no-waste behavior and concurrent redemption race.
+- secure 6-digit Full codes / 7-digit Class codes;
+- Arabic/Persian digit normalization;
+- transaction + row lock redemption;
+- profile-bound idempotency;
+- renewal extends benefit;
+- no-waste Class redemption if Full access already covers student;
+- revoke + audit events;
+- concurrency/race integration tests.
 
-Important bugs caught by the Stage 7 gate and fixed:
-- Zod/default TypeScript boundary made explicit with `?? 365`.
-- PostgreSQL enum/UNION inference in access audit generation was replaced by simpler atomic inserts.
-- `jsonb_build_object` duration parameter was explicitly typed as integer.
-- code generation + audit event moved into one transaction.
-- idempotency lookup was strengthened to include profile ownership.
+Branch/PR: `rebuild/access-entitlements` / PR #4.
 
-Stage 7 branch/PR:
-- branch `rebuild/access-entitlements`
-- PR #4 stacked on Stage 6.
+### Stage 8 Backend — Student Activation ✅ CLI/RUNTIME PASS
+Branch/PR: `rebuild/student-activation-backend` / PR #6.
 
-## 6. Current next stage
+Canonical contract: `docs/api/STUDENT_ACTIVATION_CONTRACT.md`.
 
-**NEXT: Stage 8 — Student Activation & Account Flow.**
+New first-activation endpoint:
 
-Do not skip ahead.
+```text
+POST /v1/student/activate
+code(6 digits) + password + idempotencyKey
+```
 
-Required scope for Stage 8:
-- first-time Student activation using an access code.
-- returning-student login path.
-- atomic account/profile + credential + entitlement creation where relevant.
-- no partially-created account if code redemption fails.
-- correct handling of invalid/expired/revoked/redeemed codes.
-- account identifier generation/normalization.
-- activation idempotency/race protection.
-- session establishment after successful activation.
-- integration tests on clean PostgreSQL.
-- E2E/API-level flow: activation → authenticated session → entitlement visible.
+Transaction:
 
-Stage 8 must remain `NOT COMPLETE` until its CLI/runtime gate passes.
+```text
+validate + lock Full code
+→ create Student profile
+→ create scrypt credential (identifier = normalized original Full code)
+→ create all-content entitlement
+→ bind/mark code redeemed
+→ create redemption/idempotency record
+→ write access/auth audit events
+→ COMMIT
+```
 
-## 7. Business rules that must remain preserved
+After commit, session issuance goes through canonical `AuthService.login`, so even an idempotent replay must prove the password before receiving a fresh session.
+
+Verified Stage 8 backend behaviors:
+- Arabic/Persian digit normalization;
+- missing/revoked/expired/used code rejection;
+- no partial account on failure;
+- credential conflict rolls back and leaves code active;
+- replay with same idempotency key returns same profile/entitlement;
+- wrong password on replay does not receive session;
+- same idempotency key cannot be reused for another code;
+- returning login uses original six-digit identifier + password;
+- two concurrent activation requests for the same code create exactly one account/redemption;
+- DB unique indexes enforce one redemption per access code;
+- redeemed state requires `redeemed_by_profile_id`;
+- `account_activated` audit event added.
+
+Stage 8 first CI run caught only Biome import/format drift and was fixed without weakening lint. A later full run exposed integration suites sharing one DB; Stage 6/Auth, Stage 7/Access and Stage 8/Activation are now run against isolated PostgreSQL databases/tests.
+
+## 6. Current work / parallel coordination
+
+**CURRENT: finish Stage 8; do not start Stage 9 yet.**
+
+Two parallel workstreams exist:
+
+```text
+rebuild/student-activation-backend  → Backend PASS
+rebuild/student-activation-ui       → parallel Student UI work; verify its branch/PR directly
+```
+
+The parallel UI chat was explicitly instructed **not** to modify PostgreSQL migrations, Auth backend or AccessService and **not** to invent endpoints. It should consume `docs/api/STUDENT_ACTIVATION_CONTRACT.md` once available on its integration base.
+
+Stage 8 closes only after:
+
+```text
+Backend PASS
++ Student Activation UI PASS
++ integrated lint/typecheck/tests/build
++ activation/login/recovery browser/API E2E PASS
+= Stage 8 COMPLETE
+```
+
+If the UI branch diverged before the API contract existed, reconcile the UI to the contract rather than changing the verified backend contract casually.
+
+## 7. Stage 8 API contract summary
+
+### First activation
+`POST /v1/student/activate`
+
+Input:
+- `code`: exactly 6 digits after normalization.
+- `password`: 8–128 characters.
+- `idempotencyKey`: 12–120 characters, stable only for retrying the same submission.
+
+Fresh success: HTTP `201`; idempotent committed replay: HTTP `200` with `replayed: true`; both establish the normal HttpOnly session only after password proof.
+
+### Returning login
+`POST /v1/auth/login` with `identifier = original 6-digit code` + password.
+
+### Session/access
+- `GET /v1/student/me`
+- `GET /v1/student/access/entitlements`
+- `POST /v1/auth/logout`
+
+### Recovery
+- Admin issue one-time token: `POST /v1/admin/auth/recovery-token`.
+- Reset: `POST /v1/auth/reset-password`.
+- Never reveal original password.
+
+### Offline
+First activation and returning online login require backend connectivity. Offline trusted-session behavior belongs to the later Offline/PWA stage and must not be faked in Stage 8 UI.
+
+## 8. Business rules that must remain preserved
 
 - Full code: 6 digits.
 - Class code: 7 digits.
@@ -194,41 +249,41 @@ Stage 8 must remain `NOT COMPLETE` until its CLI/runtime gate passes.
 - Admin must retain content CRUD, uploads/PDF/mixed media, AI generation modes, quiz builder, accounts/access codes/class codes, notifications and exports.
 - AI rules must preserve Arabic/Fusha, numbers, chemistry/scientific notation, exact Quran/Hadith/source-text rules, explanation/difficulty/source/page/counts/duplicate/version/exact-exam/unknown-answer behavior.
 
-## 8. Known future stages / major remaining systems
+## 9. Next stages after Stage 8 closes
 
-After Stage 8, continue phase-by-phase only:
+Authoritative next order begins:
 
-1. account/admin account management finalization.
-2. content model/API and deterministic `alwaslh-go` inventory/import.
-3. ordered media/PDF pipeline.
-4. Admin content UI.
-5. versioned AI contracts and Prompt Registry.
-6. durable Gemini jobs/workers, retries, project/key health, cooldown/failover and AI Ops.
-7. quiz domain + shared PracticeEngine.
-8. Student lesson reader/quizzes/notes/progress/notifications.
-9. Offline Sync Engine + PWA/service worker + attempt outbox.
-10. Admin access/student/report/export surfaces.
-11. design-system completion/shared UI/accessibility.
-12. performance/security/observability.
-13. staging, real-host DB tuning, backup/restore drill, E2E, load/security/accessibility gates.
-14. release only after feature parity and release gates are evidenced.
+1. **Stage 9 — Content Model & deterministic `alwaslh-go` Import.**
+2. **Stage 10 — Media Pipeline.**
+3. **Stage 11 — Gemini Prompt/Output Contracts.**
+4. **Stage 12 — Durable AI Execution.**
+5. Admin Product.
+6. Student learning product beyond activation.
+7. Practice Engine.
+8. Offline/PWA.
+9. Notes/Saved, Notifications, Statistics/Achievements, Exports.
+10. Performance, Security, Automated Tests, Accessibility/Device QA.
+11. Initial content load, Staging, Release Gate, Production Cutover, Monitoring.
 
-## 9. Things explicitly NOT YET VERIFIED
+`MASTER_REBUILD_ROADMAP.md` is the authoritative detailed numbering and must remain synchronized with this file.
+
+## 10. Things explicitly NOT YET VERIFIED
 
 Do not claim these are done merely because schema exists:
 
+- Stage 8 parallel Student UI and combined browser E2E.
+- real reverse-proxy/API perimeter activation rate limiting.
 - actual production/self-hosted PostgreSQL networking/tuning/load characteristics.
 - real-host backup + restore drill.
 - object storage/media provider.
 - `alwaslh-go` full file integrity/inventory/import.
 - Gemini golden tests/provider failover/runtime.
 - complete Admin product.
-- complete Student PWA product.
-- browser E2E.
+- complete Student learning/PWA product.
 - offline isolation/delta/outbox/service-worker lifecycle.
 - production security/performance/accessibility/release readiness.
 
-## 10. Canonical documents to read before work
+## 11. Canonical documents to read before work
 
 Read in this order:
 
@@ -237,10 +292,11 @@ Read in this order:
 3. `PROJECT_ENGINEERING_LOG.md` — decisions/findings/history.
 4. `PRODUCT_FEATURE_PARITY_MATRIX.md` — feature preservation contract.
 5. `MASTER_REBUILD_ROADMAP.md` — ordered roadmap.
-6. `docs/engineering/CLI_VERIFICATION_GATES.md` — mandatory gate policy.
-7. `PROJECT_FULL_AUDIT_CATALOG.md` / `PROJECT_DEEP_AUDIT.md` — legacy evidence when needed.
+6. `docs/api/STUDENT_ACTIVATION_CONTRACT.md` — current Stage 8 UI/backend contract while Stage 8 is active.
+7. `docs/engineering/CLI_VERIFICATION_GATES.md` — mandatory gate policy.
+8. `PROJECT_FULL_AUDIT_CATALOG.md` / `PROJECT_DEEP_AUDIT.md` — legacy evidence when needed.
 
-## 11. Handoff update rule
+## 12. Handoff update rule
 
 At the end of **every meaningful implementation batch**:
 
