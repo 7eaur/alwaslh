@@ -242,7 +242,8 @@ export class AccessService {
               `insert into access_events (
                  event_type, actor_profile_id, code_type, full_access_code_id, metadata
                ) values (
-                 'code_generated', $1, 'full_access', $2, jsonb_build_object('durationDays', $3)
+                 'code_generated', $1, 'full_access', $2,
+                 jsonb_build_object('durationDays', $3::integer)
                )`,
               [actorProfileId, generated.id, durationDays],
             );
@@ -251,7 +252,8 @@ export class AccessService {
               `insert into access_events (
                  event_type, actor_profile_id, code_type, class_access_code_id, metadata
                ) values (
-                 'code_generated', $1, 'class_access', $2, jsonb_build_object('durationDays', $3)
+                 'code_generated', $1, 'class_access', $2,
+                 jsonb_build_object('durationDays', $3::integer)
                )`,
               [actorProfileId, generated.id, durationDays],
             );
