@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "auditType": "stage9-alwaslh-go-full-inventory",
+  "source": {
+    "repository": "7eaur/alwaslh-go",
+    "revision": "f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23"
+  },
+  "status": "FAIL",
+  "manifestSha256": "8334bef7cd0efb53ec5bc29778f4ba5281e48a522b2fd56916206833f002bd61",
+  "expected": {
+    "subjectRoots": 15,
+    "documents": 48,
+    "treeImages": 5552,
+    "canonicalInventoryAssets": 5552,
+    "helperFiles": 76,
+    "extensions": {
+      ".jpg": 4218,
+      ".webp": 1334
+    }
+  },
+  "observed": {
+    "subjectRoots": 15,
+    "documents": 48,
+    "treeImages": 5552,
+    "canonicalInventoryAssets": 4780,
+    "omittedCanonicalAssets": 772,
+    "helperFiles": 86,
+    "manifestFiles": 24,
+    "extensions": {
+      ".jpg": 4218,
+      ".webp": 1334
+    }
+  },
+  "namingPatternsInCanonicalAssets": {
+    "book_page": 2747,
+    "english_page": 144,
+    "exam_page": 1857,
+    "front": 12,
+    "preliminary": 20
+  },
+  "helperPatterns": {
+    "manifest.json": 24,
+    "تقرير_المعالجة.json": 8,
+    "دليل_الصور_صفحة_بصفحة.txt": 27,
+    "دليل_الصور_صفحة_بصفحة.xlsx": 27
+  },
+  "issueCounts": {
+    "classificationErrors": 0,
+    "duplicateBlobGroups": 100,
+    "expectedCountErrors": 1,
+    "manifestErrors": 788,
+    "orderErrors": 0,
+    "otherFiles": 0,
+    "sourceRevisionErrors": 0,
+    "unmappedImages": 0,
+    "unparsedAssets": 0
+  },
+  "manifestProblemCounts": {
+    "entry requires positive integer seq and relative_path": 772,
+    "manifest seq is not contiguous from 1": 8,
+    "source images missing from manifest": 8
+  },
+  "documentsWithDroppedAssets": [
+    {
+      "document": "التربية الاسلاميه ثالث ثانوي/كتاب الإيمان",
+      "omittedAssets": 77
+    },
+    {
+      "document": "التربية الاسلاميه ثالث ثانوي/كتاب الحديث والتهذيب",
+      "omittedAssets": 74
+    },
+    {
+      "document": "التربية الاسلاميه ثالث ثانوي/كتاب السيرة النبوية",
+      "omittedAssets": 90
+    },
+    {
+      "document": "التربية الاسلاميه ثالث ثانوي/كتاب الفقه",
+      "omittedAssets": 78
+    },
+    {
+      "document": "القران الكريم ثالث ثانوي/كتاب القرآن الكريم",
+      "omittedAssets": 106
+    },
+    {
+      "document": "اللغة العربية ثالث ثانوي/كتاب الأدب والنصوص",
+      "omittedAssets": 130
+    },
+    {
+      "document": "اللغة العربية ثالث ثانوي/كتاب القراءة",
+      "omittedAssets": 65
+    },
+    {
+      "document": "اللغة العربية ثالث ثانوي/كتاب النحو والصرف",
+      "omittedAssets": 152
+    }
+  ],
+  "expectedCountMismatches": [
+    {
+      "metric": "helperFiles",
+      "expected": 76,
+      "observed": 86
+    }
+  ],
+  "duplicateContent": {
+    "gitBlobGroups": 100,
+    "assetPaths": 201,
+    "fatalByContract": false,
+    "detailsEvidence": "GitHub Actions artifact stage9-source-inventory-audit/full-inventory.json"
+  },
+  "cleanChecks": {
+    "orderErrors": 0,
+    "unparsedAssets": 0,
+    "unmappedImages": 0,
+    "classificationErrors": 0,
+    "sourceRevisionErrors": 0,
+    "otherFiles": 0
+  },
+  "findings": [
+    {
+      "id": "S9-AUD-001",
+      "severity": "P1",
+      "area": "Manifest compatibility",
+      "problem": "Eight manifest.json files use Arabic-key entries such as م and اسم الصورة while the inventory parser expects seq and relative_path.",
+      "impact": "788 manifest errors are emitted and 772 real source images are absent from documents[].assets; tree summary says 5552 images but canonical payload contains 4780 assets.",
+      "status": "OPEN"
+    },
+    {
+      "id": "S9-AUD-002",
+      "severity": "P2",
+      "area": "Helper expectations",
+      "problem": "Source map expects 76 helper files but the pinned source has 86 recognized helper files.",
+      "impact": "The expected-count gate fails even though helper basenames are recognized.",
+      "status": "OPEN"
+    },
+    {
+      "id": "S9-AUD-003",
+      "severity": "P2",
+      "area": "Duplicate content",
+      "problem": "100 duplicate Git blob groups cover 201 asset paths.",
+      "impact": "Requires content review; contract treats cross-document duplicates as reportable but not automatically fatal.",
+      "status": "REVIEW"
+    },
+    {
+      "id": "S9-AUD-004",
+      "severity": "P3",
+      "area": "Ordering and naming",
+      "problem": "No non-manifest ordering, unknown filename, unmapped image, classification, or source-revision errors were observed.",
+      "impact": "The pinned source is clean on these dimensions.",
+      "status": "PASS"
+    }
+  ],
+  "evidence": {
+    "workflowRunId": 33293619250,
+    "artifactId": 9726719713,
+    "artifactZipSha256": "1b11c3b14bc0520c3f0c8bc3ea3a7d5848dfa3206e29da97c3b3d47516e3d11b",
+    "fullInventoryFile": "full-inventory.json",
+    "inventorySummaryFile": "inventory-summary.json"
+  }
+}
