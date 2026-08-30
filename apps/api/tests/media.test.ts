@@ -19,8 +19,14 @@ test("ordered concurrency preserves input order even when completion order is re
   });
   assert.notDeepEqual(completed, items);
   assert.deepEqual(results, ["page-1", "page-2", "page-3", "page-4", "page-5"]);
-  await assert.rejects(mapWithConcurrencyOrdered(items, 9, async (value) => value), /invalid_concurrency/);
-  await assert.rejects(mapWithConcurrencyOrdered(items, 0, async (value) => value), /invalid_concurrency/);
+  await assert.rejects(
+    mapWithConcurrencyOrdered(items, 9, async (value) => value),
+    /invalid_concurrency/,
+  );
+  await assert.rejects(
+    mapWithConcurrencyOrdered(items, 0, async (value) => value),
+    /invalid_concurrency/,
+  );
 });
 
 test("filesystem storage rejects traversal and writes atomically under its root", async () => {
