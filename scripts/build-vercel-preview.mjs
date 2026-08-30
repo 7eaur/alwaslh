@@ -19,25 +19,41 @@ function run(command, args, options = {}) {
 
 const root = process.cwd();
 const output = `${root}/dist-vercel`;
+const buildEnv = {
+  ...process.env,
+  NODE_ENV: "development",
+  npm_config_production: "false",
+};
 
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 
 for (const app of ["api", "student-web", "admin-web"]) {
-  await run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund"], {
+  await run("npm", ["install", "--include=dev", "--ignore-scripts", "--no-audit", "--no-fund"], {
     cwd: `${root}/apps/${app}`,
+    env: buildEnv,
   });
 }
 
-await run("npm", ["run", "build"], { cwd: `${root}/apps/api` });
-await run("npx", ["tsc", "-b"], { cwd: `${root}/apps/student-web` });
+await run("npm", ["run", "build"], {
+  cwd: `${root}/apps/api`,
+  env: buildEnv,
+});
+await run("npx", ["tsc", "-b"], {
+  cwd: `${root}/apps/student-web`,
+  env: buildEnv,
+});
 await run("npx", ["vite", "build"], {
   cwd: `${root}/apps/student-web`,
-  env: { ...process.env, VITE_API_BASE_URL: "/api" },
+  env: { ...buildEnv, VITE_API_BASE_URL: "/api" },
 });
-await run("npx", ["tsc", "-b"], { cwd: `${root}/apps/admin-web` });
+await run("npx", ["tsc", "-b"], {
+  cwd: `${root}/apps/admin-web`,
+  env: buildEnv,
+});
 await run("npx", ["vite", "build", "--mode", "preview-single"], {
   cwd: `${root}/apps/admin-web`,
+  env: buildEnv,
 });
 
 await cp(`${root}/apps/student-web/dist`, output, { recursive: true });
