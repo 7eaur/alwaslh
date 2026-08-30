@@ -1,8 +1,8 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { allowedOrigins, type AppConfig } from "../config.js";
+import { type AppConfig, allowedOrigins } from "../config.js";
 import { AppError } from "../errors.js";
-import { AuthService, type SessionProfile } from "./service.js";
+import type { AuthService, SessionProfile } from "./service.js";
 
 const LoginSchema = z.object({
   identifier: z.string().min(3).max(120),
@@ -32,7 +32,7 @@ function parseCookies(header: string | undefined): Map<string, string> {
     try {
       cookies.set(name, decodeURIComponent(value));
     } catch {
-      continue;
+      // Ignore malformed individual cookie values rather than rejecting the whole header.
     }
   }
   return cookies;
@@ -116,7 +116,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, auth
     return { recoveryToken: token, expiresInMinutes: 30 };
   });
 
-  app.post("/v1/auth/reset-password", async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post("/v1/auth/reset-password", async (request, reply) => {
     const input = parseBody(ResetSchema, request.body);
     await auth.resetPassword(input.token, input.newPassword);
     reply.header("Set-Cookie", clearSessionCookie(config));
