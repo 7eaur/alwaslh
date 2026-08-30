@@ -73,7 +73,11 @@ export class AuthService {
     private readonly sessionTtlHours: number,
   ) {}
 
-  async login(identifierInput: string, password: string, userAgent?: string): Promise<{ token: string; profile: SessionProfile }> {
+  async login(
+    identifierInput: string,
+    password: string,
+    userAgent?: string,
+  ): Promise<{ token: string; profile: SessionProfile }> {
     const identifier = normalizeIdentifier(identifierInput);
     if (identifier.length < 3 || identifier.length > 120 || password.length > 128) {
       throw new AppError("UNAUTHORIZED", "بيانات الدخول غير صحيحة", 401);
