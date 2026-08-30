@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { inventoryDigest, validateInventory, type ContentSourceInventory } from "../src/content/source-import.js";
+import {
+  inventoryDigest,
+  validateInventory,
+  type ContentSourceInventory,
+} from "../src/content/source-import.js";
 
 function makeInventory(): ContentSourceInventory {
   const inventory = {
@@ -77,7 +81,9 @@ test("valid inventory passes digest and count checks", () => {
 
 test("tampered inventory is rejected by digest verification", () => {
   const inventory = makeInventory();
-  inventory.documents[0]!.title = "tampered";
+  const firstDocument = inventory.documents[0];
+  assert.ok(firstDocument);
+  firstDocument.title = "tampered";
   assert.throws(() => validateInventory(inventory), /digest mismatch/);
 });
 
