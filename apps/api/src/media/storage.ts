@@ -1,6 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, join, posix, resolve, sep } from "node:path";
-import { randomUUID } from "node:crypto";
 
 export interface MediaStorage {
   put(key: string, bytes: Uint8Array): Promise<void>;
@@ -17,12 +17,21 @@ export function assertMediaStorageKey(key: string): string {
   }
 
   const normalized = posix.normalize(key);
-  if (normalized !== key || normalized === "." || normalized.startsWith("../") || normalized.includes("/../")) {
+  if (
+    normalized !== key ||
+    normalized === "." ||
+    normalized.startsWith("../") ||
+    normalized.includes("/../")
+  ) {
     throw new Error("invalid_media_storage_key");
   }
 
   const segments = normalized.split("/");
-  if (segments.some((segment) => segment === "" || segment === "." || segment === ".." || !SAFE_SEGMENT.test(segment))) {
+  if (
+    segments.some(
+      (segment) => segment === "" || segment === "." || segment === ".." || !SAFE_SEGMENT.test(segment),
+    )
+  ) {
     throw new Error("invalid_media_storage_key");
   }
 
