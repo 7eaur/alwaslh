@@ -28,8 +28,10 @@ export class MediaPipelineService {
   async processImage(input: MediaInput): Promise<ProcessedMediaAsset> {
     if (!input.idempotencyKey.trim()) throw new Error("invalid_input");
     if (!Number.isInteger(input.sourcePosition) || input.sourcePosition < 0) throw new Error("invalid_input");
-    if (!input.sourceFilename.trim() || !input.sourceMimeType.startsWith("image/")) throw new Error("invalid_input");
-    if (input.bytes.byteLength === 0 || input.bytes.byteLength > 50 * 1024 * 1024) throw new Error("invalid_input");
+    if (!input.sourceFilename.trim() || !input.sourceMimeType.startsWith("image/"))
+      throw new Error("invalid_input");
+    if (input.bytes.byteLength === 0 || input.bytes.byteLength > 50 * 1024 * 1024)
+      throw new Error("invalid_input");
 
     const mediaAsset = await this.database.transaction((tx) => ensureMediaAsset(tx, input));
 
