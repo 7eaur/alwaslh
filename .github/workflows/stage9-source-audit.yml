@@ -7,6 +7,8 @@ on:
       - "content/tooling/render_inventory_audit.py"
       - "content/import-contracts/alwaslh-go-source-map.json"
       - ".github/workflows/stage9-source-audit.yml"
+      - "content/reports/stage9-alwaslh-go-inventory-audit.json"
+      - "content/reports/STAGE9_ALWASLH_GO_INVENTORY_AUDIT.md"
   workflow_dispatch:
 
 permissions:
@@ -32,6 +34,8 @@ jobs:
           test "$(git -C /tmp/alwaslh-go rev-parse HEAD)" = "$ALWASLH_GO_REVISION"
 
       - name: Build canonical full inventory
+        id: inventory
+        continue-on-error: true
         run: |
           mkdir -p /tmp/stage9-audit
           python3 content/tooling/alwaslh_go_inventory.py \
@@ -41,6 +45,8 @@ jobs:
             --summary /tmp/stage9-audit/inventory-summary.json
 
       - name: Render machine and human audit reports
+        id: report
+        continue-on-error: true
         run: |
           python3 content/tooling/render_inventory_audit.py \
             --inventory /tmp/stage9-audit/full-inventory.json \
@@ -56,3 +62,9 @@ jobs:
           path: /tmp/stage9-audit/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Enforce audit result
+        if: always()
+        run: |
+          test "${{ steps.inventory.outcome }}" = "success"
+          test "${{ steps.report.outcome }}" = "success"
