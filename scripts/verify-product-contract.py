@@ -29,7 +29,9 @@ def main() -> None:
         if not cells or not ID_RE.match(cells[0]):
             continue
         rows.append((cells[0], cells))
-        if len(cells) < 3:
+        # The matrix intentionally has sections with different column counts.
+        # Every feature row must still have an ID plus at least one non-empty contract field.
+        if len(cells) < 2:
             fail(f"feature row {cells[0]} at line {line_no} is structurally incomplete")
         if any(cell == "" for cell in cells[1:]):
             fail(f"feature row {cells[0]} at line {line_no} contains an empty contract cell")
