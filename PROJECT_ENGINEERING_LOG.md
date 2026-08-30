@@ -4,20 +4,20 @@
 
 ## Project Understanding
 
-**الوسيلة الذكية** منصة تعليمية عربية بواجهتين واضحتين:
+**الوسيلة الذكية** منصة تعليمية عربية بواجهتين رئيسيتين:
 
 - **Student:** تفعيل/دخول، صفوف ومواد ودروس، قارئ، أسئلة تفاعلية، اختبارات، ملاحظات وأسئلة محفوظة، إشعارات، إحصائيات وإنجازات، وPWA/Offline.
 - **Admin:** إدارة الصفوف والمواد والدروس والمحتوى، الرفع والمعالجة، Gemini/AI generation، الاختبارات والنماذج، أكواد الوصول الكامل وأكواد الصفوف، الحسابات، الإشعارات، التصدير والإعدادات.
 
-الهدف هو نفس المنتج ونفس السيناريوهات المهمة، لكن بتنفيذ أقوى وأوضح وأسرع وأكثر أمانًا. `PRODUCT_FEATURE_PARITY_MATRIX.md` هو بوابة منع إسقاط أي Feature أثناء إعادة البناء.
+الهدف هو بناء أفضل نسخة من **نفس المنتج** مع Feature Parity كاملة. `PRODUCT_FEATURE_PARITY_MATRIX.md` هو بوابة منع إسقاط أي Feature أو User Flow مهم أثناء إعادة البناء.
 
 ## Source Repositories
 
 ### `7eaur/alwaslh`
-مرجع السلوك الحالي، Business Rules، User Flows، الواجهة الحالية، Supabase migrations/functions، وOffline/PWA implementation.
+مرجع السلوك الحالي، Business Rules، User Flows، Supabase migrations/functions، والـOffline/PWA implementation.
 
 ### `7eaur/alwaslh-go`
-مرجع المحتوى والصور. تم التحقق من README وهيكل الجذر: 15 مادة لثالث ثانوي وتاسع، نحو 5,552 صورة، كتب مدرسية ونماذج وزارية، وملفات JSON/TXT/XLSX مساعدة. يعامل كـ **Content Source Repository** وليس static frontend assets.
+مرجع المحتوى والصور: 15 مادة لثالث ثانوي وتاسع، نحو 5,552 صورة، كتب مدرسية ونماذج وزارية، وملفات JSON/TXT/XLSX مساعدة. يعامل كـ **Content Source Repository** وليس static frontend assets.
 
 ## Key Documents
 
@@ -26,7 +26,8 @@
 - `PRODUCT_FEATURE_PARITY_MATRIX.md`
 - `PROJECT_REBUILD_BLUEPRINT.md`
 - `MASTER_REBUILD_ROADMAP.md`
-- `packages/brand/BRAND_FOUNDATION.md`
+- `packages/brand/BRAND_GUIDELINES.md`
+- `packages/brand/BRAND_STAGE_DOD.md`
 
 ## Legacy Architecture
 
@@ -39,7 +40,7 @@ Student/Admin Browser
  -> overlapping IndexedDB/localStorage/memory/CacheStorage/SW layers
 ```
 
-The stack is viable. The unsafe parts are authorization, entitlement, credential/recovery, account ownership, offline synchronization and AI orchestration.
+The stack is viable. The unsafe foundations are authorization, entitlement, credential/recovery, account ownership, offline synchronization and AI orchestration.
 
 ## Target Architecture
 
@@ -92,28 +93,17 @@ content/
 
 Detailed evidence is maintained in `PROJECT_FULL_AUDIT_CATALOG.md`.
 
-### P0 / release blockers
-
-| ID | Area | Problem | Status |
-|---|---|---|---|
-| SEC-001 | Admin auth | anonymous `SECURITY DEFINER sync_admin_password` privilege path | OPEN |
-| SEC-002..011 | RLS/AuthZ | broad/public student/code/admin-style policies and service-role migration path | OPEN |
-| DATA-015 | Activation | activation is multi-step/non-transactional | OPEN |
-| DATA-018 | Class redemption | class redemption is non-atomic/racy | OPEN |
-
-### Important correctness risks
-
-- quiz resume and option-correctness drift;
-- client-trusted score/achievement/rank;
-- malformed AI response normalization can invent plausible answers;
-- saved-question ID collisions and wrong lesson provenance;
-- audio note type mismatch;
-- schema/statistics drift;
-- stale deleted offline content;
-- no durable offline attempt outbox;
-- service worker can cache Supabase API GETs incorrectly;
-- multi-file upload page order can change with async completion order;
-- export sanitization/scope/truncation problems.
+| ID | Severity | Area | Problem | Status |
+|---|---|---|---|---|
+| SEC-001 | P0 | Admin auth | anonymous `SECURITY DEFINER sync_admin_password` privilege path | OPEN |
+| SEC-002..011 | P0 | RLS/AuthZ | broad/public student/code/admin-style policies and service-role migration paths | OPEN |
+| DATA-015 | P0 | Activation | activation is multi-step/non-transactional | OPEN |
+| DATA-018 | P0 | Class codes | redemption is non-atomic/racy | OPEN |
+| SEC-015..018 | P1 | Credentials | plaintext/reversible recovery and device credential assumptions | OPEN |
+| DATA-025 | P1 | Assessment | score/achievement/rank integrity is client-trusted | OPEN |
+| AI-* | P1/P2 | AI | browser-owned jobs, weak structured/semantic validation, retry/quota orchestration gaps | OPEN |
+| OFF-* | P1/P2 | Offline | overlapping caches/sync, stale deletions, no durable attempt outbox | OPEN |
+| MEDIA-* | P1/P2 | Media | async page-ordering and export correctness/sanitization defects | OPEN |
 
 ## Classification
 
@@ -144,15 +134,15 @@ Deployed schema/data/RLS/storage must be inspected and backed up first.
 Fresh staging must be reproducible from repository migrations/import tooling.
 
 ### AD-004 — Separate Admin and Student apps
-Different bundle/runtime/UX/PWA requirements justify two apps in one shared codebase.
+Different bundle/runtime/UX/PWA requirements justify two apps in one shared workspace.
 
 ### AD-005 — One entitlement model
-Full/class/admin/migration access maps to normalized entitlements with explicit scope/source/status/start/expiry/revocation.
+Full/class access maps to normalized entitlements with explicit scope/source/status/start/expiry/revocation.
 
 ### AD-006 — Durable AI jobs
 Browser creates/observes; server/queue owns execution. Prompt/schema/semantic validators are versioned.
 
-### AD-007 — Gemini capacity is scheduled by provider project
+### AD-007 — Gemini capacity scheduled by provider project
 Credentials remain server-side; project cooldown and credential health are separate concepts.
 
 ### AD-008 — One Student Sync Engine
@@ -162,87 +152,116 @@ Account + entitlement/content revisions, deterministic delta application includi
 Never bundle the raw content repository into Student/Admin applications.
 
 ### AD-010 — Product identity is owned and tokenized
-No Miaoda branding dependency. Admin is compact/data-oriented; Student is calm/mobile/reading-oriented. Same semantic token system, different product density.
+No Miaoda/TailAdmin brand dependency. Admin is compact/data-oriented; Student is calm/mobile/reading-oriented.
+
+### AD-011 — Original product identity is evolved, not discarded
+The approved brand preserves the first product's recognizable **teal + open-book** DNA while replacing inconsistent/template assets with owned canonical vector assets and tokens.
 
 ## Changes Made
 
-### Audit & planning branch
-- completed deep audit, full catalog, feature parity matrix, rebuild blueprint and master roadmap;
-- confirmed `alwaslh-go` content repository role;
-- release decision for legacy implementation remains **NO-GO**.
+### Stage 1 — Audit, product contract and rebuild planning
 
-### `rebuild/foundation` — Foundation Batch 1
+Completed repository discovery, deep/full audit, Feature Parity Matrix, rebuild blueprint and master roadmap. Legacy release decision remains **NO-GO**.
 
-Added:
-- `packages/brand/BRAND_FOUNDATION.md`
+### Foundation work created before stage-order correction
+
+The isolated `rebuild/foundation` branch already contains experimental package boundaries and independent Admin/Student shells. They remain frozen as implementation scaffolds and must follow the approved identity/UX stages before expansion.
+
+### Stage 2 — Brand Identity — COMPLETE
+
+The original logo supplied by the product owner was analyzed and retained as the identity root: turquoise/teal, rounded app tile, white open-book mark and Arabic-first naming. Old repository `TailAdmin` marks are explicitly rejected as product identity.
+
+Implemented canonical identity assets:
+
+- `packages/brand/assets/logo/logo-mark.svg`
+- `packages/brand/assets/logo/logo-mark-white.svg`
+- `packages/brand/assets/logo/logo-mark-monochrome.svg`
+- `packages/brand/assets/logo/logo-primary.svg`
+- `packages/brand/assets/logo/logo-horizontal.svg`
+- `packages/brand/assets/logo/logo-horizontal-white.svg`
+- `packages/brand/assets/app-icons/favicon.svg`
+- `packages/brand/assets/app-icons/icon-192.png`
+- `packages/brand/assets/app-icons/icon-512.png`
+- `packages/brand/assets/app-icons/icon-maskable.svg`
+- `packages/brand/assets/app-icons/icon-maskable-512.png`
+
+Identity contracts/documentation:
+
+- `packages/brand/BRAND_GUIDELINES.md`
+- `packages/brand/BRAND_STAGE_DOD.md`
+- `packages/brand/ASSET_NOTES.md`
+- `packages/brand/brand-assets.json`
+- `packages/brand/identity.json`
 - `packages/brand/src/tokens.css`
 - `packages/brand/src/tokens.ts`
-- `packages/domain/src/access.ts`
-- `packages/domain/src/content.ts`
-- `packages/validation/src/access.ts`
 
-Implemented:
-- owned identity tokens: restrained ink/teal/warm accent, neutral surfaces, semantic states, RTL typography, spacing, radius, elevation, focus, reduced motion and touch-target baseline;
-- canonical entitlement/access contract;
-- one 6-digit full-access and one 7-digit class-code validation contract with Arabic/Persian digit normalization;
-- ordered content-manifest contract where `sourceOrder` is assigned before async processing, preventing completion-order page reordering.
+Brand Identity v1 palette:
 
-### `rebuild/foundation` — Foundation Batch 2 (current)
+- Primary Teal `#00B5A9`
+- Dark Teal `#007F78`
+- Brand Ink `#123C43`
+- Mint `#E6F7F6`
+- Soft Surface `#F2F4F7`
+- Charcoal `#1F2937`
 
-Added package boundaries:
-- `@alwaslh/brand`
-- `@alwaslh/domain`
-- `@alwaslh/validation`
+Typography baseline:
 
-Added independent application shells:
-- `apps/admin-web` — strict TypeScript + Vite + RTL document shell + operational sidebar/content/AI/access structure.
-- `apps/student-web` — strict TypeScript + Vite + RTL/mobile-first shell + lightweight five-item bottom navigation + explicit offline status concept.
+- Arabic primary: **Cairo**
+- fallback: **Tajawal / Noto Sans Arabic / system sans**
 
-Both applications consume shared brand tokens and are not wired to production database APIs yet by design.
+Usage rules:
+
+- gradient is restricted to identity/app-icon use; product UI remains mostly flat;
+- minimum body text 16px Student / 14px Admin data surfaces;
+- no 8–10px production copy;
+- consistent 20/24px line icons;
+- focus ring, 44px touch target, reduced motion and unrestricted browser zoom;
+- RTL by default;
+- Admin uses a denser application of the same identity; Student uses larger spacing and reading-first hierarchy.
+
+**Stage 2 Definition of Done: PASS.**
 
 ## Tests & Verification
 
 ### Performed
 
-`packages/domain/src/access.ts` and `packages/domain/src/content.ts` were reproduced from the committed definitions and checked with local TypeScript 5.8.3 using:
-
-```text
---strict --noEmit --target ES2022 --module ESNext --moduleResolution bundler
-```
-
-Result: **PASS**.
+- `packages/domain/src/access.ts` and `packages/domain/src/content.ts`: strict TypeScript source check — **PASS**.
+- Brand canonical vector assets were generated and committed.
+- PWA 192/512/maskable raster assets were generated from the brand mark and committed.
+- GitHub repository listing confirms all expected logo and app-icon files exist on `rebuild/foundation`.
+- `BRAND_STAGE_DOD.md` records all Stage 2 gates as passed.
 
 ### NOT YET VERIFIED
 
 - React/Vite application builds;
-- Zod validation package runtime/typecheck with installed dependency graph;
-- final workspace installation/lockfile;
+- installed Cairo/Tajawal runtime/font rendering in rebuilt apps;
+- full workspace install/lockfile;
 - deployed Supabase schema/RLS/functions/data/storage;
 - production secrets/admin values;
-- real browser accessibility/performance;
+- real-browser accessibility/performance;
 - full `alwaslh-go` manifest/image integrity.
 
-Local GitHub clone/install remains blocked in the current container because `github.com` DNS resolution is unavailable, so no false build-pass claim is made.
+No false build-pass claim is made.
 
 ## Known Issues
 
-- Legacy P0/P1 findings remain open until database/backend remediation begins.
-- New app shells intentionally contain no production data wiring.
-- Temporary textual brand mark is not the final logo.
-- package/workspace dependency installation and CI remain to be finalized.
+- Legacy P0/P1 findings remain open until database/backend stages.
+- Experimental Admin/Student shells are not production UI and will be revised from Stage 3 UX specifications.
+- Database reality is **NOT YET VERIFIED**.
+- Brand SVG wordmark uses font-family references; application/deployment font loading must be verified when UI implementation resumes.
 
 ## Remaining Work
 
-1. Finish package/workspace wiring, tests and CI for new apps/packages.
-2. As soon as database platform access is connected, produce `DATABASE_REALITY_AUDIT.md` and final RLS/schema map.
-3. Build Auth/RLS/Entitlement foundation with DB/integration tests.
+1. **Stage 3 — UX Information Architecture:** lock Admin/Student IA, navigation, user flows, states and responsive wireframe specifications.
+2. When the database platform is connected, run `DATABASE_REALITY_AUDIT.md` before final migrations.
+3. Design/rebuild Auth/RLS/Entitlement and ownership with tests.
 4. Build deterministic `alwaslh-go` importer/media pipeline.
 5. Build durable Gemini job/provider platform.
-6. Build full Admin product against stable contracts.
-7. Build full Student PWA/Practice/Sync product against stable contracts.
-8. Migrate legacy data/content and run Feature Parity, E2E, security, performance and accessibility gates.
-9. Stage, rehearse migration/rollback, then production cutover only after release gates pass.
+6. Implement full Admin product from approved UX contracts.
+7. Implement full Student PWA/Practice/Sync product from approved UX contracts.
+8. Migrate legacy data/content and run parity/E2E/security/performance/accessibility gates.
+9. Stage, rehearse rollback/cutover, then release only after all gates pass.
 
 ## Current State
 
-Implementation is now underway on `rebuild/foundation`. The legacy app remains untouched as behavioral reference. No destructive database changes have been made while production database reality is still unverified.
+**Stage 2 Brand Identity is closed. Stage 3 UX Architecture is next.** The legacy app remains untouched as behavioral reference and no destructive production database changes have been made.
