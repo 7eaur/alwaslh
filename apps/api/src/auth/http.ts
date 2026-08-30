@@ -42,7 +42,7 @@ export function sessionToken(request: FastifyRequest, config: AppConfig): string
   return parseCookies(request.headers.cookie).get(config.SESSION_COOKIE_NAME);
 }
 
-function sessionCookie(config: AppConfig, token: string, maxAgeSeconds: number): string {
+export function sessionCookie(config: AppConfig, token: string, maxAgeSeconds: number): string {
   const secure = config.NODE_ENV === "production" ? "; Secure" : "";
   return `${config.SESSION_COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAgeSeconds}${secure}`;
 }

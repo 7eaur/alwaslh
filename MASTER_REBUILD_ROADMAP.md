@@ -7,11 +7,14 @@
 1. نحافظ على **المنتج والسيناريوهات**، وليس على أخطاء التنفيذ القديم.
 2. `alwaslh` مرجع للفكرة والـflows والميزات والمشكلات التي يجب ألا تتكرر.
 3. `alwaslh-go` مرجع للمحتوى/الصور ويُدخل عبر Content Pipeline.
-4. لا يوجد التزام بمطابقة قاعدة Supabase القديمة أو IDs القديمة أو RLS القديمة.
-5. PostgreSQL الجديدة هي clean-slate source of truth.
+4. لا يوجد التزام بمطابقة قاعدة Supabase القديمة أو IDs/RLS القديمة.
+5. PostgreSQL الجديدة هي clean-slate source of truth وتعمل خلف Backend خاص.
 6. كل مرحلة لها Definition of Done ولا نقفز للمرحلة التالية قبل إغلاقها.
-7. أي Runtime gate لم يُشغل فعليًا يبقى `NOT YET VERIFIED`.
-8. Correctness > Cleverness، وClarity > Complexity.
+7. التوازي مسموح **داخل نفس المرحلة** عندما تكون الحدود والعقود واضحة، لكن لا نبدأ المرحلة التالية قبل Integration Gate للمرحلة الحالية.
+8. أي Runtime gate لم يُشغل فعليًا يبقى `NOT YET VERIFIED`.
+9. الحالات الرسمية: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`.
+10. `PROJECT_HANDOFF.md` هو أول ملف لأي محادثة/مهندس جديد.
+11. Correctness > Cleverness، وClarity > Complexity، وEvidence > Assumptions.
 
 ---
 
@@ -63,278 +66,183 @@ PostgreSQL لا تُفتح مباشرة للمتصفح.
 ## الهدف
 تثبيت المنتج الذي سنبنيه قبل إعادة التنفيذ.
 
-## يشمل
-- Admin features.
-- Student features.
-- activation/login/recovery scenarios.
-- lessons/reader/questions/quizzes/notes/saved questions.
-- statistics/achievements/notifications.
-- Offline/PWA.
-- exports.
-- كل AI generation modes وقواعدها.
-- محتوى `alwaslh-go` المطلوب.
+يشمل Admin/Student flows، activation/login/recovery، الدروس والقارئ والاختبارات والملاحظات، الإحصائيات/الإنجازات/الإشعارات، Offline/PWA، exports، كل AI modes وقواعدها، ومحتوى `alwaslh-go` المطلوب.
 
 ## المصدر
 `PRODUCT_FEATURE_PARITY_MATRIX.md`
 
 ## Gate
-**COMPLETE.**
+**COMPLETE / CLI PASS.**
 
 ---
 
 # Stage 2 — Brand Identity
 
-## الهدف
-بناء هوية مملوكة للمنتج انطلاقًا من الشعار الأول teal/open-book.
-
-## المخرجات
-- Primary logo.
-- mark.
-- horizontal/inverse/monochrome variants.
-- favicon/PWA icons.
-- palette.
-- Arabic typography.
-- design tokens.
-- iconography/imagery/accessibility rules.
+Owned identity مبنية على الشعار الأصلي teal/open-book: logo system، favicon/PWA icons، palette، Arabic typography، design tokens، iconography/accessibility rules.
 
 ## المصدر
 `packages/brand/`
 
 ## Gate
-**COMPLETE / PASS.**
+**COMPLETE / CLI PASS.**
 
 ---
 
 # Stage 3 — UX Architecture
 
 ## Admin IA
-
-```text
-Overview
-Content
-  Classes & Subjects
-  Lessons
-  Upload & Processing
-Assessment & AI
-  Quizzes
-  AI Operations
-Students & Access
-  Students
-  Full Access Codes
-  Class Codes
-Communication
-  Notifications
-Reports
-  Export History
-System
-  Settings
-  Security
-```
+Overview → Content → Assessment & AI → Students & Access → Communication → Reports → System.
 
 ## Student IA
+Home → Lessons → Quizzes → Notes → More.
 
-```text
-Home
-Lessons
-Quizzes
-Notes
-More
-```
-
-More يحتوي الإحصائيات/الإنجازات/الإشعارات/التفعيل/الحساب/التثبيت/المساعدة.
-
-## المخرجات
-- IA.
-- critical flows.
-- legacy-to-target mapping.
-- loading/error/offline/permission states.
-- responsive/accessibility contracts.
-- low-fidelity wireframes.
+المخرجات: IA، critical flows، legacy-to-target mapping، states، responsive/accessibility contracts، low-fidelity wireframes.
 
 ## المصدر
 `docs/ux/`
 
 ## Gate
-**COMPLETE / PASS.**
+**COMPLETE / CLI PASS.**
 
 ---
 
 # Stage 4 — Clean-Slate PostgreSQL Data Platform
 
 ## القرار
+**PostgreSQL ذاتية الاستضافة في نفس بيئة الـBackend**، خاصة وغير مكشوفة للمتصفح. Supabase ليست Target Platform ولا نطابق schema/IDs/RLS القديمة.
 
-**PostgreSQL ذاتية الاستضافة في نفس بيئة استضافة الـBackend.**
+النموذج الأساسي يغطي Identity، Curriculum، Access، Learning، AI durable jobs وOffline revisions/tombstones.
 
-Supabase ليست Target Platform. لا نطابق schema أو IDs أو RLS القديمة.
-
-## الحدود
-
-```text
-Browser -> Backend API -> PostgreSQL
-```
-
-لا يوجد browser -> database.
-
-## النموذج الأساسي
-
-### Identity
-`profiles`
-
-### Curriculum
-`classes`, `subjects`, `subject_class_links`, `lessons`, `lesson_assets`
-
-### Access
-`full_access_codes`, `class_access_codes`, `access_redemptions`, `student_entitlements`
-
-### Learning
-`quizzes`, `quiz_lessons`, `quiz_versions`, `questions`, `question_options`, `practice_sessions`, `practice_session_questions`, `practice_session_options`, `practice_answers`, `quiz_attempts`, `saved_questions`, `achievement_definitions`, `student_achievements`, `notifications`, `notification_reads`
-
-### AI
-`ai_jobs`, `ai_job_units`, `ai_outputs`
-
-### Offline sync
-`content_revisions`, `content_tombstones`, `sync_checkpoints`
-
-## قواعد ثابتة
-- ownership = profile UUID.
-- full code = 6 digits.
-- class code = 7 digits.
-- redemption transactional/idempotent.
-- entitlement normalized.
-- page/order explicit.
-- stable question IDs.
-- persisted question/option shuffle order.
-- selected option must belong to the same question.
-- score is not trusted from browser.
-- deletions produce revision/tombstone.
-- AI jobs durable.
-
-## Operations
-- owner/migrator/app/readonly DB roles.
-- DB private/no public 5432.
-- version-controlled SQL migrations.
-- off-host backups.
-- restore drills.
-
-## المصدر
-- `DATABASE_PLATFORM_ARCHITECTURE.md`
-- `database/migrations/`
-- `database/SCHEMA.md`
-- `database/BACKUP_RESTORE.md`
-- `database/tests/schema_smoke.sql`
-- `database/DATABASE_STAGE_DOD.md`
+قواعد ثابتة: UUID ownership، 6/7-digit codes، explicit order، normalized entitlements، persisted practice order، cross-record constraints، client score غير موثوق، durable AI jobs.
 
 ## Gate
-**DESIGN/SCHEMA BASELINE COMPLETE / PASS.**
+**COMPLETE / CLI + PostgreSQL RUNTIME PASS.**
 
-Real PostgreSQL execution remains a required pre-release runtime gate.
+Actual-host tuning/network/load/backup restore تبقى Release/Ops gates لاحقة.
 
 ---
 
 # Stage 5 — Engineering Foundation
 
-## الهدف
-إنشاء workspace قابل للبناء والاختبار قبل features.
-
-## العمل
-- root workspace/monorepo configuration.
-- strict TypeScript.
-- reproducible dependency versions/lockfile.
-- real build scripts.
-- `apps/api` backend runtime.
-- DB driver + bounded pool.
-- migration runner.
-- environment schema validation.
-- structured logging.
-- common API error/result contract.
-- test harness.
-- lint/typecheck/unit/build scripts fail-fast.
-- CI.
+Real `apps/api`، strict TypeScript، PostgreSQL pool/transactions، migration runner، env validation، logging/error contract، unit harness، Admin/Student isolated builds وCI.
 
 ## Gate
-- clean install works.
-- Admin build passes.
-- Student build passes.
-- API typecheck/test passes.
-- clean PostgreSQL migrations + smoke tests pass when DB runtime is available.
+**COMPLETE / CLI + RUNTIME PASS.**
 
 ---
 
 # Stage 6 — Authentication & Authorization
 
-## Student
-- secure account/session model.
-- 6-digit activation remains business entry flow.
-- no plaintext passwords.
-- no reversible original-password retrieval.
-- recovery = reset, not reveal.
-- fingerprint/device ID is not credential proof.
+- salted scrypt credentials؛
+- opaque server sessions؛
+- HttpOnly cookies؛
+- Student/Admin role isolation؛
+- mutation Origin protection؛
+- DB-backed login lockout؛
+- recovery = one-time reset, never reveal؛
+- explicit first-admin CLI bootstrap only.
 
-## Admin
-- explicit admin identity/role.
-- no default admin credential.
-- sensitive actions can require re-auth.
-
-## Authorization
-- backend policies/services own authorization.
-- database runtime role is least privilege.
-- Student A cannot read/update Student B.
-- protected content requires entitlement.
-
-## Tests
-anonymous/studentA/studentB/admin matrices at API level.
+## Gate
+**COMPLETE / CLI + PostgreSQL RUNTIME PASS.**
 
 ---
 
-# Stage 7 — Entitlement & Activation Service
+# Stage 7 — Access Codes & Entitlements
 
 ## Full access
-- exactly 6 digits.
-- secure generation.
-- atomic single-use redemption/lifecycle.
-- search/pagination/import/export admin workflows preserved.
+- exactly 6 digits؛
+- cryptographically secure generation؛
+- duration/lifecycle؛
+- transactional single-use redemption؛
+- profile-bound idempotency؛
+- renewal extends real benefit.
 
 ## Class access
-- exactly 7 digits.
-- atomic redemption.
-- expiry/status checks.
-- renewal updates/extends entitlement intentionally.
+- exactly 7 digits؛
+- atomic redemption؛
+- class entitlement؛
+- no-waste rule when active Full access already covers student.
 
-## Transaction
+Admin revoke/audit and concurrent races are required.
 
-```text
-validate
--> lock code
--> check lifecycle
--> create/update entitlement
--> bind redemption
--> commit
-```
-
-Concurrency/idempotency tests are mandatory.
+## Gate
+**COMPLETE / CLI + PostgreSQL RUNTIME PASS.**
 
 ---
 
-# Stage 8 — Content Model & `alwaslh-go` Import
+# Stage 8 — Student Activation & Account Flow
 
-## الهدف
-تحويل 5,000+ curriculum/exam images إلى canonical content.
+## Product rule
+First activation uses a **6-digit Full Access code**. After successful activation, the same normalized code becomes the Student's returning **account identifier**, not an authentication secret.
+
+Returning login:
+
+```text
+6-digit account identifier + password -> server session
+```
+
+No fingerprint/device credential. Recovery resets password and never reveals it.
+
+## Backend transaction
+
+```text
+validate/lock Full code
+-> create Student profile
+-> create scrypt credential
+-> create all-content entitlement
+-> mark/bind code redeemed
+-> create redemption/idempotency
+-> access/auth audit
+-> COMMIT
+-> canonical Auth login/session
+```
+
+Required behavior:
+- Arabic/Persian digit normalization؛
+- invalid/expired/revoked/used code handling؛
+- rollback on any partial failure؛
+- activation idempotent replay؛
+- concurrent same-code race creates one account only؛
+- returning login؛
+- logout/recovery states؛
+- no password storage in browser.
+
+Canonical API contract: `docs/api/STUDENT_ACTIVATION_CONTRACT.md`.
+
+## Parallel workstreams
+
+```text
+rebuild/student-activation-backend
+rebuild/student-activation-ui
+```
+
+Backend is already **CLI/RUNTIME PASS**. Stage 8 is not COMPLETE until UI + integrated browser/API E2E are green.
+
+## Gate
+**IN PROGRESS — Backend PASS; UI + integrated E2E pending.**
+
+---
+
+# Stage 9 — Content Model & Deterministic `alwaslh-go` Import
+
+حوّل curriculum/exam source إلى canonical content عبر:
 
 ```text
 alwaslh-go
--> discover
+-> full discovery/inventory
 -> parse manifests/names
 -> normalize grade/subject/book/exam/year/page
 -> deterministic ordering
 -> checksum/dedupe
--> output import manifest
+-> canonical import manifest
+-> transactional/import batches
 ```
 
-Import must report expected/imported/missing/duplicate/order errors.
+Must report expected/imported/missing/duplicate/order errors. Raw repository never ships in frontend.
 
 ---
 
-# Stage 9 — Media Pipeline
+# Stage 10 — Media Pipeline
 
 ```text
 upload/source
@@ -348,120 +256,91 @@ upload/source
 -> metadata transaction
 ```
 
-Requirements:
-- bounded concurrency;
-- abort/retry;
-- no completion-order reordering;
-- readable educational text after compression;
-- deterministic storage keys/checksums.
+Requirements: bounded concurrency، abort/retry، no completion-order reordering، readable educational text، deterministic keys/checksums، self-hosted/reliable PDF worker strategy.
 
 ---
 
-# Stage 10 — Gemini Prompt/Output Contracts
+# Stage 11 — Gemini Prompt/Output Contracts
 
-Versioned PromptRegistry for all preserved modes, including:
-- summaries;
-- extraction;
-- lesson questions;
-- MCQ/TF/mixed;
-- image questions;
-- quiz versions;
-- regenerate;
-- replica/exact-exam flows;
-- bulk generation.
+Versioned PromptRegistry لكل preserved mode: summaries/extraction/questions/MCQ/TF/mixed/image/version/regenerate/exam replica/exact/bulk.
 
-Each contract has:
-`input schema -> prompt version -> output schema -> semantic validator -> renderer`.
+كل contract:
 
-Rules for Arabic/scientific/religious/source-exact content remain explicit and regression-tested.
+```text
+input schema
+-> prompt version
+-> structured output schema
+-> semantic validator
+-> renderer/persistence
+```
+
+Arabic/scientific/religious/source-exact rules لها golden regression tests.
 
 ---
 
-# Stage 11 — Durable AI Execution
+# Stage 12 — Durable AI Execution
 
 ```text
 Admin
 -> API create ai_job
--> worker claims units
+-> durable queue/job units
+-> workers
 -> Gemini project/credential scheduler
--> validate
--> save output
--> review/publish
+-> structured + semantic validation
+-> save/review/publish
 ```
 
-Support:
-- queue/job state;
-- retries/backoff;
-- 429 project cooldown;
-- credential health;
-- multiple Gemini projects/credentials;
-- cancellation;
-- progress;
-- prompt/model/version metadata;
-- no secret values in DB/UI logs.
+Support retries/backoff، 429 project cooldown، credential/project health، multiple projects/credentials، cancellation/resume، progress، prompt/model metadata، tokens/cost/latency، secrets server-only.
 
 ---
 
-# Stage 12 — Admin Product
+# Stage 13 — Admin Product
 
-Implement in functional order:
-1. auth/shell;
-2. Overview;
-3. Classes & Subjects;
-4. Lessons;
-5. Upload/Processing;
-6. AI Operations;
-7. Quiz Builder;
-8. Students;
-9. Full Access Codes;
-10. Class Codes;
-11. Notifications;
-12. Reports/Export History;
+Functional order:
+1. auth/shell؛
+2. Overview؛
+3. Classes & Subjects؛
+4. Lessons؛
+5. Upload/Processing؛
+6. AI Operations؛
+7. Quiz Builder؛
+8. Students؛
+9. Full Access Codes؛
+10. Class Codes؛
+11. Notifications؛
+12. Reports/Exports؛
 13. Settings/Security.
 
-Admin is data-dense and operational, not decorative dashboard cards.
+Admin data-dense/operational، لا decorative dashboard spam.
 
 ---
 
-# Stage 13 — Student Product
+# Stage 14 — Student Learning Product
 
-1. activation/login/recovery;
-2. Home;
-3. classes/subjects/lessons;
-4. Reader;
-5. Summary/Practice;
-6. Notes/Saved;
-7. Quizzes;
-8. Attempts;
-9. Statistics/Achievements;
-10. Notifications;
-11. Class activation;
-12. Account/Help/Install.
+Stage 8 owns activation/login/recovery. This stage builds the post-auth learning product:
+1. Home؛
+2. classes/subjects/lessons؛
+3. Reader؛
+4. Summary/Practice؛
+5. Notes/Saved؛
+6. Quizzes/Attempts؛
+7. Statistics/Achievements؛
+8. Notifications؛
+9. Class activation/account/help/install.
 
-Mobile-first and reading-first.
+Mobile-first + reading-first.
 
 ---
 
-# Stage 14 — Practice Engine
+# Stage 15 — Practice Engine
 
-One shared state machine for lesson practice and quizzes.
-
-Persist:
-- session ID;
-- stable questions;
-- shuffled question order;
-- shuffled option order;
-- answer per question;
-- current question;
-- completion.
-
-Support resume/restart/bookmark/explanation/offline without index-based identity bugs.
+One shared deterministic state machine for lesson practice and quizzes. Persist session ID, stable questions, shuffled question/option order, answers, current question and completion. Support resume/restart/bookmark/explanation/offline without index identity bugs. Trusted completion is server-derived.
 
 ---
 
-# Stage 15 — Offline / PWA
+# Stage 16 — Offline / PWA
 
-Server canonical, account-scoped IndexedDB replica.
+Server canonical + account-scoped IndexedDB replica:
 
 ```text
 revision request
@@ -472,146 +351,103 @@ revision request
 -> checkpoint only after required success
 ```
 
-Service worker caches app shell/static/media only; never DB/Auth/API responses as generic images.
+Student owns Service Worker. Cache app shell/static/media only; no generic Auth/API caching. Add attempt outbox/idempotency and update lifecycle verification.
 
 ---
 
-# Stage 16 — Notes & Saved Questions
+# Stage 17 — Notes & Saved Questions
 
-Preserve text/image/capture/audio note scenarios. Current local-first notes can remain account-scoped local data unless product decision later adds cloud sync.
-
-Saved questions use real `question_id`, not array index/student code.
+Preserve text/image/capture/audio scenarios where still valuable. Local-first may remain account-scoped. Saved questions use real stable question IDs/provenance. Bound media storage; no unbounded base64.
 
 ---
 
-# Stage 17 — Notifications
+# Stage 18 — Notifications
 
-Admin: audience/severity/action/publish/expiry.  
-Student: read state, category/priority, deep link, offline awareness.
-
----
-
-# Stage 18 — Statistics / Achievements
-
-Server derives attempts/scores/awards/ranking. Browser displays results and never supplies trusted achievement/score state.
+Admin audience/severity/action/publish/expiry; Student real read state/category/priority/deep-link/offline awareness. No fake unread state.
 
 ---
 
-# Stage 19 — Export System
+# Stage 19 — Statistics / Achievements
 
-Preserve required PDF/Excel/quiz/code-card/history/image exports with:
-- sanitization;
-- Arabic-safe fonts;
-- new brand assets;
-- explicit scopes/options;
-- lazy loading of heavy libraries;
-- no silent `first 2 images` truncation.
+Server derives attempts/scores/awards/ranking; browser never supplies authoritative achievement/score/rank state.
 
 ---
 
-# Stage 20 — Performance Engineering
+# Stage 20 — Export System
 
-Student must not ship Admin/AI/XLSX/PDF authoring dependencies. Admin heavy tools lazy-load.
-
-Measure:
-- JS size;
-- LCP/INP/CLS;
-- API/query latency;
-- image bytes;
-- IndexedDB/media cache size;
-- sync bytes/time;
-- offline startup;
-- AI/upload/export latency/memory.
+Preserve required PDF/Excel/quiz/code-card/history/image exports with sanitization، Arabic-safe fonts، new brand، explicit scopes/options، lazy heavy libraries، large-export strategy and no silent truncation.
 
 ---
 
-# Stage 21 — Security Hardening
+# Stage 21 — Performance Engineering
 
-Audit:
-- secrets;
-- DB networking;
-- authorization;
-- rate limits;
-- validation;
-- file upload;
-- storage access;
-- CSP/CORS/headers;
-- dependencies;
-- admin audit events;
-- backup access.
+Student must not ship Admin/AI/XLSX/PDF-authoring dependencies. Measure bundle sizes، Core Web Vitals، API/query latency، images، cache/sync bytes، offline startup، AI/upload/export latency/memory. Optimize only from evidence.
 
 ---
 
-# Stage 22 — Automated Tests
+# Stage 22 — Security Hardening
 
-### Unit
-validation, entitlement, PracticeEngine, scoring, AI validators, content ordering, sync diff.
+Audit and test secrets، DB networking، authorization/IDOR، activation/login rate limits، validation، uploads، storage، CSP/CORS/headers، CSRF/session behavior، dependencies، audit logs and backup access.
 
-### Database
-migrations, constraints, concurrent code redemption, transaction/idempotency.
-
-### Integration
-Auth, activation, recovery, content, AI retries, media processing.
-
-### E2E Admin/Student
-all critical flows and error/offline variants.
+The 6-digit activation business rule has limited entropy, so real reverse-proxy/API perimeter rate limiting is a mandatory security/release gate.
 
 ---
 
-# Stage 23 — Accessibility / Device QA
+# Stage 23 — Automated Tests & CI Expansion
 
-RTL, keyboard, focus, screen reader, 200% zoom, contrast, reduced motion, Android/iPhone/tablet/desktop, slow network/offline.
+Unit، DB migrations/constraints/concurrency، Auth/Activation/Access integration، content/media tests، AI golden/retry tests، Practice/Offline tests، Admin/Student E2E and regression coverage for legacy critical defects.
 
----
-
-# Stage 24 — Initial Data / Content Load
-
-Because old DB data is not required, production initialization focuses on:
-- admin bootstrap through secure provisioning;
-- canonical curriculum/content import from `alwaslh-go`;
-- quiz/AI content generated or imported through the new contracts;
-- optional selective imports only when explicitly useful.
-
-No legacy DB migration is a release dependency.
+CI blocks deployment on failed gates.
 
 ---
 
-# Stage 25 — Staging
+# Stage 24 — Accessibility / Device QA
+
+RTL، keyboard/focus/screen reader، 200% zoom، contrast، reduced motion، 44px touch targets، Android/iPhone/tablet/desktop، slow network/offline.
+
+---
+
+# Stage 25 — Initial Data / Content Load
+
+No legacy DB migration dependency. Initialize secure Admin, canonical curriculum from `alwaslh-go`, and quiz/AI content through new contracts. Selective legacy import only if explicitly useful later.
+
+---
+
+# Stage 26 — Staging
 
 Fresh environment from repository only:
 
 ```text
 PostgreSQL provision
 -> migrations
--> app config
+-> app config/secrets
 -> content import
+-> API/workers
 -> Admin
 -> Student
--> workers/AI
--> test suite
+-> full staged test suite
 ```
 
 If staging cannot be reproduced, release is blocked.
 
 ---
 
-# Stage 26 — Release Gate
+# Stage 27 — Release Gate
 
 Required before production:
-- no P0/P1 blocker;
-- DB migrations/smoke pass on real PostgreSQL;
-- backup restore verified;
-- Auth/authorization tests pass;
-- code concurrency/idempotency pass;
-- Admin/Student E2E pass;
-- Offline pass;
-- AI golden tests pass;
-- performance/accessibility budgets pass;
-- Feature Parity implementation coverage accepted.
+- P0/P1 blockers cleared/explicitly accepted؛
+- real-host DB migrations + connectivity/load/network checks؛
+- backup restore drill؛
+- Auth/authorization/activation/access concurrency pass؛
+- Admin/Student E2E؛
+- Offline/PWA pass؛
+- AI golden/retry/failover pass؛
+- performance/accessibility/security budgets pass؛
+- Feature Parity coverage evidenced.
 
 ---
 
-# Stage 27 — Production Cutover
+# Stage 28 — Production Cutover
 
 ```text
 provision
@@ -624,23 +460,13 @@ provision
 -> smoke tests
 ```
 
-Rollback procedure is prepared before cutover.
+Rollback is prepared/tested before cutover.
 
 ---
 
-# Stage 28 — Monitoring & Operations
+# Stage 29 — Monitoring & Operations
 
-Monitor:
-- login/activation failures;
-- code redemption;
-- authorization errors;
-- DB connection/query/lock health;
-- backups;
-- AI 429/503/job failures;
-- sync failures;
-- JS/runtime errors;
-- media/storage growth;
-- PWA update failures.
+Monitor login/activation/code failures، authorization، DB pool/query/locks، backups، AI quota/errors/jobs، sync، JS/runtime، media/storage growth and PWA updates. Maintain incident/runbook documentation.
 
 ---
 
@@ -648,11 +474,16 @@ Monitor:
 
 | Stage | Status |
 |---|---|
-| 1 Product Freeze | COMPLETE |
-| 2 Brand Identity | COMPLETE / PASS |
-| 3 UX Architecture | COMPLETE / PASS |
-| 4 PostgreSQL Data Platform | COMPLETE / PASS design/schema baseline; runtime PostgreSQL verification pending pre-release |
-| 5 Engineering Foundation | NEXT |
-| 6–28 | NOT STARTED / later gates |
+| 1 Product Freeze | COMPLETE / CLI PASS |
+| 2 Brand Identity | COMPLETE / CLI PASS |
+| 3 UX Architecture | COMPLETE / CLI PASS |
+| 4 PostgreSQL Data Platform | COMPLETE / CLI + RUNTIME PASS |
+| 5 Engineering Foundation | COMPLETE / CLI + RUNTIME PASS |
+| 6 Auth & Authorization | COMPLETE / CLI + RUNTIME PASS |
+| 7 Access Codes & Entitlements | COMPLETE / CLI + RUNTIME PASS |
+| 8 Student Activation & Account Flow | IN PROGRESS — Backend CLI/RUNTIME PASS; parallel UI + integrated E2E pending |
+| 9–29 | NOT STARTED / later gates |
 
-We do not move to Stage 6 before Stage 5 is closed.
+Latest verified Stage 8 Backend baseline: `rebuild/student-activation-backend` commit `a87c7f766481708e018dcaa1ae6e6643c0667fef`, GitHub Actions run `33289741640`, full Stages 1–8 backend jobs **SUCCESS**.
+
+**Do not start Stage 9 until Stage 8 UI and integrated E2E gate are green.**

@@ -56,8 +56,10 @@ Browser never receives PostgreSQL credentials and never connects directly to the
 
 ## User Flows to Preserve
 
-### Full access
-`6-digit code -> server validation -> atomic claim -> account/profile -> entitlement -> authorized sync -> dashboard`
+### Full access / first activation
+`6-digit full code -> server validation/lock -> atomic Student account + credential + entitlement + redemption -> authenticated session -> dashboard`
+
+After first activation the same 6-digit code is the Student **account identifier**, not a secret. Returning authentication requires `identifier + password`.
 
 ### Class access
 `7-digit class code -> atomic redemption -> class entitlement -> delta sync`
@@ -77,9 +79,9 @@ Browser never receives PostgreSQL credentials and never connects directly to the
 |---|---|---|---|---|
 | SEC-001 | P0 | Admin auth | anonymous privileged password mutation | ELIMINATED by new auth boundary |
 | SEC-002..011 | P0 | Authorization | broad/public DB/RLS privilege paths | ELIMINATED; browser has no DB access |
-| DATA-015 | P0 | Activation | multi-step/non-transactional | target Stage 8 requires atomic flow |
+| DATA-015 | P0 | Activation | multi-step/non-transactional | FIXED in Stage 8 backend; integrated UI/E2E pending |
 | DATA-018 | P0 | Class codes | redemption racy/non-atomic | FIXED and runtime-tested in Stage 7 |
-| SEC-015..018 | P1 | Credentials | plaintext/reversible/device assumptions | FIXED in Stage 6 |
+| SEC-015..018 | P1 | Credentials | plaintext/reversible/device assumptions | FIXED in Stage 6/8 credential design |
 | DATA-025 | P1 | Assessment | client-trusted score/ranking | schema strengthened; finalization service later |
 | OFF-* | P1/P2 | Offline | stale/overlapping caches/sync | revision/tombstone model exists; engine later |
 | AI-* | P1/P2 | AI | browser-owned jobs/weak validation | durable job schema exists; worker/platform later |
@@ -97,7 +99,7 @@ Validation/forms/states, UX/accessibility, querying/pagination, media/export, ob
 Large feature modules, practice UI/state boundaries, content authoring pipeline.
 
 ### REBUILD
-Backend API boundary, Auth/Recovery, authorization, entitlement/code service, Student sync/service worker, durable Gemini execution.
+Backend API boundary, Auth/Recovery, authorization, entitlement/code service, Student activation, Student sync/service worker, durable Gemini execution.
 
 ### REMOVE
 Legacy Supabase coupling, direct/public DB assumptions, legacy IDs as ownership, plaintext/reversible credentials, fingerprint credential proof and verified dead/unsafe implementation paths.
@@ -120,6 +122,9 @@ Legacy Supabase coupling, direct/public DB assumptions, legacy IDs as ownership,
 - **AD-014 — Relational integrity before JSON convenience.** Core ownership/order/assessment/access relationships are normalized and constrained.
 - **AD-015 — CLI verification is mandatory for every stage.** Documentation/design review alone cannot produce a full PASS. Use DESIGN PASS / CLI PASS / RUNTIME PASS / RELEASE PASS; unexecuted = `NOT YET VERIFIED`.
 - **AD-016 — Repository-owned handoff is mandatory.** `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md` and this log must be kept current so a new conversation can resume from repository evidence rather than chat memory.
+- **AD-017 — Full code becomes Student account identifier after first activation.** The original 6-digit full-access code preserves the legacy mental model as the returning identifier, but is never authentication by itself; password + server session are required.
+- **AD-018 — Activation account creation is one transaction.** Profile, scrypt credential, all-content entitlement, code ownership/redemption and audit events either commit together or roll back together.
+- **AD-019 — Stage integration suites use isolated databases.** Auth, Access and Activation integration gates do not share mutable test state; broad cross-feature E2E belongs to an explicit integration/release gate.
 
 ## Changes Made
 
@@ -147,17 +152,7 @@ CLI caught a real Mint-token drift; source tokens were fixed rather than weakeni
 ### Stage 3 — UX Architecture
 **CLI PASS.**
 
-Implemented:
-- Admin operational IA;
-- Student five-destination mobile IA;
-- legacy-to-target mapping;
-- critical Admin/Student flows;
-- loading/empty/error/offline/stale/permission/destructive states;
-- responsive/navigation/accessibility contracts;
-- Admin/Student SVG wireframes;
-- UX parity review.
-
-`scripts/verify-ux.py` checks required contracts, coverage rows, product feature-ID inventory, DoD state and SVG validity.
+Implemented Admin/Student IA, legacy mapping, critical flows, loading/empty/error/offline/permission states, responsive/accessibility contracts, wireframes and UX parity checks. `scripts/verify-ux.py` enforces the documented contracts.
 
 ### Stage 4 — PostgreSQL Data Platform
 **CLI/RUNTIME PASS on PostgreSQL 16.**
@@ -167,47 +162,25 @@ Decision:
 - private DB; no browser DB connection;
 - clean-slate schema; Supabase is not the target.
 
-Canonical migrations now include:
+Canonical migrations:
 - `0001_core.sql` — profiles, classes, subjects, subject-class links, lessons, ordered assets.
 - `0002_access.sql` — exact 6/7-digit code base and entitlement/redemption model.
 - `0003_learning.sql` — quizzes/versions/questions/options, persisted question/option order, answers, attempts, saved questions, achievements, notifications.
 - `0004_ai_and_sync.sql` — durable AI jobs/units/outputs and content revision/tombstone/sync checkpoint model.
 - `0005_auth.sql` — credentials/sessions/recovery/login security support.
-- `0006_access_contract.sql` — Stage 7 access durations/auditing/active entitlement uniqueness and strengthened constraints.
+- `0006_access_contract.sql` — access durations/auditing/active entitlement uniqueness and strengthened constraints.
+- `0007_activation_contract.sql` — one-redemption-per-code DB indexes, stronger redeemed ownership constraints and `account_activated` auth event.
 
-Integrity guarantees include:
-- lesson subject belongs to class through relational FK;
-- asset position unique per lesson;
-- answer option must be an option actually presented for same session/question;
-- current practice question belongs to session;
-- attempt profile/session/version/quiz relationships are cross-constrained;
-- score percentage generated from counts;
-- active entitlement uniqueness.
+Integrity guarantees include relational lesson ownership/order, persisted practice ordering, answer/session cross-record constraints, server-generated score percentage, active-entitlement uniqueness and one access redemption per individual code.
 
-Operations:
-- `database/deploy/roles.sql.example`;
-- `database/BACKUP_RESTORE.md`;
-- `database/SCHEMA.md`;
-- `database/tests/schema_smoke.sql`;
-- `database/tests/run.sh`.
+Operations include DB role template, backup/restore runbook, schema documentation and clean-PostgreSQL smoke tests.
 
 ### Stage 5 — Engineering Foundation
 **CLI/RUNTIME PASS.**
 
-Implemented:
-- real `apps/api` runtime;
-- PostgreSQL pool and transaction boundary;
-- migration runner and applied-migration tracking;
-- idempotent rerun behavior;
-- environment validation;
-- structured public error envelope/logging foundation;
-- reproducible API install/build path;
-- lint + strict TypeScript + unit tests + production API build;
-- production builds for Admin and Student shells;
-- CI stage gate.
+Implemented real `apps/api`, PostgreSQL pool/transactions, migration runner/idempotency, environment validation, error/logging foundation, strict TypeScript/unit/build path, separate Admin/Student production builds and CI.
 
-Failure caught and fixed:
-- new Admin/Student Vite builds were inheriting legacy root PostCSS/Tailwind config. PostCSS configuration was isolated per new application rather than carrying old build coupling forward.
+Failure caught and fixed: new apps inherited legacy root PostCSS/Tailwind config; new application PostCSS boundaries were isolated.
 
 ### Stage 6 — Auth & Authorization
 **CLI/RUNTIME PASS.**
@@ -219,51 +192,81 @@ Implemented and tested:
 - role isolation for Admin/Student;
 - mutation-origin protection foundation;
 - PostgreSQL-backed login attempt/lockout state;
-- one-time recovery flow that resets credentials and never reveals original password;
-- password change/recovery invalidates existing sessions;
+- one-time recovery/reset that never reveals original password;
+- password reset invalidates existing sessions;
 - explicit first-admin CLI bootstrap only; no default/public bootstrap.
 
-Integration gate verifies on PostgreSQL:
-- bootstrap works once and refuses repeat;
-- login/session lifecycle;
-- recovery/reset behavior;
-- Student/Admin role isolation.
+Integration gate verifies bootstrap once/refusal on repeat, login/session lifecycle, recovery/reset and Student/Admin role isolation.
 
 Strict TypeScript issues in scrypt wrapper/optional types/Fastify test headers were caught and fixed before runtime closure.
 
 ### Stage 7 — Access Codes & Entitlements
 **CLI/RUNTIME PASS.**
 
-Implemented:
-- cryptographically secure 6-digit full-access and 7-digit class-access generation via server cryptography;
-- Arabic/Persian digit normalization;
-- entitlement duration stored with code;
-- transactional row-locked redemption;
-- advisory-lock idempotency;
-- idempotency lookup bound to the same profile;
-- finite renewal extends existing entitlement instead of creating conflicting active grants;
-- no-waste rule: class code is not consumed if active full access already covers the student;
-- Admin revoke flow;
-- access audit events;
-- code generation + audit event in the same transaction;
-- unique active entitlement constraints.
+Implemented secure 6/7 digit generation, Arabic/Persian normalization, duration per code, row-locked transactional redemption, profile-bound idempotency, finite renewal extension, no-waste Class behavior under Full access, revoke, audit events and active-entitlement uniqueness.
 
-Integration gate covers:
-- code generation;
-- Arabic/Persian digits;
-- first redemption;
-- idempotent replay;
-- renewal extension;
-- revoke;
-- no-waste class code behavior under full access;
-- concurrent redemption race proving only one competing claimant succeeds.
+Integration gate covers generation, Arabic digits, first redemption, replay, renewal, revoke, no-waste and concurrent competing redemption.
 
 Runtime failures caught and fixed before PASS:
-1. `durationDays` default had to be made explicit at the TypeScript boundary (`?? 365`).
-2. PostgreSQL enum inference in a UNION-based audit insert failed; query was simplified instead of patched with unnecessary complexity.
-3. `jsonb_build_object` could not infer duration parameter type; SQL now uses explicit integer typing.
-4. code generation/audit was strengthened to be atomic.
-5. idempotency ownership was strengthened so another profile cannot obtain a prior result by reusing a known key.
+1. `durationDays` default made explicit at TypeScript boundary.
+2. PostgreSQL enum inference in UNION audit insert failed; query simplified.
+3. `jsonb_build_object` parameter got explicit integer type.
+4. code generation + audit made atomic.
+5. idempotency ownership bound to same profile.
+
+### Stage 8 Backend — Student Activation & Account Flow
+**CLI/RUNTIME PASS for backend; Stage 8 overall remains IN PROGRESS pending parallel UI + integrated E2E.**
+
+Branch/PR:
+- `rebuild/student-activation-backend`
+- PR #6 stacked on `rebuild/access-entitlements`.
+
+Canonical API contract: `docs/api/STUDENT_ACTIVATION_CONTRACT.md`.
+
+Implemented:
+- `POST /v1/student/activate` accepting 6-digit Full code + password + stable idempotency key;
+- original Full code becomes normalized returning account identifier;
+- Arabic/Persian digit normalization;
+- cheap code preflight before expensive password hashing;
+- second code validation under `FOR UPDATE` inside transaction;
+- Student profile creation;
+- salted scrypt credential creation;
+- all-content entitlement creation from the code duration;
+- redeemed-code ownership binding;
+- access redemption/idempotency record;
+- access and auth audit events;
+- post-commit session establishment through canonical `AuthService.login`;
+- idempotent replay returns same account/entitlement but still requires password proof before a fresh session;
+- safe returning login through existing `/v1/auth/login`;
+- recovery stays reset-only and never reveals original password.
+
+Migration `0007_activation_contract.sql` adds:
+- `ux_access_redemptions_full_code_once`;
+- `ux_access_redemptions_class_code_once`;
+- redeemed state requires both timestamp and owner profile;
+- `account_activated` auth audit event.
+
+Stage 8 integration test verifies:
+- missing code rejected with no account;
+- revoked and time-expired code rejected;
+- Arabic-digit activation succeeds;
+- session immediately authenticates Student;
+- entitlement is visible after activation;
+- password stored only as scrypt hash;
+- code is bound/redeemed exactly once;
+- activation/login audit events exist;
+- wrong-password replay does not receive session;
+- correct idempotent replay returns same profile/entitlement;
+- idempotency key cannot be reused with another code;
+- already-used code with new key fails;
+- logout then returning login with Arabic digits works;
+- concurrent activation race yields one success and one conflict, one account and one redemption;
+- an artificial credential-identifier conflict rolls back profile creation and leaves code unconsumed.
+
+Failures/quality findings caught while closing Stage 8 backend:
+1. First Stage 8 CI run failed Biome import ordering/formatting only; source was formatted without weakening lint.
+2. Next full run showed Stage 8 itself green but Stage 6 red because Stage 6's broad `test:integration` command picked up Auth + Access + Activation tests concurrently against one mutable DB. Activation test observed unrelated profile rows (`8 !== 5`). This was a **test-isolation defect, not an Auth regression**.
+3. CI now runs `auth.integration.test.ts`, `access.integration.test.ts` and `activation.integration.test.ts` in their stage-specific PostgreSQL databases. The next full run was green.
 
 ## Tests & Verification
 
@@ -273,64 +276,65 @@ See:
 - `.github/workflows/rebuild-stage-verification.yml`
 - `PROJECT_HANDOFF.md`
 
-### Latest verified baseline
+### Latest verified backend baseline
 
-- Branch: `rebuild/access-entitlements`
-- Commit: `0a7929daf2f79baccca31b8110a6c6e372d49024`
-- GitHub Actions run: `33288330856`
-- Result: **Stages 1–7 SUCCESS**.
+- Branch: `rebuild/student-activation-backend`
+- Commit: `a87c7f766481708e018dcaa1ae6e6643c0667fef`
+- GitHub Actions run: `33289741640`
+- Result: **Stages 1–8 backend jobs SUCCESS**.
 
-The same full run verified:
+The full run verifies:
 - Stage 1 product contract — PASS;
 - Stage 2 brand — PASS;
 - Stage 3 UX — PASS;
 - Stage 4 clean PostgreSQL build/migrations/schema tests — PASS;
 - Stage 5 lint/typecheck/unit/API build/migration runner/Admin build/Student build — PASS;
-- Stage 6 auth unit + PostgreSQL integration lifecycle/role tests — PASS;
-- Stage 7 access unit + migrations/constraints + lifecycle/renewal/idempotency/race integration — PASS.
+- Stage 6 auth unit + isolated PostgreSQL auth lifecycle/role tests — PASS;
+- Stage 7 access unit + migrations/constraints + isolated lifecycle/renewal/idempotency/race integration — PASS;
+- Stage 8 activation lint + strict typecheck + unit suite + migrations/invariants + isolated atomicity/replay/session/race integration — PASS.
 
 No unexecuted item is represented as passed.
 
 ## Known Issues / Remaining Risk
 
-- Stage 8 Student Activation is not implemented yet.
-- Quiz completion service still must derive authoritative result server-side from persisted answers; client scores will not be trusted.
-- Object storage/media provider is not implemented yet; DB stores canonical asset keys/metadata contracts only.
+- **Stage 8 overall is not complete:** parallel Student Activation UI and combined browser E2E are `NOT YET VERIFIED` in this branch.
+- API/reverse-proxy activation perimeter rate limiting remains a later security gate; the six-digit business code has intentionally limited entropy and must be protected operationally.
+- Quiz completion service still must derive authoritative results server-side; client scores will not be trusted.
+- Object storage/media provider is not implemented yet.
 - `alwaslh-go` full inventory/import is not yet verified.
 - PostgreSQL CI proves clean runtime execution, not actual-host tuning/load/network readiness.
 - Real hosting backup + restore drill remains `NOT YET VERIFIED`.
 - AI prompt contracts, Gemini workers/failover/golden tests remain `NOT YET VERIFIED`.
-- Admin/Student product shells are scaffolds; complete product screens/E2E are not done.
+- Admin/Student learning product shells are not complete product implementations.
 - Offline account-scoped sync/outbox/service-worker lifecycle is not implemented.
 - Legacy application remains NO-GO and only a behavior/feature reference.
 
 ## Remaining Work
 
-1. **Stage 8 — Student Activation & Account Flow:** first activation, returning student path, atomic account/profile/credential/entitlement creation, activation idempotency/races, invalid/expired/revoked/redeemed-code behavior, session establishment, PostgreSQL integration tests.
-2. Content domain/API and deterministic `alwaslh-go` inventory/import.
-3. Ordered Media/PDF pipeline with checksum/count/order tests.
-4. Admin content management implementation.
-5. Versioned AI contracts/Prompt Registry + semantic/golden tests.
-6. Durable Gemini workers/retries/failover/cancel/resume/observability + AI Ops.
-7. Quiz domain + shared PracticeEngine + trusted completion service.
-8. Student reader/quizzes/notes/progress/notifications.
+1. **Finish Stage 8:** verify parallel `rebuild/student-activation-ui`, reconcile to `docs/api/STUDENT_ACTIVATION_CONTRACT.md`, integrate Backend + UI and run combined lint/typecheck/tests/build + browser/API E2E for activation/login/recovery states.
+2. **Stage 9:** Content model/API and deterministic `alwaslh-go` inventory/import.
+3. **Stage 10:** Ordered Media/PDF pipeline with checksum/count/order tests.
+4. **Stage 11:** Versioned AI contracts/Prompt Registry + semantic/golden tests.
+5. **Stage 12:** Durable Gemini workers/retries/failover/cancel/resume/observability + AI Ops.
+6. Admin product implementation.
+7. Student learning product + reader/quizzes/notes/progress/notifications.
+8. Shared PracticeEngine + trusted completion service.
 9. Offline Sync Engine + PWA/service worker + attempt outbox.
-10. Admin access/student/report/export surfaces.
-11. Design-system completion/shared UI/accessibility.
-12. Performance/security/observability hardening.
-13. Actual-host PostgreSQL tuning/load/network, backup/restore drill, staging, browser E2E, release/rollback gates.
-14. Release only after Feature Parity is fully evidenced.
+10. Reports/exports, performance/security/observability/accessibility hardening.
+11. Actual-host PostgreSQL tuning/load/network, backup/restore drill, staging, browser E2E, release/rollback gates.
+12. Release only after Feature Parity is fully evidenced.
 
 ## Documentation / Continuity Protocol
 
 At every meaningful implementation batch:
 
 - update this log with decisions, findings, failures/fixes and verification;
-- update `PROJECT_STATUS.md` with the current stage, completed/remaining work, blockers, last build/test and next action;
+- update `PROJECT_STATUS.md` with current stage, completed/remaining work, blockers, last build/test and next action;
 - update `PROJECT_HANDOFF.md` whenever architecture, business rules, branches/PRs, verified baseline or next-stage scope changes;
+- keep `MASTER_REBUILD_ROADMAP.md` numbering synchronized with actual staged execution;
 - retain exact CI evidence and failed checks/fixes;
 - mark anything not actually executed as `NOT YET VERIFIED`.
 
 ## Current State
 
-**Stages 1–7 are CLI/runtime verified on the latest Stage 7 baseline. Stage 8 Student Activation & Account Flow is next.**
+**Stages 1–7 are complete and CLI/runtime verified. Stage 8 Backend is CLI/runtime verified; Stage 8 remains active until the parallel Student Activation UI and combined E2E are green. Do not start Stage 9 before that integration gate closes.**
