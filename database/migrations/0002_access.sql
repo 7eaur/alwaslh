@@ -54,6 +54,7 @@ CREATE TABLE student_entitlements (
   revoked_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT student_entitlements_profile_id_id_unique UNIQUE (profile_id, id),
   CONSTRAINT student_entitlements_scope_shape CHECK (
     (scope = 'all_content' AND class_id IS NULL)
     OR
@@ -74,10 +75,13 @@ CREATE TABLE access_redemptions (
   code_type access_code_type NOT NULL,
   full_access_code_id uuid REFERENCES full_access_codes(id) ON DELETE RESTRICT,
   class_access_code_id uuid REFERENCES class_access_codes(id) ON DELETE RESTRICT,
-  entitlement_id uuid NOT NULL REFERENCES student_entitlements(id) ON DELETE RESTRICT,
+  entitlement_id uuid NOT NULL,
   idempotency_key text NOT NULL UNIQUE,
   redeemed_at timestamptz NOT NULL DEFAULT now(),
   request_metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  CONSTRAINT access_redemptions_profile_entitlement_fk
+    FOREIGN KEY (profile_id, entitlement_id)
+    REFERENCES student_entitlements(profile_id, id) ON DELETE RESTRICT,
   CONSTRAINT access_redemptions_code_shape CHECK (
     (code_type = 'full_access' AND full_access_code_id IS NOT NULL AND class_access_code_id IS NULL)
     OR
