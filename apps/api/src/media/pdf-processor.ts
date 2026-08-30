@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -30,7 +30,8 @@ function parsePageCount(output: string): number {
   const match = output.match(/^Pages:\s+(\d+)$/m);
   if (!match) throw new Error("pdf_inspection_failed");
   const pages = Number(match[1]);
-  if (!Number.isInteger(pages) || pages < 1 || pages > MAX_PDF_PAGES) throw new Error("pdf_page_limit_exceeded");
+  if (!Number.isInteger(pages) || pages < 1 || pages > MAX_PDF_PAGES)
+    throw new Error("pdf_page_limit_exceeded");
   return pages;
 }
 
