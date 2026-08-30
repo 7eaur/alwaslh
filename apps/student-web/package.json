@@ -10,7 +10,7 @@
     "dev": "vite",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
-    "test": "vitest run",
+    "test": "vitest run src",
     "test:e2e": "playwright test",
     "prebuild": "npm run lint && npm test",
     "build": "tsc -b && vite build",
