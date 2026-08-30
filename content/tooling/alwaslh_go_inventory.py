@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build a deterministic inventory for the pinned 7eaur/alwaslh-go source repository.
 
-The inventory reads Git tree metadata for image identity/size and lazily reads only
-small manifest.json blobs. Image bytes are intentionally not downloaded in Stage 9.
+Only Git tree metadata and small manifest blobs are read. Curriculum image bytes are
+not materialized during Stage 9 inventory verification.
 """
 
 from __future__ import annotations
@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import posixpath
 import re
 import subprocess
@@ -34,7 +33,6 @@ MIME_TYPES = {
     ".png": "image/png",
 }
 
-# Lower rank sorts earlier when a source document mixes naming families.
 FAMILY_PATTERNS: tuple[tuple[str, int, re.Pattern[str]], ...] = (
     ("preliminary", 0, re.compile(r"^تمهيدي\s*([0-9]+)(?:\s*-\s*(.*))?$", re.IGNORECASE)),
     ("front", 1, re.compile(r"^front\s*([0-9]+)(?:\s*-\s*(.*))?$", re.IGNORECASE)),
@@ -54,24 +52,15 @@ def normalize_source_path(value: str) -> str:
 
 
 def parse_image_filename(filename: str) -> dict[str, Any] | None:
-    """Parse one known page-image naming family.
-
-    Returns deterministic family/rank/number/title metadata or None for an unknown
-    naming convention. Extension validation is deliberately separate.
-    """
-
-    normalized = nfc(filename)
-    stem = PurePosixPath(normalized).stem
+    stem = PurePosixPath(nfc(filename)).stem
     for family, rank, pattern in FAMILY_PATTERNS:
         match = pattern.fullmatch(stem)
         if match:
-            number = int(match.group(1))
-            title = (match.group(2) or "").strip()
             return {
                 "family": family,
                 "familyRank": rank,
-                "number": number,
-                "titleHint": title or None,
+                "number": int(match.group(1)),
+                "titleHint": (match.group(2) or "").strip() or None,
             }
     return None
 
@@ -90,13 +79,11 @@ def classify_document(unit_name: str, subject_slug: str) -> dict[str, Any]:
     year_match = re.search(r"(?<![0-9])(14[0-9]{2})(?![0-9])", normalized)
     hijri_year = int(year_match.group(1)) if year_match else None
     exam_track: str | None = None
-
     if is_exam and subject_slug == "mathematics":
         if "التفاضل" in normalized or "التكامل" in normalized:
             exam_track = "calculus"
         elif "الجبر" in normalized or "الهندس" in normalized:
             exam_track = "algebra_geometry"
-
     return {
         "kind": "government_exam" if is_exam else "textbook",
         "hijriYear": hijri_year if is_exam else None,
@@ -178,14 +165,48 @@ def add_issue(issues: dict[str, list[Any]], kind: str, payload: Any) -> None:
 
 def resolve_manifest_path(manifest_path: str, relative_path: str) -> str:
     parent = posixpath.dirname(manifest_path)
-    relative = normalize_source_path(relative_path)
-    resolved = posixpath.normpath(posixpath.join(parent, relative))
+    resolved = posixpath.normpath(posixpath.join(parent, normalize_source_path(relative_path)))
     return normalize_source_path(resolved)
 
 
-def manifest_metadata(entry: dict[str, Any]) -> dict[str, Any]:
-    allowed = ("seq", "source_page", "book_page", "section", "title", "original_name", "new_name")
-    return {key: entry.get(key) for key in allowed if key in entry}
+def normalize_manifest_entry(entry: dict[str, Any]) -> dict[str, Any] | None:
+    """Normalize both real manifest schemas found in the pinned source tree."""
+    seq = entry.get("seq")
+    relative_path = entry.get("relative_path")
+    if isinstance(seq, int) and seq > 0 and isinstance(relative_path, str) and relative_path.strip():
+        return {
+            "seq": seq,
+            "relative_path": relative_path,
+            "new_name": entry.get("new_name"),
+            "metadata": {
+                key: entry.get(key)
+                for key in ("seq", "source_page", "book_page", "section", "title", "original_name", "new_name")
+                if key in entry
+            },
+        }
+
+    arabic_seq = entry.get("م")
+    image_name = entry.get("اسم الصورة")
+    if isinstance(arabic_seq, int) and arabic_seq > 0 and isinstance(image_name, str) and image_name.strip():
+        return {
+            "seq": arabic_seq,
+            "relative_path": f"الصور/{image_name}",
+            "new_name": image_name,
+            "metadata": {
+                "seq": arabic_seq,
+                "source_page": entry.get("رقم صفحة PDF"),
+                "book_page": entry.get("رقم الصفحة في الكتاب"),
+                "title": entry.get("عنوان الدرس/الصفحة"),
+                "new_name": image_name,
+                "width": entry.get("العرض"),
+                "height": entry.get("الارتفاع"),
+                "source_size_kb": entry.get("حجم المصدر KB"),
+                "image_size_kb": entry.get("حجم الصورة KB"),
+                "savings_percent": entry.get("التوفير %"),
+                "schema": "arabic_processing_manifest",
+            },
+        }
+    return None
 
 
 def order_with_manifest(
@@ -222,20 +243,20 @@ def order_with_manifest(
         if not isinstance(raw_entry, dict):
             add_issue(issues, "manifestErrors", {"document": document_path, "problem": "manifest entry is not an object"})
             continue
-        seq = raw_entry.get("seq")
-        relative_path = raw_entry.get("relative_path")
-        if not isinstance(seq, int) or seq <= 0 or not isinstance(relative_path, str) or not relative_path.strip():
+        entry = normalize_manifest_entry(raw_entry)
+        if entry is None:
             add_issue(
                 issues,
                 "manifestErrors",
-                {"document": document_path, "entry": raw_entry, "problem": "entry requires positive integer seq and relative_path"},
+                {"document": document_path, "entry": raw_entry, "problem": "unsupported manifest entry schema"},
             )
             continue
+        seq = entry["seq"]
         if seq in seen_seq:
             add_issue(issues, "manifestErrors", {"document": document_path, "seq": seq, "problem": "duplicate seq"})
             continue
         seen_seq.add(seq)
-        resolved = resolve_manifest_path(manifest_blob["path"], relative_path)
+        resolved = resolve_manifest_path(manifest_blob["path"], entry["relative_path"])
         image = image_by_path.get(resolved)
         if image is None:
             add_issue(
@@ -253,7 +274,7 @@ def order_with_manifest(
             continue
         seen_paths.add(resolved)
 
-        new_name = raw_entry.get("new_name")
+        new_name = entry.get("new_name")
         if isinstance(new_name, str) and new_name and nfc(new_name) != nfc(image["filename"]):
             add_issue(
                 issues,
@@ -262,7 +283,7 @@ def order_with_manifest(
                     "document": document_path,
                     "seq": seq,
                     "path": resolved,
-                    "problem": "new_name does not match image basename",
+                    "problem": "manifest image name does not match basename",
                     "newName": new_name,
                     "filename": image["filename"],
                 },
@@ -272,11 +293,10 @@ def order_with_manifest(
         if parsed is None:
             add_issue(issues, "unparsedAssets", {"document": document_path, "path": image["path"]})
             parsed = {"family": "unparsed", "familyRank": 99, "number": seq, "titleHint": None}
-
         item = dict(image)
         item["parsed"] = parsed
         item["sourceOrder"] = seq - 1
-        item["manifestMetadata"] = manifest_metadata(raw_entry)
+        item["manifestMetadata"] = entry["metadata"]
         ordered.append(item)
 
     expected_seq = list(range(1, len(manifest) + 1))
@@ -286,7 +306,6 @@ def order_with_manifest(
             "manifestErrors",
             {"document": document_path, "problem": "manifest seq is not contiguous from 1", "observed": sorted(seen_seq)},
         )
-
     missing_from_manifest = sorted(set(image_by_path) - seen_paths)
     if missing_from_manifest:
         add_issue(
@@ -294,7 +313,6 @@ def order_with_manifest(
             "manifestErrors",
             {"document": document_path, "problem": "source images missing from manifest", "paths": missing_from_manifest},
         )
-
     ordered.sort(key=lambda item: (item["sourceOrder"], item["path"]))
     return ordered
 
@@ -306,7 +324,6 @@ def order_without_manifest(
 ) -> list[dict[str, Any]]:
     prepared: list[dict[str, Any]] = []
     family_numbers: dict[str, list[int]] = defaultdict(list)
-
     for image in images:
         parsed = parse_image_filename(image["filename"])
         if parsed is None:
@@ -352,11 +369,11 @@ def order_without_manifest(
 
 
 def public_asset(item: dict[str, Any]) -> dict[str, Any]:
-    parsed = item["parsed"]
-    extension = item["extension"]
     metadata: dict[str, Any] = {}
     if item.get("manifestMetadata") is not None:
         metadata["manifest"] = item["manifestMetadata"]
+    parsed = item["parsed"]
+    extension = item["extension"]
     return {
         "sourcePath": item["path"],
         "filename": item["filename"],
@@ -390,18 +407,12 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
         "otherFiles": [],
         "duplicateBlobGroups": [],
     }
-
     if revision != configured_revision:
-        add_issue(
-            issues,
-            "sourceRevisionErrors",
-            {"expected": configured_revision, "observed": revision},
-        )
+        add_issue(issues, "sourceRevisionErrors", {"expected": configured_revision, "observed": revision})
 
     subject_entries = config.get("subjects")
     if not isinstance(subject_entries, list) or not subject_entries:
         raise ValueError("source map requires a non-empty subjects array")
-
     subjects_by_root: dict[str, dict[str, Any]] = {}
     for subject in subject_entries:
         if not isinstance(subject, dict) or not isinstance(subject.get("sourceRoot"), str):
@@ -416,39 +427,29 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
     subject_image_counts: Counter[str] = Counter()
     extension_counts: Counter[str] = Counter()
     helper_count = 0
-    mapped_image_paths: set[str] = set()
-
     for blob in blobs:
         path = blob["path"]
         parts = path.split("/")
         root = parts[0] if parts else ""
-        extension = blob["extension"]
-        is_image = extension in IMAGE_EXTENSIONS
-
+        is_image = blob["extension"] in IMAGE_EXTENSIONS
         if root not in subjects_by_root:
             if is_image:
                 add_issue(issues, "unmappedImages", {"path": path})
             continue
-
         if len(parts) < 2:
             if is_image:
                 add_issue(issues, "unmappedImages", {"path": path, "problem": "image has no source-unit directory"})
             continue
-
-        unit = parts[1]
-        unit_files[(root, unit)].append(blob)
-
+        unit_files[(root, parts[1])].append(blob)
         if is_image:
-            mapped_image_paths.add(path)
             subject_image_counts[root] += 1
-            extension_counts[extension] += 1
+            extension_counts[blob["extension"]] += 1
         elif blob["filename"] in HELPER_BASENAMES:
             helper_count += 1
-        elif len(parts) >= 2:
+        else:
             add_issue(issues, "otherFiles", {"path": path})
 
     documents: list[dict[str, Any]] = []
-
     for (root, unit), files in sorted(unit_files.items(), key=lambda item: (item[0][0], item[0][1])):
         images = [item for item in files if item["extension"] in IMAGE_EXTENSIONS]
         if not images:
@@ -457,7 +458,6 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
         subject = subjects_by_root[root]
         classification = classify_document(unit, str(subject["subjectSlug"]))
         document_path = f"{root}/{unit}"
-
         if classification["kind"] == "government_exam" and classification["hijriYear"] is None:
             add_issue(
                 issues,
@@ -465,20 +465,19 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
                 {"document": document_path, "problem": "government exam has no parseable Hijri year"},
             )
 
-        manifest_helpers = [item for item in helpers if item["filename"] == "manifest.json"]
-        if len(manifest_helpers) > 1:
+        manifests = [item for item in helpers if item["filename"] == "manifest.json"]
+        if len(manifests) > 1:
             add_issue(
                 issues,
                 "manifestErrors",
-                {"document": document_path, "problem": "multiple manifest.json files", "paths": [x["path"] for x in manifest_helpers]},
+                {"document": document_path, "problem": "multiple manifest.json files", "paths": [x["path"] for x in manifests]},
             )
             ordered = order_without_manifest(document_path, images, issues)
-        elif len(manifest_helpers) == 1:
-            ordered = order_with_manifest(repo, document_path, images, manifest_helpers[0], issues)
+        elif len(manifests) == 1:
+            ordered = order_with_manifest(repo, document_path, images, manifests[0], issues)
         else:
             ordered = order_without_manifest(document_path, images, issues)
 
-        asset_parent_paths = sorted({posixpath.dirname(item["path"]) for item in images})
         documents.append(
             {
                 "sourcePath": document_path,
@@ -492,19 +491,18 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
                 "examTrack": classification["examTrack"],
                 "position": 0,
                 "helperFiles": sorted(item["path"] for item in helpers),
-                "sourceMetadata": {"assetParentPaths": asset_parent_paths},
+                "sourceMetadata": {"assetParentPaths": sorted({posixpath.dirname(item["path"]) for item in images})},
                 "assets": [public_asset(item) for item in ordered],
             }
         )
 
-    documents_by_subject: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for document in documents:
-        documents_by_subject[(document["classSlug"], document["subjectSlug"])].append(document)
-    for grouped_documents in documents_by_subject.values():
-        grouped_documents.sort(key=document_sort_key)
-        for position, document in enumerate(grouped_documents):
+        grouped[(document["classSlug"], document["subjectSlug"])].append(document)
+    for subject_documents in grouped.values():
+        subject_documents.sort(key=document_sort_key)
+        for position, document in enumerate(subject_documents):
             document["position"] = position
-
     subject_order = {subject["sourceRoot"]: index for index, subject in enumerate(subject_entries)}
     documents.sort(
         key=lambda document: (
@@ -517,35 +515,24 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
     expected = config.get("expected", {})
     observed_subject_roots = sum(1 for root in subjects_by_root if subject_image_counts[root] > 0)
     image_count = sum(extension_counts.values())
+    canonical_asset_count = sum(len(document["assets"]) for document in documents)
 
     def expect_equal(label: str, observed: Any, expected_value: Any) -> None:
         if expected_value is not None and observed != expected_value:
-            add_issue(
-                issues,
-                "expectedCountErrors",
-                {"metric": label, "expected": expected_value, "observed": observed},
-            )
+            add_issue(issues, "expectedCountErrors", {"metric": label, "expected": expected_value, "observed": observed})
 
     expect_equal("subjectRoots", observed_subject_roots, expected.get("subjectRoots"))
     expect_equal("documents", len(documents), expected.get("documents"))
     expect_equal("images", image_count, expected.get("images"))
+    expect_equal("canonicalAssets", canonical_asset_count, image_count)
     expect_equal("helperFiles", helper_count, expected.get("helperFiles"))
-
     expected_extensions = expected.get("extensions", {})
     if isinstance(expected_extensions, dict):
         for extension, expected_count in sorted(expected_extensions.items()):
             expect_equal(f"extensions.{extension}", extension_counts.get(extension, 0), expected_count)
-        unexpected_extensions = {
-            extension: count
-            for extension, count in sorted(extension_counts.items())
-            if extension not in expected_extensions and count > 0
-        }
-        if unexpected_extensions:
-            add_issue(
-                issues,
-                "expectedCountErrors",
-                {"metric": "unexpectedExtensions", "observed": unexpected_extensions},
-            )
+        unexpected = {k: v for k, v in sorted(extension_counts.items()) if k not in expected_extensions and v > 0}
+        if unexpected:
+            add_issue(issues, "expectedCountErrors", {"metric": "unexpectedExtensions", "observed": unexpected})
 
     per_subject: list[dict[str, Any]] = []
     for subject in subject_entries:
@@ -576,7 +563,7 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
         if len(paths) > 1:
             issues["duplicateBlobGroups"].append({"sourceGitBlobSha1": sha, "paths": sorted(paths)})
 
-    fatal_issue_kinds = (
+    fatal_kinds = (
         "sourceRevisionErrors",
         "unmappedImages",
         "unparsedAssets",
@@ -585,8 +572,7 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
         "classificationErrors",
         "expectedCountErrors",
     )
-    fatal_issue_count = sum(len(issues[kind]) for kind in fatal_issue_kinds)
-
+    fatal_count = sum(len(issues[kind]) for kind in fatal_kinds)
     summary = {
         "subjectRoots": observed_subject_roots,
         "documents": len(documents),
@@ -599,24 +585,19 @@ def build_inventory(repo: Path, config: dict[str, Any]) -> tuple[dict[str, Any],
         "duplicateBlobGroups": len(issues["duplicateBlobGroups"]),
         "duplicateBlobAssets": sum(len(group["paths"]) for group in issues["duplicateBlobGroups"]),
         "otherFiles": len(issues["otherFiles"]),
-        "fatalIssues": fatal_issue_count,
+        "fatalIssues": fatal_count,
         "perSubject": per_subject,
     }
-
-    payload_without_digest = {
+    payload = {
         "schemaVersion": 1,
-        "source": {
-            "repository": config["sourceRepository"],
-            "revision": revision,
-        },
+        "source": {"repository": config["sourceRepository"], "revision": revision},
         "summary": summary,
         "issues": issues,
         "documents": documents,
     }
-    digest = hashlib.sha256(canonical_bytes(payload_without_digest)).hexdigest()
-    inventory = dict(payload_without_digest)
-    inventory["manifestSha256"] = digest
-    return inventory, fatal_issue_count == 0
+    inventory = dict(payload)
+    inventory["manifestSha256"] = hashlib.sha256(canonical_bytes(payload)).hexdigest()
+    return inventory, fatal_count == 0
 
 
 def write_json(path: Path, payload: Any) -> None:
@@ -627,22 +608,21 @@ def write_json(path: Path, payload: Any) -> None:
 
 
 def compact_summary(inventory: dict[str, Any]) -> dict[str, Any]:
-    issues = inventory["issues"]
     return {
         "schemaVersion": inventory["schemaVersion"],
         "source": inventory["source"],
         "manifestSha256": inventory["manifestSha256"],
         "summary": inventory["summary"],
-        "issueCounts": {key: len(value) for key, value in sorted(issues.items())},
+        "issueCounts": {key: len(value) for key, value in sorted(inventory["issues"].items())},
     }
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo", required=True, type=Path, help="Local Git checkout of alwaslh-go")
-    parser.add_argument("--config", required=True, type=Path, help="Pinned source-map JSON")
-    parser.add_argument("--output", required=True, type=Path, help="Full canonical inventory JSON")
-    parser.add_argument("--summary", type=Path, help="Optional compact summary JSON")
+    parser.add_argument("--repo", required=True, type=Path)
+    parser.add_argument("--config", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--summary", type=Path)
     return parser.parse_args(argv)
 
 
@@ -652,19 +632,15 @@ def main(argv: list[str] | None = None) -> int:
     if not (repo / ".git").exists():
         print(f"ERROR: {repo} is not a Git checkout", file=sys.stderr)
         return 2
-
     try:
-        config = load_json(args.config)
-        inventory, valid = build_inventory(repo, config)
+        inventory, valid = build_inventory(repo, load_json(args.config))
     except Exception as error:
         print(f"ERROR: inventory failed: {error}", file=sys.stderr)
         return 2
-
     write_json(args.output, inventory)
     summary = compact_summary(inventory)
     if args.summary:
         write_json(args.summary, summary)
-
     print(json.dumps(summary, ensure_ascii=False, sort_keys=True, indent=2))
     if not valid:
         print("ERROR: Stage 9 inventory contract failed; inspect issues in the generated inventory.", file=sys.stderr)
