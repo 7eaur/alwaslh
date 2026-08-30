@@ -42,7 +42,7 @@ Routes:
 - `/admin` and `/admin/*` → Admin Web
 - `/api/*` → Fastify serverless API
 
-Root `vercel.json` runs `node scripts/build-vercel-preview.mjs`, outputs `dist-vercel`, and exposes `api/[...path].ts` as the serverless function.
+Root `vercel.json` runs `node scripts/build-vercel-preview.mjs`, outputs `dist-vercel`, and exposes `api/[...path].js` as the serverless function.
 
 Required Vercel environment variables:
 
@@ -95,11 +95,11 @@ Verified on Vercel before database environment variables were redeployed:
 
 ## Environment variable deployment checkpoint
 
-On 2026-08-30 the project owner configured the required Vercel environment variables. Secret values are intentionally not recorded here. This documentation commit exists partly to trigger a fresh Preview deployment so the new variables are captured by the runtime.
+On 2026-08-30 the project owner configured the required Vercel environment variables and then corrected `DATABASE_URL` to use the Supabase pooled PostgreSQL connection string. Secret values are intentionally not recorded here. This documentation commit exists partly to trigger a fresh Preview deployment so the corrected value is captured by the runtime.
 
 ## Not yet verified
 
-- API `/api/health` and `/api/ready` using the newly configured Supabase connection: **NOT YET VERIFIED** until the fresh deployment completes.
+- API `/api/health` and `/api/ready` using the corrected Supabase connection: **NOT YET VERIFIED** until the fresh deployment completes.
 - Browser activation/login against the live Vercel + Supabase environment: **NOT YET VERIFIED**.
 - Admin feature completeness follows the main rebuild roadmap and is not implied by preview hosting.
 - Media Storage adapter on Supabase belongs to Stage 10.
