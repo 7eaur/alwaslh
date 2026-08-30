@@ -50,7 +50,7 @@ jobs:
 
       - name: Verify Stage 9 unit contracts
         run: |
-          python3 -m unittest content.tests.test_alwaslh_go_inventory
+          python3 -m unittest discover -s content/tests -p 'test_*.py'
           npm run lint --prefix apps/api
           npm run typecheck --prefix apps/api
           npm test --prefix apps/api
@@ -66,7 +66,7 @@ jobs:
         run: |
           mkdir -p /tmp/alwaslh-stage9
           set +e
-          python3 content/tooling/alwaslh_go_inventory.py \
+          python3 content/tooling/alwaslh_go_manifest_compat.py \
             --repo /tmp/alwaslh-go \
             --config content/import-contracts/alwaslh-go-source-map.json \
             --output /tmp/alwaslh-stage9/inventory.json \
