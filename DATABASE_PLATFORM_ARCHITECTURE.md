@@ -4,7 +4,7 @@
 
 **Target database:** self-hosted PostgreSQL on the same production hosting/server environment as the backend services.
 
-Supabase is **not** the target platform for the rebuilt product. The existing Supabase project remains a **legacy migration source** only until all required data is reconciled and migrated.
+The rebuilt product is **clean-slate at the data-platform level**. The existing Supabase project is not a schema target and is not required for Stage 4 completion. The old project is used to preserve product idea, business scenarios, feature parity and useful content assets — not to constrain the new database design.
 
 ## Why this architecture
 
@@ -14,6 +14,7 @@ Supabase is **not** the target platform for the rebuilt product. The existing Su
 - Authentication, authorization, entitlement, AI jobs and writes are enforced server-side.
 - Database portability is preserved; the product is not coupled to a hosted proprietary Data API.
 - The same-hosting requirement reduces external platform dependency while keeping a clean service boundary.
+- We can model the product correctly from first principles instead of reproducing legacy ownership/RLS/schema mistakes.
 
 ## Target topology
 
@@ -27,7 +28,7 @@ Internet
       Backend API
           |
           +-- PostgreSQL (private network / localhost only)
-          +-- Object storage/media service
+          +-- Object/media storage
           +-- AI workers / job runners
 
 PostgreSQL is NOT exposed to public clients.
@@ -62,7 +63,7 @@ Passwords/secrets are created by deployment secret management and are never comm
 - Public TCP/5432 access is forbidden.
 - TLS is required if database traffic crosses hosts.
 - API uses a bounded connection pool.
-- Application connection limits must leave capacity for migrations, backups and operator sessions.
+- Application connection limits leave capacity for migrations, backups and operator sessions.
 - Long-running AI work never holds a SQL transaction while calling Gemini or processing media.
 
 ## Transaction rules
@@ -76,13 +77,13 @@ Transactions are mandatory for:
 - publishing a complete content import batch;
 - state transitions that must be idempotent.
 
-External calls (Auth provider, storage, Gemini) are never performed inside a PostgreSQL transaction. Use idempotency keys and compensating actions around those boundaries.
+External calls (Auth, storage, Gemini) are never performed inside a PostgreSQL transaction. Use idempotency keys and compensating actions around those boundaries.
 
 ## Canonical ownership
 
 Every student-owned server record references `profiles.id` (UUID). No student ownership key is a plaintext access code, browser fingerprint or device ID.
 
-`profiles.auth_subject` is a provider-neutral unique identity link. Stage 6 will define the final authentication implementation without requiring the product-domain schema to store plaintext/reversible credentials.
+`profiles.auth_subject` is a provider-neutral unique identity link. The authentication stage will define the final credential/session implementation without requiring the product-domain schema to store plaintext or reversibly encrypted passwords.
 
 ## Data domains
 
@@ -112,8 +113,14 @@ Every student-owned server record references `profiles.id` (UUID). No student ow
 - `practice_answers`
 - `quiz_attempts`
 - `saved_questions`
+- `achievement_definitions`
 - `student_achievements`
 - `notifications`
+
+### Offline synchronization
+- `content_revisions`
+- `content_tombstones`
+- `sync_checkpoints` (server/account metadata where required)
 
 ### AI operations
 - `ai_jobs`
@@ -129,9 +136,11 @@ Every student-owned server record references `profiles.id` (UUID). No student ow
 5. Lesson assets contain an explicit stable `position`; upload completion order never defines page order.
 6. Quiz questions use stable UUIDs; UI array index is never identity.
 7. Score is derived from recorded answers, not trusted from client input.
-8. AI outputs are not published without schema + semantic validation state.
-9. All important timestamps use `timestamptz` and UTC at the database boundary.
-10. Deletions that affect offline clients produce revision/tombstone information in the later sync subsystem.
+8. AI outputs are not publishable without schema + semantic validation state.
+9. All important timestamps use `timestamptz`; application/API boundaries operate in UTC.
+10. Deletions that affect offline clients create revision/tombstone information.
+11. Every uniqueness/business rule that can be safely guaranteed by PostgreSQL is represented as a constraint/index, not only application code.
+12. No JSONB is used as a substitute for relational structure where querying/integrity matters; JSONB is reserved for bounded metadata/configuration/snapshots.
 
 ## Migration strategy
 
@@ -140,34 +149,45 @@ Repository migrations under `database/migrations/` are the source of truth for t
 Rules:
 
 - append-only numbered migrations after release;
-- each migration must be rerunnable only when explicitly designed as idempotent;
+- migrations are reviewed like application code;
 - staging is built from zero using repository migrations;
 - production schema is never edited manually without a corresponding migration;
-- destructive migrations require backup + rehearsal + rollback/data recovery plan.
+- destructive migrations require backup + rehearsal + rollback/data recovery plan;
+- seed/demo data is separate from schema migrations.
 
-## Legacy Supabase migration source
+## Legacy project policy
 
-The old Supabase database is not repaired into the target schema. It will later be connected in read-only mode for:
+The previous project is a **product specification and feature/reference source**, not a database compatibility target.
 
-- schema/data inventory;
-- account/profile reconciliation;
-- class/subject/lesson mapping;
-- access/class-code migration;
-- quizzes/questions/attempts/progress migration;
-- notifications/achievements migration;
-- storage-object reference extraction.
+We preserve:
 
-Migration tooling must produce counts and reconciliation reports. Legacy IDs are recorded in migration mapping tables/tooling, not reused as unsafe ownership semantics.
+- product idea;
+- required Student/Admin scenarios;
+- activation-code semantics where intentionally retained;
+- lessons/quizzes/notes/offline/AI/export workflows;
+- useful curriculum/media assets from `alwaslh-go`.
+
+We do **not** preserve merely for compatibility:
+
+- legacy database IDs;
+- old RLS assumptions;
+- text-based student ownership keys;
+- plaintext/reversible credential structures;
+- duplicate entitlement models;
+- accidental schema drift;
+- unsafe triggers/functions/policies.
+
+If selected old content/data is imported later, it is transformed into the new canonical model through explicit import tooling; the new schema will not bend around legacy defects.
 
 ## Backup / restore baseline
 
 Before production release:
 
 - automated daily logical backup;
-- frequent WAL/physical backup strategy if hosting supports it;
+- WAL/physical/PITR strategy when supported by hosting;
 - encrypted off-host backup copy;
 - documented retention policy;
-- monthly restore drill to a non-production database;
+- periodic restore drill to a non-production database;
 - backup monitoring/alerting;
 - pre-migration snapshot/backup for high-risk releases.
 
@@ -192,12 +212,14 @@ Track at minimum:
 - [x] Same-hosting deployment boundary documented.
 - [x] Direct browser/database access rejected.
 - [x] Production DB role model documented.
-- [x] Target domain schema established as version-controlled migrations.
-- [x] Code/entitlement/content-order invariants represented in database constraints.
+- [x] Clean-slate target domain model established as version-controlled migrations.
+- [x] Code/entitlement/content-order/ownership invariants represented in database constraints.
+- [x] Learning/quiz/attempt ownership model represented with stable UUID identities.
+- [x] AI job persistence model represented.
+- [x] Offline revision/tombstone model represented.
 - [x] Backup/restore baseline documented.
-- [x] Legacy Supabase classified as migration source, not target.
-- [x] Smoke-test SQL added for clean-schema verification.
-- [ ] Actual production PostgreSQL instance provisioned — infrastructure access not yet provided.
-- [ ] Legacy Supabase live data connected/read — migration execution stage, NOT required to approve the target platform architecture.
+- [x] Previous Supabase schema explicitly rejected as compatibility target.
+- [x] Smoke-test SQL provided for clean-schema verification.
+- [ ] Actual production PostgreSQL instance provisioned — infrastructure deployment step, not a design blocker.
 
-**Stage 4 architecture status: COMPLETE / APPROVED BASELINE.**
+**Stage 4 architecture status: COMPLETE / APPROVED CLEAN-SLATE BASELINE.**
