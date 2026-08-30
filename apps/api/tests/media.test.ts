@@ -6,6 +6,7 @@ import test from "node:test";
 import sharp from "sharp";
 import { prepareImageVariants } from "../src/media/image-processor.js";
 import { mapWithConcurrencyOrdered } from "../src/media/ordered-concurrency.js";
+import { buildMediaStorageKey } from "../src/media/service.js";
 import { assertMediaStorageKey, FileSystemMediaStorage } from "../src/media/storage.js";
 
 test("ordered concurrency preserves input order even when completion order is reversed", async () => {
@@ -18,6 +19,8 @@ test("ordered concurrency preserves input order even when completion order is re
   });
   assert.notDeepEqual(completed, items);
   assert.deepEqual(results, ["page-1", "page-2", "page-3", "page-4", "page-5"]);
+  await assert.rejects(mapWithConcurrencyOrdered(items, 9, async (value) => value), /invalid_concurrency/);
+  await assert.rejects(mapWithConcurrencyOrdered(items, 0, async (value) => value), /invalid_concurrency/);
 });
 
 test("filesystem storage rejects traversal and writes atomically under its root", async () => {
@@ -40,7 +43,7 @@ test("filesystem storage rejects traversal and writes atomically under its root"
   }
 });
 
-test("image processor creates source display thumbnail and AI variants with bounded dimensions", async () => {
+test("image processor creates deterministic source/display/thumbnail/AI variants", async () => {
   const source = await sharp({
     create: { width: 2200, height: 1400, channels: 3, background: "white" },
   })
@@ -58,5 +61,16 @@ test("image processor creates source display thumbnail and AI variants with boun
   assert.ok(display?.width && display.height && Math.max(display.width, display.height) <= 1800);
   assert.ok(thumbnail?.width && thumbnail.height && Math.max(thumbnail.width, thumbnail.height) <= 480);
   assert.ok(ai?.width && ai.height && Math.max(ai.width, ai.height) <= 1280);
-  for (const variant of variants) assert.match(variant.checksumSha256, /^[0-9a-f]{64}$/);
+
+  for (const variant of variants) {
+    assert.ok(variant.bytes.byteLength > 0);
+    assert.ok(variant.width && variant.height);
+    assert.match(variant.checksumSha256, /^[0-9a-f]{64}$/);
+    const firstKey = buildMediaStorageKey("asset-1", variant);
+    const secondKey = buildMediaStorageKey("asset-1", variant);
+    assert.equal(firstKey, secondKey);
+    assert.equal(assertMediaStorageKey(firstKey), firstKey);
+  }
+
+  await assert.rejects(prepareImageVariants(Buffer.from("not-an-image")));
 });
