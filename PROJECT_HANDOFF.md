@@ -1,6 +1,6 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> **Purpose:** نقطة البداية الإلزامية لأي محادثة/مهندس جديد. اقرأ هذا الملف قبل أي تعديل، ثم `PROJECT_STATUS.md` و`PROJECT_ENGINEERING_LOG.md` و`PRODUCT_FEATURE_PARITY_MATRIX.md` و`MASTER_REBUILD_ROADMAP.md`. المستودع ونتائج CLI/CI هي المصدر الأعلى للحقيقة.
+> **Purpose:** نقطة البداية الإلزامية لأي محادثة/مهندس جديد. اقرأ هذا الملف أولًا، ثم `PROJECT_STATUS.md` و`PROJECT_ENGINEERING_LOG.md` و`PRODUCT_FEATURE_PARITY_MATRIX.md` و`MASTER_REBUILD_ROADMAP.md`. المستودع ونتائج CLI/CI هي المصدر الأعلى للحقيقة؛ لا تعتمد على ذاكرة المحادثة.
 
 ## 1. Product
 
@@ -14,7 +14,8 @@
 ## 2. Source repositories
 
 - `7eaur/alwaslh`: مرجع Business Rules / User Flows / legacy behavior والمشكلات التي يجب ألا تتكرر. ليس مرجعًا للبنية الداخلية أو DB الجديدة.
-- `7eaur/alwaslh-go`: مصدر curriculum/books/images/government exams. يدخل عبر deterministic content importer؛ لا يُشحن raw إلى frontend.
+- `7eaur/alwaslh-go`: مصدر curriculum/books/images/government exams. يدخل عبر deterministic content pipeline؛ لا يُشحن raw إلى frontend.
+- Stage 9 pinned source revision: `f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
 
 ## 3. Non-negotiable architecture decisions
 
@@ -26,15 +27,17 @@
 6. لا plaintext/reversible passwords ولا device fingerprint كدليل مصادقة.
 7. Full access code = **6 digits**؛ Class access code = **7 digits**.
 8. Redemption/activation transactional + idempotent + race-safe.
-9. بعد أول تفعيل، الـFull Code نفسه يصبح **معرّف حساب الطالب** للدخول اللاحق؛ ليس سرًا ولا يكفي بدون كلمة المرور.
+9. بعد أول تفعيل، Full Code يصبح **معرّف حساب الطالب** للدخول اللاحق؛ ليس سرًا ولا يكفي بدون كلمة المرور.
 10. Recovery = reset، ولا يعرض السر الأصلي.
 11. Student offline data لاحقًا account-scoped مع revisions/tombstones/outbox.
 12. Gemini keys server-only؛ AI jobs durable في backend/workers.
-13. `alwaslh-go` Content Source فقط؛ importer يحفظ source/order/checksum metadata.
-14. لا Stage تُغلق بلا دليل executable. الحالات الرسمية: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`؛ غير المنفذ = `NOT YET VERIFIED`.
-15. لا نبدأ Stage التالية قبل إغلاق Integration Gate للمرحلة الحالية.
+13. `alwaslh-go` Content Source فقط؛ importer يحفظ source/order/provenance/checksum metadata.
+14. Stage 9 لا يستنتج Lessons من أسماء صور/ملفات المصدر. Source documents/assets محفوظة canonical أولًا، والربط بالدروس لاحقًا صريح.
+15. لا Stage تُغلق بلا دليل executable. الحالات الرسمية: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; غير المنفذ = `NOT YET VERIFIED`.
+16. لا نبدأ Stage التالية قبل إغلاق Integration Gate للمرحلة الحالية.
+17. أي ترتيب صفحات/أصول يجب أن يكون source-derived deterministic؛ async completion order لا يملك أي معنى business.
 
-## 4. Target tree
+## 4. Target tree / runtime
 
 ```text
 apps/
@@ -60,8 +63,6 @@ content/
   tooling/
 ```
 
-Runtime:
-
 ```text
 Admin Web ──┐
             ├── Backend API ── PostgreSQL (private)
@@ -70,16 +71,7 @@ Student PWA ┘       │
                     └── background / AI workers
 ```
 
-## 5. Latest verified baseline
-
-**Stages 1–8 are now closed.**
-
-- Branch: `rebuild/student-activation-integration`
-- Commit: `829af003156f4c57ceea1cba2ebca12a4309177a`
-- GitHub Actions run: `33292329935`
-- Result: **SUCCESS**
-- Environment: GitHub Actions Ubuntu + Node 22 + clean PostgreSQL 16 + Chromium Playwright.
-- Verified jobs: Stages 1–8, including live API + built Student Web browser E2E.
+## 5. Verified stages
 
 ### Stage 1 — Product Contract ✅ CLI PASS
 `PRODUCT_FEATURE_PARITY_MATRIX.md` + automated product contract checks.
@@ -100,97 +92,109 @@ Canonical migrations currently:
 - `0005_auth.sql`
 - `0006_access_contract.sql`
 - `0007_activation_contract.sql`
-
-Clean PostgreSQL 16 application and schema contracts are tested in CI.
+- `0008_content_source_import.sql`
 
 ### Stage 5 — Engineering Foundation ✅ CLI/RUNTIME PASS
-Implemented/verified:
-
-- real `apps/api` runtime;
-- bounded PostgreSQL pool + transaction boundary;
-- migration runner + idempotent migration tracking;
-- env validation + structured public errors/logging;
-- strict TypeScript/lint/unit/build;
-- isolated Admin/Student production builds;
-- CI stage gates;
-- production API build separated from tests through `apps/api/tsconfig.build.json`, producing `dist/server.js` that matches `npm start`.
+Real `apps/api`, bounded PostgreSQL pool/transactions, migration runner, env validation, logging/public errors, strict TypeScript/lint/unit/build, isolated Admin/Student builds and CI. Production API emits runtime-only `dist/server.js` matching `npm start`.
 
 ### Stage 6 — Auth & Authorization ✅ CLI/RUNTIME PASS
-- salted `scrypt` credentials;
-- opaque random sessions; only SHA-256 token digest persisted;
-- HttpOnly session cookie;
-- Student/Admin role isolation;
-- mutation Origin protection;
-- DB-backed login lockout;
-- one-time reset-only recovery;
-- password reset revokes existing sessions;
-- explicit first Admin CLI bootstrap only.
+Salted scrypt credentials, opaque sessions with only SHA-256 digest persisted, HttpOnly cookie, Student/Admin role isolation, mutation Origin protection, DB lockout, one-time reset-only recovery/session invalidation and explicit first-Admin CLI bootstrap.
 
 ### Stage 7 — Access Codes & Entitlements ✅ CLI/RUNTIME PASS
-- crypto-secure 6-digit Full / 7-digit Class codes;
-- Arabic/Persian digit normalization;
-- row-locked transactional redemption;
-- profile-bound idempotency;
-- renewal extends real benefit;
-- no-waste Class redemption when active Full access already covers student;
-- revoke/audit;
-- DB uniqueness + concurrent race tests.
+Crypto-secure 6/7-digit codes, Arabic/Persian digit normalization, row-locked transactional redemption, profile-bound idempotency, renewal with real benefit, no-waste Class redemption under Full access, revoke/audit and race tests.
 
 ### Stage 8 — Student Activation & Account Flow ✅ CLI/RUNTIME/BROWSER E2E PASS
 Canonical API contract: `docs/api/STUDENT_ACTIVATION_CONTRACT.md`.
 
-First activation:
-
 ```text
-POST /v1/student/activate
-6-digit Full Code + password + stable idempotencyKey
-```
-
-Atomic flow:
-
-```text
-validate + lock code
-→ create Student profile
-→ create scrypt credential (identifier = normalized Full Code)
-→ create all-content entitlement
-→ bind/mark code redeemed
-→ create redemption/idempotency record
-→ audit events
+6-digit Full Code + password + idempotency key
+→ validate/lock code
+→ Student profile
+→ scrypt credential
+→ all-content entitlement
+→ redemption/audit
 → COMMIT
 → canonical Auth login
 → HttpOnly session
 ```
 
-Verified behaviors:
+Returning login uses the original six-digit identifier + password. Recovery resets password and never reveals it. Chromium E2E verifies activation → entitlement → logout → return login → recovery reset → old-password rejection → new-password login.
 
-- invalid/expired/revoked/used code handling;
-- Arabic/Persian normalization;
-- rollback with no partial account;
-- idempotent replay bound to the same activation;
-- replay still requires correct password before new session;
-- concurrent same-code activation creates one account only;
-- returning login uses original six-digit identifier + password;
-- Student Web shows verified entitlement after activation;
-- logout + returning login;
-- one-time recovery token → password reset;
-- old password rejected, new password succeeds;
-- loading/error/offline states;
-- RTL/mobile responsive flow;
-- Chromium E2E with live built API and built Student Web via same-origin proxy.
+### Stage 9 — Content Model & deterministic `alwaslh-go` Import ✅ CLI/PostgreSQL RUNTIME PASS
 
-## 6. Bugs caught by gates and fixed
+**Verified code baseline:**
 
-Do not erase these from engineering history:
+- Branch: `rebuild/content-import`
+- PR: #8
+- Code commit: `30d12d24be93bf306a9da5fffcfb45ea9317a186`
+- Dedicated Stage 9 run: `33294631418` — **SUCCESS**
+- Full regression run on same commit: `33294631419` — **SUCCESS**
 
-- legacy root PostCSS/Tailwind leaked into new app builds → isolated app config.
-- Auth strict TS/scrypt typing defects → fixed at source.
-- Stage 7 duration/enum/JSONB typing defects → fixed at SQL/TS boundary.
-- code creation + audit was not fully atomic → moved into one transaction.
-- idempotency lookup could cross profiles → bound to profile ownership.
-- Stage 8 formatter/lint drift → source formatted, lint not weakened.
-- Auth/Access/Activation integration suites were interfering on one shared DB → stage-specific isolated PostgreSQL DB/suites.
-- Vitest collected Playwright E2E file → Unit suite scoped to `src`.
-- API production build emitted `dist/src/server.js` while `npm start` expected `dist/server.js` → introduced runtime-only `tsconfig.build.json`.
+Pinned source:
+
+`7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
+
+Verified inventory:
+
+```text
+15 subject roots
+48 source documents
+5,552 images
+4,218 JPG
+1,334 WEBP
+86 recognized helper files
+24 manifest files
+0 fatal issues
+0 manifest errors
+0 order errors
+0 unmapped images
+0 unparsed assets
+0 classification errors
+0 expected-count errors
+```
+
+Canonical inventory SHA-256:
+
+`7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`
+
+Duplicate evidence is retained: **100 duplicate Git-blob groups / 201 asset paths**. This is REVIEW evidence, not automatically fatal, because repeated educational pages can be intentional.
+
+Runtime import on clean PostgreSQL 16:
+
+```text
+migrations 0001 → 0008
+first import       → 48 documents / 5,552 assets / replayed=false
+identical reimport → same run / 48 documents / 5,552 assets / replayed=true
+DB assertions      → 1 run, 48 present docs, 5,552 present assets,
+                     zero absent rows, zero duplicate present positions
+```
+
+Stage 9 canonical data layer:
+
+- `content_import_runs`
+- `content_source_documents`
+- `content_source_assets`
+
+Primary source files:
+
+- `ALWASLH_GO_IMPORT_CONTRACT.md`
+- `content/import-contracts/alwaslh-go-source-map.json`
+- `content/tooling/alwaslh_go_inventory.py`
+- `content/tooling/alwaslh_go_manifest_compat.py`
+- `apps/api/src/content/source-import.ts`
+- `apps/api/src/content/import-source-cli.ts`
+- `database/migrations/0008_content_source_import.sql`
+- `.github/workflows/stage9-content-import.yml`
+
+## 6. Stage 9 defects found by executable gates
+
+Do not erase this history:
+
+1. Parallel source audit discovered eight Arabic-key `manifest.json` files using fields such as `م` and `اسم الصورة`; the original parser would have omitted **772 images** while the top-level Git-tree count still looked correct. Fixed with explicit schema support plus a canonical payload asset-count invariant.
+2. Helper baseline drift: expected 76, actual **86 recognized helpers** (27 TXT guides + 27 XLSX guides + 24 manifests + 8 processing reports). Contract updated to evidence.
+3. A third real manifest shape in `اللغة العربية ثالث ثانوي/كتاب القراءة` used `filename`, `pdf_page`, `book_page`, `title`, dimensions and byte size. It caused 65 unsupported entries plus two derived manifest errors. Added explicit compatibility normalization and tests.
+4. First real DB import exposed cross-language digest drift: Python serialized integral float `9.0`, JavaScript `JSON.stringify` serialized it as `9`. Canonical digest now normalizes integral floats to integer JSON form before SHA-256.
+5. Importer/unit formatting and strict-type issues found earlier were fixed at source; tests were not weakened.
 
 ## 7. Current branch / PR coordination
 
@@ -201,88 +205,88 @@ Existing stack:
 - `rebuild/access-entitlements` / PR #4
 - `rebuild/student-activation-ui` / PR #5
 - `rebuild/student-activation-backend` / PR #6
-- **Integrated Stage 8 source of truth:** `rebuild/student-activation-integration` / PR #7
+- `rebuild/student-activation-integration` / PR #7
+- **Stage 9 source of truth:** `rebuild/content-import` / PR #8
+- Parallel audit evidence: `rebuild/content-source-audit` / PR #9
 
-PR #7 contains the verified Backend + Student Activation UI integration and should be treated as the continuation base for Stage 9 unless branch-stack cleanup is intentionally performed.
+The source-audit branch intentionally did not own migration/importer logic. Its findings were reconciled into the Stage 9 implementation branch.
 
-## 8. Business rules that must remain preserved
+## 8. Business rules/features that must remain preserved
 
 - Full code exactly 6 digits; Class code exactly 7 digits.
 - Multiple class entitlements where valid.
-- Renewal must add real benefit; never consume a code without extending access.
+- Renewal adds real benefit; never consume a code without extending access.
 - Full access covers all classes.
 - Student cannot forge entitlement/score/achievement/rank from browser.
 - Recovery resets secret and never reveals original password.
-- Reader must later preserve images/zoom-pan/summary/practice/notes/settings/prev-next.
-- Notes parity includes text/image/capture/audio unless later explicitly changed.
+- Reader later preserves images/zoom-pan/summary/practice/notes/settings/prev-next.
+- Notes parity includes text/image/capture/audio unless explicitly changed with documented reason.
 - Quiz parity includes filters, multi-lesson/version, shuffle/random, explanation/images/bookmark/resume/restart/attempt/offline/achievements.
 - Admin parity includes content CRUD, PDF/image/mixed upload, AI generation modes, Quiz Builder, students/access codes/class codes, notifications and exports.
 - AI rules preserve Arabic/Fusha, numerals, chemistry/scientific notation, exact Quran/Hadith/source text, correct options/explanation/method/difficulty/source/page/counts/duplicates/versions/exact-exam/unknown-answer behavior.
 
-## 9. CURRENT: Stage 9 — Content Model & deterministic `alwaslh-go` Import
+## 9. NEXT: Stage 10 — Media Pipeline
 
-**This is the next and only active roadmap stage. Do not jump to Media/AI/Admin/Student learning work before Stage 9 gate closes.**
+**Do not implement Stage 10 until the documentation-only Stage 9 closure commits have passed both the Stage 9 dedicated CI and full regression CI.**
 
-Required Stage 9 work:
+Once that closure gate is green, Stage 10 is the only active implementation stage.
+
+Roadmap contract:
 
 ```text
-alwaslh-go
-→ complete repository discovery/inventory
-→ read real manifests/helper files and naming patterns
-→ canonical source taxonomy
-→ normalize class/subject/book/exam/year/page
-→ deterministic order
-→ checksums + duplicate detection
-→ canonical import manifest
-→ repeatable importer/import batches
-→ reporting: expected/imported/missing/duplicate/order errors
-→ CLI/runtime verification
+upload/source
+→ validate
+→ PDF page extraction if needed
+→ stable ordering
+→ optimize display variant
+→ thumbnail
+→ AI variant
+→ storage
+→ metadata transaction
 ```
 
-Important constraints:
+Required principles:
 
-- inspect actual files; do not infer from folder names only;
-- raw repository is never frontend payload;
-- ordering must be source-derived and deterministic, never async completion order;
-- imported rows/assets must preserve source provenance/checksum/order;
-- repeated import must be deterministic/idempotent or explicitly reconcile changes;
-- anything not inspected = `NOT YET VERIFIED`.
+- bounded concurrency;
+- abort/retry;
+- no completion-order page reordering;
+- educational text readability before aggressive compression;
+- deterministic storage keys/checksums;
+- reliable/self-hosted PDF worker strategy;
+- source provenance/order from Stage 9 must survive media processing;
+- storage runtime and actual media bytes are `NOT YET VERIFIED` until Stage 10 tests execute.
 
 ## 10. Later roadmap order
 
-After Stage 9 closes:
+After Stage 10:
 
-1. Stage 10 Media Pipeline.
-2. Stage 11 Gemini Prompt/Output Contracts.
-3. Stage 12 Durable AI Execution.
-4. Stage 13 Admin Product.
-5. Stage 14 Student Learning Product.
-6. Stage 15 Practice Engine.
-7. Stage 16 Offline/PWA.
-8. Stage 17 Notes & Saved Questions.
-9. Stage 18 Notifications.
-10. Stage 19 Statistics/Achievements.
-11. Stage 20 Export System.
-12. Stage 21 Performance.
-13. Stage 22 Security Hardening.
-14. Stage 23 Automated Tests/CI expansion.
-15. Stage 24 Accessibility/Device QA.
-16. Stage 25 Initial Content Load.
-17. Stage 26 Staging.
-18. Stage 27 Release Gate.
-19. Stage 28 Production Cutover.
-20. Stage 29 Monitoring & Operations.
-
-See `MASTER_REBUILD_ROADMAP.md` for detailed gates.
+1. Stage 11 Gemini Prompt/Output Contracts.
+2. Stage 12 Durable AI Execution.
+3. Stage 13 Admin Product.
+4. Stage 14 Student Learning Product.
+5. Stage 15 Practice Engine.
+6. Stage 16 Offline/PWA.
+7. Stage 17 Notes & Saved Questions.
+8. Stage 18 Notifications.
+9. Stage 19 Statistics/Achievements.
+10. Stage 20 Export System.
+11. Stage 21 Performance Engineering.
+12. Stage 22 Security Hardening.
+13. Stage 23 Automated Tests/CI Expansion.
+14. Stage 24 Accessibility/Device QA.
+15. Stage 25 Initial Data/Content Load.
+16. Stage 26 Staging.
+17. Stage 27 Release Gate.
+18. Stage 28 Production Cutover.
+19. Stage 29 Monitoring & Operations.
 
 ## 11. NOT YET VERIFIED / remaining release risk
 
+- current documentation-only Stage 9 closure head CI until it completes;
 - production-host PostgreSQL network/pool/load tuning;
 - real-host backup + restore drill;
 - reverse-proxy/API perimeter rate limiting and final security audit;
-- object/media storage runtime;
-- complete `alwaslh-go` inventory/import;
-- media/PDF processing pipeline;
+- object/media storage runtime + PDF/media pipeline;
 - Gemini prompt/golden/failover/worker runtime;
 - complete Admin product;
 - post-auth Student learning product;
@@ -298,4 +302,5 @@ At every meaningful batch:
 - update `PROJECT_STATUS.md` with current stage, completed/remaining work, blockers, last verification and next step;
 - update this handoff when verified baseline, architecture/business rules, branches/PRs or active stage changes;
 - keep exact run/commit evidence;
-- never represent an unexecuted check as PASS.
+- never represent an unexecuted check as PASS;
+- at transition report: `المرحلة الحالية → ما تم → ما لم يتم → Definition of Done → هل ننتقل أم لا.`
