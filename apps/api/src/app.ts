@@ -1,4 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import { registerAuthRoutes } from "./auth/http.js";
+import { AuthService } from "./auth/service.js";
 import type { AppConfig } from "./config.js";
 import type { Database } from "./db.js";
 import { toPublicError } from "./errors.js";
@@ -16,6 +18,9 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
     bodyLimit: 1_048_576,
     requestTimeout: 15_000,
   });
+  const auth = new AuthService(database, config.SESSION_TTL_HOURS);
+
+  registerAuthRoutes(app, config, auth);
 
   app.get("/health", async () => ({
     status: "ok",
