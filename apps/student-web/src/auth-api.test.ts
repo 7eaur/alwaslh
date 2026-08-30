@@ -38,8 +38,10 @@ describe("isSixDigitAccessCode", () => {
 
 describe("activation API contract", () => {
   it("posts the documented activation payload with the session cookie contract", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
+    const calls: Array<[RequestInfo | URL, RequestInit | undefined]> = [];
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      calls.push([input, init]);
+      return new Response(
         JSON.stringify({
           profile: { id: "profile-id", role: "student", displayName: null },
           entitlement: {
@@ -54,8 +56,8 @@ describe("activation API contract", () => {
           replayed: false,
         }),
         { status: 201, headers: { "Content-Type": "application/json" } },
-      ),
-    );
+      );
+    });
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await activateStudent("123456", "StudentPass123!", "activation-request-0001");
@@ -63,7 +65,10 @@ describe("activation API contract", () => {
     expect(result.accountIdentifier).toBe("123456");
     expect(result.profile.role).toBe("student");
     expect(fetchMock).toHaveBeenCalledOnce();
-    const [path, init] = fetchMock.mock.calls[0] ?? [];
+    const firstCall = calls[0];
+    expect(firstCall).toBeDefined();
+    if (!firstCall) throw new Error("Expected one fetch call");
+    const [path, init] = firstCall;
     expect(path).toBe("/v1/student/activate");
     expect(init?.method).toBe("POST");
     expect(init?.credentials).toBe("include");
