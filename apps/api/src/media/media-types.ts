@@ -8,6 +8,17 @@ export interface MediaInput {
   sourcePageNumber?: number;
   contentSourceAssetId?: string;
   bytes: Buffer;
+  signal?: AbortSignal;
+}
+
+export interface PdfMediaInput {
+  idempotencyKey: string;
+  sourcePositionStart: number;
+  sourceFilename: string;
+  sourceMimeType: "application/pdf";
+  bytes: Buffer;
+  concurrency?: number;
+  signal?: AbortSignal;
 }
 
 export interface PreparedVariant {
@@ -29,5 +40,6 @@ export interface ProcessedMediaAsset {
   sourceMimeType: string;
   sourcePageNumber?: number;
   contentSourceAssetId?: string;
+  replayed: boolean;
   variants: readonly PreparedVariant[];
 }
