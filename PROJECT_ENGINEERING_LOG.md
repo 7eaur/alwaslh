@@ -1,23 +1,23 @@
 # PROJECT ENGINEERING LOG
 
-> Engineering source of truth for product understanding, architecture, audit decisions, changes, verification and remaining work.
+> Engineering source of truth for product understanding, architecture decisions, changes, verification and remaining work.
 
 ## Project Understanding
 
-**الوسيلة الذكية** منصة تعليمية عربية بواجهتين رئيسيتين:
+**الوسيلة الذكية** منصة تعليمية عربية بمنتجين مترابطين:
 
-- **Student:** تفعيل/دخول، صفوف ومواد ودروس، قارئ، أسئلة تفاعلية، اختبارات، ملاحظات وأسئلة محفوظة، إشعارات، إحصائيات وإنجازات، وPWA/Offline.
+- **Student:** تفعيل/دخول، صفوف ومواد ودروس، قارئ، ملخص، أسئلة تفاعلية، اختبارات، ملاحظات وأسئلة محفوظة، إشعارات، إحصائيات وإنجازات، PWA وOffline.
 - **Admin:** إدارة الصفوف والمواد والدروس والمحتوى، الرفع والمعالجة، Gemini/AI generation، الاختبارات والنماذج، أكواد الوصول الكامل وأكواد الصفوف، الحسابات، الإشعارات، التصدير والإعدادات.
 
-الهدف هو بناء أفضل نسخة من **نفس المنتج** مع Feature Parity كاملة. `PRODUCT_FEATURE_PARITY_MATRIX.md` هو بوابة منع إسقاط أي Feature أو User Flow مهم أثناء إعادة البناء.
+الهدف هو بناء أفضل نسخة من **نفس الفكرة والسيناريوهات**. `PRODUCT_FEATURE_PARITY_MATRIX.md` هو بوابة منع إسقاط Feature أو User Flow مهم.
 
 ## Source Repositories
 
 ### `7eaur/alwaslh`
-مرجع السلوك الحالي، Business Rules، User Flows، Supabase migrations/functions، والـOffline/PWA implementation.
+مرجع الفكرة، السلوك الحالي، Business Rules، User Flows والمشكلات التي يجب ألا تتكرر. **ليس مرجعًا يجب مطابقة قاعدة بياناته أو بنيته الداخلية.**
 
 ### `7eaur/alwaslh-go`
-مرجع المحتوى والصور: 15 مادة لثالث ثانوي وتاسع، نحو 5,552 صورة، كتب مدرسية ونماذج وزارية، وملفات JSON/TXT/XLSX مساعدة. يعامل كـ **Content Source Repository** وليس static frontend assets.
+مرجع المحتوى والصور: مواد ثالث ثانوي وتاسع، آلاف صفحات الكتب والنماذج الوزارية وملفات فهرسة مساعدة. يعامل كـ **Content Source Repository** يدخل عبر import/normalization pipeline.
 
 ## Key Documents
 
@@ -27,7 +27,10 @@
 - `PROJECT_REBUILD_BLUEPRINT.md`
 - `MASTER_REBUILD_ROADMAP.md`
 - `packages/brand/BRAND_GUIDELINES.md`
-- `packages/brand/BRAND_STAGE_DOD.md`
+- `docs/ux/UX_ARCHITECTURE.md`
+- `DATABASE_PLATFORM_ARCHITECTURE.md`
+- `database/SCHEMA.md`
+- `database/DATABASE_STAGE_DOD.md`
 
 ## Legacy Architecture
 
@@ -40,7 +43,7 @@ Student/Admin Browser
  -> overlapping IndexedDB/localStorage/memory/CacheStorage/SW layers
 ```
 
-The stack is viable. The unsafe foundations are authorization, entitlement, credential/recovery, account ownership, offline synchronization and AI orchestration.
+The legacy implementation remains **NO-GO** for production. Its unsafe foundations include authorization, entitlement, credential/recovery, ownership, offline synchronization and AI orchestration.
 
 ## Target Architecture
 
@@ -48,6 +51,9 @@ The stack is viable. The unsafe foundations are authorization, entitlement, cred
 apps/
   admin-web/
   student-web/
+  api/                # Stage 5
+  workers/            # later AI/background work
+
 packages/
   brand/
   ui/
@@ -56,26 +62,34 @@ packages/
   validation/
   ai-contracts/
   testing/
-supabase/
+
+database/
   migrations/
-  functions/
   tests/
+  deploy/
+
 content/
   import-contracts/
   manifests/
   tooling/
 ```
 
-- Admin and Student are separate deployable frontend applications.
-- Shared code is limited to stable contracts/tokens/primitives.
-- Server/database is canonical.
-- Student IndexedDB becomes an account-scoped authorized replica.
-- `alwaslh-go` flows through deterministic import/normalization tooling.
+Runtime topology:
+
+```text
+Admin Web ──┐
+            ├── Backend API ── PostgreSQL (private / same hosting)
+Student PWA ┘       │
+                    ├── media/object storage
+                    └── background/AI workers
+```
+
+Admin/Student never receive database credentials and never connect directly to PostgreSQL.
 
 ## User Flows to Preserve
 
 ### Full access
-`6-digit code -> server validation -> atomic claim -> Auth/profile -> entitlement -> authorized sync -> dashboard`
+`6-digit code -> server validation -> atomic claim -> account/profile -> entitlement -> authorized sync -> dashboard`
 
 ### Class access
 `7-digit class code -> atomic redemption -> class entitlement -> delta sync`
@@ -84,184 +98,200 @@ content/
 `class -> subject -> lesson -> reader -> summary/practice/notes/saved questions`
 
 ### Quiz
-`catalog/filter -> quiz/version -> shuffled session -> resume/restart -> completion -> attempt/statistics/achievements`
+`catalog/filter -> quiz/version -> persisted shuffled session -> resume/restart -> completion -> attempt/statistics/achievements`
 
 ### Admin
 `admin auth -> overview -> content/upload -> AI operations -> quizzes -> students/access -> notifications/reports/settings`
 
-## Audit Findings
+## Audit Findings That Drive the Rebuild
 
-Detailed evidence is maintained in `PROJECT_FULL_AUDIT_CATALOG.md`.
+Detailed evidence remains in `PROJECT_FULL_AUDIT_CATALOG.md`.
 
-| ID | Severity | Area | Problem | Status |
+| ID | Severity | Area | Legacy Problem | Target Status |
 |---|---|---|---|---|
-| SEC-001 | P0 | Admin auth | anonymous `SECURITY DEFINER sync_admin_password` privilege path | OPEN |
-| SEC-002..011 | P0 | RLS/AuthZ | broad/public student/code/admin-style policies and service-role migration paths | OPEN |
-| DATA-015 | P0 | Activation | activation is multi-step/non-transactional | OPEN |
-| DATA-018 | P0 | Class codes | redemption is non-atomic/racy | OPEN |
-| SEC-015..018 | P1 | Credentials | plaintext/reversible recovery and device credential assumptions | OPEN |
-| DATA-025 | P1 | Assessment | score/achievement/rank integrity is client-trusted | OPEN |
-| AI-* | P1/P2 | AI | browser-owned jobs, weak structured/semantic validation, retry/quota orchestration gaps | OPEN |
-| OFF-* | P1/P2 | Offline | overlapping caches/sync, stale deletions, no durable attempt outbox | OPEN |
-| MEDIA-* | P1/P2 | Media | async page-ordering and export correctness/sanitization defects | OPEN |
+| SEC-001 | P0 | Admin auth | anonymous privileged admin-password mutation | **DESIGN ELIMINATED** — no legacy RPC model |
+| SEC-002..011 | P0 | Authorization | broad/public RLS and privileged paths | **DESIGN ELIMINATED** — browser has no DB access |
+| DATA-015 | P0 | Activation | multi-step/non-transactional | **DB CONTRACT FIXED** — transactional/idempotent target |
+| DATA-018 | P0 | Class codes | redemption racy/non-atomic | **DB CONTRACT FIXED** — transactional/idempotent target |
+| SEC-015..018 | P1 | Credentials | plaintext/reversible/device assumptions | Stage 6 rebuild; legacy schema not preserved |
+| DATA-025 | P1 | Assessment | client-trusted score/achievement | **DB MODEL FIXED**; backend finalization still Stage 6/learning service |
+| OFF-* | P1/P2 | Offline | stale/overlapping sync/caches | revision/tombstone target established; engine later |
+| AI-* | P1/P2 | AI | browser-owned jobs/weak validation | durable job schema established; worker platform later |
+| MEDIA-* | P1/P2 | Media | page ordering/export defects | stable ordered asset model established; pipeline later |
 
 ## Classification
 
 ### KEEP
-Product idea, important scenarios, React/Vite direction, Supabase platform, IndexedDB offline concept, AI authoring, educational content.
+Product idea, required scenarios, React/Vite frontend direction, IndexedDB offline concept, AI-assisted authoring and educational content.
 
 ### IMPROVE
-Validation/forms/states, design/accessibility, querying/pagination, media/export, observability/documentation.
+Validation/forms/states, UX/accessibility, querying/pagination, media/export, observability, operations.
 
 ### REFACTOR
-Large pages, domain/data boundaries, practice state, content upload pipeline.
+Large feature modules, practice UI/state boundaries, content authoring pipeline.
 
 ### REBUILD
-Auth/Recovery, RLS/Authorization, entitlement/code redemption, student ownership/FKs, Student sync/service worker, durable Gemini jobs/provider orchestration.
+Backend API boundary, Auth/Recovery, authorization, entitlement/code redemption service, Student sync/service worker, durable Gemini execution.
 
 ### REMOVE
-Only verified dead/unsafe implementation paths. Never remove a required user scenario merely to simplify the new UI.
+Legacy Supabase coupling, public/direct DB assumptions, legacy IDs as ownership, plaintext/reversible password structures, fingerprint credential proof, unsafe/dead implementation paths.
 
 ## Architecture Decisions
 
-### AD-001 — No blind whole-project rewrite
-Preserve working behavior; rebuild only structurally unsafe foundations.
+### AD-001 — Preserve product, not legacy mistakes
+Feature parity applies to user-visible product results and important business scenarios, not internal implementation compatibility.
 
-### AD-002 — No final production migration before DB reality audit
-Deployed schema/data/RLS/storage must be inspected and backed up first.
+### AD-002 — Security/data integrity before feature implementation
+A feature is not complete if it can be bypassed or creates inconsistent ownership/state.
 
-### AD-003 — Version-controlled migrations are canonical
-Fresh staging must be reproducible from repository migrations/import tooling.
+### AD-003 — Version-controlled database migrations are canonical
+Fresh staging/production schema must be reproducible from repository migrations.
 
 ### AD-004 — Separate Admin and Student apps
-Different bundle/runtime/UX/PWA requirements justify two apps in one shared workspace.
+Different bundle/runtime/UX/PWA requirements justify separate apps sharing stable packages.
 
 ### AD-005 — One entitlement model
 Full/class access maps to normalized entitlements with explicit scope/source/status/start/expiry/revocation.
 
 ### AD-006 — Durable AI jobs
-Browser creates/observes; server/queue owns execution. Prompt/schema/semantic validators are versioned.
+Browser creates/observes jobs; server workers execute them. Prompt/schema/semantic validators are versioned.
 
 ### AD-007 — Gemini capacity scheduled by provider project
-Credentials remain server-side; project cooldown and credential health are separate concepts.
+Credentials remain server-side; project quota/cooldown and credential health are separate.
 
 ### AD-008 — One Student Sync Engine
-Account + entitlement/content revisions, deterministic delta application including deletions.
+Account-scoped authorized replica driven by server content/entitlement revisions and explicit deletions.
 
-### AD-009 — `alwaslh-go` is a source pipeline
-Never bundle the raw content repository into Student/Admin applications.
+### AD-009 — `alwaslh-go` is a content source pipeline
+Raw curriculum repository is never bundled directly into frontend applications.
 
-### AD-010 — Product identity is owned and tokenized
-No Miaoda/TailAdmin brand dependency. Admin is compact/data-oriented; Student is calm/mobile/reading-oriented.
+### AD-010 — Owned brand/design system
+No Miaoda/TailAdmin product-brand dependency.
 
-### AD-011 — Original product identity is evolved, not discarded
-The approved brand preserves the first product's recognizable **teal + open-book** DNA while replacing inconsistent/template assets with owned canonical vector assets and tokens.
+### AD-011 — Original identity is evolved, not discarded
+The approved brand preserves the first product's teal/open-book DNA with owned canonical assets.
+
+### AD-012 — Self-hosted PostgreSQL on the same hosting
+The target database is PostgreSQL in the same hosting environment as backend services. The browser never connects to it directly.
+
+### AD-013 — Clean-slate data model
+The old Supabase schema/data is not a compatibility target. Legacy tables, IDs, RLS assumptions and ownership hacks do not constrain the new schema.
+
+### AD-014 — Relational integrity before JSON convenience
+Core ownership/order/assessment/entitlement relationships are normalized and constrained in PostgreSQL. JSONB is limited to bounded metadata/config/output payloads.
 
 ## Changes Made
 
-### Stage 1 — Audit, product contract and rebuild planning
+### Stage 1 — Product audit / contract
+**COMPLETE.** Repository discovery, deep/full audit, Feature Parity Matrix, rebuild blueprint and roadmap completed.
 
-Completed repository discovery, deep/full audit, Feature Parity Matrix, rebuild blueprint and master roadmap. Legacy release decision remains **NO-GO**.
+### Stage 2 — Brand Identity
+**COMPLETE / PASS.**
 
-### Foundation work created before stage-order correction
+Implemented owned brand system based on the original logo:
+- canonical mark/primary/horizontal/inverse/monochrome variants;
+- favicon and PWA icons;
+- teal/ink/mint palette;
+- Cairo Arabic baseline;
+- design tokens and accessibility usage rules.
 
-The isolated `rebuild/foundation` branch already contains experimental package boundaries and independent Admin/Student shells. They remain frozen as implementation scaffolds and must follow the approved identity/UX stages before expansion.
+Source of truth: `packages/brand/`.
 
-### Stage 2 — Brand Identity — COMPLETE
+### Stage 3 — UX Architecture
+**COMPLETE / PASS.**
 
-The original logo supplied by the product owner was analyzed and retained as the identity root: turquoise/teal, rounded app tile, white open-book mark and Arabic-first naming. Old repository `TailAdmin` marks are explicitly rejected as product identity.
+Implemented target Admin/Student IA, navigation, feature mapping, critical flows, async/error/offline/permission state contracts, responsive/accessibility contracts and low-fidelity wireframes.
 
-Implemented canonical identity assets:
+Source of truth: `docs/ux/`.
 
-- `packages/brand/assets/logo/logo-mark.svg`
-- `packages/brand/assets/logo/logo-mark-white.svg`
-- `packages/brand/assets/logo/logo-mark-monochrome.svg`
-- `packages/brand/assets/logo/logo-primary.svg`
-- `packages/brand/assets/logo/logo-horizontal.svg`
-- `packages/brand/assets/logo/logo-horizontal-white.svg`
-- `packages/brand/assets/app-icons/favicon.svg`
-- `packages/brand/assets/app-icons/icon-192.png`
-- `packages/brand/assets/app-icons/icon-512.png`
-- `packages/brand/assets/app-icons/icon-maskable.svg`
-- `packages/brand/assets/app-icons/icon-maskable-512.png`
+### Stage 4 — PostgreSQL Data Platform
+**COMPLETE / PASS — design/schema baseline.**
 
-Identity contracts/documentation:
+Decision:
+- self-hosted PostgreSQL;
+- same hosting environment as backend;
+- private DB boundary;
+- no direct frontend/database connection;
+- legacy Supabase not used as target.
 
-- `packages/brand/BRAND_GUIDELINES.md`
-- `packages/brand/BRAND_STAGE_DOD.md`
-- `packages/brand/ASSET_NOTES.md`
-- `packages/brand/brand-assets.json`
-- `packages/brand/identity.json`
-- `packages/brand/src/tokens.css`
-- `packages/brand/src/tokens.ts`
+Implemented:
 
-Brand Identity v1 palette:
+#### Core curriculum (`database/migrations/0001_core.sql`)
+- UUID profiles;
+- classes/subjects/subject-class links;
+- lesson composite FK ensures subject belongs to class;
+- lesson assets with explicit unique stable position and checksum/media metadata.
 
-- Primary Teal `#00B5A9`
-- Dark Teal `#007F78`
-- Brand Ink `#123C43`
-- Mint `#E6F7F6`
-- Soft Surface `#F2F4F7`
-- Charcoal `#1F2937`
+#### Access (`0002_access.sql`)
+- exact six-digit full-access codes;
+- exact seven-digit class codes;
+- normalized student entitlements;
+- partial unique indexes preventing duplicate active entitlement scopes;
+- redemption record with idempotency contract.
 
-Typography baseline:
+#### Learning (`0003_learning.sql`)
+- quizzes, lessons, versions, questions/options;
+- stable UUID question identity;
+- at most one correct option in current MCQ/TF contract;
+- normalized persisted practice question order;
+- normalized persisted shuffled option order;
+- answer FK ensures selected option belongs to same question;
+- quiz attempts with generated percentage;
+- saved questions, achievement definitions/awards, notifications/read state.
 
-- Arabic primary: **Cairo**
-- fallback: **Tajawal / Noto Sans Arabic / system sans**
+#### AI / Offline (`0004_ai_and_sync.sql`)
+- durable `ai_jobs`, `ai_job_units`, `ai_outputs`;
+- prompt/model/idempotency/progress/attempt/validation metadata;
+- `content_revisions`, `content_tombstones`, `sync_checkpoints` for deterministic later offline sync.
 
-Usage rules:
-
-- gradient is restricted to identity/app-icon use; product UI remains mostly flat;
-- minimum body text 16px Student / 14px Admin data surfaces;
-- no 8–10px production copy;
-- consistent 20/24px line icons;
-- focus ring, 44px touch target, reduced motion and unrestricted browser zoom;
-- RTL by default;
-- Admin uses a denser application of the same identity; Student uses larger spacing and reading-first hierarchy.
-
-**Stage 2 Definition of Done: PASS.**
+#### Operations
+- `database/deploy/roles.sql.example` — owner/migrator/app/readonly least-privilege role model;
+- `database/BACKUP_RESTORE.md` — daily logical + off-host + restore verification baseline;
+- `database/tests/schema_smoke.sql` — structural/constraint smoke suite;
+- `database/SCHEMA.md` — human-readable schema map;
+- `database/DATABASE_STAGE_DOD.md` — Stage 4 gate.
 
 ## Tests & Verification
 
-### Performed
+### PASS / verified from committed source
+- Brand Stage DoD.
+- UX Stage DoD.
+- Domain access/content TypeScript source checks from earlier foundation batch.
+- Static review of Stage 4 PostgreSQL relationships/constraints and migration ordering.
+- Stage 4 schema smoke test suite is committed.
 
-- `packages/domain/src/access.ts` and `packages/domain/src/content.ts`: strict TypeScript source check — **PASS**.
-- Brand canonical vector assets were generated and committed.
-- PWA 192/512/maskable raster assets were generated from the brand mark and committed.
-- GitHub repository listing confirms all expected logo and app-icon files exist on `rebuild/foundation`.
-- `BRAND_STAGE_DOD.md` records all Stage 2 gates as passed.
+### NOT YET RUN / VERIFIED
+- PostgreSQL migrations on a real database: no PostgreSQL runtime is provisioned in the connected environment.
+- `database/tests/schema_smoke.sql` execution: pending real PostgreSQL.
+- Actual connection-pool/load/backup-restore measurements.
+- Full Admin/Student React/Vite builds.
+- Backend API runtime (Stage 5 not implemented yet).
+- Auth/recovery runtime (Stage 6).
+- AI worker runtime.
+- full content-import integrity and real browser performance/accessibility.
 
-### NOT YET VERIFIED
+No false runtime pass claim is made.
 
-- React/Vite application builds;
-- installed Cairo/Tajawal runtime/font rendering in rebuilt apps;
-- full workspace install/lockfile;
-- deployed Supabase schema/RLS/functions/data/storage;
-- production secrets/admin values;
-- real-browser accessibility/performance;
-- full `alwaslh-go` manifest/image integrity.
+## Known Issues / Remaining Risk
 
-No false build-pass claim is made.
-
-## Known Issues
-
-- Legacy P0/P1 findings remain open until database/backend stages.
-- Experimental Admin/Student shells are not production UI and will be revised from Stage 3 UX specifications.
-- Database reality is **NOT YET VERIFIED**.
-- Brand SVG wordmark uses font-family references; application/deployment font loading must be verified when UI implementation resumes.
+- The database SQL is a pre-production baseline until executed against the target PostgreSQL version.
+- Authentication/session schema and credentials are intentionally deferred to Stage 6, so `profiles.auth_subject` is provider-neutral now.
+- Quiz finalization must be implemented server-side to derive `correct_count/question_count` from persisted answers; the browser will not be allowed to submit trusted scores.
+- Media/object storage implementation remains later; DB only stores canonical storage keys/metadata.
+- Experimental Admin/Student shells created before stage-order correction remain scaffolds, not final feature implementation.
 
 ## Remaining Work
 
-1. **Stage 3 — UX Information Architecture:** lock Admin/Student IA, navigation, user flows, states and responsive wireframe specifications.
-2. When the database platform is connected, run `DATABASE_REALITY_AUDIT.md` before final migrations.
-3. Design/rebuild Auth/RLS/Entitlement and ownership with tests.
-4. Build deterministic `alwaslh-go` importer/media pipeline.
-5. Build durable Gemini job/provider platform.
-6. Implement full Admin product from approved UX contracts.
-7. Implement full Student PWA/Practice/Sync product from approved UX contracts.
-8. Migrate legacy data/content and run parity/E2E/security/performance/accessibility gates.
-9. Stage, rehearse rollback/cutover, then release only after all gates pass.
+1. **Stage 5 — Engineering Foundation:** backend API runtime boundary, database driver/pool/migration runner, environment validation, structured logging, typed errors, test harness, reproducible workspace/build/CI.
+2. **Stage 6 — Auth & Authorization:** secure account/session/recovery/admin model and API authorization tests.
+3. Stage 7 — transactional entitlement/code service.
+4. Stage 8/9 — `alwaslh-go` content importer and ordered media pipeline.
+5. Stage 10/11 — Gemini prompt contracts, durable workers, retries/failover/observability.
+6. Build full Admin product against stable services.
+7. Build full Student PWA/Practice/Sync product.
+8. Parity/E2E/security/performance/accessibility/staging gates.
+9. Production release only after real PostgreSQL runtime, backup restore and release gates pass.
 
 ## Current State
 
-**Stage 2 Brand Identity is closed. Stage 3 UX Architecture is next.** The legacy app remains untouched as behavioral reference and no destructive production database changes have been made.
+**Stages 1–4 are closed at their documented gates. Stage 5 Engineering Foundation is next.**
