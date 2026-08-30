@@ -37,7 +37,11 @@ select conname from pg_constraint where conname in (
   'lessons_subject_class_fk',
   'full_access_codes_format',
   'class_access_codes_format',
-  'practice_answers_selected_option_fk'
+  'practice_answers_presented_option_fk',
+  'practice_sessions_current_question_fk',
+  'quiz_attempts_profile_session_fk',
+  'quiz_attempts_version_session_fk',
+  'quiz_attempts_quiz_version_fk'
 ) order by conname;
 select indexname from pg_indexes where indexname in (
   'ux_active_all_content_entitlement',
@@ -49,7 +53,11 @@ for required in \
   lessons_subject_class_fk \
   full_access_codes_format \
   class_access_codes_format \
-  practice_answers_selected_option_fk \
+  practice_answers_presented_option_fk \
+  practice_sessions_current_question_fk \
+  quiz_attempts_profile_session_fk \
+  quiz_attempts_version_session_fk \
+  quiz_attempts_quiz_version_fk \
   ux_active_all_content_entitlement \
   ux_active_class_entitlement \
   ux_question_single_correct_option; do
