@@ -35,7 +35,13 @@ interface EntitlementRow {
 }
 
 interface RedemptionRow {
+  profile_id: string;
   entitlement_id: string;
+}
+
+interface GeneratedCodeRow {
+  id: string;
+  code: string;
 }
 
 const CODE_INSERT_RETRIES = 12;
@@ -130,10 +136,15 @@ export class AccessService {
     return this.db.transaction(async (tx) => {
       await tx.query("select pg_advisory_xact_lock(hashtext($1))", [idempotencyKey]);
       const previous = await tx.query<RedemptionRow>(
-        "select entitlement_id from access_redemptions where idempotency_key = $1",
+        "select profile_id, entitlement_id from access_redemptions where idempotency_key = $1",
         [idempotencyKey],
       );
-      if (previous[0]) return findEntitlement(tx, previous[0].entitlement_id);
+      if (previous[0]) {
+        if (previous[0].profile_id !== profileId) {
+          throw new AppError("CONFLICT", "مفتاح الطلب مستخدم لطلب آخر", 409);
+        }
+        return findEntitlement(tx, previous[0].entitlement_id);
+      }
 
       await assertActiveStudent(tx, profileId);
       await expireElapsedEntitlements(tx, profileId);
@@ -197,48 +208,60 @@ export class AccessService {
     if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 3650) {
       throw new AppError("BAD_REQUEST", "مدة الصلاحية غير صحيحة", 400);
     }
+    if (type === "class_access" && !classId) {
+      throw new AppError("BAD_REQUEST", "الصف مطلوب لإنشاء أكواد الصف", 400);
+    }
 
     const codes: string[] = [];
     for (let index = 0; index < count; index += 1) {
       let inserted = false;
       for (let attempt = 0; attempt < CODE_INSERT_RETRIES && !inserted; attempt += 1) {
         const code = createDigits(type === "full_access" ? 6 : 7);
-        const rows =
-          type === "full_access"
-            ? await this.db.query<{ code: string }>(
-                `insert into full_access_codes (code, created_by_profile_id, entitlement_duration_days)
-                 values ($1, $2, $3)
-                 on conflict (code) do nothing
-                 returning code`,
-                [code, actorProfileId, durationDays],
-              )
-            : await this.db.query<{ code: string }>(
-                `insert into class_access_codes (code, class_id, created_by_profile_id, entitlement_duration_days)
-                 values ($1, $2, $3, $4)
-                 on conflict (code) do nothing
-                 returning code`,
-                [code, classId, actorProfileId, durationDays],
-              );
-        if (rows[0]) {
-          codes.push(rows[0].code);
+        const created = await this.db.transaction(async (tx) => {
+          const rows =
+            type === "full_access"
+              ? await tx.query<GeneratedCodeRow>(
+                  `insert into full_access_codes (code, created_by_profile_id, entitlement_duration_days)
+                   values ($1, $2, $3)
+                   on conflict (code) do nothing
+                   returning id, code`,
+                  [code, actorProfileId, durationDays],
+                )
+              : await tx.query<GeneratedCodeRow>(
+                  `insert into class_access_codes (code, class_id, created_by_profile_id, entitlement_duration_days)
+                   values ($1, $2, $3, $4)
+                   on conflict (code) do nothing
+                   returning id, code`,
+                  [code, classId, actorProfileId, durationDays],
+                );
+          const generated = rows[0];
+          if (!generated) return undefined;
+
+          if (type === "full_access") {
+            await tx.query(
+              `insert into access_events (
+                 event_type, actor_profile_id, code_type, full_access_code_id, metadata
+               ) values (
+                 'code_generated', $1, 'full_access', $2, jsonb_build_object('durationDays', $3)
+               )`,
+              [actorProfileId, generated.id, durationDays],
+            );
+          } else {
+            await tx.query(
+              `insert into access_events (
+                 event_type, actor_profile_id, code_type, class_access_code_id, metadata
+               ) values (
+                 'code_generated', $1, 'class_access', $2, jsonb_build_object('durationDays', $3)
+               )`,
+              [actorProfileId, generated.id, durationDays],
+            );
+          }
+          return generated;
+        });
+
+        if (created) {
+          codes.push(created.code);
           inserted = true;
-          await this.db.query(
-            `insert into access_events (
-               event_type, actor_profile_id, code_type, full_access_code_id, class_access_code_id, metadata
-             )
-             select 'code_generated', $1, $2,
-                    case when $2 = 'full_access' then id else null end,
-                    null,
-                    jsonb_build_object('durationDays', $3)
-             from full_access_codes where $2 = 'full_access' and code = $4
-             union all
-             select 'code_generated', $1, $2,
-                    null,
-                    case when $2 = 'class_access' then id else null end,
-                    jsonb_build_object('durationDays', $3)
-             from class_access_codes where $2 = 'class_access' and code = $4`,
-            [actorProfileId, type, durationDays, code],
-          );
         }
       }
       if (!inserted) throw new AppError("CONFLICT", "تعذر إنشاء كود فريد، أعد المحاولة", 409);
@@ -453,8 +476,8 @@ export class AccessService {
       `insert into access_events (
          event_type, subject_profile_id, code_type, full_access_code_id, class_access_code_id, entitlement_id
        ) values
-         ('code_redeemed', $1, $2, $3, $4, $5),
-         ($6, $1, $2, $3, $4, $5)`,
+         ('code_redeemed', $1, $2::access_code_type, $3, $4, $5),
+         ($6::access_event_type, $1, $2::access_code_type, $3, $4, $5)`,
       [
         profileId,
         type,
