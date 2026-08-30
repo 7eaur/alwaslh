@@ -1,9 +1,9 @@
 # PROJECT STATUS
 
 - **Current Phase:** Stage 4 PostgreSQL Data Platform is **CLI PASS**. Stage 5 Engineering Foundation is next.
-- **Verification Policy:** every stage now requires executable CLI/CI verification. Statuses distinguish DESIGN PASS / CLI PASS / RUNTIME PASS / RELEASE PASS. Unexecuted checks remain `NOT YET VERIFIED`.
+- **Verification Policy:** every stage requires executable CLI/CI verification. Statuses distinguish DESIGN PASS / CLI PASS / RUNTIME PASS / RELEASE PASS. Unexecuted checks remain `NOT YET VERIFIED`.
 - **Verification Source:** `docs/engineering/CLI_VERIFICATION_GATES.md` and `docs/engineering/CLI_VERIFICATION_REPORT_2026-08-30.md`.
-- **Final Stage 1–4 CI Run:** GitHub Actions run `33285502614` on commit `64ee5bbb9489461583425ffa88e4b294638f4bfc` — **SUCCESS**.
+- **Latest Branch Verification:** branch head `62315bfbb568690fe548abd790da307f9baef3aa` was reverified after documentation updates; GitHub Actions push run `33285626187` and PR run `33285627437` both completed with **success**.
 - **Stage 1 Product Contract:** **CLI PASS.** Feature IDs/rows and required capability families are automatically validated.
 - **Stage 2 Brand Identity:** **CLI PASS.** Canonical assets exist; SVGs parse; PWA dimensions/identity JSON/palette/typography/accessibility tokens are checked. CLI caught and we fixed a real Mint-token drift.
 - **Stage 3 UX Architecture:** **CLI PASS.** Required IA/flows/states/parity coverage and wireframe SVGs are automatically checked. Browser/E2E UX remains later implementation verification.
