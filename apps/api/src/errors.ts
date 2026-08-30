@@ -22,7 +22,10 @@ export class AppError extends Error {
   }
 }
 
-export function toPublicError(error: unknown): { statusCode: number; body: { error: { code: ErrorCode; message: string } } } {
+export function toPublicError(error: unknown): {
+  statusCode: number;
+  body: { error: { code: ErrorCode; message: string } };
+} {
   if (error instanceof AppError) {
     return {
       statusCode: error.statusCode,
