@@ -3,7 +3,7 @@
   "buildCommand": "node scripts/build-vercel-preview.mjs",
   "outputDirectory": "dist-vercel",
   "functions": {
-    "api/[...path].ts": {
+    "api/[...path].js": {
       "maxDuration": 30
     }
   },
