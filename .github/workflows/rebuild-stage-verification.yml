@@ -2,16 +2,13 @@ name: Rebuild Stage Verification
 
 on:
   pull_request:
-  push:
-    branches:
-      - rebuild/foundation
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: rebuild-stage-verification-single-flight
+  group: rebuild-stage-verification-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
