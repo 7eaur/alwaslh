@@ -2,7 +2,10 @@ import { Pool, type PoolConfig, type QueryResultRow } from "pg";
 
 export interface Database {
   ping(): Promise<void>;
-  query<T extends QueryResultRow = QueryResultRow>(text: string, values?: readonly unknown[]): Promise<readonly T[]>;
+  query<T extends QueryResultRow = QueryResultRow>(
+    text: string,
+    values?: readonly unknown[],
+  ): Promise<readonly T[]>;
   close(): Promise<void>;
 }
 
