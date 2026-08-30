@@ -13,14 +13,20 @@ export interface Database extends QueryExecutor {
   close(): Promise<void>;
 }
 
-export function createDatabase(connectionString: string): Database {
+export interface DatabaseOptions {
+  ssl?: boolean;
+  maxConnections?: number;
+}
+
+export function createDatabase(connectionString: string, options: DatabaseOptions = {}): Database {
   const config: PoolConfig = {
     connectionString,
-    max: 10,
+    max: options.maxConnections ?? 10,
     min: 0,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
     allowExitOnIdle: false,
+    ...(options.ssl ? { ssl: { rejectUnauthorized: false } } : {}),
   };
   const pool = new Pool(config);
 
