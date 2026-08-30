@@ -200,10 +200,7 @@ test("media processing binds idempotency to source bytes and preserves Stage 9 p
       assert.ok(variant.width && variant.height);
     }
 
-    await assert.rejects(
-      service.processImage({ ...input, sourcePosition: 8 }),
-      /idempotency_conflict/,
-    );
+    await assert.rejects(service.processImage({ ...input, sourcePosition: 8 }), /idempotency_conflict/);
     const unchanged = await db.query<{ status: string; attempt_count: number }>(
       "select status, attempt_count from media_assets where idempotency_key = $1",
       [input.idempotencyKey],
