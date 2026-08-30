@@ -30,6 +30,44 @@ class FilenameParsingTests(unittest.TestCase):
         self.assertIsNone(inventory.parse_image_filename("scan-final.jpg"))
 
 
+class ManifestCompatibilityTests(unittest.TestCase):
+    def test_canonical_manifest_entry_is_normalized(self):
+        entry = inventory.normalize_manifest_entry(
+            {
+                "seq": 2,
+                "source_page": 2,
+                "book_page": 1,
+                "title": "صفحة العنوان",
+                "new_name": "ص001 - صفحة العنوان.jpg",
+                "relative_path": "الصور/ص001 - صفحة العنوان.jpg",
+            }
+        )
+        self.assertEqual(entry["seq"], 2)
+        self.assertEqual(entry["relative_path"], "الصور/ص001 - صفحة العنوان.jpg")
+        self.assertEqual(entry["metadata"]["book_page"], 1)
+
+    def test_real_arabic_processing_manifest_is_normalized(self):
+        entry = inventory.normalize_manifest_entry(
+            {
+                "م": 1,
+                "رقم صفحة PDF": 1,
+                "رقم الصفحة في الكتاب": None,
+                "عنوان الدرس/الصفحة": "غلاف الكتاب",
+                "اسم الصورة": "PDF001 - غلاف الكتاب.webp",
+                "العرض": 2008,
+                "الارتفاع": 2835,
+            }
+        )
+        self.assertEqual(entry["seq"], 1)
+        self.assertEqual(entry["relative_path"], "الصور/PDF001 - غلاف الكتاب.webp")
+        self.assertEqual(entry["new_name"], "PDF001 - غلاف الكتاب.webp")
+        self.assertEqual(entry["metadata"]["schema"], "arabic_processing_manifest")
+        self.assertEqual(entry["metadata"]["width"], 2008)
+
+    def test_unknown_manifest_schema_is_rejected(self):
+        self.assertIsNone(inventory.normalize_manifest_entry({"page": 1, "image": "x.jpg"}))
+
+
 class DocumentClassificationTests(unittest.TestCase):
     def test_textbook_is_not_given_exam_metadata(self):
         result = inventory.classify_document("كتاب الفيزياء", "physics")
@@ -85,7 +123,6 @@ class OrderingTests(unittest.TestCase):
             self.image("exam/صفحة_2.jpg", "b" * 40),
             self.image("exam/صفحة_1.jpg", "c" * 40),
         ]
-        # 1,2,10 is numerically ordered, but the missing 3..9 range is still reported.
         ordered = inventory.order_without_manifest("exam", images, issues)
         self.assertEqual([item["parsed"]["number"] for item in ordered], [1, 2, 10])
         self.assertEqual(len(issues["orderErrors"]), 1)
