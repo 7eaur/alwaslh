@@ -4,10 +4,15 @@
 The source repository contains three manifest entry shapes. The canonical inventory
 module handles the canonical and Arabic-processing variants directly; this adapter
 adds the older ``filename/pdf_page`` variant without weakening any validation.
+
+It also normalizes integral JSON floats before hashing so the Python producer and
+JavaScript consumer share one canonical digest representation (JSON.stringify
+serializes ``9.0`` as ``9``).
 """
 
 from __future__ import annotations
 
+import json
 import sys
 from typing import Any
 
@@ -44,8 +49,24 @@ def normalize_manifest_entry(entry: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
+def normalize_json_numbers(value: Any) -> Any:
+    if isinstance(value, list):
+        return [normalize_json_numbers(item) for item in value]
+    if isinstance(value, dict):
+        return {key: normalize_json_numbers(item) for key, item in value.items()}
+    if isinstance(value, float) and value.is_integer():
+        return int(value)
+    return value
+
+
+def canonical_bytes(payload: Any) -> bytes:
+    normalized = normalize_json_numbers(payload)
+    return json.dumps(normalized, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+
+
 def main(argv: list[str] | None = None) -> int:
     inventory.normalize_manifest_entry = normalize_manifest_entry
+    inventory.canonical_bytes = canonical_bytes
     return inventory.main(argv)
 
 
