@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  type ContentSourceInventory,
   inventoryDigest,
   validateInventory,
-  type ContentSourceInventory,
 } from "../src/content/source-import.js";
 
 function makeInventory(): ContentSourceInventory {
