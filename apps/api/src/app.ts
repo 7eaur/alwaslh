@@ -1,6 +1,8 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerAccessRoutes } from "./access/http.js";
 import { AccessService } from "./access/service.js";
+import { registerStudentActivationRoutes } from "./activation/http.js";
+import { StudentActivationService } from "./activation/service.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
 import type { AppConfig } from "./config.js";
@@ -22,8 +24,10 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   });
   const auth = new AuthService(database, config.SESSION_TTL_HOURS);
   const access = new AccessService(database);
+  const activation = new StudentActivationService(database);
 
   registerAuthRoutes(app, config, auth);
+  registerStudentActivationRoutes(app, config, auth, activation);
   registerAccessRoutes(app, config, auth, access);
 
   app.get("/health", async () => ({
