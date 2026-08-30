@@ -96,11 +96,19 @@ test("auth lifecycle, role isolation, lockout and recovery", async () => {
   assert.notEqual(sessions[0]?.token_hash_sha256, sessionToken);
   assert.match(sessions[0]?.token_hash_sha256 ?? "", /^[0-9a-f]{64}$/);
 
-  const studentMe = await app.inject({ method: "GET", url: "/v1/student/me", headers: { cookie: studentCookie } });
+  const studentMe = await app.inject({
+    method: "GET",
+    url: "/v1/student/me",
+    headers: { cookie: studentCookie },
+  });
   assert.equal(studentMe.statusCode, 200);
   assert.equal(studentMe.json().profile.id, studentId);
 
-  const studentAdminAttempt = await app.inject({ method: "GET", url: "/v1/admin/me", headers: { cookie: studentCookie } });
+  const studentAdminAttempt = await app.inject({
+    method: "GET",
+    url: "/v1/admin/me",
+    headers: { cookie: studentCookie },
+  });
   assert.equal(studentAdminAttempt.statusCode, 403);
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
@@ -147,7 +155,11 @@ test("auth lifecycle, role isolation, lockout and recovery", async () => {
   });
   assert.equal(reset.statusCode, 200);
 
-  const oldSession = await app.inject({ method: "GET", url: "/v1/auth/me", headers: { cookie: studentCookie } });
+  const oldSession = await app.inject({
+    method: "GET",
+    url: "/v1/auth/me",
+    headers: { cookie: studentCookie },
+  });
   assert.equal(oldSession.statusCode, 401);
 
   const oldPassword = await app.inject({
