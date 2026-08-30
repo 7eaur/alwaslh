@@ -227,3 +227,49 @@ jobs:
       - name: Run access lifecycle, renewal and race integration tests
         run: node --test --import tsx tests/integration/access.integration.test.ts
         working-directory: apps/api
+
+  stage-8-student-activation:
+    name: Stage 8 · Student activation backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_activation
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_activation"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_activation
+      LOG_LEVEL: silent
+      ALLOWED_ORIGINS: http://localhost:5173
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Lint, strict typecheck and unit tests
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+      - name: Apply migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify activation database invariants
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('ux_access_redemptions_full_code_once','ux_access_redemptions_class_code_once')")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='auth_event_type' and e.enumlabel='account_activated'")" = "1"
+      - name: Run activation atomicity, replay, session and race integration tests
+        run: node --test --import tsx tests/integration/activation.integration.test.ts
+        working-directory: apps/api
