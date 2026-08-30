@@ -110,7 +110,9 @@ export function validateInventory(input: unknown): ContentSourceInventory {
   }
   const observedDigest = inventoryDigest(inventory);
   if (observedDigest !== inventory.manifestSha256) {
-    throw new Error(`Content source inventory digest mismatch: expected ${inventory.manifestSha256}, observed ${observedDigest}`);
+    throw new Error(
+      `Content source inventory digest mismatch: expected ${inventory.manifestSha256}, observed ${observedDigest}`,
+    );
   }
   return inventory;
 }
@@ -118,7 +120,10 @@ export function validateInventory(input: unknown): ContentSourceInventory {
 type RunRow = { id: string };
 type DocumentRow = { id: string };
 
-async function getOrCreateRun(tx: QueryExecutor, inventory: ContentSourceInventory): Promise<{ id: string; replayed: boolean }> {
+async function getOrCreateRun(
+  tx: QueryExecutor,
+  inventory: ContentSourceInventory,
+): Promise<{ id: string; replayed: boolean }> {
   const existing = await tx.query<RunRow>(
     `select id
        from content_import_runs
@@ -237,7 +242,10 @@ async function upsertAsset(
   );
 }
 
-export async function importContentSource(database: Database, input: unknown): Promise<ContentSourceImportResult> {
+export async function importContentSource(
+  database: Database,
+  input: unknown,
+): Promise<ContentSourceImportResult> {
   const inventory = validateInventory(input);
   return database.transaction(async (tx) => {
     const run = await getOrCreateRun(tx, inventory);
