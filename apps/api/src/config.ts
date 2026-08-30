@@ -11,6 +11,8 @@ const EnvSchema = z.object({
     .refine((value) => value.startsWith("postgresql://") || value.startsWith("postgres://"), {
       message: "DATABASE_URL must use postgresql:// or postgres://",
     }),
+  DATABASE_SSL: z.enum(["disable", "require"]).default("disable"),
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(20).default(10),
   SESSION_COOKIE_NAME: z
     .string()
     .regex(/^[A-Za-z0-9_-]+$/)
@@ -21,6 +23,7 @@ const EnvSchema = z.object({
     .min(1)
     .max(24 * 30)
     .default(24 * 7),
+  SESSION_COOKIE_SAME_SITE: z.enum(["lax", "none"]).default("lax"),
   ALLOWED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:5174"),
 });
 
