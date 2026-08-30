@@ -1,0 +1,85 @@
+name: Stage 10 Media Pipeline
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage10-media-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  media-pipeline:
+    name: Stage 10 · Media pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_media
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_media"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_media
+      LOG_LEVEL: silent
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install media runtime and PostgreSQL CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils postgresql-client python3-reportlab
+          pdfinfo -v
+          pdftoppm -v
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Lint, typecheck, unit test and build
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+          npm run build --prefix apps/api
+      - name: Apply migrations through media schema
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify media schema constraints
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_type where typname in ('media_asset_status','media_variant_kind')")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from information_schema.tables where table_schema='public' and table_name in ('media_assets','media_variants')")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname='ux_media_assets_content_source_asset'")" = "1"
+      - name: Run PostgreSQL media idempotency and retry integration test
+        run: node --test --import tsx tests/integration/media.integration.test.ts
+        working-directory: apps/api
+      - name: Generate a real two-page PDF fixture
+        run: |
+          python3 - <<'PY'
+          from reportlab.pdfgen import canvas
+          from reportlab.lib.pagesizes import A4
+          path = "/tmp/stage10-two-pages.pdf"
+          pdf = canvas.Canvas(path, pagesize=A4)
+          pdf.drawString(72, 780, "Stage 10 page 1")
+          pdf.showPage()
+          pdf.drawString(72, 780, "Stage 10 page 2")
+          pdf.showPage()
+          pdf.save()
+          print(path)
+          PY
+      - name: Verify real Poppler extraction and stable page order
+        env:
+          MEDIA_TEST_PDF: /tmp/stage10-two-pages.pdf
+        run: node --import tsx tests/media-pdf-smoke.ts
+        working-directory: apps/api
