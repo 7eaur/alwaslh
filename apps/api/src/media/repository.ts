@@ -1,32 +1,97 @@
 import type { QueryExecutor } from "../db.js";
 import type { ProcessedMediaAsset } from "./media-types.js";
 
-interface MediaAssetRow {
+export interface MediaAssetRow {
   id: string;
   status: "processing" | "ready" | "failed";
 }
 
+interface ExistingMediaAssetRow extends MediaAssetRow {
+  content_source_asset_id: string | null;
+  source_position: number;
+  source_filename: string;
+  source_mime_type: string;
+  source_page_number: number | null;
+  source_checksum_sha256: string;
+  source_byte_size: string;
+}
+
+export interface StoredMediaVariantRow {
+  kind: "source" | "display" | "thumbnail" | "ai";
+  profile_version: string;
+  storage_key: string;
+  mime_type: string;
+  byte_size: string;
+  width: number | null;
+  height: number | null;
+  checksum_sha256: string;
+}
+
+export interface MediaIdentityInput {
+  idempotencyKey: string;
+  contentSourceAssetId?: string;
+  sourcePosition: number;
+  sourceFilename: string;
+  sourceMimeType: string;
+  sourcePageNumber?: number;
+  sourceChecksumSha256: string;
+  sourceByteSize: number;
+}
+
+function sameNullable<T>(left: T | null | undefined, right: T | null | undefined): boolean {
+  return (left ?? null) === (right ?? null);
+}
+
+function assertSameIdentity(existing: ExistingMediaAssetRow, input: MediaIdentityInput): void {
+  const matches =
+    sameNullable(existing.content_source_asset_id, input.contentSourceAssetId) &&
+    existing.source_position === input.sourcePosition &&
+    existing.source_filename === input.sourceFilename &&
+    existing.source_mime_type === input.sourceMimeType &&
+    sameNullable(existing.source_page_number, input.sourcePageNumber) &&
+    existing.source_checksum_sha256 === input.sourceChecksumSha256 &&
+    Number(existing.source_byte_size) === input.sourceByteSize;
+
+  if (!matches) throw new Error("idempotency_conflict");
+}
+
 export async function ensureMediaAsset(
   tx: QueryExecutor,
-  input: {
-    idempotencyKey: string;
-    contentSourceAssetId?: string;
-    sourcePosition: number;
-    sourceFilename: string;
-    sourceMimeType: string;
-    sourcePageNumber?: number;
-  },
+  input: MediaIdentityInput,
 ): Promise<MediaAssetRow> {
+  const existingRows = await tx.query<ExistingMediaAssetRow>(
+    `select id, status, content_source_asset_id, source_position, source_filename,
+            source_mime_type, source_page_number, source_checksum_sha256, source_byte_size
+     from media_assets
+     where idempotency_key = $1
+     for update`,
+    [input.idempotencyKey],
+  );
+  const existing = existingRows[0];
+
+  if (existing) {
+    assertSameIdentity(existing, input);
+    const updatedRows = await tx.query<MediaAssetRow>(
+      `update media_assets
+       set attempt_count = attempt_count + 1,
+           status = case when status = 'ready' then 'ready'::media_asset_status else 'processing'::media_asset_status end,
+           last_error_code = case when status = 'ready' then last_error_code else null end,
+           last_error_message = case when status = 'ready' then last_error_message else null end
+       where id = $1
+       returning id, status`,
+      [existing.id],
+    );
+    const updated = updatedRows[0];
+    if (!updated) throw new Error("media_asset_upsert_failed");
+    return updated;
+  }
+
   const rows = await tx.query<MediaAssetRow>(
     `insert into media_assets (
        idempotency_key, content_source_asset_id, source_position, source_filename,
-       source_mime_type, source_page_number, status, attempt_count
-     ) values ($1, $2, $3, $4, $5, $6, 'processing', 1)
-     on conflict (idempotency_key) do update
-       set attempt_count = media_assets.attempt_count + 1,
-           status = case when media_assets.status = 'ready' then 'ready'::media_asset_status else 'processing'::media_asset_status end,
-           last_error_code = case when media_assets.status = 'ready' then media_assets.last_error_code else null end,
-           last_error_message = case when media_assets.status = 'ready' then media_assets.last_error_message else null end
+       source_mime_type, source_page_number, source_checksum_sha256, source_byte_size,
+       status, attempt_count
+     ) values ($1, $2, $3, $4, $5, $6, $7, $8, 'processing', 1)
      returning id, status`,
     [
       input.idempotencyKey,
@@ -35,11 +100,26 @@ export async function ensureMediaAsset(
       input.sourceFilename,
       input.sourceMimeType,
       input.sourcePageNumber ?? null,
+      input.sourceChecksumSha256,
+      input.sourceByteSize,
     ],
   );
   const row = rows[0];
   if (!row) throw new Error("media_asset_upsert_failed");
   return row;
+}
+
+export async function listMediaVariants(
+  tx: QueryExecutor,
+  mediaAssetId: string,
+): Promise<readonly StoredMediaVariantRow[]> {
+  return tx.query<StoredMediaVariantRow>(
+    `select kind, profile_version, storage_key, mime_type, byte_size, width, height, checksum_sha256
+     from media_variants
+     where media_asset_id = $1
+     order by array_position(array['source','display','thumbnail','ai']::media_variant_kind[], kind)`,
+    [mediaAssetId],
+  );
 }
 
 export async function commitProcessedMedia(tx: QueryExecutor, asset: ProcessedMediaAsset): Promise<void> {
