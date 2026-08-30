@@ -49,10 +49,10 @@ try {
 
     console.log(`apply ${filename}`);
     await client.query(contents);
-    await client.query(
-      "insert into schema_migrations (filename, checksum_sha256) values ($1, $2)",
-      [filename, hash],
-    );
+    await client.query("insert into schema_migrations (filename, checksum_sha256) values ($1, $2)", [
+      filename,
+      hash,
+    ]);
   }
 } finally {
   await client.query("select pg_advisory_unlock($1)", [lockId]).catch(() => undefined);
