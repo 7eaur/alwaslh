@@ -1,18 +1,19 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage 4 — Database Reality Verification is the next roadmap gate; **BLOCKED until the database platform is connected**.
-- **Stage Order Rule:** stages are executed sequentially. Do not skip Stage 4 into final schema/Auth/RLS implementation using assumptions.
-- **Stage 2 Brand Identity:** **COMPLETE / PASS.** Canonical owned identity is based on the original turquoise/open-book product logo, not TailAdmin assets.
-- **Brand Source of Truth:** `packages/brand/BRAND_GUIDELINES.md`, `packages/brand/BRAND_STAGE_DOD.md`, `packages/brand/assets/`, `packages/brand/src/tokens.css`, `packages/brand/src/tokens.ts`.
-- **Brand Assets:** primary/horizontal/inverse/monochrome/white logo variants; favicon; PWA 192/512/maskable icons; identity manifest.
-- **Brand Palette:** primary teal `#00B5A9`, dark teal `#007F78`, brand ink `#123C43`, mint `#E6F7F6`, surface `#F2F4F7`, charcoal `#1F2937`; Cairo primary Arabic typography with Tajawal/Noto fallbacks.
-- **Stage 3 UX Architecture:** **COMPLETE / PASS.** Admin and Student IA, navigation, legacy-to-target screen mapping, critical user flows, async/offline/error/permission states, responsive/accessibility contracts and low-fidelity wireframe references are committed.
-- **UX Source of Truth:** `docs/ux/UX_ARCHITECTURE.md`, `docs/ux/UX_FEATURE_PARITY_REVIEW.md`, `docs/ux/UX_STAGE_DOD.md`, `docs/ux/wireframes/`.
-- **UX Parity:** all feature groups in the existing parity contract have a target UX destination/flow. This is architecture coverage only; implementation parity is not yet claimed.
-- **Admin Direction:** operational/data-dense; grouped into Overview, Content, Assessment & AI, Students & Access, Communication, Reports, System.
-- **Student Direction:** calm mobile-first PWA with five primary destinations: Home, Lessons, Quizzes, Notes, More; lower-frequency statistics/achievements/notifications/access/install remain under More.
+- **Current Phase:** Stage 4 — PostgreSQL Data Platform **COMPLETE / PASS at design/schema baseline**. Stage 5 Engineering Foundation is next.
+- **Stage Order Rule:** stages are executed sequentially; runtime verification gates remain explicit and may not be silently treated as passed.
+- **Stage 2 Brand Identity:** **COMPLETE / PASS.** Canonical owned identity evolves the original turquoise/open-book product logo.
+- **Stage 3 UX Architecture:** **COMPLETE / PASS.** Admin/Student IA, flows, states, responsive/accessibility contracts and wireframes are committed.
+- **Stage 4 Database Decision:** rebuilt product uses **self-hosted PostgreSQL on the same hosting environment as backend services**. Supabase is not the target platform.
+- **Clean-Slate Rule:** the old project is a product/feature/scenario reference, not a database compatibility target. Legacy IDs, old RLS assumptions, plaintext/reversible credentials, device ownership and schema drift are not preserved.
+- **Database Boundary:** Admin/Student browsers never connect directly to PostgreSQL. Only backend API, workers, migrations and backup processes hold DB credentials.
+- **Canonical Schema:** `database/migrations/0001_core.sql`, `0002_access.sql`, `0003_learning.sql`, `0004_ai_and_sync.sql`.
+- **Database Documentation:** `DATABASE_PLATFORM_ARCHITECTURE.md`, `database/SCHEMA.md`, `database/README.md`, `database/BACKUP_RESTORE.md`, `database/DATABASE_STAGE_DOD.md`.
+- **Database Security/Ops:** separate owner/migrator/app/readonly roles; private PostgreSQL network boundary; version-controlled migrations; off-host backups and restore drills required.
+- **Key Integrity Guarantees:** UUID ownership; class/subject/lesson FK integrity; stable lesson page positions; exact 6/7-digit code constraints; normalized entitlements; idempotent redemption contract; stable quiz/question/option identity; persisted practice shuffle order; answer-option ownership FK; generated attempt percentage; durable AI jobs; offline content revisions/tombstones.
+- **Database Tests:** `database/tests/schema_smoke.sql` committed. It checks core FK/ordering/code/question/attempt invariants.
+- **Database Runtime Verification:** **NOT YET RUN** because no real PostgreSQL instance is provisioned in the connected environment. No migration/test runtime-pass claim is made. Runtime database execution remains a pre-release gate.
+- **Content Source:** `7eaur/alwaslh-go` remains the canonical curriculum/media source input; content will be normalized/imported into the new model rather than forcing the schema to copy legacy database structures.
 - **Implementation Branch:** `rebuild/foundation`.
-- **Database Connection:** **NOT YET CONNECTED / NOT YET VERIFIED.** Required Stage 4 output is `DATABASE_REALITY_AUDIT.md` covering actual schema, RLS, functions/RPCs/triggers, Auth, Storage policies, Realtime, indexes/constraints and data/schema drift before any final migrations.
-- **Legacy Product:** remains **NO-GO** for production and remains the behavior/feature reference until tested replacement parity is achieved.
-- **Last Verification:** brand repository assets and Stage 2/3 documentation gates verified from committed source. Full rebuilt React/Vite runtime/build is still **NOT YET VERIFIED**; no build-pass claim is made.
-- **Next Action:** connect the database platform. Immediately after connection: inventory/backup/reality audit, compare deployed state with migrations, then produce the target migration/RLS plan. No later roadmap stage starts before this gate.
+- **Legacy Product:** remains **NO-GO** for production and is retained only as product behavior/feature reference until tested replacement parity is achieved.
+- **Next Action:** Stage 5 — establish the real backend/monorepo engineering foundation around the approved PostgreSQL contracts: API runtime boundary, environment validation, database access layer/migration runner, logging/error contracts, test harness and reproducible Admin/Student builds. Auth/credentials remain Stage 6 and will not be mixed into Stage 5 prematurely.
