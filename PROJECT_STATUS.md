@@ -1,119 +1,95 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage 9 Content Model & deterministic `alwaslh-go` Import is **COMPLETE / CLI + PostgreSQL RUNTIME PASS**. Stage 10 Media Pipeline is next, but must not begin until CI passes again on this documentation head.
-- **Verification Policy:** every stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; anything not executed remains `NOT YET VERIFIED`.
-- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, and `MASTER_REBUILD_ROADMAP.md`.
-- **Latest Verified Stage 9 Code Baseline:** branch `rebuild/content-import`, commit `30d12d24be93bf306a9da5fffcfb45ea9317a186`.
-- **Stage 9 Dedicated Verification:** GitHub Actions run `33294631418` — **SUCCESS**.
-- **Full Regression Verification on same commit:** GitHub Actions run `33294631419` — **SUCCESS** across the complete rebuild verification workflow.
+- **Current Phase:** temporary Preview Environment setup is active before continuing Stage 10 Media Pipeline.
+- **Main rebuild state:** Stages 1–9 are closed and verified. Stage 10 remains the next implementation stage; its work is paused only long enough to make the project continuously testable on Supabase + Vercel.
+- **Verification Policy:** every rebuild stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; anything not executed remains `NOT YET VERIFIED`.
+- **Continuity Source:** read `PROJECT_HANDOFF.md`, this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `MASTER_REBUILD_ROADMAP.md`, and for the temporary environment `docs/preview/SUPABASE_VERCEL_PREVIEW.md`.
 
-## Completed
+## Last verified rebuild baseline
 
-- **Stage 1 Product Contract:** **CLI PASS.** Feature-preservation contract and automated parity checks.
-- **Stage 2 Brand Identity:** **CLI PASS.** Owned teal/open-book identity, canonical assets/tokens/PWA icons and automated brand checks.
-- **Stage 3 UX Architecture:** **CLI PASS.** Admin/Student IA, critical flows/states, responsive/accessibility contracts and wireframes.
-- **Stage 4 PostgreSQL Data Platform:** **CLI/RUNTIME PASS on PostgreSQL 16.** Clean-slate private PostgreSQL behind Backend; migrations and relational integrity verified on clean DBs.
-- **Stage 5 Engineering Foundation:** **CLI/RUNTIME PASS.** API runtime, DB pool/transactions, migration runner, env validation, logging/error envelope, strict TS, tests, production builds and CI.
-- **Stage 6 Auth & Authorization:** **CLI/RUNTIME PASS.** Salted scrypt credentials, opaque sessions, HttpOnly cookies, role isolation, Origin protection, DB lockout, reset-only recovery and explicit Admin bootstrap.
-- **Stage 7 Access Codes & Entitlements:** **CLI/RUNTIME PASS.** Secure 6/7-digit codes, Arabic/Persian normalization, transactional/idempotent redemption, renewal, no-waste behavior, revoke/audit, constraints and race tests.
-- **Stage 8 Student Activation & Account Flow:** **CLI/RUNTIME/BROWSER E2E PASS.** Atomic activation + returning login + recovery + real Chromium integration.
-- **Stage 9 Content Model & deterministic `alwaslh-go` Import:** **CLI/PostgreSQL RUNTIME PASS.** Full pinned inventory, manifest compatibility, deterministic ordering, provenance, repeatable DB import and reconciliation verified.
+- Branch: `rebuild/content-import`
+- Documentation head: `cf55bd5d0f36dd9ad0f2df57c46c5541a3b01d0a`
+- Stage 9 dedicated run: `33294974544` — **SUCCESS**
+- Full regression run: `33294974573` — **SUCCESS**
+- Stage 9 source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
+- Verified source inventory: 15 subject roots / 48 documents / 5,552 images / 4,218 JPG / 1,334 WEBP / 86 helper files / 0 fatal issues.
 
-## Stage 9 verified source/import facts
+## Completed rebuild stages
 
-Pinned source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
+1. Product Contract — CLI PASS.
+2. Brand Identity — CLI PASS.
+3. UX Architecture — CLI PASS.
+4. PostgreSQL Data Platform — CLI/RUNTIME PASS.
+5. Engineering Foundation — CLI/RUNTIME PASS.
+6. Auth & Authorization — CLI/RUNTIME PASS.
+7. Access Codes & Entitlements — CLI/RUNTIME PASS.
+8. Student Activation & Account Flow — CLI/RUNTIME/BROWSER E2E PASS.
+9. Content Model & deterministic `alwaslh-go` Import — CLI/PostgreSQL RUNTIME PASS.
 
-```text
-15 subject roots
-48 source documents
-5,552 source images
-4,218 JPG
-1,334 WEBP
-86 recognized helper files
-24 manifest.json files
-0 fatal inventory issues
-0 manifest errors
-0 order errors
-0 unmapped images
-0 unparsed assets
-0 classification errors
-0 expected-count errors
-```
+## Temporary Preview Environment — ACTIVE
 
-Canonical inventory SHA-256:
+Branch: `preview/supabase-vercel`.
 
-`7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`
+Purpose: run the evolving product continuously for owner testing while the rebuild proceeds. This does **not** replace the final production architecture decision.
 
-The inventory reports **100 duplicate Git-blob groups covering 201 paths**. They are retained as review evidence, not auto-rejected, because repeated educational pages can be intentional.
+### Supabase
 
-### Runtime import proof
+Project: `linksoftt@gmail.com's Project` / ref `dhlqqgnxsqawidjmedvq`.
 
-Clean PostgreSQL 16 applied `0001_core.sql` through `0008_content_source_import.sql`.
+Verified directly on Supabase:
 
-First import:
+- canonical migrations `0001_core` → `0008_content_source_import` applied successfully;
+- 40 public application tables;
+- 21 public enum types;
+- 107 indexes after canonical migrations;
+- six-digit/full and seven-digit/class access-code constraints present;
+- single-redemption activation index present;
+- content source import tables present;
+- preview-only `preview_supabase_lockdown` applied;
+- RLS enabled on every public app table;
+- `anon` and `authenticated` table/sequence access revoked;
+- Supabase `RLS Disabled in Public` security errors eliminated;
+- `RLS Enabled No Policy` INFO notices are intentional because PostgREST is not an application data path.
 
-```json
-{"replayed":false,"documents":48,"assets":5552}
-```
+Preview seed data exists for manual testing:
 
-Identical re-import:
+- one temporary Admin account with a salted `scrypt$...` credential;
+- one active temporary six-digit Full Access Code.
 
-```json
-{"replayed":true,"documents":48,"assets":5552}
-```
+Credentials are intentionally not stored in Git.
 
-Runtime assertions proved exactly one import run, 48 present source documents, 5,552 present assets, zero absent rows and no duplicate present `(document_id, position)` pairs.
+### Vercel preparation
 
-## Canonical database migrations
+Implemented on the preview branch:
 
-`0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql` → `0008_content_source_import.sql`.
+- `apps/api/api/[...path].ts` Vercel serverless Fastify adapter;
+- Supabase SSL and serverless pool-size configuration;
+- exact credentialed CORS allowlist;
+- preview cross-origin `SameSite=None; Secure` HttpOnly cookie option while `Lax` remains default;
+- configurable `VITE_API_BASE_URL` in Student Web;
+- Vercel configs for API, Student and Admin apps;
+- `database/preview/0001_supabase_lockdown.sql` records Supabase-specific hardening;
+- full runbook: `docs/preview/SUPABASE_VERCEL_PREVIEW.md`.
 
-## Current branch / PR stack
+## NOT YET VERIFIED — Preview
 
-- Foundation: `rebuild/foundation` / PR #2.
-- Auth: `rebuild/auth-authorization` / PR #3.
-- Access/Entitlements: `rebuild/access-entitlements` / PR #4.
-- Student Activation UI: `rebuild/student-activation-ui` / PR #5.
-- Student Activation Backend: `rebuild/student-activation-backend` / PR #6.
-- Stage 8 integrated source: `rebuild/student-activation-integration` / PR #7.
-- **Stage 9 source of truth:** `rebuild/content-import` / PR #8.
-- Parallel Stage 9 source audit: `rebuild/content-source-audit` / PR #9; audit-only evidence, not importer ownership.
+- Vercel projects have not yet been imported/deployed in the user's Vercel account because no Vercel connector is available in this environment.
+- Actual Vercel deployment URLs: **NOT YET VERIFIED**.
+- `/api/ready` from Vercel to Supabase: **NOT YET VERIFIED**.
+- Browser activation/login with third-party Vercel origins: **NOT YET VERIFIED**.
+- Preview branch API/Student/Admin CI after the platform-adapter changes: pending until the preview PR/workflow run is green.
+- Supabase Storage media adapter: belongs to Stage 10 and is not yet complete.
 
-## Critical defects caught and fixed by gates
+## Final architecture remains unchanged
 
-- Legacy root PostCSS/Tailwind leakage into new apps.
-- Auth strict-TypeScript/scrypt boundary defects.
-- Stage 7 PostgreSQL enum/JSONB/default typing defects, audit atomicity and idempotency ownership weakness.
-- Stage 8 test isolation/discovery defects and production API build/start mismatch.
-- Stage 9 audit found eight Arabic-key manifests that would have omitted **772 images** despite a correct top-level Git image count; parser support + payload-count invariant added.
-- Stage 9 helper expectation drift corrected from 76 to the observed/recognized 86 helpers.
-- Stage 9 found a third real manifest shape (`filename` + `pdf_page` + `book_page`) in `كتاب القراءة`; explicit compatibility support and regression tests added.
-- Stage 9 first real DB import exposed Python/JavaScript numeric JSON digest drift (`9.0` vs `9`); canonical integral-number normalization fixed the cross-language digest contract.
-
-## Important decisions
-
-- PostgreSQL is self-hosted/private behind Backend; browser never connects directly.
-- Supabase is not the target platform and legacy DB data/schema are not compatibility targets.
-- Full access code = exactly 6 digits; Class access code = exactly 7 digits.
-- Full Code becomes the returning Student identifier only after activation; password remains the authentication secret.
-- Recovery resets the secret; it never reveals the original password.
-- `alwaslh-go` is a canonical source input. Raw repository assets never ship as a frontend bundle.
-- Stage 9 preserves source documents/assets/order/provenance and **does not infer Lesson entities from filenames**.
-- Duplicate source blobs remain reportable review evidence unless a later semantic rule proves them invalid.
-- Legacy application remains **NO-GO** for production until final parity/release gates pass.
-
-## NOT YET VERIFIED / remaining release risks
-
-- final CI on the documentation-only Stage 9 closure head;
-- actual production-host PostgreSQL networking, pool tuning, load behavior and backup/restore drill;
-- API/reverse-proxy perimeter rate limiting and final security hardening;
-- object/media storage runtime and ordered PDF/media processing;
-- Gemini prompt contracts, golden tests, durable workers, multi-project/key failover and runtime;
-- complete Admin product;
-- post-auth Student learning product, Practice Engine and trusted scoring;
-- account-scoped Offline Sync/PWA/outbox lifecycle;
-- full performance/security/accessibility/device/staging/rollback/release gates.
+- Browser never connects directly to PostgreSQL/PostgREST.
+- Business Auth/Authorization/Entitlements remain in `apps/api`.
+- Supabase is a temporary PostgreSQL/Storage hosting provider during development, not an application dependency.
+- Final hosting will move PostgreSQL, media storage and API behind the production infrastructure without changing domain contracts.
 
 ## Next Action
 
-**Closure gate:** wait for both Stage 9 dedicated CI and the full regression workflow to pass on this documentation head. If green, Stage 9 is fully closed and the next implementation stage is **Stage 10 — Media Pipeline**.
+1. Run CLI/CI against `preview/supabase-vercel` and fix platform-adapter failures.
+2. Import three Vercel projects (API, Student, Admin), set secrets/URLs, and prove `/api/health`, `/api/ready`, Student activation/login/logout/recovery in browser.
+3. Keep the Preview environment updated after verified rebuild batches.
+4. Resume **Stage 10 — Media Pipeline** immediately after the temporary hosting gate is usable.
