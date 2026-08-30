@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -42,6 +42,8 @@ test("filesystem storage rejects traversal and writes atomically under its root"
     await storage.put(key, bytes);
     assert.equal(await storage.exists(key), true);
     assert.deepEqual(await storage.read(key), bytes);
+    const storedDirectory = join(root, "media", "asset-1", "source");
+    assert.deepEqual(await readdir(storedDirectory), ["source-abc.png"]);
     await storage.remove(key);
     assert.equal(await storage.exists(key), false);
   } finally {
