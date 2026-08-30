@@ -1,9 +1,11 @@
+const MAX_MEDIA_CONCURRENCY = 8;
+
 export async function mapWithConcurrencyOrdered<T, R>(
   items: readonly T[],
   concurrency: number,
   worker: (item: T, index: number) => Promise<R>,
 ): Promise<R[]> {
-  if (!Number.isInteger(concurrency) || concurrency < 1) {
+  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > MAX_MEDIA_CONCURRENCY) {
     throw new Error("invalid_concurrency");
   }
 
