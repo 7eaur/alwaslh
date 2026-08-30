@@ -35,8 +35,17 @@ function parsePageCount(output: string): number {
   return pages;
 }
 
-export async function extractPdfPages(bytes: Buffer): Promise<readonly ExtractedPdfPage[]> {
+function processFailure(code: string, error: unknown, signal?: AbortSignal): never {
+  if (signal?.aborted) throw new Error("aborted");
+  throw new Error(`${code}:${String(error)}`);
+}
+
+export async function extractPdfPages(
+  bytes: Buffer,
+  signal?: AbortSignal,
+): Promise<readonly ExtractedPdfPage[]> {
   if (bytes.byteLength === 0 || bytes.byteLength > MAX_PDF_BYTES) throw new Error("invalid_input");
+  signal?.throwIfAborted();
 
   const directory = await mkdtemp(join(tmpdir(), "alwaslh-pdf-"));
   const inputPath = join(directory, "source.pdf");
@@ -44,20 +53,22 @@ export async function extractPdfPages(bytes: Buffer): Promise<readonly Extracted
 
   try {
     await writeFile(inputPath, bytes, { flag: "wx" });
+    signal?.throwIfAborted();
+
     const inspection = await execFileAsync("pdfinfo", [inputPath], {
       timeout: 15_000,
       maxBuffer: 1024 * 1024,
-    }).catch((error) => {
-      throw new Error(`pdf_inspection_failed:${String(error)}`);
-    });
+      ...(signal ? { signal } : {}),
+    }).catch((error) => processFailure("pdf_inspection_failed", error, signal));
     const expectedPages = parsePageCount(inspection.stdout);
+    signal?.throwIfAborted();
 
     await execFileAsync("pdftoppm", ["-jpeg", "-r", "150", inputPath, outputPrefix], {
       timeout: 120_000,
       maxBuffer: 1024 * 1024,
-    }).catch((error) => {
-      throw new Error(`pdf_render_failed:${String(error)}`);
-    });
+      ...(signal ? { signal } : {}),
+    }).catch((error) => processFailure("pdf_render_failed", error, signal));
+    signal?.throwIfAborted();
 
     const files = (await readdir(directory))
       .map((filename) => {
