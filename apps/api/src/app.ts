@@ -1,4 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
+import { registerAccessRoutes } from "./access/http.js";
+import { AccessService } from "./access/service.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
 import type { AppConfig } from "./config.js";
@@ -19,8 +21,10 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
     requestTimeout: 15_000,
   });
   const auth = new AuthService(database, config.SESSION_TTL_HOURS);
+  const access = new AccessService(database);
 
   registerAuthRoutes(app, config, auth);
+  registerAccessRoutes(app, config, auth, access);
 
   app.get("/health", async () => ({
     status: "ok",

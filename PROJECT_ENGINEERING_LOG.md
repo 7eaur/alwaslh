@@ -1,20 +1,20 @@
 # PROJECT ENGINEERING LOG
 
-> Engineering source of truth for product understanding, architecture decisions, changes, verification and remaining work. Detailed legacy evidence remains in `PROJECT_FULL_AUDIT_CATALOG.md`.
+> Engineering source of truth for product understanding, architecture decisions, changes, verification and remaining work. Detailed legacy evidence remains in `PROJECT_FULL_AUDIT_CATALOG.md`. For continuation context, read `PROJECT_HANDOFF.md` first.
 
 ## Project Understanding
 
 **الوسيلة الذكية** منصة تعليمية عربية بمنتجين مترابطين:
 
-- **Student:** تفعيل/دخول، صفوف ومواد ودروس، قارئ، ملخص، أسئلة تفاعلية، اختبارات، ملاحظات وأسئلة محفوظة، إشعارات، إحصائيات وإنجازات، PWA وOffline.
-- **Admin:** إدارة الصفوف والمواد والدروس والمحتوى، الرفع والمعالجة، Gemini/AI generation، الاختبارات والنماذج، أكواد الوصول الكامل وأكواد الصفوف، الحسابات، الإشعارات، التصدير والإعدادات.
+- **Student PWA:** تفعيل/دخول، صفوف ومواد ودروس، قارئ، ملخص، أسئلة تفاعلية، اختبارات، ملاحظات وأسئلة محفوظة، إشعارات، إحصائيات وإنجازات، PWA وOffline.
+- **Admin Web:** إدارة الصفوف والمواد والدروس والمحتوى، الرفع والمعالجة، Gemini/AI generation، الاختبارات والنماذج، أكواد الوصول الكامل وأكواد الصفوف، الحسابات، الإشعارات، التصدير والإعدادات.
 
-الهدف هو بناء أفضل نسخة من **نفس الفكرة والسيناريوهات**. `PRODUCT_FEATURE_PARITY_MATRIX.md` هو بوابة منع إسقاط Feature أو User Flow مهم.
+الهدف هو بناء أفضل نسخة من **نفس الفكرة والسيناريوهات والنتائج للمستخدم**، مع عدم الحفاظ على أخطاء البنية القديمة. `PRODUCT_FEATURE_PARITY_MATRIX.md` هو عقد منع إسقاط Feature أو User Flow مهم.
 
 ### Source repositories
 
-- `7eaur/alwaslh`: مرجع الفكرة، السلوك، Business Rules، User Flows والمشكلات التي يجب ألا تتكرر. **ليس مرجعًا لقاعدة البيانات الجديدة أو للبنية الداخلية.**
-- `7eaur/alwaslh-go`: مرجع المحتوى والصور والكتب والنماذج الوزارية. يدخل لاحقًا عبر deterministic import/normalization pipeline ولا يحمّل كـfrontend bundle.
+- `7eaur/alwaslh`: مرجع الفكرة والسلوك وBusiness Rules وUser Flows والمشكلات التي يجب ألا تتكرر. **ليس مرجعًا للـschema أو internal architecture الجديدة.**
+- `7eaur/alwaslh-go`: مرجع المحتوى والصور والكتب والنماذج الوزارية. سيُستهلك لاحقًا عبر deterministic import/normalization pipeline؛ لا يحمّل raw كـfrontend bundle.
 
 ## Target Architecture
 
@@ -22,9 +22,8 @@
 apps/
   admin-web/
   student-web/
-  api/                  # Stage 5
-  workers/              # AI/background stages
-
+  api/
+  workers/              # AI/background stages later
 packages/
   brand/
   ui/
@@ -33,12 +32,10 @@ packages/
   validation/
   ai-contracts/
   testing/
-
 database/
   migrations/
   tests/
   deploy/
-
 content/
   import-contracts/
   manifests/
@@ -55,7 +52,7 @@ Student PWA ┘       │
                     └── background/AI workers
 ```
 
-The browser never receives PostgreSQL credentials and never connects directly to the database.
+Browser never receives PostgreSQL credentials and never connects directly to the database.
 
 ## User Flows to Preserve
 
@@ -78,15 +75,15 @@ The browser never receives PostgreSQL credentials and never connects directly to
 
 | ID | Severity | Area | Legacy problem | Target status |
 |---|---|---|---|---|
-| SEC-001 | P0 | Admin auth | anonymous privileged password mutation | DESIGN ELIMINATED; legacy RPC model not retained |
-| SEC-002..011 | P0 | Authorization | broad/public DB/RLS privilege paths | DESIGN ELIMINATED; browser has no DB access |
-| DATA-015 | P0 | Activation | multi-step/non-transactional | DB contract redesigned for transactional/idempotent service |
-| DATA-018 | P0 | Class codes | redemption racy/non-atomic | DB contract redesigned for transactional/idempotent service |
-| SEC-015..018 | P1 | Credentials | plaintext/reversible/device assumptions | Stage 6 rebuild; old mechanism removed |
-| DATA-025 | P1 | Assessment | client-trusted score/ranking | DB model strengthened; server finalization required |
-| OFF-* | P1/P2 | Offline | stale/overlapping caches/sync | revision/tombstone target established; engine later |
-| AI-* | P1/P2 | AI | browser-owned jobs/weak validation | durable job schema established; worker/platform later |
-| MEDIA-* | P1/P2 | Media | upload page ordering/export defects | stable ordered asset model established; pipeline later |
+| SEC-001 | P0 | Admin auth | anonymous privileged password mutation | ELIMINATED by new auth boundary |
+| SEC-002..011 | P0 | Authorization | broad/public DB/RLS privilege paths | ELIMINATED; browser has no DB access |
+| DATA-015 | P0 | Activation | multi-step/non-transactional | target Stage 8 requires atomic flow |
+| DATA-018 | P0 | Class codes | redemption racy/non-atomic | FIXED and runtime-tested in Stage 7 |
+| SEC-015..018 | P1 | Credentials | plaintext/reversible/device assumptions | FIXED in Stage 6 |
+| DATA-025 | P1 | Assessment | client-trusted score/ranking | schema strengthened; finalization service later |
+| OFF-* | P1/P2 | Offline | stale/overlapping caches/sync | revision/tombstone model exists; engine later |
+| AI-* | P1/P2 | AI | browser-owned jobs/weak validation | durable job schema exists; worker/platform later |
+| MEDIA-* | P1/P2 | Media | upload page ordering/export defects | stable ordered asset model exists; pipeline later |
 
 ## Classification
 
@@ -121,7 +118,8 @@ Legacy Supabase coupling, direct/public DB assumptions, legacy IDs as ownership,
 - **AD-012 — Self-hosted PostgreSQL on same hosting.** Private database boundary behind backend services.
 - **AD-013 — Clean-slate data model.** Old Supabase schema/data is not a compatibility target.
 - **AD-014 — Relational integrity before JSON convenience.** Core ownership/order/assessment/access relationships are normalized and constrained.
-- **AD-015 — CLI verification is mandatory for every stage.** Documentation/design review alone cannot produce a full PASS. Use DESIGN PASS / CLI PASS / RUNTIME PASS / RELEASE PASS and keep unexecuted checks as `NOT YET VERIFIED`.
+- **AD-015 — CLI verification is mandatory for every stage.** Documentation/design review alone cannot produce a full PASS. Use DESIGN PASS / CLI PASS / RUNTIME PASS / RELEASE PASS; unexecuted = `NOT YET VERIFIED`.
+- **AD-016 — Repository-owned handoff is mandatory.** `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md` and this log must be kept current so a new conversation can resume from repository evidence rather than chat memory.
 
 ## Changes Made
 
@@ -131,20 +129,20 @@ Legacy Supabase coupling, direct/public DB assumptions, legacy IDs as ownership,
 - repository/product audit completed;
 - `PRODUCT_FEATURE_PARITY_MATRIX.md` established;
 - rebuild roadmap and feature-preservation contract established;
-- `scripts/verify-product-contract.py` now validates unique/non-empty feature IDs and required capability families.
+- `scripts/verify-product-contract.py` validates unique/non-empty feature IDs and required capability families.
 
 ### Stage 2 — Brand Identity
 **CLI PASS.**
 
-Implemented owned identity based on the original turquoise/open-book mark:
-- primary/horizontal/inverse/monochrome/white logo assets;
+- evolved the real original teal/open-book identity instead of TailAdmin assets;
+- primary/horizontal/inverse/monochrome logo assets;
 - favicon + PWA 192/512/maskable assets;
-- Brand Teal `#00B5A9`, Dark Teal `#007F78`, Brand Ink `#123C43`, Mint `#E6F7F6`, Soft Surface `#F2F4F7`, Charcoal `#1F2937`;
+- canonical Brand Teal/Dark Teal/Ink/Mint/Surface/Charcoal palette;
 - Cairo primary Arabic typography with Tajawal/Noto fallbacks;
 - dark/focus/reduced-motion/touch target tokens;
-- `scripts/verify-brand.py` checks asset existence, SVG XML, PNG sizes, JSON contracts and brand/template regressions.
+- `scripts/verify-brand.py` validates assets, SVG XML, PNG sizes, JSON contracts and template regressions.
 
-CLI found a real drift where Mint existed in `identity.json` but not CSS. Added canonical `--brand-mint` rather than weakening the gate.
+CLI caught a real Mint-token drift; source tokens were fixed rather than weakening the gate.
 
 ### Stage 3 — UX Architecture
 **CLI PASS.**
@@ -162,27 +160,29 @@ Implemented:
 `scripts/verify-ux.py` checks required contracts, coverage rows, product feature-ID inventory, DoD state and SVG validity.
 
 ### Stage 4 — PostgreSQL Data Platform
-**CLI PASS on PostgreSQL 16.15.**
+**CLI/RUNTIME PASS on PostgreSQL 16.**
 
 Decision:
 - self-hosted PostgreSQL in same hosting environment as backend;
 - private DB; no browser DB connection;
 - clean-slate schema; Supabase is not the target.
 
-Canonical migrations:
+Canonical migrations now include:
 - `0001_core.sql` — profiles, classes, subjects, subject-class links, lessons, ordered assets.
-- `0002_access.sql` — exact 6/7-digit codes, entitlements, redemption/idempotency contract.
+- `0002_access.sql` — exact 6/7-digit code base and entitlement/redemption model.
 - `0003_learning.sql` — quizzes/versions/questions/options, persisted question/option order, answers, attempts, saved questions, achievements, notifications.
 - `0004_ai_and_sync.sql` — durable AI jobs/units/outputs and content revision/tombstone/sync checkpoint model.
+- `0005_auth.sql` — credentials/sessions/recovery/login security support.
+- `0006_access_contract.sql` — Stage 7 access durations/auditing/active entitlement uniqueness and strengthened constraints.
 
 Integrity guarantees include:
-- lesson subject must belong to class through composite FK;
-- asset page position unique per lesson;
-- answer option must be an option actually presented in the same session/question;
-- current practice question belongs to the session;
-- quiz attempt profile/session/version/quiz relationships are cross-constrained;
+- lesson subject belongs to class through relational FK;
+- asset position unique per lesson;
+- answer option must be an option actually presented for same session/question;
+- current practice question belongs to session;
+- attempt profile/session/version/quiz relationships are cross-constrained;
 - score percentage generated from counts;
-- active entitlement uniqueness constraints.
+- active entitlement uniqueness.
 
 Operations:
 - `database/deploy/roles.sql.example`;
@@ -191,71 +191,146 @@ Operations:
 - `database/tests/schema_smoke.sql`;
 - `database/tests/run.sh`.
 
+### Stage 5 — Engineering Foundation
+**CLI/RUNTIME PASS.**
+
+Implemented:
+- real `apps/api` runtime;
+- PostgreSQL pool and transaction boundary;
+- migration runner and applied-migration tracking;
+- idempotent rerun behavior;
+- environment validation;
+- structured public error envelope/logging foundation;
+- reproducible API install/build path;
+- lint + strict TypeScript + unit tests + production API build;
+- production builds for Admin and Student shells;
+- CI stage gate.
+
+Failure caught and fixed:
+- new Admin/Student Vite builds were inheriting legacy root PostCSS/Tailwind config. PostCSS configuration was isolated per new application rather than carrying old build coupling forward.
+
+### Stage 6 — Auth & Authorization
+**CLI/RUNTIME PASS.**
+
+Implemented and tested:
+- salted `scrypt` password hashing server-side;
+- random opaque session tokens; persisted form is SHA-256 digest only;
+- HttpOnly session cookie;
+- role isolation for Admin/Student;
+- mutation-origin protection foundation;
+- PostgreSQL-backed login attempt/lockout state;
+- one-time recovery flow that resets credentials and never reveals original password;
+- password change/recovery invalidates existing sessions;
+- explicit first-admin CLI bootstrap only; no default/public bootstrap.
+
+Integration gate verifies on PostgreSQL:
+- bootstrap works once and refuses repeat;
+- login/session lifecycle;
+- recovery/reset behavior;
+- Student/Admin role isolation.
+
+Strict TypeScript issues in scrypt wrapper/optional types/Fastify test headers were caught and fixed before runtime closure.
+
+### Stage 7 — Access Codes & Entitlements
+**CLI/RUNTIME PASS.**
+
+Implemented:
+- cryptographically secure 6-digit full-access and 7-digit class-access generation via server cryptography;
+- Arabic/Persian digit normalization;
+- entitlement duration stored with code;
+- transactional row-locked redemption;
+- advisory-lock idempotency;
+- idempotency lookup bound to the same profile;
+- finite renewal extends existing entitlement instead of creating conflicting active grants;
+- no-waste rule: class code is not consumed if active full access already covers the student;
+- Admin revoke flow;
+- access audit events;
+- code generation + audit event in the same transaction;
+- unique active entitlement constraints.
+
+Integration gate covers:
+- code generation;
+- Arabic/Persian digits;
+- first redemption;
+- idempotent replay;
+- renewal extension;
+- revoke;
+- no-waste class code behavior under full access;
+- concurrent redemption race proving only one competing claimant succeeds.
+
+Runtime failures caught and fixed before PASS:
+1. `durationDays` default had to be made explicit at the TypeScript boundary (`?? 365`).
+2. PostgreSQL enum inference in a UNION-based audit insert failed; query was simplified instead of patched with unnecessary complexity.
+3. `jsonb_build_object` could not infer duration parameter type; SQL now uses explicit integer typing.
+4. code generation/audit was strengthened to be atomic.
+5. idempotency ownership was strengthened so another profile cannot obtain a prior result by reusing a known key.
+
 ## Tests & Verification
 
 ### Mandatory policy
 See:
 - `docs/engineering/CLI_VERIFICATION_GATES.md`
-- `docs/engineering/CLI_VERIFICATION_REPORT_2026-08-30.md`
 - `.github/workflows/rebuild-stage-verification.yml`
+- `PROJECT_HANDOFF.md`
 
-### Final Stage 1–4 run
+### Latest verified baseline
 
-GitHub Actions run `33285502614` on commit `64ee5bbb9489461583425ffa88e4b294638f4bfc`: **SUCCESS**.
+- Branch: `rebuild/access-entitlements`
+- Commit: `0a7929daf2f79baccca31b8110a6c6e372d49024`
+- GitHub Actions run: `33288330856`
+- Result: **Stages 1–7 SUCCESS**.
 
-Verified:
-- Stage 1 product-contract CLI — PASS.
-- Stage 2 brand CLI — PASS.
-- Stage 3 UX CLI — PASS.
-- Stage 4 clean PostgreSQL 16.15 build — PASS.
-- migrations `0001`–`0004` executed with `ON_ERROR_STOP` — PASS.
-- `database/tests/schema_smoke.sql` — PASS.
-- schema-only `pg_dump` — PASS.
-- critical table/constraint/index catalog checks — PASS.
-
-### Failures caught and fixed before final PASS
-
-1. Stage 1 checker initially assumed a fixed table width; matrix has deliberate variable-width sections. Checker fixed while preserving strict ID/non-empty validation.
-2. Stage 2 detected Mint token drift between identity JSON and CSS; source tokens fixed.
-3. Stage 4 migrations and smoke passed on first DB run, but catalog test expected an obsolete FK name. Test was corrected to the stronger `practice_answers_presented_option_fk` and expanded to verify cross-record attempt/session constraints.
-
-### Still NOT YET VERIFIED / later gates
-
-- Stage 5 full workspace install/lint/typecheck/unit/API/build pipeline.
-- actual hosting PostgreSQL connection-pool/load/config/network review.
-- actual backup + restore drill on hosting.
-- Auth/session/recovery/authorization attack matrix.
-- API-level concurrent code redemption.
-- object storage/media integration.
-- content import integrity for `alwaslh-go`.
-- AI golden/retry/failover/cancel/resume runtime.
-- Admin/Student browser E2E.
-- offline account isolation/delta/outbox/update lifecycle.
-- production performance/security/accessibility and release rollback gates.
+The same full run verified:
+- Stage 1 product contract — PASS;
+- Stage 2 brand — PASS;
+- Stage 3 UX — PASS;
+- Stage 4 clean PostgreSQL build/migrations/schema tests — PASS;
+- Stage 5 lint/typecheck/unit/API build/migration runner/Admin build/Student build — PASS;
+- Stage 6 auth unit + PostgreSQL integration lifecycle/role tests — PASS;
+- Stage 7 access unit + migrations/constraints + lifecycle/renewal/idempotency/race integration — PASS.
 
 No unexecuted item is represented as passed.
 
 ## Known Issues / Remaining Risk
 
-- Auth/session implementation is intentionally deferred to Stage 6; `profiles.auth_subject` remains provider-neutral.
-- Quiz completion service must derive `correct_count/question_count` server-side from persisted answers; browser-provided scores will not be trusted.
-- Object storage is not implemented yet; database currently stores canonical keys/metadata only.
-- PostgreSQL CI proves schema execution, not actual-host tuning/backup readiness.
-- Experimental Admin/Student shells created before stage-order correction are scaffolds, not production feature implementation.
-- Legacy application remains NO-GO and is only a behavior/feature reference.
+- Stage 8 Student Activation is not implemented yet.
+- Quiz completion service still must derive authoritative result server-side from persisted answers; client scores will not be trusted.
+- Object storage/media provider is not implemented yet; DB stores canonical asset keys/metadata contracts only.
+- `alwaslh-go` full inventory/import is not yet verified.
+- PostgreSQL CI proves clean runtime execution, not actual-host tuning/load/network readiness.
+- Real hosting backup + restore drill remains `NOT YET VERIFIED`.
+- AI prompt contracts, Gemini workers/failover/golden tests remain `NOT YET VERIFIED`.
+- Admin/Student product shells are scaffolds; complete product screens/E2E are not done.
+- Offline account-scoped sync/outbox/service-worker lifecycle is not implemented.
+- Legacy application remains NO-GO and only a behavior/feature reference.
 
 ## Remaining Work
 
-1. **Stage 5 — Engineering Foundation:** API runtime, PostgreSQL driver/pool/migration runner, environment validation, structured logging/errors, test harness, lockfile/reproducible workspace and CI for lint/typecheck/unit/API/build.
-2. **Stage 6 — Auth & Authorization:** secure accounts/sessions/recovery/admin authorization and attack-matrix tests.
-3. **Stage 7 — Entitlement & Codes:** transactional service + concurrency/idempotency tests.
-4. **Stage 8/9 — Content & Media:** deterministic `alwaslh-go` importer and ordered media pipeline with checksum/count/order tests.
-5. **Stage 10/11 — AI:** prompt contracts, structured/semantic validation, durable workers, retries/failover/observability and golden tests.
-6. Full Admin implementation + E2E.
-7. Full Student PWA/Practice/Offline implementation + E2E.
-8. Performance/security/accessibility/staging/backup/rollback gates.
-9. Release only after Feature Parity is fully evidenced.
+1. **Stage 8 — Student Activation & Account Flow:** first activation, returning student path, atomic account/profile/credential/entitlement creation, activation idempotency/races, invalid/expired/revoked/redeemed-code behavior, session establishment, PostgreSQL integration tests.
+2. Content domain/API and deterministic `alwaslh-go` inventory/import.
+3. Ordered Media/PDF pipeline with checksum/count/order tests.
+4. Admin content management implementation.
+5. Versioned AI contracts/Prompt Registry + semantic/golden tests.
+6. Durable Gemini workers/retries/failover/cancel/resume/observability + AI Ops.
+7. Quiz domain + shared PracticeEngine + trusted completion service.
+8. Student reader/quizzes/notes/progress/notifications.
+9. Offline Sync Engine + PWA/service worker + attempt outbox.
+10. Admin access/student/report/export surfaces.
+11. Design-system completion/shared UI/accessibility.
+12. Performance/security/observability hardening.
+13. Actual-host PostgreSQL tuning/load/network, backup/restore drill, staging, browser E2E, release/rollback gates.
+14. Release only after Feature Parity is fully evidenced.
+
+## Documentation / Continuity Protocol
+
+At every meaningful implementation batch:
+
+- update this log with decisions, findings, failures/fixes and verification;
+- update `PROJECT_STATUS.md` with the current stage, completed/remaining work, blockers, last build/test and next action;
+- update `PROJECT_HANDOFF.md` whenever architecture, business rules, branches/PRs, verified baseline or next-stage scope changes;
+- retain exact CI evidence and failed checks/fixes;
+- mark anything not actually executed as `NOT YET VERIFIED`.
 
 ## Current State
 
-**Stages 1–4 are CLI-verified. Stage 5 Engineering Foundation is next.** Every future stage must prove its own CLI/runtime gates before closure.
+**Stages 1–7 are CLI/runtime verified on the latest Stage 7 baseline. Stage 8 Student Activation & Account Flow is next.**

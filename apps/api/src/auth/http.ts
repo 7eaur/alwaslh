@@ -38,7 +38,7 @@ function parseCookies(header: string | undefined): Map<string, string> {
   return cookies;
 }
 
-function sessionToken(request: FastifyRequest, config: AppConfig): string | undefined {
+export function sessionToken(request: FastifyRequest, config: AppConfig): string | undefined {
   return parseCookies(request.headers.cookie).get(config.SESSION_COOKIE_NAME);
 }
 
@@ -51,13 +51,13 @@ function clearSessionCookie(config: AppConfig): string {
   return sessionCookie(config, "", 0);
 }
 
-function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
+export function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
   const parsed = schema.safeParse(body);
   if (!parsed.success) throw new AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400);
   return parsed.data;
 }
 
-async function currentProfile(
+export async function currentProfile(
   request: FastifyRequest,
   config: AppConfig,
   auth: AuthService,

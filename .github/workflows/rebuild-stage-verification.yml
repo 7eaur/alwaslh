@@ -182,3 +182,48 @@ jobs:
           fi
       - name: Run PostgreSQL auth lifecycle and role-isolation integration tests
         run: npm run test:integration --prefix apps/api
+
+  stage-7-access-entitlements:
+    name: Stage 7 · Access codes & entitlements
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_access
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_access"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_access
+      LOG_LEVEL: silent
+      ALLOWED_ORIGINS: http://localhost:5173
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Lint, typecheck and unit test access source
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+      - name: Apply migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify PostgreSQL access constraints
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('full_access_codes_duration_valid','class_access_codes_duration_valid')")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('ux_active_all_content_entitlement','ux_active_class_entitlement')")" = "2"
+      - name: Run access lifecycle, renewal and race integration tests
+        run: node --test --import tsx tests/integration/access.integration.test.ts
+        working-directory: apps/api
