@@ -36,6 +36,7 @@ CREATE TABLE quiz_versions (
   shuffle_questions boolean NOT NULL DEFAULT true,
   shuffle_options boolean NOT NULL DEFAULT true,
   created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT quiz_versions_quiz_id_id_unique UNIQUE (quiz_id, id),
   CONSTRAINT quiz_versions_number_unique UNIQUE (quiz_id, version_number),
   CONSTRAINT quiz_versions_number_positive CHECK (version_number > 0)
 );
@@ -88,10 +89,12 @@ CREATE TABLE practice_sessions (
   quiz_version_id uuid REFERENCES quiz_versions(id) ON DELETE SET NULL,
   lesson_id uuid REFERENCES lessons(id) ON DELETE SET NULL,
   status practice_session_status NOT NULL DEFAULT 'in_progress',
-  current_question_id uuid REFERENCES questions(id) ON DELETE SET NULL,
+  current_question_id uuid,
   started_at timestamptz NOT NULL DEFAULT now(),
   completed_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT practice_sessions_profile_id_id_unique UNIQUE (profile_id, id),
+  CONSTRAINT practice_sessions_version_id_id_unique UNIQUE (quiz_version_id, id),
   CONSTRAINT practice_sessions_exact_context CHECK (
     (quiz_version_id IS NOT NULL AND lesson_id IS NULL)
     OR
@@ -108,6 +111,12 @@ CREATE TABLE practice_session_questions (
   CONSTRAINT practice_session_questions_position_unique UNIQUE (session_id, position),
   CONSTRAINT practice_session_questions_position_nonnegative CHECK (position >= 0)
 );
+
+ALTER TABLE practice_sessions
+ADD CONSTRAINT practice_sessions_current_question_fk
+FOREIGN KEY (id, current_question_id)
+REFERENCES practice_session_questions(session_id, question_id)
+DEFERRABLE INITIALLY DEFERRED;
 
 CREATE TABLE practice_session_options (
   session_id uuid NOT NULL,
@@ -134,17 +143,17 @@ CREATE TABLE practice_answers (
   CONSTRAINT practice_answers_session_question_fk
     FOREIGN KEY (session_id, question_id)
     REFERENCES practice_session_questions(session_id, question_id) ON DELETE CASCADE,
-  CONSTRAINT practice_answers_selected_option_fk
-    FOREIGN KEY (question_id, selected_option_id)
-    REFERENCES question_options(question_id, id) ON DELETE RESTRICT
+  CONSTRAINT practice_answers_presented_option_fk
+    FOREIGN KEY (session_id, question_id, selected_option_id)
+    REFERENCES practice_session_options(session_id, question_id, option_id) ON DELETE RESTRICT
 );
 
 CREATE TABLE quiz_attempts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  profile_id uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  quiz_id uuid NOT NULL REFERENCES quizzes(id) ON DELETE RESTRICT,
-  quiz_version_id uuid NOT NULL REFERENCES quiz_versions(id) ON DELETE RESTRICT,
-  session_id uuid NOT NULL UNIQUE REFERENCES practice_sessions(id) ON DELETE RESTRICT,
+  profile_id uuid NOT NULL,
+  quiz_id uuid NOT NULL,
+  quiz_version_id uuid NOT NULL,
+  session_id uuid NOT NULL UNIQUE,
   status attempt_status NOT NULL DEFAULT 'completed',
   correct_count integer NOT NULL,
   question_count integer NOT NULL,
@@ -153,6 +162,15 @@ CREATE TABLE quiz_attempts (
   ) STORED,
   completed_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT quiz_attempts_profile_session_fk
+    FOREIGN KEY (profile_id, session_id)
+    REFERENCES practice_sessions(profile_id, id) ON DELETE RESTRICT,
+  CONSTRAINT quiz_attempts_version_session_fk
+    FOREIGN KEY (quiz_version_id, session_id)
+    REFERENCES practice_sessions(quiz_version_id, id) ON DELETE RESTRICT,
+  CONSTRAINT quiz_attempts_quiz_version_fk
+    FOREIGN KEY (quiz_id, quiz_version_id)
+    REFERENCES quiz_versions(quiz_id, id) ON DELETE RESTRICT,
   CONSTRAINT quiz_attempts_correct_count_nonnegative CHECK (correct_count >= 0),
   CONSTRAINT quiz_attempts_question_count_positive CHECK (question_count > 0),
   CONSTRAINT quiz_attempts_correct_not_over_total CHECK (correct_count <= question_count)
