@@ -10,9 +10,7 @@ if (!databaseUrl) throw new Error("DATABASE_URL is required for auth integration
 
 const origin = "http://localhost:5173";
 
-function cookieFrom(response: {
-  headers: Record<string, string | string[] | number | undefined>;
-}): string {
+function cookieFrom(response: { headers: Record<string, string | string[] | number | undefined> }): string {
   const raw = response.headers["set-cookie"];
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (!value || typeof value === "number") throw new Error("Expected Set-Cookie header");
