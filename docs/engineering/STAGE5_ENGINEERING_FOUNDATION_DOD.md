@@ -24,18 +24,25 @@ Stage 5 is not complete until all runtime checks below pass in CI on a clean run
 
 ## Verification
 
-The CI gate must run on a clean GitHub runner and a disposable PostgreSQL 16 instance:
+Verified on GitHub Actions clean runners with PostgreSQL 16:
 
-- [ ] API dependency install PASS.
-- [ ] API strict typecheck PASS.
-- [ ] API unit tests PASS.
-- [ ] API production build PASS.
-- [ ] API migration runner applies all four baseline migrations PASS.
-- [ ] API migration runner second execution proves idempotent skip behavior PASS.
-- [ ] Admin dependency install/typecheck/build PASS.
-- [ ] Student dependency install/typecheck/build PASS.
-- [ ] Existing Stage 1–4 gates remain green on the same branch head.
+- [x] API dependency install PASS.
+- [x] API lint PASS.
+- [x] API strict typecheck PASS.
+- [x] API unit tests PASS — 7/7.
+- [x] API production build PASS.
+- [x] API migration runner applies all four baseline migrations PASS.
+- [x] API migration runner second execution proves idempotent skip behavior PASS.
+- [x] `schema_migrations` records exactly four baseline migrations PASS.
+- [x] Admin dependency install/typecheck/production build PASS.
+- [x] Student dependency install/typecheck/production build PASS.
+- [x] Existing Stage 1–4 gates remain green on the same branch head.
+
+## Failures found and corrected by the gate
+
+1. Biome rejected formatting drift in API source; source files were formatted rather than weakening the gate.
+2. Admin/Student Vite builds inherited the legacy root PostCSS/Tailwind configuration; each rebuilt app now owns an isolated PostCSS configuration.
 
 ## Gate result
 
-**PENDING CI.** Stage 6 Auth & Authorization must not begin until every unchecked Stage 5 verification item is green.
+**PASS — Stage 5 Engineering Foundation is closed. Stage 6 Auth & Authorization may begin.**
