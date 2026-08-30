@@ -8,8 +8,10 @@
   },
   "scripts": {
     "dev": "vite",
+    "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "prebuild": "npm run lint && npm test",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit"
@@ -22,6 +24,7 @@
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "1.55.0",
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
     "@vitejs/plugin-react": "5.1.4",
