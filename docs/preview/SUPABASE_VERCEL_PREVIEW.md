@@ -2,12 +2,11 @@
 
 ## Purpose
 
-This environment is temporary but fully functional. It exists so the product can be exercised continuously while the rebuild proceeds. It does **not** replace the production architecture decision: the final deployment remains portable PostgreSQL + application API + replaceable media storage.
+Temporary full-product preview environment for continuous manual testing during the rebuild. It does **not** change the final production architecture decision: portable PostgreSQL + application API + replaceable media storage.
 
 ## Git baseline
 
 - Branch: `preview/supabase-vercel`
-- The preview branch was created from the Stage 9 verified baseline before Stage 10 implementation.
 - Preview-only platform adaptations must not be merged blindly into production/runtime branches.
 
 ## Supabase
@@ -15,50 +14,37 @@ This environment is temporary but fully functional. It exists so the product can
 - Project: `linksoftt@gmail.com's Project`
 - Project ref: `dhlqqgnxsqawidjmedvq`
 - API URL: `https://dhlqqgnxsqawidjmedvq.supabase.co`
-- Role in this environment: PostgreSQL hosting and, when Stage 10 needs it, media storage.
+- Role: PostgreSQL hosting and, when Stage 10 needs it, temporary media storage.
 - Supabase Auth/PostgREST are **not** the application authorization layer.
-- Browser clients must never read/write the rebuild tables through Supabase REST.
+- Browser clients must never read/write rebuild tables through Supabase REST.
 
-### Applied database migrations
+### Applied migrations
 
-The canonical rebuild migrations were applied in order:
-
-1. `0001_core`
-2. `0002_access`
-3. `0003_learning`
-4. `0004_ai_and_sync`
-5. `0005_auth`
-6. `0006_access_contract`
-7. `0007_activation_contract`
-8. `0008_content_source_import`
-
-A preview-only migration named `preview_supabase_lockdown` was then applied.
+Canonical rebuild migrations `0001` through `0008` were applied in order, followed by preview-only migration `preview_supabase_lockdown`.
 
 ### Supabase lockdown
 
-`database/preview/0001_supabase_lockdown.sql` records the preview-specific hardening:
+`database/preview/0001_supabase_lockdown.sql` records the preview hardening:
 
 - RLS enabled on every `public` application table.
 - No RLS policies intentionally exist because PostgREST is not an application data path.
-- `anon` and `authenticated` have table and sequence privileges revoked.
-- `set_updated_at()` has a fixed `search_path`.
-- The API database connection remains the only business-data path.
-
-Supabase Security Advisor should therefore show no `RLS Disabled in Public` errors. `RLS Enabled No Policy` informational notices are expected and intentional for this architecture.
+- `anon` and `authenticated` table/sequence privileges revoked.
+- `set_updated_at()` uses a fixed `search_path`.
+- The application API remains the only business-data path.
 
 ## Vercel topology
 
-Use three projects from repository `7eaur/alwaslh`, all tracking branch `preview/supabase-vercel`:
+The preview uses **one Vercel project** connected to repository `7eaur/alwaslh` and branch `preview/supabase-vercel`.
 
-### API project
+Routes:
 
-- Root directory: `apps/api`
-- Runtime route: `/api/*`
-- Serverless adapter: `apps/api/api/[...path].ts`
-- Health URL after deployment: `https://<api-project>.vercel.app/api/health`
-- Readiness URL: `https://<api-project>.vercel.app/api/ready`
+- `/` → Student Web
+- `/admin` and `/admin/*` → Admin Web
+- `/api/*` → Fastify serverless API
 
-Required environment variables:
+Root `vercel.json` runs `node scripts/build-vercel-preview.mjs`, outputs `dist-vercel`, and exposes `api/[...path].ts` as the serverless function.
+
+Required Vercel environment variables:
 
 ```text
 NODE_ENV=production
@@ -68,45 +54,13 @@ DATABASE_POOL_MAX=2
 LOG_LEVEL=info
 SESSION_COOKIE_NAME=alwaslh_session
 SESSION_TTL_HOURS=168
-SESSION_COOKIE_SAME_SITE=none
-ALLOWED_ORIGINS=https://<student-project>.vercel.app,https://<admin-project>.vercel.app
+SESSION_COOKIE_SAME_SITE=lax
+ALLOWED_ORIGINS=https://alwaslh-git-preview-supabase-vercel-wasl15.vercel.app
 ```
 
-Use the Supabase **pooled** PostgreSQL connection string for a serverless runtime. Do not commit it.
+`DATABASE_URL` is a secret and must never be committed. Use the Supabase pooled PostgreSQL connection string.
 
-### Student project
-
-- Root directory: `apps/student-web`
-- Framework: Vite
-- Build command: `npm run build`
-- Output directory: `dist`
-- Enable Vercel's option to include source files outside the Root Directory because this package references `../../packages/*` workspace packages.
-
-Required environment variable:
-
-```text
-VITE_API_BASE_URL=https://<api-project>.vercel.app/api
-```
-
-### Admin project
-
-- Root directory: `apps/admin-web`
-- Framework: Vite
-- Build command: `npm run build`
-- Output directory: `dist`
-- Enable source files outside Root Directory for shared `../../packages/*` packages.
-
-Admin API wiring will follow the same `https://<api-project>.vercel.app/api` contract as Admin functionality is rebuilt.
-
-## Cross-origin session contract
-
-Vercel projects have separate origins during preview. Preview runtime therefore supports:
-
-- exact `ALLOWED_ORIGINS` allowlist;
-- credentialed CORS responses only for allowed origins;
-- `HttpOnly` cookies;
-- `SameSite=None; Secure` only when `SESSION_COOKIE_SAME_SITE=none`;
-- normal `SameSite=Lax` remains the default outside this preview configuration.
+Because Student/Admin/API share the same Vercel origin in this topology, Student requests use `/api` and the normal `SameSite=Lax` session cookie is sufficient.
 
 ## Seed data
 
@@ -115,7 +69,7 @@ The preview database contains:
 - one temporary Admin account for manual testing;
 - one unused temporary six-digit Full Access Code for Student activation.
 
-Credentials/codes are intentionally **not stored in Git**. Rotate or remove them whenever the preview is shared outside the project owner.
+Credentials/codes are intentionally not stored in Git.
 
 ## Verification performed
 
@@ -128,18 +82,28 @@ Verified directly against Supabase:
 - six-digit and seven-digit code constraints present;
 - single-redemption activation index present;
 - content source import tables present;
-- preview Admin credential is a `scrypt$...` hash, not plaintext;
+- preview Admin credential uses a `scrypt$...` hash, not plaintext;
 - temporary Full Access Code exists and is active;
 - `RLS Disabled in Public` findings eliminated after lockdown.
 
+Verified on Vercel before database environment variables were redeployed:
+
+- branch `preview/supabase-vercel` deployment reached `READY`;
+- Student root returned HTTP 200;
+- Student and Admin bundles built successfully;
+- one Node.js serverless function was produced.
+
+## Environment variable deployment checkpoint
+
+On 2026-08-30 the project owner configured the required Vercel environment variables. Secret values are intentionally not recorded here. This documentation commit exists partly to trigger a fresh Preview deployment so the new variables are captured by the runtime.
+
 ## Not yet verified
 
-- Vercel deployment URLs: **NOT YET VERIFIED** until projects are imported into the user's Vercel account.
-- API `/ready` against Supabase from Vercel: **NOT YET VERIFIED**.
-- Browser login/activation through the deployed Vercel origins: **NOT YET VERIFIED**.
-- Admin application feature completeness: follows the main rebuild roadmap and is not implied by preview hosting.
-- Media Storage adapter on Supabase: Stage 10 work.
+- API `/api/health` and `/api/ready` using the newly configured Supabase connection: **NOT YET VERIFIED** until the fresh deployment completes.
+- Browser activation/login against the live Vercel + Supabase environment: **NOT YET VERIFIED**.
+- Admin feature completeness follows the main rebuild roadmap and is not implied by preview hosting.
+- Media Storage adapter on Supabase belongs to Stage 10.
 
 ## Rule for future stages
 
-A feature can be deployed to this preview environment once its stage CLI/CI gate passes. Preview success is an additional runtime signal, not a replacement for the project's CLI/CI Definition of Done.
+A feature can be deployed to this preview environment after its stage CLI/CI gate passes. Preview success is an additional runtime signal, not a replacement for the project's CLI/CI Definition of Done.
