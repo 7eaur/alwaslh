@@ -15,5 +15,13 @@ Stage 2 is complete when all of the following are true:
 - [x] iconography and imagery rules are documented.
 - [x] Admin and Student identity usage difference is documented.
 - [x] TailAdmin product-brand dependency is rejected.
+- [x] `python3 scripts/verify-brand.py` passes in CI.
+- [x] canonical SVG files parse successfully.
+- [x] PWA PNG dimensions are verified as 192x192 and 512x512.
+- [x] identity JSON/palette/typography contracts match CSS tokens.
 
-**Result: PASS — Stage 2 identity baseline can be used as the input to Stage 3 UX Architecture.**
+## Verification note
+
+The first CLI run found a real token drift: `identity.json` declared Mint `#E6F7F6` while CSS did not expose the same canonical token. `--brand-mint` was added and the gate was rerun successfully.
+
+**Result: CLI PASS — Stage 2 identity baseline is executable-verified at source/asset level. Real browser/font/PWA-device rendering remains a later runtime/accessibility gate.**
