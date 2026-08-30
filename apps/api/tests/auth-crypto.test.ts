@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createOpaqueToken, hashPassword, hashToken, normalizeIdentifier, verifyPassword } from "../src/auth/crypto.js";
+import {
+  createOpaqueToken,
+  hashPassword,
+  hashToken,
+  normalizeIdentifier,
+  verifyPassword,
+} from "../src/auth/crypto.js";
 
 test("password hashes are salted scrypt values and verify correctly", async () => {
   const password = "StrongStudentPass123";
