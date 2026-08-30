@@ -1,4 +1,4 @@
-import { normalizeAccessCode, type EntitlementView } from "../access/service.js";
+import { type EntitlementView, normalizeAccessCode } from "../access/service.js";
 import { hashAuditValue, hashPassword } from "../auth/crypto.js";
 import type { SessionProfile } from "../auth/service.js";
 import type { Database, QueryExecutor } from "../db.js";
@@ -71,7 +71,11 @@ function assertFreshCode(code: FullCodeRow | undefined): asserts code is FullCod
 export class StudentActivationService {
   constructor(private readonly db: Database) {}
 
-  async activate(rawCode: string, password: string, idempotencyInput: string): Promise<StudentActivationResult> {
+  async activate(
+    rawCode: string,
+    password: string,
+    idempotencyInput: string,
+  ): Promise<StudentActivationResult> {
     const code = normalizeAccessCode(rawCode);
     if (!/^\d{6}$/.test(code)) {
       throw new AppError("BAD_REQUEST", "كود التفعيل يجب أن يكون 6 أرقام", 400);
@@ -194,7 +198,10 @@ export class StudentActivationService {
     });
   }
 
-  private async findReplay(executor: QueryExecutor, idempotencyKey: string): Promise<ActivationReplayRow | undefined> {
+  private async findReplay(
+    executor: QueryExecutor,
+    idempotencyKey: string,
+  ): Promise<ActivationReplayRow | undefined> {
     const rows = await executor.query<ActivationReplayRow>(
       `select r.profile_id, r.entitlement_id, r.code_type, f.code as full_code
        from access_redemptions r
