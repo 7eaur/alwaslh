@@ -273,7 +273,13 @@ export class AccessService {
     }
 
     const entitlement = existing
-      ? await this.renewEntitlement(tx, existing.id, accessCode.entitlement_duration_days, "full_code", accessCode.id)
+      ? await this.renewEntitlement(
+          tx,
+          existing.id,
+          accessCode.entitlement_duration_days,
+          "full_code",
+          accessCode.id,
+        )
       : await this.createEntitlement(
           tx,
           profileId,
@@ -296,7 +302,14 @@ export class AccessService {
        ) values ($1, 'full_access', $2, $3, $4)`,
       [profileId, accessCode.id, entitlement.id, idempotencyKey],
     );
-    await this.recordRedemptionEvents(tx, profileId, "full_access", accessCode.id, entitlement.id, Boolean(existing));
+    await this.recordRedemptionEvents(
+      tx,
+      profileId,
+      "full_access",
+      accessCode.id,
+      entitlement.id,
+      Boolean(existing),
+    );
     return entitlement;
   }
 
@@ -337,7 +350,13 @@ export class AccessService {
     }
 
     const entitlement = existing
-      ? await this.renewEntitlement(tx, existing.id, accessCode.entitlement_duration_days, "class_code", accessCode.id)
+      ? await this.renewEntitlement(
+          tx,
+          existing.id,
+          accessCode.entitlement_duration_days,
+          "class_code",
+          accessCode.id,
+        )
       : await this.createEntitlement(
           tx,
           profileId,
@@ -360,7 +379,14 @@ export class AccessService {
        ) values ($1, 'class_access', $2, $3, $4)`,
       [profileId, accessCode.id, entitlement.id, idempotencyKey],
     );
-    await this.recordRedemptionEvents(tx, profileId, "class_access", accessCode.id, entitlement.id, Boolean(existing));
+    await this.recordRedemptionEvents(
+      tx,
+      profileId,
+      "class_access",
+      accessCode.id,
+      entitlement.id,
+      Boolean(existing),
+    );
     return entitlement;
   }
 
@@ -429,7 +455,14 @@ export class AccessService {
        ) values
          ('code_redeemed', $1, $2, $3, $4, $5),
          ($6, $1, $2, $3, $4, $5)`,
-      [profileId, type, fullId, classId, entitlementId, renewed ? "entitlement_renewed" : "entitlement_created"],
+      [
+        profileId,
+        type,
+        fullId,
+        classId,
+        entitlementId,
+        renewed ? "entitlement_renewed" : "entitlement_created",
+      ],
     );
   }
 }
