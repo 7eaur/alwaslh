@@ -1,20 +1,10 @@
 import { createHash } from "node:crypto";
 import type { Database } from "../db.js";
 import { prepareImageVariants } from "./image-processor.js";
-import type {
-  MediaInput,
-  PdfMediaInput,
-  PreparedVariant,
-  ProcessedMediaAsset,
-} from "./media-types.js";
+import type { MediaInput, PdfMediaInput, PreparedVariant, ProcessedMediaAsset } from "./media-types.js";
 import { mapWithConcurrencyOrdered } from "./ordered-concurrency.js";
 import { extractPdfPages } from "./pdf-processor.js";
-import {
-  commitProcessedMedia,
-  ensureMediaAsset,
-  listMediaVariants,
-  markMediaFailed,
-} from "./repository.js";
+import { commitProcessedMedia, ensureMediaAsset, listMediaVariants, markMediaFailed } from "./repository.js";
 import type { MediaStorage } from "./storage.js";
 
 const REQUIRED_VARIANT_KINDS = ["source", "display", "thumbnail", "ai"] as const;
@@ -61,10 +51,7 @@ export class MediaPipelineService {
     private readonly storage: MediaStorage,
   ) {}
 
-  private async loadReadyAsset(
-    input: MediaInput,
-    mediaAssetId: string,
-  ): Promise<ProcessedMediaAsset> {
+  private async loadReadyAsset(input: MediaInput, mediaAssetId: string): Promise<ProcessedMediaAsset> {
     const stored = await listMediaVariants(this.database, mediaAssetId);
     if (
       stored.length !== REQUIRED_VARIANT_KINDS.length ||
