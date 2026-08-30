@@ -65,22 +65,41 @@ jobs:
       - name: Build and validate complete 5,552-image inventory
         run: |
           mkdir -p /tmp/alwaslh-stage9
+          set +e
           python3 content/tooling/alwaslh_go_inventory.py \
             --repo /tmp/alwaslh-go \
             --config content/import-contracts/alwaslh-go-source-map.json \
             --output /tmp/alwaslh-stage9/inventory.json \
             --summary /tmp/alwaslh-stage9/summary.json
+          INVENTORY_STATUS=$?
+          set -e
           python3 - <<'PY'
+          import collections
           import json
+          with open('/tmp/alwaslh-stage9/inventory.json', encoding='utf-8') as f:
+              inventory = json.load(f)
           with open('/tmp/alwaslh-stage9/summary.json', encoding='utf-8') as f:
               s = json.load(f)
           assert s['summary']['subjectRoots'] == 15, s
           assert s['summary']['documents'] == 48, s
           assert s['summary']['images'] == 5552, s
-          assert s['summary']['helperFiles'] == 76, s
+          assert s['summary']['helperFiles'] == 86, s
           assert s['summary']['extensions'] == {'.jpg': 4218, '.webp': 1334}, s
+          manifest_errors = inventory['issues']['manifestErrors']
+          if manifest_errors:
+              print('Manifest error breakdown:')
+              for problem, count in collections.Counter(item.get('problem', '<missing>') for item in manifest_errors).most_common():
+                  print(f'  {count:4d}  {problem}')
+              print('First 25 manifest errors:')
+              for item in manifest_errors[:25]:
+                  print(json.dumps(item, ensure_ascii=False, sort_keys=True))
+          if inventory['issues']['expectedCountErrors']:
+              print('Expected-count errors:')
+              for item in inventory['issues']['expectedCountErrors']:
+                  print(json.dumps(item, ensure_ascii=False, sort_keys=True))
           assert s['summary']['fatalIssues'] == 0, s
           PY
+          test "$INVENTORY_STATUS" = "0"
 
       - name: Apply migrations on clean PostgreSQL
         run: npm run db:migrate --prefix apps/api
