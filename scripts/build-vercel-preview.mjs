@@ -30,10 +30,12 @@ for (const app of ["api", "student-web", "admin-web"]) {
 }
 
 await run("npm", ["run", "build"], { cwd: `${root}/apps/api` });
-await run("npm", ["run", "build"], {
+await run("npx", ["tsc", "-b"], { cwd: `${root}/apps/student-web` });
+await run("npx", ["vite", "build"], {
   cwd: `${root}/apps/student-web`,
   env: { ...process.env, VITE_API_BASE_URL: "/api" },
 });
+await run("npx", ["tsc", "-b"], { cwd: `${root}/apps/admin-web` });
 await run("npx", ["vite", "build", "--mode", "preview-single"], {
   cwd: `${root}/apps/admin-web`,
 });
