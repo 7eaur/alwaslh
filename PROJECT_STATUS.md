@@ -1,14 +1,18 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage 2 — Brand Identity implementation.
-- **Stage Order Rule:** no UX/backend implementation expansion until the current stage Definition of Done is met.
-- **Brand Direction:** approved evolution of the original turquoise/open-book identity supplied by the product owner; TailAdmin assets are not part of the product identity.
-- **Brand v1 Completed:** canonical logo mark; primary logo; horizontal logo; inverse logo; monochrome mark; favicon; PWA 192/512/maskable raster icons; final v1 palette; Cairo/Tajawal typography direction; iconography/imagery/accessibility rules; versioned brand asset manifest and design tokens.
-- **Brand Source of Truth:** `packages/brand/BRAND_GUIDELINES.md`, `packages/brand/assets/`, `packages/brand/src/tokens.css`, `packages/brand/src/tokens.ts`.
-- **Brand Palette:** primary teal `#00B5A9`, dark teal `#007F78`, brand ink `#123C43`, mint `#E6F7F6`, neutral surface `#F2F4F7`, charcoal `#1F2937`.
-- **Identity Principle:** gradient is allowed for the app icon/logo; production UI remains mostly flat, restrained and functional.
+- **Current Phase:** Stage 4 — Database Reality Verification is the next roadmap gate; **BLOCKED until the database platform is connected**.
+- **Stage Order Rule:** stages are executed sequentially. Do not skip Stage 4 into final schema/Auth/RLS implementation using assumptions.
+- **Stage 2 Brand Identity:** **COMPLETE / PASS.** Canonical owned identity is based on the original turquoise/open-book product logo, not TailAdmin assets.
+- **Brand Source of Truth:** `packages/brand/BRAND_GUIDELINES.md`, `packages/brand/BRAND_STAGE_DOD.md`, `packages/brand/assets/`, `packages/brand/src/tokens.css`, `packages/brand/src/tokens.ts`.
+- **Brand Assets:** primary/horizontal/inverse/monochrome/white logo variants; favicon; PWA 192/512/maskable icons; identity manifest.
+- **Brand Palette:** primary teal `#00B5A9`, dark teal `#007F78`, brand ink `#123C43`, mint `#E6F7F6`, surface `#F2F4F7`, charcoal `#1F2937`; Cairo primary Arabic typography with Tajawal/Noto fallbacks.
+- **Stage 3 UX Architecture:** **COMPLETE / PASS.** Admin and Student IA, navigation, legacy-to-target screen mapping, critical user flows, async/offline/error/permission states, responsive/accessibility contracts and low-fidelity wireframe references are committed.
+- **UX Source of Truth:** `docs/ux/UX_ARCHITECTURE.md`, `docs/ux/UX_FEATURE_PARITY_REVIEW.md`, `docs/ux/UX_STAGE_DOD.md`, `docs/ux/wireframes/`.
+- **UX Parity:** all feature groups in the existing parity contract have a target UX destination/flow. This is architecture coverage only; implementation parity is not yet claimed.
+- **Admin Direction:** operational/data-dense; grouped into Overview, Content, Assessment & AI, Students & Access, Communication, Reports, System.
+- **Student Direction:** calm mobile-first PWA with five primary destinations: Home, Lessons, Quizzes, Notes, More; lower-frequency statistics/achievements/notifications/access/install remain under More.
 - **Implementation Branch:** `rebuild/foundation`.
-- **Database Connection:** **NOT YET CONNECTED/VERIFIED.** No final backend migrations will be authored from assumptions.
-- **Legacy Product:** remains NO-GO for production and remains the feature/behavior reference until parity replacement is verified.
-- **Verification:** SVG/source assets generated and PWA raster assets rendered from the canonical vector mark. Full app runtime/build remains NOT YET VERIFIED because the rebuilt apps are not yet dependency-installed/tested in the connected environment.
-- **Next Stage after brand review:** Stage 3 — UX Information Architecture and user-flow/wireframe specification for Admin and Student. No database migration is part of that stage unless the database platform becomes connected and requires immediate reality audit.
+- **Database Connection:** **NOT YET CONNECTED / NOT YET VERIFIED.** Required Stage 4 output is `DATABASE_REALITY_AUDIT.md` covering actual schema, RLS, functions/RPCs/triggers, Auth, Storage policies, Realtime, indexes/constraints and data/schema drift before any final migrations.
+- **Legacy Product:** remains **NO-GO** for production and remains the behavior/feature reference until tested replacement parity is achieved.
+- **Last Verification:** brand repository assets and Stage 2/3 documentation gates verified from committed source. Full rebuilt React/Vite runtime/build is still **NOT YET VERIFIED**; no build-pass claim is made.
+- **Next Action:** connect the database platform. Immediately after connection: inventory/backup/reality audit, compare deployed state with migrations, then produce the target migration/RLS plan. No later roadmap stage starts before this gate.
