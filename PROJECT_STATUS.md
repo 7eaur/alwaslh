@@ -1,16 +1,14 @@
 # PROJECT STATUS
 
-- **Current Phase:** Brand Identity — IN PROGRESS. تنفيذ المراحل عاد للتسلسل المحدد في `MASTER_REBUILD_ROADMAP.md` بعد إيقاف التوسع البرمجي المبكر.
-- **Release Decision on Current Product:** **NO-GO for production/final handover.** Existing source remains the behavioral reference, not the target implementation.
-- **Completed Before Phase Reset:** repository discovery; deep/static full audit; feature parity matrix; rebuild blueprint/roadmap; initial `alwaslh-go` verification; isolated `rebuild/foundation` branch; non-destructive brand/domain/validation foundations; experimental Admin/Student shells.
-- **Phase Rule:** لا يتم الانتقال إلى UX/implementation التالي حتى تُغلق مرحلة الهوية رسميًا. الـAdmin/Student shells الحالية تعتبر EXPERIMENTAL FOUNDATION وليست تصميمًا معتمدًا.
-- **Legacy Identity Audit:** تم استخراج ملفات الشعار القديمة. `auth-logo.svg` و`logo-dark.svg` يحملان Wordmark `TailAdmin` وبالتالي هما Template assets وليسا شعار الوسيلة الذكية. `logo-icon.svg` محفوظ كمرجع Legacy فقط.
-- **Legacy PWA Identity:** `public/manifest.json` يثبت اسم `الوسيلة الذكية` ويستخدم `#00a09d` كلون theme/background وأيقونة JPG خارجية على Miaoda CDN. توجد أيضًا `public/icon.jpg` و`public/favicon.png` محليًا ويجب فحصهما بصريًا قبل اعتماد أصل العلامة.
-- **Brand Files:** `packages/brand/BRAND_FOUNDATION.md` (DRAFT foundation), `packages/brand/BRAND_IDENTITY_AUDIT.md` (current phase gate), `packages/brand/reference/legacy-template-logo-icon.svg` (legacy template reference).
-- **Logo Status:** FINAL LOGO NOT YET APPROVED. لا يوجد حتى الآن Logo System نهائي أو App Icon set نهائي أو Illustration pack معتمد.
-- **Identity Deliverables Required:** legacy icon visual verification; 2–3 refinements based on valid legacy identity; approved Arabic logo/mark; light/dark/monochrome; favicon; PWA 192/512/maskable; typography; final palette; iconography; visual asset rules.
+- **Current Phase:** Stage 2 — Brand Identity implementation.
+- **Stage Order Rule:** no UX/backend implementation expansion until the current stage Definition of Done is met.
+- **Brand Direction:** approved evolution of the original turquoise/open-book identity supplied by the product owner; TailAdmin assets are not part of the product identity.
+- **Brand v1 Completed:** canonical logo mark; primary logo; horizontal logo; inverse logo; monochrome mark; favicon; PWA 192/512/maskable raster icons; final v1 palette; Cairo/Tajawal typography direction; iconography/imagery/accessibility rules; versioned brand asset manifest and design tokens.
+- **Brand Source of Truth:** `packages/brand/BRAND_GUIDELINES.md`, `packages/brand/assets/`, `packages/brand/src/tokens.css`, `packages/brand/src/tokens.ts`.
+- **Brand Palette:** primary teal `#00B5A9`, dark teal `#007F78`, brand ink `#123C43`, mint `#E6F7F6`, neutral surface `#F2F4F7`, charcoal `#1F2937`.
+- **Identity Principle:** gradient is allowed for the app icon/logo; production UI remains mostly flat, restrained and functional.
 - **Implementation Branch:** `rebuild/foundation`.
-- **Audit/Planning Branch:** `audit/repository-discovery`.
-- **Database Connection:** **NOT YET CONNECTED/VERIFIED.** Database Reality Audit remains mandatory before final backend migrations.
-- **Last Verified Code Check:** strict TypeScript check for committed access/content domain contracts — PASS. New React shells remain NOT YET VERIFIED runtime.
-- **Next Step:** finish the Brand Identity phase only. After identity approval, proceed to the next roadmap phase in order; do not resume backend/UI expansion early.
+- **Database Connection:** **NOT YET CONNECTED/VERIFIED.** No final backend migrations will be authored from assumptions.
+- **Legacy Product:** remains NO-GO for production and remains the feature/behavior reference until parity replacement is verified.
+- **Verification:** SVG/source assets generated and PWA raster assets rendered from the canonical vector mark. Full app runtime/build remains NOT YET VERIFIED because the rebuilt apps are not yet dependency-installed/tested in the connected environment.
+- **Next Stage after brand review:** Stage 3 — UX Information Architecture and user-flow/wireframe specification for Admin and Student. No database migration is part of that stage unless the database platform becomes connected and requires immediate reality audit.
