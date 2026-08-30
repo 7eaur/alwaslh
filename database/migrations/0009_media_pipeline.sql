@@ -11,6 +11,8 @@ CREATE TABLE media_assets (
   source_filename text NOT NULL,
   source_mime_type text NOT NULL,
   source_page_number integer,
+  source_checksum_sha256 text NOT NULL,
+  source_byte_size bigint NOT NULL,
   status media_asset_status NOT NULL DEFAULT 'processing',
   attempt_count integer NOT NULL DEFAULT 0,
   last_error_code text,
@@ -22,6 +24,8 @@ CREATE TABLE media_assets (
   CONSTRAINT media_assets_source_filename_nonblank CHECK (length(btrim(source_filename)) > 0),
   CONSTRAINT media_assets_source_mime_nonblank CHECK (length(btrim(source_mime_type)) > 0),
   CONSTRAINT media_assets_source_page_positive CHECK (source_page_number IS NULL OR source_page_number > 0),
+  CONSTRAINT media_assets_source_checksum_format CHECK (source_checksum_sha256 ~ '^[0-9a-f]{64}$'),
+  CONSTRAINT media_assets_source_byte_size_positive CHECK (source_byte_size > 0),
   CONSTRAINT media_assets_attempt_count_nonnegative CHECK (attempt_count >= 0),
   CONSTRAINT media_assets_error_code_nonblank CHECK (last_error_code IS NULL OR length(btrim(last_error_code)) > 0)
 );
