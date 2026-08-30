@@ -73,17 +73,20 @@ Browser never receives PostgreSQL credentials and never connects directly to the
 
 ## Audit Findings Driving the Rebuild
 
-| ID | Severity | Area | Legacy problem | Target status |
-|---|---|---|---|---|
-| SEC-001 | P0 | Admin auth | anonymous privileged password mutation | ELIMINATED by new auth boundary |
-| SEC-002..011 | P0 | Authorization | broad/public DB/RLS privilege paths | ELIMINATED; browser has no DB access |
-| DATA-015 | P0 | Activation | multi-step/non-transactional | target Stage 8 requires atomic flow |
-| DATA-018 | P0 | Class codes | redemption racy/non-atomic | FIXED and runtime-tested in Stage 7 |
-| SEC-015..018 | P1 | Credentials | plaintext/reversible/device assumptions | FIXED in Stage 6 |
-| DATA-025 | P1 | Assessment | client-trusted score/ranking | schema strengthened; finalization service later |
-| OFF-* | P1/P2 | Offline | stale/overlapping caches/sync | revision/tombstone model exists; engine later |
-| AI-* | P1/P2 | AI | browser-owned jobs/weak validation | durable job schema exists; worker/platform later |
-| MEDIA-* | P1/P2 | Media | upload page ordering/export defects | stable ordered asset model exists; pipeline later |
+| ID | Severity | Area | Problem | Evidence / Impact | Solution | Status |
+|---|---|---|---|---|---|---|
+| SEC-001 | P0 | Admin auth | anonymous privileged password mutation in legacy | privileged identity could be compromised | new server-side auth boundary | ELIMINATED in Stage 6 |
+| SEC-002..011 | P0 | Authorization | broad/public DB/RLS privilege paths in legacy | browser could bypass intended service rules | browser has no direct DB access | ELIMINATED by target architecture |
+| DATA-015 | P0 | Activation | legacy activation was multi-step/non-transactional | partial account/code state possible | atomic backend activation contract required | OPEN — Stage 8 backend |
+| DATA-018 | P0 | Class codes | redemption was racy/non-atomic | concurrent or wasted redemption | row locks + idempotency + no-waste rules | FIXED/RUNTIME VERIFIED Stage 7 |
+| SEC-015..018 | P1 | Credentials | plaintext/reversible/device assumptions | account compromise/recovery fragility | salted scrypt + opaque sessions + reset-only recovery | FIXED Stage 6 |
+| UI-008-001 | P1 | Student activation UI | base branch has no documented first-time activation API | UI cannot safely create account/entitlement/session without inventing contract | keep UI ready but do not send activation code until backend contract exists | BLOCKED / NOT YET VERIFIED |
+| UI-008-002 | P1 | Student recovery UI | Student-side recovery-token issuance has no documented API; existing issuance is Admin-only | self-service recovery cannot be completed from Student UI | support documented reset with existing token; await explicit issuance contract | BLOCKED / NOT YET VERIFIED |
+| UI-008-003 | P2 | Student deployment | same-origin `/v1/*` browser routing not verified in this batch | standalone browser E2E may fail without deployment reverse proxy | verify deployment routing before wiring E2E; do not invent Vite/API host | NOT YET VERIFIED |
+| DATA-025 | P1 | Assessment | client-trusted score/ranking legacy behavior | result could be forged | server-derived finalization | REMAINING |
+| OFF-* | P1/P2 | Offline | stale/overlapping caches/sync | cross-account/stale data risk | account-scoped revision/tombstone Sync Engine | REMAINING |
+| AI-* | P1/P2 | AI | browser-owned jobs/weak validation | unreliable/replay/security risks | durable server jobs + versioned contracts | REMAINING |
+| MEDIA-* | P1/P2 | Media | upload page ordering/export defects | wrong content order/output | stable ordered asset model/pipeline | PARTIAL; pipeline later |
 
 ## Classification
 
@@ -97,7 +100,7 @@ Validation/forms/states, UX/accessibility, querying/pagination, media/export, ob
 Large feature modules, practice UI/state boundaries, content authoring pipeline.
 
 ### REBUILD
-Backend API boundary, Auth/Recovery, authorization, entitlement/code service, Student sync/service worker, durable Gemini execution.
+Backend API boundary, Auth/Recovery, authorization, entitlement/code service, Student activation orchestration, Student sync/service worker, durable Gemini execution.
 
 ### REMOVE
 Legacy Supabase coupling, direct/public DB assumptions, legacy IDs as ownership, plaintext/reversible credentials, fingerprint credential proof and verified dead/unsafe implementation paths.
@@ -120,6 +123,8 @@ Legacy Supabase coupling, direct/public DB assumptions, legacy IDs as ownership,
 - **AD-014 — Relational integrity before JSON convenience.** Core ownership/order/assessment/access relationships are normalized and constrained.
 - **AD-015 — CLI verification is mandatory for every stage.** Documentation/design review alone cannot produce a full PASS. Use DESIGN PASS / CLI PASS / RUNTIME PASS / RELEASE PASS; unexecuted = `NOT YET VERIFIED`.
 - **AD-016 — Repository-owned handoff is mandatory.** `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md` and this log must be kept current so a new conversation can resume from repository evidence rather than chat memory.
+- **AD-017 — Frontend consumes documented contracts only.** Missing activation/recovery APIs are explicit blockers; UI must never guess endpoint names, payloads or security semantics.
+- **AD-018 — Cold offline launch is not authentication.** Until the account-scoped offline session/replica contract is implemented, Student UI does not promote an unverified local state to authenticated.
 
 ## Changes Made
 
@@ -134,136 +139,95 @@ Legacy Supabase coupling, direct/public DB assumptions, legacy IDs as ownership,
 ### Stage 2 — Brand Identity
 **CLI PASS.**
 
-- evolved the real original teal/open-book identity instead of TailAdmin assets;
-- primary/horizontal/inverse/monochrome logo assets;
-- favicon + PWA 192/512/maskable assets;
-- canonical Brand Teal/Dark Teal/Ink/Mint/Surface/Charcoal palette;
-- Cairo primary Arabic typography with Tajawal/Noto fallbacks;
-- dark/focus/reduced-motion/touch target tokens;
-- `scripts/verify-brand.py` validates assets, SVG XML, PNG sizes, JSON contracts and template regressions.
+- evolved the original teal/open-book identity instead of template assets;
+- owned SVG/PNG/PWA assets;
+- canonical palette, Arabic typography, focus/reduced-motion/touch tokens;
+- `scripts/verify-brand.py` validates assets and identity contracts.
 
-CLI caught a real Mint-token drift; source tokens were fixed rather than weakening the gate.
+A Mint-token drift was caught and fixed at source rather than weakening the gate.
 
 ### Stage 3 — UX Architecture
 **CLI PASS.**
 
-Implemented:
-- Admin operational IA;
-- Student five-destination mobile IA;
-- legacy-to-target mapping;
-- critical Admin/Student flows;
-- loading/empty/error/offline/stale/permission/destructive states;
-- responsive/navigation/accessibility contracts;
-- Admin/Student SVG wireframes;
-- UX parity review.
-
-`scripts/verify-ux.py` checks required contracts, coverage rows, product feature-ID inventory, DoD state and SVG validity.
+Implemented Admin/Student IA, parity mapping, critical flows, async/offline/error states, responsive/accessibility contracts and wireframes. `scripts/verify-ux.py` enforces the contracts.
 
 ### Stage 4 — PostgreSQL Data Platform
 **CLI/RUNTIME PASS on PostgreSQL 16.**
 
-Decision:
-- self-hosted PostgreSQL in same hosting environment as backend;
-- private DB; no browser DB connection;
-- clean-slate schema; Supabase is not the target.
+Canonical migrations:
+- `0001_core.sql`
+- `0002_access.sql`
+- `0003_learning.sql`
+- `0004_ai_and_sync.sql`
+- `0005_auth.sql`
+- `0006_access_contract.sql`
 
-Canonical migrations now include:
-- `0001_core.sql` — profiles, classes, subjects, subject-class links, lessons, ordered assets.
-- `0002_access.sql` — exact 6/7-digit code base and entitlement/redemption model.
-- `0003_learning.sql` — quizzes/versions/questions/options, persisted question/option order, answers, attempts, saved questions, achievements, notifications.
-- `0004_ai_and_sync.sql` — durable AI jobs/units/outputs and content revision/tombstone/sync checkpoint model.
-- `0005_auth.sql` — credentials/sessions/recovery/login security support.
-- `0006_access_contract.sql` — Stage 7 access durations/auditing/active entitlement uniqueness and strengthened constraints.
-
-Integrity guarantees include:
-- lesson subject belongs to class through relational FK;
-- asset position unique per lesson;
-- answer option must be an option actually presented for same session/question;
-- current practice question belongs to session;
-- attempt profile/session/version/quiz relationships are cross-constrained;
-- score percentage generated from counts;
-- active entitlement uniqueness.
-
-Operations:
-- `database/deploy/roles.sql.example`;
-- `database/BACKUP_RESTORE.md`;
-- `database/SCHEMA.md`;
-- `database/tests/schema_smoke.sql`;
-- `database/tests/run.sh`.
+Core relational ownership/order/access/auth integrity is constrained in PostgreSQL. Browser direct DB access is not part of the target.
 
 ### Stage 5 — Engineering Foundation
 **CLI/RUNTIME PASS.**
 
-Implemented:
-- real `apps/api` runtime;
-- PostgreSQL pool and transaction boundary;
-- migration runner and applied-migration tracking;
-- idempotent rerun behavior;
-- environment validation;
-- structured public error envelope/logging foundation;
-- reproducible API install/build path;
-- lint + strict TypeScript + unit tests + production API build;
-- production builds for Admin and Student shells;
-- CI stage gate.
-
-Failure caught and fixed:
-- new Admin/Student Vite builds were inheriting legacy root PostCSS/Tailwind config. PostCSS configuration was isolated per new application rather than carrying old build coupling forward.
+Implemented API runtime, DB pool/transaction boundary, migration runner/idempotency, environment validation, public errors/logging, lint/strict TypeScript/unit tests/builds and CI gates. Legacy root PostCSS/Tailwind leakage into new apps was caught and isolated.
 
 ### Stage 6 — Auth & Authorization
 **CLI/RUNTIME PASS.**
 
-Implemented and tested:
-- salted `scrypt` password hashing server-side;
-- random opaque session tokens; persisted form is SHA-256 digest only;
-- HttpOnly session cookie;
-- role isolation for Admin/Student;
-- mutation-origin protection foundation;
-- PostgreSQL-backed login attempt/lockout state;
-- one-time recovery flow that resets credentials and never reveals original password;
-- password change/recovery invalidates existing sessions;
-- explicit first-admin CLI bootstrap only; no default/public bootstrap.
-
-Integration gate verifies on PostgreSQL:
-- bootstrap works once and refuses repeat;
-- login/session lifecycle;
-- recovery/reset behavior;
-- Student/Admin role isolation.
-
-Strict TypeScript issues in scrypt wrapper/optional types/Fastify test headers were caught and fixed before runtime closure.
+Implemented/tested salted `scrypt`, opaque session tokens with persisted SHA-256 digest only, HttpOnly cookie, role isolation, mutation-origin protection, DB-backed login lockout, reset-only one-time recovery, session invalidation and explicit first-admin CLI bootstrap.
 
 ### Stage 7 — Access Codes & Entitlements
 **CLI/RUNTIME PASS.**
 
-Implemented:
-- cryptographically secure 6-digit full-access and 7-digit class-access generation via server cryptography;
-- Arabic/Persian digit normalization;
-- entitlement duration stored with code;
-- transactional row-locked redemption;
-- advisory-lock idempotency;
-- idempotency lookup bound to the same profile;
-- finite renewal extends existing entitlement instead of creating conflicting active grants;
-- no-waste rule: class code is not consumed if active full access already covers the student;
-- Admin revoke flow;
-- access audit events;
-- code generation + audit event in the same transaction;
-- unique active entitlement constraints.
+Implemented/tested secure 6/7-digit code generation, Arabic/Persian normalization, entitlement duration, row-locked transactional redemption, advisory-lock idempotency, profile-bound idempotent replay, renewal extension, full-access no-waste rule, revoke/audit and active-entitlement uniqueness. Integration tests include concurrent redemption races.
 
-Integration gate covers:
-- code generation;
-- Arabic/Persian digits;
-- first redemption;
-- idempotent replay;
-- renewal extension;
-- revoke;
-- no-waste class code behavior under full access;
-- concurrent redemption race proving only one competing claimant succeeds.
+Stage 7 gate caught/fixed explicit default typing, PostgreSQL enum inference, JSONB parameter typing, code/audit atomicity and idempotency ownership.
 
-Runtime failures caught and fixed before PASS:
-1. `durationDays` default had to be made explicit at the TypeScript boundary (`?? 365`).
-2. PostgreSQL enum inference in a UNION-based audit insert failed; query was simplified instead of patched with unnecessary complexity.
-3. `jsonb_build_object` could not infer duration parameter type; SQL now uses explicit integer typing.
-4. code generation/audit was strengthened to be atomic.
-5. idempotency ownership was strengthened so another profile cannot obtain a prior result by reusing a known key.
+### Stage 8 — Student Activation UI parallel batch
+**Student UI sub-scope: CLI PASS. Overall Stage 8: NOT COMPLETE.**
+
+Branching:
+- created `rebuild/student-activation-ui` from exact `rebuild/access-entitlements` head `2479960820f338c5b6d7ffd9ec04a557de3c9f74`;
+- implementation commit `483ddf4926604b87fcbe7199fd426bc52ea80b9d`;
+- draft PR #5 targets `rebuild/access-entitlements`.
+
+Scope discipline:
+- all implementation changes are under `apps/student-web`;
+- **no PostgreSQL migration changed**;
+- **no Auth backend code changed**;
+- **no `AccessService` code changed**;
+- no undocumented endpoint was created or assumed.
+
+Frontend contract layer (`apps/student-web/src/auth-api.ts`):
+- documented `POST /v1/auth/login`;
+- documented `POST /v1/auth/logout`;
+- documented `GET /v1/student/me`;
+- documented `POST /v1/auth/reset-password`;
+- documented `GET /v1/student/access/entitlements`;
+- same-origin requests with `credentials: "include"` for HttpOnly session cookie behavior;
+- typed public API errors and network-unavailable handling;
+- activation-code normalization aligned with backend Arabic/Persian digit behavior.
+
+UI behavior (`apps/student-web/src/App.tsx` + styles):
+- initial session verification before displaying private account data;
+- separate activation/login/recovery surfaces instead of one ambiguous form;
+- returning-student login with server errors, busy state and role guard;
+- authenticated success/account state with entitlement loading/empty/error/offline states;
+- recovery reset with token/password confirmation and documented reset endpoint;
+- activation input validates normalized six digits but intentionally does not submit because the first-time activation API contract is absent;
+- offline banner after an already verified in-memory session, but cold offline launch does not fabricate authentication;
+- logout is disabled offline rather than pretending server session revocation succeeded;
+- mobile-first/RTL responsive behavior, high-contrast support, semantic labels/forms, `aria-live`, touch targets and accessible invalid states;
+- no fake dashboard data or fake entitlement state.
+
+Quality tooling added inside Student app:
+- ESLint configuration;
+- Vitest unit tests for access-code normalization/validation;
+- `prebuild` executes lint + tests before production build so existing CI verifies them without modifying Stage 1–7 workflow logic.
+
+Blocked behavior intentionally left unimplemented:
+1. `POST /v1/student/access/redeem` was **not** misused as first activation because it requires an existing authenticated Student session.
+2. No activation endpoint was invented; code is not sent or consumed.
+3. No Student recovery-token issuance endpoint was invented; current documented issuance is Admin-only.
+4. No Vite dev/API proxy destination was guessed; deployed browser routing remains `NOT YET VERIFIED`.
 
 ## Tests & Verification
 
@@ -273,53 +237,86 @@ See:
 - `.github/workflows/rebuild-stage-verification.yml`
 - `PROJECT_HANDOFF.md`
 
-### Latest verified baseline
+### Latest verification covering Student Activation UI
 
-- Branch: `rebuild/access-entitlements`
-- Commit: `0a7929daf2f79baccca31b8110a6c6e372d49024`
-- GitHub Actions run: `33288330856`
-- Result: **Stages 1–7 SUCCESS**.
+GitHub Actions:
+- workflow: `Rebuild Stage Verification`
+- run: `33289552826`
+- implementation commit: `483ddf4926604b87fcbe7199fd426bc52ea80b9d`
+- PR merge-test ref checked out by Actions; all Stage 1–7 jobs completed `success`.
 
-The same full run verified:
+Student verification in Stage 5 job `Stage 5 · Engineering foundation`, step `Install and build Student`:
+
+```text
+npm run typecheck --prefix apps/student-web
+> tsc --noEmit
+PASS
+
+npm run build --prefix apps/student-web
+> prebuild
+> npm run lint && npm test
+
+npm run lint
+> eslint . --max-warnings 0
+PASS
+
+npm test
+> vitest run
+PASS — 1 file, 5 tests, 5 passed
+
+build
+> tsc -b && vite build
+PASS — Vite 7.1.3, 29 modules transformed
+```
+
+Build output recorded by CI:
+- `dist/index.html` 0.67 kB;
+- CSS 13.71 kB;
+- JS 365.07 kB;
+- production build completed successfully.
+
+The same run also revalidated:
 - Stage 1 product contract — PASS;
 - Stage 2 brand — PASS;
 - Stage 3 UX — PASS;
-- Stage 4 clean PostgreSQL build/migrations/schema tests — PASS;
-- Stage 5 lint/typecheck/unit/API build/migration runner/Admin build/Student build — PASS;
-- Stage 6 auth unit + PostgreSQL integration lifecycle/role tests — PASS;
-- Stage 7 access unit + migrations/constraints + lifecycle/renewal/idempotency/race integration — PASS.
+- Stage 4 clean PostgreSQL migrations/schema tests — PASS;
+- Stage 5 API lint/typecheck/tests/build + migration runner + Admin/Student builds — PASS;
+- Stage 6 auth lifecycle/role integration — PASS;
+- Stage 7 access lifecycle/renewal/idempotency/race integration — PASS.
 
-No unexecuted item is represented as passed.
+No browser E2E was executed in this batch. No unexecuted item is represented as passed.
 
 ## Known Issues / Remaining Risk
 
-- Stage 8 Student Activation is not implemented yet.
-- Quiz completion service still must derive authoritative result server-side from persisted answers; client scores will not be trusted.
-- Object storage/media provider is not implemented yet; DB stores canonical asset keys/metadata contracts only.
+- **Stage 8 overall remains NOT COMPLETE:** first-time activation backend orchestration/API is still absent on this branch and owned by the main Stage 8 conversation.
+- **BLOCKED / NOT YET VERIFIED:** Student self-service recovery-token issuance contract.
+- **NOT YET VERIFIED:** browser E2E and production/reverse-proxy routing for same-origin `/v1/*` requests.
+- **NOT YET VERIFIED:** account-scoped offline replica/session continuation; current cold offline screen deliberately refuses to infer authentication.
+- Quiz completion service still must derive authoritative result server-side from persisted answers.
+- Object storage/media provider is not implemented yet.
 - `alwaslh-go` full inventory/import is not yet verified.
 - PostgreSQL CI proves clean runtime execution, not actual-host tuning/load/network readiness.
 - Real hosting backup + restore drill remains `NOT YET VERIFIED`.
 - AI prompt contracts, Gemini workers/failover/golden tests remain `NOT YET VERIFIED`.
-- Admin/Student product shells are scaffolds; complete product screens/E2E are not done.
-- Offline account-scoped sync/outbox/service-worker lifecycle is not implemented.
+- Complete Admin/Student products and release E2E are not done.
 - Legacy application remains NO-GO and only a behavior/feature reference.
 
 ## Remaining Work
 
-1. **Stage 8 — Student Activation & Account Flow:** first activation, returning student path, atomic account/profile/credential/entitlement creation, activation idempotency/races, invalid/expired/revoked/redeemed-code behavior, session establishment, PostgreSQL integration tests.
-2. Content domain/API and deterministic `alwaslh-go` inventory/import.
-3. Ordered Media/PDF pipeline with checksum/count/order tests.
-4. Admin content management implementation.
-5. Versioned AI contracts/Prompt Registry + semantic/golden tests.
-6. Durable Gemini workers/retries/failover/cancel/resume/observability + AI Ops.
-7. Quiz domain + shared PracticeEngine + trusted completion service.
-8. Student reader/quizzes/notes/progress/notifications.
-9. Offline Sync Engine + PWA/service worker + attempt outbox.
-10. Admin access/student/report/export surfaces.
-11. Design-system completion/shared UI/accessibility.
-12. Performance/security/observability hardening.
-13. Actual-host PostgreSQL tuning/load/network, backup/restore drill, staging, browser E2E, release/rollback gates.
-14. Release only after Feature Parity is fully evidenced.
+1. **Stage 8 backend contract:** first activation, atomic account/profile/credential/entitlement creation, code outcome semantics, activation idempotency/races, account identifier contract and post-activation session establishment.
+2. Wire the existing Student activation UI to that documented endpoint after it exists; add API/browser E2E for `activation → authenticated session → entitlement visible`.
+3. Decide/document Student recovery-token issuance flow if self-service recovery is required, then wire the existing reset surface.
+4. Content domain/API and deterministic `alwaslh-go` inventory/import.
+5. Ordered Media/PDF pipeline with checksum/count/order tests.
+6. Admin content management implementation.
+7. Versioned AI contracts/Prompt Registry + semantic/golden tests.
+8. Durable Gemini workers/retries/failover/cancel/resume/observability + AI Ops.
+9. Quiz domain + shared PracticeEngine + trusted completion service.
+10. Student reader/quizzes/notes/progress/notifications.
+11. Offline Sync Engine + PWA/service worker + attempt outbox.
+12. Admin access/student/report/export surfaces.
+13. Design-system completion/shared UI/accessibility.
+14. Performance/security/observability hardening and actual-host/staging/release gates.
 
 ## Documentation / Continuity Protocol
 
@@ -333,4 +330,4 @@ At every meaningful implementation batch:
 
 ## Current State
 
-**Stages 1–7 are CLI/runtime verified on the latest Stage 7 baseline. Stage 8 Student Activation & Account Flow is next.**
+**Stages 1–7 remain CLI/runtime verified. Stage 8 Student Activation UI sub-scope is CLI PASS on `rebuild/student-activation-ui`, while Stage 8 overall remains NOT COMPLETE until the missing backend activation/recovery contracts and end-to-end runtime flow are implemented and verified.**

@@ -1,6 +1,6 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> **Purpose:** هذا الملف هو نقطة البداية لأي محادثة أو مهندس جديد. يجب قراءته قبل تعديل المشروع. إذا تعارض مع افتراض سابق، فالمستودع والـCLI هما المصدر الأعلى للحقيقة.
+> **Purpose:** هذا الملف هو نقطة البداية لأي محادثة أو مهندس جديد. يجب قراءته قبل تعديل المشروع. إذا تعارض مع افتراض سابق، فالمستودع والـCLI/CI هما المصدر الأعلى للحقيقة.
 
 ## 1. What this project is
 
@@ -31,6 +31,7 @@
 11. `alwaslh-go` Content Source فقط؛ importer يحفظ order/checksum/source metadata.
 12. Feature parity تقاس بالنتيجة للمستخدم وليس بطريقة التنفيذ القديمة.
 13. لا Stage تُغلق بدون CLI/CI evidence. الحالات: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; أي شيء غير منفذ = `NOT YET VERIFIED`.
+14. Frontend لا يخترع API contracts. أي flow لا يملك عقدًا موثقًا يبقى `BLOCKED / NOT YET VERIFIED` بدل ربطه بمسار افتراضي.
 
 ## 4. Canonical target tree
 
@@ -68,116 +69,98 @@ Student PWA ┘       │
                     └── AI/background workers
 ```
 
-## 5. Current verified stage state
+## 5. Verified baseline and current parallel work
 
-Latest full green verification on Stage 7 branch:
+### Stages 1–7 baseline
 
-- Branch: `rebuild/access-entitlements`
-- Commit: `0a7929daf2f79baccca31b8110a6c6e372d49024`
-- GitHub Actions run: `33288330856`
-- Result: **Stages 1–7 SUCCESS** on clean CI, including PostgreSQL 16 runtime tests.
+Stages 1–7 remain **CLI/RUNTIME PASS**. A fresh verification was rerun against the Stage 8 Student UI change and all existing stage jobs stayed green:
 
-### Stage 1 — Product Contract ✅ CLI PASS
-- Repository/product audit done.
-- `PRODUCT_FEATURE_PARITY_MATRIX.md` is the feature-preservation contract.
-- `scripts/verify-product-contract.py` validates IDs/rows/capability families.
+- GitHub Actions run: `33289552826`
+- Result: **Stages 1–7 SUCCESS** on clean CI, including PostgreSQL 16 runtime/integration checks.
+- The Stage 8 UI implementation commit verified by that run: `483ddf4926604b87fcbe7199fd426bc52ea80b9d`.
 
-### Stage 2 — Brand Identity ✅ CLI PASS
-- Identity evolved from original teal/open-book logo.
-- Owned SVG/PNG/PWA assets; no TailAdmin/Miaoda dependency.
-- Palette/typography/accessibility tokens are canonical under `packages/brand`.
-- `scripts/verify-brand.py` checks assets, SVG parse, PWA dimensions, identity JSON, typography/accessibility tokens.
+Prior Stage 7 stack remains:
+- Foundation: `rebuild/foundation` / PR #2.
+- Auth: `rebuild/auth-authorization` / PR #3.
+- Access/Entitlements: `rebuild/access-entitlements` / PR #4.
 
-### Stage 3 — UX Architecture ✅ CLI PASS
-- Admin IA, Student mobile IA, critical flows/states, parity mapping, responsive/accessibility contracts and wireframes documented.
-- `scripts/verify-ux.py` enforces contracts.
+### Stage 8 — Student Activation & Account Flow
 
-### Stage 4 — PostgreSQL Data Platform ✅ CLI/RUNTIME PASS
-Canonical migrations currently:
-- `0001_core.sql`
-- `0002_access.sql`
-- `0003_learning.sql`
-- `0004_ai_and_sync.sql`
-- `0005_auth.sql`
-- `0006_access_contract.sql`
+**Overall Stage 8 status: NOT COMPLETE.** Backend activation/account orchestration is owned by the main Stage 8 conversation and was deliberately not modified in this parallel UI batch.
 
-CI applies migrations to clean PostgreSQL 16 with failure-on-error and validates constraints/indexes/schema behavior.
+Parallel Student UI branch:
+- base: `rebuild/access-entitlements`
+- branch: `rebuild/student-activation-ui`
+- implementation commit: `483ddf4926604b87fcbe7199fd426bc52ea80b9d`
+- draft PR: #5
+- verification run: `33289552826`
+- Student UI sub-scope: **CLI PASS**
 
-### Stage 5 — Engineering Foundation ✅ CLI/RUNTIME PASS
-Implemented:
-- `apps/api` runtime.
-- PostgreSQL pool/transaction boundary.
-- migration runner + idempotent migration tracking.
-- environment validation.
-- structured public error envelope/logging foundation.
-- lint + strict TypeScript + unit tests + production API build.
-- Admin production build and Student production build.
-- CI clean-run gate.
+Implemented under `apps/student-web` only:
+- first-launch server session verification using documented `GET /v1/student/me`;
+- returning-student login using documented `POST /v1/auth/login`;
+- verified Student role before entering the authenticated Student state;
+- logout using documented `POST /v1/auth/logout`;
+- entitlement summary using documented `GET /v1/student/access/entitlements`;
+- recovery reset using documented `POST /v1/auth/reset-password` when the user already has a valid recovery token;
+- dedicated activation/login/recovery UI with clear separation between flows;
+- 6-digit activation-code input with Arabic/Persian/English digit normalization matching the backend contract;
+- loading, network-unavailable, offline, API-error, empty entitlement and success states;
+- no fake offline authentication: cold offline launch does not claim an unverified session;
+- responsive RTL-first layout, touch targets, semantic forms/labels, `aria-live` error/status announcements, invalid-state semantics and reduced-motion behavior through brand tokens;
+- frontend lint + Vitest scripts wired into `prebuild` so the existing Stage 5 CI build executes them.
 
-### Stage 6 — Auth & Authorization ✅ CLI/RUNTIME PASS
-Implemented and tested:
-- password hashing with salted `scrypt` server-side.
-- random opaque sessions; only SHA-256 token digest persisted.
-- HttpOnly session cookie.
-- Admin/Student role isolation.
-- Origin/CSRF-oriented mutation protection.
-- PostgreSQL-backed brute-force lockout state.
-- recovery is one-time and resets credentials; original password is never exposed.
-- password reset invalidates sessions.
-- first Admin creation is explicit CLI bootstrap; no public/default-admin bootstrap.
-- PostgreSQL integration tests verify login/session/recovery/role isolation/bootstrap refusal on repeat.
+### Stage 8 documented API boundary
 
-Stage 6 branch/PR:
-- branch `rebuild/auth-authorization`
-- PR #3 stacked on foundation.
+Documented and used by the Student UI:
+- `POST /v1/auth/login`
+- `POST /v1/auth/logout`
+- `GET /v1/student/me`
+- `POST /v1/auth/reset-password`
+- `GET /v1/student/access/entitlements`
 
-### Stage 7 — Access Codes & Entitlements ✅ CLI/RUNTIME PASS
-Implemented and tested:
-- cryptographically secure 6-digit full-access codes.
-- cryptographically secure 7-digit class-access codes.
-- Arabic/Persian digit normalization.
-- configurable entitlement duration stored with generated code.
-- transactional row-locked redemption.
-- idempotency keys with advisory transaction locks.
-- idempotency result is profile-bound; another student cannot reuse a known key.
-- finite renewal extends the existing entitlement rather than creating conflicting grants.
-- class code is **not consumed** when active full access already covers the student.
-- Admin revoke flow.
-- atomic code creation + audit event.
-- access audit events.
-- active entitlement uniqueness constraints.
-- integration tests cover generation, Arabic digits, renewal, idempotency, revoke, no-waste behavior and concurrent redemption race.
+Documented but **not suitable for first activation**:
+- `POST /v1/student/access/redeem` requires an already authenticated Student session.
 
-Important bugs caught by the Stage 7 gate and fixed:
-- Zod/default TypeScript boundary made explicit with `?? 365`.
-- PostgreSQL enum/UNION inference in access audit generation was replaced by simpler atomic inserts.
-- `jsonb_build_object` duration parameter was explicitly typed as integer.
-- code generation + audit event moved into one transaction.
-- idempotency lookup was strengthened to include profile ownership.
+Explicit blockers:
+- **BLOCKED / NOT YET VERIFIED — first-time activation API:** no documented endpoint on `rebuild/access-entitlements` atomically validates a 6-digit full-access code, creates/claims Student account credentials, grants entitlement and establishes a session. The activation UI therefore validates presentation/input only and **does not send or consume the code**.
+- **BLOCKED / NOT YET VERIFIED — Student recovery-token issuance:** current documented issuance route is Admin-only. The Student UI can perform reset with an already-issued token but does not invent a self-service issuance endpoint.
+- **NOT YET VERIFIED — browser E2E / deployment API routing:** production/reverse-proxy behavior that serves `/v1/*` to the Student web origin has not been browser-tested in this batch; Vite dev proxy behavior was not invented without a documented deployment contract.
 
-Stage 7 branch/PR:
-- branch `rebuild/access-entitlements`
-- PR #4 stacked on Stage 6.
+### Stage 8 Student UI verification evidence
 
-## 6. Current next stage
+GitHub Actions run `33289552826`, Stage 5 job `Stage 5 · Engineering foundation`, step `Install and build Student`:
 
-**NEXT: Stage 8 — Student Activation & Account Flow.**
+```text
+npm run typecheck --prefix apps/student-web
+  -> tsc --noEmit                              PASS
 
-Do not skip ahead.
+npm run build --prefix apps/student-web
+  -> prebuild: npm run lint && npm test
+     -> eslint . --max-warnings 0              PASS
+     -> vitest run                             PASS (5/5 tests)
+  -> tsc -b && vite build                      PASS
+```
 
-Required scope for Stage 8:
-- first-time Student activation using an access code.
-- returning-student login path.
-- atomic account/profile + credential + entitlement creation where relevant.
-- no partially-created account if code redemption fails.
-- correct handling of invalid/expired/revoked/redeemed codes.
-- account identifier generation/normalization.
-- activation idempotency/race protection.
-- session establishment after successful activation.
-- integration tests on clean PostgreSQL.
-- E2E/API-level flow: activation → authenticated session → entitlement visible.
+Production build transformed 29 modules and completed successfully. The same workflow run also completed Stage 1, 2, 3, 4, 5, 6 and 7 jobs successfully.
 
-Stage 8 must remain `NOT COMPLETE` until its CLI/runtime gate passes.
+## 6. Current Stage 8 remaining scope
+
+The main Stage 8 implementation still must provide and prove the backend contract for:
+- first-time Student activation using an access code;
+- atomic account/profile + credential + entitlement creation where relevant;
+- no partially-created account if activation/redemption fails;
+- invalid/expired/revoked/redeemed code outcomes;
+- account identifier generation/normalization contract;
+- activation idempotency/race protection;
+- session establishment after successful activation;
+- Student recovery issuance UX/API contract if self-service recovery is required;
+- PostgreSQL integration tests;
+- API/E2E flow: activation → authenticated session → entitlement visible.
+
+After the backend contract exists, `apps/student-web` should wire the existing activation/recovery surfaces to that documented contract without changing the established flow semantics.
+
+Stage 8 remains `NOT COMPLETE` until its complete CLI/runtime gate passes.
 
 ## 7. Business rules that must remain preserved
 
@@ -215,8 +198,11 @@ After Stage 8, continue phase-by-phase only:
 
 ## 9. Things explicitly NOT YET VERIFIED
 
-Do not claim these are done merely because schema exists:
+Do not claim these are done merely because schema/UI exists:
 
+- complete Stage 8 first-time activation backend/runtime flow.
+- Student self-service recovery-token issuance.
+- Student browser E2E and deployed `/v1/*` routing.
 - actual production/self-hosted PostgreSQL networking/tuning/load characteristics.
 - real-host backup + restore drill.
 - object storage/media provider.
@@ -224,7 +210,6 @@ Do not claim these are done merely because schema exists:
 - Gemini golden tests/provider failover/runtime.
 - complete Admin product.
 - complete Student PWA product.
-- browser E2E.
 - offline isolation/delta/outbox/service-worker lifecycle.
 - production security/performance/accessibility/release readiness.
 
@@ -236,7 +221,7 @@ Read in this order:
 2. `PROJECT_STATUS.md` — concise current stage and last verified build.
 3. `PROJECT_ENGINEERING_LOG.md` — decisions/findings/history.
 4. `PRODUCT_FEATURE_PARITY_MATRIX.md` — feature preservation contract.
-5. `MASTER_REBUILD_ROADMAP.md` — ordered roadmap.
+5. `MASTER_REBUILD_ROADMAP.md` — ordered roadmap; newer handoff/status stage numbering governs where historical roadmap text differs.
 6. `docs/engineering/CLI_VERIFICATION_GATES.md` — mandatory gate policy.
 7. `PROJECT_FULL_AUDIT_CATALOG.md` / `PROJECT_DEEP_AUDIT.md` — legacy evidence when needed.
 
