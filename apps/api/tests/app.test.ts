@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { buildApp } from "../src/app.js";
 import type { AppConfig } from "../src/config.js";
-import type { Database } from "../src/db.js";
+import type { Database, QueryExecutor } from "../src/db.js";
 
 const config: AppConfig = {
   NODE_ENV: "test",
@@ -10,15 +10,24 @@ const config: AppConfig = {
   PORT: 3000,
   LOG_LEVEL: "silent",
   DATABASE_URL: "postgresql://user:pass@localhost:5432/test",
+  SESSION_COOKIE_NAME: "alwaslh_session",
+  SESSION_TTL_HOURS: 168,
+  ALLOWED_ORIGINS: "http://localhost:5173",
 };
 
 function fakeDatabase(options: { ready?: boolean } = {}): Database {
+  const executor: QueryExecutor = {
+    async query() {
+      return [];
+    },
+  };
   return {
+    ...executor,
     async ping() {
       if (options.ready === false) throw new Error("db unavailable");
     },
-    async query() {
-      return [];
+    async transaction(work) {
+      return work(executor);
     },
     async close() {},
   };
