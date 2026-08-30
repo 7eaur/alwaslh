@@ -273,8 +273,9 @@ export class AuthService {
          returning failed_count, locked_until`,
         [identifier],
       );
-      await recordAuthEvent(tx, "login_failure", { profileId, identifier });
-      if (rows[0]?.locked_until) await recordAuthEvent(tx, "login_locked", { profileId, identifier });
+      const eventContext = profileId ? { profileId, identifier } : { identifier };
+      await recordAuthEvent(tx, "login_failure", eventContext);
+      if (rows[0]?.locked_until) await recordAuthEvent(tx, "login_locked", eventContext);
     });
   }
 }
