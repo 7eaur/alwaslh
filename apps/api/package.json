@@ -16,7 +16,8 @@
     "test:integration": "node --import tsx --test tests/integration/*.test.ts",
     "start": "node dist/server.js",
     "db:migrate": "tsx src/migrate.ts",
-    "auth:create-admin": "tsx src/auth/create-admin.ts"
+    "auth:create-admin": "tsx src/auth/create-admin.ts",
+    "content:import-source": "tsx src/content/import-source-cli.ts"
   },
   "dependencies": {
     "fastify": "5.6.1",
