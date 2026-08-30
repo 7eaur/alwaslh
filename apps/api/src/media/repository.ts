@@ -55,10 +55,7 @@ function assertSameIdentity(existing: ExistingMediaAssetRow, input: MediaIdentit
   if (!matches) throw new Error("idempotency_conflict");
 }
 
-export async function ensureMediaAsset(
-  tx: QueryExecutor,
-  input: MediaIdentityInput,
-): Promise<MediaAssetRow> {
+export async function ensureMediaAsset(tx: QueryExecutor, input: MediaIdentityInput): Promise<MediaAssetRow> {
   const existingRows = await tx.query<ExistingMediaAssetRow>(
     `select id, status, content_source_asset_id, source_position, source_filename,
             source_mime_type, source_page_number, source_checksum_sha256, source_byte_size
