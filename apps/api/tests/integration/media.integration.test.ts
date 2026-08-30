@@ -37,10 +37,14 @@ test("media processing is retryable and idempotent across storage and PostgreSQL
     const replay = await service.processImage(input);
     assert.equal(replay.mediaAssetId, first.mediaAssetId);
 
-    const assets = await db.query<{ id: string; status: string; attempt_count: number; source_position: number }>(
-      "select id, status, attempt_count, source_position from media_assets where idempotency_key = $1",
-      [input.idempotencyKey],
-    );
+    const assets = await db.query<{
+      id: string;
+      status: string;
+      attempt_count: number;
+      source_position: number;
+    }>("select id, status, attempt_count, source_position from media_assets where idempotency_key = $1", [
+      input.idempotencyKey,
+    ]);
     assert.equal(assets.length, 1);
     assert.equal(assets[0]?.status, "ready");
     assert.equal(Number(assets[0]?.attempt_count), 2);
