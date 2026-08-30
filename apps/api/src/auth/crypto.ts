@@ -1,12 +1,33 @@
-import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
-import { promisify } from "node:util";
+import {
+  createHash,
+  randomBytes,
+  scrypt as scryptCallback,
+  type ScryptOptions,
+  timingSafeEqual,
+} from "node:crypto";
 
-const scrypt = promisify(scryptCallback);
 const SCRYPT_N = 32_768;
 const SCRYPT_R = 8;
 const SCRYPT_P = 1;
 const SCRYPT_KEY_LENGTH = 64;
 const SCRYPT_MAX_MEMORY = 64 * 1024 * 1024;
+
+function deriveScrypt(
+  password: string,
+  salt: Buffer,
+  keyLength: number,
+  options: ScryptOptions,
+): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    scryptCallback(password, salt, keyLength, options, (error, derivedKey) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(derivedKey);
+    });
+  });
+}
 
 export function normalizeIdentifier(value: string): string {
   const arabicIndic = "٠١٢٣٤٥٦٧٨٩";
@@ -23,12 +44,12 @@ export async function hashPassword(password: string): Promise<string> {
     throw new Error("Password length must be between 8 and 128 characters");
   }
   const salt = randomBytes(16);
-  const derived = (await scrypt(password, salt, SCRYPT_KEY_LENGTH, {
+  const derived = await deriveScrypt(password, salt, SCRYPT_KEY_LENGTH, {
     N: SCRYPT_N,
     r: SCRYPT_R,
     p: SCRYPT_P,
     maxmem: SCRYPT_MAX_MEMORY,
-  })) as Buffer;
+  });
   return [
     "scrypt",
     `N=${SCRYPT_N},r=${SCRYPT_R},p=${SCRYPT_P}`,
@@ -51,12 +72,12 @@ export async function verifyPassword(password: string, encodedHash: string): Pro
     const salt = Buffer.from(saltEncoded, "base64url");
     const expected = Buffer.from(hashEncoded, "base64url");
     if (expected.length !== SCRYPT_KEY_LENGTH) return false;
-    const actual = (await scrypt(password, salt, expected.length, {
+    const actual = await deriveScrypt(password, salt, expected.length, {
       N,
       r,
       p,
       maxmem: SCRYPT_MAX_MEMORY,
-    })) as Buffer;
+    });
     return timingSafeEqual(actual, expected);
   } catch {
     return false;
