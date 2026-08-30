@@ -1,0 +1,18 @@
+{
+  "brand": "الوسيلة الذكية",
+  "tagline": "الوسيلة التفاعلية الأولى في اليمن",
+  "version": "1.0.0",
+  "logo": {
+    "mark": "./assets/logo/logo-mark.svg",
+    "primary": "./assets/logo/logo-primary.svg",
+    "horizontal": "./assets/logo/logo-horizontal.svg",
+    "horizontalInverse": "./assets/logo/logo-horizontal-white.svg",
+    "monochrome": "./assets/logo/logo-mark-monochrome.svg"
+  },
+  "appIcons": {
+    "favicon": "./assets/app-icons/favicon.svg",
+    "pwa192": "./assets/app-icons/icon-192.png",
+    "pwa512": "./assets/app-icons/icon-512.png",
+    "maskable512": "./assets/app-icons/icon-maskable-512.png"
+  }
+}

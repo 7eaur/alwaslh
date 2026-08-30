@@ -1,0 +1,20 @@
+{
+  "stage": "brand-identity",
+  "version": "1.0.0",
+  "status": "approved-baseline",
+  "name": "الوسيلة الذكية",
+  "tagline": "الوسيلة التفاعلية الأولى في اليمن",
+  "sourceIdea": "evolution of the original teal open-book identity",
+  "colors": {
+    "primary": "#00B5A9",
+    "primaryDark": "#007F78",
+    "ink": "#123C43",
+    "mint": "#E6F7F6",
+    "surface": "#F2F4F7",
+    "charcoal": "#1F2937"
+  },
+  "typography": {
+    "primaryArabic": "Cairo",
+    "fallbackArabic": ["Tajawal", "Noto Sans Arabic"]
+  }
+}

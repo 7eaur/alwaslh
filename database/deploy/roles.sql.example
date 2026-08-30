@@ -1,0 +1,59 @@
+-- Run as a PostgreSQL administrator during infrastructure provisioning.
+-- Replace role passwords through the hosting secret mechanism; never commit them here.
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'alwaslh_owner') THEN
+    CREATE ROLE alwaslh_owner NOLOGIN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'alwaslh_migrator') THEN
+    CREATE ROLE alwaslh_migrator LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'alwaslh_app') THEN
+    CREATE ROLE alwaslh_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'alwaslh_readonly') THEN
+    CREATE ROLE alwaslh_readonly LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT;
+  END IF;
+END
+$$;
+
+-- Database ownership is assigned by the provisioning process, for example:
+-- ALTER DATABASE alwaslh OWNER TO alwaslh_owner;
+
+GRANT alwaslh_owner TO alwaslh_migrator;
+
+-- Schema privileges are applied after connecting to the application database.
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON DATABASE alwaslh FROM PUBLIC;
+
+GRANT CONNECT ON DATABASE alwaslh TO alwaslh_migrator, alwaslh_app, alwaslh_readonly;
+GRANT USAGE ON SCHEMA public TO alwaslh_app, alwaslh_readonly;
+
+-- Migrations should create objects owned by alwaslh_owner by executing:
+-- SET ROLE alwaslh_owner;
+-- ... migrations ...
+-- RESET ROLE;
+
+-- Runtime grants after migrations:
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO alwaslh_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO alwaslh_app;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO alwaslh_app;
+
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO alwaslh_readonly;
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO alwaslh_readonly;
+
+ALTER DEFAULT PRIVILEGES FOR ROLE alwaslh_owner IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO alwaslh_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE alwaslh_owner IN SCHEMA public
+  GRANT USAGE, SELECT ON SEQUENCES TO alwaslh_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE alwaslh_owner IN SCHEMA public
+  GRANT EXECUTE ON FUNCTIONS TO alwaslh_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE alwaslh_owner IN SCHEMA public
+  GRANT SELECT ON TABLES TO alwaslh_readonly;
+
+-- Password examples are intentionally omitted.
+-- Use ALTER ROLE ... PASSWORD only through secrets/bootstrap automation.

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" role="img" aria-labelledby="title desc">
+<title id="title">الوسيلة الذكية</title><desc id="desc">الشعار الأفقي للوسيلة الذكية</desc>
+<defs>
+  <linearGradient id="g" x1="0" y1="280" x2="280" y2="0" gradientUnits="userSpaceOnUse"><stop stop-color="#007F78"/><stop offset="1" stop-color="#29C8C0"/></linearGradient>
+</defs>
+<g transform="translate(20 20)">
+<rect width="280" height="280" rx="66" fill="url(#g)"/>
+<path d="M64 88c0-10 8-18 18-18h34c15 0 25 3 34 10 9-7 19-10 34-10h22c10 0 18 8 18 18v94c0 10-8 18-18 18h-30c-15 0-25 4-34 14-4 5-11 5-15 0-9-10-19-14-34-14H82c-10 0-18-8-18-18V88Z" fill="none" stroke="white" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M140 82v116" stroke="white" stroke-width="16" stroke-linecap="round"/>
+</g>
+<g direction="rtl" unicode-bidi="bidi-override" text-anchor="end" font-family="Cairo, Tajawal, 'Noto Sans Arabic', sans-serif">
+<text x="1160" y="135" font-size="88" font-weight="800" fill="#FFFFFF">الوسيلة الذكية</text>
+<text x="1160" y="215" font-size="36" font-weight="500" fill="#D6FFFB">الوسيلة التفاعلية الأولى في اليمن</text>
+</g>
+</svg>
