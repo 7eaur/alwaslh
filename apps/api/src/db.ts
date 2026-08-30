@@ -37,7 +37,10 @@ export function createDatabase(connectionString: string): Database {
       try {
         await client.query("begin");
         const tx: QueryExecutor = {
-          async query<R extends QueryResultRow = QueryResultRow>(text: string, values: readonly unknown[] = []) {
+          async query<R extends QueryResultRow = QueryResultRow>(
+            text: string,
+            values: readonly unknown[] = [],
+          ) {
             const result = await client.query<R>(text, [...values]);
             return result.rows;
           },
