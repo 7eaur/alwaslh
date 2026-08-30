@@ -43,8 +43,10 @@ export class MediaPipelineService {
         sourcePosition: input.sourcePosition,
         sourceFilename: input.sourceFilename,
         sourceMimeType: input.sourceMimeType,
-        sourcePageNumber: input.sourcePageNumber,
-        contentSourceAssetId: input.contentSourceAssetId,
+        ...(input.sourcePageNumber === undefined ? {} : { sourcePageNumber: input.sourcePageNumber }),
+        ...(input.contentSourceAssetId === undefined
+          ? {}
+          : { contentSourceAssetId: input.contentSourceAssetId }),
         variants,
       };
 
