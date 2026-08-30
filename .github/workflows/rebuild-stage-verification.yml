@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: rebuild-stage-verification-${{ github.ref }}
+  group: rebuild-stage-verification-single-flight
   cancel-in-progress: true
 
 jobs:
