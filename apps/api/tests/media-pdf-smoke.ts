@@ -44,6 +44,12 @@ try {
     pages.map((page) => page.replayed),
     [false, false],
   );
+  for (const page of pages) {
+    const display = page.variants.find((variant) => variant.kind === "display");
+    assert.ok(display?.width && display.height);
+    assert.ok(Math.max(display.width, display.height) >= 1200);
+    assert.ok(Math.max(display.width, display.height) <= 1800);
+  }
 
   const replay = await service.processPdf(input);
   assert.deepEqual(
@@ -70,7 +76,22 @@ try {
     [100, 101],
   );
 
-  console.log("Stage 10 PDF smoke: extraction, transforms, storage and replay preserved 1..N order");
+  await assert.rejects(
+    service.processPdf({
+      idempotencyKey: "stage10-invalid-pdf-0001",
+      sourcePositionStart: 200,
+      sourceFilename: "invalid.pdf",
+      sourceMimeType: "application/pdf",
+      bytes: Buffer.from("not-a-pdf"),
+    }),
+    /pdf_inspection_failed/,
+  );
+  const invalidRows = await db.query<{ count: string }>(
+    "select count(*)::text as count from media_assets where idempotency_key like 'stage10-invalid-pdf-0001:%'",
+  );
+  assert.equal(invalidRows[0]?.count, "0");
+
+  console.log("Stage 10 PDF smoke: extraction, transforms, quality, replay, errors and order verified");
 } finally {
   await db.close();
   await rm(root, { recursive: true, force: true });
