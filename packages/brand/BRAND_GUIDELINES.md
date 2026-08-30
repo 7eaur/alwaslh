@@ -15,6 +15,7 @@
 - `assets/logo/logo-horizontal.svg` — الشعار الأفقي.
 - `assets/logo/logo-horizontal-white.svg` — للاستخدام فوق الخلفيات الداكنة.
 - `assets/logo/logo-mark-monochrome.svg` — نسخة أحادية اللون.
+- `assets/logo/logo-mark-white.svg` — نسخة الرمز البيضاء للخلفيات الداكنة.
 - `assets/app-icons/favicon.svg` — favicon vector.
 - `assets/app-icons/icon-192.png` — PWA 192.
 - `assets/app-icons/icon-512.png` — PWA 512.
@@ -77,7 +78,7 @@
 **Student:** نفس الهوية، touch-first، مساحات أكبر، التركيز على القراءة والتقدم، استخدام teal كإشارة اتجاه وليس كخلفية لكل الشاشة.
 
 ## 10. Approved visual reference
-`reference/brand-direction-board.webp` هو مرجع بصري لاتجاه الهوية، وليس مصدرًا لاستخراج نصوص أو قياسات. الأصول الإنتاجية هي ملفات SVG/PNG داخل `assets/`.
+`reference/brand-direction-board.svg` هو مرجع بصري لاتجاه الهوية، وليس مصدرًا لاستخراج نصوص أو قياسات. الأصول الإنتاجية هي ملفات SVG/PNG داخل `assets/`.
 
 ## 11. Status
 **Brand Identity v1 — APPROVED DIRECTION / IMPLEMENTATION BASELINE.**  
