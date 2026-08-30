@@ -1,0 +1,58 @@
+name: Stage 9 Source Inventory Audit
+
+on:
+  pull_request:
+    paths:
+      - "content/tooling/alwaslh_go_inventory.py"
+      - "content/tooling/render_inventory_audit.py"
+      - "content/import-contracts/alwaslh-go-source-map.json"
+      - ".github/workflows/stage9-source-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-source-audit:
+    name: Stage 9 · Full pinned source audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ALWASLH_GO_REVISION: f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify inventory audit tooling
+        run: python3 -m unittest content.tests.test_alwaslh_go_inventory
+
+      - name: Fetch pinned alwaslh-go Git metadata
+        run: |
+          git clone --filter=blob:none --no-checkout https://github.com/7eaur/alwaslh-go.git /tmp/alwaslh-go
+          git -C /tmp/alwaslh-go checkout --detach "$ALWASLH_GO_REVISION"
+          test "$(git -C /tmp/alwaslh-go rev-parse HEAD)" = "$ALWASLH_GO_REVISION"
+
+      - name: Build canonical full inventory
+        run: |
+          mkdir -p /tmp/stage9-audit
+          python3 content/tooling/alwaslh_go_inventory.py \
+            --repo /tmp/alwaslh-go \
+            --config content/import-contracts/alwaslh-go-source-map.json \
+            --output /tmp/stage9-audit/full-inventory.json \
+            --summary /tmp/stage9-audit/inventory-summary.json
+
+      - name: Render machine and human audit reports
+        run: |
+          python3 content/tooling/render_inventory_audit.py \
+            --inventory /tmp/stage9-audit/full-inventory.json \
+            --source-map content/import-contracts/alwaslh-go-source-map.json \
+            --json /tmp/stage9-audit/inventory-audit.json \
+            --markdown /tmp/stage9-audit/inventory-audit.md
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage9-source-inventory-audit
+          path: /tmp/stage9-audit/
+          if-no-files-found: error
+          retention-days: 30
