@@ -34,9 +34,10 @@ export function registerAccessRoutes(
     const actor = await currentProfile(request, config, auth);
     if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
     const input = parseBody(GenerateFullSchema, request.body);
+    const durationDays = input.durationDays ?? 365;
     return {
-      codes: await access.generateFullCodes(actor.id, input.count, input.durationDays),
-      durationDays: input.durationDays,
+      codes: await access.generateFullCodes(actor.id, input.count, durationDays),
+      durationDays,
     };
   });
 
@@ -44,10 +45,11 @@ export function registerAccessRoutes(
     const actor = await currentProfile(request, config, auth);
     if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
     const input = parseBody(GenerateClassSchema, request.body);
+    const durationDays = input.durationDays ?? 365;
     return {
-      codes: await access.generateClassCodes(actor.id, input.classId, input.count, input.durationDays),
+      codes: await access.generateClassCodes(actor.id, input.classId, input.count, durationDays),
       classId: input.classId,
-      durationDays: input.durationDays,
+      durationDays,
     };
   });
 
