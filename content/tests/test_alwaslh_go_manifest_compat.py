@@ -1,5 +1,6 @@
 import importlib.util
 import pathlib
+import sys
 import unittest
 
 TOOLING = pathlib.Path(__file__).parents[1] / "tooling"
@@ -7,7 +8,6 @@ MODULE_PATH = TOOLING / "alwaslh_go_manifest_compat.py"
 SPEC = importlib.util.spec_from_file_location("alwaslh_go_manifest_compat", MODULE_PATH)
 assert SPEC and SPEC.loader
 compat = importlib.util.module_from_spec(SPEC)
-import sys
 sys.path.insert(0, str(TOOLING))
 SPEC.loader.exec_module(compat)
 
@@ -37,6 +37,10 @@ class ManifestCompatibilityTests(unittest.TestCase):
         arabic = compat.normalize_manifest_entry({"م": 1, "اسم الصورة": "PDF001 - غلاف.webp"})
         self.assertEqual(canonical["seq"], 1)
         self.assertEqual(arabic["relative_path"], "الصور/PDF001 - غلاف.webp")
+
+    def test_integral_floats_use_javascript_json_number_shape(self):
+        encoded = compat.canonical_bytes({"z": 9.0, "nested": [1.0, 1.5]}).decode("utf-8")
+        self.assertEqual(encoded, '{"nested":[1,1.5],"z":9}')
 
 
 if __name__ == "__main__":
