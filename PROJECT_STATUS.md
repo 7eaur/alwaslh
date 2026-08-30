@@ -1,89 +1,87 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage 8 Student Activation & Account Flow is **IN PROGRESS**. Backend is **CLI/RUNTIME PASS**; the parallel Student Activation UI and combined browser E2E are still required before Stage 8 can close.
-- **Verification Policy:** every stage requires executable CLI/CI verification. Statuses distinguish DESIGN PASS / CLI PASS / RUNTIME PASS / RELEASE PASS. Unexecuted checks remain `NOT YET VERIFIED`.
-- **Continuity Source:** `PROJECT_HANDOFF.md` is the mandatory first-read for any new conversation/engineer.
-- **Verification Sources:** `docs/engineering/CLI_VERIFICATION_GATES.md`, `.github/workflows/rebuild-stage-verification.yml`, and the recorded GitHub Actions runs.
-- **Latest Backend Verified Baseline:** branch `rebuild/student-activation-backend`, commit `a87c7f766481708e018dcaa1ae6e6643c0667fef`, GitHub Actions run `33289741640`. **Stages 1–8 backend jobs all completed with success**, including clean PostgreSQL 16 activation integration tests.
+- **Current Phase:** Stage 8 Student Activation & Account Flow is **COMPLETE / CLI + PostgreSQL RUNTIME + BROWSER E2E PASS**. Stage 9 Content Model & deterministic `alwaslh-go` import is next.
+- **Verification Policy:** every stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; anything not executed remains `NOT YET VERIFIED`.
+- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, and `MASTER_REBUILD_ROADMAP.md`.
+- **Latest Full Verified Baseline:** branch `rebuild/student-activation-integration`, commit `829af003156f4c57ceea1cba2ebca12a4309177a`, GitHub Actions run `33292329935`. **Stages 1–8 and the Stage 8 Chromium browser E2E all completed successfully.**
 
 ## Completed
 
-- **Stage 1 Product Contract:** **CLI PASS.** Feature IDs/rows and required capability families are automatically validated.
-- **Stage 2 Brand Identity:** **CLI PASS.** Canonical owned assets, SVG parsing, PWA dimensions, identity JSON, palette, typography and accessibility tokens are checked.
-- **Stage 3 UX Architecture:** **CLI PASS.** Admin/Student IA, flows, states, parity coverage and wireframe SVG validity are automatically checked.
-- **Stage 4 PostgreSQL Data Platform:** **CLI/RUNTIME PASS on PostgreSQL 16.** Clean-slate self-hosted PostgreSQL behind backend services; browser has no DB credentials/direct DB access.
-- **Stage 5 Engineering Foundation:** **CLI/RUNTIME PASS.** API runtime, PostgreSQL pool/transaction boundary, migration runner/idempotency, environment validation, logging/errors, lint, strict typecheck, unit tests, API build, Admin build and Student build all pass in CI.
-- **Stage 6 Auth & Authorization:** **CLI/RUNTIME PASS.** Salted scrypt password hashing, opaque sessions with SHA-256 persisted token digests, HttpOnly cookie, role isolation, mutation origin protection, DB-backed lockout, one-time recovery/reset, session invalidation and explicit first-admin CLI bootstrap are tested against PostgreSQL.
-- **Stage 7 Access Codes & Entitlements:** **CLI/RUNTIME PASS.** Secure 6-digit full codes and 7-digit class codes, Arabic/Persian digit normalization, transactional/idempotent redemption, renewal extension, no-waste class redemption behavior, revoke, audit events, uniqueness constraints and concurrent race behavior are tested on PostgreSQL 16.
-- **Stage 8 Backend — Student Activation:** **CLI/RUNTIME PASS.** First activation with a 6-digit full-access code is atomic and idempotent; profile + scrypt credential + full entitlement + redemption + audit commit together; the original six-digit code becomes the returning account identifier, not a secret; session issuance uses canonical Auth login; invalid/expired/revoked/used-code, replay, rollback, Arabic digits, returning login and concurrent activation races are integration-tested.
+- **Stage 1 Product Contract:** **CLI PASS.** Feature-preservation contract and automated parity checks.
+- **Stage 2 Brand Identity:** **CLI PASS.** Owned teal/open-book identity, canonical assets/tokens/PWA icons and automated brand checks.
+- **Stage 3 UX Architecture:** **CLI PASS.** Admin/Student IA, critical flows/states, responsive/accessibility contracts and wireframes.
+- **Stage 4 PostgreSQL Data Platform:** **CLI/RUNTIME PASS on PostgreSQL 16.** Clean-slate private PostgreSQL behind Backend; migrations and relational integrity verified on clean DBs.
+- **Stage 5 Engineering Foundation:** **CLI/RUNTIME PASS.** API runtime, DB pool/transactions, migration runner, environment validation, logging/error envelope, strict TS, tests, production builds and CI. Production API build now uses `tsconfig.build.json`, outputs runtime-only `dist/`, and matches `npm start`.
+- **Stage 6 Auth & Authorization:** **CLI/RUNTIME PASS.** Salted scrypt credentials, opaque sessions, HttpOnly cookies, role isolation, Origin protection, DB lockout, reset-only recovery and explicit Admin bootstrap.
+- **Stage 7 Access Codes & Entitlements:** **CLI/RUNTIME PASS.** Secure 6/7-digit codes, Arabic/Persian normalization, transactional/idempotent redemption, renewal, no-waste behavior, revoke/audit, constraints and race tests.
+- **Stage 8 Student Activation & Account Flow:** **CLI/RUNTIME/BROWSER E2E PASS.** Atomic first activation; original six-digit Full Code becomes returning account identifier; password remains the authentication secret; immediate HttpOnly session; entitlement visibility; logout; returning login; recovery reset; offline/loading/error UI states; responsive RTL UI; race/idempotency/rollback tests.
+
+## Stage 8 verified browser flow
+
+```text
+invalid code
+→ valid 6-digit activation + password
+→ atomic profile/credential/full entitlement/redemption
+→ HttpOnly Student session
+→ entitlement visible in Student Web
+→ logout
+→ returning login with 6-digit identifier + password
+→ Admin-issued one-time recovery token
+→ Student password reset
+→ old password rejected
+→ new password login succeeds
+```
+
+Chromium E2E uses clean PostgreSQL 16 + live built API + built Student Web through same-origin Vite preview proxy.
 
 ## Canonical database migrations
 
-`database/migrations/0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql`.
-
-Stage 8 adds DB-level single-redemption indexes, stronger redeemed-code ownership constraints and the `account_activated` auth audit event.
+`0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql`.
 
 ## Current branch / PR stack
 
 - Foundation: `rebuild/foundation` / PR #2.
-- Auth: `rebuild/auth-authorization` / PR #3, stacked on foundation.
-- Access/Entitlements: `rebuild/access-entitlements` / PR #4, stacked on Auth.
-- Student Activation Backend: `rebuild/student-activation-backend` / PR #6, stacked on Access/Entitlements.
-- Student Activation UI: parallel conversation/branch `rebuild/student-activation-ui`; **its final status must be read from that branch/PR and remains NOT YET VERIFIED in this branch until integration.**
+- Auth: `rebuild/auth-authorization` / PR #3.
+- Access/Entitlements: `rebuild/access-entitlements` / PR #4.
+- Student Activation UI parallel work: `rebuild/student-activation-ui` / PR #5.
+- Student Activation Backend: `rebuild/student-activation-backend` / PR #6.
+- **Stage 8 integrated source of truth:** `rebuild/student-activation-integration` / PR #7, stacked on the Stage 8 Backend branch.
 
-## Stage 8 API contract
+## Critical defects caught and fixed by gates
 
-Canonical UI/backend contract: `docs/api/STUDENT_ACTIVATION_CONTRACT.md`.
-
-Key flow:
-
-```text
-POST /v1/student/activate
-6-digit full code + password + stable idempotency key
-→ atomic account/credential/entitlement/redemption
-→ canonical Auth login
-→ HttpOnly session
-```
-
-Returning login remains `POST /v1/auth/login` using the original 6-digit account identifier + password. Recovery resets the password and never reveals the original secret.
+- Legacy root PostCSS/Tailwind leakage into new apps.
+- Auth strict-TypeScript/scrypt boundary defects.
+- Stage 7 PostgreSQL enum/JSONB/default typing defects and non-atomic audit creation.
+- Stage 7 idempotency ownership weakness.
+- Stage 8 formatter/lint drift.
+- Cross-stage integration-test interference caused by multiple suites sharing one DB; each stage now runs its own suite against an isolated PostgreSQL database.
+- Student Unit suite accidentally collected Playwright E2E files; Vitest is now scoped to `src`.
+- API production build/start mismatch: build emitted `dist/src/server.js` while `npm start` expected `dist/server.js`; production build is now separated from tests using `tsconfig.build.json`.
 
 ## Important decisions
 
-- PostgreSQL is self-hosted on the same hosting environment as backend services.
-- Supabase is **not** the target platform.
-- Old project is a feature/scenario reference, not a schema/data compatibility target.
-- The six-digit full-access code is the Student account identifier after first activation; it is not sufficient authentication by itself.
-- Browser never stores/retrieves the password and never connects directly to PostgreSQL.
-- `7eaur/alwaslh-go` remains the canonical curriculum/media source input and will be imported deterministically later.
-- Legacy application remains **NO-GO** for production until the replacement passes parity/release gates.
-
-## Critical fixes caught by CI so far
-
-- Product parity validator assumption corrected without weakening checks.
-- Brand Mint token drift fixed at source.
-- PostgreSQL constraint verification corrected to the actual stronger FK contract.
-- Legacy root PostCSS/Tailwind configuration leaking into new apps was isolated.
-- Auth strict TypeScript/scrypt/optional typing issues fixed before runtime.
-- Stage 7 default duration typing, PostgreSQL enum inference and JSONB parameter typing defects were caught and fixed.
-- Stage 7 code creation + audit event was made atomic; idempotency was bound to the same profile.
-- Stage 8 first CI run caught Biome import/format drift; source was formatted rather than weakening lint.
-- Stage 8 exposed cross-stage integration-test interference: Stage 6 was running every integration file concurrently on one DB. CI was corrected so Auth/Access/Activation each run their own integration suite against isolated PostgreSQL databases.
+- PostgreSQL is self-hosted/private behind Backend; browser never connects directly.
+- Supabase is not the target platform.
+- Legacy project is a feature/behavior reference, not a schema compatibility target.
+- Full access code = exactly 6 digits; Class access code = exactly 7 digits.
+- The Full Code becomes the returning Student identifier only after activation; it is **not** sufficient authentication by itself.
+- Recovery resets the secret; it never reveals the original password.
+- `7eaur/alwaslh-go` is the canonical curriculum/media source input and must be imported deterministically; raw content is never shipped as a frontend bundle.
+- Legacy application remains **NO-GO** for production until final parity/release gates pass.
 
 ## NOT YET VERIFIED / remaining release risks
 
-- Stage 8 parallel Student UI implementation and its lint/typecheck/tests/build result on its own branch.
-- combined Stage 8 browser E2E: activation → session → entitlement-visible → logout → returning login/recovery states.
-- actual production/self-hosted PostgreSQL connection-pool tuning, load characteristics and network configuration.
-- activation/API perimeter rate limiting under real reverse-proxy hosting; security hardening remains a later mandatory gate.
-- real-host backup + restore drill.
-- object storage/media integration.
-- full `alwaslh-go` inventory/import integrity.
-- Gemini contracts/golden tests/workers/failover/runtime.
-- complete Admin application and browser E2E.
-- complete Student PWA, reader, quizzes, notes, progress and browser E2E.
-- offline account isolation/delta/outbox/service-worker lifecycle.
-- production performance/security/accessibility/staging/rollback gates.
+- actual production-host PostgreSQL networking, pool tuning, load behavior and backup/restore drill;
+- API/reverse-proxy perimeter rate limiting and final security hardening;
+- object/media storage runtime;
+- full `alwaslh-go` inventory and deterministic import integrity;
+- ordered media/PDF pipeline;
+- Gemini prompt contracts, golden tests, durable workers, multi-project/key failover and runtime;
+- complete Admin product;
+- post-auth Student learning product, Practice Engine and trusted scoring;
+- account-scoped Offline Sync/PWA/outbox lifecycle;
+- full performance/security/accessibility/device/staging/rollback/release gates.
 
 ## Next Action
 
-**Finish Stage 8, do not start Stage 9 yet.** Read/verify the parallel `rebuild/student-activation-ui` work when available, reconcile it with `docs/api/STUDENT_ACTIVATION_CONTRACT.md`, integrate Backend + UI on a dedicated Stage 8 integration branch/PR if needed, then run combined lint/typecheck/tests/build and browser/API E2E. Stage 8 closes only after both halves and the integrated flow are green.
+**Stage 9 — Content Model & Deterministic `alwaslh-go` Import.** Start by reading the real `7eaur/alwaslh-go` repository contents/manifests, create a complete source inventory and canonical import contract, then implement deterministic parsing/order/checksum/dedupe/reporting. Do not begin Stage 10 Media Pipeline until the Stage 9 importer gate is green.
