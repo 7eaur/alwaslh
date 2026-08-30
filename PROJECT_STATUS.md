@@ -1,11 +1,13 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage 9 Content Model & deterministic `alwaslh-go` Import is **COMPLETE / CLI + PostgreSQL RUNTIME PASS**. Stage 10 Media Pipeline is next, but must not begin until CI passes again on this documentation head.
+- **Current Phase:** Stage 10 Media Pipeline is **CODE COMPLETE / CLI + PostgreSQL + MEDIA RUNTIME PASS**. Documentation closure CI is running next; after it is green, sync the stable Stage 10 schema/code to the temporary Supabase/Vercel Preview and verify that deployment before beginning Stage 11.
 - **Verification Policy:** every stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; anything not executed remains `NOT YET VERIFIED`.
-- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, and `MASTER_REBUILD_ROADMAP.md`.
-- **Latest Verified Stage 9 Code Baseline:** branch `rebuild/content-import`, commit `30d12d24be93bf306a9da5fffcfb45ea9317a186`.
-- **Stage 9 Dedicated Verification:** GitHub Actions run `33294631418` — **SUCCESS**.
-- **Full Regression Verification on same commit:** GitHub Actions run `33294631419` — **SUCCESS** across the complete rebuild verification workflow.
+- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `MASTER_REBUILD_ROADMAP.md`, stage contracts/DoD, and `docs/engineering/CLI_VERIFICATION_GATES.md`.
+- **Stage 10 branch / PR:** `rebuild/media-pipeline` / PR #11.
+- **Latest Verified Stage 10 Code Baseline:** `f9f58ed4b9cf599d992a08b9c9eb33d3ae1a17c3`.
+- **Stage 10 Dedicated Verification:** run `33302062208` — **SUCCESS**.
+- **Stage 9 Regression on same code head:** run `33302062209` — **SUCCESS**.
+- **Full Regression Verification on same code head:** run `33302062216` — **SUCCESS**, including Chromium E2E.
 
 ## Completed
 
@@ -18,6 +20,7 @@
 - **Stage 7 Access Codes & Entitlements:** **CLI/RUNTIME PASS.** Secure 6/7-digit codes, Arabic/Persian normalization, transactional/idempotent redemption, renewal, no-waste behavior, revoke/audit, constraints and race tests.
 - **Stage 8 Student Activation & Account Flow:** **CLI/RUNTIME/BROWSER E2E PASS.** Atomic activation + returning login + recovery + real Chromium integration.
 - **Stage 9 Content Model & deterministic `alwaslh-go` Import:** **CLI/PostgreSQL RUNTIME PASS.** Full pinned inventory, manifest compatibility, deterministic ordering, provenance, repeatable DB import and reconciliation verified.
+- **Stage 10 Media Pipeline:** **CLI/PostgreSQL/MEDIA RUNTIME PASS on code head.** Server-owned media processing, safe storage abstraction, deterministic ordering/keys, Sharp variants, Poppler PDF extraction, Stage 9 provenance, source-byte-bound idempotency, failure/abort cleanup and full PDF runtime verification.
 
 ## Stage 9 verified source/import facts
 
@@ -32,41 +35,28 @@ Pinned source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
 86 recognized helper files
 24 manifest.json files
 0 fatal inventory issues
-0 manifest errors
-0 order errors
-0 unmapped images
-0 unparsed assets
-0 classification errors
-0 expected-count errors
 ```
 
 Canonical inventory SHA-256:
-
 `7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`
 
-The inventory reports **100 duplicate Git-blob groups covering 201 paths**. They are retained as review evidence, not auto-rejected, because repeated educational pages can be intentional.
+## Stage 10 verified media facts
 
-### Runtime import proof
-
-Clean PostgreSQL 16 applied `0001_core.sql` through `0008_content_source_import.sql`.
-
-First import:
-
-```json
-{"replayed":false,"documents":48,"assets":5552}
-```
-
-Identical re-import:
-
-```json
-{"replayed":true,"documents":48,"assets":5552}
-```
-
-Runtime assertions proved exactly one import run, 48 present source documents, 5,552 present assets, zero absent rows and no duplicate present `(document_id, position)` pairs.
+- `0009_media_pipeline.sql` introduces `media_assets` and `media_variants` with source checksum/byte identity, processing state, attempt/error evidence and unique variant/storage identities.
+- Imported media can reference `content_source_assets`; Stage 9 inventory is not mutated into Lesson entities.
+- Media idempotency is owned by exact source identity + SHA-256 + byte size; reusing the key for different source data is rejected.
+- Exact ready replay verifies the stored variant byte size/SHA before returning it.
+- `sharp` produces `source`, `display`, `thumbnail`, and `ai` variants with computed dimensions/byte sizes/SHA-256.
+- Storage keys are backend-generated deterministic relative keys; traversal is rejected.
+- Concurrency is bounded to 1..8 and result/page order is independent from worker completion timing.
+- Partial storage failure, metadata failure and abort remove successfully written partial objects and leave observable failed state.
+- Poppler is invoked with argument arrays, temporary directories are scoped/cleaned, page count/order is validated, and malformed PDFs fail before media rows are created.
+- A real two-page PDF was executed end-to-end through extraction → transforms → filesystem storage → PostgreSQL metadata → exact replay; page order remained `1,2` / positions `100,101`.
+- Display output from the real PDF stayed within the tested long-edge quality window `1200..1800` pixels.
 
 ## Canonical database migrations
 
-`0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql` → `0008_content_source_import.sql`.
+`0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql` → `0008_content_source_import.sql` → `0009_media_pipeline.sql`.
 
 ## Current branch / PR stack
 
@@ -76,8 +66,18 @@ Runtime assertions proved exactly one import run, 48 present source documents, 5
 - Student Activation UI: `rebuild/student-activation-ui` / PR #5.
 - Student Activation Backend: `rebuild/student-activation-backend` / PR #6.
 - Stage 8 integrated source: `rebuild/student-activation-integration` / PR #7.
-- **Stage 9 source of truth:** `rebuild/content-import` / PR #8.
-- Parallel Stage 9 source audit: `rebuild/content-source-audit` / PR #9; audit-only evidence, not importer ownership.
+- Stage 9 source of truth: `rebuild/content-import` / PR #8.
+- Parallel Stage 9 source audit: `rebuild/content-source-audit` / PR #9; audit-only evidence.
+- Temporary test deployment: `preview/supabase-vercel` / PR #10.
+- **Stage 10 source of truth:** `rebuild/media-pipeline` / PR #11.
+
+## Temporary Preview Environment
+
+- Supabase project `linksoftt` is a temporary PostgreSQL/testing host, not the final platform architecture.
+- Vercel project `alwaslh` exposes Student `/`, Admin `/admin`, API `/api/*` from `preview/supabase-vercel`.
+- Browser access to application tables through Supabase/PostgREST is intentionally blocked; API remains the data boundary.
+- The Preview must be synchronized after each stable stage before the next stage proceeds.
+- Vercel serverless filesystem is not the final durable media volume and Poppler/media upload runtime on Vercel is currently **NOT YET VERIFIED**.
 
 ## Critical defects caught and fixed by gates
 
@@ -85,35 +85,25 @@ Runtime assertions proved exactly one import run, 48 present source documents, 5
 - Auth strict-TypeScript/scrypt boundary defects.
 - Stage 7 PostgreSQL enum/JSONB/default typing defects, audit atomicity and idempotency ownership weakness.
 - Stage 8 test isolation/discovery defects and production API build/start mismatch.
-- Stage 9 audit found eight Arabic-key manifests that would have omitted **772 images** despite a correct top-level Git image count; parser support + payload-count invariant added.
-- Stage 9 helper expectation drift corrected from 76 to the observed/recognized 86 helpers.
-- Stage 9 found a third real manifest shape (`filename` + `pdf_page` + `book_page`) in `كتاب القراءة`; explicit compatibility support and regression tests added.
-- Stage 9 first real DB import exposed Python/JavaScript numeric JSON digest drift (`9.0` vs `9`); canonical integral-number normalization fixed the cross-language digest contract.
-
-## Important decisions
-
-- PostgreSQL is self-hosted/private behind Backend; browser never connects directly.
-- Supabase is not the target platform and legacy DB data/schema are not compatibility targets.
-- Full access code = exactly 6 digits; Class access code = exactly 7 digits.
-- Full Code becomes the returning Student identifier only after activation; password remains the authentication secret.
-- Recovery resets the secret; it never reveals the original password.
-- `alwaslh-go` is a canonical source input. Raw repository assets never ship as a frontend bundle.
-- Stage 9 preserves source documents/assets/order/provenance and **does not infer Lesson entities from filenames**.
-- Duplicate source blobs remain reportable review evidence unless a later semantic rule proves them invalid.
-- Legacy application remains **NO-GO** for production until final parity/release gates pass.
+- Stage 9 Arabic-key/third-shape manifest omissions, helper baseline drift and Python/JavaScript canonical digest drift.
+- Stage 10 first gate caught formatting and strict optional-property defects before runtime.
+- Stage 10 review caught weak idempotency ownership and changed it to bind the key to exact source bytes/provenance before retry mutation.
+- Stage 10 failure-injection gates prove partial filesystem objects are cleaned on storage failure, metadata failure and abort.
+- Stage 10 final DoD added direct assertions for no temp-file residue and malformed-PDF/no-metadata behavior rather than relying on inference.
 
 ## NOT YET VERIFIED / remaining release risks
 
-- final CI on the documentation-only Stage 9 closure head;
-- actual production-host PostgreSQL networking, pool tuning, load behavior and backup/restore drill;
-- API/reverse-proxy perimeter rate limiting and final security hardening;
-- object/media storage runtime and ordered PDF/media processing;
-- Gemini prompt contracts, golden tests, durable workers, multi-project/key failover and runtime;
-- complete Admin product;
+- Stage 10 workflows on the final documentation head;
+- Stage 10 schema/code synchronization and deployment verification on the temporary Supabase/Vercel Preview;
+- durable media volume/Poppler behavior on the eventual production host and backup/restore/load drills;
+- Gemini prompt contracts, golden tests, durable AI workers/provider failover;
+- complete Admin product and live Admin media upload boundary;
 - post-auth Student learning product, Practice Engine and trusted scoring;
 - account-scoped Offline Sync/PWA/outbox lifecycle;
-- full performance/security/accessibility/device/staging/rollback/release gates.
+- complete performance/security/accessibility/device/staging/rollback/release gates.
 
 ## Next Action
 
-**Closure gate:** wait for both Stage 9 dedicated CI and the full regression workflow to pass on this documentation head. If green, Stage 9 is fully closed and the next implementation stage is **Stage 10 — Media Pipeline**.
+1. Run Stage 10 dedicated + Stage 9 regression + complete rebuild verification on this documentation head.
+2. If green, apply `0009_media_pipeline.sql` and new-table Supabase lockdown to temporary `linksoftt`, mirror stable Stage 10 code into `preview/supabase-vercel`, deploy and verify Vercel health/readiness/build.
+3. Only after Preview sync evidence, begin **Stage 11 — Gemini Prompt/Output Contracts**.
