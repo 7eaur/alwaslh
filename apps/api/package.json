@@ -11,9 +11,12 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check src tests",
-    "test": "node --import tsx --test tests/**/*.test.ts",
+    "test": "npm run test:unit",
+    "test:unit": "node --import tsx --test tests/*.test.ts",
+    "test:integration": "node --import tsx --test tests/integration/*.test.ts",
     "start": "node dist/server.js",
-    "db:migrate": "tsx src/migrate.ts"
+    "db:migrate": "tsx src/migrate.ts",
+    "auth:create-admin": "tsx src/auth/create-admin.ts"
   },
   "dependencies": {
     "fastify": "5.6.1",

@@ -2,16 +2,13 @@ name: Rebuild Stage Verification
 
 on:
   pull_request:
-  push:
-    branches:
-      - rebuild/foundation
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: rebuild-stage-verification-single-flight
+  group: rebuild-stage-verification-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -117,7 +114,9 @@ jobs:
         run: |
           sudo apt-get update >/dev/null
           sudo apt-get install -y postgresql-client >/dev/null
-          test "$(psql "$DATABASE_URL" -Atqc 'select count(*) from schema_migrations')" = "4"
+          expected="$(find database/migrations -maxdepth 1 -type f -name '*.sql' | wc -l | tr -d ' ')"
+          actual="$(psql "$DATABASE_URL" -Atqc 'select count(*) from schema_migrations')"
+          test "$actual" = "$expected"
       - name: Install and build Admin
         run: |
           npm install --prefix apps/admin-web --ignore-scripts --no-audit --no-fund
@@ -128,3 +127,58 @@ jobs:
           npm install --prefix apps/student-web --ignore-scripts --no-audit --no-fund
           npm run typecheck --prefix apps/student-web
           npm run build --prefix apps/student-web
+
+  stage-6-auth-authorization:
+    name: Stage 6 · Auth & authorization
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_auth
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_auth"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_auth
+      LOG_LEVEL: silent
+      ALLOWED_ORIGINS: http://localhost:5173
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Lint and typecheck auth source
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+      - name: Run unit tests including auth cryptography
+        run: npm test --prefix apps/api
+      - name: Apply all migrations
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify explicit first-admin bootstrap and refusal on repeat
+        env:
+          ADMIN_BOOTSTRAP_IDENTIFIER: admin-bootstrap
+          ADMIN_BOOTSTRAP_PASSWORD: BootstrapPass123!
+          ADMIN_BOOTSTRAP_DISPLAY_NAME: مدير التهيئة
+        run: |
+          npm run auth:create-admin --prefix apps/api
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from profiles where role = 'admin'")" = "1"
+          psql "$DATABASE_URL" -Atqc "select password_hash from auth_credentials" | grep -q '^scrypt\$'
+          if npm run auth:create-admin --prefix apps/api; then
+            echo 'FAIL: second bootstrap admin creation unexpectedly succeeded' >&2
+            exit 1
+          fi
+      - name: Run PostgreSQL auth lifecycle and role-isolation integration tests
+        run: npm run test:integration --prefix apps/api
