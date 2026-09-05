@@ -1,12 +1,12 @@
 # PROJECT ENGINEERING LOG
 
-> Engineering source of truth for product understanding, architecture decisions, implementation history, verification evidence and remaining work. Read `PROJECT_HANDOFF.md`, then `PROJECT_STATUS.md`, then `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
+> Engineering source of truth for product understanding, architecture decisions, implementation history, verification evidence and remaining work. Read `PROJECT_HANDOFF.md`, then `PROJECT_STATUS.md`, then `docs/product/PRODUCT_EVOLUTION_REVIEW.md`, `docs/product/PRODUCT_DECISIONS_BATCH_05.md`, and `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
 
 ## Project Understanding
 
 **الوسيلة الذكية** منصة تعليمية عربية بمنتجين رئيسيين:
 
-- **Student PWA:** Welcome/Auth، المنهج، Reader، الملخصات، `اختبر نفسك`، الاختبارات والنماذج، الملاحظات، المفضلة، `يحتاج مراجعة`، التقدم، الإنجازات الشخصية وOffline/PWA.
+- **Student PWA:** Welcome/Auth، المنهج، Reader، الملخصات، `اختبر نفسك`، الاختبارات والنماذج، الملاحظات، المفضلة، `يحتاج مراجعة`، التقدم، الإنجازات الشخصية، Push Notifications وOffline/PWA.
 - **Admin Web:** Super Admin واحد يدير الصفوف/المواد/الدروس/المحتوى، الرفع والمعالجة، OCR/TTS، الطلاب والأكواد، AI authoring، Question Bank/QA، النشر، Import/Export والتقارير.
 
 ### Product governance
@@ -14,8 +14,9 @@
 - الفكرة الأساسية ثابتة.
 - التطبيق القديم reference/inventory للفكرة والمميزات والسيناريوهات والمشكلات.
 - **لا تُحذف Feature قديمة ذات قيمة بدون قرار صريح من Product Owner.**
-- `PRODUCT_FEATURE_PARITY_MATRIX.md` يبقى coverage checklist قبل إغلاق Student/Admin product stages.
+- `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` coverage gates قبل إغلاق Student/Admin product stages.
 - يمكن تغيير UI/Architecture/Flow إذا بقيت قيمة الميزة وبُنيت بطريقة أفضل.
+- Product Review Batches 01–05 حسمت Core Product بما يكفي لاستئناف التنفيذ؛ التفاصيل الروتينية تُختار هندسيًا وفق PED-048.
 
 ### Sources
 
@@ -32,7 +33,8 @@ Student PWA ┘       │
                     ├── media/object storage
                     ├── OCR extraction + searchable text
                     ├── cached/versioned TTS audio
-                    ├── durable AI workers/jobs
+                    ├── durable provider-neutral AI workers/jobs
+                    ├── Web Push / notification delivery
                     └── account/device-scoped offline sync
 ```
 
@@ -44,9 +46,11 @@ Rules:
 - normal Upload never depends on OCR/AI/TTS.
 - OCR is reusable/provider-abstracted.
 - TTS uses approved text and is cached by published content revision.
-- Gemini secrets/execution server-owned.
+- AI provider/model credentials and execution are server-owned; domain is not tied to Gemini.
 - Student assessment sessions use Published Admin-reviewed Question Bank only.
 - Offline is account/device-scoped and designed to reduce repeated server fetches.
+- Design System is unified through shared brand/tokens/components; page-by-page component/style duplication is not acceptable as final design.
+- Root-cause fixes are mandatory; Preview workarounds require documented exit paths.
 
 ## Verified engineering baseline — Stages 1–10
 
@@ -144,7 +148,7 @@ Canonical detailed record: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
 - PED-023 TTS `استماع للدرس`: cached derived media from approved text, not generated per Play.
 - PED-024 Arabic search to exact lesson/page.
 - PED-025 no independent Highlight system now.
-- PED-026 Student custom tests consume Published Question Bank only; no live Gemini generation.
+- PED-026 Student custom tests consume Published Question Bank only; no live AI generation.
 - PED-027 original ministerial model distinct from future simulation.
 - PED-031 `اختبر نفسك` gives immediate feedback after every question; Full Tests/Models review at end.
 
@@ -165,12 +169,28 @@ Canonical detailed record: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
 ### AI/OCR
 - PED-007 AI text-first from reusable OCR.
 - PED-008 provider-abstracted OCR.
-- PED-009 authorized Gemini credential/project scheduler.
+- PED-009 legacy decision established server-only credential scheduling; superseded/expanded by Batch05 to provider/model-neutral routing.
 - PED-010 upload independent from AI.
 - PED-021 preserve valuable legacy generation modes/outcomes.
 - PED-037 generated-from-book questions require source + page provenance before publish.
 - PED-038 high-throughput durable generation architecture: chunking, queues, bounded concurrency/backpressure, retry/cooldown, partial-success persistence, idempotency, cancel/resume, validation/dedupe/provenance, usage metrics.
 - PED-039 Legacy Feature Coverage Gate before closing Student/Admin product stages.
+
+## Product Decision — Batch 05
+
+Canonical detailed record: `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
+
+- **PED-040 Notes media parity:** Notes launch with text + image + capture + audio. Binary media uses blob/media storage, not base64 records.
+- **PED-041 Auto Needs Review:** repeated mistakes can automatically create a Needs Review item; implementation default target = two independent mistakes on the same question, configurable after measurement.
+- **PED-042 Weak areas:** progress/mastery/weak-area recommendations are server-derived from sufficient real evidence; never from one answer or client-declared score.
+- **PED-043 Push Notifications:** Web/PWA Push from initial product where supported; gentle study reminders default max 3/week and never more than 1/day, with quiet hours/opt-out and In-App fallback.
+- **PED-044 Provider/model-neutral AI:** no hard Gemini lock-in. Use adapters and cost+quality+throughput routing across benchmarked providers/models.
+- **PED-045 Model cascade:** cheap/fast approved model first when suitable, then escalate only failed/uncertain unit to stronger model.
+- **PED-046 Root-Cause Change Policy:** patching around defects is not final architecture; understand contracts/callers/side-effects and fix the source problem. Preview workaround must have known-issue/exit-path documentation.
+- **PED-047 Unified Design System:** one brand/token/component system, shared states/responsiveness/a11y, duplicate-component/style audit before Stage13/14 closure.
+- **PED-048 Engineering discretion:** routine details no longer require product discussion if they preserve recorded Business Rules, legacy coverage and verification requirements.
+
+AI provider/model routing details: `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
 
 ## Architecture Decisions
 
@@ -198,7 +218,7 @@ Canonical detailed record: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
 - **AD-034** Upload cannot depend on OCR/AI/TTS availability.
 - **AD-035** OCR reusable/provider-abstracted.
 - **AD-036** AI text-first by default; original source remains evidence/fallback.
-- **AD-037** AI credentials/projects scheduled server-side with health/rate/cooldown/failover.
+- **AD-037** AI credentials/projects scheduled server-side with health/rate/cooldown/failover; expanded by AD-054.
 - **AD-038** Student account uses registered cryptographic application-device identity, not fingerprint/IP/user-agent.
 - **AD-039** Offline first-class and low-request.
 - **AD-040** Notes/Favorites/Needs Review separate product semantics.
@@ -215,6 +235,13 @@ Canonical detailed record: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
 - **AD-051** Generated source-based questions require source/page provenance to publish.
 - **AD-052** High-volume AI generation is durable chunked work with backpressure/partial persistence, never one giant HTTP request.
 - **AD-053** Legacy feature matrix is a release coverage gate for feature-heavy Student/Admin stages.
+- **AD-054** AI domain is provider/model-neutral; provider-specific transport/errors/credentials stay behind adapters.
+- **AD-055** AI routing is benchmark/cost/quality aware and may use model cascade; free tier is not automatically production-suitable.
+- **AD-056** Notes media files use proper media/blob storage and account/device sync, not large base64 DB payloads.
+- **AD-057** Weak-area/review automation is server-derived from repeated evidence and remains explainable to Student.
+- **AD-058** Web Push is opt-in and rate-limited with gentle defaults and In-App fallback.
+- **AD-059** Root-cause modification policy is mandatory; temporary workaround requires explicit removal path.
+- **AD-060** Unified shared Design System/components are mandatory; duplication audit gates Student/Admin completion.
 
 ## Audit Findings
 
@@ -227,7 +254,7 @@ Canonical detailed record: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
 | SEC-015..018 | P1 | Credentials | plaintext/reversible recovery | FIXED; Admin reset only |
 | DATA-025 | P1 | Assessment | client-trusted score/rank | REMAINING; Stage15 trusted engine |
 | OFF-* | P1/P2 | Offline | stale/global/cross-account cache risk | REBUILD required; PED-015/028/029 direction decided |
-| AI-* | P1/P2 | AI | browser-owned jobs/weak validation | REBUILD required; PED-007/009/021/038 direction decided |
+| AI-* | P1/P2 | AI | browser-owned jobs/weak validation | REBUILD required; PED-007/021/038/044/045 direction decided |
 | CONTENT-009-* | P1/P2 | Content | manifest/helper/digest completeness defects | FIXED Stage9 |
 | MEDIA-010-* | P1/P2 | Media | order/idempotency/failure/PDF defects | FIXED Stage10 runtime |
 | PREVIEW-010-001 | P2 | Vercel | Stage10 direct deploy expects root `dist` | OPEN; Preview reconciliation required |
@@ -239,8 +266,12 @@ Canonical detailed record: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
 | PRODUCT-005 | P2 | Reader | image-only experience lacks text/search/audio | DECIDED Reader/Text/Search/TTS; implementation pending |
 | PRODUCT-006 | P1 | Assessment | live Student AI would raise cost/uncertainty | DECIDED Published Question Bank only |
 | PRODUCT-007 | P1 | Source correctness | generated questions without page provenance hard to review | PED-037 DECIDED; implementation pending |
-| AI-NEW-001 | P1 | AI Cost | repeated image-to-Gemini wastes tokens | OCR text-first decided |
+| PRODUCT-008 | P2 | Personal Learning | legacy note media/base64 patterns risk payload/storage bloat | PED-040/AD-056 DECIDED; implementation pending |
+| PRODUCT-009 | P2 | UX Consistency | page-specific component/style duplication would create drift | PED-047/AD-060 hard gate; implementation audit pending |
+| AI-NEW-001 | P1 | AI Cost | repeated image-to-model use wastes tokens | OCR text-first decided |
 | AI-NEW-002 | P1 | AI Scale | giant/brittle generation requests lose progress and overload provider/server | PED-038 durable chunk/backpressure architecture decided |
+| AI-NEW-003 | P1 | AI Lock-in | single-provider architecture limits cost/reliability options | PED-044/045 provider-neutral routing decided |
+| ENG-001 | P1 | Maintainability | patch-style fixes can hide root defects/duplicate contracts | PED-046/AD-059 mandatory root-cause policy |
 
 ## Tests & Verification
 
@@ -253,7 +284,7 @@ Final Stage10 documentation head `27c6a2ef1118ee44d2e63471e4f925e1296283e0`:
 
 ### Product-review decisions
 
-Batches 01–04 are **design/product decisions only** unless they refer to already verified Stage1–10 behavior. New two-step activation/device binding, image delivery tuning, OCR runtime, Reader Text/Search/TTS, Published Question Bank custom tests, 14-day Offline lease and high-throughput AI execution are `NOT YET VERIFIED` until implementation gates run.
+Batches 01–05 are **design/product decisions only** unless they refer to already verified Stage1–10 behavior. New two-step activation/device binding, image delivery tuning, OCR runtime, Reader Text/Search/TTS, Published Question Bank custom tests, Notes media sync, auto Needs Review, Push, 14-day Offline lease and multi-provider high-throughput AI execution are `NOT YET VERIFIED` until implementation gates run.
 
 ## Temporary Preview
 
@@ -274,23 +305,24 @@ Batches 01–04 are **design/product decisions only** unless they refer to alrea
 - Student image-delivery/browser readability tuning not verified.
 - OCR provider benchmark/runtime not implemented.
 - Reader Text/Search/TTS not implemented.
-- Practice/Question Bank engine not implemented.
+- Practice/Published Question Bank and auto Needs Review not implemented.
+- Push Notification delivery/runtime not implemented.
 - Offline 14-day lease/download runtime not verified.
-- Stage11 contracts / Stage12 high-throughput AI execution not implemented.
-- exact Notes media scope, Notifications, mastery/recommendation rules, Quiz Builder UX, Import/Export scopes and Student direct AI still under Product Review.
+- Stage11 provider-neutral contracts/benchmark and Stage12 durable router/scheduler/cascade not implemented.
+- Admin/Student full product stages not implemented.
 - production backup/restore/load/security/performance/accessibility/staging/release gates remain later work.
 
 ## Remaining Work
 
-1. Finish remaining Product Evolution Review decisions.
+1. Close Product Review documentation/CI; no more routine product questions required before implementation.
 2. Reconcile every legacy feature via `PRODUCT_FEATURE_PARITY_MATRIX.md` before closing Student/Admin product stages.
-3. Reopen Stage6/8 for two-step activation + registered-device flow and rerun API/PostgreSQL/security/Chromium gates.
-4. Synchronize Stage10 into Supabase/Vercel Preview and fix Vercel build/routing; verify optimized media delivery.
+3. Synchronize Stage10 into Supabase/Vercel Preview and fix Vercel build/routing; verify optimized media delivery.
+4. Reopen Stage6/8 for two-step activation + registered-device flow and rerun API/PostgreSQL/security/Chromium gates.
 5. Implement OCR Extraction Foundation.
-6. Implement Stage11 AI prompt/output/provenance/golden contracts.
-7. Implement Stage12 durable high-throughput generation per PED-038.
-8. Build Super Admin curriculum/upload/OCR/AI review/Question Bank/Import-Export product.
-9. Build Student Reader/Summaries/Practice/Tests/Models/Personal Data/Progress product.
+6. Implement Stage11 provider-neutral AI prompt/output/provenance/golden contracts + model benchmark runner.
+7. Implement Stage12 durable multi-provider/model routing, scheduler, cascade, backpressure, budgets and telemetry.
+8. Build Super Admin curriculum/upload/OCR/AI review/Question Bank/Import-Export/Notification product.
+9. Build Student Reader/Summaries/Practice/Tests/Models/Notes/Favorites/NeedsReview/Progress/Push product.
 10. Build Offline/PWA with explicit downloads, revision sync/outbox and 14-day lease.
 11. Execute performance/security/tests/accessibility/content-load/staging/release/production/operations gates.
 
@@ -300,11 +332,11 @@ After every meaningful batch:
 - update this log;
 - update `PROJECT_STATUS.md`;
 - update `PROJECT_HANDOFF.md` when business/roadmap/baseline changes;
-- update `docs/product/PRODUCT_EVOLUTION_REVIEW.md`;
-- update `PRODUCT_FEATURE_PARITY_MATRIX.md` / `MASTER_REBUILD_ROADMAP.md` when decisions alter scope;
+- update relevant Product Decision/AI docs؛
+- update `PRODUCT_FEATURE_PARITY_MATRIX.md` / coverage evidence as implementation lands;
 - retain exact CI evidence;
 - unexecuted = `NOT YET VERIFIED`.
 
 ## Current State
 
-**Stages 1–10 retain verified technical gates. Product Review Batches 01–04 are recorded. Access codes/multiple class entitlements, image optimization, contextual instructions, immediate Practice feedback, Super Admin-only scope, simplified curriculum hierarchy, mandatory source/page provenance and high-throughput token-efficient AI architecture are now explicit product decisions. Their new implementation work remains NOT YET VERIFIED.**
+**Stages 1–10 retain verified technical gates. Product Review Batches 01–05 are recorded. Core access, Reader, Practice, Offline, Super Admin, Notes, Push, progress and provider-neutral high-throughput AI direction are decided. Root-cause engineering and unified Design System are mandatory governance. New implementation work remains NOT YET VERIFIED and should now resume in the documented bridge order rather than continuing product discussion.**
