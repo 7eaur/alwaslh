@@ -2,7 +2,7 @@
 
 - **Current Phase:** Product Evolution Review after verified Stage 10.
 - **Verification Policy:** every stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; unexecuted = `NOT YET VERIFIED`.
-- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `docs/product/PRODUCT_EVOLUTION_REVIEW.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `MASTER_REBUILD_ROADMAP.md`.
+- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `docs/product/PRODUCT_EVOLUTION_REVIEW.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`, `MASTER_REBUILD_ROADMAP.md`.
 - **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
 - **Product Review Batches recorded:** 01–04.
 - **Verified Stage 10 final head:** `27c6a2ef1118ee44d2e63471e4f925e1296283e0`; Stage10 `33302270707`, Stage9 regression `33302270692`, Full Rebuild `33302270695` all SUCCESS.
@@ -62,6 +62,10 @@
 8. Stage11 AI contracts and Stage12 high-throughput durable execution pending.
 9. Admin/Student full products pending.
 
+## Legacy feature coverage gate
+
+`PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` are mandatory before Admin/Student feature stages close. Every legacy capability must map to `KEEP/IMPROVE/REFACTOR/REBUILD` with implementation/test evidence, or to explicit Product Owner-approved `REMOVE`.
+
 ## Temporary Preview
 
 Supabase `linksoftt` + Vercel `alwaslh` (`wasl15`) remain temporary. Preview branch `preview/supabase-vercel` at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81` has READY deployment and `/api/health` HTTP 200, but is still pre-Stage10. Vercel output-dir mismatch and serverless media/Poppler durability remain unresolved/`NOT YET VERIFIED`.
@@ -77,4 +81,4 @@ Supabase `linksoftt` + Vercel `alwaslh` (`wasl15`) remain temporary. Preview bra
 
 ## Next Action
 
-Continue Product Evolution Review for the remaining items above, then revise implementation sequencing. Product decisions are design-level only until code + executable gates pass. `PRODUCT_FEATURE_PARITY_MATRIX.md` remains the coverage checklist so legacy capabilities are not silently lost.
+Continue Product Evolution Review for the remaining items above, then revise implementation sequencing. Product decisions are design-level only until code + executable gates pass. Legacy feature coverage is a hard gate; nothing valuable from the old application may disappear silently.
