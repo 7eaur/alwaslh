@@ -1,6 +1,6 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> اقرأ بالترتيب: `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → `docs/product/PRODUCT_EVOLUTION_REVIEW.md` → `PRODUCT_FEATURE_PARITY_MATRIX.md` → `MASTER_REBUILD_ROADMAP.md`. المستودع وCI هما source of truth.
+> اقرأ بالترتيب: `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → `docs/product/PRODUCT_EVOLUTION_REVIEW.md` → `PRODUCT_FEATURE_PARITY_MATRIX.md` → `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` → `MASTER_REBUILD_ROADMAP.md`. المستودع وCI هما source of truth.
 
 ## 1. Product direction
 
@@ -89,7 +89,11 @@ Preserve/improve all valuable legacy capabilities: curriculum, Reader, summaries
 
 Goal: maximize **accepted useful output per token/time** without exhausting server/provider resources.
 
-## 4. Affected implementation roadmap
+## 4. Legacy feature coverage gate
+
+`PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` are hard gates before Student/Admin feature completion. Every legacy capability must map to a target flow/module and executable evidence, or explicit Product Owner-approved removal.
+
+## 5. Affected implementation roadmap
 
 1. Stage6/8 partial reopen: two-step activation + forced password change + registered device challenge/rebind + security/Chromium E2E.
 2. Stage10 Preview Sync pending, including optimized Student media delivery verification.
@@ -101,13 +105,12 @@ Goal: maximize **accepted useful output per token/time** without exhausting serv
 8. Stage15 trusted Practice/Test/Model engine using Published Question Bank.
 9. Stage16 mandatory Offline/PWA + 14-day lease.
 10. Stage20 Import/Export/Reporting required.
-11. Before closing Admin/Student product stages, reconcile every legacy capability in `PRODUCT_FEATURE_PARITY_MATRIX.md` to a target implementation or owner-approved removal.
 
-## 5. Preview
+## 6. Preview
 
 Temporary only: Supabase `linksoftt`; Vercel `alwaslh` team `wasl15`; preview branch `preview/supabase-vercel` at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`; READY and `/api/health` HTTP 200 verified. Preview remains pre-Stage10; Vercel output-dir mismatch and serverless media/Poppler durability remain unresolved/`NOT YET VERIFIED`.
 
-## 6. Still pending product decisions
+## 7. Still pending product decisions
 
 - Notes launch scope: text only vs image/capture/audio too.
 - Notifications exact categories/channels.
@@ -116,6 +119,6 @@ Temporary only: Supabase `linksoftt`; Vercel `alwaslh` team `wasl15`; preview br
 - exact Import/Export/report scopes/formats.
 - Student direct AI explanation/chat scope.
 
-## 7. Mandatory continuation
+## 8. Mandatory continuation
 
 After each decision/implementation batch update Product Review, Status, Engineering Log, Handoff and Roadmap. Never mark a Product decision as implemented without executable evidence. Never remove a valuable legacy feature without explicit owner approval.
