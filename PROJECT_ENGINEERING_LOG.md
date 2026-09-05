@@ -1,13 +1,14 @@
 # PROJECT ENGINEERING LOG
 
-> Engineering source of truth for product understanding, architecture decisions, implementation history, verification evidence and remaining work. Read `PROJECT_HANDOFF.md`, then `PROJECT_STATUS.md`, then `docs/product/PRODUCT_EVOLUTION_REVIEW.md`, `docs/product/PRODUCT_DECISIONS_BATCH_05.md`, and `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
+> Engineering source of truth for product understanding, architecture decisions, implementation history, verification evidence and remaining work. Start with `DOCUMENTATION_INDEX.md`, then `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md`, Product Decision docs, `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`, and the legacy coverage/audit references.
 
 ## Project Understanding
 
-**الوسيلة الذكية** منصة تعليمية عربية بمنتجين رئيسيين:
+**الوسيلة الذكية** منصة تعليمية عربية بسطحين رئيسيين مستقلين:
 
-- **Student PWA:** Welcome/Auth، المنهج، Reader، الملخصات، `اختبر نفسك`، الاختبارات والنماذج، الملاحظات، المفضلة، `يحتاج مراجعة`، التقدم، الإنجازات الشخصية، Push Notifications وOffline/PWA.
-- **Admin Web:** Super Admin واحد يدير الصفوف/المواد/الدروس/المحتوى، الرفع والمعالجة، OCR/TTS، الطلاب والأكواد، AI authoring، Question Bank/QA، النشر، Import/Export والتقارير.
+- **Student PWA (`apps/student-web`)**: Welcome/Auth، المنهج، Reader، الملخصات، `اختبر نفسك`، الاختبارات والنماذج، الملاحظات، المفضلة، `يحتاج مراجعة`، التقدم، الإنجازات الشخصية، Push Notifications وOffline/PWA. تطبيق ويب قابل للتثبيت ويعمل أيضًا من Browser.
+- **Admin Web (`apps/admin-web`)**: Super Admin واحد يدير الصفوف/المواد/الدروس/المحتوى، الرفع والمعالجة، OCR/TTS، الطلاب والأكواد، AI authoring، Question Bank/QA، النشر، Import/Export والتقارير.
+- **Backend API (`apps/api`)**: الحد الوحيد للوصول إلى PostgreSQL الخاصة وتنفيذ Auth/Authorization/Entitlements والعمليات authoritative.
 
 ### Product governance
 
@@ -15,8 +16,10 @@
 - التطبيق القديم reference/inventory للفكرة والمميزات والسيناريوهات والمشكلات.
 - **لا تُحذف Feature قديمة ذات قيمة بدون قرار صريح من Product Owner.**
 - `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` coverage gates قبل إغلاق Student/Admin product stages.
+- تفاصيل القديم محفوظة أيضًا في `PROJECT_DEEP_AUDIT.md`, `PROJECT_FULL_AUDIT_CATALOG.md`, `PROJECT_REBUILD_BLUEPRINT.md`, `OFFLINE_MODE.md`, `OFFLINE_MODE_README.md`.
 - يمكن تغيير UI/Architecture/Flow إذا بقيت قيمة الميزة وبُنيت بطريقة أفضل.
-- Product Review Batches 01–05 حسمت Core Product بما يكفي لاستئناف التنفيذ؛ التفاصيل الروتينية تُختار هندسيًا وفق PED-048.
+- Product Review Batches 01–06 حسمت Core Product بما يكفي لاستئناف التنفيذ؛ التفاصيل الروتينية تُختار هندسيًا وفق القرارات المسجلة.
+- `DOCUMENTATION_INDEX.md` هو خريطة التوثيق، و`NEXT_CONVERSATION_PROMPT.md` هو startup prompt للمحادثات الجديدة.
 
 ### Sources
 
@@ -42,6 +45,8 @@ Rules:
 - Browser never receives PostgreSQL credentials.
 - Auth/Authorization/Entitlements server-owned.
 - PostgreSQL clean-slate/migration-owned.
+- Student PWA and Admin Web are separate runtime/UX surfaces; Admin bundles/navigation do not belong in Student UX.
+- Student remains installable Web/PWA but must also work in Browser without installation.
 - media transforms server-owned/deterministic.
 - normal Upload never depends on OCR/AI/TTS.
 - OCR is reusable/provider-abstracted.
@@ -51,6 +56,7 @@ Rules:
 - Offline is account/device-scoped and designed to reduce repeated server fetches.
 - Design System is unified through shared brand/tokens/components; page-by-page component/style duplication is not acceptable as final design.
 - Root-cause fixes are mandatory; Preview workarounds require documented exit paths.
+- During development, stable/verified batches are synchronized to the temporary Preview environment for Product Owner supervision/testing, without redefining Production architecture.
 
 ## Verified engineering baseline — Stages 1–10
 
@@ -192,6 +198,16 @@ Canonical detailed record: `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
 
 AI provider/model routing details: `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
 
+## Product Decision — Batch 06
+
+Canonical detailed record: `docs/product/PRODUCT_DECISIONS_BATCH_06.md`.
+
+- **PED-049 Runtime surfaces:** Student PWA and Admin Web are independent surfaces sharing Backend/brand primitives, not one combined frontend experience.
+- **PED-050 Installable Student Web App:** Student remains Web/PWA installable like the old product outcome, while keeping correct Service Worker/offline/update/accessibility behavior and browser usability without install.
+- **PED-051 Live development Preview:** stable/verified batches are synchronized to Supabase/Vercel temporary Preview for supervision/testing; Preview is not Production architecture. Canonical policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
+- **PED-052 Legacy documentation reference:** parity matrix + deep/full audits + rebuild blueprint + Offline docs remain mandatory reference when implementing modules.
+- **PED-053 Documentation memory:** repository docs, CI and runtime evidence—not chat memory—are project continuity source. `DOCUMENTATION_INDEX.md` + `NEXT_CONVERSATION_PROMPT.md` make continuation deterministic.
+
 ## Architecture Decisions
 
 - **AD-001** Preserve product value, not legacy mistakes.
@@ -242,6 +258,9 @@ AI provider/model routing details: `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
 - **AD-058** Web Push is opt-in and rate-limited with gentle defaults and In-App fallback.
 - **AD-059** Root-cause modification policy is mandatory; temporary workaround requires explicit removal path.
 - **AD-060** Unified shared Design System/components are mandatory; duplication audit gates Student/Admin completion.
+- **AD-061** Student PWA and Admin Web are independent deployable/runtime surfaces sharing API and design primitives, not one combined user interface.
+- **AD-062** Temporary Supabase/Vercel deployment is a continuous development Preview/supervision layer only; stable batches sync after CI and receive runtime evidence.
+- **AD-063** Repository documentation index + specialized decision docs are continuity contracts; legacy audit docs remain mandatory implementation references.
 
 ## Audit Findings
 
@@ -272,6 +291,8 @@ AI provider/model routing details: `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
 | AI-NEW-002 | P1 | AI Scale | giant/brittle generation requests lose progress and overload provider/server | PED-038 durable chunk/backpressure architecture decided |
 | AI-NEW-003 | P1 | AI Lock-in | single-provider architecture limits cost/reliability options | PED-044/045 provider-neutral routing decided |
 | ENG-001 | P1 | Maintainability | patch-style fixes can hide root defects/duplicate contracts | PED-046/AD-059 mandatory root-cause policy |
+| DOC-001 | P2 | Continuity | chat-memory dependency can cause repeated/contradictory work | PED-053/AD-063; DOCUMENTATION_INDEX + NEXT_CONVERSATION_PROMPT added |
+| PREVIEW-DEV-001 | P2 | Delivery | stable rebuild work can diverge from owner-visible Preview | PED-051/AD-062; continuous verified Preview sync policy added |
 
 ## Tests & Verification
 
@@ -284,9 +305,11 @@ Final Stage10 documentation head `27c6a2ef1118ee44d2e63471e4f925e1296283e0`:
 
 ### Product-review decisions
 
-Batches 01–05 are **design/product decisions only** unless they refer to already verified Stage1–10 behavior. New two-step activation/device binding, image delivery tuning, OCR runtime, Reader Text/Search/TTS, Published Question Bank custom tests, Notes media sync, auto Needs Review, Push, 14-day Offline lease and multi-provider high-throughput AI execution are `NOT YET VERIFIED` until implementation gates run.
+Batches 01–06 are **design/product/engineering-governance decisions only** unless they refer to already verified Stage1–10 behavior. New two-step activation/device binding, PWA final install/update behavior, image delivery tuning, OCR runtime, Reader Text/Search/TTS, Published Question Bank custom tests, Notes media sync, auto Needs Review, Push, 14-day Offline lease, multi-provider high-throughput AI execution and continuous Preview synchronization are `NOT YET VERIFIED` until their implementation/runtime gates run.
 
 ## Temporary Preview
+
+Canonical policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
 
 - Supabase `linksoftt` temporary only.
 - migrations through `0008` applied; `0009` pending there.
@@ -297,11 +320,14 @@ Batches 01–05 are **design/product decisions only** unless they refer to alrea
 - Preview remains pre-Stage10.
 - direct Stage10 branch deployment error: `No Output Directory named "dist" found after the Build completed.`
 - Vercel filesystem/Poppler durability is NOT YET VERIFIED.
+- policy now requires stable batches to sync to Preview after CI and receive recorded deployment/runtime verification.
 
 ## Known Issues / Remaining Risk
 
+- Product Review current HEAD still requires final documentation-head CI closure before implementation transition is declared complete.
 - Stage6/8 auth/device refactor not implemented.
 - Stage10 code/migration not synchronized into Preview.
+- Student PWA final install/update lifecycle not yet runtime-verified under the revised product contract.
 - Student image-delivery/browser readability tuning not verified.
 - OCR provider benchmark/runtime not implemented.
 - Reader Text/Search/TTS not implemented.
@@ -314,29 +340,35 @@ Batches 01–05 are **design/product decisions only** unless they refer to alrea
 
 ## Remaining Work
 
-1. Close Product Review documentation/CI; no more routine product questions required before implementation.
+1. Close Product Review documentation/CI on current planning HEAD; no more routine product questions required before implementation.
 2. Reconcile every legacy feature via `PRODUCT_FEATURE_PARITY_MATRIX.md` before closing Student/Admin product stages.
-3. Synchronize Stage10 into Supabase/Vercel Preview and fix Vercel build/routing; verify optimized media delivery.
-4. Reopen Stage6/8 for two-step activation + registered-device flow and rerun API/PostgreSQL/security/Chromium gates.
+3. Synchronize Stage10 into Supabase/Vercel Preview and fix Vercel build/routing from root cause; verify optimized media delivery and document runtime evidence.
+4. Reopen Stage6/8 for two-step activation + registered-device flow and rerun API/PostgreSQL/security/Chromium gates; sync stable result to Preview.
 5. Implement OCR Extraction Foundation.
 6. Implement Stage11 provider-neutral AI prompt/output/provenance/golden contracts + model benchmark runner.
 7. Implement Stage12 durable multi-provider/model routing, scheduler, cascade, backpressure, budgets and telemetry.
 8. Build Super Admin curriculum/upload/OCR/AI review/Question Bank/Import-Export/Notification product.
-9. Build Student Reader/Summaries/Practice/Tests/Models/Notes/Favorites/NeedsReview/Progress/Push product.
+9. Build Student PWA Reader/Summaries/Practice/Tests/Models/Notes/Favorites/NeedsReview/Progress/Push product.
 10. Build Offline/PWA with explicit downloads, revision sync/outbox and 14-day lease.
-11. Execute performance/security/tests/accessibility/content-load/staging/release/production/operations gates.
+11. After each stable batch: sync Preview, deploy, verify, document.
+12. Execute performance/security/tests/accessibility/content-load/staging/release/production/operations gates.
 
 ## Documentation / Continuity Protocol
 
 After every meaningful batch:
-- update this log;
-- update `PROJECT_STATUS.md`;
-- update `PROJECT_HANDOFF.md` when business/roadmap/baseline changes;
-- update relevant Product Decision/AI docs؛
-- update `PRODUCT_FEATURE_PARITY_MATRIX.md` / coverage evidence as implementation lands;
-- retain exact CI evidence;
+- update this log؛
+- update `PROJECT_STATUS.md`؛
+- update `PROJECT_HANDOFF.md` when business/roadmap/baseline/Preview changes؛
+- update relevant Product Decision/AI/Preview docs؛
+- update `PRODUCT_FEATURE_PARITY_MATRIX.md` / coverage evidence as implementation lands؛
+- retain exact commit/CI/deployment/runtime evidence؛
 - unexecuted = `NOT YET VERIFIED`.
+
+Continuity entrypoints:
+- `DOCUMENTATION_INDEX.md`؛
+- `PROJECT_HANDOFF.md`؛
+- `NEXT_CONVERSATION_PROMPT.md`.
 
 ## Current State
 
-**Stages 1–10 retain verified technical gates. Product Review Batches 01–05 are recorded. Core access, Reader, Practice, Offline, Super Admin, Notes, Push, progress and provider-neutral high-throughput AI direction are decided. Root-cause engineering and unified Design System are mandatory governance. New implementation work remains NOT YET VERIFIED and should now resume in the documented bridge order rather than continuing product discussion.**
+**Stages 1–10 retain verified technical gates. Product Review Batches 01–06 are recorded. Core access, Reader, Practice, Offline, Super Admin, Notes, Push, progress, provider-neutral high-throughput AI, separate Student/Admin runtime surfaces, installable Student PWA and continuous temporary Preview policy are decided. Root-cause engineering, unified Design System, legacy coverage and repository-owned documentation are mandatory governance. New implementation work remains NOT YET VERIFIED and should now resume in the documented bridge order.**
