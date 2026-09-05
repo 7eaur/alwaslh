@@ -26,7 +26,7 @@ export function createDatabase(connectionString: string, options: DatabaseOption
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
     allowExitOnIdle: false,
-    ...(options.ssl ? { ssl: { rejectUnauthorized: false } } : {}),
+    ...(options.ssl ? { ssl: true } : {}),
   };
   const pool = new Pool(config);
 

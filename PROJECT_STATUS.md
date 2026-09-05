@@ -1,95 +1,118 @@
 # PROJECT STATUS
 
-- **Current Phase:** temporary Preview Environment setup is active before continuing Stage 10 Media Pipeline.
-- **Main rebuild state:** Stages 1–9 are closed and verified. Stage 10 remains the next implementation stage; its work is paused only long enough to make the project continuously testable on Supabase + Vercel.
-- **Verification Policy:** every rebuild stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; anything not executed remains `NOT YET VERIFIED`.
-- **Continuity Source:** read `PROJECT_HANDOFF.md`, this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `MASTER_REBUILD_ROADMAP.md`, and for the temporary environment `docs/preview/SUPABASE_VERCEL_PREVIEW.md`.
+- **Current Phase:** Product Evolution Review closure after verified Stage 10. Core product decisions are settled enough to resume implementation without more routine product discussion.
+- **Verification Policy:** every implementation stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; unexecuted = `NOT YET VERIFIED`.
+- **Continuity Source:** start with `DOCUMENTATION_INDEX.md`, then `PROJECT_HANDOFF.md`, this file, `PROJECT_ENGINEERING_LOG.md`, Product Decision docs, AI strategy, legacy parity/audits and `MASTER_REBUILD_ROADMAP.md`. `NEXT_CONVERSATION_PROMPT.md` is the canonical startup prompt.
+- **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
+- **Product Review Batches recorded:** 01–06.
+- **Verified Stage 10 final head:** `27c6a2ef1118ee44d2e63471e4f925e1296283e0`; Stage10 `33302270707`, Stage9 regression `33302270692`, Full Rebuild `33302270695` all SUCCESS.
 
-## Last verified rebuild baseline
+## Current decided product direction
 
-- Branch: `rebuild/content-import`
-- Documentation head: `cf55bd5d0f36dd9ad0f2df57c46c5541a3b01d0a`
-- Stage 9 dedicated run: `33294974544` — **SUCCESS**
-- Full regression run: `33294974573` — **SUCCESS**
-- Stage 9 source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
-- Verified source inventory: 15 subject roots / 48 documents / 5,552 images / 4,218 JPG / 1,334 WEBP / 86 helper files / 0 fatal issues.
+### Runtime surfaces
+- `apps/student-web` = Student Web/PWA، قابل للتثبيت مثل نتيجة التطبيق القديم، mobile-first/offline-first ويعمل أيضًا من Browser.
+- `apps/admin-web` = Admin Web مستقل للـSuper Admin فقط.
+- `apps/api` = Backend API الوحيد للوصول إلى PostgreSQL الخاصة.
+- Admin navigation/bundles لا تدخل Student UX؛ السطحان يتشاركان Brand/Design System/shared primitives فقط حيث يناسب.
 
-## Completed rebuild stages
+### Student entry/account/access
+- Welcome → `تفعيل جديد` / `لدي حساب بالفعل`.
+- Two-step activation with one-time verification ticket and atomic final activation.
+- Admin temporary-password recovery + revoke sessions + forced private password change.
+- One registered cryptographic application device per Student account; Admin reset/rebind for lost/different device.
+- Full Code = 6 digits.
+- Class Code = 7 digits; Student can add more Class Codes later and hold multiple class entitlements.
 
-1. Product Contract — CLI PASS.
-2. Brand Identity — CLI PASS.
-3. UX Architecture — CLI PASS.
-4. PostgreSQL Data Platform — CLI/RUNTIME PASS.
-5. Engineering Foundation — CLI/RUNTIME PASS.
-6. Auth & Authorization — CLI/RUNTIME PASS.
-7. Access Codes & Entitlements — CLI/RUNTIME PASS.
-8. Student Activation & Account Flow — CLI/RUNTIME/BROWSER E2E PASS.
-9. Content Model & deterministic `alwaslh-go` Import — CLI/PostgreSQL RUNTIME PASS.
+### Student learning
+- No valuable legacy capability may disappear without explicit Product Owner approval.
+- Reader: optimized original page + optional approved OCR Text View + Arabic search + cached/versioned TTS `استماع للدرس`.
+- Notes keep all useful legacy types: text + image + capture + audio.
+- Favorites and Needs Review remain separate from Notes.
+- Needs Review can be added manually or automatically after repeated wrong answers; default implementation target is two independent mistakes on the same question, configurable after measurement.
+- `اختبر نفسك`: immediate correct/incorrect + answer + published explanation after each question.
+- Full Tests/Models: result/review at end.
+- Student custom tests consume only Admin-reviewed Published Question Bank.
+- Original ministerial models remain exact/provenanced; simulated model is a separate future type.
+- Personal progress/private achievements only; no Global Leaderboard.
+- Weak-area recommendations are server-derived and require enough evidence; no misleading conclusion from one question.
 
-## Temporary Preview Environment — ACTIVE
+### Notifications / Offline / performance
+- Web/PWA Push Notifications are required from the initial product where platform support permits.
+- Study reminders are gentle by default: at most one/day and default max 3/week, with quiet hours and opt-out.
+- Important content/access/Admin messages can also use Push; In-App center remains fallback.
+- Offline: Lesson + Subject + explicit Book downloads, Download Manager, delta sync/outbox, maximum 14-day signed authorization lease capped by entitlement expiry.
+- Student runtime should avoid repeated full API refetches.
 
-Branch: `preview/supabase-vercel`.
+### Media / Curriculum / Admin / UX
+- Images are processed into light Student-facing variants while source originals remain internal evidence; readability of Arabic/formulas/tables must be tested before final quality settings.
+- Curriculum supports multiple ordered classes/subjects with optional Unit; no mandatory yearly version lifecycle.
+- Admin role = **Super Admin only** for current scope.
+- Upload is independent from OCR/AI/TTS.
+- OCR reusable and async; TTS derived from approved text and cached by content revision.
+- Draft → Review → Published.
+- Admin Import/Export required.
+- Contextual in-place instructions required.
+- Design System must be unified: shared brand/tokens/components, no page-by-page duplication.
 
-Purpose: run the evolving product continuously for owner testing while the rebuild proceeds. This does **not** replace the final production architecture decision.
+### AI authoring
+- AI is **provider/model-neutral**, not Gemini-specific.
+- Canonical strategy: `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
+- Benchmark multiple providers/models and route by task, quality, cost and throughput.
+- OCR-text-first by default; vision only when required.
+- Generated-from-book questions require source + page provenance before publish.
+- Durable high-throughput execution: chunked jobs, queue, bounded concurrency/backpressure, provider/model scheduler, retries/cooldown, idempotency, partial success, cancel/resume, validation/dedupe/provenance and cost/token/latency metrics.
+- Model cascade: cheap/fast benchmark-approved model first where suitable; escalate only failed/uncertain units to a stronger model.
+- Goal = maximize accepted useful output per cost/token/time, not raw request count.
 
-### Supabase
+## Mandatory engineering governance
 
-Project: `linksoftt@gmail.com's Project` / ref `dhlqqgnxsqawidjmedvq`.
+- **No patching as final design.** Fix root causes after understanding callers/contracts/side effects.
+- No disabling tests, auth bypasses, duplicate implementations, hidden errors or hard-coded production exceptions as final solutions.
+- Unified Design System and duplicate-component/style audit are required before closing Admin/Student product stages.
+- Documentation is project memory; every meaningful batch updates Status/Log/Handoff/specialized docs and exact evidence.
+- Legacy details remain available in `PRODUCT_FEATURE_PARITY_MATRIX.md`, `PROJECT_DEEP_AUDIT.md`, `PROJECT_FULL_AUDIT_CATALOG.md`, `PROJECT_REBUILD_BLUEPRINT.md`, Offline docs and `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
 
-Verified directly on Supabase:
+## Engineering impact / NOT YET IMPLEMENTED
 
-- canonical migrations `0001_core` → `0008_content_source_import` applied successfully;
-- 40 public application tables;
-- 21 public enum types;
-- 107 indexes after canonical migrations;
-- six-digit/full and seven-digit/class access-code constraints present;
-- single-redemption activation index present;
-- content source import tables present;
-- preview-only `preview_supabase_lockdown` applied;
-- RLS enabled on every public app table;
-- `anon` and `authenticated` table/sequence access revoked;
-- Supabase `RLS Disabled in Public` security errors eliminated;
-- `RLS Enabled No Policy` INFO notices are intentional because PostgREST is not an application data path.
+1. Stage6/8 partial reopen for two-step activation/device/recovery + security/Chromium gates.
+2. Stage10 Preview Sync still pending.
+3. Student PWA installability/final offline/update behavior beyond current baseline remains later runtime verification.
+4. Student media-delivery quality/browser verification pending.
+5. OCR Extraction Foundation pending.
+6. Reader Text/Search/TTS pending runtime implementation.
+7. Practice Engine/Published Question Bank + auto Needs Review pending.
+8. Push notification service and gentle-reminder policy pending.
+9. Offline 14-day lease/download architecture pending runtime verification.
+10. Stage11 provider-neutral AI contracts/benchmark + Stage12 durable multi-provider execution pending.
+11. Admin/Student full products pending.
 
-Preview seed data exists for manual testing:
+## Legacy feature coverage gate
 
-- one temporary Admin account with a salted `scrypt$...` credential;
-- one active temporary six-digit Full Access Code.
+`PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` are mandatory before Admin/Student feature stages close. Every legacy capability must map to `KEEP/IMPROVE/REFACTOR/REBUILD` with implementation/test evidence, or explicit Product Owner-approved `REMOVE`.
 
-Credentials are intentionally not stored in Git.
+## Temporary development Preview
 
-### Vercel preparation
+Canonical policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
 
-Implemented on the preview branch:
+Current temporary environment:
+- Supabase `linksoftt` = PostgreSQL/testing host مؤقت فقط؛
+- Vercel project `alwaslh`, team `wasl15` = web/runtime host مؤقت؛
+- integration branch `preview/supabase-vercel`.
 
-- `apps/api/api/[...path].ts` Vercel serverless Fastify adapter;
-- Supabase SSL and serverless pool-size configuration;
-- exact credentialed CORS allowlist;
-- preview cross-origin `SameSite=None; Secure` HttpOnly cookie option while `Lax` remains default;
-- configurable `VITE_API_BASE_URL` in Student Web;
-- Vercel configs for API, Student and Admin apps;
-- `database/preview/0001_supabase_lockdown.sql` records Supabase-specific hardening;
-- full runbook: `docs/preview/SUPABASE_VERCEL_PREVIEW.md`.
+الغرض: الإشراف والتجارب أثناء التطوير. بعد كل دفعة مستقرة: `CI PASS → Preview sync → deploy → runtime verification → documentation evidence`.
 
-## NOT YET VERIFIED — Preview
+Current Preview branch remains at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81` with READY deployment and `/api/health` HTTP 200 previously verified, but it is still pre-Stage10. Vercel output-dir mismatch and serverless media/Poppler durability remain unresolved/`NOT YET VERIFIED`.
 
-- Vercel projects have not yet been imported/deployed in the user's Vercel account because no Vercel connector is available in this environment.
-- Actual Vercel deployment URLs: **NOT YET VERIFIED**.
-- `/api/ready` from Vercel to Supabase: **NOT YET VERIFIED**.
-- Browser activation/login with third-party Vercel origins: **NOT YET VERIFIED**.
-- Preview branch API/Student/Admin CI after the platform-adapter changes: pending until the preview PR/workflow run is green.
-- Supabase Storage media adapter: belongs to Stage 10 and is not yet complete.
-
-## Final architecture remains unchanged
-
-- Browser never connects directly to PostgreSQL/PostgREST.
-- Business Auth/Authorization/Entitlements remain in `apps/api`.
-- Supabase is a temporary PostgreSQL/Storage hosting provider during development, not an application dependency.
-- Final hosting will move PostgreSQL, media storage and API behind the production infrastructure without changing domain contracts.
+Preview does **not** redefine final Production architecture. أي workaround خاص بالمنصة مؤقت ويحتاج impact + exit path؛ الأسرار لا تدخل Git أو chat.
 
 ## Next Action
 
-1. Run CLI/CI against `preview/supabase-vercel` and fix platform-adapter failures.
-2. Import three Vercel projects (API, Student, Admin), set secrets/URLs, and prove `/api/health`, `/api/ready`, Student activation/login/logout/recovery in browser.
-3. Keep the Preview environment updated after verified rebuild batches.
-4. Resume **Stage 10 — Media Pipeline** immediately after the temporary hosting gate is usable.
+1. Close Product Review documentation/CI on the current planning HEAD.
+2. Stage10 Preview Sync.
+3. Stage6/8 auth/device refactor.
+4. OCR Foundation.
+5. revised Stage11 provider-neutral AI contracts/benchmark.
+6. Stage12 durable multi-provider high-throughput execution.
+7. Continue Super Admin + Student stages according to `MASTER_REBUILD_ROADMAP.md` and the legacy coverage gate.
+
+Routine design details may now be chosen by engineering according to the documented product rules; only genuine Business Rule conflicts should reopen product discussion.
