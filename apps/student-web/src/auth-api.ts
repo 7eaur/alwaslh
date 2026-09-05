@@ -56,6 +56,8 @@ export class ApiRequestError extends Error {
   }
 }
 
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+
 async function parseResponseBody(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) return undefined;
@@ -74,7 +76,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(`${apiBaseUrl}${path}`, {
       ...init,
       credentials: "include",
       headers,

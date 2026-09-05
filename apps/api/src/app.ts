@@ -5,9 +5,9 @@ import { registerStudentActivationRoutes } from "./activation/http.js";
 import { StudentActivationService } from "./activation/service.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
-import type { AppConfig } from "./config.js";
+import { type AppConfig, allowedOrigins } from "./config.js";
 import type { Database } from "./db.js";
-import { toPublicError } from "./errors.js";
+import { AppError, toPublicError } from "./errors.js";
 
 export interface AppDependencies {
   config: AppConfig;
@@ -18,13 +18,32 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const app = Fastify({
     logger: config.LOG_LEVEL === "silent" ? false : { level: config.LOG_LEVEL },
     disableRequestLogging: false,
-    trustProxy: false,
+    trustProxy: true,
     bodyLimit: 1_048_576,
     requestTimeout: 15_000,
   });
+  const origins = allowedOrigins(config);
   const auth = new AuthService(database, config.SESSION_TTL_HOURS);
   const access = new AccessService(database);
   const activation = new StudentActivationService(database);
+
+  app.addHook("onRequest", async (request, reply) => {
+    const origin = request.headers.origin;
+    if (origin && origins.has(origin)) {
+      reply.header("Access-Control-Allow-Origin", origin);
+      reply.header("Access-Control-Allow-Credentials", "true");
+      reply.header("Vary", "Origin");
+    }
+
+    if (request.method === "OPTIONS") {
+      if (!origin || !origins.has(origin)) {
+        throw new AppError("FORBIDDEN", "مصدر الطلب غير مسموح", 403);
+      }
+      reply.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+      reply.header("Access-Control-Allow-Headers", "Content-Type");
+      return reply.code(204).send();
+    }
+  });
 
   registerAuthRoutes(app, config, auth);
   registerStudentActivationRoutes(app, config, auth, activation);
