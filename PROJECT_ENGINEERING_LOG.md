@@ -13,7 +13,7 @@
 
 الفكرة الأساسية ثابتة. التطبيق القديم reference/inventory للفكرة والمميزات والسيناريوهات والمشكلات، وليس specification للشاشات أو التقنية.
 
-**قاعدة جديدة:** لا تُحذف Feature قديمة ذات قيمة بدون قرار صريح من Product Owner. يمكن إعادة تنظيم/دمج آليات مكررة إذا بقيت النتيجة الوظيفية كاملة.
+**قاعدة:** لا تُحذف Feature قديمة ذات قيمة بدون قرار صريح من Product Owner. يمكن إعادة تنظيم/دمج آليات مكررة إذا بقيت النتيجة الوظيفية كاملة.
 
 كل Feature/Flow/Business Rule رئيسي يصنف `KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE / NEW`.
 
@@ -30,7 +30,8 @@ Admin Web ──┐
             ├── Backend API ── PostgreSQL (private)
 Student PWA ┘       │
                     ├── media/object storage
-                    ├── OCR extraction
+                    ├── OCR extraction/indexing
+                    ├── cached/versioned TTS audio
                     └── background / AI workers
 ```
 
@@ -41,8 +42,76 @@ Rules:
 - Student/Admin separate UX/runtime concerns.
 - media transforms server-owned/deterministic.
 - OCR is a separate reusable extraction layer; upload does not depend on OCR/AI.
+- TTS consumes approved/published text and is cached by content revision; playback does not call TTS on every request.
 - Gemini secrets/execution are server-owned.
 - Student Offline is account/device-scoped and must reduce repeated server requests.
+- Student-generated practice/test sessions use published Admin-reviewed Question Bank only; no live AI question generation for Student.
+
+## User Flows / Business Rules
+
+### Student entry / activation / returning login
+
+```text
+Welcome
+→ تفعيل جديد | لدي حساب بالفعل
+```
+
+New activation target:
+
+```text
+6-digit Full Code verification
+→ one-time short-lived activation ticket
+→ mandatory Create Password
+→ atomic account + credential + entitlement + redemption + audit
+→ register application-device key
+→ authenticated session
+```
+
+Returning login:
+
+```text
+identifier + password
+→ registered-device challenge proof
+→ session
+```
+
+Admin recovery:
+
+```text
+lookup account/code
+→ temporary password
+→ revoke old sessions
+→ must_change_password
+→ Student chooses new private password
+```
+
+### Reader
+
+```text
+Lesson
+→ original page/image view
+↔ optional approved OCR/published Text View
+→ search results map to exact page/source
+→ optional cached TTS audio
+→ Notes / Favorites / Needs Review
+```
+
+No independent Highlight feature in current scope.
+
+### Practice/Test
+
+- Summary, Self Practice, Full Test and Ministerial Model are separate product concepts.
+- Student can select lessons/count/types for custom sessions.
+- Session questions come only from Published Question Bank reviewed by Admin.
+- Original ministerial models remain source-exact; future simulation model is a different type.
+
+### Offline
+
+- explicit lesson/subject downloads;
+- explicit full-book download when size/storage budget permits;
+- no automatic full curriculum download;
+- local account/device-scoped cache + revision/delta sync + outbox;
+- signed offline access lease maximum 14 days, capped by entitlement expiry.
 
 ## Implemented baseline — Stages 1–10
 
@@ -84,7 +153,7 @@ invalid code
 → new password accepted
 ```
 
-Product decisions now partially reopen Stage 6/8 for two-step activation, temporary-password forced change and registered-device challenge/rebind.
+Product decisions partially reopen Stage 6/8 for two-step activation, temporary-password forced change and registered-device challenge/rebind.
 
 ### Stage 9 Content Model / deterministic `alwaslh-go` Import — CLI/PostgreSQL RUNTIME PASS
 
@@ -155,107 +224,72 @@ Same product idea; legacy implementation/UI details are not binding.
 Student sees a polished welcome/introduction screen before entry. Visible copy must be final Product-ready Arabic.
 
 ### PED-003 — Two-step activation
-
-```text
-6-digit Full Code verification
-→ one-time short-lived activation ticket
-→ mandatory Create Password
-→ atomic account + credential + entitlement + redemption + audit
-→ session
-```
-
-First step must not create/consume a partial account.
+`6-digit Full Code verification → one-time ticket → mandatory password → atomic activation/session`.
 
 ### PED-004 — Admin-assisted recovery
-Admin may create temporary reset credential/password, revoke sessions and set `must_change_password`; Student must choose a new private password after login. Admin never sees old password.
+Temporary password/reset, session revocation, forced private password change. Admin never sees old password.
 
 ### PED-005 — Simple but feature-complete Student UX
-Student UI remains elegant/mobile-first and low-clutter while retaining valuable curriculum, study and personal-learning capabilities.
+Low-clutter/mobile-first while retaining valuable curriculum/study/personal-learning capabilities.
 
 ### PED-006 / PED-010 — Upload independent from AI
-Admin upload/process/store works even if OCR/Gemini is unavailable. OCR and AI are separate jobs/workflows.
+Admin upload/process/store works even if OCR/Gemini is unavailable.
 
 ### PED-007 / PED-008 — OCR extraction layer
-
-```text
-page/source
-→ OcrProvider
-→ raw extracted text + provenance + provider/version/confidence/status
-→ reusable stored OCR result
-→ AI receives selected text/context
-```
-
-Original image is source of truth. Religious exact text, formulas/chemistry/tables and low-confidence OCR require review/fallback.
+Provider-abstracted reusable OCR text with provenance/confidence/status. Original image remains source of truth.
 
 ### PED-009 — Durable Gemini scheduling
 Server-only authorized credentials/projects with health, quota/rate awareness, cooldown, retry/backoff, failover and usage/error metadata.
 
-### PED-011 — No silent feature loss
-Tests, summaries, `اختبر نفسك`, models/ministerial exams, explanations, attempts, resume/restart, versions, notes, favorites, review-later, progress and other valuable legacy learning features remain by default. Removal requires explicit owner approval.
+### PED-011 / PED-012 — Feature depth retained and learning modes separated
+Summaries, Self Practice, Full Tests, models/ministerials and related legacy capabilities remain; they are reorganized rather than removed.
 
-### PED-012 — Summary / Self Practice / Full Test are distinct
-- Summary = lesson/source review content.
-- Self Practice = quick repeatable feedback-driven practice.
-- Full Test/Model = attempt/session/history/scoring flow.
-- Ministerial/exam model = explicit exam metadata/source/version semantics.
+### PED-013 / PED-014 — Returning account + single registered device
+Returning login exists. Device policy uses application cryptographic key challenge, not fingerprint/IP/user-agent.
 
-### PED-013 — Returning Student path
-Welcome/entry includes `لدي حساب بالفعل` → identifier/password → device check → home.
+### PED-015 — Offline is core
+Account/device-scoped cache + revisions/outbox; no generic authenticated API SW cache; trusted server authority preserved.
 
-### PED-014 — Single registered application device
-Business requirement: Student account normally opens on one registered device only.
+### PED-016 / PED-017 — Personal data and achievements
+Notes/Favorites/Needs Review remain separate. Achievements are private/personal; no Global Leaderboard requirement.
 
-Security implementation direction:
-- first activation generates application device cryptographic keypair;
-- server stores public key + display metadata;
-- returning online login requires password + signed server challenge;
-- another/lost device is rejected until Admin reset/rebind;
-- IP/user-agent/device model/browser fingerprint are not security proof;
-- Web/PWA limitation: this binds an application key, not guaranteed physical hardware identity; clearing local storage may require recovery.
+### PED-018 — Flexible curriculum hierarchy
+`Curriculum/Year → Class → Subject Offering → optional Unit → Lesson → Content`, explicit ordering, no arbitrary generic tree.
 
-**Impact:** Stage 6/8 partial reopen + device registry/challenge/rebind + security/browser E2E.
+### PED-019 / PED-020 — Import/Export + review lifecycle
+Scoped safe Import/Export. Content/AI flow `Draft → Review → Published`.
 
-### PED-015 — Offline is core and should reduce server load
-- account/device-scoped local cache;
-- explicit bounded downloads;
-- revision/delta sync, not full refetch;
-- local outbox for Student mutable data;
-- signed offline entitlement snapshot bounded by real entitlement expiry;
-- no generic auth API caching in Service Worker;
-- server remains authority for trusted finalization/redemption/publish.
+### PED-021 — Preserve AI generation outcomes
+Summary/questions/MCQ/T-F/mixed/extraction/page-selected/regenerate/versions/exam/exact/replica/bulk and metadata, each with versioned contract/validator/golden tests.
 
-Exact offline lease duration/download granularity remain pending.
+## Product Decision Batch 03
 
-### PED-016 — Notes / Favorites / Needs Review remain separate
-Semantics stay separate even if storage infrastructure is shared. Each item keeps stable provenance to lesson/page/question/model when applicable.
+### PED-022 — Dual Reader
+Original page/image is primary; optional approved OCR/published Text View is available. Wide screens may use side-by-side, mobile uses a simple toggle.
 
-### PED-017 — Private achievements only
-Keep personal achievements/progress; Global Leaderboard not required.
+### PED-023 — TTS / «استماع للدرس»
+Provider-abstracted Arabic TTS reads approved/published lesson text. Audio is generated/cached by content revision, stored with provider/model/voice/checksum/duration metadata, reused across plays and optionally downloaded Offline. Provider/voice benchmark remains pending.
 
-### PED-018 — Flexible explicit curriculum hierarchy
-Direction:
+### PED-024 — Book/Lesson search
+Arabic-normalized OCR/published text search with exact lesson/page/source mapping. Downloaded content should support local search where practical.
 
-```text
-Curriculum/Year
-→ Class/Grade
-→ Subject Offering
-→ optional Unit/Section
-→ Lesson
-→ Content/pages/resources
-```
+### PED-025 — No Highlight system now
+Notes/Favorites/Needs Review provide the personal-learning organization needed; coordinate/text highlight sync is excluded from current scope.
 
-Units optional; explicit stable ordering; subject may link across offerings/classes; no filename inference. Exact year/version/archive schema pending.
+### PED-026 — Custom tests use Published Question Bank only
+Student can choose allowed lessons/count/types. Backend selects from Admin-reviewed published questions; no live Gemini generation for Student sessions and no unnecessary full answer-key bank shipping to Browser.
 
-### PED-019 — Admin Import/Export required
-Module-scoped import/export with validation, preview/result reporting and fit-for-data formats (CSV/XLSX/PDF/structured package where appropriate).
+### PED-027 — Original ministerial vs simulation
+Original models remain source-exact/provenanced. Simulation is a distinct, clearly labeled future type.
 
-### PED-020 — Draft → Review → Published
-All AI outputs are Draft. Admin reviews/edits/validates before publish. Content lifecycle supports at least Draft/Published and later archive/replace/version semantics.
+### PED-028 — Offline download policy
+Lesson + Subject downloads supported. Whole-book download supported explicitly when storage budget permits. Download Manager handles size/progress/retry/cancel/remove. No automatic full curriculum download.
 
-### PED-021 — Preserve legacy AI generation outcomes
-At least: summaries, question generation, MCQ, T/F, mixed, extraction/source, selected page/image, regenerate, alternate version, exam/model, exact/replica where applicable, bulk generation, and source/page/answer/explanation/method/difficulty metadata where applicable.
+### PED-029 — 14-day offline authorization
+`valid_until = min(now + 14 days, entitlement_expiry)`. Admin revocation cannot reach a completely offline device instantly; worst intentional offline window is the remaining signed lease.
 
-Each mode requires versioned prompt, typed input/output schema, semantic validator and golden tests. OCR text + provenance is default input; vision fallback only when required.
+### PED-030 — Practice feedback timing remains open
+Immediate correction after each `اختبر نفسك` question vs correction at end is still PENDING and must not be assumed.
 
 ## Architecture Decisions
 
@@ -290,6 +324,11 @@ Each mode requires versioned prompt, typed input/output schema, semantic validat
 - **AD-041** Public/global student leaderboard is not required; achievements are private/personal.
 - **AD-042** Content/AI lifecycle requires human review before publish.
 - **AD-043** Curriculum hierarchy should be explicit/flexible, not arbitrary generic tree or filename-derived.
+- **AD-044** Reader keeps original page as visual source of truth while approved OCR text is an optional searchable/accessibility view.
+- **AD-045** TTS audio is a versioned derived media asset generated from approved published text and cached; playback must not regenerate speech.
+- **AD-046** Student assessment sessions consume only published Admin-reviewed Question Bank entries; live AI generation is excluded from Student test creation.
+- **AD-047** Original ministerial models and simulated models are different content types and labels.
+- **AD-048** Offline protected access uses a signed 14-day maximum lease capped by actual entitlement expiry.
 
 ## Audit Findings
 
@@ -301,7 +340,7 @@ Each mode requires versioned prompt, typed input/output schema, semantic validat
 | DATA-018 | P0 | Class Codes | racy redemption | FIXED Stage 7 |
 | SEC-015..018 | P1 | Credentials | plaintext/reversible recovery | FIXED; Admin reset only |
 | DATA-025 | P1 | Assessment | client-trusted score/rank | REMAINING later trusted Practice/attempt engine |
-| OFF-* | P1/P2 | Offline | global/stale/cross-account cache risk | REBUILD required by PED-015 |
+| OFF-* | P1/P2 | Offline | global/stale/cross-account cache risk | REBUILD required; PED-015/028/029 define direction |
 | AI-* | P1/P2 | AI | browser-owned jobs/weak validation | REBUILD required by PED-007/009/021 |
 | CONTENT-009-* | P1/P2 | Content | manifest/helper/digest completeness defects | FIXED Stage 9 |
 | MEDIA-010-* | P1/P2 | Media | order/idempotency/failure/PDF defects | FIXED Stage 10 runtime |
@@ -311,7 +350,24 @@ Each mode requires versioned prompt, typed input/output schema, semantic validat
 | PRODUCT-002 | P1 | Activation UX | baseline combines code+password | DECIDED refactor pending |
 | PRODUCT-003 | P1 | Device Policy | password-only login does not enforce requested one-device policy | DECIDED architecture; implementation pending |
 | PRODUCT-004 | P1 | Offline/Load | repeated server fetches conflict with offline/low-load requirement | DECIDED architecture; implementation pending |
+| PRODUCT-005 | P2 | Reader | source images alone do not support useful search/read-aloud | DECIDED OCR Text View + search + cached TTS; implementation pending |
+| PRODUCT-006 | P1 | Assessment | live AI generation for Student sessions would increase cost/uncertainty | DECIDED Published Question Bank only |
 | AI-NEW-001 | P1 | AI Cost | repeated image-to-Gemini use wastes tokens | DECIDED OCR text-first path pending |
+
+## Tests & Verification
+
+### Verified technical baseline
+
+Final Stage 10 documentation head:
+`27c6a2ef1118ee44d2e63471e4f925e1296283e0`
+
+- Stage10 workflow `33302270707` — SUCCESS.
+- Stage9 regression `33302270692` — SUCCESS.
+- Full Rebuild `33302270695` — SUCCESS, including Chromium Stage8 E2E.
+
+### Product-review decisions
+
+Batches 01–03 are documentation/design decisions only. Their implementation/runtime gates are **NOT YET VERIFIED** until the affected stages are reopened and executed. In particular: registered-device auth, new two-step activation UI/API, OCR provider runtime, Reader text/search/TTS, Published Question Bank custom-test flow, and 14-day Offline lease are not represented as implemented.
 
 ## Temporary Preview
 
@@ -325,29 +381,31 @@ Each mode requires versioned prompt, typed input/output schema, semantic validat
 - direct Stage10 branch deployment error: `No Output Directory named "dist" found after the Build completed.`
 - Vercel filesystem/Poppler durability is NOT YET VERIFIED.
 
-## Current Roadmap Impact
+## Known Issues / Remaining Risk
 
-Before feature-heavy implementation:
+- Stage 6/8 product-required auth/device refactor is not implemented yet.
+- Stage10 stable code/migration still not synchronized into Preview.
+- OCR provider selection/benchmark and extraction persistence not implemented.
+- Reader Text View/search/TTS runtime not implemented; TTS provider/voice benchmark pending.
+- Practice feedback timing and detailed scoring/review semantics remain undecided.
+- Curriculum year/version/archive/replacement semantics remain undecided.
+- Admin roles/permissions and Quiz Builder/QA exact workflow remain undecided.
+- Offline 14-day lease/download architecture is decided but not runtime-verified.
+- final production DB/media backup/restore/load/security/performance/accessibility/staging/release gates remain later work.
 
-1. finish Product Evolution Review for Reader, Practice details, curriculum versioning, Offline details, Admin roles and QA;
-2. partially reopen Stage 6/8 for two-step activation, forced password change, registered device challenge and rebind;
-3. sync Stage 10 stable baseline into Preview and fix Vercel build/routing;
-4. add OCR Extraction Foundation independent from upload;
-5. Stage 11 AI contracts preserve all agreed generation modes using OCR text + provenance;
-6. Stage 12 durable AI implements jobs/scheduler/retry/cooldown/failover/metrics/idempotency;
-7. Admin Product implements flexible curriculum, independent upload, OCR states, review/publish, AI review, import/export;
-8. Student Product implements Welcome/login, curriculum/Reader, summaries, practice, tests/models, notes/favorites/review-later, progress/private achievements;
-9. Offline/PWA is mandatory and account/device-scoped with low-request delta sync.
+## Remaining Work
 
-## Remaining Product Decisions
-
-- Reader detailed UX/search/highlights/page jump/settings.
-- Practice/Test question types/timing/review/scoring/attempts/ministerial semantics.
-- Curriculum year/version/archive/replacement.
-- Offline download scopes + authorization lease duration.
-- Admin roles/permissions.
-- Notes media types + sync conflict UX.
-- notifications/search/exact reports/import/export scopes.
+1. Continue Product Evolution Review and settle Practice feedback/scoring, curriculum versioning, Admin roles, Quiz Builder/QA, Notes media, Notifications, Student direct AI scope and exact reports/import/export.
+2. Update `PRODUCT_FEATURE_PARITY_MATRIX.md` into explicit decision inventory as remaining decisions settle.
+3. Reopen Stage 6/8 for two-step activation + registered-device flow and rerun API/PostgreSQL/security/Chromium gates.
+4. Synchronize Stage10 into Supabase/Vercel Preview and fix Vercel routing/build mismatch.
+5. Implement OCR Extraction Foundation with benchmarked provider abstraction.
+6. Build Reader text/search/TTS contracts and runtime according to PED-022..024.
+7. Build AI contracts/durable execution with preserved Admin generation modes.
+8. Build Admin curriculum/upload/OCR/AI review/Quiz Builder/Import-Export product.
+9. Build Student curriculum/Reader/Summaries/Practice/Tests/Models/Personal Data/Progress product.
+10. Build Offline/PWA with explicit downloads, revision sync/outbox and 14-day entitlement lease.
+11. Execute later performance/security/test/accessibility/content-load/staging/release/production/operations gates.
 
 ## Documentation / Continuity Protocol
 
@@ -362,4 +420,4 @@ After every meaningful batch:
 
 ## Current State
 
-**Stages 1–10 have verified technical gates. Product Evolution Review Batches 01–02 are recorded. Stage 6/8 require a deliberate auth/device refactor before final Student Product; Stage 10 still needs Preview sync; OCR/text-first AI, feature-complete learning flows, flexible curriculum, Admin review/publish, Import/Export and first-class Offline are now explicit product requirements.**
+**Stages 1–10 have verified technical gates. Product Evolution Review Batches 01–03 are recorded. Reader/Search/TTS, Published Question Bank-only Student tests, original-vs-simulation model separation and 14-day Offline policy are now decided at product/architecture level but not yet implemented. Stage 6/8 still require deliberate auth/device refactor; Stage10 still needs Preview sync; OCR/text-first AI and the feature-complete Student/Admin products remain upcoming implementation work.**
