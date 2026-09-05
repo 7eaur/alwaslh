@@ -1,262 +1,125 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> **Purpose:** نقطة البداية الإلزامية لأي محادثة/مهندس جديد. اقرأ هذا الملف أولًا، ثم `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `docs/product/PRODUCT_EVOLUTION_REVIEW.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `MASTER_REBUILD_ROADMAP.md`, ثم عقد/DoD المرحلة ذات الصلة. المستودع ونتائج CLI/CI هي المصدر الأعلى للحقيقة؛ لا تعتمد على ذاكرة المحادثة.
+> اقرأ أولًا: `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → `docs/product/PRODUCT_EVOLUTION_REVIEW.md` → `PRODUCT_FEATURE_PARITY_MATRIX.md` → `MASTER_REBUILD_ROADMAP.md`. المستودع وCI هما source of truth؛ لا تعتمد على ذاكرة المحادثة.
 
-## 1. Product
+## Product direction
 
-**الوسيلة الذكية** منصة تعليمية عربية بمنتجين منفصلين منطقيًا:
+**الفكرة الأساسية لم تتغير.** الوسيلة الذكية تبقى منصة تعليمية عربية للطالب مع Admin لإدارة المحتوى والوصول والـAI والتشغيل. التطبيق القديم مرجع للفكرة والمميزات والسيناريوهات والمشكلات، وليس مواصفة ملزمة للشاشات أو الـflows أو Business Rules.
 
-- **Student PWA:** تجربة الطالب للدخول والوصول للمحتوى والتعلّم والمراجعة والممارسة.
-- **Admin Web:** إدارة المحتوى والطلاب والوصول والـAI والتشغيل والتقارير.
+كل Feature رئيسية تُصنف بعد النقاش: `KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE / NEW`.
 
-المنتج القديم ليس مواصفة ملزمة. هو مرجع لـ:
+## Verified engineering baseline
 
-- الفكرة الأساسية؛
-- الاحتياجات والسيناريوهات التي أثبتت قيمة؛
-- المحتوى والبيانات المرجعية؛
-- الأخطاء المعمارية/الأمنية/المنتجية التي يجب ألا تتكرر.
-
-من الآن فصاعدًا كل Feature/Flow/Business Rule رئيسي يُناقش مع product owner ويصنف `KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE / NEW` قبل تثبيت الخطة النهائية للمراحل المتبقية.
-
-## 2. Source repositories
-
-- `7eaur/alwaslh`: المنتج المرجعي + إعادة البناء الجديدة.
-- `7eaur/alwaslh-go`: مصدر curriculum/books/images/government exams؛ يدخل عبر deterministic content pipeline ولا يُشحن raw إلى frontend.
-- Stage 9 pinned source revision: `f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
-
-## 3. Non-negotiable engineering decisions currently verified
-
-هذه القرارات هي baseline هندسية مثبتة. إذا قرر Product Review تغيير Business Rule مبني عليها، يُعاد فتح الجزء المتأثر رسميًا مع impact analysis وtests؛ لا يتم كسر العقد بصمت.
-
-1. PostgreSQL خاصة خلف Backend API في الإنتاج النهائي؛ Browser لا يتصل مباشرة بقاعدة البيانات.
-2. Clean-slate schema/data؛ legacy Supabase schema/data ليست compatibility target.
-3. Admin وStudent منفصلان في UX/runtime concerns حتى لو اشتركا مؤقتًا في Preview deployment.
-4. Auth/Authorization/Entitlements server-side.
-5. لا plaintext/reversible passwords ولا device fingerprint كدليل مصادقة.
-6. current Full access code contract = **6 digits**؛ current Class access code contract = **7 digits**.
-7. Redemption/activation transactional + idempotent + race-safe.
-8. current Student activation contract: Full Code + password، وبعد التفعيل يصبح Full Code المطبّع current returning identifier وليس secret.
-9. Recovery = reset ولا يعرض السر الأصلي.
-10. `alwaslh-go` Content Source فقط؛ importer يحفظ source/order/provenance/checksum ولا يستنتج Lessons من filenames.
-11. ترتيب الصفحات/الأصول source-derived deterministic؛ async completion order لا يملك معنى business.
-12. media processing server-owned؛ Sharp للصور وPoppler للـPDF في runtime المثبت.
-13. لا Stage تُغلق بلا executable evidence. الحالات الرسمية: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; غير المنفذ = `NOT YET VERIFIED`.
-14. كل Stage مستقرة يجب أن تُزامن مع Preview المؤقتة وتتحقق هناك قبل الاعتماد العملي عليها، مع توثيق platform limitations.
-
-## 4. Verified stages
-
-### Stage 1 — Product Contract ✅ CLI PASS
-Legacy/product inventory + feature-preservation safety net. بعد قرار Product Evolution Review، هذه المصفوفة تُعامل كـdecision inventory وليست إلزامًا بالحفاظ على كل legacy behavior.
-
-### Stage 2 — Brand Identity ✅ CLI PASS
-Owned teal/open-book identity تحت `packages/brand`.
-
-### Stage 3 — UX Architecture ✅ CLI PASS
-Admin/Student IA + critical states/flows + responsive/accessibility contracts. يمكن تعديل الـflows في Product Review إذا اتخذ قرار أفضل.
-
-### Stage 4 — PostgreSQL Data Platform ✅ CLI/RUNTIME PASS
-Clean PostgreSQL 16 migrations and relational integrity.
-
-### Stage 5 — Engineering Foundation ✅ CLI/RUNTIME PASS
-API, DB pool/transactions, migration runner, config/logging/errors, strict TS/lint/unit/build, isolated app builds and CI.
-
-### Stage 6 — Auth & Authorization ✅ CLI/RUNTIME PASS
-Salted scrypt credentials, opaque sessions, HttpOnly cookies, role isolation, Origin protection, DB lockout, reset-only recovery, explicit Admin bootstrap.
-
-### Stage 7 — Access Codes & Entitlements ✅ CLI/RUNTIME PASS
-Crypto-secure 6/7-digit codes, Arabic/Persian normalization, transactional/idempotent redemption, renewal/no-waste/revoke/audit/race tests.
-
-### Stage 8 — Student Activation & Account Flow ✅ CLI/RUNTIME/BROWSER E2E PASS
-Atomic activation → profile/credential/entitlement/redemption/audit → canonical login/session. Returning login + reset-only recovery verified in Chromium.
-
-### Stage 9 — Content Model & deterministic `alwaslh-go` Import ✅ CLI/PostgreSQL RUNTIME PASS
-
-Verified inventory:
-
-```text
-15 subject roots
-48 source documents
-5,552 images
-4,218 JPG
-1,334 WEBP
-86 recognized helper files
-24 manifests
-0 fatal inventory issues
-```
-
-Canonical inventory SHA-256:
-`7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`
-
-Clean PostgreSQL import proves first import `replayed=false`, identical reimport `replayed=true`, exactly 48 present documents / 5,552 present assets / unique positions.
-
-Critical Stage 9 defects caught before closure included:
-- 8 Arabic-key manifests that otherwise omitted 772 images؛
-- helper baseline drift 76→86؛
-- third `filename/pdf_page/book_page` manifest schema؛
-- Python/JS `9.0` vs `9` canonical digest mismatch.
-
-### Stage 10 — Media Pipeline ✅ CLI/PostgreSQL/MEDIA RUNTIME PASS / FINAL DOC-HEAD VERIFIED
-
-**Branch / PR:** `rebuild/media-pipeline` / PR #11.
-
-**Final Stage 10 documentation head:**
+Stages 1–10 technically verified at documented levels. Final Stage 10 head:
 `27c6a2ef1118ee44d2e63471e4f925e1296283e0`
 
-Final same-head evidence:
-- Stage 10 dedicated run `33302270707` — **SUCCESS**.
-- Stage 9 import regression `33302270692` — **SUCCESS**.
-- Complete rebuild regression `33302270695` — **SUCCESS**, including Chromium E2E.
+Final same-head CI:
+- Stage 10 `33302270707` — SUCCESS.
+- Stage 9 regression `33302270692` — SUCCESS.
+- Full rebuild `33302270695` — SUCCESS including Chromium E2E.
 
-Earlier executable code-head evidence:
-- code head `f9f58ed4b9cf599d992a08b9c9eb33d3ae1a17c3`;
-- dedicated run `33302062208` — SUCCESS;
-- Stage 9 regression `33302062209` — SUCCESS;
-- full regression `33302062216` — SUCCESS.
+Key baseline:
+- private PostgreSQL behind Backend API;
+- server-owned Auth/Authorization/Entitlements;
+- scrypt credentials + opaque sessions + HttpOnly cookie;
+- current 6-digit Full Code / 7-digit Class Code;
+- deterministic Stage 9 source inventory/import: 15 roots / 48 documents / 5,552 images / 0 fatal issues;
+- deterministic Stage 10 Media Pipeline: Sharp images + Poppler PDF + ordered concurrency + checksums + safe storage identities + retry/idempotency/failure cleanup.
 
-Stage 10 pipeline:
+## Product Decisions — Batch 01
+
+Canonical decision file: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
+
+### PED-001 Same product, better execution
+Maintain the original product idea and useful capabilities; redesign weak UX/architecture instead of cloning legacy behavior.
+
+### PED-002 Student Welcome before auth
+Student gets an elegant welcome/introduction experience before login/activation. All user-visible copy must be final Product copy; no placeholders/dev text.
+
+### PED-003 Two-step first activation — REOPENS Stage 8 contract
+Required UX:
 
 ```text
-source/upload bytes
-→ validate exact source identity
-→ stable source/page position
-→ Sharp image pipeline OR local Poppler PDF extraction
-→ bounded ordered transforms
-→ source/display/thumbnail/AI variants
-→ SHA-256 + dimensions + byte sizes
-→ deterministic trusted storage keys
-→ storage writes
-→ PostgreSQL metadata transaction
+Enter 6-digit Full Code
+→ verify eligibility
+→ mandatory Create Password screen
+→ atomic account + entitlement + redemption + audit
+→ authenticated session
 ```
 
-Canonical data model added by `0009_media_pipeline.sql`:
-- `media_assets`
-- `media_variants`
-- enums `media_asset_status`, `media_variant_kind`.
+Engineering invariant: first verification must not create a partial account or permanently consume the code. Use a short-lived one-time activation ticket bound to the code; final account creation remains transactional/race-safe/idempotent.
 
-Verified invariants:
-- exact source-byte/provenance-bound idempotency;
-- conflicting key ownership rejected;
-- exact ready replay validates stored bytes against DB SHA/size;
-- optional `content_source_asset_id` preserves Stage 9 provenance;
-- bounded concurrency 1..8 with input/page order independent from completion order;
-- path traversal rejected;
-- storage/metadata/abort failures clean partial objects and retain observable failed state;
-- scoped Poppler temp dirs + numeric page validation;
-- real 2-page PDF passed extraction → transforms → storage → PostgreSQL → exact replay with order `[1,2]` and positions `[100,101]`;
-- malformed PDF creates zero media rows;
-- no successful temp residue;
-- tested display long edge stayed within `1200..1800` px.
+### PED-004 Admin-assisted password recovery
+Student contacts Admin and provides the code/account identifier. Admin can reset access but cannot reveal the old password. Preferred safe model: temporary reset password/credential + `must_change_password` on next login + revoke previous sessions + audit.
 
-## 5. Canonical migrations
+### PED-005 Student UX
+Student application must be elegant, simple, mobile-first and easy. Preserve useful curriculum, models/quizzes, notes, favorites/saved items, progress/tracking and other valuable features, but reorganize them instead of copying the old dashboard.
 
-`0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql` → `0008_content_source_import.sql` → `0009_media_pipeline.sql`.
+### PED-006/PED-010 Admin upload is independent from AI
+Admin adds classes/subjects/lessons/content normally. Media upload/process/store must succeed without Gemini. AI quota/failure must never block normal upload.
 
-## 6. Branch / PR stack
+### PED-007/PED-008 OCR text layer before AI
+Target:
 
-- `rebuild/foundation` / PR #2
-- `rebuild/auth-authorization` / PR #3
-- `rebuild/access-entitlements` / PR #4
-- `rebuild/student-activation-ui` / PR #5
-- `rebuild/student-activation-backend` / PR #6
-- `rebuild/student-activation-integration` / PR #7
-- `rebuild/content-import` / PR #8
-- `rebuild/content-source-audit` / PR #9 (audit-only)
-- `preview/supabase-vercel` / PR #10 (temporary running test environment)
-- `rebuild/media-pipeline` / PR #11 (Stage 10 source of truth; draft/open)
-- **`planning/product-evolution-review` — current planning/decision branch created from final Stage 10 head.**
+```text
+page image/source
+→ OCR provider abstraction
+→ extracted text + page/source provenance + confidence/status/provider metadata
+→ persist/reuse OCR text
+→ Gemini receives compact text/context for generation
+```
 
-## 7. Temporary Supabase/Vercel Preview
+Original image remains source of truth. Low-confidence OCR, religious exact text, formulas/chemistry/tables require review/fallback rather than silent trust.
 
-Purpose: let the product owner test the evolving application before final hosting.
+### PED-009 Durable Gemini credential scheduling
+Gemini credentials remain server-only. Stage 12 must support configured authorized credential/project pools with health, quota/rate awareness, cooldown, retry/backoff and failover. This is for reliability/load management, not bypassing provider terms/limits.
 
-- Supabase project: `linksoftt` — temporary PostgreSQL/testing platform only.
-- Vercel project: `alwaslh` under team `wasl15`.
-- Preview branch: `preview/supabase-vercel`.
-- Current Preview head: `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`.
-- A deployment of that head is `READY`.
-- `/api/health` was rechecked and returned HTTP 200 with `{"status":"ok","service":"alwaslh-api"}`.
-- Preview is still pre-Stage-10; migration `0009` and Stage 10 code are not synchronized there yet.
-- Direct Vercel builds from `rebuild/media-pipeline` currently fail with `No Output Directory named "dist" found after the Build completed`; this is a Vercel project/branch build configuration mismatch, not a failure of Stage 10 GitHub CI/runtime.
-- Browser/PostgREST access to application tables is intentionally blocked; Backend API remains the boundary.
-- Vercel serverless filesystem is ephemeral and Poppler/media upload behavior there remains `NOT YET VERIFIED`.
+## Immediate roadmap impact
 
-## 8. Important defects caught and fixed
+Before feature-heavy Stage 11+ implementation:
 
-- Legacy public/admin-insecure DB paths and browser-direct privilege assumptions removed by target architecture.
-- Legacy plaintext/reversible credential/recovery patterns replaced by scrypt/session/reset-only contracts.
-- root PostCSS/Tailwind leakage into new apps.
-- Auth strict TypeScript/scrypt boundary defects.
-- Stage 7 enum/JSON/default typing, audit atomicity and idempotency ownership issues.
-- Stage 8 DB test isolation / runner discovery / production API build-start mismatch.
-- Stage 9 incomplete manifest compatibility and cross-language digest defects.
-- Stage 10 original legacy completion-order page reorder risk eliminated with stable preassigned positions.
-- Stage 10 design review strengthened idempotency ownership to exact source bytes/provenance.
-- Stage 10 failure injection proved storage/metadata/abort cleanup.
+1. Continue Product Evolution Review and settle core Student/Admin/learning decisions.
+2. Reopen Stage 8 for the new two-step activation flow with updated API/UI/Chromium E2E.
+3. Complete Stage 10 Preview sync and fix Vercel build/routing mismatch.
+4. Add an OCR Extraction Layer between Media Pipeline and AI authoring. Upload remains independent; OCR is separate/retryable; AI generation is explicit/on-demand.
+5. Stage 11 contracts consume OCR text + source/page provenance and enforce typed structured output + semantic/golden validation.
+6. Stage 12 implements durable AI jobs + credential/project scheduler + usage/error telemetry.
+7. Admin/Student product stages follow recorded decisions, not legacy screen parity.
 
-## 9. Product Evolution Review — CURRENT WORK
+## Preview
 
-The product owner explicitly decided that remaining development must not blindly inherit the old application. We will re-evaluate **all product features and scenarios** and select the best approach for the current product.
+Temporary only:
+- Supabase project `linksoftt`;
+- Vercel project `alwaslh`, team `wasl15`;
+- preview branch `preview/supabase-vercel` at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`;
+- READY deployment and `/api/health` HTTP 200 verified;
+- Preview still pre-Stage-10;
+- direct Stage 10 branch deploy currently fails Vercel output-dir expectation `dist`;
+- Vercel serverless filesystem/Poppler durability is NOT YET VERIFIED and is not final production architecture.
 
-Canonical review file:
-`docs/product/PRODUCT_EVOLUTION_REVIEW.md`
+## Still pending product decisions
 
-Topics include:
-- product audience/value;
-- account/access/activation;
-- curriculum/navigation;
-- Student home/reader;
-- Practice/quizzes;
-- Student AI;
-- notes/saved/highlights;
-- statistics/achievements/gamification;
+- expiry/renewal/Class Code details;
+- Student Home/navigation;
+- Reader/search/highlights/settings;
+- Practice/quizzes/models/ministerial exams;
+- notes/saved/sync;
+- progress/achievements/rank;
 - notifications;
 - Offline/PWA;
-- Admin roles;
-- content workflow/media;
-- Admin AI authoring;
-- Quiz Builder/QA;
-- students/codes/support;
+- Admin roles/permissions;
+- content draft/review/publish/version lifecycle;
+- AI generation modes/review workflow;
+- Quiz Builder/content QA;
 - reports/export;
-- search/discovery;
-- publishing/version lifecycle;
-- new product ideas.
+- search/discovery/support operations.
 
-Each decision records legacy behavior, user need, options, chosen approach, classification, business/UX/data/security/offline/AI impact, stages affected and DoD/tests.
+## Mandatory continuation
 
-## 10. Roadmap governance from this point
-
-- Stages 1–10 remain verified baseline until a recorded product decision explicitly reopens part of them.
-- Stage 11–29 scope/order may change after Product Evolution Review.
-- `PRODUCT_FEATURE_PARITY_MATRIX.md` is a decision inventory, not an automatic KEEP list.
-- No new feature-heavy stage begins while core product decisions that affect it are still pending.
-- Preview synchronization remains required after the resulting stable baseline is decided.
-
-## 11. NOT YET VERIFIED / remaining release risks
-
-- Stage 10 temporary Preview synchronization;
-- production media volume durability/backup/load/Poppler environment;
-- final product decisions for remaining Admin/Student features;
-- Gemini prompt/semantic/golden contracts and durable execution runtime;
-- complete Admin and Student learning products;
-- Practice Engine / trusted scoring;
-- Offline replica/outbox/service-worker lifecycle;
-- full performance/security/accessibility/device/staging/rollback/release gates.
-
-## 12. Next required sequence
-
-1. Conduct Product Evolution Review with the product owner and record decisions in `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
-2. Update `PRODUCT_FEATURE_PARITY_MATRIX.md` and `MASTER_REBUILD_ROADMAP.md` from decisions, not assumptions.
-3. Reopen any affected Stage 1–10 contract only if a recorded decision requires it; rerun affected executable gates.
-4. Synchronize the resulting stable baseline into `linksoftt` + `preview/supabase-vercel`; fix Vercel build/routing configuration and verify deployment.
-5. Begin the revised next implementation stage.
-
-## 13. Mandatory continuation protocol
-
-At every meaningful implementation/decision batch:
-- update `PROJECT_ENGINEERING_LOG.md`;
+After each decision batch:
+- update `docs/product/PRODUCT_EVOLUTION_REVIEW.md`;
 - update `PROJECT_STATUS.md`;
-- update this handoff when baseline/architecture/business rules/branches/Preview status changes;
-- update `docs/product/PRODUCT_EVOLUTION_REVIEW.md` for product decisions;
-- keep exact run/commit evidence;
-- unexecuted = `NOT YET VERIFIED`;
-- transition report: `المرحلة الحالية → ما تم → ما لم يتم → Definition of Done → هل ننتقل أم لا.`
+- update `PROJECT_ENGINEERING_LOG.md`;
+- update this handoff when business rules/roadmap/baseline changes;
+- later update `PRODUCT_FEATURE_PARITY_MATRIX.md` and `MASTER_REBUILD_ROADMAP.md` from decisions;
+- never mark unexecuted work as verified.
