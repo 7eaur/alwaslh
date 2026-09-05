@@ -20,133 +20,64 @@ Final same-head CI:
 - Stage9 regression `33302270692` — SUCCESS.
 - Full rebuild `33302270695` — SUCCESS including Chromium E2E.
 
-Baseline includes:
-- private PostgreSQL behind Backend API;
-- scrypt credentials + opaque sessions + HttpOnly cookies;
-- server-owned Auth/Authorization/Entitlements;
-- current Full Code 6 digits / Class Code 7 digits;
-- Stage9 deterministic source import: 15 roots / 48 docs / 5,552 images / 0 fatal inventory issues;
-- Stage10 server-owned Media Pipeline: Sharp + Poppler + deterministic order/storage/checksums/idempotency/failure cleanup.
+Baseline includes private PostgreSQL/API boundary, secure Auth/session primitives, current 6-digit Full / 7-digit Class codes, deterministic Stage9 source import (15 roots / 48 docs / 5,552 images / 0 fatal issues), and deterministic Stage10 Sharp/Poppler media pipeline.
 
 ## 3. Product decisions — Batches 01–03
 
 Canonical source: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
 
 ### Student entry/auth
+- Welcome/intro before auth with Product-ready copy.
+- `تفعيل جديد` and `لدي حساب بالفعل`.
+- New activation: code verification → one-time ticket → mandatory password → atomic account/entitlement/redemption/audit → registered device → session.
+- Admin-assisted temporary-password recovery + old-session revocation + forced private password change.
+- One registered cryptographic application-device key per Student account; different/lost device requires Admin reset/rebind. Fingerprint/IP/user-agent are not security proof.
 
-- Welcome/intro before auth; only Product-ready visible copy.
-- Entry options: `تفعيل جديد` and `لدي حساب بالفعل`.
-- Activation:
+### Learning capabilities
+Preserve/improve curriculum, Reader, summaries, `اختبر نفسك`, full/custom tests, original ministerial models, explanations, images, versions, filters, resume/restart/attempts, Notes, Favorites, Needs Review, progress, private achievements and Offline/PWA. No useful legacy feature is removed silently.
 
-```text
-6-digit Full Code verification
-→ short-lived one-time activation ticket
-→ mandatory Create Password
-→ atomic account + credential + entitlement + redemption + audit
-→ authenticated session
-```
+### Reader / Search / TTS
+- Original page/image remains visual source of truth.
+- Optional approved OCR/published Text View.
+- Arabic-aware search maps results to exact lesson/page/source.
+- `استماع للدرس` through Arabic TTS provider abstraction.
+- TTS consumes approved/published text and is generated/cached by content revision; playback does not regenerate speech.
+- Optional Offline audio download.
+- No separate Highlight feature currently.
 
-- Admin-assisted recovery: temporary password; revoke old sessions; `must_change_password`; Student creates new private password.
-- **Single registered device policy:** first activation registers a cryptographic application-device public key. Returning online login requires valid password + proof of registered private key. Different/lost device requires Admin reset/rebind. Browser fingerprint/IP/user-agent are not security proof. In Web/PWA this is app-device-key binding, not unbreakable hardware identity.
+### Practice / Tests / Models
+- Student can choose available subject/lesson(s), question count and types for custom sessions.
+- **All Student session questions come from Admin-reviewed Published Question Bank only. No live Gemini generation for Student tests.**
+- Original ministerial models stay exact/provenanced.
+- Simulation is a separate future type and clearly labeled.
+- `اختبر نفسك` feedback timing remains PENDING.
 
-### Student learning capabilities
+### Offline
+- Explicit lesson + subject downloads.
+- Explicit full-book download when size/storage budget permits.
+- No automatic full curriculum download.
+- Download Manager with size/progress/retry/cancel/remove.
+- account/device-scoped cache + revisions/delta sync + outbox.
+- **maximum 14-day signed authorization lease, capped by entitlement expiry**.
+- no generic authenticated API-response SW caching.
 
-Preserve/improve valuable legacy capabilities:
-- curriculum/classes/subjects/lessons;
-- Reader;
-- summaries;
-- `اختبر نفسك` / quick practice;
-- full tests;
-- models/ministerial exams;
-- filters/multi-lesson/versions/randomization/shuffle;
-- explanations/question images;
-- resume/restart/attempt history;
-- notes;
-- favorites;
-- `Needs Review`;
-- progress/tracking;
-- private achievements;
-- Offline/PWA.
+### Curriculum/Admin/AI
+- Multiple classes/grades/subjects with flexible ordered hierarchy direction `Curriculum/Year → Class → Subject Offering → optional Unit → Lesson → Content`.
+- Upload independent from OCR/AI/TTS.
+- OCR asynchronous/provider-abstracted/reusable.
+- Draft → Review → Published; Admin reviews AI output before publish.
+- Admin Import/Export required.
+- Preserve legacy AI generation outcomes, with OCR-text-first inputs, versioned schemas/validators/golden tests and server-side credential scheduling.
 
-Summary, Self Practice and Full Test/Model are separate product concepts. Notes/Favorites/Needs Review remain separate. No Global Leaderboard requirement.
+## 4. Affected implementation roadmap
 
-### Reader / search / TTS
-
-- Original page/image view remains visual source of truth.
-- Add optional OCR/published **Text View**; mobile toggle and optional side-by-side on wide screens.
-- Add Arabic-aware search inside book/lesson; every result maps back to exact lesson/page/source position.
-- Add **استماع للدرس** through provider-abstracted Arabic TTS/voice service.
-- TTS uses approved/published text, not low-confidence raw OCR.
-- Generated audio is cached/versioned by published content revision and reused; never regenerate on every Play.
-- Audio may be downloaded through Offline Download Manager.
-- No separate Highlight feature in current scope; Notes/Favorites/Needs Review cover personal organization.
-
-### Practice / tests / models
-
-- Student may create a custom test/practice using available subject/lesson(s), question count and question types.
-- **Every Student question comes only from the Admin-reviewed Published Question Bank.** No live Gemini generation for Student sessions.
-- Practice Engine stores exact question/version/session identity and safe deterministic randomization/shuffle.
-- Original ministerial models remain exact/source-provenanced and separate from generated content.
-- Future `Simulation Model` is a separate clearly labeled type and must never be presented as original.
-- `اختبر نفسك` feedback timing is still PENDING: after each question vs end of practice set.
-
-### Offline/performance
-
-Offline is a **core requirement**:
-- account/device-scoped local data;
-- app shell/static caching;
-- explicit download of lesson and subject;
-- full-book download allowed explicitly when size/storage budget permits;
-- no automatic full-curriculum download;
-- Download Manager shows size/progress and supports retry/cancel/remove;
-- revision/delta sync instead of repeated full refetch;
-- local outbox for mutable Student data;
-- no generic authenticated API-response caching in Service Worker;
-- server remains authority for final score/redemption/publishing.
-
-**Offline authorization lease:** maximum 14 days and always capped by real entitlement expiry:
-`valid_until = min(now + 14 days, entitlement_expiry)`.
-
-### Curriculum/Admin
-
-- Admin can add multiple classes/grades and multiple subjects with flexible ordering.
-- Direction: `Curriculum/Year → Class → Subject Offering → optional Unit/Section → Lesson → Content`; year/version/archive schema still pending.
-- Upload/process/store independent of AI/OCR availability.
-- OCR is asynchronous/provider-abstracted and reusable.
-- TTS derived audio is separate from upload and tied to published text revisions.
-- Admin Import/Export remains required with explicit module scopes and validation.
-- Content lifecycle: `Draft → Review → Published`; AI outputs are Draft and require Admin review.
-
-### AI authoring
-
-Preserve old generation outcomes/modes, rebuilt safely:
-- summaries;
-- general/source question generation;
-- MCQ;
-- True/False;
-- mixed sets;
-- extraction/source-based;
-- selected page/image generation;
-- regenerate;
-- alternate versions;
-- exam/model generation;
-- exact/replica modes where applicable;
-- bulk generation;
-- answer/explanation/method/difficulty/source/page metadata where applicable.
-
-Default input: OCR text + source/page provenance. Vision fallback only when required. Each mode has versioned prompt/input/output contract, semantic validation and golden tests. Gemini credentials/projects server-only with scheduler/health/rate/quota/cooldown/retry/failover.
-
-## 4. Stages explicitly affected by review
-
-1. **Stage 6/8 partial reopen:** two-step activation + forced password change + device registry/challenge + reset/rebind + security/Chromium E2E.
-2. **Stage 10 Preview Sync:** still pending.
-3. **OCR Extraction Foundation:** required before full AI authoring; must not block normal upload.
-4. **Reader/Student Product:** original page + text view + search + cached/versioned TTS + notes/favorites + Offline downloads.
-5. **Stage 11 AI Contracts:** preserve agreed generation modes, text-first/provenance-aware.
-6. **Stage 12 Durable AI:** jobs/scheduler/retries/cooldown/failover/metrics/idempotency.
-7. **Admin Product:** flexible curriculum, upload/OCR/TTS states, Draft/Review/Published, AI review, import/export.
-8. **Practice Engine:** custom sessions from Published Question Bank only; original models exact; simulation separate later.
-9. **Offline/PWA:** mandatory, account/device-scoped, explicit bounded downloads and 14-day authorization lease.
+1. Stage 6/8 partial reopen: two-step activation, forced password change, device key/challenge/rebind, security + Chromium E2E.
+2. Stage10 Preview Sync still pending.
+3. OCR Extraction Foundation required before full AI/search/TTS use.
+4. Reader/Student Product: original page + Text View + search + cached/versioned TTS + notes/favorites + Offline downloads.
+5. Practice Engine: Published Question Bank-only Student sessions; original ministerial type separate from future simulation type.
+6. Offline/PWA: account/device-scoped sync/download manager + 14-day entitlement lease.
+7. Admin Product: flexible curriculum, upload/OCR/TTS states, Question Bank/Quiz Builder, AI review/publish, Import/Export.
 
 ## 5. Preview
 
@@ -155,29 +86,21 @@ Temporary only:
 - Vercel project `alwaslh`, team `wasl15`;
 - preview branch `preview/supabase-vercel` at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`;
 - READY deployment and `/api/health` HTTP 200 verified;
-- Preview still pre-Stage-10;
-- direct Stage10 branch deploy has Vercel output-dir `dist` configuration mismatch;
-- Vercel filesystem/Poppler durability is `NOT YET VERIFIED` and is not final production architecture.
+- Preview still pre-Stage10;
+- Vercel Stage10 direct-build output-dir mismatch remains open;
+- Vercel filesystem/Poppler durability is `NOT YET VERIFIED` and not final architecture.
 
 ## 6. Still pending product decisions
 
-- `اختبر نفسك`: correction/explanation after each question or after practice set.
-- Practice/Test scoring, timing, result/review semantics.
+- `اختبر نفسك`: feedback after each question vs end of set; scoring/timing/review semantics.
 - curriculum year/version/archive/replacement semantics.
 - Admin roles/permissions.
 - Quiz Builder/Content QA exact workflow.
 - Notes media types/sync conflicts.
-- notifications exact categories/channels.
+- notifications categories/channels.
 - Student direct AI explanation/chat scope, if any.
 - exact reports/import/export scopes/formats.
 
 ## 7. Mandatory continuation
 
-After each meaningful batch:
-- update `docs/product/PRODUCT_EVOLUTION_REVIEW.md`;
-- update `PROJECT_STATUS.md`;
-- update `PROJECT_ENGINEERING_LOG.md`;
-- update this handoff when product/business/roadmap/baseline changes;
-- update `PRODUCT_FEATURE_PARITY_MATRIX.md` and `MASTER_REBUILD_ROADMAP.md` as decisions settle;
-- do not mark unexecuted work verified;
-- do not remove valuable legacy features without explicit owner approval.
+After each meaningful batch update Product Review, Status, Engineering Log, Handoff and Roadmap as applicable. Never mark unimplemented product decisions as runtime-verified, and never remove valuable legacy features without explicit owner approval.
