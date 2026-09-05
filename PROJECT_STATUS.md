@@ -4,6 +4,7 @@
 - **Verification Policy:** every stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; unexecuted = `NOT YET VERIFIED`.
 - **Continuity Source:** read `PROJECT_HANDOFF.md`, this file, `PROJECT_ENGINEERING_LOG.md`, `docs/product/PRODUCT_EVOLUTION_REVIEW.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `MASTER_REBUILD_ROADMAP.md`.
 - **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
+- **Product Review Batches recorded:** 01–03.
 - **Verified Stage 10 final head:** `27c6a2ef1118ee44d2e63471e4f925e1296283e0`.
 - **Final Stage 10 CI:** Stage10 `33302270707` SUCCESS; Stage9 regression `33302270692` SUCCESS; Full Rebuild `33302270695` SUCCESS including Chromium E2E.
 
@@ -25,98 +26,79 @@
 Canonical source: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
 
 ### Student entry/account
+- Same product idea; no useful legacy feature removed without explicit owner decision.
+- Welcome/introduction before entry with `تفعيل جديد` / `لدي حساب بالفعل`.
+- Two-step activation: code verification → mandatory password → atomic activation/session.
+- Admin-assisted temporary-password recovery + forced password change + session revocation.
+- One registered cryptographic application-device key per account; different/lost device requires Admin reset/rebind.
 
-- Same product idea; no useful legacy feature is removed without explicit owner decision.
-- Welcome/introduction before Student entry.
-- Entry provides `تفعيل جديد` and `لدي حساب بالفعل`.
-- Activation becomes `Full Code verification → mandatory password creation → atomic activation/session`.
-- Recovery is Admin-assisted: temporary password, revoke old sessions, force Student to create a new private password.
-- Student account is restricted to **one registered application device key**. Different/lost device requires Admin reset/rebind. Browser fingerprint/user-agent/IP are not treated as security proof.
-
-### Student learning product
-
-- Keep/improve legacy educational capabilities: summaries, `اختبر نفسك`, full tests, models/ministerial exams, explanations, attempts, resume/restart, question images, versions, filters, progress and other useful flows.
-- Summary, Self Practice and Full Test/Model are separate product concepts.
-- Notes, Favorites and `Needs Review` remain separate UX concepts.
-- Personal achievements/progress remain; Global Leaderboard is not required.
-- Student UX must stay simple/elegant/mobile-first despite feature breadth.
+### Student learning
+- Preserve summaries, `اختبر نفسك`, full/custom tests, original ministerial models, explanations, attempts, resume/restart, versions, filters, progress and other useful legacy learning flows.
+- Notes, Favorites and Needs Review remain separate.
+- Personal achievements remain; no Global Leaderboard requirement.
 
 ### Reader / search / audio
-
-- Reader keeps the **original page/image view** as the visual source of truth.
-- Add optional **OCR/published Text View** beside/toggleable from the page view.
-- Add Arabic-aware search inside lesson/book with results mapped back to exact page/source position.
-- Add **استماع للدرس** using a provider-abstracted Arabic TTS/voice service.
-- TTS audio is generated/cached per published content revision and reused; it is not regenerated on every playback.
-- Offline audio download may be offered through the Download Manager.
-- No independent Highlight system in the current scope; Notes/Favorites/Needs Review are sufficient.
+- Original page/image view remains visual source of truth.
+- Optional approved OCR/published Text View.
+- Arabic-aware book/lesson search mapped to exact page/source.
+- `استماع للدرس` through provider-abstracted Arabic TTS.
+- TTS audio generated/cached per published content revision, reused across plays and optionally downloadable Offline.
+- No independent Highlight system in current scope.
 
 ### Practice / tests / ministerial models
-
-- Student may build a custom practice/test by selecting available subject/lesson(s), count and question types.
-- **All Student questions come from the Admin-reviewed Published Question Bank.** No live Gemini question generation for Student sessions.
-- Practice Engine selects published question/version IDs and preserves trusted session identity/randomization.
-- Original ministerial models remain exact and separately typed from future simulation models.
-- Simulation is a separate future content type and must be labeled clearly as simulation, never original.
-- One detail remains open: whether `اختبر نفسك` reveals correction/explanation after each question or at the end of the practice set.
+- Student can build custom practice/test from selected published subject/lesson(s), count and available question types.
+- **Every Student question comes from Admin-reviewed Published Question Bank; no live Gemini generation for Student sessions.**
+- Original ministerial models remain exact/provenanced.
+- Simulation model is a separate future type and clearly labeled.
+- Practice feedback timing remains PENDING: immediate per question vs end of set.
 
 ### Offline/performance
-
-- Offline is a core Student requirement.
-- Support explicit download of lesson, full subject, and whole book when size/budget permits; never auto-download the entire curriculum.
-- Download Manager must show size/progress and support retry/cancel/remove.
-- Account/device-scoped local cache + revisions/delta sync + local outbox reduce repeated API calls.
-- **Offline authorization lease = 14 days maximum**, always capped by actual entitlement expiry.
+- Offline is core.
+- Explicit lesson and subject downloads; explicit full-book download when size/storage budget permits; no automatic whole-curriculum download.
+- Download Manager: size/progress/retry/cancel/remove.
+- Account/device-scoped cache + revision/delta sync + local outbox reduce API traffic.
+- **Offline authorization lease = maximum 14 days, capped by actual entitlement expiry.**
 - No generic authenticated API-response Service Worker caching.
-- Trusted finalization/redemption/publishing remain server validated.
 
-### Curriculum/Admin
-
-- Admin supports multiple classes/grades and multiple subjects with explicit flexible ordering.
-- Direction: `Curriculum/Year → Class → Subject Offering → optional Unit/Section → Lesson → Content`.
-- Upload is independent from AI.
-- OCR is asynchronous/provider-abstracted and reusable.
-- Admin Import/Export remains required with scoped contracts/validation.
-- Content lifecycle: `Draft → Admin Review → Published`; AI outputs are Draft and must be reviewed before publish.
-
-### AI authoring
-
-- Preserve old generation outcomes/modes: summaries, questions, MCQ, T/F, mixed, extraction/source-based, selected page/image, regenerate, alternate versions, exam/model, exact/replica where applicable, bulk generation and source/page metadata.
-- Default input path is OCR text + provenance, with vision fallback only when necessary.
-- Gemini credentials/projects server-only with health/rate/quota tracking, cooldown, retry/backoff and legitimate failover.
+### Curriculum/Admin/AI
+- Multiple classes/grades/subjects with flexible ordering; direction `Curriculum/Year → Class → Subject Offering → optional Unit → Lesson → Content`.
+- Upload independent of OCR/AI/TTS.
+- OCR async/reusable/provider-abstracted.
+- Draft → Admin Review → Published; AI outputs always reviewed before publish.
+- Admin Import/Export required.
+- Preserve legacy AI generation outcomes with OCR-text-first inputs and server-side durable credential scheduling.
 
 ## Immediate architecture impact
 
-1. **Reopen Stage 6/8 partially:** two-step activation, temporary-password forced change, device registry/challenge verification, device reset/rebind and new security/browser E2E.
-2. **Stage 10 Preview Sync** still required; Preview remains pre-Stage-10.
-3. Add **OCR Extraction Foundation** between Media and AI authoring; it must not block upload.
-4. Reader implementation must consume original media + approved OCR text, add book search, and support cached/versioned TTS audio.
-5. Stage 11 AI contracts must keep all agreed generation modes and use OCR text + source/page provenance by default.
-6. Stage 12 Durable AI implements job durability, scheduling, retry/cooldown/failover/metrics/idempotency.
-7. Admin Product includes flexible curriculum, review/publish lifecycle, OCR/TTS derived states, AI review and import/export.
-8. Student Product includes Welcome/login, curriculum/reader, text/search/audio, summaries, practice, custom tests from published Question Bank, original models, notes/favorites/review-later and private progress/achievements.
-9. Offline/PWA is mandatory and uses bounded explicit downloads + 14-day entitlement lease.
+1. Reopen Stage 6/8 partially for two-step activation, temporary-password forced change, device registry/challenge/rebind and new security/browser E2E.
+2. Stage 10 Preview Sync remains pending.
+3. Implement OCR Extraction Foundation independent from upload.
+4. Reader must support original-page + Text View + search + cached/versioned TTS.
+5. Stage 11/12 AI contracts/execution retain agreed generation modes and text-first provenance-aware architecture.
+6. Admin Product includes flexible curriculum, OCR/TTS derived states, review/publish, AI review, Question Bank/Quiz Builder and Import/Export.
+7. Student Product includes Reader text/search/audio, summaries, Practice, Published-Question-Bank custom tests, original models, personal data and progress.
+8. Offline/PWA uses bounded explicit downloads and 14-day lease.
 
 ## Temporary Preview
 
 - Supabase `linksoftt`: temporary PostgreSQL/testing host only.
 - Vercel project `alwaslh`, team `wasl15`.
-- Preview branch `preview/supabase-vercel` remains at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81` with a READY deployment.
-- `/api/health` was verified HTTP 200 on that deployment.
-- Stage 10 migration/code is not synchronized there yet.
-- Vercel serverless filesystem is not durable media storage; Poppler/live media upload on Vercel remains `NOT YET VERIFIED`.
+- Preview branch `preview/supabase-vercel` remains at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81` with READY deployment.
+- `/api/health` verified HTTP 200.
+- Stage 10 migration/code not synchronized there yet.
+- Vercel serverless filesystem is not durable media storage; Poppler/live media upload remains `NOT YET VERIFIED`.
 
 ## Product review still pending
 
-- `اختبر نفسك`: immediate feedback vs end-of-set feedback؛ detailed scoring/timing/review semantics.
+- `اختبر نفسك`: immediate feedback vs end-of-set; scoring/timing/result/review semantics.
 - Curriculum year/version/archive/replacement semantics.
 - Admin roles/permissions.
 - Quiz Builder/Content QA exact workflow.
-- Notes media types and sync conflict UX.
-- Notifications exact categories/channels.
+- Notes media types/sync conflict UX.
+- Notifications categories/channels.
 - Student direct AI/explanation scope, if any.
-- Exact report/import/export scopes/formats.
+- Exact reports/import/export scopes/formats.
 
 ## Next Action
 
-Continue Product Evolution Review one coherent area at a time. Next discussion should finalize Practice/Test behavior and then Admin roles/content/Quiz Builder workflow. Record every decision immediately, revise the roadmap from those decisions, and reopen only affected verified stages with executable gates.
+Continue Product Evolution Review. Next: finalize Practice/Test behavior, then Admin roles/content/Quiz Builder. Product decisions are design-level only until implemented and executable gates pass; do not report Reader/TTS/Offline/device changes as runtime-complete yet.
