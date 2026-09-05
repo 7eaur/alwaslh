@@ -1,14 +1,30 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> اقرأ بالترتيب: `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → `docs/product/PRODUCT_EVOLUTION_REVIEW.md` → `docs/product/PRODUCT_DECISIONS_BATCH_05.md` → `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` → `PRODUCT_FEATURE_PARITY_MATRIX.md` → `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` → `MASTER_REBUILD_ROADMAP.md`. المستودع وCI هما source of truth؛ لا تعتمد على ذاكرة المحادثة.
+> اقرأ بالترتيب: `DOCUMENTATION_INDEX.md` → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → `docs/product/PRODUCT_EVOLUTION_REVIEW.md` → `docs/product/PRODUCT_DECISIONS_BATCH_05.md` → `docs/product/PRODUCT_DECISIONS_BATCH_06.md` → `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` → `PRODUCT_FEATURE_PARITY_MATRIX.md` → `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` → `MASTER_REBUILD_ROADMAP.md` → `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`. المستودع وCI هما source of truth؛ لا تعتمد على ذاكرة المحادثة. `NEXT_CONVERSATION_PROMPT.md` جاهز لبدء محادثة جديدة.
 
 ## 1. Product direction
 
-**الفكرة الأساسية ثابتة.** الوسيلة الذكية منصة تعليمية عربية للطالب، مع Super Admin لإدارة المنهج والمحتوى والطلاب والوصول والـAI والتشغيل.
+**الفكرة الأساسية ثابتة.** الوسيلة الذكية منصة تعليمية عربية بسطحين منفصلين لنفس المنتج:
+
+- **Student PWA (`apps/student-web`)**: تطبيق ويب قابل للتثبيت، mobile-first/offline-first، للطالب فقط.
+- **Admin Web (`apps/admin-web`)**: واجهة مستقلة للـSuper Admin فقط.
+- كلاهما يتعامل مع **Backend API (`apps/api`)**؛ Browser لا يتصل مباشرة بPostgreSQL.
 
 التطبيق القديم مرجع شامل للمميزات والسيناريوهات. **لا تُحذف Feature قديمة ذات قيمة بدون قرار صريح من Product Owner.** نعيد تنظيمها/بناءها إذا كانت الطريقة القديمة ضعيفة، لكن لا نسقط النتيجة الوظيفية.
 
-Product Review Batches 01–05 حسمت Core Product بما يكفي لاستئناف التنفيذ. التفاصيل الروتينية تُختار هندسيًا بالأبسط والأصح وفق PED-048؛ لا نعيد فتح النقاش إلا لقرار Business حقيقي.
+Product Review Batches 01–06 حسمت Core Product بما يكفي لاستئناف التنفيذ. التفاصيل الروتينية تُختار هندسيًا بالأبسط والأصح؛ لا نعيد فتح النقاش إلا لقرار Business حقيقي.
+
+### Legacy reference set
+
+عند تنفيذ أي Module، راجع عند الحاجة:
+- `PRODUCT_FEATURE_PARITY_MATRIX.md`؛
+- `PROJECT_DEEP_AUDIT.md`؛
+- `PROJECT_FULL_AUDIT_CATALOG.md`؛
+- `PROJECT_REBUILD_BLUEPRINT.md`؛
+- `OFFLINE_MODE.md` / `OFFLINE_MODE_README.md`؛
+- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
+
+هذه ملفات مرجع للتطبيق القديم ونتائجه/مشكلاته، وليست specification تقنية يجب نسخها.
 
 ## 2. Verified engineering baseline
 
@@ -25,7 +41,7 @@ Baseline:
 - Stage9 deterministic source import: 15 roots / 48 docs / 5,552 images / 0 fatal issues؛
 - Stage10 Sharp/Poppler deterministic media pipeline with variants/checksums/order/idempotency/cleanup.
 
-## 3. Product decisions — Batches 01–05
+## 3. Product decisions — Batches 01–06
 
 ### Student entry/account/access
 - Welcome before auth.
@@ -73,11 +89,13 @@ Preserve/improve all valuable legacy capabilities: curriculum, Reader, summaries
 - target hierarchy: `Class → Subject Offering → optional Unit → Lesson → Content` with explicit ordering.
 - no mandatory yearly curriculum version lifecycle; source year/edition only as optional metadata where useful.
 - **Admin role = Super Admin only** for current scope.
+- Admin Web مستقل عن Student PWA؛ لا Admin navigation/bundles داخل UX الطالب.
+- Student يبقى Web/PWA installable ويعمل أيضًا من Browser بدون تثبيت.
 - upload independent from OCR/AI/TTS.
 - contextual in-place instructions required throughout Student/Admin UX.
 - Draft → Review → Published.
 - Import/Export required.
-- unified Design System required: `packages/brand` + shared tokens/components; no page-by-page duplicated Button/Form/Card/Modal/style implementations.
+- unified Design System required: `packages/brand` + shared tokens/components؛ لا page-by-page duplicated Button/Form/Card/Modal/style implementations.
 
 ### AI authoring / model strategy
 - AI is **provider/model-neutral**, not Gemini-specific.
@@ -87,7 +105,7 @@ Preserve/improve all valuable legacy capabilities: curriculum, Reader, summaries
 - generated-from-book questions cannot Publish without source + page provenance.
 - durable high-throughput architecture: OCR reuse, bounded durable units, queue/backpressure, per-provider/model concurrency, health/rate/quota/cooldown, retry/backoff, partial-success persistence, idempotency, cancel/resume/progress, validation/dedupe/provenance and token/cost/latency telemetry.
 - model cascade where benchmark supports it: cheap/fast approved model first, escalate only failed/uncertain unit to stronger model.
-- free/near-free providers/models may be used when reliability/privacy/quality fit; random free routing is not a production correctness dependency.
+- free/near-free providers/models may be used when reliability/privacy/quality fit؛ random free routing is not a production correctness dependency.
 - success metric = accepted useful outputs per cost/token/time, not request count.
 
 ## 4. Mandatory engineering governance
@@ -108,6 +126,9 @@ Temporary Preview workaround is allowed only if documented as Known Issue with i
 ### Design governance
 One coherent visual/product system. Shared tokens/components/states are preferred over repeated page-specific copies. Admin may be denser and Student touch-first, but both share the same brand and component contracts. Duplicate style/component audit is required before Stage13/14 closure.
 
+### Documentation governance
+Documentation is the project memory. After every meaningful batch update Status/Log/Handoff and specialized docs, plus exact CI/runtime evidence. Unexecuted = `NOT YET VERIFIED`.
+
 ## 5. Legacy feature coverage gate
 
 `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` are hard gates before Student/Admin feature completion. Every legacy capability must map to a target flow/module and executable evidence, or explicit Product Owner-approved removal.
@@ -121,7 +142,7 @@ One coherent visual/product system. Shared tokens/components/states are preferre
 5. Stage11 provider-neutral AI contracts + golden benchmark + provenance/validators.
 6. Stage12 durable multi-provider/model high-throughput execution + router/cascade/scheduler.
 7. Stage13 Super Admin Product only; no multi-role RBAC.
-8. Stage14 Student Product: Reader page/text/search/TTS + all agreed learning features.
+8. Stage14 Student Web/PWA Product: installability + Reader page/text/search/TTS + all agreed learning features.
 9. Stage15 trusted Practice/Test/Model engine using Published Question Bank + repeated-error events.
 10. Stage16 mandatory Offline/PWA + 14-day lease.
 11. Stage17 Notes/Favorites/Needs Review, including text/image/capture/audio.
@@ -130,9 +151,31 @@ One coherent visual/product system. Shared tokens/components/states are preferre
 14. Stage20 Import/Export/Reporting required.
 15. Later performance/security/tests/accessibility/content-load/staging/release/production/ops gates unchanged.
 
-## 7. Preview
+## 7. Development Preview policy
 
-Temporary only: Supabase `linksoftt`; Vercel `alwaslh` team `wasl15`; preview branch `preview/supabase-vercel` at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`; READY and `/api/health` HTTP 200 verified. Preview remains pre-Stage10; Vercel output-dir mismatch and serverless media/Poppler durability remain unresolved/`NOT YET VERIFIED`.
+Canonical policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
+
+Temporary environment:
+- Supabase `linksoftt` — temporary PostgreSQL/testing host only؛
+- Vercel project `alwaslh`, team `wasl15` — temporary web/runtime host؛
+- integration branch `preview/supabase-vercel`.
+
+Purpose: Product Owner can supervise/test stable work continuously during rebuild.
+
+Required flow after a stable implementation batch:
+
+```text
+CI PASS
+→ sync preview/supabase-vercel
+→ apply required Preview migrations/config
+→ deploy
+→ verify build + health/readiness + relevant user flow
+→ document exact evidence
+```
+
+Preview does not redefine final Production architecture. Secrets never enter Git/chat. Platform limitations remain `NOT YET VERIFIED` when they cannot be proven.
+
+Current known Preview state: branch `preview/supabase-vercel` at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`; READY deployment and `/api/health` HTTP 200 were verified, but Preview is still pre-Stage10. Vercel output-dir mismatch and serverless media/Poppler durability remain unresolved/`NOT YET VERIFIED`.
 
 ## 8. Mandatory continuation
 
@@ -140,9 +183,11 @@ After every meaningful implementation batch:
 - update `PROJECT_STATUS.md`؛
 - update `PROJECT_ENGINEERING_LOG.md`؛
 - update this Handoff when business/architecture/branch/CI/preview state changes؛
-- update relevant Product Decision/AI docs؛
+- update relevant Product Decision/AI/Preview docs؛
 - update parity/coverage evidence as features are implemented؛
 - retain exact CI/run/runtime evidence؛
 - unexecuted = `NOT YET VERIFIED`؛
 - never patch around root causes as final design؛
 - never remove a valuable legacy feature without explicit owner approval.
+
+For a new conversation use `NEXT_CONVERSATION_PROMPT.md`.
