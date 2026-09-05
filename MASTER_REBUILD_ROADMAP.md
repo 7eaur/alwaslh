@@ -1,22 +1,24 @@
 # MASTER REBUILD ROADMAP — الوسيلة الذكية
 
-> الخطة التنفيذية الرسمية لبناء أفضل نسخة من نفس المنتج مع الحفاظ على الفكرة والسيناريوهات والـFeature Parity، بتنفيذ جديد أقوى وأوضح وأسهل في التشغيل والصيانة.
+> الخطة التنفيذية الرسمية لبناء أفضل نسخة من فكرة **الوسيلة الذكية**. التطبيق القديم مرجع للفكرة والاحتياجات والسيناريوهات والمشكلات، وليس مواصفة يجب نسخها. بعد Stage 10 دخل المشروع Product Evolution Review لإعادة مناقشة كل المميزات والـflows قبل تثبيت المراحل المنتجية المتبقية.
 
 ## القواعد الحاكمة
 
-1. نحافظ على **المنتج والسيناريوهات**، وليس على أخطاء التنفيذ القديم.
-2. `alwaslh` مرجع للـBusiness Rules والـflows والميزات والمشكلات التي يجب ألا تتكرر.
+1. نحافظ على **قيمة المنتج واحتياجات المستخدم**، لا على أخطاء أو تفاصيل التنفيذ القديم.
+2. `alwaslh` مرجع للـBusiness Rules والـflows والميزات التاريخية والمشكلات التي يجب ألا تتكرر؛ كل عنصر فيه قابل لـ`KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE` بعد نقاش صريح.
 3. `alwaslh-go` مرجع للمحتوى/الصور ويُدخل عبر deterministic Content Pipeline.
 4. لا يوجد التزام بمطابقة Supabase schema/IDs/RLS القديمة.
 5. PostgreSQL clean-slate source of truth خلف Backend خاص.
 6. كل Stage لها Definition of Done؛ لا تبدأ التالية قبل Integration Gate الحالية.
-7. التوازي مسموح **داخل نفس Stage** فقط عندما تكون الحدود والعقود واضحة.
+7. التوازي مسموح داخل نفس Stage عندما تكون الحدود والعقود واضحة.
 8. أي Runtime gate لم يُشغل فعليًا = `NOT YET VERIFIED`.
 9. الحالات الرسمية: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`.
 10. `PROJECT_HANDOFF.md` هو أول ملف لأي محادثة/مهندس جديد.
-11. Correctness > Cleverness، Clarity > Complexity، Evidence > Assumptions.
+11. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` هو سجل القرارات المنتجية الجاري بناؤه.
+12. Correctness > Cleverness، Clarity > Complexity، Evidence > Assumptions.
+13. أي Product Decision يغير عقدًا من Stages 1–10 يفتح Impact Review وRefactor واضحًا بدل تعديل صامت.
 
-## Target Architecture
+## Target Architecture — verified direction
 
 ```text
 Admin Web ──┐
@@ -26,61 +28,67 @@ Student PWA ┘       │
                     └── background + AI workers
 ```
 
-PostgreSQL لا تُفتح مباشرة للمتصفح.
+Browser لا يتصل مباشرة بPostgreSQL.
 
 ---
 
-# Stage 1 — Product Freeze & Feature Parity
+# Stage 1 — Product Inventory / Initial Feature Parity ✅
 
-تثبيت Admin/Student flows، activation/login/recovery، reader/practice/quizzes/notes، notifications/statistics/achievements، Offline/PWA، exports، AI modes وقواعدها ومحتوى `alwaslh-go`.
+تم تثبيت inventory شامل للـAdmin/Student flows والميزات القديمة حتى لا تضيع معرفة المنتج أثناء إعادة البناء.
+
+**Important reinterpretation after Product Evolution Review:** هذه المصفوفة Decision Inventory وليست Automatic KEEP list.
 
 **Gate: COMPLETE / CLI PASS.**
 
-# Stage 2 — Brand Identity
+# Stage 2 — Brand Identity ✅
 
 Owned teal/open-book identity: logo/PWA assets، palette، Arabic typography، tokens وaccessibility rules.
 
 **Gate: COMPLETE / CLI PASS.**
 
-# Stage 3 — UX Architecture
+# Stage 3 — UX Architecture ✅
 
 Admin IA + Student IA + critical flows + loading/error/offline/permission states + responsive/accessibility contracts + wireframes.
 
+هذه الـflows baseline مصممة ومختبرة، ويمكن مراجعتها Product-wise قبل تنفيذ الشاشات الكاملة.
+
 **Gate: COMPLETE / CLI PASS.**
 
-# Stage 4 — Clean-Slate PostgreSQL Data Platform
+# Stage 4 — Clean-Slate PostgreSQL Data Platform ✅
 
-Self-hosted private PostgreSQL behind Backend. Identity/Curriculum/Access/Learning/AI/Sync relations constrained and migration-owned.
+Private PostgreSQL behind Backend. Identity/Curriculum/Access/Learning/AI/Sync relations constrained and migration-owned.
 
 **Gate: COMPLETE / CLI + PostgreSQL RUNTIME PASS.**
 
-# Stage 5 — Engineering Foundation
+# Stage 5 — Engineering Foundation ✅
 
 Real `apps/api`، strict TypeScript، bounded PostgreSQL pool/transactions، migration runner، env validation، logging/error contract، tests، isolated Admin/Student builds وCI.
 
 **Gate: COMPLETE / CLI + RUNTIME PASS.**
 
-# Stage 6 — Authentication & Authorization
+# Stage 6 — Authentication & Authorization ✅
 
 scrypt credentials، opaque server sessions + HttpOnly cookie، Student/Admin isolation، Origin protection، DB lockout، reset-only recovery، explicit first-admin CLI bootstrap.
 
 **Gate: COMPLETE / CLI + PostgreSQL RUNTIME PASS.**
 
-# Stage 7 — Access Codes & Entitlements
+# Stage 7 — Access Codes & Entitlements ✅
 
-6-digit Full / 7-digit Class، crypto generation، transactional row-locked redemption، profile-bound idempotency، renewal benefit، no-waste Class redemption، revoke/audit، concurrency tests.
+Current implemented contract: 6-digit Full / 7-digit Class، crypto generation، transactional row-locked redemption، profile-bound idempotency، renewal benefit، no-waste Class redemption، revoke/audit، concurrency tests.
+
+هذه Business Rules قابلة لإعادة المناقشة Product-wise؛ أي تغيير يُعيد فتح العقد المتأثر رسميًا.
 
 **Gate: COMPLETE / CLI + PostgreSQL RUNTIME PASS.**
 
-# Stage 8 — Student Activation & Account Flow
+# Stage 8 — Student Activation & Account Flow ✅
 
-First activation uses 6-digit Full Code. After success the normalized code becomes returning account identifier, not authentication secret. Password remains required. Atomic profile/credential/entitlement/redemption/audit flow + returning login/logout + recovery + Student activation UI.
+Current implemented contract: first activation uses 6-digit Full Code + password; normalized Full Code becomes returning identifier after success; password remains secret. Atomic profile/credential/entitlement/redemption/audit flow + returning login/logout + reset-only recovery + Student activation UI.
 
 Canonical API contract: `docs/api/STUDENT_ACTIVATION_CONTRACT.md`.
 
 **Gate: COMPLETE / CLI + PostgreSQL RUNTIME + Chromium BROWSER E2E PASS.**
 
-# Stage 9 — Content Model & Deterministic `alwaslh-go` Import
+# Stage 9 — Content Model & Deterministic `alwaslh-go` Import ✅
 
 ```text
 alwaslh-go pinned revision
@@ -117,100 +125,144 @@ No Lesson inference from filenames. Raw repository never ships in frontend. Asyn
 
 Runtime proof on clean PostgreSQL 16: migrations `0001→0008`, first import 48/5552, identical re-import same run with `replayed=true`, presence/position uniqueness assertions PASS.
 
-Evidence:
-- code commit `30d12d24be93bf306a9da5fffcfb45ea9317a186`;
-- dedicated run `33294631418` SUCCESS؛
-- full regression run `33294631419` SUCCESS.
+**Gate: COMPLETE / CLI + PostgreSQL RUNTIME PASS.**
 
-**Gate: COMPLETE / CLI + PostgreSQL RUNTIME PASS at code baseline. Documentation-head re-verification is the final closure check before Stage 10 implementation starts.**
-
----
-
-# Stage 10 — Media Pipeline
+# Stage 10 — Media Pipeline ✅
 
 ```text
 upload/source
-→ validate
-→ PDF page extraction if needed
-→ stable ordering
-→ optimize display variant
-→ thumbnail
-→ AI variant
+→ validate exact source identity
+→ stable page/source position
+→ Sharp image pipeline OR Poppler PDF extraction
+→ bounded ordered transforms
+→ source/display/thumbnail/AI variants
+→ checksums/dimensions/bytes
+→ trusted deterministic storage keys
 → storage
-→ metadata transaction
+→ PostgreSQL metadata transaction
 ```
 
-Requirements:
-- bounded concurrency؛
+Verified requirements:
+- bounded concurrency 1..8؛
 - abort/retry؛
 - no completion-order reordering؛
-- readable educational text before aggressive compression؛
-- deterministic storage keys/checksums؛
-- reliable/self-hosted PDF worker strategy؛
-- Stage 9 source provenance/order survives processing؛
-- object/media storage runtime verified, not assumed.
+- source-byte/provenance-bound idempotency؛
+- exact ready replay validates stored SHA/size؛
+- deterministic keys/checksums/dimensions؛
+- safe filesystem traversal boundary؛
+- storage/metadata/abort cleanup؛
+- local/server-owned Poppler PDF runtime؛
+- Stage 9 provenance survives processing؛
+- real two-page PDF end-to-end runtime proof؛
+- malformed PDF creates zero successful media rows.
 
-**Gate: NEXT after Stage 9 documentation-head CI is green.**
+Final documentation head:
+`27c6a2ef1118ee44d2e63471e4f925e1296283e0`
+
+Final same-head evidence:
+- Stage 10 dedicated `33302270707` — SUCCESS؛
+- Stage 9 regression `33302270692` — SUCCESS؛
+- full rebuild regression `33302270695` — SUCCESS including Chromium E2E.
+
+**Gate: COMPLETE / CLI + PostgreSQL + MEDIA RUNTIME PASS.**
 
 ---
 
-# Stage 11 — Gemini Prompt/Output Contracts
+# PRODUCT EVOLUTION REVIEW CHECKPOINT — CURRENT
 
-Versioned PromptRegistry لكل preserved mode: summaries/extraction/questions/MCQ/TF/mixed/image/version/regenerate/exam replica/exact/bulk.
+قبل Stage 11 وما بعدها، المنتج يدخل مراجعة شاملة مع product owner.
 
-```text
-input schema → prompt version → structured output schema → semantic validator → persistence/rendering
-```
+الهدف ليس إضافة features عشوائيًا، بل مناقشة كل محور واختيار الطريقة الأنسب لنا الآن:
 
-Arabic/scientific/religious/source-exact rules require golden regression tests.
+- product audience/value proposition؛
+- accounts/activation/access؛
+- curriculum/content structure؛
+- Student home/navigation؛
+- Reader؛
+- Practice/quizzes؛
+- Student AI؛
+- notes/saved/highlights؛
+- statistics/achievements/gamification؛
+- notifications؛
+- Offline/PWA؛
+- Admin roles؛
+- Admin content/media workflow؛
+- Admin AI authoring؛
+- Quiz Builder/content QA؛
+- students/codes/support؛
+- reports/export؛
+- search/discovery؛
+- content publishing/version lifecycle؛
+- new product ideas.
 
-# Stage 12 — Durable AI Execution
+Canonical decision log:
+`docs/product/PRODUCT_EVOLUTION_REVIEW.md`
 
-Durable `ai_job`/units + workers + Gemini project/credential scheduler + retries/backoff + 429 project cooldown + health/failover + cancellation/resume + progress + prompt/model/tokens/cost/latency metadata + server-only secrets.
+**Gate to leave this checkpoint:**
+- كل محور يؤثر على المرحلة التالية لديه Decision واضح؛
+- القرارات موثقة مع reasons/impact؛
+- `PRODUCT_FEATURE_PARITY_MATRIX.md` محدث كـdecision inventory؛
+- roadmap revised from decisions؛
+- affected Stages 1–10 identified and reopened only if necessary؛
+- no unresolved contradiction between product decisions and data/API contracts.
 
-# Stage 13 — Admin Product
+---
 
-Functional order: auth/shell → Overview → Classes/Subjects → Lessons → Upload/Processing → AI Operations → Quiz Builder → Students → Full Codes → Class Codes → Notifications → Reports/Exports → Settings/Security.
+# Provisional post-review stages
 
-# Stage 14 — Student Learning Product
+> المراحل التالية هي **initial engineering plan** وليست نهائية حتى ننهي Product Evolution Review. يمكن دمجها أو تقسيمها أو إعادة ترتيبها حسب قراراتنا.
 
-Post-auth product: Home → classes/subjects/lessons → Reader → Summary/Practice → Notes/Saved → Quizzes/Attempts → Statistics/Achievements → Notifications → Class activation/account/help/install. Mobile-first + reading-first.
+# Stage 11 — AI Prompt/Output Contracts — PROVISIONAL
 
-# Stage 15 — Practice Engine
+Versioned prompt/contracts، typed request/output schemas، semantic validators، golden tests، source-exact/religious/scientific/Arabic rules. Exact modes are decided during Product Review.
 
-One deterministic shared state machine. Persist stable questions/options/order/answers/current/completion. Resume/restart/bookmark/explanation/offline without index-identity bugs. Trusted completion server-derived.
+# Stage 12 — Durable AI Execution — PROVISIONAL
 
-# Stage 16 — Offline / PWA
+Durable AI jobs/workers، provider scheduling، retries/backoff، 429 cooldown، health/failover، cancellation/resume، progress، prompt/model/tokens/cost/latency metadata، server-only secrets.
 
-Account-scoped IndexedDB replica driven by revisions/tombstones/outbox. Student owns SW. Cache shell/static/media only, never generic Auth/API responses. Bounded media/cache lifecycle and attempt idempotency.
+# Stage 13 — Admin Product — PROVISIONAL
 
-# Stage 17 — Notes & Saved Questions
+Admin flows/roles/modules will be rebuilt from Product Review decisions rather than legacy screen parity.
 
-Preserve text/image/capture/audio where valuable. Account-scoped local-first is acceptable. Stable question provenance, bounded media, no unbounded base64.
+# Stage 14 — Student Learning Product — PROVISIONAL
 
-# Stage 18 — Notifications
+Student post-auth learning UX will be rebuilt from Product Review decisions, mobile-first and reading-first where still appropriate.
 
-Admin audience/severity/action/publish/expiry. Student real read state/category/priority/deep-link/offline awareness. No fake unread state.
+# Stage 15 — Practice / Assessment Engine — PROVISIONAL
 
-# Stage 19 — Statistics / Achievements
+Deterministic/trusted question and attempt state. Exact modes, scoring, history and resume behavior depend on Product Review.
 
-Server derives attempts/scores/awards/ranking. Browser never supplies authoritative score/achievement/rank state.
+# Stage 16 — Offline / PWA — PROVISIONAL
 
-# Stage 20 — Export System
+If retained: account-scoped IndexedDB replica, revision/tombstone/outbox model, bounded cache/media lifecycle and explicit offline contract.
 
-Required PDF/Excel/quiz/code-card/history/image exports with sanitization، Arabic-safe fonts، new brand، explicit scopes، lazy heavy libraries، large-export strategy and no silent truncation.
+# Stage 17 — Personal Learning Data — PROVISIONAL
+
+Notes/saved/highlights/media forms according to Product Review decisions.
+
+# Stage 18 — Notifications — PROVISIONAL
+
+Admin/Student notification model according to decided value and channels.
+
+# Stage 19 — Statistics / Progress / Achievements — PROVISIONAL
+
+Server-derived trusted progress/attempt metrics; gamification/leaderboards only if explicitly retained.
+
+# Stage 20 — Export / Reporting — PROVISIONAL
+
+Only outputs with clear Admin/Student value; sanitization and Arabic-safe rendering remain mandatory.
 
 # Stage 21 — Performance Engineering
 
-Measure/enforce Student bundle isolation، JS size، LCP/INP/CLS، API/query latency، media bytes، cache/sync size/time، offline startup and AI/upload/export latency/memory.
+Measure and enforce bundle/API/query/media/cache/sync/AI/upload/export budgets.
 
 # Stage 22 — Security Hardening
 
-Secrets، DB networking، authorization/IDOR، activation/login perimeter rate limits، validation، uploads/storage، CSP/CORS/headers، CSRF/session، dependencies، audit logs، backup access.
+Secrets، DB networking، authorization/IDOR، perimeter rate limits، validation، uploads/storage، CSP/CORS/headers، CSRF/session، dependencies، audit logs، backup access.
 
 # Stage 23 — Automated Tests & CI Expansion
 
-Unit، DB migrations/constraints/concurrency، Auth/Activation/Access integration، content/media، AI golden/retry، Practice/Offline، Admin/Student E2E and critical legacy regression coverage.
+Unit، DB/concurrency، Auth/Access، content/media، AI، learning/offline، Admin/Student E2E and critical regression coverage.
 
 # Stage 24 — Accessibility / Device QA
 
@@ -218,15 +270,15 @@ RTL، keyboard/focus/screen reader، 200% zoom، contrast، reduced motion، 44p
 
 # Stage 25 — Initial Data / Content Load
 
-Secure Admin initialization، canonical curriculum from `alwaslh-go`، quiz/AI content through new contracts. No legacy DB migration dependency.
+Secure initialization and canonical curriculum/content load through the final decided contracts.
 
 # Stage 26 — Staging
 
-Fresh environment reproducible from repository: PostgreSQL → migrations → config/secrets → content import → API/workers → Admin → Student → full staged tests.
+Fresh reproducible environment: PostgreSQL → migrations → config/secrets → content → API/workers → Admin → Student → staged tests.
 
 # Stage 27 — Release Gate
 
-No unresolved/unaccepted P0/P1، real-host DB/network/load، backup restore drill، Auth/authorization/access concurrency، Admin/Student E2E، Offline/PWA، AI golden/retry/failover، performance/accessibility/security budgets and parity evidence.
+No unresolved/unaccepted P0/P1، real-host DB/network/load، backup restore drill، Auth/authorization/access concurrency، Admin/Student E2E، Offline if retained، AI if retained، performance/accessibility/security budgets and product-decision evidence.
 
 # Stage 28 — Production Cutover
 
@@ -234,7 +286,7 @@ Provision → backup/checkpoint → migrations → content load → backend/work
 
 # Stage 29 — Monitoring & Operations
 
-Monitor login/activation/code failures، authorization، DB pool/query/locks، backups، AI quota/errors/jobs، sync، JS/runtime، media/storage growth and PWA update health. Maintain runbooks/incidents.
+Monitor auth/access، DB، backups، AI/jobs where applicable، sync، frontend/runtime، media/storage growth and PWA update health. Maintain runbooks/incidents.
 
 ---
 
@@ -242,7 +294,7 @@ Monitor login/activation/code failures، authorization، DB pool/query/locks، b
 
 | Stage | Status |
 |---|---|
-| 1 Product Freeze | COMPLETE / CLI PASS |
+| 1 Product Inventory | COMPLETE / CLI PASS |
 | 2 Brand Identity | COMPLETE / CLI PASS |
 | 3 UX Architecture | COMPLETE / CLI PASS |
 | 4 PostgreSQL Data Platform | COMPLETE / CLI + RUNTIME PASS |
@@ -250,8 +302,14 @@ Monitor login/activation/code failures، authorization، DB pool/query/locks، b
 | 6 Auth & Authorization | COMPLETE / CLI + RUNTIME PASS |
 | 7 Access Codes & Entitlements | COMPLETE / CLI + RUNTIME PASS |
 | 8 Student Activation & Account Flow | COMPLETE / CLI + PostgreSQL RUNTIME + Chromium BROWSER E2E PASS |
-| 9 Content Model & `alwaslh-go` Import | COMPLETE / CLI + PostgreSQL RUNTIME PASS; final docs-head CI pending |
-| 10 Media Pipeline | NEXT; do not start until final Stage 9 closure CI is green |
-| 11–29 | NOT STARTED / later gates |
+| 9 Content Model & `alwaslh-go` Import | COMPLETE / CLI + PostgreSQL RUNTIME PASS |
+| 10 Media Pipeline | COMPLETE / CLI + PostgreSQL + MEDIA RUNTIME PASS / final docs-head verified |
+| Product Evolution Review | **CURRENT / IN PROGRESS** |
+| 11–20 | PROVISIONAL / pending product decisions |
+| 21–29 | PLANNED / later engineering and release gates |
 
-**Current rule:** do not implement Stage 10 until both the Stage 9 dedicated workflow and full regression workflow pass on the final Stage 9 documentation head.
+## Preview integration status
+
+Temporary Preview is still pre-Stage-10. The known READY Vercel deployment answers `/api/health` with HTTP 200, but direct Stage 10 branch deployments currently fail because the Vercel project expects `dist` output. Stage 10 sync to Supabase/Vercel remains pending and will occur after the Product Evolution Review produces the stable next baseline.
+
+**Current rule:** do not start a feature-heavy Stage 11+ from the old roadmap assumptions. First discuss and record product decisions, update the roadmap, then implement from the revised plan.
