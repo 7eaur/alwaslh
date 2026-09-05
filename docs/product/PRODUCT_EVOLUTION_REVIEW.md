@@ -235,7 +235,7 @@ Different/lost device
 
 **Classification:** KEEP requirement + REBUILD implementation
 **Stage:** Offline/PWA plus Auth device-binding integration
-**Status:** DECIDED direction; exact offline lease duration PENDING
+**Status:** DECIDED direction; exact offline lease duration decided in Batch 03.
 
 ## PED-016 — Personal Learning Data تبقى منفصلة مفاهيميًا
 
@@ -331,7 +331,126 @@ AI outputs دائمًا Draft. Admin يراجع الإجابة الصحيحة و
 **Classification:** KEEP outcomes + REBUILD contracts/execution
 **Status:** DECIDED
 
-# المحاور الحالية بعد Batch 02
+# القرارات المعتمدة — Batch 03
+
+## PED-022 — Reader بصري أساسي + Text View اختياري
+
+صفحات الكتاب الأصلية/المعالجة تبقى العرض الأساسي ومصدر الحقيقة المرئي. بجانبها يوجد خيار واضح لعرض **النص المقروء** المستخرج/المعتمد من OCR.
+
+على الهاتف يكون الانتقال غالبًا Toggle بين `الصفحة` و`النص`، وعلى الشاشات الواسعة يمكن دعم عرض جانبي عندما يفيد دون ازدحام.
+
+النص لا يستبدل الصفحة الأصلية في المحتوى الذي يحتاج دقة شكلية مثل الرياضيات والكيمياء والجداول والنصوص exact؛ هو view إضافي للقراءة والبحث والوصول.
+
+**Classification:** NEW + IMPROVE Reader
+**Status:** DECIDED
+
+## PED-023 — استماع للدرس عبر خدمة TTS / Voice Model
+
+نضيف للـReader خيار **استماع للدرس** يحول النص المنشور/المعتمد للدرس إلى صوت عربي واضح عبر provider abstraction مستقل عن Gemini generation.
+
+**Efficiency rule:** لا نولد الصوت عند كل Play. الصوت يُولد للـpublished content revision ويُخزن كMedia Asset مشتق مع provider/model/voice/version/checksum/duration/source revision metadata، ثم يعاد استخدامه. إذا تغير النص المنشور تصبح النسخة الصوتية القديمة stale ويعاد توليدها عند الحاجة.
+
+**UX target:** Play/Pause، seek، سرعة تشغيل مناسبة، واستمرار من الموضع الأخير. تنزيل الصوت للأوفلاين اختياري ضمن Download Manager.
+
+**Correctness:** TTS يستخدم النص المعتمد/المراجع، لا OCR خام منخفض الثقة. Provider/voice selection يحتاج benchmark عربي قبل التنفيذ النهائي.
+
+**Classification:** NEW
+**Status:** Product + architecture DECIDED / provider & voice PENDING
+
+## PED-024 — البحث داخل الكتاب/الدرس مطلوب
+
+Search يستخدم OCR/published text index مع Arabic normalization ويربط كل نتيجة مباشرة بالـlesson/page/source position.
+
+```text
+query
+→ normalized search
+→ matching lesson/page/snippet
+→ open exact page/text location
+```
+
+للمحتوى المنزّل يمكن توفير local search index حتى يعمل البحث الأساسي Offline بدون API request لكل بحث. البحث الشامل عبر كل المحتوى يمكن أن يستخدم Backend index مع pagination/ranking.
+
+**Classification:** NEW + IMPROVE discovery
+**Status:** DECIDED
+
+## PED-025 — لا Highlights مستقلة في النسخة الحالية
+
+لا نضيف نظام text/page highlighting مستقل الآن. الملاحظات والمفضلة و`يحتاج مراجعة` تكفي للاستخدام الشخصي المطلوب وتمنع تعقيد annotation/coordinate sync بدون قيمة مؤكدة.
+
+**Classification:** REMOVE from current scope
+**Status:** DECIDED
+
+## PED-026 — الطالب يبني اختباره من بنك أسئلة منشور فقط
+
+الطالب يستطيع إنشاء اختبار/تدريب مخصص باختيار عناصر مثل:
+
+- المادة؛
+- درس أو عدة دروس؛
+- عدد الأسئلة ضمن الحدود المتاحة؛
+- أنواع الأسئلة المتوفرة؛
+- إعدادات الاختبار المسموحة.
+
+**قاعدة أساسية:** كل الأسئلة تأتي من **Question Bank منشور ومراجع مسبقًا من Admin**. لا Live Gemini generation للطالب أثناء إنشاء الاختبار.
+
+Backend/Practice Engine يختار session من published question IDs وفق filters، مع randomization/shuffle deterministic وآمن وتسجيل question/version identity. لا يتم شحن بنك الأسئلة الكامل مع answer keys إلى Browser بلا حاجة.
+
+**Classification:** KEEP outcome + REBUILD execution
+**Status:** DECIDED
+
+## PED-027 — النماذج الوزارية الأصلية مستقلة عن المحاكاة
+
+النموذج الوزاري الأصلي يحفظ **كما هو** مع provenance/version/year/round/source/order وصور/أسئلة الأصل حسب المصدر، ولا يخلط مع محتوى مولد.
+
+نوع منفصل باسم واضح للمحاكاة يمكن إضافته/توسيعه مستقبلًا:
+
+```text
+Original Ministerial Model
+≠
+Simulated Model
+```
+
+المحاكاة إذا فُعلت لاحقًا تستخدم Question Bank/AI reviewed content وتحمل label صريح أنها محاكاة وليست نسخة أصلية.
+
+**Classification:** KEEP original + NEW simulation type later
+**Status:** Original DECIDED / simulation implementation DEFERRED
+
+## PED-028 — سياسة Offline Download عملية ومحدودة
+
+بما أن Product Owner فوّض اختيار الأنسب، نعتمد السياسة التالية:
+
+- تنزيل **درس منفرد** مدعوم؛
+- تنزيل **مادة كاملة** مدعوم؛
+- تنزيل **كتاب كامل** مدعوم عندما يكون Resource مستقلًا وحجمه ضمن budget، وبطلب صريح من الطالب؛
+- لا تنزيل تلقائي لكل المنهج؛
+- قبل التنزيل نعرض الحجم المتوقع والمساحة؛
+- Download Manager يدعم progress/retry/cancel/remove؛
+- media/text/audio المنزلة مرتبطة بالحساب + registered device + content revision؛
+- eviction policy واضحة للمحتوى القديم وغير المستخدم؛
+- Student shell والبيانات الأساسية الصغيرة تُزامن تلقائيًا، أما media الثقيلة فهي explicit download.
+
+**Classification:** KEEP Offline + REBUILD download UX/storage policy
+**Status:** DECIDED
+
+## PED-029 — Offline authorization lease = 14 يومًا كحد أقصى
+
+بعد Online validation ناجح يصدر Backend snapshot/lease موقّع مرتبطًا بالحساب والجهاز والصلاحية.
+
+```text
+valid_until = min(now + 14 days, entitlement_expiry)
+```
+
+أثناء وجود اتصال يتم تجديده بدون طلبات زائدة وفق sync lifecycle. بعد انتهاء الـ14 يومًا يحتاج التطبيق اتصالًا لتجديد صلاحية الوصول للمحتوى المحمي. Revoke من Admin لا يمكن الوصول لجهاز غير متصل فورًا؛ أسوأ نافذة Offline مقصودة هي مدة lease المتبقية، مع عدم تجاوز expiry الأصلي.
+
+**Classification:** NEW explicit Offline security rule
+**Status:** DECIDED
+
+## PED-030 — توقيت Feedback في «اختبر نفسك» ما زال مفتوحًا
+
+لم يُحسم بعد هل يظهر التصحيح/الشرح بعد كل سؤال مباشرة أم بعد إنهاء مجموعة Practice. لا نفترض القرار. الاختبار الكامل والنموذج يبقيان separate assessment flows.
+
+**Status:** PENDING
+
+# المحاور الحالية بعد Batch 03
 
 ## A. Product / audience
 
@@ -365,25 +484,25 @@ Flexible explicit hierarchy direction PED-018 مع Admin add/reorder. Curriculum
 
 ## E. Reader
 
-الصفحات والترتيب والzoom/pan/navigation/source integrity أساسية. search/highlight/page jump/reading settings/notes integration تحتاج review تفصيليًا.
+معتمد الآن: original page view + optional OCR text view + search + TTS/audio + zoom/pan/navigation + notes/favorites، وبدون Highlights مستقلة. Page jump/reading settings/audio exact UX تحتاج prototype ضمن Student Product لا Business Rule جديدًا.
 
-**Status:** PENDING DETAILED REVIEW
+**Status:** CORE DECIDED
 
 ## F. Practice / Tests / Models / Summaries
 
-القدرات الأساسية معتمدة وفق PED-011/PED-012. نحتاج الآن تحديد UX التفصيلي، أنواع الأسئلة، scoring، timing، attempts، الوزاريات، review mode، وإدارة Question Bank.
+القدرات الأساسية معتمدة. الطالب يستطيع custom test من **published Admin-reviewed Question Bank فقط**. Original ministerial models تبقى exact؛ simulation نوع منفصل لاحقًا. Timing/scoring/review semantics التفصيلية تحتاج حسمًا، وأهم نقطة مفتوحة حاليًا هي Practice feedback timing.
 
-**Status:** CORE CAPABILITIES DECIDED / DETAILS PENDING
+**Status:** CORE DECIDED / DETAILS PENDING
 
 ## G. Student AI
 
-لم نعتمد Chat حر للطالب. Admin AI/OCR معتمدان. أي Student AI مباشر يناقش لاحقًا ولا يحل محل الملخصات/الأسئلة المنشورة المراجعة.
+لا Live AI generation للأسئلة أثناء استخدام الطالب. Admin AI/OCR authoring هو المصدر المنشور. أي Chat/AI explanation مباشر للطالب يحتاج قرارًا مستقلًا لاحقًا.
 
-**Status:** PENDING
+**Status:** PARTIALLY DECIDED
 
 ## H. Notes / Favorites / Review-later
 
-الأنواع منفصلة وفق PED-016. أنواع media للملاحظات، folders/tags، sync conflict UX تحتاج قرارًا تفصيليًا.
+الأنواع منفصلة وفق PED-016. Highlights غير مطلوبة. أنواع media للملاحظات وsync conflict UX تحتاج قرارًا تفصيليًا.
 
 **Status:** CORE DECIDED / DETAILS PENDING
 
@@ -399,9 +518,9 @@ Personal progress + private achievements معتمدة؛ Global Leaderboard غي�
 
 ## K. Offline/PWA
 
-Offline أساسي وفق PED-015. download granularity، offline lease duration، storage budgets، conflict UX تحتاج حسمًا.
+Offline أساسي. Lesson + Subject + explicit full-book downloads معتمدة، وOffline authorization lease = 14 days capped by entitlement expiry. Storage budgets exact numbers/conflict UX تحتاج implementation tuning واختبار أجهزة حقيقي.
 
-**Status:** CORE DECIDED / DETAILS PENDING
+**Status:** CORE DECIDED
 
 ## L. Admin roles/permissions
 
@@ -409,7 +528,7 @@ Offline أساسي وفق PED-015. download granularity، offline lease duration
 
 ## M. Admin content/media
 
-Add/reorder curriculum + upload independent of AI + OCR async + Draft/Review/Published معتمدة. Versioning/replacement/archive والتعامل مع updates تحتاج review.
+Add/reorder curriculum + upload independent of AI + OCR async + Draft/Review/Published معتمدة. TTS derived audio يعتمد على published/approved text ولا يحظر upload. Versioning/replacement/archive والتعامل مع updates تحتاج review.
 
 **Status:** PARTIALLY DECIDED
 
@@ -421,7 +540,7 @@ Add/reorder curriculum + upload independent of AI + OCR async + Draft/Review/Pub
 
 ## O. Quiz Builder / Content QA
 
-يجب أن يدعم manual edit، validation، source/page، difficulty، duplicates، answers/explanations، preview، versions. التفاصيل تحتاج نقاش.
+يجب أن يدعم manual edit، validation، source/page، difficulty، duplicates، answers/explanations، preview، versions، ونشر الأسئلة إلى Question Bank الذي يستهلكه الطالب. التفاصيل تحتاج نقاش.
 
 **Status:** PENDING DETAILED REVIEW
 
@@ -439,9 +558,9 @@ Import/Export capability معتمدة، exact reports/scopes/formats تحتاج 
 
 ## R. Search/discovery
 
-OCR text يمكن أن يدعم search مستقبلًا. Arabic normalization، indexing، student/admin scopes تحتاج review.
+Book/lesson search معتمد باستخدام OCR/published text + Arabic normalization. Admin/global search exact indexing/scopes تحتاج review.
 
-**Status:** PENDING
+**Status:** PARTIALLY DECIDED
 
 ## S. Content lifecycle
 
@@ -451,27 +570,29 @@ Draft → Review → Published معتمد. Curriculum version/year، rollback، 
 
 # أثر القرارات على الخطة
 
-1. **Product Evolution Review يبقى المرحلة الحالية** حتى نحسم Reader، Practice details، curriculum versioning، Offline details، Admin roles وContent QA الأساسية.
+1. **Product Evolution Review يبقى المرحلة الحالية** حتى نحسم Practice feedback/scoring الأساسية، curriculum versioning، Admin roles وContent QA الأساسية.
 2. **Stage 8 Reopen:** two-step activation + temporary-password mandatory change + registered-device key/challenge + device reset/rebind + new Chromium/security E2E.
 3. **Stage 10 Preview Sync:** ما زال مطلوبًا بعد تثبيت baseline القرارات.
-4. **OCR Extraction Foundation** يجب أن يسبق الاعتماد الكامل على AI authoring؛ مستقل عن Upload.
-5. **Stage 11 AI Contracts** يحافظ على جميع generation modes ذات القيمة ويستخدم OCR text + provenance كinput افتراضي.
-6. **Stage 12 Durable AI** يطبق job queue/scheduler/retry/cooldown/failover/metrics/idempotency.
-7. **Admin Product** يتضمن flexible curriculum، independent upload، OCR states، Draft/Review/Published، AI review، import/export.
-8. **Student Product** يتضمن Welcome/returning login، curriculum/reader، summaries، self-practice، tests/models، notes/favorites/review-later، personal progress/achievements.
-9. **Offline/PWA** Requirement أساسي: account/device-scoped cache + revisions + outbox + bounded explicit downloads، مع تقليل API traffic.
-10. لا Feature legacy ذات قيمة تُحذف بدون قرار صريح موثق.
+4. **OCR Extraction Foundation** يسبق الاعتماد الكامل على AI authoring؛ مستقل عن Upload.
+5. **Reader Product** يجب أن يدعم page/text dual view، OCR search، cached TTS audio، notes/favorites وOffline downloads.
+6. **Stage 11 AI Contracts** يحافظ على جميع generation modes ذات القيمة ويستخدم OCR text + provenance كinput افتراضي.
+7. **Stage 12 Durable AI** يطبق job queue/scheduler/retry/cooldown/failover/metrics/idempotency.
+8. **Admin Product** يتضمن flexible curriculum، independent upload، OCR/TTS derived-state visibility، Draft/Review/Published، AI review، import/export.
+9. **Student Product** يتضمن Welcome/returning login، curriculum/reader، summaries، self-practice، custom tests from published Question Bank، original models، notes/favorites/review-later، personal progress/achievements.
+10. **Offline/PWA** Requirement أساسي: account/device-scoped cache + revisions + outbox + explicit bounded downloads + 14-day authorization lease.
+11. لا Feature legacy ذات قيمة تُحذف بدون قرار صريح موثق.
 
 # قرارات نحتاجها في الجلسات التالية
 
-- Reader: البحث، highlight، jump، layout، dark/reading settings.
-- Practice/Test: أنواع الأسئلة، timing، correction/review، attempts، الوزاريات، custom test builder للطالب إن وجد.
-- Curriculum: year/version، optional units، archived editions، هل المادة نفسها تشترك بين أكثر من صف أم offering مستقل.
-- Offline: هل يسمح تنزيل `درس + مادة + كتاب كامل`؟ وما مدة offline authorization قبل ضرورة الاتصال؟
-- Admin roles: Super Admin فقط أم Content Editor/Support لاحقًا.
+- Practice: feedback after each question vs end of practice؛ scoring/timing/review semantics.
+- Curriculum: year/version، archived editions، content replacement/update rules.
+- Admin roles: Super Admin فقط أم Content Editor/Support/Reviewer وغيرها.
+- Quiz Builder/Content QA exact workflow and duplicate/source validation UX.
 - Notes: text/image/capture/audio وما الذي نطلقه أولًا.
-- Notifications/search/reports exact scope.
+- Notifications exact categories/channels.
+- Reports/Import/Export exact scopes/formats.
+- Student AI: هل نضيف شرح مباشر/Chat مقيد بالمصدر أم نكتفي بالمحتوى المنشور في البداية.
 
 ## الحالة
 
-`PRODUCT REVIEW IN PROGRESS / BATCHES 01–02 RECORDED / NO FEATURE REMOVAL WITHOUT OWNER DECISION`
+`PRODUCT REVIEW IN PROGRESS / BATCHES 01–03 RECORDED / READER+SEARCH+TTS+QUESTION-BANK+OFFLINE CORE DECIDED / NO FEATURE REMOVAL WITHOUT OWNER DECISION`
