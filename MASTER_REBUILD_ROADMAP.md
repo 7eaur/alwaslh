@@ -18,7 +18,7 @@
 12. Large AI generation = durable chunked jobs + bounded concurrency/backpressure، وليس request ضخم واحد.
 13. Admin product الحالي = Super Admin فقط؛ لا multi-role RBAC بلا حاجة.
 14. Full Code 6 digits / Class Code 7 digits كلاهما Core Feature؛ multiple class entitlements مدعومة.
-15. `PRODUCT_FEATURE_PARITY_MATRIX.md` coverage gate قبل إغلاق Student/Admin feature stages.
+15. `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` hard coverage gate قبل إغلاق Student/Admin feature stages.
 16. كل Stage لها executable DoD؛ unexecuted = `NOT YET VERIFIED`.
 
 ## Target Architecture
@@ -39,7 +39,7 @@ Student PWA ┘       │
 # Verified baseline
 
 ## Stage 1 — Product Inventory ✅ CLI PASS
-Legacy feature/user-flow inventory and coverage safety net.
+Legacy feature/user-flow inventory and parity safety net.
 
 ## Stage 2 — Brand Identity ✅ CLI PASS
 Owned teal/open-book identity, Arabic typography/tokens/accessibility rules.
