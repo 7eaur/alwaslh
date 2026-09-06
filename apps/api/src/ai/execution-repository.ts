@@ -1,6 +1,6 @@
 import type { QueryExecutor } from "../db.js";
 import type { AiGenerationRequest } from "./contracts.js";
-import type { AiModelRoute } from "./router.js";
+import { type AiModelRoute, resolveRouteCapacity } from "./router.js";
 import type { AiValidationResult, AiValidationStatus } from "./validators.js";
 
 export type AiExecutableUnitStatus =
@@ -36,6 +36,8 @@ export interface AiClaimedUnit {
   max_attempts: number;
   lease_token: string;
   lease_expires_at: Date;
+  resume_route_key: string | null;
+  capacity_deferred_count: number;
 }
 
 export interface AiPlanUnitRecord {
@@ -61,6 +63,23 @@ export interface AiProviderUsageRecord {
   outputTokens?: number;
   estimatedCostUsd?: number;
 }
+
+export type AiCapacityDimension = "global" | "provider" | "project" | "model";
+
+export interface AiCapacityBlock {
+  started: false;
+  dimension: AiCapacityDimension;
+  current: number;
+  limit: number;
+}
+
+export interface AiStartedAttempt {
+  started: true;
+  id: string;
+  attemptNumber: number;
+}
+
+export type AiAttemptStartResult = AiCapacityBlock | AiStartedAttempt;
 
 function json(value: unknown): string {
   return JSON.stringify(value ?? null);
@@ -152,12 +171,14 @@ export class AiExecutionRepository {
     const rows = await executor.query<{ job_id: string }>(
       `update ai_job_units
        set status = 'failed', lease_token = null, lease_expires_at = null,
+           resume_route_key = null,
            last_error_code = 'lease_expired_max_attempts',
            last_error_message = 'worker lease expired after maximum execution attempts',
            completed_at = now()
        where status = 'running'
          and lease_expires_at <= now()
          and attempt_count >= max_attempts
+         and resume_route_key is null
        returning job_id`,
     );
     return [...new Set(rows.map((row) => row.job_id))];
@@ -171,7 +192,7 @@ export class AiExecutionRepository {
          join ai_jobs j on j.id = u.job_id
          where j.cancel_requested_at is null
            and j.status in ('queued', 'running', 'retrying')
-           and u.attempt_count < u.max_attempts
+           and (u.attempt_count < u.max_attempts or u.resume_route_key is not null)
            and (
              u.status = 'queued'
              or (u.status = 'retrying' and (u.next_attempt_at is null or u.next_attempt_at <= now()))
@@ -183,7 +204,7 @@ export class AiExecutionRepository {
        )
        update ai_job_units u
        set status = 'running',
-           attempt_count = u.attempt_count + 1,
+           attempt_count = u.attempt_count + case when u.resume_route_key is null then 1 else 0 end,
            next_attempt_at = null,
            lease_token = gen_random_uuid(),
            lease_expires_at = now() + make_interval(secs => $1::int),
@@ -193,7 +214,8 @@ export class AiExecutionRepository {
        where u.id = c.id
        returning u.id, u.job_id, u.unit_key, u.position, u.status,
                  u.input_payload, u.attempt_count, u.max_attempts,
-                 u.lease_token, u.lease_expires_at`,
+                 u.lease_token, u.lease_expires_at,
+                 u.resume_route_key, u.capacity_deferred_count`,
       [leaseSeconds],
     );
     const claimed = rows[0] ?? null;
@@ -225,8 +247,67 @@ export class AiExecutionRepository {
     executor: QueryExecutor,
     unit: Pick<AiClaimedUnit, "id" | "lease_token">,
     route: AiModelRoute,
-  ): Promise<{ id: string; attemptNumber: number }> {
+    globalMaxConcurrent: number,
+  ): Promise<AiAttemptStartResult> {
     await this.assertActiveLease(executor, unit);
+
+    // Serialize only the very short capacity-check + attempt-insert critical section
+    // across worker processes. Provider calls happen after this transaction commits.
+    await executor.query("select pg_advisory_xact_lock(9412, 12)");
+
+    const capacity = resolveRouteCapacity(route);
+    const countsRows = await executor.query<{
+      global_running: number;
+      provider_running: number;
+      project_running: number;
+      model_running: number;
+    }>(
+      `select
+         count(*)::int as global_running,
+         count(*) filter (where provider_key = $1)::int as provider_running,
+         count(*) filter (
+           where $3::text is not null
+             and provider_key = $1
+             and provider_project_alias = $3
+         )::int as project_running,
+         count(*) filter (where provider_key = $1 and model_used = $2)::int as model_running
+       from ai_execution_attempts
+       where status = 'running'`,
+      [route.providerKey, route.modelKey, route.projectAlias ?? null],
+    );
+    const counts = countsRows[0];
+    if (!counts) throw new Error("ai_capacity_count_failed");
+
+    if (counts.global_running >= globalMaxConcurrent) {
+      return { started: false, dimension: "global", current: counts.global_running, limit: globalMaxConcurrent };
+    }
+    if (counts.provider_running >= capacity.providerMaxConcurrent) {
+      return {
+        started: false,
+        dimension: "provider",
+        current: counts.provider_running,
+        limit: capacity.providerMaxConcurrent,
+      };
+    }
+    if (
+      capacity.projectMaxConcurrent !== null &&
+      counts.project_running >= capacity.projectMaxConcurrent
+    ) {
+      return {
+        started: false,
+        dimension: "project",
+        current: counts.project_running,
+        limit: capacity.projectMaxConcurrent,
+      };
+    }
+    if (counts.model_running >= capacity.modelMaxConcurrent) {
+      return {
+        started: false,
+        dimension: "model",
+        current: counts.model_running,
+        limit: capacity.modelMaxConcurrent,
+      };
+    }
 
     const next = await executor.query<{ attempt_number: number }>(
       `select coalesce(max(attempt_number), 0)::int + 1 as attempt_number
@@ -253,13 +334,47 @@ export class AiExecutionRepository {
     );
     await executor.query(
       `update ai_job_units
-       set provider_project_alias = $2, credential_alias = $3, model_used = $4
+       set provider_project_alias = $2, credential_alias = $3, model_used = $4,
+           resume_route_key = null
        where id = $1`,
       [unit.id, route.projectAlias ?? null, route.credentialAlias ?? null, route.modelKey],
     );
     const id = inserted[0]?.id;
     if (!id) throw new Error("ai_attempt_insert_failed");
-    return { id, attemptNumber };
+    return { started: true, id, attemptNumber };
+  }
+
+  async deferForCapacity(
+    executor: QueryExecutor,
+    unit: Pick<AiClaimedUnit, "id" | "lease_token">,
+    routeKey: string,
+    nextAttemptAt: Date,
+    dimension: AiCapacityDimension,
+    current: number,
+    limit: number,
+  ): Promise<void> {
+    const rows = await executor.query<{ id: string }>(
+      `update ai_job_units
+       set status = 'retrying',
+           next_attempt_at = $4,
+           lease_token = null,
+           lease_expires_at = null,
+           resume_route_key = $3,
+           capacity_deferred_count = capacity_deferred_count + 1,
+           last_error_code = 'capacity_backpressure',
+           last_error_message = $5,
+           completed_at = null
+       where id = $1 and status = 'running' and lease_token = $2 and lease_expires_at > now()
+       returning id`,
+      [
+        unit.id,
+        unit.lease_token,
+        routeKey,
+        nextAttemptAt,
+        `capacity ${dimension} ${current}/${limit}; resume route ${routeKey}`,
+      ],
+    );
+    if (!rows[0]) throw new Error("ai_lease_lost");
   }
 
   async finishAttemptSuccess(
@@ -336,6 +451,7 @@ export class AiExecutionRepository {
            next_attempt_at = $4,
            lease_token = null,
            lease_expires_at = null,
+           resume_route_key = null,
            last_error_code = case when $3 = 'retrying' or $3 = 'failed' then 'validation_invalid' else null end,
            last_error_message = case when $3 = 'retrying' or $3 = 'failed' then 'provider output failed Stage11 validation' else null end,
            completed_at = case when $5 then now() else null end
@@ -364,7 +480,7 @@ export class AiExecutionRepository {
         unit.id,
         validation.status,
         json(output),
-        json(validation.output ?? null),
+        json(validationErrors),
         json(validationErrors),
         json(semanticWarnings),
       ],
@@ -384,6 +500,7 @@ export class AiExecutionRepository {
            next_attempt_at = $4,
            lease_token = null,
            lease_expires_at = null,
+           resume_route_key = null,
            last_error_code = $5,
            last_error_message = $6,
            completed_at = case when $3 = 'failed' then now() else null end
@@ -468,7 +585,7 @@ export class AiExecutionRepository {
     await executor.query(
       `update ai_job_units
        set status = 'cancelled', lease_token = null, lease_expires_at = null,
-           next_attempt_at = null, completed_at = now(),
+           next_attempt_at = null, resume_route_key = null, completed_at = now(),
            last_error_code = 'job_cancelled', last_error_message = 'job cancelled'
        where job_id = $1 and status in ('queued', 'running', 'retrying')`,
       [jobId],
