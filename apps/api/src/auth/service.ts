@@ -294,7 +294,7 @@ export class AuthService {
           throw new AppError("CONFLICT", "إعادة ربط الجهاز تتطلب مفتاح جهاز جديدًا", 409);
         }
 
-        let devices: { id: string }[];
+        let devices: readonly { id: string }[];
         try {
           devices = await tx.query<{ id: string }>(
             `insert into student_devices (profile_id, public_key_spki, public_key_sha256, label)
