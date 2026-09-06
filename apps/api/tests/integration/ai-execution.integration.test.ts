@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { AiGenerationRequest } from "../../src/ai/contracts.js";
+import { AiExecutionService } from "../../src/ai/execution-service.js";
 import type {
   AiProviderAdapter,
   AiProviderGenerateInput,
@@ -8,7 +9,6 @@ import type {
 } from "../../src/ai/provider.js";
 import { AiProviderError } from "../../src/ai/provider.js";
 import { AiModelRouter } from "../../src/ai/router.js";
-import { AiExecutionService } from "../../src/ai/execution-service.js";
 import { createDatabase } from "../../src/db.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -209,7 +209,11 @@ test("Stage12 execution is durable, leased, retryable, cancellable and partial-s
     const cascadeResult = await cascade.processNext();
     assert.equal(cascadeResult?.status, "completed");
     assert.equal(cascadeResult?.routeKey, "strong");
-    const cascadeAttempts = await db.query<{ status: string; provider_key: string; retryable: boolean | null }>(
+    const cascadeAttempts = await db.query<{
+      status: string;
+      provider_key: string;
+      retryable: boolean | null;
+    }>(
       `select status, provider_key, retryable
        from ai_execution_attempts a
        join ai_job_units u on u.id = a.job_unit_id
@@ -324,7 +328,9 @@ test("Stage12 execution is durable, leased, retryable, cancellable and partial-s
       completed_units: number;
       failed_units: number;
       total_units: number;
-    }>("select status, completed_units, failed_units, total_units from ai_jobs where id = $1", [partialJob.job.id]);
+    }>("select status, completed_units, failed_units, total_units from ai_jobs where id = $1", [
+      partialJob.job.id,
+    ]);
     assert.equal(partialState[0]?.status, "completed");
     assert.equal(partialState[0]?.completed_units, 1);
     assert.equal(partialState[0]?.failed_units, 1);
