@@ -1,141 +1,141 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage6/8 Auth/Activation/Device Refactor — **VERIFIED**; OCR Extraction Foundation is next.
+- **Current Phase:** OCR Extraction Foundation — **VERIFIED**; Stage11 Provider-Neutral AI Prompt / Output Contracts is active next work.
 - **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
-- **Exact verified Stage6/8 head:** `016546eca5696337b52063903bb5ba2fb9631c33`.
+- **Exact verified OCR implementation head:** `befdb8e5bd02aa33b12ce1098fac2678fe15acdd`.
 - **Deployment:** `DEFERRED BY PRODUCT OWNER`. No Preview/Vercel deployment is required while this decision remains active.
-- **Git auto-deployment:** intentionally disabled during this development period so normal commits/CI do not publish automatically.
+- **Git auto-deployment:** intentionally disabled during this development period so ordinary commits/CI do not publish.
 - **Verification policy:** executable evidence is mandatory. Hosted Preview surfaces remain `NOT YET VERIFIED` / `DEFERRED BY PRODUCT OWNER`; they are not reported as PASS.
 
-## Stage6/8 closure — VERIFIED
+## Verified foundation through OCR
 
-The final auth/activation/device implementation now matches the Product Review target:
+Stages 1–10 remain green. Stage6/8 Auth/Activation/Device was previously closed on `016546eca5696337b52063903bb5ba2fb9631c33` and remains green under the OCR regression head.
 
-- two-step 6-digit Full Code activation: eligibility verification does not consume the code;
-- short-lived activation ticket;
-- mandatory password creation;
-- one final atomic transaction for account + credential + entitlement + redemption + audit + registered device;
-- password-only Student sessions are blocked;
-- returning Student login requires password + one-time registered-device challenge;
-- cryptographic application-device identity uses ECDSA P-256, not IP/User-Agent/browser fingerprint;
-- Student sessions are bound to an active registered device;
-- Admin recovery issues a temporary password, revokes previous sessions/challenges and forces a private password change;
-- Admin device reset revokes the old device/sessions and permits one rebind;
-- historical device-key reuse for the same profile is rejected;
-- Student Web stores a non-extractable private `CryptoKey` in account-scoped IndexedDB and sends only the public key/proof to the server;
-- rebind rotates the browser key and the new session is bound to the new device.
-
-## Exact verification evidence
-
-Exact head: `016546eca5696337b52063903bb5ba2fb9631c33`.
-
-- **Rebuild Stage Verification `34002283741` — SUCCESS**
-  - Stage 1 Product contract — PASS
-  - Stage 2 Brand identity — PASS
-  - Stage 3 UX architecture — PASS
-  - Stage 4 PostgreSQL clean build — PASS
-  - Stage 5 Engineering foundation — PASS
-    - API lint/typecheck/unit/build
-    - clean migrations + idempotent rerun/count
-    - Admin build
-    - Student lint/unit/typecheck/build
-  - Stage 6 Auth & authorization — PASS
-    - PostgreSQL auth lifecycle
-    - role isolation
-    - registered-device proof
-    - wrong-device rejection
-    - password-only Student bypass rejection
-    - temporary-password forced change
-    - session revocation
-    - explicit device reset/rebind
-    - historical-key rejection / new-key success
-  - Stage 7 Access codes & entitlements — PASS
-    - renewal/no-waste/idempotency/race/revoke remain intact with device-bound Student sessions
-  - Stage 8 Student activation backend — PASS
-    - two-step activation atomicity
-    - replay/idempotency
-    - device-bound session creation
-    - race safety
-  - Stage 8 Chromium browser E2E — PASS
-    - activation verification + completion
-    - WebCrypto P-256 key creation
-    - IndexedDB persistence
-    - returning-device challenge login
-    - temporary-password forced private-password change with the same key
-    - session invalidation
-    - device rebind and browser key rotation
-    - successful login with the new key
-    - responsive horizontal-overflow check
-- **Stage 9 Content Import Verification `34002283819` — SUCCESS**
-- **Stage 10 Media Pipeline `34002283817` — SUCCESS**
-
-## Key implementation boundary
-
-The browser never receives PostgreSQL credentials and does not authorize through direct Supabase/PostgREST access. `apps/api` remains the only business-data path. Device private keys remain browser-local; the server stores the public key/fingerprint only.
-
-The Chromium recovery/rebind scenario uses a test-only `AuthService` fixture against the E2E PostgreSQL database to change support state without introducing a test HTTP endpoint or embedding Admin credentials. Admin HTTP authorization/recovery/rebind routes are separately verified by the PostgreSQL/API auth integration suite.
-
-## Deployment / Preview state
-
-Development deployment is intentionally postponed by Product Owner decision.
-
-- previous Stage10 Preview engineering/Supabase work remains recorded as historical evidence;
-- prior Vercel quota failure is no longer an engineering-order blocker while deployment is deferred;
-- no Business Rule, authorization boundary, validation rule or DB permission was weakened;
-- Preview `READY`, `/`, `/admin`, `/api/health`, `/api/ready`, hosted Poppler and durable hosted media remain `NOT YET VERIFIED` until deployment is explicitly re-enabled;
-- do not re-enable Git auto-deployment or publish a Preview without a new Product Owner instruction.
-
-## OCR Extraction Foundation — current next work
-
-Repository discovery already confirms the correct integration boundary:
+OCR Foundation now adds a provider-neutral, durable derived-text layer without changing media/upload success semantics:
 
 ```text
-ready media page / media_asset
-→ durable OCR job
-→ OcrProvider abstraction
-→ raw text + optional normalized text
-→ confidence/status/provider/version/provenance
-→ PostgreSQL
-→ searchable/reusable text
+ready media asset / AI image variant
+→ durable ocr_extractions work item
+→ OcrProvider
+→ raw OCR text
+→ conservative normalized text
+→ confidence + provider/version metadata
+→ review gate where required
+→ approved searchable/reusable text
 ```
 
-Existing Stage10 media identity already provides `media_asset_id`, `content_source_asset_id`, `source_page_number`, source checksum and deterministic media variants. OCR must reference this provenance rather than duplicate it.
+### OCR implementation contract
 
-Required OCR properties:
+- canonical schema: `database/migrations/0011_ocr_foundation.sql`;
+- OCR references deterministic Stage10 `media_variants` and their checksum instead of duplicating source/page provenance;
+- enqueue accepts only a `ready` media asset with the expected AI variant;
+- idempotency identity is bound to media variant + checksum + provider + provider version + extraction profile;
+- durable states: `queued / running / retrying / completed / failed`;
+- worker claims use PostgreSQL row locking with `FOR UPDATE SKIP LOCKED`;
+- each running attempt has a UUID lease token and expiry;
+- expired final attempts are closed as failed; expired retryable work can be reclaimed;
+- stale workers cannot complete **or fail/retry** an extraction after losing the lease;
+- the input media must still be `ready` at execution time and must match stored checksum/byte identity;
+- OCR failure does not turn a successful Stage10 media asset into failed media;
+- raw provider text is retained;
+- normalization is deliberately conservative and preserves Arabic/source characters;
+- empty output always requires review;
+- missing/low provider confidence requires review according to profile threshold;
+- sensitive/exact-source profiles can force review even with high confidence;
+- only completed `not_required` or Admin-`approved` text is searchable/reusable;
+- Admin-only review can approve/reject and optionally replace normalized text;
+- `OcrProvider` is provider-neutral; Tesseract CLI/TSV is a verified reference adapter, not an architecture lock-in;
+- real CI installs and exercises both Arabic and English Tesseract language packs.
 
-- upload/media processing remains successful even when OCR fails;
-- retry and idempotency;
-- source/page identity and checksum-aware provenance;
-- original image remains canonical evidence;
-- raw OCR text retained; normalization is separate/traceable;
-- confidence and review/fallback state for low-confidence, sensitive or exact-source content;
-- provider-neutral interface; no hard lock-in to one OCR vendor;
-- searchable/reusable approved text;
-- deterministic PostgreSQL/integration tests and regression gates;
-- provider benchmark dataset/evidence before claiming provider quality.
+## Exact OCR verification evidence
+
+Exact head: `befdb8e5bd02aa33b12ce1098fac2678fe15acdd`.
+
+- **OCR Foundation Verification `34003439653` — SUCCESS**
+  - PostgreSQL + Tesseract Arabic/English runtime installation — PASS
+  - API lint/typecheck/unit/build — PASS
+  - clean migrations through `0011_ocr_foundation.sql` — PASS
+  - OCR PostgreSQL table/index/constraint contracts — PASS
+  - durable enqueue/replay — PASS
+  - low-confidence review gating — PASS
+  - approved-only search — PASS
+  - retry/backoff state — PASS
+  - media success independence from OCR failure — PASS
+  - concurrent claim isolation — PASS
+  - empty-output review — PASS
+  - forced sensitive-profile review — PASS
+  - media-ready execution guard — PASS
+  - stale-lease write rejection — PASS
+  - real Tesseract extraction smoke test — PASS
+- **Stage 9 Content Import Verification `34003439660` — SUCCESS**
+- **Stage 10 Media Pipeline `34003439659` — SUCCESS**
+- **Rebuild Stage Verification `34003439669` — SUCCESS**
+  - Stages 1–8 — PASS
+  - API/Admin/Student builds — PASS
+  - PostgreSQL migrations — PASS
+  - Stage8 Chromium activation/returning-login/recovery/rebind E2E — PASS
+
+## Auth/device baseline retained
+
+The OCR batch did not weaken Stage6/8:
+
+- two-step non-consuming 6-digit Full Code verification;
+- final activation is one atomic account/credential/entitlement/redemption/device/audit transaction;
+- ECDSA P-256 registered-device proof for Student sessions;
+- password-only Student session bypass blocked;
+- temporary-password recovery forces private-password replacement;
+- Admin reset/rebind revokes old auth state and requires a new device key;
+- browser private key remains non-extractable and account-scoped in IndexedDB.
 
 ## Stage10 media boundary retained
 
-- media storage remains behind `MediaStorage`;
-- locally verified adapter remains `FileSystemMediaStorage`;
-- PDF extraction uses Poppler locally;
-- Vercel filesystem is not accepted as durable production media storage;
-- hosted Poppler/durable media behavior remains `NOT YET VERIFIED` and will not be faked to unblock OCR architecture.
+- Stage10 media remains authoritative source/image evidence;
+- OCR is derived and cannot redefine media readiness;
+- `MediaStorage` remains the storage abstraction;
+- locally verified storage adapter remains `FileSystemMediaStorage`;
+- hosted durable storage and hosted Poppler remain `NOT YET VERIFIED` while deployment is deferred.
+
+## Deployment / Preview state
+
+Development deployment remains intentionally postponed by Product Owner decision.
+
+- no deployment was performed for Auth/Device or OCR work;
+- previous Preview/Supabase/Vercel engineering evidence remains historical only;
+- hosted Student/Admin/API/media/OCR behavior remains `NOT YET VERIFIED`;
+- do not re-enable Git auto-deployment or publish a Preview without a new Product Owner instruction.
+
+## Active next phase — Stage11 AI contracts
+
+Stage11 must define the provider/model-neutral **content contract**, not the Stage12 scheduler/throughput system.
+
+Required next work:
+
+1. inventory actual AI code/schema and legacy generation modes before editing;
+2. create a versioned Prompt Registry contract;
+3. define typed provider-neutral generation inputs/outputs;
+4. use approved OCR text + source/page provenance as the primary book-generation input;
+5. require source/page evidence for book-generated questions;
+6. define schema + semantic + provenance + duplicate validators;
+7. encode Arabic/Fusha/scientific/chemistry/exact-source rules without silent answer invention;
+8. define explicit uncertain/invalid/review-required outcomes;
+9. build a source-controlled golden regression/benchmark harness that can compare provider adapters on identical cases;
+10. keep provider execution/routing/queues/backpressure in Stage12 unless a minimal interface is needed by Stage11 tests.
+
+Live provider credentials/cost routing are **NOT YET VERIFIED** and must not be invented or embedded in the repository.
 
 ## Remaining ordered work
 
-1. OCR Extraction Foundation.
-2. Stage11 provider/model-neutral AI prompt/output contracts + golden benchmark + provenance/validators.
-3. Stage12 durable provider/model-neutral high-throughput execution.
-4. Curriculum structure extension and Stage13+ according to `MASTER_REBUILD_ROADMAP.md`.
-5. When Product Owner explicitly re-enables deployment: restore the deployment path deliberately, sync a stable validated head, verify exact hosted commit/`READY`/Student/Admin/API/runtime behavior, and record evidence.
+1. Stage11 provider/model-neutral AI prompt/output contracts + golden benchmark/provenance/validators.
+2. Stage12 durable provider/model-neutral high-throughput execution.
+3. Curriculum structure extension and Stage13+ according to `MASTER_REBUILD_ROADMAP.md`.
+4. When Product Owner explicitly re-enables deployment: deliberately restore/sync a stable validated head and verify exact hosted commit/`READY`/Student/Admin/API/media/OCR runtime before claiming PASS.
 
 `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` remain hard gates before later Student/Admin feature closure. No valuable legacy capability may be removed without explicit Product Owner approval.
 
 ## Last build/test
 
-**Stage6/8 exact head `016546eca5696337b52063903bb5ba2fb9631c33`: Full Rebuild + Stage9 + Stage10 all SUCCESS.**
+**OCR exact implementation head `befdb8e5bd02aa33b12ce1098fac2678fe15acdd`: OCR Foundation + Full Rebuild + Stage9 + Stage10 all SUCCESS.**
 
 ## Next step
 
-Design and implement the smallest correct OCR Foundation on top of the existing Stage10 media identity/storage boundaries, then run PostgreSQL/API/media regression gates. Deployment remains deferred.
+Begin Stage11 with repository/code discovery and legacy generation-mode inventory, then implement the smallest correct prompt/input/output/validation contracts and golden regression harness. Deployment remains deferred.
