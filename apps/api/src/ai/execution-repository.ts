@@ -67,7 +67,10 @@ function json(value: unknown): string {
 }
 
 export class AiExecutionRepository {
-  async createPlan(executor: QueryExecutor, input: CreateAiPlanInput): Promise<{ job: AiJobRecord; replayed: boolean }> {
+  async createPlan(
+    executor: QueryExecutor,
+    input: CreateAiPlanInput,
+  ): Promise<{ job: AiJobRecord; replayed: boolean }> {
     const inserted = await executor.query<AiJobRecord>(
       `insert into ai_jobs (
          created_by_profile_id, job_type, status, prompt_key, prompt_version,
@@ -112,7 +115,13 @@ export class AiExecutionRepository {
       [
         job.id,
         input.maxAttempts,
-        json(input.units.map((unit) => ({ unit_key: unit.unitKey, position: unit.position, input_payload: unit.request }))),
+        json(
+          input.units.map((unit) => ({
+            unit_key: unit.unitKey,
+            position: unit.position,
+            input_payload: unit.request,
+          })),
+        ),
       ],
     );
 
@@ -255,7 +264,10 @@ export class AiExecutionRepository {
     providerRequestId?: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
-    const costMicros = usage.estimatedCostUsd === undefined ? null : Math.max(0, Math.round(usage.estimatedCostUsd * 1_000_000));
+    const costMicros =
+      usage.estimatedCostUsd === undefined
+        ? null
+        : Math.max(0, Math.round(usage.estimatedCostUsd * 1_000_000));
     const rows = await executor.query<{ id: string }>(
       `update ai_execution_attempts
        set status = 'completed', validation_status = $2::ai_output_validation_status,
