@@ -251,7 +251,11 @@ test("OCR foundation is durable, review-aware, retryable and independent from me
       key: "exact-source-review-v1",
       requiresReview: true,
     };
-    const sensitiveEnqueue = await ocr.enqueue(sensitiveMedia.mediaAssetId, sensitiveProvider, sensitiveProfile);
+    const sensitiveEnqueue = await ocr.enqueue(
+      sensitiveMedia.mediaAssetId,
+      sensitiveProvider,
+      sensitiveProfile,
+    );
     const sensitiveProcessed = await ocr.processNext(sensitiveProvider, sensitiveProfile);
     assert.equal(sensitiveProcessed?.extraction.id, sensitiveEnqueue.extraction.id);
     assert.equal(sensitiveProcessed?.extraction.review_status, "pending");
@@ -269,7 +273,9 @@ test("OCR foundation is durable, review-aware, retryable and independent from me
       { rawText: "SHOULD NOT RUN", meanConfidence: 99 },
     ]);
     const invalidatedEnqueue = await ocr.enqueue(invalidatedMedia.mediaAssetId, invalidatedProvider, profile);
-    await db.query("update media_assets set status = 'failed' where id = $1", [invalidatedMedia.mediaAssetId]);
+    await db.query("update media_assets set status = 'failed' where id = $1", [
+      invalidatedMedia.mediaAssetId,
+    ]);
     await assert.rejects(() => ocr.processNext(invalidatedProvider, profile), /ocr_input_integrity_failed/);
     assert.equal((await ocr.get(invalidatedEnqueue.extraction.id))?.status, "failed");
 
@@ -284,9 +290,10 @@ test("OCR foundation is durable, review-aware, retryable and independent from me
     const staleEnqueue = await ocr.enqueue(staleMedia.mediaAssetId, staleProvider, profile);
     const staleRun = ocr.processNext(staleProvider, profile);
     await staleProvider.started;
-    await db.query("update ocr_extractions set lease_expires_at = now() - interval '1 second' where id = $1", [
-      staleEnqueue.extraction.id,
-    ]);
+    await db.query(
+      "update ocr_extractions set lease_expires_at = now() - interval '1 second' where id = $1",
+      [staleEnqueue.extraction.id],
+    );
     staleProvider.releaseFailure();
     await assert.rejects(staleRun, /ocr_lease_lost/);
     const staleState = await ocr.get(staleEnqueue.extraction.id);
