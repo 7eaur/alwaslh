@@ -215,6 +215,7 @@ export async function loadClaimedOcrInput(
        and e.status = 'running'
        and e.lease_token = $2
        and e.lease_expires_at > now()
+       and a.status = 'ready'
        and v.checksum_sha256 = e.input_checksum_sha256
      limit 1`,
     [extractionId, leaseToken],
@@ -306,6 +307,7 @@ export async function failOcrExtraction(
      where id = $1
        and status = 'running'
        and lease_token = $2
+       and lease_expires_at > now()
      returning id, input_media_variant_id, input_checksum_sha256, provider_key, provider_version,
                profile_key, status, attempt_count, max_attempts, next_attempt_at,
                raw_text, normalized_text, mean_confidence, review_status, review_reason, idempotency_key`,
