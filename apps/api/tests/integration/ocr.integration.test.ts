@@ -44,6 +44,35 @@ class SequenceOcrProvider implements OcrProvider {
   }
 }
 
+class DeferredFailureOcrProvider implements OcrProvider {
+  readonly started: Promise<void>;
+  private releasePromise: Promise<void>;
+  private resolveStarted!: () => void;
+  private resolveRelease!: () => void;
+
+  constructor(
+    readonly key: string,
+    readonly version: string,
+  ) {
+    this.started = new Promise((resolve) => {
+      this.resolveStarted = resolve;
+    });
+    this.releasePromise = new Promise((resolve) => {
+      this.resolveRelease = resolve;
+    });
+  }
+
+  releaseFailure(): void {
+    this.resolveRelease();
+  }
+
+  async extract(_input: OcrProviderInput): Promise<OcrProviderResult> {
+    this.resolveStarted();
+    await this.releasePromise;
+    throw new OcrProviderError("provider_busy", "provider returned after lease expiry", true);
+  }
+}
+
 async function fixtureImage(text: string): Promise<Buffer> {
   const escaped = text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   const svg = Buffer.from(
@@ -191,10 +220,83 @@ test("OCR foundation is durable, review-aware, retryable and independent from me
     assert.equal(concurrent.filter((value) => value !== null).length, 1);
     assert.equal(concurrent.filter((value) => value === null).length, 1);
 
+    const emptyMedia = await media.processImage({
+      idempotencyKey: "ocr-media-empty-text",
+      sourcePosition: 4,
+      sourceFilename: "empty.png",
+      sourceMimeType: "image/png",
+      bytes: await fixtureImage("EMPTY OCR"),
+    });
+    const emptyProvider = new SequenceOcrProvider("empty-ocr", "test-v1", [
+      { rawText: "  \n\t ", meanConfidence: 99 },
+    ]);
+    const emptyEnqueue = await ocr.enqueue(emptyMedia.mediaAssetId, emptyProvider, profile);
+    const emptyProcessed = await ocr.processNext(emptyProvider, profile);
+    assert.equal(emptyProcessed?.extraction.id, emptyEnqueue.extraction.id);
+    assert.equal(emptyProcessed?.extraction.review_status, "pending");
+    assert.equal(emptyProcessed?.extraction.review_reason, "empty_text");
+
+    const sensitiveMedia = await media.processImage({
+      idempotencyKey: "ocr-media-sensitive-review",
+      sourcePosition: 5,
+      sourceFilename: "sensitive.png",
+      sourceMimeType: "image/png",
+      bytes: await fixtureImage("EXACT SOURCE TEXT"),
+    });
+    const sensitiveProvider = new SequenceOcrProvider("sensitive-ocr", "test-v1", [
+      { rawText: "EXACT SOURCE TEXT", meanConfidence: 99 },
+    ]);
+    const sensitiveProfile: OcrExtractionProfile = {
+      ...profile,
+      key: "exact-source-review-v1",
+      requiresReview: true,
+    };
+    const sensitiveEnqueue = await ocr.enqueue(sensitiveMedia.mediaAssetId, sensitiveProvider, sensitiveProfile);
+    const sensitiveProcessed = await ocr.processNext(sensitiveProvider, sensitiveProfile);
+    assert.equal(sensitiveProcessed?.extraction.id, sensitiveEnqueue.extraction.id);
+    assert.equal(sensitiveProcessed?.extraction.review_status, "pending");
+    assert.equal(sensitiveProcessed?.extraction.review_reason, "profile_requires_review");
+    assert.equal((await ocr.searchApproved("EXACT")).length, 0);
+
+    const invalidatedMedia = await media.processImage({
+      idempotencyKey: "ocr-media-invalidated-before-run",
+      sourcePosition: 6,
+      sourceFilename: "invalidated.png",
+      sourceMimeType: "image/png",
+      bytes: await fixtureImage("INVALIDATED MEDIA"),
+    });
+    const invalidatedProvider = new SequenceOcrProvider("invalidated-ocr", "test-v1", [
+      { rawText: "SHOULD NOT RUN", meanConfidence: 99 },
+    ]);
+    const invalidatedEnqueue = await ocr.enqueue(invalidatedMedia.mediaAssetId, invalidatedProvider, profile);
+    await db.query("update media_assets set status = 'failed' where id = $1", [invalidatedMedia.mediaAssetId]);
+    await assert.rejects(() => ocr.processNext(invalidatedProvider, profile), /ocr_input_integrity_failed/);
+    assert.equal((await ocr.get(invalidatedEnqueue.extraction.id))?.status, "failed");
+
+    const staleMedia = await media.processImage({
+      idempotencyKey: "ocr-media-stale-lease",
+      sourcePosition: 7,
+      sourceFilename: "stale-lease.png",
+      sourceMimeType: "image/png",
+      bytes: await fixtureImage("STALE LEASE"),
+    });
+    const staleProvider = new DeferredFailureOcrProvider("stale-ocr", "test-v1");
+    const staleEnqueue = await ocr.enqueue(staleMedia.mediaAssetId, staleProvider, profile);
+    const staleRun = ocr.processNext(staleProvider, profile);
+    await staleProvider.started;
+    await db.query("update ocr_extractions set lease_expires_at = now() - interval '1 second' where id = $1", [
+      staleEnqueue.extraction.id,
+    ]);
+    staleProvider.releaseFailure();
+    await assert.rejects(staleRun, /ocr_lease_lost/);
+    const staleState = await ocr.get(staleEnqueue.extraction.id);
+    assert.equal(staleState?.status, "running");
+    assert.equal(staleState?.attempt_count, 1);
+
     if (process.env.OCR_REAL_ENGINE === "1") {
       const realMedia = await media.processImage({
         idempotencyKey: "ocr-media-real-tesseract",
-        sourcePosition: 4,
+        sourcePosition: 8,
         sourceFilename: "real-tesseract.png",
         sourceMimeType: "image/png",
         sourcePageNumber: 9,
