@@ -251,7 +251,7 @@ export class AiExecutionRepository {
   ): Promise<AiAttemptStartResult> {
     await this.assertActiveLease(executor, unit);
 
-    // Serialize only the very short capacity-check + attempt-insert critical section
+    // Serialize only the short capacity-check + attempt-insert critical section
     // across worker processes. Provider calls happen after this transaction commits.
     await executor.query("select pg_advisory_xact_lock(9412, 12)");
 
@@ -480,7 +480,7 @@ export class AiExecutionRepository {
         unit.id,
         validation.status,
         json(output),
-        json(validationErrors),
+        json(validation.output ?? null),
         json(validationErrors),
         json(semanticWarnings),
       ],
