@@ -1,6 +1,6 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> Source of truth order: `DOCUMENTATION_INDEX.md` → this file → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → `docs/product/PRODUCT_EVOLUTION_REVIEW.md` → Batch05/06 decisions → `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` → `PRODUCT_FEATURE_PARITY_MATRIX.md` → `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` → `MASTER_REBUILD_ROADMAP.md` → `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md` → `docs/preview/SUPABASE_VERCEL_PREVIEW.md`. Repository + GitHub Actions + runtime evidence are authoritative; do not rely on chat memory.
+> Source of truth order: `DOCUMENTATION_INDEX.md` → this file → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → Product Decision docs → `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` → `PRODUCT_FEATURE_PARITY_MATRIX.md` → `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` → `MASTER_REBUILD_ROADMAP.md` → engineering/Preview runbooks. Repository + GitHub Actions + runtime evidence are authoritative; do not rely on chat memory.
 
 ## 1. Product direction
 
@@ -8,25 +8,34 @@
 
 - `apps/student-web` — Student Web/PWA، mobile-first/offline-first، RTL، قابل للتثبيت ويعمل أيضًا من Browser، ولا يحتوي Admin navigation/functionality.
 - `apps/admin-web` — Admin Web مستقل، Super Admin فقط حاليًا.
-- `apps/api` — Backend API الوحيد للوصول إلى PostgreSQL وتطبيق Auth/Authorization/Entitlements.
+- `apps/api` — Backend API الوحيد للوصول إلى PostgreSQL وتطبيق Auth/Authorization/Entitlements والعمليات authoritative.
 
 التطبيق القديم mandatory feature/scenario inventory وليس specification تقنية أو بصرية. **لا تُحذف Feature قديمة ذات قيمة بدون موافقة Product Owner صريحة.** استخدم `PRODUCT_FEATURE_PARITY_MATRIX.md` و`docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` قبل إغلاق Student/Admin feature stages.
 
 Product Review Batches 01–06 حسمت Core Product. التفاصيل الروتينية تُختار هندسيًا وفق Correctness/Clarity/Maintainability/UX/Security دون Overengineering.
 
-## 2. Product Review closure — VERIFIED
+## 2. Branch / execution state
 
-PR #12 / branch `planning/product-evolution-review`.
+- Repository: `7eaur/alwaslh`.
+- Branch: `planning/product-evolution-review`.
+- Draft PR: #12.
+- Stage6/8 exact verified implementation head: `016546eca5696337b52063903bb5ba2fb9631c33`.
+- Documentation closure continues after that verified implementation head.
+- **Development deployment is currently `DEFERRED BY PRODUCT OWNER`.**
+- Git-based automatic Vercel deployment is intentionally disabled during this period so ordinary commits/CI do not publish.
+- Do not re-enable deployment or claim hosted PASS unless Product Owner explicitly changes this decision and runtime verification is executed.
 
-Product Review documentation closure was verified on exact head `e293defdaf87169ddbed0cc0c7cae2c525464c23`:
+## 3. Product Review closure — VERIFIED
+
+Product Review documentation closure was verified earlier on exact head `e293defdaf87169ddbed0cc0c7cae2c525464c23`:
 
 - Stage10 docs-head `33999128114` — SUCCESS.
 - Stage9 docs-head `33999128132` — SUCCESS.
 - Full Rebuild `33999128111` — SUCCESS.
 
-Therefore implementation resumed in the required bridge order.
+No routine Product Review discussion is required before implementation. Genuine Business Rule conflicts may reopen a decision explicitly.
 
-## 3. Stable Stage1–10 engineering baseline
+## 4. Stable Stage1–10 baseline
 
 Original Stage10 stable head: `27c6a2ef1118ee44d2e63471e4f925e1296283e0`.
 
@@ -41,193 +50,212 @@ Key baseline outcomes:
 - private PostgreSQL behind API;
 - scrypt credentials + opaque HttpOnly sessions;
 - Full Code 6 digits / Class Code 7 digits;
-- transactional/idempotent access/activation baseline;
+- transactional/idempotent access baseline;
 - Stage9 5,552-image deterministic source inventory/import;
 - Stage10 deterministic Sharp/Poppler media pipeline with provenance/order/idempotency/cleanup.
 
-## 4. Stage10 Preview Sync — current work
+## 5. Historical Stage10 Preview engineering work
 
-### Final verified implementation head
+Stage10 Preview engineering integration previously culminated in `68be2f5e750ba3d53bf31fae1641182f29516627` and passed:
 
-`68be2f5e750ba3d53bf31fae1641182f29516627`
+- Stage10 `34000105615` — SUCCESS.
+- Stage9 `34000105600` — SUCCESS.
+- Full Rebuild `34000105608` — SUCCESS.
 
-CI on this exact commit:
+Supabase Preview received canonical `0009_media_pipeline` plus additive Preview lockdown. Direct Browser business-data access remained prohibited.
 
-- Stage10 Media Pipeline `34000105615` — SUCCESS.
-- Stage9 Content Import Verification `34000105600` — SUCCESS.
-- Rebuild Stage Verification `34000105608` — SUCCESS.
-- Chromium activation / returning-login / recovery E2E — SUCCESS.
+The prior Vercel build-rate quota prevented a fresh hosted runtime verification. That remains historical evidence, but **it is no longer an engineering-order blocker because Product Owner explicitly postponed deployment**. Hosted Student/Admin/API/media/Poppler behavior remains `NOT YET VERIFIED` rather than being reported as PASS.
 
-### Root-cause fixes implemented
+Stage10 runtime contract remains repository-owned (`vercel.json`, combined build/routing), but Git auto-deployment is currently disabled intentionally.
 
-The prior Vercel `No Output Directory named "dist"` failures came from missing root deployment contract on the planning branch while the intended combined output was `dist-vercel`.
+## 6. Stage6/8 Auth / Activation / Device Refactor — VERIFIED
 
-Repository now has one root Preview contract:
+### Final product flow implemented
 
-- root `vercel.json`;
-- `buildCommand: node scripts/build-vercel-preview.mjs`;
-- `outputDirectory: dist-vercel`;
-- Git deployments explicitly enabled;
-- `/` -> Student;
-- `/admin` / `/admin/*` -> Admin;
-- `/api/*` -> Fastify serverless API;
-- build script asserts API/Student/Admin/final combined outputs before success.
+#### Activation
 
-Preview runtime config also includes:
+```text
+6-digit Full Code
+→ eligibility verification without consumption
+→ short-lived one-time activation ticket
+→ mandatory password creation
+→ P-256 device public key + proof
+→ one final transaction:
+   profile + credential + entitlement + redemption + device + audit + code/ticket consumption
+→ device-bound authenticated session
+```
 
-- bounded DB pool;
-- configurable `DATABASE_SSL=require` with normal certificate verification;
-- explicit CORS origins + proxy awareness;
-- configurable cookie SameSite;
-- Student API base contract;
-- Admin `/admin/` base.
+No partial account and no code consumption before successful finalization.
 
-No Business Logic duplication or auth bypass was introduced.
+#### Returning Student login
 
-## 5. Supabase Preview — Stage10 schema/security VERIFIED
+```text
+identifier + password
+→ one-time challenge for the registered application-device key
+→ valid cryptographic signature
+→ device-bound HttpOnly session
+```
 
-Temporary project: `linksoftt`, ref `dhlqqgnxsqawidjmedvq`.
+`/v1/auth/login` does not create Student password-only sessions.
 
-Applied:
+#### Recovery
 
-- canonical `0009_media_pipeline` — version `20260905234708`;
-- `preview_media_pipeline_lockdown` — version `20260905234729`.
+```text
+Admin temporary password
+→ revoke existing Student sessions/challenges
+→ must_change_password = true
+→ Student password + registered-device challenge
+→ mandatory private password replacement
+→ new device-bound session
+```
 
-Verified directly:
+#### Lost/replaced device
 
-- `media_assets` + `media_variants` exist;
-- RLS enabled on both;
-- `anon` SELECT = false;
-- `authenticated` SELECT = false;
-- no permissive RLS policies;
-- expected Stage10 indexes present.
+```text
+Admin device reset
+→ revoke active device + sessions/challenges
+→ one rebind permission
+→ Student password
+→ device_rebind challenge
+→ generate/register NEW P-256 key
+→ device-bound session
+```
 
-Supabase remains a temporary PostgreSQL/testing host; Browser direct business-data access is still prohibited.
+A historical key already used by the same profile cannot be reused for rebind.
 
-## 6. Preview branch state
+### Browser key contract
 
-Branch: `preview/supabase-vercel`.
+`apps/student-web` uses WebCrypto ECDSA P-256. The private key is non-extractable and stored as a `CryptoKey` in account-scoped IndexedDB. Only the public SPKI and challenge signature leave the browser. IP/User-Agent/browser fingerprint are not device identity.
 
-Important commits:
+### Database contract
 
-- old pre-Stage10 Preview: `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`;
-- initial Stage10 sync: `b85194085fa5ffdc866f692f837a7a7b105c34b2`;
-- final build-contract sync: `479db8183695c69786d3f4c9e2bde8aba5caeaff`;
-- current Preview evidence/blocker doc head: `d064cc7fedbb4095c82006e51192271c22e70b73`.
+`database/migrations/0010_student_auth_device.sql` owns:
 
-Canonical Preview evidence doc: `docs/preview/SUPABASE_VERCEL_PREVIEW.md`.
+- `must_change_password` / temporary-password state;
+- device rebind state;
+- `student_devices` with one active device per Student and historical fingerprint protection;
+- Student session `device_id` binding;
+- one-time device challenges;
+- one-time activation tickets;
+- relevant auth audit event types/indexes/constraints.
 
-## 7. Current blocking issue — DO NOT BYPASS
+### Exact verification evidence
 
-**PREVIEW-010-003 — P1 — Vercel Build Rate Limit**
+Exact implementation head: `016546eca5696337b52063903bb5ba2fb9631c33`.
 
-Evidence on final implementation commit `68be2f5…` from Vercel/GitHub status:
+- **Rebuild Stage Verification `34002283741` — SUCCESS**
+  - Stage1–5 — PASS.
+  - Stage6 Auth & authorization — PASS including PostgreSQL registered-device/recovery/rebind security lifecycle.
+  - Stage7 Access codes & entitlements — PASS; existing renewal/no-waste/idempotency/race rules retained under device-bound sessions.
+  - Stage8 activation backend — PASS including atomicity/replay/session/race.
+  - Stage8 Chromium browser E2E — PASS.
+- **Stage9 Content Import Verification `34002283819` — SUCCESS.**
+- **Stage10 Media Pipeline `34002283817` — SUCCESS.**
 
-`Deployment rate limited — retry in 24 hours.`
+Chromium proves:
 
-Meaning:
+- invalid/valid activation verification;
+- final activation and entitlement;
+- browser P-256 key creation;
+- IndexedDB key persistence;
+- returning challenge login with the same key;
+- temporary-password forced private-password replacement without rotating the valid device;
+- session invalidation;
+- device reset/rebind;
+- rotation to a different P-256 key;
+- successful login with the rebound device;
+- no mobile horizontal overflow in the tested viewport.
 
-- application CI did not fail;
-- Supabase migration/security did not fail;
-- Vercel did not create a fresh Stage10 deployment because provider quota blocked it before runtime verification;
-- do not claim Student/Admin/API hosted PASS yet.
+The browser recovery/rebind E2E changes support state through a **test-only production-AuthService fixture against the E2E PostgreSQL DB**, not through a test HTTP route or embedded Admin credentials. Admin HTTP authorization/recovery/rebind endpoints are independently verified by the Stage6 integration suite.
 
-Exit path:
+## 7. Architecture decisions now authoritative
 
-1. after the Vercel build-rate window clears, deploy the already-synced `preview/supabase-vercel` branch;
-2. confirm deployment points to the expected current Preview commit;
-3. verify `READY`;
-4. verify `/` Student;
-5. verify `/admin` Admin;
-6. verify `/api/health`;
-7. verify `/api/ready` against Supabase;
-8. inspect runtime errors/logs;
-9. update `docs/preview/SUPABASE_VERCEL_PREVIEW.md`, `PROJECT_STATUS.md`, this Handoff and Engineering Log with exact deployment/runtime evidence.
+- **AD-069 — Device-bound Student sessions:** Student authentication requires a registered cryptographic application-device key; password-only Student sessions are forbidden.
+- **AD-070 — Two-step activation:** eligibility verification is non-consuming; account/code/device finalization stays one atomic transaction.
+- **AD-071 — Forced recovery:** recovery uses temporary credential + session/challenge revocation + mandatory private password replacement.
+- **AD-072 — Explicit device reset/rebind:** only Admin reset enables rebind; the same historical device key cannot be reused for that profile.
+- **AD-073 — Browser-local private key:** Student private device key is non-extractable WebCrypto state in account-scoped IndexedDB; server stores public material only.
+- **AD-074 — Deployment deferral:** Product Owner may temporarily defer Preview deployment while CI/PostgreSQL/security/Chromium development continues; deferred runtime is never labeled PASS.
 
-No auth/validation/security/business workaround is permitted to bypass quota.
+## 8. Current next bridge — OCR Extraction Foundation
 
-## 8. Stage10 hosted media boundary
+Do not build OCR as an upload dependency or duplicate Stage10 provenance.
 
-Actual code inspection confirms:
+Existing Stage10 media identity already provides:
 
-- media storage domain is behind `MediaStorage`;
-- concrete verified implementation currently = `FileSystemMediaStorage`;
-- PDF extraction calls `pdfinfo` / `pdftoppm`;
-- no Student/Admin media-processing HTTP endpoint exists in `apps/api/src/app.ts` yet.
+- `media_asset_id`;
+- `content_source_asset_id` where applicable;
+- source position and page number;
+- source checksum/byte identity;
+- deterministic `source/display/thumbnail/ai` variants;
+- independent media ready/failed state.
+
+Target:
+
+```text
+ready media page / media_asset
+→ durable OCR job
+→ OcrProvider
+→ raw text + optional normalized text
+→ confidence/status/provider/version/provenance
+→ PostgreSQL
+→ searchable/reusable text
+```
+
+Required behavior:
+
+- OCR failure does not make upload/media processing fail;
+- retry/idempotency and bounded execution;
+- media/source/page/checksum provenance;
+- original image remains canonical evidence;
+- raw text retained and normalization traceable;
+- low-confidence/sensitive/exact-source review/fallback state;
+- provider-neutral interface, no hard lock-in;
+- approved searchable/reusable text;
+- executable PostgreSQL/integration tests;
+- provider benchmark dataset before provider quality claims.
+
+Before choosing schema/worker details, inspect existing job/sync patterns (especially `0004_ai_and_sync.sql`) and `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` so OCR shares simple durable patterns rather than inventing a second orchestration architecture.
+
+## 9. Stage10 hosted media boundary retained
+
+Actual Stage10 code still proves only:
+
+- storage domain behind `MediaStorage`;
+- concrete verified implementation = `FileSystemMediaStorage`;
+- local PDF extraction through Poppler;
+- no durable hosted media runtime proof yet.
 
 Therefore:
 
 - Vercel filesystem is not accepted as durable media storage;
-- Vercel Poppler availability = `NOT YET VERIFIED`;
-- durable hosted media adapter/processing belongs to media/OCR integration work;
-- Student image quality/readability delivery remains `NOT YET VERIFIED`.
+- hosted Poppler = `NOT YET VERIFIED`;
+- OCR must depend on storage abstraction/media identity, not on a serverless filesystem assumption;
+- do not invent a temporary hosted workaround as Production architecture.
 
-Do not turn an ephemeral filesystem workaround into Production architecture.
-
-## 9. Stage6/8 partial reopen — NEXT ONLY AFTER PREVIEW GATE
-
-Do **not** begin implementation until current Stage10 Preview deployment/runtime verification closes.
-
-Required target:
-
-### Activation
-
-`6-digit Full Code`
-→ eligibility verification without consumption
-→ short-lived one-time activation ticket
-→ mandatory password creation
-→ one final transaction: account + credential + entitlement + redemption + audit
-→ register cryptographic application-device key
-→ authenticated session.
-
-No partial account; no code consumption before successful final transaction.
-
-### Returning login
-
-identifier + password + registered-device challenge.
-
-Do not use IP/User-Agent/browser fingerprint as security identity.
-
-### Recovery
-
-Admin temporary password/reset credential
-→ revoke sessions
-→ `must_change_password`
-→ Student login
-→ mandatory private password replacement.
-
-Lost/replaced device: Admin reset/rebind.
-
-Required verification: API + PostgreSQL + security + Chromium E2E + Preview sync.
-
-## 10. Ordered roadmap after Stage6/8
+## 10. Ordered roadmap after OCR
 
 1. OCR Extraction Foundation.
-2. Stage11 provider/model-neutral AI contracts + benchmark + provenance/validators.
+2. Stage11 provider/model-neutral AI prompt/output contracts + benchmark/provenance/validators.
 3. Stage12 durable provider/model-neutral high-throughput execution.
-4. Stage13+ from `MASTER_REBUILD_ROADMAP.md`.
+4. Curriculum structure extension and Stage13+ from `MASTER_REBUILD_ROADMAP.md`.
+5. When Product Owner explicitly re-enables deployment, deliberately restore/sync a stable Preview and execute hosted runtime verification before calling it PASS.
 
-Keep all recorded Product decisions: Reader page+optional approved text+Arabic search+cached TTS, Published Question Bank only for Student tests, original ministerial provenance, Notes text/image/capture/audio, separate Favorites/Needs Review, repeated-error auto review, Push with gentle limits, signed max-14-day Offline lease, multiple Class Codes/entitlements, Super Admin only, unified Design System and no valuable legacy feature removal without approval.
+Keep all Product decisions: Reader page + approved text/search/TTS, Published Question Bank only for Student tests, original ministerial provenance, Notes text/image/capture/audio, Favorites separate from Needs Review, repeated-error automation, Push gentle limits, signed max-14-day Offline lease, multiple Class Codes/entitlements, Super Admin only, unified Design System and no valuable legacy feature removal without approval.
 
-## 11. Legacy/parity state
-
-Stage10 Preview Sync is infrastructure/schema/deployment work only. No Student/Admin legacy capability was implemented or removed by this batch. Therefore no parity row is newly closed.
-
-`PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` remain mandatory before Stage13/14+ feature closure.
-
-## 12. Mandatory continuation protocol
+## 11. Mandatory continuation protocol
 
 After every meaningful batch:
 
 - update `PROJECT_STATUS.md`;
 - update `PROJECT_ENGINEERING_LOG.md`;
-- update this Handoff when architecture/branch/CI/Preview changes;
+- update this Handoff when architecture/branch/CI/Preview state changes;
 - update specialized docs;
 - update parity/coverage evidence when actual feature implementation changes;
 - retain exact commit/CI/deployment/runtime evidence;
 - unexecuted = `NOT YET VERIFIED`;
-- never weaken tests/security/business rules to get a green environment.
+- never weaken tests/security/business rules to obtain a green environment.
 
 ## Current transition decision
 
-**Stage10 Preview Sync is NOT fully complete. Engineering CI, Supabase migration/security and Preview branch synchronization are complete. Fresh Vercel Runtime is blocked externally by build-rate quota and remains NOT YET VERIFIED. Do not move to Stage6/8 implementation until the hosted runtime gate closes.**
+**Stage6/8 Auth/Activation/Device Refactor is VERIFIED. Stage9 and Stage10 regressions are green on the same implementation head. Development deployment is intentionally deferred by Product Owner and is not a blocker. The active engineering transition is now OCR Extraction Foundation.**
