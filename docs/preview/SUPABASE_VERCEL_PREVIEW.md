@@ -29,7 +29,7 @@ The combined Vercel contract now lives at repository root. `scripts/build-vercel
 
 ### Applied migrations
 
-Registered Preview migrations now include canonical rebuild migrations `0001` through `0009`, plus Preview hardening migrations:
+Registered Preview migrations include canonical rebuild migrations `0001` through `0009`, plus Preview hardening migrations:
 
 - `preview_supabase_lockdown`
 - `preview_media_pipeline_lockdown`
@@ -77,33 +77,48 @@ Stage10's canonical implementation is verified in CI, but its Preview runtime bo
 - `apps/api/src/app.ts` does not expose a Student/Admin media-processing HTTP route yet;
 - therefore Vercel serverless filesystem persistence is **not** accepted as durable media storage, and Poppler availability in that runtime must not be assumed.
 
-Consequently, Preview currently verifies Stage10 schema/security and branch/build integration readiness, not durable media processing/storage. A durable Preview media adapter and any required processing runtime belong to the next media/OCR integration work; no filesystem workaround may become the Production architecture.
+Consequently, Preview currently verifies Stage10 schema/security and deployment compatibility, not durable media processing/storage. A durable Preview media adapter and any required processing runtime belong to the next media/OCR integration work; no filesystem workaround may become the Production architecture.
 
 ## Runtime verification checkpoint
 
-### Current blocker
+### Build-rate incident and recovery
 
-Vercel Git integration received the final planning commit `68be2f5…` but did not create a deployment. GitHub commit status from Vercel is `failure` with the explicit description:
+A Vercel attempt on implementation commit `68be2f5…` was initially rejected with:
 
 `Deployment rate limited — retry in 24 hours.`
 
-This is a temporary Preview-platform quota blocker, not an application build/test failure.
+The provider later accepted planning docs-head `0510fed2327b4511475f95f24b49322cc274c408`, proving the rate window cleared during this engineering session.
 
-- Severity: `P1` for the current development Preview gate because it blocks required runtime verification.
-- Impact: no new Stage10 Vercel deployment can currently be produced; Student/Admin/API live verification must not be claimed.
-- Security/Business impact: none to the verified code or Supabase schema; no bypass or weakened control is introduced.
-- Exit condition: after the Vercel build-rate window clears, deploy the already-synced `preview/supabase-vercel` branch and verify the exact deployment/commit.
-- Removal path: no code workaround is required. Do not change Business Rules or security boundaries to bypass platform quota.
+Planning deployment evidence:
 
-### Pending checks
+- deployment: `dpl_CB4WN2Q8M6GchkUVjAWU1UvHBELa`
+- source branch: `planning/product-evolution-review`
+- source commit: `0510fed2327b4511475f95f24b49322cc274c408`
+- state: `READY`
+- build log: combined Student/Admin/API build completed and Vercel deployed outputs successfully
+- Student `/`: HTTP `200`
 
-- deployment reaches `READY`: **NOT YET VERIFIED**
-- `/api/health`: **NOT YET VERIFIED** on the new Stage10 deployment
-- `/api/ready` against Supabase PostgreSQL: **NOT YET VERIFIED**
-- Student root: **NOT YET VERIFIED** on the new Stage10 deployment
-- Admin `/admin`: **NOT YET VERIFIED** on the new Stage10 deployment
-- live activation/login/recovery against Preview Supabase: **NOT YET VERIFIED** for this deployment
+Protected routes `/admin` and `/api/health` return Vercel SSO `302` in the available stateless fetch tool. Vercel runtime logs contain no request entries for these attempts, confirming they were stopped by Deployment Protection before reaching Fastify. This is **not** evidence of an API/Admin application failure.
+
+A browser session capable of retaining the Vercel bypass cookie is not available in the current execution runtime. Do not weaken Deployment Protection to make a smoke check pass.
+
+### Preview-branch deployment
+
+This documentation update is intentionally pushed on `preview/supabase-vercel` after the quota window cleared so Git integration can create a fresh deployment from the actual Preview branch. Record its exact deployment ID/commit below once Vercel reports it.
+
+Pending checks until that deployment completes:
+
+- Preview branch deployment reaches `READY`: **NOT YET VERIFIED**
+- exact Preview commit/deployment linkage: **NOT YET VERIFIED**
+- Student root on Preview branch: **NOT YET VERIFIED**
+- Admin `/admin` behind Deployment Protection: **NOT YET VERIFIED** in authenticated browser session
+- `/api/health` behind Deployment Protection: **NOT YET VERIFIED** in authenticated browser session
+- `/api/ready` against Supabase: **NOT YET VERIFIED** in authenticated browser session
 - Vercel Poppler availability and durable media storage: **NOT YET VERIFIED** and not required to claim Stage10 Preview schema sync
+
+## Legacy/parity impact
+
+This batch is deployment/runtime infrastructure plus Stage10 schema hardening. It does **not** implement or remove a Student/Admin legacy capability. Therefore no row in `PRODUCT_FEATURE_PARITY_MATRIX.md` is promoted to a new feature-complete state by this batch. The `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` remains fully applicable to later Student/Admin feature stages.
 
 ## Rule for future batches
 
