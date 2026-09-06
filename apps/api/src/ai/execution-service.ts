@@ -3,11 +3,7 @@ import type { Database } from "../db.js";
 import { type AiGenerationRequest, aiGenerationRequestSchema } from "./contracts.js";
 import { AiExecutionRepository, type AiJobRecord } from "./execution-repository.js";
 import { buildPromptEnvelope, getPromptDefinition } from "./prompt-registry.js";
-import {
-  type AiProviderError,
-  type AiProviderGenerateResult,
-  classifyAiProviderError,
-} from "./provider.js";
+import { type AiProviderError, type AiProviderGenerateResult, classifyAiProviderError } from "./provider.js";
 import type { AiModelRouter } from "./router.js";
 import { type AiValidationResult, validateAiGenerationOutput } from "./validators.js";
 
