@@ -7,16 +7,18 @@ Temporary full-product preview environment for continuous Product Owner/manual v
 ## Git baseline — 2026-09-06
 
 - Source branch: `planning/product-evolution-review`
-- Verified implementation commit: `86d62e700d49f803cbad4b83cae6b124b416c896`
+- Final verified Stage10 Preview-integration implementation commit: `68be2f5e750ba3d53bf31fae1641182f29516627`
 - Preview integration branch: `preview/supabase-vercel`
-- Stage10 sync merge: `b85194085fa5ffdc866f692f837a7a7b105c34b2`
-- Git comparison `86d62e7… -> b851940…`: zero file differences; Preview merge preserves prior integration history only.
+- Initial Stage10 sync merge: `b85194085fa5ffdc866f692f837a7a7b105c34b2`
+- Final Stage10 build-contract sync merge: `479db8183695c69786d3f4c9e2bde8aba5caeaff`
 
-Verified GitHub Actions on implementation commit `86d62e7…`:
+Verified GitHub Actions on implementation commit `68be2f5…`:
 
-- Stage 10 Media Pipeline `33999803132` — `SUCCESS`
-- Stage 9 Content Import Verification `33999803154` — `SUCCESS`
-- Rebuild Stage Verification `33999803135` — `SUCCESS`, including Chromium activation/returning-login/recovery E2E
+- Stage 10 Media Pipeline `34000105615` — `SUCCESS`
+- Stage 9 Content Import Verification `34000105600` — `SUCCESS`
+- Rebuild Stage Verification `34000105608` — `SUCCESS`, including Chromium activation/returning-login/recovery E2E
+
+The combined Vercel contract now lives at repository root. `scripts/build-vercel-preview.mjs` fails fast if API, Student, Admin, or combined outputs are missing; `vercel.json` explicitly enables Git deployments and defines `dist-vercel` as the output.
 
 ## Supabase Preview
 
@@ -61,7 +63,7 @@ One temporary Vercel project hosts the three surfaces:
 - `/admin` and `/admin/*` -> Admin Web
 - `/api/*` -> Fastify serverless API
 
-Root `vercel.json` is the single routing/build contract. It runs `node scripts/build-vercel-preview.mjs`, outputs `dist-vercel`, and exposes `api/[...path].js` as the API function. This fixes the previous root cause where planning-branch deployments inherited Vite's default `dist` expectation while the intended combined preview output was `dist-vercel`.
+Root `vercel.json` is the single routing/build contract. It runs `node scripts/build-vercel-preview.mjs`, outputs `dist-vercel`, and exposes `api/[...path].js` as the API function. This fixes the prior root cause where planning-branch deployments inherited Vite's default `dist` expectation while the intended combined preview output was `dist-vercel`.
 
 Required environment variable names are documented in `apps/api/.env.example`; secret values must never be committed or copied into documentation.
 
@@ -75,16 +77,28 @@ Stage10's canonical implementation is verified in CI, but its Preview runtime bo
 - `apps/api/src/app.ts` does not expose a Student/Admin media-processing HTTP route yet;
 - therefore Vercel serverless filesystem persistence is **not** accepted as durable media storage, and Poppler availability in that runtime must not be assumed.
 
-Consequently, Preview currently verifies Stage10 schema/security and deployment compatibility, not durable media processing/storage. A durable Preview media adapter and any required processing runtime belong to the next media/OCR integration work; no filesystem workaround may become the Production architecture.
+Consequently, Preview currently verifies Stage10 schema/security and branch/build integration readiness, not durable media processing/storage. A durable Preview media adapter and any required processing runtime belong to the next media/OCR integration work; no filesystem workaround may become the Production architecture.
 
 ## Runtime verification checkpoint
 
-A fresh Vercel deployment is required from this Preview branch after the Stage10 sync.
+### Current blocker
 
-Pending checks:
+Vercel Git integration received the final planning commit `68be2f5…` but did not create a deployment. GitHub commit status from Vercel is `failure` with the explicit description:
+
+`Deployment rate limited — retry in 24 hours.`
+
+This is a temporary Preview-platform quota blocker, not an application build/test failure.
+
+- Severity: `P1` for the current development Preview gate because it blocks required runtime verification.
+- Impact: no new Stage10 Vercel deployment can currently be produced; Student/Admin/API live verification must not be claimed.
+- Security/Business impact: none to the verified code or Supabase schema; no bypass or weakened control is introduced.
+- Exit condition: after the Vercel build-rate window clears, deploy the already-synced `preview/supabase-vercel` branch and verify the exact deployment/commit.
+- Removal path: no code workaround is required. Do not change Business Rules or security boundaries to bypass platform quota.
+
+### Pending checks
 
 - deployment reaches `READY`: **NOT YET VERIFIED**
-- `/api/health`: **NOT YET VERIFIED**
+- `/api/health`: **NOT YET VERIFIED** on the new Stage10 deployment
 - `/api/ready` against Supabase PostgreSQL: **NOT YET VERIFIED**
 - Student root: **NOT YET VERIFIED** on the new Stage10 deployment
 - Admin `/admin`: **NOT YET VERIFIED** on the new Stage10 deployment
