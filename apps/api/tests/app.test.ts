@@ -10,8 +10,11 @@ const config: AppConfig = {
   PORT: 3000,
   LOG_LEVEL: "silent",
   DATABASE_URL: "postgresql://user:pass@localhost:5432/test",
+  DATABASE_SSL: "disable",
+  DATABASE_POOL_MAX: 10,
   SESSION_COOKIE_NAME: "alwaslh_session",
   SESSION_TTL_HOURS: 168,
+  SESSION_COOKIE_SAME_SITE: "lax",
   ALLOWED_ORIGINS: "http://localhost:5173",
 };
 
@@ -54,6 +57,31 @@ test("GET /ready returns 503 when PostgreSQL is unavailable", async () => {
   const response = await app.inject({ method: "GET", url: "/ready" });
   assert.equal(response.statusCode, 503);
   assert.deepEqual(response.json(), { status: "not_ready" });
+  await app.close();
+});
+
+test("allowed CORS preflight is explicit and credential-safe", async () => {
+  const app = buildApp({ config, database: fakeDatabase() });
+  const response = await app.inject({
+    method: "OPTIONS",
+    url: "/v1/auth/login",
+    headers: { origin: "http://localhost:5173" },
+  });
+  assert.equal(response.statusCode, 204);
+  assert.equal(response.headers["access-control-allow-origin"], "http://localhost:5173");
+  assert.equal(response.headers["access-control-allow-credentials"], "true");
+  await app.close();
+});
+
+test("unknown CORS origins are rejected", async () => {
+  const app = buildApp({ config, database: fakeDatabase() });
+  const response = await app.inject({
+    method: "OPTIONS",
+    url: "/v1/auth/login",
+    headers: { origin: "https://example.invalid" },
+  });
+  assert.equal(response.statusCode, 403);
+  assert.equal(response.json().error.code, "FORBIDDEN");
   await app.close();
 });
 

@@ -1,109 +1,118 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage 10 Media Pipeline is **CODE COMPLETE / CLI + PostgreSQL + MEDIA RUNTIME PASS**. Documentation closure CI is running next; after it is green, sync the stable Stage 10 schema/code to the temporary Supabase/Vercel Preview and verify that deployment before beginning Stage 11.
-- **Verification Policy:** every stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; anything not executed remains `NOT YET VERIFIED`.
-- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `MASTER_REBUILD_ROADMAP.md`, stage contracts/DoD, and `docs/engineering/CLI_VERIFICATION_GATES.md`.
-- **Stage 10 branch / PR:** `rebuild/media-pipeline` / PR #11.
-- **Latest Verified Stage 10 Code Baseline:** `f9f58ed4b9cf599d992a08b9c9eb33d3ae1a17c3`.
-- **Stage 10 Dedicated Verification:** run `33302062208` — **SUCCESS**.
-- **Stage 9 Regression on same code head:** run `33302062209` — **SUCCESS**.
-- **Full Regression Verification on same code head:** run `33302062216` — **SUCCESS**, including Chromium E2E.
+- **Current Phase:** Stage12 Durable Provider-Neutral AI Execution — execution core **VERIFIED**; concurrency/backpressure + health/budget + worker lifecycle remain **ACTIVE / NOT YET VERIFIED**.
+- **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
+- **Latest fully verified executable baseline:** `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
+- **Deployment:** `DEFERRED BY PRODUCT OWNER`. Git auto-deployment remains intentionally disabled; hosted runtime is `NOT YET VERIFIED`.
 
-## Completed
+## Verified baseline through Stage12 execution core
 
-- **Stage 1 Product Contract:** **CLI PASS.** Feature-preservation contract and automated parity checks.
-- **Stage 2 Brand Identity:** **CLI PASS.** Owned teal/open-book identity, canonical assets/tokens/PWA icons and automated brand checks.
-- **Stage 3 UX Architecture:** **CLI PASS.** Admin/Student IA, critical flows/states, responsive/accessibility contracts and wireframes.
-- **Stage 4 PostgreSQL Data Platform:** **CLI/RUNTIME PASS on PostgreSQL 16.** Clean-slate private PostgreSQL behind Backend; migrations and relational integrity verified on clean DBs.
-- **Stage 5 Engineering Foundation:** **CLI/RUNTIME PASS.** API runtime, DB pool/transactions, migration runner, env validation, logging/error envelope, strict TS, tests, production builds and CI.
-- **Stage 6 Auth & Authorization:** **CLI/RUNTIME PASS.** Salted scrypt credentials, opaque sessions, HttpOnly cookies, role isolation, Origin protection, DB lockout, reset-only recovery and explicit Admin bootstrap.
-- **Stage 7 Access Codes & Entitlements:** **CLI/RUNTIME PASS.** Secure 6/7-digit codes, Arabic/Persian normalization, transactional/idempotent redemption, renewal, no-waste behavior, revoke/audit, constraints and race tests.
-- **Stage 8 Student Activation & Account Flow:** **CLI/RUNTIME/BROWSER E2E PASS.** Atomic activation + returning login + recovery + real Chromium integration.
-- **Stage 9 Content Model & deterministic `alwaslh-go` Import:** **CLI/PostgreSQL RUNTIME PASS.** Full pinned inventory, manifest compatibility, deterministic ordering, provenance, repeatable DB import and reconciliation verified.
-- **Stage 10 Media Pipeline:** **CLI/PostgreSQL/MEDIA RUNTIME PASS on code head.** Server-owned media processing, safe storage abstraction, deterministic ordering/keys, Sharp variants, Poppler PDF extraction, Stage 9 provenance, source-byte-bound idempotency, failure/abort cleanup and full PDF runtime verification.
+Stages 1–10, OCR, Stage11 and the first durable Stage12 execution core are verified on one exact executable head.
 
-## Stage 9 verified source/import facts
+Exact verified executable head: `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
 
-Pinned source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
+- Stage12 AI Execution Verification `34006710501` — **SUCCESS**.
+- Stage11 AI Contract Verification `34006710456` — **SUCCESS**.
+- OCR Foundation Verification `34006710511` — **SUCCESS** including real Tesseract runtime.
+- Stage10 Media Pipeline `34006710490` — **SUCCESS** including real PDF extraction/transform/replay.
+- Stage9 Content Import Verification `34006710461` — **SUCCESS** including complete 5,552-image inventory + idempotent re-import.
+- Rebuild Stage Verification `34006710470` — **SUCCESS** including Stage8 Chromium activation/login/recovery browser E2E.
+
+## Stage12 discovery decision
+
+`database/migrations/0004_ai_and_sync.sql` already contained `ai_jobs`, `ai_job_units` and `ai_outputs`, but there was no current AI execution route, worker entrypoint or integration test consuming them. The implementation therefore **reuses and extends the existing durable AI tables** instead of creating a second queue/orchestration system.
+
+## Verified Stage12 execution core
+
+Implemented and now verified:
+
+- additive `database/migrations/0012_ai_execution.sql`;
+- deterministic generation-plan idempotency + plan fingerprint conflict detection;
+- durable unit claiming with `FOR UPDATE SKIP LOCKED`;
+- UUID lease token + expiry;
+- strong `running ↔ active lease` database invariant;
+- stale/expired worker rejection for attempt telemetry, unit state and output writes;
+- attempt history/telemetry per provider route;
+- provider-neutral `AiProviderAdapter` + `AiModelRouter`;
+- provider/network execution outside DB transactions;
+- Stage11 schema/semantic/provenance/duplicate validation before durable output acceptance;
+- bounded route cascade;
+- retryable-error retry with exponential backoff + jitter and max attempts;
+- `review_required` as a durable non-fabricated review state;
+- partial-success job counter reconciliation;
+- cancellation that removes worker write authority and preserves lock ordering;
+- optional provider/model/project/credential aliases, provider request id, tokens, latency, errors and cost-micros telemetry without storing secrets;
+- PostgreSQL lifecycle coverage for idempotency, lease behavior, stale-worker recovery, cascade, retry, cancellation and partial success.
+
+### Execution pipeline
 
 ```text
-15 subject roots
-48 source documents
-5,552 source images
-4,218 JPG
-1,334 WEBP
-86 recognized helper files
-24 manifest.json files
-0 fatal inventory issues
+Generation Plan
+→ Stage11 typed source/page requests
+→ durable ai_jobs / ai_job_units
+→ short transactional claim + lease
+→ AiModelRouter
+→ provider adapter call OUTSIDE DB transaction
+→ Stage11 validation
+→ lease-protected attempt/output persistence
+→ retry | review_required | completed | failed
+→ job progress / partial-success reconciliation
 ```
 
-Canonical inventory SHA-256:
-`7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`
+## Evidence-backed defects fixed during Stage12 core
 
-## Stage 10 verified media facts
+### Shared formatter gate
 
-- `0009_media_pipeline.sql` introduces `media_assets` and `media_variants` with source checksum/byte identity, processing state, attempt/error evidence and unique variant/storage identities.
-- Imported media can reference `content_source_assets`; Stage 9 inventory is not mutated into Lesson entities.
-- Media idempotency is owned by exact source identity + SHA-256 + byte size; reusing the key for different source data is rejected.
-- Exact ready replay verifies the stored variant byte size/SHA before returning it.
-- `sharp` produces `source`, `display`, `thumbnail`, and `ai` variants with computed dimensions/byte sizes/SHA-256.
-- Storage keys are backend-generated deterministic relative keys; traversal is rejected.
-- Concurrency is bounded to 1..8 and result/page order is independent from worker completion timing.
-- Partial storage failure, metadata failure and abort remove successfully written partial objects and leave observable failed state.
-- Poppler is invoked with argument arrays, temporary directories are scoped/cleaned, page count/order is validated, and malformed PDFs fail before media rows are created.
-- A real two-page PDF was executed end-to-end through extraction → transforms → filesystem storage → PostgreSQL metadata → exact replay; page order remained `1,2` / positions `100,101`.
-- Display output from the real PDF stayed within the tested long-edge quality window `1200..1800` pixels.
+Head `00c1affe9e7fb1fce4d9e305e7bd650beb8c4e9b` failed all six workflows at the same API Biome gate. This was formatting-only; TypeScript/PostgreSQL steps had not executed. Fixed without semantic changes.
 
-## Canonical database migrations
+### AI-012-009 — stale attempt telemetry write
 
-`0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql` → `0008_content_source_import.sql` → `0009_media_pipeline.sql`.
+Static review found that unit/output writes were lease-protected but an old worker could still finalize its `ai_execution_attempts` row after lease expiry. Fix at `592e3848fc347ef7aeca9c9de75d4519e2d9433b`:
 
-## Current branch / PR stack
+- `finishAttemptSuccess/Failure` now require the current unexpired unit lease;
+- migration enforces the strong running-lease shape;
+- cancellation uses unit→attempt lock ordering;
+- integration test proves stale attempt remains running until recovery, then becomes `failed/lease_expired`, and a new leased attempt may complete.
 
-- Foundation: `rebuild/foundation` / PR #2.
-- Auth: `rebuild/auth-authorization` / PR #3.
-- Access/Entitlements: `rebuild/access-entitlements` / PR #4.
-- Student Activation UI: `rebuild/student-activation-ui` / PR #5.
-- Student Activation Backend: `rebuild/student-activation-backend` / PR #6.
-- Stage 8 integrated source: `rebuild/student-activation-integration` / PR #7.
-- Stage 9 source of truth: `rebuild/content-import` / PR #8.
-- Parallel Stage 9 source audit: `rebuild/content-source-audit` / PR #9; audit-only evidence.
-- Temporary test deployment: `preview/supabase-vercel` / PR #10.
-- **Stage 10 source of truth:** `rebuild/media-pipeline` / PR #11.
+### Integration test SQL ambiguity
 
-## Temporary Preview Environment
+Stage12 run `34006606146` on `592e3848…` passed lint, typecheck, unit tests, build, clean migrations and DB contract checks, then failed only because the test query selected unqualified `status` after joining two tables that both expose that column. Production execution logic was not failing. The test was corrected to `a.status` / `a.attempt_number` in `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`, after which all six verification workflows passed.
 
-- Supabase project `linksoftt` is a temporary PostgreSQL/testing host, not the final platform architecture.
-- Vercel project `alwaslh` exposes Student `/`, Admin `/admin`, API `/api/*` from `preview/supabase-vercel`.
-- Browser access to application tables through Supabase/PostgREST is intentionally blocked; API remains the data boundary.
-- The Preview must be synchronized after each stable stage before the next stage proceeds.
-- Vercel serverless filesystem is not the final durable media volume and Poppler/media upload runtime on Vercel is currently **NOT YET VERIFIED**.
+## Stage12 invariants now verified
 
-## Critical defects caught and fixed by gates
+- no provider/network call occurs inside a DB transaction;
+- running AI units always have an active lease identity shape;
+- stale/expired/cancelled workers cannot finalize attempts, units or outputs;
+- cancellation clears current execution authority;
+- same idempotency key with a changed plan fingerprint is rejected;
+- provider/model/project/credential fields remain execution metadata, not Stage11 domain contracts;
+- provider secrets are not persisted;
+- exact-source review requirements remain authoritative;
+- retries are bounded;
+- partial successes survive sibling failures;
+- direct-question Question Bank persistence remains unresolved and is not silently widened.
 
-- Legacy root PostCSS/Tailwind leakage into new apps.
-- Auth strict-TypeScript/scrypt boundary defects.
-- Stage 7 PostgreSQL enum/JSONB/default typing defects, audit atomicity and idempotency ownership weakness.
-- Stage 8 test isolation/discovery defects and production API build/start mismatch.
-- Stage 9 Arabic-key/third-shape manifest omissions, helper baseline drift and Python/JavaScript canonical digest drift.
-- Stage 10 first gate caught formatting and strict optional-property defects before runtime.
-- Stage 10 review caught weak idempotency ownership and changed it to bind the key to exact source bytes/provenance before retry mutation.
-- Stage 10 failure-injection gates prove partial filesystem objects are cleaned on storage failure, metadata failure and abort.
-- Stage 10 final DoD added direct assertions for no temp-file residue and malformed-PDF/no-metadata behavior rather than relying on inference.
+## Remaining Stage12 work
 
-## NOT YET VERIFIED / remaining release risks
+1. Add **distributed bounded global/provider/project/model concurrency + scheduler backpressure**. Durable claim safety alone is not a throughput limiter.
+2. Add route health/cooldown/Retry-After and budget ceilings/kill switch without credential rotation to evade quotas or terms.
+3. Add explicit progress/resume semantics where needed by the Stage12 job contract.
+4. Add a dedicated worker lifecycle separate from the HTTP server, with graceful shutdown and bounded polling.
+5. Run real provider/model benchmark evidence before enabling production routes/defaults.
+6. Keep live credentials, current pricing, production routing and hosted worker runtime `NOT YET VERIFIED` until explicitly configured/tested.
 
-- Stage 10 workflows on the final documentation head;
-- Stage 10 schema/code synchronization and deployment verification on the temporary Supabase/Vercel Preview;
-- durable media volume/Poppler behavior on the eventual production host and backup/restore/load drills;
-- Gemini prompt contracts, golden tests, durable AI workers/provider failover;
-- complete Admin product and live Admin media upload boundary;
-- post-auth Student learning product, Practice Engine and trusted scoring;
-- account-scoped Offline Sync/PWA/outbox lifecycle;
-- complete performance/security/accessibility/device/staging/rollback/release gates.
+Admin execution/query/cancel/review UI/API remains a Stage13 integration concern after the backend worker contract stabilizes.
 
-## Next Action
+## Stable lower-layer boundaries
 
-1. Run Stage 10 dedicated + Stage 9 regression + complete rebuild verification on this documentation head.
-2. If green, apply `0009_media_pipeline.sql` and new-table Supabase lockdown to temporary `linksoftt`, mirror stable Stage 10 code into `preview/supabase-vercel`, deploy and verify Vercel health/readiness/build.
-3. Only after Preview sync evidence, begin **Stage 11 — Gemini Prompt/Output Contracts**.
+- Stage9 canonical source inventory: 15 roots / 48 source documents / 5,552 images.
+- Stage10 media identity/checksum/order remains authoritative source evidence.
+- OCR remains derived from ready media; only reviewed/approved OCR is downstream approved text evidence.
+- Student auth/device rules from Stage6/8 remain unchanged.
+- Current Question Bank persistence supports only `multiple_choice | true_false`; AI `direct` extraction remains reviewable output, not auto-publishable Question Bank data.
+
+## Last build/test
+
+**Last fully green executable head:** `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
+
+**Next engineering batch:** Stage12 distributed concurrency/backpressure, built as a separate batch above the verified core.

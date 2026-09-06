@@ -1,0 +1,68 @@
+name: OCR Foundation Verification
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ocr-foundation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ocr-foundation:
+    name: OCR · Durable extraction foundation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_ocr
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_ocr"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_ocr
+      LOG_LEVEL: silent
+      OCR_REAL_ENGINE: "1"
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install PostgreSQL and Tesseract Arabic/English runtime
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y postgresql-client tesseract-ocr tesseract-ocr-ara tesseract-ocr-eng fonts-dejavu-core >/dev/null
+          tesseract --version | head -n 1
+          tesseract --list-langs | grep -qx 'ara'
+          tesseract --list-langs | grep -qx 'eng'
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Lint, typecheck, unit test and build OCR source
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+          npm run build --prefix apps/api
+      - name: Apply all migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify OCR PostgreSQL contracts
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname='ocr_extractions' and relkind='r'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_ocr_extractions_ready','idx_ocr_extractions_search_approved')")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ocr_extractions_identity_unique','ocr_extractions_running_lease_shape','ocr_extractions_confidence_range')")" = "3"
+      - name: Run PostgreSQL OCR lifecycle, retry, review, concurrency and real Tesseract tests
+        run: node --test --import tsx tests/integration/ocr.integration.test.ts
+        working-directory: apps/api
