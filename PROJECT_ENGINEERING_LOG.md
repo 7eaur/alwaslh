@@ -1,351 +1,322 @@
 # PROJECT ENGINEERING LOG
 
-> Engineering source of truth for product understanding, architecture decisions, implementation history, verification evidence and remaining work. Start with `DOCUMENTATION_INDEX.md`, then `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md`, Product Decision docs, `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`, and legacy coverage/audit references.
+> Engineering source of truth for project understanding, architecture decisions, implementation history, verification evidence and remaining work. Repository + GitHub Actions + runtime evidence are authoritative; chat memory is not.
 
 ## Project Understanding
 
-**الوسيلة الذكية** منصة تعليمية عربية بثلاثة أسطح/طبقات رئيسية:
+**الوسيلة الذكية** منصة تعليمية عربية بثلاثة أسطح رئيسية:
 
-- **Student Web/PWA (`apps/student-web`)**: Welcome/Auth، curriculum، Reader، summaries، practice/tests/models، Notes، Favorites، Needs Review، progress/private achievements، Notifications وOffline/PWA. Mobile-first، RTL، قابل للتثبيت ويعمل أيضًا من Browser.
-- **Admin Web (`apps/admin-web`)**: Super Admin واحد حاليًا لإدارة curriculum/content/media/OCR/TTS/AI authoring/Question Bank/students/codes/recovery/device reset/notifications/import-export/reports/audit.
-- **Backend API (`apps/api`)**: المسار الوحيد لبيانات PostgreSQL وتطبيق Auth/Authorization/Entitlements والعمليات authoritative.
+- **Student Web/PWA (`apps/student-web`)**: Auth, curriculum, Reader, summaries, practice/tests/models, Notes, Favorites, Needs Review, progress/private achievements, notifications and Offline/PWA.
+- **Admin Web (`apps/admin-web`)**: Super Admin only in current scope for curriculum/content/media/OCR/TTS/AI authoring/Question Bank/students/codes/recovery/device reset/notifications/import-export/reports/audit.
+- **Backend API (`apps/api`)**: the only authoritative business-data path to private PostgreSQL.
 
-### Product governance
+Product governance:
 
-- الفكرة الأساسية ثابتة؛ التطبيق القديم inventory إلزامي للمميزات والسيناريوهات والمشكلات وليس implementation specification.
-- **لا تُحذف Feature قديمة ذات قيمة بدون قرار صريح من Product Owner.**
-- `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` hard gates قبل إغلاق Student/Admin feature stages.
-- Product Review Batches 01–06 حسمت Core Product بما يكفي لاستمرار التنفيذ.
-- أي شيء غير منفذ أو غير مختبر = `NOT YET VERIFIED`.
-- Repository + GitHub Actions + runtime evidence هي ذاكرة المشروع الرسمية؛ chat memory ليست Source of Truth.
+- preserve the same product idea, core business outcomes and valuable legacy capabilities;
+- legacy implementation is inventory/evidence, not a technical specification;
+- `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` are hard gates before later Student/Admin feature closure;
+- unexecuted or unverified behavior is `NOT YET VERIFIED`;
+- Product Review Batches 01–06 define the current Core Product.
 
-### Sources
+Repository state:
 
-- repo: `7eaur/alwaslh`.
-- working branch: `planning/product-evolution-review` / draft PR #12.
-- canonical curriculum/media source: `7eaur/alwaslh-go` pinned at `f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23` for Stage9 inventory.
+- repo: `7eaur/alwaslh`;
+- working branch: `planning/product-evolution-review` / draft PR #12;
+- canonical Stage9 source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`;
+- exact latest verified executable head: `592123dae33f0cfce2ecd36e9577764767faa95a`;
+- deployment: `DEFERRED BY PRODUCT OWNER`.
 
 ## Architecture
 
 ```text
 Admin Web ──┐
-            ├── Backend API ── PostgreSQL (private)
+            ├── Backend API ── private PostgreSQL
 Student PWA ┘       │
                     ├── media/blob storage abstraction
-                    ├── OCR extraction + searchable approved text
-                    ├── cached/versioned TTS
-                    ├── provider/model-neutral AI contracts + durable jobs
-                    ├── Web Push / In-App notifications
+                    ├── OCR extraction + reviewed searchable text
+                    ├── Stage11 provider-neutral AI contracts
+                    ├── Stage12 durable provider-neutral execution
+                    ├── later TTS / notifications
                     └── account/device-scoped offline sync
 ```
 
-Rules:
+Architecture rules:
 
-- Browser never receives PostgreSQL credentials and never authorizes business operations through direct PostgREST access.
+- Browser never receives PostgreSQL/service credentials or performs authoritative business writes directly.
 - Auth/Authorization/Entitlements are server-owned.
 - Student and Admin are independent runtime surfaces.
-- final activation account creation is one transaction.
-- Student device identity is a cryptographic application-device key, not IP/User-Agent/browser fingerprint.
-- upload/media processing is independent from OCR/AI/TTS availability.
-- source media remains canonical evidence.
-- OCR/AI/TTS use provider-neutral boundaries where applicable.
+- Final first activation state is atomic.
+- Student device identity is cryptographic application-device proof, not IP/User-Agent/fingerprint.
+- Upload/media success is independent from OCR/AI/TTS availability.
+- Source media remains canonical evidence.
+- Reviewed OCR text is the approved text evidence path.
+- Provider/model-specific AI payloads stay behind adapters.
 - Preview does not redefine Production architecture.
-- root-cause fixes are mandatory; environment workarounds need an explicit exit path.
+- Root-cause fixes are mandatory; no test/security/business-rule weakening for green CI.
+
+## User Flows — Current Verified Infrastructure
+
+### Student activation/login/recovery
+
+```text
+6-digit Full Code
+→ non-consuming eligibility verification
+→ one-time activation ticket
+→ password + new P-256 device key/proof
+→ atomic profile/credential/entitlement/redemption/device/audit finalization
+→ device-bound HttpOnly session
+```
+
+Returning login requires password + one-time proof from the registered device key. Recovery revokes previous auth state, forces private-password replacement and retains device proof. Lost/replaced device requires explicit Admin reset/rebind and a NEW P-256 key; historical-key reuse is rejected.
+
+### Content/media/OCR
+
+```text
+Stage9 canonical source inventory
+→ Stage10 deterministic media variants/checksums/order
+→ ready media AI variant
+→ durable OCR lease/retry execution
+→ raw + conservative normalized text
+→ review gate
+→ approved searchable/reusable text
+```
+
+### AI authoring contract
+
+```text
+reviewed OCR/source-page chunks
+→ typed generation request
+→ versioned Prompt Registry
+→ provider-neutral envelope
+→ structured output
+→ schema/semantic/provenance/duplicate validation
+→ valid | invalid | review_required
+```
+
+Actual durable routing/execution belongs to Stage12.
 
 ## Verified Engineering Baseline
 
-### Stage 1 — Product Inventory — PASS
-Legacy feature/user-flow inventory and parity safety net.
+- **Stage1 Product Inventory** — PASS.
+- **Stage2 Brand** — PASS.
+- **Stage3 UX Architecture** — PASS.
+- **Stage4 PostgreSQL** — PASS.
+- **Stage5 Engineering Foundation** — PASS.
+- **Stage6 Auth & Authorization** — VERIFIED.
+- **Stage7 Access Codes & Entitlements** — VERIFIED.
+- **Stage8 Activation/Login/Recovery/Device** — VERIFIED.
+- **Stage9 Deterministic Source Import** — VERIFIED; 15 roots / 48 source docs / 5,552 images / canonical digest `7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`.
+- **Stage10 Media Pipeline** — VERIFIED.
+- **OCR Extraction Foundation** — VERIFIED.
+- **Stage11 Provider-Neutral AI Prompt / Output Contracts** — VERIFIED.
 
-### Stage 2 — Brand — PASS
-Owned brand/tokens/accessibility direction.
+## Changes Made
 
-### Stage 3 — UX Architecture — PASS
-Admin/Student IA and critical-state contracts.
+### Stage6/8 Auth / Activation / Device
 
-### Stage 4 — PostgreSQL — PASS
-Migration-owned PostgreSQL16 data platform.
+- two-step non-consuming Full Code verification;
+- atomic activation finalization;
+- password-only Student session bypass removed;
+- purpose-bound registered-device challenge login;
+- device-bound sessions;
+- temporary-password recovery + forced private replacement;
+- explicit Admin reset/rebind;
+- historical device-key reuse rejection;
+- non-extractable WebCrypto P-256 key stored in account-scoped IndexedDB.
 
-### Stage 5 — Engineering Foundation — PASS
-API runtime, bounded pool/transactions, config/logging/errors, strict TypeScript/lint/tests/build/CI.
+Exact historical closure head: `016546eca5696337b52063903bb5ba2fb9631c33`.
 
-### Stage 6 — Auth & Authorization — VERIFIED
-scrypt credentials, opaque HttpOnly sessions, role isolation, Origin protection, lockout, registered-device Student authentication, forced recovery and explicit rebind.
+### OCR Extraction Foundation
 
-### Stage 7 — Access Codes & Entitlements — VERIFIED
-
-- Full Code = 6 digits.
-- Class Code = 7 digits.
-- crypto-secure generation.
-- Arabic/Persian digit normalization.
-- transactional row-lock redemption.
-- idempotency/race safety/renewal/no-waste/revoke/audit.
-
-### Stage 8 — Activation/Login/Recovery/Device — VERIFIED
-Two-step activation, device challenge login, temporary-password forced change, session revocation, reset/rebind and browser key rotation are implemented and verified.
-
-### Stage 9 — Deterministic source import — VERIFIED
-Canonical inventory: 15 roots / 48 source documents / 5,552 images / 0 fatal inventory issues. Canonical digest: `7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`.
-
-### Stage 10 — Media Pipeline — VERIFIED
-`0009_media_pipeline.sql` + media services retain deterministic storage/order/checksum/provenance/idempotency/cleanup and local Sharp/Poppler PDF-processing guarantees.
-
-### OCR Extraction Foundation — VERIFIED
-`0011_ocr_foundation.sql` + provider-neutral OCR service provide durable extraction/retry/lease/review/search behavior on top of Stage10 media identity.
-
-## Product Review Closure — 2026-09-06
-
-Exact docs-head `e293defdaf87169ddbed0cc0c7cae2c525464c23`:
-
-- Stage10 `33999128114` — SUCCESS.
-- Stage9 `33999128132` — SUCCESS.
-- Full Rebuild `33999128111` — SUCCESS.
-
-Result: Core Product Review closure = PASS. Only genuine Business Rule conflicts should reopen Product Review.
-
-## Deployment State
-
-Historical Stage10 Preview engineering work fixed the combined Vercel build/routing contract and applied `0009_media_pipeline.sql` plus additive browser-role lockdown to the temporary Supabase Preview. A fresh Vercel runtime later hit provider build-rate quota; no security/business workaround was introduced.
-
-Product Owner then explicitly postponed development deployment.
-
-Current rule:
-
-- Preview/Vercel deployment = `DEFERRED BY PRODUCT OWNER`;
-- Git auto-deployment intentionally disabled;
-- hosted Student/Admin/API/media/Poppler/OCR remain `NOT YET VERIFIED`;
-- old quota is historical evidence, not an engineering-order blocker;
-- no deployment until Product Owner explicitly re-enables it.
-
-## Stage6/8 Auth / Activation / Device Refactor — Closure
-
-### Problem
-
-The earlier baseline did not meet the final Product Review device/recovery contract: activation was not fully split into non-consuming verification + atomic finalization, Student login could be password-only, recovery did not enforce temporary credential → private password, and lost-device handling lacked explicit cryptographic rebind history.
-
-### Solution
-
-- `/v1/student/activation/verify`: validates 6-digit Full Code without consumption and issues a short-lived ticket.
-- `/v1/student/activation/complete`: ticket + password + idempotency + P-256 public key/proof; one final transaction creates profile/credential/entitlement/redemption/device/audit and consumes code/ticket.
-- Student login uses `/v1/student/login/start` → purpose-bound challenge → `/v1/student/login/complete`.
-- `/v1/auth/login` does not create password-only Student sessions.
-- Student sessions bind to `device_id`.
-- Admin recovery issues a bounded temporary password, revokes old sessions/challenges and sets `must_change_password`.
-- Student must replace it using the registered device before session creation.
-- Admin device reset revokes active device/auth state and grants one rebind.
-- rebind requires a new P-256 key; historical key reuse for the same profile is rejected.
-- Student browser keeps a non-extractable private WebCrypto `CryptoKey` in account-scoped IndexedDB.
-
-### Exact Stage6/8 evidence
-
-Exact implementation head: `016546eca5696337b52063903bb5ba2fb9631c33`.
-
-- Rebuild Stage Verification `34002283741` — SUCCESS including Chromium.
-- Stage9 `34002283819` — SUCCESS.
-- Stage10 `34002283817` — SUCCESS.
-
-## OCR Extraction Foundation — Closure Batch
-
-### Repository discovery
-
-Stage10 already provided the correct provenance anchor:
-
-- `media_assets.id`;
-- optional `content_source_asset_id`;
-- source position/page number;
-- source checksum/bytes;
-- independent `ready/failed` media state;
-- deterministic `source/display/thumbnail/ai` variants with storage keys/checksums.
-
-`0004_ai_and_sync.sql` was also inspected. Its AI jobs are tied to prompt/model generation, so OCR was not incorrectly stuffed into `ai_jobs`. Instead OCR reuses the same *durable execution principles* without duplicating the AI domain.
-
-### Schema
-
-`database/migrations/0011_ocr_foundation.sql` adds:
-
-- `ocr_extraction_status`: `queued / running / retrying / completed / failed`;
-- `ocr_review_status`: `not_required / pending / approved / rejected`;
-- `ocr_extractions` bound to `input_media_variant_id` + input checksum;
-- provider key/version + extraction profile key;
-- attempt/max-attempt/next-attempt state;
+- `database/migrations/0011_ocr_foundation.sql`;
+- durable `queued/running/retrying/completed/failed` work;
+- `FOR UPDATE SKIP LOCKED` claims;
 - UUID lease token + expiry;
-- raw/normalized text;
-- mean confidence + provider metadata;
-- review reason/reviewer/time;
-- bounded error fields;
-- natural uniqueness + explicit idempotency key;
-- ready/review/search indexes including approved-text GIN search.
+- stale-worker completion/failure write rejection;
+- execution-time media-ready/checksum/byte verification;
+- raw text retention + conservative normalization;
+- low-confidence/empty/sensitive review reasons;
+- approved-only downstream search;
+- provider-neutral `OcrProvider`;
+- Tesseract CLI/TSV reference adapter with Arabic/English runtime smoke test.
 
-### Service/repository behavior
+Exact OCR closure head: `befdb8e5bd02aa33b12ce1098fac2678fe15acdd`.
 
-- enqueue only accepts a `ready` media asset with the expected deterministic AI variant;
-- idempotency hash includes variant id + checksum + provider key/version + profile key;
-- claims use `FOR UPDATE SKIP LOCKED`;
-- expired final attempts are failed safely;
-- expired running work under max attempts can be reclaimed;
-- completion requires current matching lease token **and unexpired lease**;
-- failure/retry updates also require current matching **unexpired** lease;
-- therefore a stale worker cannot overwrite the state of a newer attempt;
-- claimed input is reloaded only if media is still `ready` and checksum still matches;
-- stored bytes are checked for byte length and SHA-256 before provider execution;
-- provider failure/retry never marks the Stage10 media asset failed;
-- exponential retry delay is bounded;
-- Admin-only review approves/rejects pending text and may replace normalized text;
-- approved search only sees completed `not_required` or `approved` rows.
+### Stage11 Provider-Neutral AI Contracts
 
-### Text quality/review behavior
+Discovery inspected actual legacy `analyze-lesson` behavior, `0004_ai_and_sync.sql`, Product decisions, parity requirements and provider strategy before implementation.
 
-Normalization is intentionally conservative: raw provider text remains evidence and normalization avoids aggressive source rewriting.
+Implemented `apps/api/src/ai`:
 
-Review reasons:
+- `contracts.ts` — typed/Zod request, source, evidence, question and output contracts;
+- `prompt-registry.ts` — complete versioned registry + provider-neutral prompt envelope;
+- `validators.ts` — schema/semantic/provenance/count/notation/duplicate/review policy;
+- `benchmark.ts` — common provider benchmark adapter interface and usage/result aggregation.
 
-- normalized text empty → `empty_text`;
-- profile explicitly sensitive/exact (`requiresReview`) → `profile_requires_review`;
-- provider confidence missing → `provider_confidence_unavailable`;
-- confidence below profile threshold → `low_confidence`.
+Supported modes:
 
-This prevents high-confidence OCR alone from bypassing review for exact/sensitive source modes.
+- lesson summary;
+- question generation;
+- comprehensive lesson content;
+- multi-version quiz;
+- exact question extraction;
+- exact exam extraction;
+- replica question extraction;
+- regenerate one question;
+- page detection.
 
-### Provider boundary
+Legacy `extract_text` outcome is now provided by OCR Foundation instead of duplicating text extraction inside AI generation.
 
-`OcrProvider` is provider-neutral.
+Stage11 correctness behavior:
 
-`TesseractOcrProvider` is a verified reference adapter:
+- approved OCR + source/page/checksum chunks are the primary book-generation input;
+- explicit vision fallback is review-gated;
+- evidence outside the requested media/page set is invalid;
+- exact-source quote mismatch is invalid;
+- MCQ option count, T/F options, requested counts and version counts are deterministic checks;
+- `answerText` must match `options[correctOptionIndex]` for known option answers;
+- unknown/review answers cannot claim answer index/text;
+- exact/exam/replica extraction may not use external model knowledge to manufacture certainty;
+- exact/religious modes are review-gated;
+- Arabic visible numeral policy preserves scientific tokens such as `H2O`/`Fe3O4`;
+- exact duplicates are invalid in generated content;
+- near-duplicates are review-required;
+- regeneration must return one changed question while preserving type/difficulty;
+- provider/model fields are not part of the domain prompt envelope.
 
-- accepts image input only;
-- validates language hints;
-- shells to `tesseract` with bounded timeout/output and abort handling;
-- parses TSV, preserves line order and calculates weighted confidence;
-- CI installs `tesseract-ocr-ara` and `tesseract-ocr-eng` and executes a real smoke extraction.
-
-It is **not** a production-provider lock-in or proof that Tesseract is best for Arabic/scientific source material. Provider-quality selection still requires the benchmark dataset.
-
-### Root-cause fixes found by CI
-
-- initial OCR changes hit Biome formatting/import-order failures only; fixed without behavior changes.
-- OCR workflow PostgreSQL contract check failed because the shell assertion itself contained an extra `)` after `relkind='r'`; migration had already applied successfully. The workflow SQL syntax was corrected rather than changing the schema.
-- additional engineering review found and fixed three correctness risks before closure:
-  1. stale worker failure writes after lease expiry;
-  2. processing media that stopped being `ready` after enqueue;
-  3. empty/sensitive text bypassing review under high confidence.
-
-### Exact OCR verification evidence
-
-Exact implementation head: `befdb8e5bd02aa33b12ce1098fac2678fe15acdd`.
-
-- **OCR Foundation Verification `34003439653` — SUCCESS**
-  - Tesseract Arabic/English runtime — PASS;
-  - lint/typecheck/unit/build — PASS;
-  - migrations through `0011` — PASS;
-  - PostgreSQL table/index/constraint contracts — PASS;
-  - durable enqueue/replay — PASS;
-  - retry/backoff — PASS;
-  - concurrent claims — PASS;
-  - low-confidence review — PASS;
-  - approved-only search — PASS;
-  - empty-output review — PASS;
-  - sensitive-profile forced review — PASS;
-  - execution-time media-ready guard — PASS;
-  - stale-lease rejection — PASS;
-  - media-success independence — PASS;
-  - real Tesseract extraction — PASS.
-- **Stage9 Content Import Verification `34003439660` — SUCCESS.**
-- **Stage10 Media Pipeline `34003439659` — SUCCESS.**
-- **Rebuild Stage Verification `34003439669` — SUCCESS**, including Stage8 Chromium activation/returning-login/recovery/rebind E2E.
-
-**Conclusion:** OCR Extraction Foundation is `VERIFIED`.
+Stage11 intentionally preserves `direct` extracted questions at the AI boundary, while current Question Bank persistence still supports only `multiple_choice | true_false`. No silent DB widening was performed.
 
 ## Architecture Decisions
 
-Historical AD-064–068 remain valid for Preview build/TLS/DB hardening/media durability/quota behavior.
+Historical AD-064–068: Preview/build/TLS/media durability/provider quota decisions remain valid.
 
-- **AD-069 — Device-bound Student sessions:** Student authentication requires registered cryptographic device proof.
-- **AD-070 — Two-step activation:** verification is non-consuming; final account/code/device changes are atomic.
-- **AD-071 — Temporary-password recovery:** old auth state is revoked and a private password replacement is mandatory.
-- **AD-072 — Explicit rebind with key history:** Admin reset enables rebind; historical key reuse is rejected.
-- **AD-073 — Browser-local non-extractable key:** private Student device key remains in account-scoped IndexedDB.
-- **AD-074 — Deployment deferral:** Product Owner may defer hosted Preview while CI/PostgreSQL/browser engineering continues.
-- **AD-075 — OCR is derived, not authoritative media state:** OCR failure cannot turn a successful upload/media asset into failure.
-- **AD-076 — OCR provenance is Stage10 media/checksum-bound:** do not duplicate curriculum/source/page identity into a competing OCR provenance model.
-- **AD-077 — OCR uses lease-protected durable work:** stale workers cannot complete or fail/retry after lease loss.
-- **AD-078 — Downstream searchable/generation text is reviewed OCR only:** pending/rejected OCR is not approved evidence.
-- **AD-079 — OCR provider-neutral boundary:** Tesseract is a reference implementation, not a hard dependency for final provider choice.
+- **AD-069** — Student sessions are device-bound; password alone cannot create a Student session.
+- **AD-070** — activation eligibility verification is non-consuming; final state changes are atomic.
+- **AD-071** — recovery revokes old auth state and forces private-password replacement.
+- **AD-072** — device rebind requires explicit Admin reset; historical key reuse is rejected.
+- **AD-073** — Student private device key remains browser-local and non-extractable.
+- **AD-074** — deployment may remain deferred while CI/PostgreSQL/browser verification continues; deferred hosted runtime is never PASS.
+- **AD-075** — OCR is derived state and cannot redefine media success.
+- **AD-076** — OCR provenance is Stage10 media/checksum-bound; no competing source/page model.
+- **AD-077** — OCR durable work is lease-protected against stale writers.
+- **AD-078** — downstream approved text/search/generation consumes reviewed OCR only.
+- **AD-079** — Tesseract is a reference OCR adapter, not production lock-in.
+- **AD-080** — AI domain contracts are provider/model-neutral; provider payloads stay inside adapters.
+- **AD-081** — reviewed OCR + source/page/checksum evidence is the primary book-generation path; vision fallback is explicit/reviewed.
+- **AD-082** — exact modes never invent certainty; unresolved answers remain unknown/review-required.
+- **AD-083** — deterministic violations are `invalid`; uncertainty/sensitivity/near-duplicate cases may be `review_required`.
+- **AD-084** — direct extracted questions are preserved but not silently persisted into the current Question Bank schema.
+- **AD-085** — production routing/cascade requires benchmark evidence; Stage11 only defines the common harness/contracts.
 
 ## Audit Findings
 
 | ID | Severity | Area | Problem | Evidence | Impact | Solution | Status |
 |---|---|---|---|---|---|---|---|
-| SEC-001 | P0 | Admin Auth | Legacy anonymous privileged mutation | legacy audit | account/security compromise | private Backend authorization | FIXED Stage6 |
-| AUTH-006-004 | P1 | Student Auth | password-only session bypassed device policy | pre-refactor behavior | device policy bypass | challenge login + device-bound session | FIXED + VERIFIED |
-| AUTH-006-005 | P1 | Recovery | recovery did not force private replacement | Product Review/baseline | weaker account recovery | temporary password + revoke + forced change | FIXED + VERIFIED |
-| AUTH-006-006 | P1 | Device | no explicit cryptographic rebind history | Product Review/baseline | uncontrolled device movement | P-256 registry + reset + historical-key rejection | FIXED + VERIFIED |
-| DATA-015 | P0 | Activation | partial/prematurely consuming activation risk | legacy/baseline audit | partial account/code loss | non-consuming verify + atomic finalization | FIXED + VERIFIED |
-| DATA-018 | P0 | Class Codes | racy redemption | Stage7 audit/tests | double redemption/no-waste violation | row locks + transaction + idempotency | FIXED Stage7 |
-| CONTENT-009-* | P1/P2 | Content | source completeness/order/digest defects | Stage9 tests | wrong/missing source import | deterministic audited importer | FIXED Stage9 |
-| MEDIA-010-* | P1/P2 | Media | order/idempotency/failure/PDF defects | Stage10 tests | corrupt/non-repeatable variants | deterministic media pipeline | FIXED Stage10 |
-| OCR-011-001 | P1 | OCR | no durable extraction/result contract | roadmap + discovery | Reader/search/text-first AI lacked canonical text | `0011` + durable provider-neutral OCR | FIXED + VERIFIED `34003439653` |
-| OCR-011-002 | P1 | OCR Concurrency | stale worker could potentially overwrite newer state | implementation review | race/corrupt retry state | lease token + unexpired-lease condition on complete/fail | FIXED + VERIFIED |
-| OCR-011-003 | P1 | OCR Integrity | queued work could process media no longer ready | implementation review | derived text from invalidated media | execution-time ready/checksum/byte guard | FIXED + VERIFIED |
-| OCR-011-004 | P1 | OCR Review | high confidence could bypass review for empty/sensitive content | implementation review | unsafe downstream evidence | explicit empty/sensitive review reasons | FIXED + VERIFIED |
-| PREVIEW-010-002 | P2 | Hosted Media | durable hosted storage/Poppler unproven | media code inspection | cannot claim hosted pipeline | durable adapter/runtime verification later | NOT YET VERIFIED |
-| PRODUCT-006 | P1 | Assessment | Student live/unreviewed AI undesirable | Product Review | unreviewed questions | Published Question Bank only | DECIDED; implementation pending |
-| AI-NEW-002 | P1 | AI Scale | giant generation requests lose progress/overload providers | Product Review | brittle expensive generation | durable chunks/queue/backpressure | PENDING Stage12 |
+| SEC-001 | P0 | Admin Auth | legacy anonymous privileged mutation | legacy audit | account/security compromise | private Backend authorization | FIXED Stage6 |
+| AUTH-006-004 | P1 | Student Auth | password-only Student session bypassed device policy | baseline behavior | device policy bypass | registered-device challenge + device-bound session | FIXED + VERIFIED |
+| AUTH-006-005 | P1 | Recovery | recovery did not force private credential replacement | baseline/Product Review | weaker recovery | temporary password + revoke + forced change | FIXED + VERIFIED |
+| AUTH-006-006 | P1 | Device | no explicit cryptographic reset/rebind history | baseline/Product Review | uncontrolled device movement | P-256 registry + reset + historical-key rejection | FIXED + VERIFIED |
+| DATA-015 | P0 | Activation | partial/premature code consumption risk | baseline audit | partial account/code loss | non-consuming verify + atomic finalization | FIXED + VERIFIED |
+| DATA-018 | P0 | Class Codes | racy redemption | Stage7 tests | double redemption/no-waste violation | row locks + transaction + idempotency | FIXED Stage7 |
+| CONTENT-009-* | P1/P2 | Content | source completeness/order/digest defects | Stage9 inventory/tests | wrong/missing import | deterministic audited importer | FIXED + VERIFIED |
+| MEDIA-010-* | P1/P2 | Media | order/idempotency/failure/PDF defects | Stage10 tests | corrupt/non-repeatable media | deterministic media pipeline | FIXED + VERIFIED |
+| OCR-011-001 | P1 | OCR | no durable extraction/result contract | roadmap/discovery | no canonical reviewed text | `0011` + durable provider-neutral OCR | FIXED + VERIFIED |
+| OCR-011-002 | P1 | OCR Concurrency | stale worker could overwrite newer state | implementation review | corrupt retry/result state | unexpired lease required for writes | FIXED + VERIFIED |
+| OCR-011-003 | P1 | OCR Integrity | queued work could process media no longer ready | implementation review | invalid derived text | execution-time ready/checksum/byte guard | FIXED + VERIFIED |
+| OCR-011-004 | P1 | OCR Review | high confidence could bypass empty/sensitive review | implementation review | unsafe downstream evidence | explicit empty/sensitive review gates | FIXED + VERIFIED |
+| AI-011-001 | P1 | AI Architecture | legacy generation coupled prompts/provider/parsing/business modes | legacy `analyze-lesson` | lock-in and weak validation | Stage11 provider-neutral domain contracts | FIXED + VERIFIED |
+| AI-011-002 | P1 | Exact Source | exact modes allowed external-knowledge answer guessing | legacy exact/replica prompts | fabricated educational certainty | unknown/review answer contract | FIXED + VERIFIED |
+| AI-011-003 | P1 | Provenance | generated output lacked one authoritative source/page validation boundary | parity + legacy behavior | untraceable questions | source chunk/evidence validator | FIXED + VERIFIED |
+| AI-011-004 | P2 | Duplication | exact duplicate handling did not cover near-duplicates | Stage11 hardening review | repetitive Question Bank output | exact duplicate invalid + near-duplicate review | FIXED + VERIFIED |
+| AI-011-005 | P2 | Question Bank | AI exact extraction supports direct questions but current DB enum does not | `contracts.ts` vs `0003_learning.sql` | cannot safely auto-publish direct extraction | preserve reviewable output; later explicit persistence rule | OPEN / NOT YET VERIFIED |
+| AI-NEW-002 | P1 | AI Scale | giant provider requests lose progress and overload systems | Product Review/roadmap | brittle expensive generation | durable units/scheduler/backpressure/cascade | ACTIVE Stage12 |
+| PREVIEW-010-002 | P2 | Hosted Media/AI | durable hosted media/Poppler/OCR/AI execution unproven | runtime state | cannot claim hosted pipeline | verify later when deployment re-enabled | NOT YET VERIFIED |
 | DOC-001 | P2 | Continuity | chat-memory dependency | governance audit | repeated/contradictory work | repository Status/Log/Handoff | CONTROLLED |
 
-## Stage11 — Active Discovery / Contract Scope
+## Tests & Verification
 
-Next phase is **Provider-Neutral AI Prompt / Output Contracts**.
+### Stage6/8 historical closure
 
-Boundary:
+Exact head `016546eca5696337b52063903bb5ba2fb9631c33`:
 
-- Stage11 defines prompt registry, typed inputs/outputs, provenance and validators, plus a golden benchmark harness.
-- Stage12 owns scheduler/backpressure/cascade/live high-throughput execution.
-- existing `ai_jobs / ai_job_units / ai_outputs` from `0004_ai_and_sync.sql` should be reused where appropriate, not duplicated.
-- approved OCR text is the primary book-generation source; pending/rejected OCR must not become generation evidence.
-- book-generated questions require source/page provenance.
-- no silent answer invention/defaulting.
-- exact religious/source text, formulas/tables and uncertain OCR require stricter evidence/review behavior.
-- live provider credentials/pricing/routing remain `NOT YET VERIFIED` until explicitly configured and benchmarked.
+- Rebuild `34002283741` — SUCCESS including Chromium.
+- Stage9 `34002283819` — SUCCESS.
+- Stage10 `34002283817` — SUCCESS.
 
-Before implementation, inventory actual AI code/schema/tests and relevant legacy generation modes from parity/audit docs.
+### OCR closure
 
-## Legacy Feature Coverage Impact
+Exact head `befdb8e5bd02aa33b12ce1098fac2678fe15acdd`:
 
-Auth/device and OCR implement approved infrastructure/product outcomes and remove no valuable legacy capability. Stage13/14+ still require explicit row-by-row parity/coverage evidence before feature-stage closure.
+- OCR `34003439653` — SUCCESS.
+- Stage9 `34003439660` — SUCCESS.
+- Stage10 `34003439659` — SUCCESS.
+- Full Rebuild `34003439669` — SUCCESS including Chromium.
+
+### Stage11 closure
+
+Exact executable head `592123dae33f0cfce2ecd36e9577764767faa95a`:
+
+- **Stage11 AI Contract Verification `34004445273` — SUCCESS**: lint, strict typecheck, golden/hardening tests, API build.
+- **OCR Foundation Verification `34004445384` — SUCCESS**.
+- **Stage10 Media Pipeline `34004445278` — SUCCESS**.
+- **Stage9 Content Import Verification `34004445277` — SUCCESS**.
+- **Rebuild Stage Verification `34004445394` — SUCCESS**, including Stage8 Chromium activation/returning-login/recovery/rebind E2E.
+
+Golden/hardening coverage includes registry completeness/version identity, provider-neutral envelope, formula numeral exception, visible-digit rejection, unresolved exact answer review, exact quote mismatch, religious review, exact duplicate rejection, wrong index/answer rejection, count mismatch, provenance-outside-request rejection, near-duplicate review, adapter failure recording and usage/cost aggregation.
 
 ## Known Issues / Remaining Risk
 
-- development deployment = `DEFERRED BY PRODUCT OWNER`;
-- hosted Student/Admin/API/Poppler/durable media/OCR = `NOT YET VERIFIED`;
-- durable hosted media adapter/runtime not implemented;
-- production OCR-provider quality benchmark not executed;
-- Stage11 AI contracts/golden benchmark not implemented yet;
-- Stage12 durable provider routing/scheduler/cascade not implemented;
-- Reader Text/Search/TTS product surface not implemented;
-- final Student PWA install/update/offline lease not runtime-verified;
-- Published Question Bank practice/test engine not implemented;
-- Notes media sync, Favorites/Needs Review automation, Push and progress/weak-area pipelines remain;
-- Admin/Student complete product stages and later performance/security/accessibility/load/release/ops gates remain.
+- Development deployment = `DEFERRED BY PRODUCT OWNER`.
+- Hosted Student/Admin/API/Poppler/durable media/OCR/AI workers = `NOT YET VERIFIED`.
+- Durable hosted media adapter/runtime is not implemented/verified.
+- Production OCR-provider quality benchmark is not executed.
+- Live AI provider/model benchmark, credentials, production routing and cost evidence are not executed.
+- Direct extracted-question persistence into the Question Bank is not resolved.
+- Stage12 durable AI router/scheduler/cascade is not implemented yet.
+- Reader Text/Search/TTS product surface is not implemented.
+- Final Student PWA install/update/offline authorization lease is not runtime-verified.
+- Published Question Bank practice/test engine is not implemented.
+- Notes media, Favorites/Needs Review automation, Push and progress/weak-area pipelines remain.
+- Later Admin/Student product, security/performance/accessibility/load/release/ops gates remain.
 
 ## Remaining Work — Ordered
 
-1. Stage11 provider/model-neutral AI prompt/output contracts + golden benchmark/provenance/validators.
-2. Stage12 durable provider/model-neutral high-throughput execution.
-3. Curriculum structure extension and Stage13+ from `MASTER_REBUILD_ROADMAP.md` with parity/design-system gates.
-4. When Product Owner explicitly re-enables deployment, deliberately restore deployment, sync a stable validated head and verify exact hosted commit/`READY`/Student/Admin/API/media/OCR runtime before claiming PASS.
+1. **Stage12 Durable Provider-Neutral High-Throughput AI Execution**.
+2. Curriculum structure extension and Stage13+ from `MASTER_REBUILD_ROADMAP.md` with parity/design-system gates.
+3. Resolve direct-question publish persistence before Admin Question Bank publishing depends on it.
+4. When Product Owner explicitly re-enables deployment, deliberately restore deployment and verify exact hosted Student/Admin/API/media/OCR/AI runtime before claiming PASS.
 
-## Tests & Verification — Current
+## Stage12 Active Scope
 
-### Exact latest implementation head
+Do not invent another queue. First inspect `0004_ai_and_sync.sql` and all current/legacy AI job callers, then reuse/extend `ai_jobs`, `ai_job_units`, `ai_outputs` only where needed.
 
-`befdb8e5bd02aa33b12ce1098fac2678fe15acdd`
+Target:
 
-- OCR Foundation Verification `34003439653` — SUCCESS.
-- Stage9 Content Import Verification `34003439660` — SUCCESS.
-- Stage10 Media Pipeline `34003439659` — SUCCESS.
-- Rebuild Stage Verification `34003439669` — SUCCESS, including Chromium.
+```text
+Generation Plan
+→ reviewed OCR source/page chunks
+→ durable bounded units
+→ scheduler/backpressure
+→ AiModelRouter
+→ provider/model adapter
+→ Stage11 output contract
+→ Stage11 validation
+→ partial success persistence
+→ Admin review
+```
 
-Documentation-only commits after this head do not supersede that exact executable implementation evidence unless they change executable code.
+Required properties:
+
+- deterministic per-unit idempotency;
+- bounded global/provider/project/model concurrency;
+- classified retry/backoff/jitter/cooldown;
+- partial success, cancel/resume/progress;
+- server-only provider configuration and budget ceilings;
+- provider/model health/telemetry;
+- prompt/source/model/token/latency/error/cost metadata;
+- no whole-book repeated prompts or giant in-memory state;
+- benchmark-approved cheap/fast → stronger model cascade only for failed/uncertain units;
+- no switching credentials/projects to evade provider limits or terms.
 
 ## Documentation / Continuity Protocol
 
@@ -354,11 +325,10 @@ After every meaningful batch:
 - update `PROJECT_ENGINEERING_LOG.md`;
 - update `PROJECT_STATUS.md`;
 - update `PROJECT_HANDOFF.md` when architecture/branch/CI/Preview state changes;
-- update specialized Product/AI/Preview docs;
-- update parity/coverage evidence when actual features land;
+- update specialized docs and parity evidence when affected;
 - retain exact commit/CI/runtime evidence;
 - unexecuted = `NOT YET VERIFIED`.
 
 ## Current State
 
-**OCR Extraction Foundation is VERIFIED on exact head `befdb8e5…`; OCR, Stage9, Stage10 and Full Rebuild are all green on that same head. Deployment remains intentionally deferred by Product Owner. Current engineering phase is Stage11 Provider-Neutral AI Prompt / Output Contracts.**
+**Stage11 Provider-Neutral AI Prompt / Output Contracts is VERIFIED on exact executable head `592123d…`; Stage11, OCR, Stage10, Stage9 and Full Rebuild/Chromium are all green on that same head. Deployment remains intentionally deferred. Current engineering phase is Stage12 Durable Provider-Neutral High-Throughput AI Execution.**

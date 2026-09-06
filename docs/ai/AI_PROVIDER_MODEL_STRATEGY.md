@@ -1,12 +1,12 @@
 # AI PROVIDER / MODEL STRATEGY
 
-> Decision snapshot: 2026-09-06. Pricing/free tiers change frequently; re-check official provider pricing/rate limits immediately before implementation or production routing. Architecture must not depend on today's prices.
+> Decision snapshot: 2026-09-06. Provider pricing/free tiers/rate limits change frequently; re-check official terms before live benchmarking or production routing. Architecture must not depend on today's prices.
 
 ## Goal
 
-Generate the largest **useful and publishable** educational output volume with controlled cost, low token waste, high Arabic/scientific correctness, and resilient throughput.
+Generate the largest **useful and publishable** educational output volume with controlled cost, low token waste, strong Arabic/scientific correctness and resilient throughput.
 
-Primary KPI is not requests/second:
+Primary KPI:
 
 ```text
 accepted reviewed outputs
@@ -14,154 +14,171 @@ accepted reviewed outputs
 cost + tokens + latency
 ```
 
-Secondary KPIs:
-- schema-valid rate؛
-- semantic/provenance-valid rate؛
-- duplicate rate؛
-- Admin rejection/edit rate؛
-- retry/failure rate؛
-- p50/p95 latency؛
-- input/output tokens per accepted item.
+Secondary KPIs include schema-valid rate, semantic/provenance-valid rate, duplicate rate, Admin rejection/edit rate, retry/failure rate, latency and tokens/cost per accepted item.
 
-## Architectural rule
+## Authoritative architecture
 
-No direct Gemini/OpenAI/Groq/OpenRouter calls from domain services.
+No direct provider calls from domain services.
 
 ```text
-Generation Service
-→ AiModelRouter
+Generation Plan / Service
+→ Stage11 typed request + Prompt Registry
+→ Stage12 AiModelRouter
 → AiProviderAdapter
-   ├── Google adapter
-   ├── Groq adapter
-   ├── OpenRouter adapter
-   └── future provider adapter
-→ normalized structured response
+→ normalized structured Stage11 output
+→ Stage11 validators/provenance/dedupe
+→ durable result / review
 ```
 
-Provider-specific payloads/errors/usage metadata stay inside adapters.
+Provider-specific payloads, errors and usage metadata stay inside adapters.
 
-## Initial candidate pool for benchmark
+## Stage11 verified contract layer
 
-The initial benchmark should include at least:
+Stage11 is now **VERIFIED** on exact executable head `592123dae33f0cfce2ecd36e9577764767faa95a`.
 
-1. **Google Gemini Flash-class model**
-   - attractive free/developer entry and paid/batch options؛
-   - good candidate for multimodal fallback and high-quality structured generation؛
-   - free-tier privacy/data-use terms must be checked before using real unpublished/source-sensitive production content؛
-   - paid/batch mode should be evaluated for large asynchronous generation.
+Implemented under `apps/api/src/ai`:
 
-2. **Groq-hosted GPT-OSS / other production text models**
-   - very high token throughput and low per-token price are attractive for OCR-text-first bulk question generation؛
-   - must prove Arabic, chemistry/math notation, exact-source behavior and structured-output acceptance on our golden set before becoming primary.
+- provider-neutral Zod request/output/source/question contracts;
+- versioned Prompt Registry;
+- provider-neutral prompt envelope;
+- deterministic schema/semantic/provenance/count/notation/duplicate validators;
+- explicit `valid | invalid | review_required` outcomes;
+- exact-source rule that unresolved answers remain unknown/review-required rather than being guessed;
+- exact duplicate rejection + near-duplicate review;
+- source-controlled golden/hardening tests;
+- provider-neutral benchmark adapter harness with usage/result summary.
 
-3. **OpenRouter specific pinned models**
-   - useful as a provider abstraction/fallback and for testing multiple models through a common API shape؛
-   - free variants/free router are acceptable for experiments/benchmarks/low-volume non-sensitive work, but **not a production correctness dependency** because availability/rate limits/model routing may change.
+Stage11 verification: `34004445273` SUCCESS, with OCR `34004445384`, Stage10 `34004445278`, Stage9 `34004445277` and Full Rebuild `34004445394` also SUCCESS on the same executable head.
 
-Additional providers/models can be added when they beat the current pool on our acceptance/cost benchmark.
+No live provider/model quality claim was made in Stage11.
+
+## Input/source policy
+
+Textbook generation should use reviewed OCR text first:
+
+```text
+ready source media
+→ reviewed OCR extraction
+→ bounded source/page chunk + checksum identity
+→ Stage11 request
+```
+
+Vision/raw-image input is fallback-only when text evidence cannot safely satisfy the mode. Vision fallback is explicit and review-gated.
+
+Book-generated questions require source/page evidence. Exact/source-sensitive output must preserve source evidence and uncertainty; no fabricated answer certainty is allowed.
+
+## Candidate provider/model pool for live benchmark
+
+Initial benchmark candidates may include:
+
+1. Google Gemini Flash-class models;
+2. Groq-hosted GPT-OSS or other production text models;
+3. pinned OpenRouter models where availability/terms are suitable;
+4. additional providers only when they can be benchmarked through the same Stage11 adapter contract.
+
+A provider/model is not approved because it is free, fast or popular. It must beat alternatives on accepted-output quality/cost/time for the relevant task family.
 
 ## Model routing by task
 
-Do not choose one model for every mode.
+### Tier A — cheap/fast approved first pass
 
-### Tier A — cheap/fast first pass
-Use when golden tests show acceptable quality for:
-- standard MCQ؛
-- simple True/False؛
-- classification/metadata extraction؛
-- duplicate-normalization helpers؛
-- simple summaries.
+Use only after golden/live benchmark evidence for modes such as standard MCQ, simple True/False, simple summaries, classification or normalization helpers.
 
 ### Tier B — stronger generation
-Use directly or by escalation for:
-- difficult Arabic phrasing؛
-- multi-step scientific questions؛
-- chemistry/math notation؛
-- questions requiring nuanced explanation/method؛
-- units rejected by Tier A validators.
+
+Use directly or as escalation for harder Arabic phrasing, multi-step science, chemistry/math notation, nuanced explanation/method, or units rejected/uncertain after Tier A.
 
 ### Exact/sensitive source modes
-Religious/source-exact text, formulas/tables and OCR-uncertain material require stricter provenance/evidence and may use a stronger/vision-capable model only when the text path cannot prove correctness. Human Admin review remains mandatory.
 
-## Cascade
+Religious/source-exact text, formulas/tables and OCR-uncertain material require stricter provenance/evidence. Human Admin review remains mandatory where Stage11 marks the mode/source as review-required.
+
+## Cascade rule
 
 ```text
 job unit
-→ cheapest benchmark-approved model for this mode
-→ schema validator
+→ cheapest benchmark-approved route for this mode/domain
+→ Stage11 schema validator
 → semantic validator
 → provenance validator
 → duplicate validator
-   ├── PASS → Draft
-   └── FAIL/UNCERTAIN → stronger approved model for this unit only
+   ├── PASS → Draft/review flow
+   └── FAIL/UNCERTAIN → stronger approved route for this unit only
 ```
 
 Never regenerate already accepted units because another unit failed.
 
-## Batch / throughput policy
+## Stage12 execution policy
 
-- OCR once per source revision؛
-- compact source chunks sized by tokens/content boundaries, not arbitrary whole books؛
-- durable DB-backed job units؛
-- bounded global concurrency؛
-- bounded per-provider/project/model concurrency؛
-- backpressure from provider rate-limit and DB/worker saturation؛
-- retry only retryable errors with exponential backoff+jitter؛
-- cooldown on 429/rate-limit responses؛
-- partial-success checkpoints؛
-- cancel/resume؛
-- deterministic idempotency keys؛
-- no unbounded in-memory batch state.
+Stage12 is the active engineering phase and must reuse/extend existing durable primitives from `database/migrations/0004_ai_and_sync.sql` rather than create a parallel queue.
+
+Required behavior:
+
+- reviewed OCR reuse;
+- bounded source/page chunks, not whole-book repeated prompts;
+- durable `ai_jobs / ai_job_units / ai_outputs` where appropriate;
+- deterministic per-unit idempotency;
+- bounded global/provider/project/model concurrency;
+- scheduler backpressure;
+- retry only retryable errors with exponential backoff + jitter;
+- cooldown/Retry-After handling for rate limits;
+- provider/credential health state;
+- partial-success checkpoints;
+- cancel/resume/progress;
+- no unbounded in-memory batch state;
+- provider/model/prompt/source/validation/token/latency/error/cost telemetry;
+- budget ceilings/kill switch;
+- server-only provider configuration;
+- model cascade only after benchmark evidence;
+- no credential/project switching to evade quotas or terms.
 
 ## Credential policy
 
-- all API keys server-only secret config؛
-- no keys in Student/Admin bundles؛
-- credentials have health/status/cooldown metadata؛
-- legitimate failover across configured authorized provider accounts/projects؛
-- no key switching to evade provider limits/terms؛
-- per-provider budget ceiling and kill switch.
+- all provider secrets are server-only;
+- no provider keys in Student/Admin bundles or repository files;
+- DB/UI may reference non-secret provider/project/credential aliases only;
+- credentials/projects have health/cooldown/budget metadata;
+- legitimate failover is allowed only across intentionally configured authorized accounts/projects;
+- multiple keys in one provider project do not imply extra quota;
+- no routing behavior may evade provider limits or terms.
 
-## Benchmark dataset
+## Golden / live benchmark dataset
 
-Before choosing defaults, run the same source-controlled golden set across candidates. Include:
-- Arabic prose؛
-- Quran/religious exact-source cases؛
-- chemistry notation؛
-- physics formulas؛
-- mathematics؛
-- tables؛
-- noisy OCR؛
-- short/long lessons؛
-- MCQ, T/F, mixed, summary, alternate-version, model/exam modes.
+Use the same source-controlled cases across candidates. Include Arabic prose, religious exact-source cases, chemistry notation, physics formulas, mathematics, tables, noisy OCR, short/long lessons, MCQ, T/F, mixed counts, summaries, exact/replica/exam extraction, alternate versions and regeneration.
 
 Measure:
-- valid structured output؛
-- correct answer؛
-- explanation quality؛
-- source/page fidelity؛
-- duplicate rate؛
-- Arabic quality؛
-- tokens؛
-- latency؛
-- estimated cost؛
+
+- structured-output validity;
+- answer correctness;
+- explanation quality;
+- source/page fidelity;
+- unresolved-answer honesty;
+- duplicate/near-duplicate rate;
+- Arabic/scientific notation quality;
+- tokens;
+- latency;
+- estimated/actual cost where available;
 - Admin acceptance/edit rate.
 
 ## Production selection rule
 
-A free model is not automatically better. A model that costs slightly more but produces twice as many accepted questions can be cheaper overall.
-
-Routing decisions must be evidence-based and versioned:
+Routing decisions are versioned evidence, not hard-coded preference:
 
 ```text
-mode + subject family + difficulty
+mode + subject family + difficulty/sensitivity
 → preferred provider/model
-→ fallback provider/model
+→ fallback/escalation route
 → benchmark version
-→ max token/output limits
+→ output/token limits
 → concurrency/budget policy
 ```
 
+A slightly more expensive model can be cheaper overall if it produces materially more accepted outputs.
+
 ## Current implementation status
 
-Architecture DECIDED by PED-044/PED-045. Provider adapters, golden benchmark runner, production routing and credentials are **NOT YET VERIFIED** and belong to revised Stage 11/12 work.
+- Provider-neutral Stage11 contracts/Prompt Registry/validators/golden harness: **VERIFIED**.
+- Durable Stage12 router/scheduler/worker/cascade: **NOT YET VERIFIED / ACTIVE NEXT WORK**.
+- Live provider adapters with authorized credentials: **NOT YET VERIFIED**.
+- Live cross-provider/model benchmark results: **NOT YET VERIFIED**.
+- Production default routing/budget configuration: **NOT YET VERIFIED**.
+- Hosted AI worker/runtime behavior: **NOT YET VERIFIED** while deployment remains deferred by Product Owner.
