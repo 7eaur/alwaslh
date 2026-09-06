@@ -57,9 +57,12 @@ jobs:
       - name: Verify Stage12 PostgreSQL execution contracts
         run: |
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname='ai_execution_attempts' and relkind='r'")" = "1"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from information_schema.columns where table_name='ai_job_units' and column_name in ('max_attempts','lease_token','lease_expires_at')")" = "3"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ai_job_units_max_attempts_valid','ai_job_units_running_lease_shape','ai_execution_attempts_unit_number_unique')")" = "3"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_ai_job_units_stage12_claim','idx_ai_execution_attempts_unit_started','idx_ai_execution_attempts_route_started')")" = "3"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from information_schema.columns where table_name='ai_job_units' and column_name in ('max_attempts','lease_token','lease_expires_at','resume_route_key','capacity_deferred_count')")" = "5"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ai_job_units_max_attempts_valid','ai_job_units_running_lease_shape','ai_job_units_resume_route_nonblank','ai_job_units_capacity_deferred_nonnegative','ai_execution_attempts_unit_number_unique')")" = "5"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_ai_job_units_stage12_claim','idx_ai_job_units_capacity_resume','idx_ai_execution_attempts_unit_started','idx_ai_execution_attempts_route_started')")" = "4"
       - name: Run PostgreSQL idempotency, lease, cascade, retry, cancellation and partial-success tests
         run: node --test --import tsx tests/integration/ai-execution.integration.test.ts
+        working-directory: apps/api
+      - name: Run PostgreSQL distributed global, provider, project and model capacity tests
+        run: node --test --import tsx tests/integration/ai-capacity.integration.test.ts
         working-directory: apps/api
