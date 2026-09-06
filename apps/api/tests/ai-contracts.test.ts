@@ -1,10 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  type AiBenchmarkAdapter,
-  runAiBenchmark,
-  summarizeAiBenchmark,
-} from "../src/ai/benchmark.js";
+import { type AiBenchmarkAdapter, runAiBenchmark, summarizeAiBenchmark } from "../src/ai/benchmark.js";
 import { aiGenerationModeSchema } from "../src/ai/contracts.js";
 import {
   buildPromptEnvelope,
