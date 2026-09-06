@@ -60,7 +60,7 @@ jobs:
         run: npm run db:migrate --prefix apps/api
       - name: Verify OCR PostgreSQL contracts
         run: |
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname='ocr_extractions' and relkind='r')" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname='ocr_extractions' and relkind='r'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_ocr_extractions_ready','idx_ocr_extractions_search_approved')")" = "2"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ocr_extractions_identity_unique','ocr_extractions_running_lease_shape','ocr_extractions_confidence_range')")" = "3"
       - name: Run PostgreSQL OCR lifecycle, retry, review, concurrency and real Tesseract tests
