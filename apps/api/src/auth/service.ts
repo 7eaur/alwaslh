@@ -161,7 +161,11 @@ export class AuthService {
       credential.temporary_password_expires_at &&
       credential.temporary_password_expires_at.getTime() <= Date.now()
     ) {
-      throw new AppError("UNAUTHORIZED", "انتهت صلاحية كلمة المرور المؤقتة. اطلب واحدة جديدة من الإدارة", 401);
+      throw new AppError(
+        "UNAUTHORIZED",
+        "انتهت صلاحية كلمة المرور المؤقتة. اطلب واحدة جديدة من الإدارة",
+        401,
+      );
     }
 
     const devices = await this.db.query<DeviceRow>(
@@ -197,7 +201,13 @@ export class AuthService {
         `insert into auth_device_challenges (
            token_hash_sha256, profile_id, device_id, purpose, expires_at
          ) values ($1, $2, $3, $4, now() + ($5::integer * interval '1 second'))`,
-        [hashToken(challengeToken), credential.profile_id, device?.id ?? null, purpose, DEVICE_CHALLENGE_SECONDS],
+        [
+          hashToken(challengeToken),
+          credential.profile_id,
+          device?.id ?? null,
+          purpose,
+          DEVICE_CHALLENGE_SECONDS,
+        ],
       );
       await tx.query("delete from auth_login_guards where normalized_identifier = $1", [
         credential.normalized_identifier,
@@ -282,10 +292,9 @@ export class AuthService {
         const device = devices[0];
         if (!device) throw new AppError("CONFLICT", "تعذر تسجيل الجهاز الجديد", 409);
         deviceId = device.id;
-        await tx.query(
-          "update auth_credentials set device_rebind_allowed = false where profile_id = $1",
-          [challenge.profile_id],
-        );
+        await tx.query("update auth_credentials set device_rebind_allowed = false where profile_id = $1", [
+          challenge.profile_id,
+        ]);
         await recordAuthEvent(tx, "device_registered", {
           profileId: challenge.profile_id,
           metadata: { deviceId, fingerprint: deviceKey.fingerprintSha256, flow: "admin_rebind" },
@@ -508,10 +517,9 @@ export class AuthService {
          where profile_id = $1 and revoked_at is null`,
         [targetProfileId, actor.id],
       );
-      await tx.query(
-        "update auth_credentials set device_rebind_allowed = true where profile_id = $1",
-        [targetProfileId],
-      );
+      await tx.query("update auth_credentials set device_rebind_allowed = true where profile_id = $1", [
+        targetProfileId,
+      ]);
       await this.revokeStudentAuthState(tx, targetProfileId);
       await recordAuthEvent(tx, "device_rebind_reset", {
         profileId: targetProfileId,

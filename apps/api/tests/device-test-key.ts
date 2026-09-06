@@ -1,5 +1,5 @@
 import { generateKeyPairSync, sign } from "node:crypto";
-import { deviceProofMessage, type DeviceProofPurpose } from "../src/auth/device-crypto.js";
+import { type DeviceProofPurpose, deviceProofMessage } from "../src/auth/device-crypto.js";
 
 export interface TestDeviceKey {
   publicKeySpki: string;
@@ -12,11 +12,10 @@ export function createTestDeviceKey(): TestDeviceKey {
   return {
     publicKeySpki,
     signChallenge(purpose, token) {
-      return sign(
-        "sha256",
-        Buffer.from(deviceProofMessage(purpose, token), "utf8"),
-        { key: privateKey, dsaEncoding: "ieee-p1363" },
-      ).toString("base64url");
+      return sign("sha256", Buffer.from(deviceProofMessage(purpose, token), "utf8"), {
+        key: privateKey,
+        dsaEncoding: "ieee-p1363",
+      }).toString("base64url");
     },
   };
 }

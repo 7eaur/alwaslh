@@ -1,5 +1,11 @@
 import { type EntitlementView, normalizeAccessCode } from "../access/service.js";
-import { createOpaqueToken, hashAuditValue, hashPassword, hashToken, verifyPassword } from "../auth/crypto.js";
+import {
+  createOpaqueToken,
+  hashAuditValue,
+  hashPassword,
+  hashToken,
+  verifyPassword,
+} from "../auth/crypto.js";
 import { assertDeviceProof } from "../auth/device-crypto.js";
 import type { SessionProfile } from "../auth/service.js";
 import type { Database, QueryExecutor } from "../db.js";
@@ -35,6 +41,7 @@ interface ActivationReplayRow {
   entitlement_id: string;
   code_type: "full_access" | "class_access";
   activation_ticket_hash: string | null;
+  normalized_identifier: string;
   password_hash: string;
   profile_status: "active" | "inactive" | "archived";
   display_name: string | null;
@@ -266,10 +273,7 @@ export class StudentActivationService {
         [profile.id, accessCode.id, entitlement.id, idempotencyKey, ticketHash, deviceKey.fingerprintSha256],
       );
 
-      await tx.query(
-        `update student_activation_tickets set used_at = now() where id = $1`,
-        [ticket.id],
-      );
+      await tx.query(`update student_activation_tickets set used_at = now() where id = $1`, [ticket.id]);
 
       await tx.query(
         `insert into access_events (
@@ -308,6 +312,7 @@ export class StudentActivationService {
               r.entitlement_id,
               r.code_type,
               r.request_metadata ->> 'activation_ticket_hash' as activation_ticket_hash,
+              c.normalized_identifier,
               c.password_hash,
               p.status as profile_status,
               p.display_name,
@@ -355,7 +360,7 @@ export class StudentActivationService {
     return {
       profile: { id: replay.profile_id, role: "student", displayName: replay.display_name },
       entitlement: toEntitlement(entitlement),
-      accountIdentifier: "",
+      accountIdentifier: replay.normalized_identifier,
       deviceId: replay.device_id,
       replayed: true,
     };
