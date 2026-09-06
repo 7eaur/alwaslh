@@ -14,7 +14,7 @@ accepted reviewed outputs
 cost + tokens + latency
 ```
 
-Secondary KPIs include schema-valid rate, semantic/provenance-valid rate, duplicate rate, Admin rejection/edit rate, retry/failure rate, latency and tokens/cost per accepted item.
+Secondary KPIs: schema-valid rate, semantic/provenance-valid rate, duplicate rate, Admin rejection/edit rate, retry/failure rate, latency and tokens/cost per accepted item.
 
 ## Authoritative architecture
 
@@ -23,38 +23,69 @@ No direct provider calls from domain services.
 ```text
 Generation Plan / Service
 → Stage11 typed request + Prompt Registry
+→ Stage12 durable unit + lease
 → Stage12 AiModelRouter
 → AiProviderAdapter
 → normalized structured Stage11 output
 → Stage11 validators/provenance/dedupe
-→ durable result / review
+→ lease-protected durable result / review
 ```
 
-Provider-specific payloads, errors and usage metadata stay inside adapters.
+Provider-specific payloads, errors and usage metadata stay inside adapters. Provider/network calls happen outside database transactions.
 
 ## Stage11 verified contract layer
 
-Stage11 is now **VERIFIED** on exact executable head `592123dae33f0cfce2ecd36e9577764767faa95a`.
-
-Implemented under `apps/api/src/ai`:
+Stage11 is **VERIFIED**. It provides:
 
 - provider-neutral Zod request/output/source/question contracts;
 - versioned Prompt Registry;
 - provider-neutral prompt envelope;
 - deterministic schema/semantic/provenance/count/notation/duplicate validators;
 - explicit `valid | invalid | review_required` outcomes;
-- exact-source rule that unresolved answers remain unknown/review-required rather than being guessed;
+- exact-source rule that unresolved answers remain unknown/review-required rather than guessed;
 - exact duplicate rejection + near-duplicate review;
 - source-controlled golden/hardening tests;
 - provider-neutral benchmark adapter harness with usage/result summary.
 
-Stage11 verification: `34004445273` SUCCESS, with OCR `34004445384`, Stage10 `34004445278`, Stage9 `34004445277` and Full Rebuild `34004445394` also SUCCESS on the same executable head.
-
 No live provider/model quality claim was made in Stage11.
+
+## Stage12 verified durable execution core
+
+Exact executable checkpoint: `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
+
+Verification matrix on that same head:
+
+- Stage12 `34006710501` — SUCCESS.
+- Stage11 `34006710456` — SUCCESS.
+- OCR `34006710511` — SUCCESS.
+- Stage10 `34006710490` — SUCCESS.
+- Stage9 `34006710461` — SUCCESS.
+- Full Rebuild `34006710470` — SUCCESS including Chromium.
+
+Verified execution behavior:
+
+- existing `ai_jobs / ai_job_units / ai_outputs` are reused rather than shadowed by a parallel queue;
+- deterministic generation-plan idempotency + fingerprint conflict detection;
+- `FOR UPDATE SKIP LOCKED` durable claims;
+- UUID lease token + expiry;
+- PostgreSQL `running ↔ lease` invariant;
+- stale/expired/cancelled workers cannot finalize attempts, units or outputs;
+- provider calls happen outside DB transactions;
+- route attempts are persisted independently from unit execution retries;
+- Stage11 validation runs before durable acceptance;
+- bounded route cascade;
+- retryable errors use bounded retry/backoff/jitter;
+- partial success is preserved;
+- cancellation removes current worker write authority;
+- telemetry supports provider/model/project/credential aliases, request id, input/output tokens, latency, validation/error state and optional cost micros without storing provider secrets.
+
+### Important hardening
+
+`AI-012-009` found that stale workers could originally finalize attempt telemetry after lease expiry even though unit/output writes were protected. The fix lease-protects attempt success/failure too, enforces the strong running-lease DB shape and uses consistent unit→attempt lock ordering. Integration coverage proves the stale attempt is recovered as `lease_expired` before a new attempt completes.
 
 ## Input/source policy
 
-Textbook generation should use reviewed OCR text first:
+Textbook generation uses reviewed OCR text first:
 
 ```text
 ready source media
@@ -65,7 +96,7 @@ ready source media
 
 Vision/raw-image input is fallback-only when text evidence cannot safely satisfy the mode. Vision fallback is explicit and review-gated.
 
-Book-generated questions require source/page evidence. Exact/source-sensitive output must preserve source evidence and uncertainty; no fabricated answer certainty is allowed.
+Book-generated questions require source/page evidence. Exact/source-sensitive output preserves evidence and uncertainty; no fabricated answer certainty is allowed.
 
 ## Candidate provider/model pool for live benchmark
 
@@ -76,7 +107,7 @@ Initial benchmark candidates may include:
 3. pinned OpenRouter models where availability/terms are suitable;
 4. additional providers only when they can be benchmarked through the same Stage11 adapter contract.
 
-A provider/model is not approved because it is free, fast or popular. It must beat alternatives on accepted-output quality/cost/time for the relevant task family.
+A provider/model is not approved because it is free, fast or popular. It must beat alternatives on accepted-output quality/cost/time for the relevant task family. **No current provider/model is production-approved yet.**
 
 ## Model routing by task
 
@@ -107,36 +138,42 @@ job unit
 
 Never regenerate already accepted units because another unit failed.
 
-## Stage12 execution policy
+Capacity pressure is **not** semantic failure. The next Stage12 batch must defer/backpressure work when the intended route has no capacity rather than silently escalating to a more expensive route merely because it is free.
 
-Stage12 is the active engineering phase and must reuse/extend existing durable primitives from `database/migrations/0004_ai_and_sync.sql` rather than create a parallel queue.
+## Distributed concurrency / backpressure — active next work
 
-Required behavior:
+Durable `SKIP LOCKED` claims prevent duplicate unit ownership, but they are not sufficient throughput control across multiple worker processes.
 
-- reviewed OCR reuse;
-- bounded source/page chunks, not whole-book repeated prompts;
-- durable `ai_jobs / ai_job_units / ai_outputs` where appropriate;
-- deterministic per-unit idempotency;
-- bounded global/provider/project/model concurrency;
-- scheduler backpressure;
-- retry only retryable errors with exponential backoff + jitter;
-- cooldown/Retry-After handling for rate limits;
-- provider/credential health state;
-- partial-success checkpoints;
-- cancel/resume/progress;
-- no unbounded in-memory batch state;
-- provider/model/prompt/source/validation/token/latency/error/cost telemetry;
-- budget ceilings/kill switch;
-- server-only provider configuration;
-- model cascade only after benchmark evidence;
-- no credential/project switching to evade quotas or terms.
+Required capacity policy:
+
+- database-coordinated, not only process-local;
+- bounded global running attempts;
+- bounded provider running attempts;
+- bounded project/account running attempts where configured;
+- bounded model running attempts;
+- race-safe under concurrent workers;
+- capacity exhaustion defers the unit without consuming a semantic retry attempt;
+- backpressure retry time is short/bounded and distinct from provider failure backoff;
+- no automatic provider/key/project rotation to evade quota/terms;
+- capacity state must remain observable in telemetry/tests.
+
+## Health / cooldown / budget policy — not yet verified
+
+After capacity control:
+
+- honor provider `Retry-After` / explicit cooldown;
+- track configured route/provider health state;
+- temporarily exclude unhealthy/cooling routes;
+- budget ceilings and kill switch must stop new work before overspend;
+- legitimate failover only across intentionally authorized providers/projects;
+- free-tier/price assumptions are never hard-coded architecture.
 
 ## Credential policy
 
 - all provider secrets are server-only;
 - no provider keys in Student/Admin bundles or repository files;
 - DB/UI may reference non-secret provider/project/credential aliases only;
-- credentials/projects have health/cooldown/budget metadata;
+- credentials/projects may have health/cooldown/budget metadata;
 - legitimate failover is allowed only across intentionally configured authorized accounts/projects;
 - multiple keys in one provider project do not imply extra quota;
 - no routing behavior may evade provider limits or terms.
@@ -174,10 +211,24 @@ mode + subject family + difficulty/sensitivity
 
 A slightly more expensive model can be cheaper overall if it produces materially more accepted outputs.
 
+## Worker lifecycle — not yet verified
+
+Stage12 still needs a dedicated worker runtime separate from the HTTP server with:
+
+- bounded polling;
+- graceful shutdown that stops new claims first;
+- in-flight lease safety;
+- explicit idle/backpressure behavior;
+- process-level logging/metrics;
+- no huge in-memory batch state.
+
 ## Current implementation status
 
 - Provider-neutral Stage11 contracts/Prompt Registry/validators/golden harness: **VERIFIED**.
-- Durable Stage12 router/scheduler/worker/cascade: **NOT YET VERIFIED / ACTIVE NEXT WORK**.
+- Durable Stage12 execution core / leasing / retry / cascade / partial-success / telemetry: **VERIFIED** on `dfd9a456…`.
+- Distributed concurrency/backpressure: **ACTIVE / NOT YET VERIFIED**.
+- Route health/cooldown/budget ceilings: **NOT YET VERIFIED**.
+- Dedicated worker runtime: **NOT YET VERIFIED**.
 - Live provider adapters with authorized credentials: **NOT YET VERIFIED**.
 - Live cross-provider/model benchmark results: **NOT YET VERIFIED**.
 - Production default routing/budget configuration: **NOT YET VERIFIED**.
