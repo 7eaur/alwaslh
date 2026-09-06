@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { cp, mkdir, rm } from "node:fs/promises";
+import { access, cp, mkdir, rm } from "node:fs/promises";
 import process from "node:process";
 
 function run(command, args, options = {}) {
@@ -15,6 +15,14 @@ function run(command, args, options = {}) {
       else reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
     });
   });
+}
+
+async function requireBuildOutput(path, label) {
+  try {
+    await access(path);
+  } catch {
+    throw new Error(`Missing ${label} build output at ${path}`);
+  }
 }
 
 const root = process.cwd();
@@ -56,9 +64,20 @@ await run("npx", ["vite", "build", "--mode", "preview-single"], {
   env: buildEnv,
 });
 
+await Promise.all([
+  requireBuildOutput(`${root}/apps/api/dist/app.js`, "API"),
+  requireBuildOutput(`${root}/apps/student-web/dist/index.html`, "Student"),
+  requireBuildOutput(`${root}/apps/admin-web/dist/index.html`, "Admin"),
+]);
+
 await cp(`${root}/apps/student-web/dist`, output, { recursive: true });
 await mkdir(`${output}/admin`, { recursive: true });
 await cp(`${root}/apps/admin-web/dist`, `${output}/admin`, { recursive: true });
+
+await Promise.all([
+  requireBuildOutput(`${output}/index.html`, "combined Student"),
+  requireBuildOutput(`${output}/admin/index.html`, "combined Admin"),
+]);
 
 console.log("Single-project Vercel preview built:");
 console.log("  /       -> Student Web");
