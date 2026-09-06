@@ -23,6 +23,7 @@ export interface OcrExtractionProfile {
   inputVariantProfileVersion: string;
   languageHints: readonly string[];
   reviewConfidenceThreshold: number;
+  requiresReview?: boolean;
   maxAttempts: number;
   leaseSeconds: number;
 }
@@ -55,6 +56,9 @@ function assertProfile(profile: OcrExtractionProfile): void {
     profile.reviewConfidenceThreshold < 0 ||
     profile.reviewConfidenceThreshold > 100
   ) {
+    throw new Error("ocr_profile_invalid");
+  }
+  if (profile.requiresReview !== undefined && typeof profile.requiresReview !== "boolean") {
     throw new Error("ocr_profile_invalid");
   }
   if (!Number.isInteger(profile.maxAttempts) || profile.maxAttempts < 1 || profile.maxAttempts > 10) {
@@ -183,11 +187,15 @@ export class OcrExtractionService {
 
       const normalizedText = normalizeOcrText(providerResult.rawText);
       const reviewReason =
-        confidence === null
-          ? "provider_confidence_unavailable"
-          : confidence < profile.reviewConfidenceThreshold
-            ? "low_confidence"
-            : undefined;
+        normalizedText.length === 0
+          ? "empty_text"
+          : profile.requiresReview
+            ? "profile_requires_review"
+            : confidence === null
+              ? "provider_confidence_unavailable"
+              : confidence < profile.reviewConfidenceThreshold
+                ? "low_confidence"
+                : undefined;
       const reviewStatus = reviewReason ? "pending" : "not_required";
       const extraction = await this.database.transaction((tx) =>
         completeOcrExtraction(tx, {
