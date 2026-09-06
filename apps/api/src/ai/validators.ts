@@ -57,6 +57,26 @@ function normalizeComparable(value: string): string {
     .trim();
 }
 
+function comparableTokens(value: string): Set<string> {
+  return new Set(
+    normalizeComparable(value)
+      .split(" ")
+      .filter((token) => token.length > 1),
+  );
+}
+
+function nearDuplicateSimilarity(left: string, right: string): number {
+  const leftTokens = comparableTokens(left);
+  const rightTokens = comparableTokens(right);
+  if (Math.min(leftTokens.size, rightTokens.size) < 4) return 0;
+  const union = new Set([...leftTokens, ...rightTokens]);
+  let intersectionSize = 0;
+  for (const token of leftTokens) {
+    if (rightTokens.has(token)) intersectionSize += 1;
+  }
+  return union.size === 0 ? 0 : intersectionSize / union.size;
+}
+
 function normalizeQuote(value: string): string {
   return value.normalize("NFC").replace(/\s+/g, " ").trim();
 }
@@ -450,6 +470,7 @@ function validateDuplicates(
   issues: AiValidationIssue[],
 ): void {
   const seen = new Map<string, number>();
+  const priorQuestions: AiQuestion[] = [];
   const questions = flattenQuestions(output);
   const exactMode = EXACT_MODES.has(request.mode);
   for (const [index, question] of questions.entries()) {
@@ -464,8 +485,22 @@ function validateDuplicates(
         `question duplicates question ${prior + 1}`,
       );
     } else {
+      for (const [priorIndex, priorQuestion] of priorQuestions.entries()) {
+        const similarity = nearDuplicateSimilarity(question.prompt, priorQuestion.prompt);
+        if (similarity >= 0.8) {
+          pushIssue(
+            issues,
+            "near_duplicate_question",
+            "review",
+            `questions.${index}.prompt`,
+            `question is very similar to question ${priorIndex + 1} (${similarity.toFixed(2)})`,
+          );
+          break;
+        }
+      }
       seen.set(normalized, index);
     }
+    priorQuestions.push(question);
   }
 }
 
