@@ -47,7 +47,8 @@ export class AiModelRouter {
       if (!route.routeKey.trim() || !route.modelKey.trim() || !route.benchmarkVersion.trim()) {
         throw new Error(`ai_route_invalid:${route.routeKey}`);
       }
-      if (!Number.isInteger(route.tier) || route.tier < 1) throw new Error(`ai_route_tier_invalid:${route.routeKey}`);
+      if (!Number.isInteger(route.tier) || route.tier < 1)
+        throw new Error(`ai_route_tier_invalid:${route.routeKey}`);
     }
   }
 
