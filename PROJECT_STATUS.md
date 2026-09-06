@@ -1,119 +1,118 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage 9 Content Model & deterministic `alwaslh-go` Import is **COMPLETE / CLI + PostgreSQL RUNTIME PASS**. Stage 10 Media Pipeline is next, but must not begin until CI passes again on this documentation head.
-- **Verification Policy:** every stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; anything not executed remains `NOT YET VERIFIED`.
-- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, and `MASTER_REBUILD_ROADMAP.md`.
-- **Latest Verified Stage 9 Code Baseline:** branch `rebuild/content-import`, commit `30d12d24be93bf306a9da5fffcfb45ea9317a186`.
-- **Stage 9 Dedicated Verification:** GitHub Actions run `33294631418` — **SUCCESS**.
-- **Full Regression Verification on same commit:** GitHub Actions run `33294631419` — **SUCCESS** across the complete rebuild verification workflow.
+- **Current Phase:** Product Evolution Review closure after verified Stage 10. Core product decisions are settled enough to resume implementation without more routine product discussion.
+- **Verification Policy:** every implementation stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; unexecuted = `NOT YET VERIFIED`.
+- **Continuity Source:** start with `DOCUMENTATION_INDEX.md`, then `PROJECT_HANDOFF.md`, this file, `PROJECT_ENGINEERING_LOG.md`, Product Decision docs, AI strategy, legacy parity/audits and `MASTER_REBUILD_ROADMAP.md`. `NEXT_CONVERSATION_PROMPT.md` is the canonical startup prompt.
+- **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
+- **Product Review Batches recorded:** 01–06.
+- **Verified Stage 10 final head:** `27c6a2ef1118ee44d2e63471e4f925e1296283e0`; Stage10 `33302270707`, Stage9 regression `33302270692`, Full Rebuild `33302270695` all SUCCESS.
 
-## Completed
+## Current decided product direction
 
-- **Stage 1 Product Contract:** **CLI PASS.** Feature-preservation contract and automated parity checks.
-- **Stage 2 Brand Identity:** **CLI PASS.** Owned teal/open-book identity, canonical assets/tokens/PWA icons and automated brand checks.
-- **Stage 3 UX Architecture:** **CLI PASS.** Admin/Student IA, critical flows/states, responsive/accessibility contracts and wireframes.
-- **Stage 4 PostgreSQL Data Platform:** **CLI/RUNTIME PASS on PostgreSQL 16.** Clean-slate private PostgreSQL behind Backend; migrations and relational integrity verified on clean DBs.
-- **Stage 5 Engineering Foundation:** **CLI/RUNTIME PASS.** API runtime, DB pool/transactions, migration runner, env validation, logging/error envelope, strict TS, tests, production builds and CI.
-- **Stage 6 Auth & Authorization:** **CLI/RUNTIME PASS.** Salted scrypt credentials, opaque sessions, HttpOnly cookies, role isolation, Origin protection, DB lockout, reset-only recovery and explicit Admin bootstrap.
-- **Stage 7 Access Codes & Entitlements:** **CLI/RUNTIME PASS.** Secure 6/7-digit codes, Arabic/Persian normalization, transactional/idempotent redemption, renewal, no-waste behavior, revoke/audit, constraints and race tests.
-- **Stage 8 Student Activation & Account Flow:** **CLI/RUNTIME/BROWSER E2E PASS.** Atomic activation + returning login + recovery + real Chromium integration.
-- **Stage 9 Content Model & deterministic `alwaslh-go` Import:** **CLI/PostgreSQL RUNTIME PASS.** Full pinned inventory, manifest compatibility, deterministic ordering, provenance, repeatable DB import and reconciliation verified.
+### Runtime surfaces
+- `apps/student-web` = Student Web/PWA، قابل للتثبيت مثل نتيجة التطبيق القديم، mobile-first/offline-first ويعمل أيضًا من Browser.
+- `apps/admin-web` = Admin Web مستقل للـSuper Admin فقط.
+- `apps/api` = Backend API الوحيد للوصول إلى PostgreSQL الخاصة.
+- Admin navigation/bundles لا تدخل Student UX؛ السطحان يتشاركان Brand/Design System/shared primitives فقط حيث يناسب.
 
-## Stage 9 verified source/import facts
+### Student entry/account/access
+- Welcome → `تفعيل جديد` / `لدي حساب بالفعل`.
+- Two-step activation with one-time verification ticket and atomic final activation.
+- Admin temporary-password recovery + revoke sessions + forced private password change.
+- One registered cryptographic application device per Student account; Admin reset/rebind for lost/different device.
+- Full Code = 6 digits.
+- Class Code = 7 digits; Student can add more Class Codes later and hold multiple class entitlements.
 
-Pinned source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
+### Student learning
+- No valuable legacy capability may disappear without explicit Product Owner approval.
+- Reader: optimized original page + optional approved OCR Text View + Arabic search + cached/versioned TTS `استماع للدرس`.
+- Notes keep all useful legacy types: text + image + capture + audio.
+- Favorites and Needs Review remain separate from Notes.
+- Needs Review can be added manually or automatically after repeated wrong answers; default implementation target is two independent mistakes on the same question, configurable after measurement.
+- `اختبر نفسك`: immediate correct/incorrect + answer + published explanation after each question.
+- Full Tests/Models: result/review at end.
+- Student custom tests consume only Admin-reviewed Published Question Bank.
+- Original ministerial models remain exact/provenanced; simulated model is a separate future type.
+- Personal progress/private achievements only; no Global Leaderboard.
+- Weak-area recommendations are server-derived and require enough evidence; no misleading conclusion from one question.
 
-```text
-15 subject roots
-48 source documents
-5,552 source images
-4,218 JPG
-1,334 WEBP
-86 recognized helper files
-24 manifest.json files
-0 fatal inventory issues
-0 manifest errors
-0 order errors
-0 unmapped images
-0 unparsed assets
-0 classification errors
-0 expected-count errors
-```
+### Notifications / Offline / performance
+- Web/PWA Push Notifications are required from the initial product where platform support permits.
+- Study reminders are gentle by default: at most one/day and default max 3/week, with quiet hours and opt-out.
+- Important content/access/Admin messages can also use Push; In-App center remains fallback.
+- Offline: Lesson + Subject + explicit Book downloads, Download Manager, delta sync/outbox, maximum 14-day signed authorization lease capped by entitlement expiry.
+- Student runtime should avoid repeated full API refetches.
 
-Canonical inventory SHA-256:
+### Media / Curriculum / Admin / UX
+- Images are processed into light Student-facing variants while source originals remain internal evidence; readability of Arabic/formulas/tables must be tested before final quality settings.
+- Curriculum supports multiple ordered classes/subjects with optional Unit; no mandatory yearly version lifecycle.
+- Admin role = **Super Admin only** for current scope.
+- Upload is independent from OCR/AI/TTS.
+- OCR reusable and async; TTS derived from approved text and cached by content revision.
+- Draft → Review → Published.
+- Admin Import/Export required.
+- Contextual in-place instructions required.
+- Design System must be unified: shared brand/tokens/components, no page-by-page duplication.
 
-`7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`
+### AI authoring
+- AI is **provider/model-neutral**, not Gemini-specific.
+- Canonical strategy: `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
+- Benchmark multiple providers/models and route by task, quality, cost and throughput.
+- OCR-text-first by default; vision only when required.
+- Generated-from-book questions require source + page provenance before publish.
+- Durable high-throughput execution: chunked jobs, queue, bounded concurrency/backpressure, provider/model scheduler, retries/cooldown, idempotency, partial success, cancel/resume, validation/dedupe/provenance and cost/token/latency metrics.
+- Model cascade: cheap/fast benchmark-approved model first where suitable; escalate only failed/uncertain units to a stronger model.
+- Goal = maximize accepted useful output per cost/token/time, not raw request count.
 
-The inventory reports **100 duplicate Git-blob groups covering 201 paths**. They are retained as review evidence, not auto-rejected, because repeated educational pages can be intentional.
+## Mandatory engineering governance
 
-### Runtime import proof
+- **No patching as final design.** Fix root causes after understanding callers/contracts/side effects.
+- No disabling tests, auth bypasses, duplicate implementations, hidden errors or hard-coded production exceptions as final solutions.
+- Unified Design System and duplicate-component/style audit are required before closing Admin/Student product stages.
+- Documentation is project memory; every meaningful batch updates Status/Log/Handoff/specialized docs and exact evidence.
+- Legacy details remain available in `PRODUCT_FEATURE_PARITY_MATRIX.md`, `PROJECT_DEEP_AUDIT.md`, `PROJECT_FULL_AUDIT_CATALOG.md`, `PROJECT_REBUILD_BLUEPRINT.md`, Offline docs and `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
 
-Clean PostgreSQL 16 applied `0001_core.sql` through `0008_content_source_import.sql`.
+## Engineering impact / NOT YET IMPLEMENTED
 
-First import:
+1. Stage6/8 partial reopen for two-step activation/device/recovery + security/Chromium gates.
+2. Stage10 Preview Sync still pending.
+3. Student PWA installability/final offline/update behavior beyond current baseline remains later runtime verification.
+4. Student media-delivery quality/browser verification pending.
+5. OCR Extraction Foundation pending.
+6. Reader Text/Search/TTS pending runtime implementation.
+7. Practice Engine/Published Question Bank + auto Needs Review pending.
+8. Push notification service and gentle-reminder policy pending.
+9. Offline 14-day lease/download architecture pending runtime verification.
+10. Stage11 provider-neutral AI contracts/benchmark + Stage12 durable multi-provider execution pending.
+11. Admin/Student full products pending.
 
-```json
-{"replayed":false,"documents":48,"assets":5552}
-```
+## Legacy feature coverage gate
 
-Identical re-import:
+`PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` are mandatory before Admin/Student feature stages close. Every legacy capability must map to `KEEP/IMPROVE/REFACTOR/REBUILD` with implementation/test evidence, or explicit Product Owner-approved `REMOVE`.
 
-```json
-{"replayed":true,"documents":48,"assets":5552}
-```
+## Temporary development Preview
 
-Runtime assertions proved exactly one import run, 48 present source documents, 5,552 present assets, zero absent rows and no duplicate present `(document_id, position)` pairs.
+Canonical policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
 
-## Canonical database migrations
+Current temporary environment:
+- Supabase `linksoftt` = PostgreSQL/testing host مؤقت فقط؛
+- Vercel project `alwaslh`, team `wasl15` = web/runtime host مؤقت؛
+- integration branch `preview/supabase-vercel`.
 
-`0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql` → `0008_content_source_import.sql`.
+الغرض: الإشراف والتجارب أثناء التطوير. بعد كل دفعة مستقرة: `CI PASS → Preview sync → deploy → runtime verification → documentation evidence`.
 
-## Current branch / PR stack
+Current Preview branch remains at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81` with READY deployment and `/api/health` HTTP 200 previously verified, but it is still pre-Stage10. Vercel output-dir mismatch and serverless media/Poppler durability remain unresolved/`NOT YET VERIFIED`.
 
-- Foundation: `rebuild/foundation` / PR #2.
-- Auth: `rebuild/auth-authorization` / PR #3.
-- Access/Entitlements: `rebuild/access-entitlements` / PR #4.
-- Student Activation UI: `rebuild/student-activation-ui` / PR #5.
-- Student Activation Backend: `rebuild/student-activation-backend` / PR #6.
-- Stage 8 integrated source: `rebuild/student-activation-integration` / PR #7.
-- **Stage 9 source of truth:** `rebuild/content-import` / PR #8.
-- Parallel Stage 9 source audit: `rebuild/content-source-audit` / PR #9; audit-only evidence, not importer ownership.
-
-## Critical defects caught and fixed by gates
-
-- Legacy root PostCSS/Tailwind leakage into new apps.
-- Auth strict-TypeScript/scrypt boundary defects.
-- Stage 7 PostgreSQL enum/JSONB/default typing defects, audit atomicity and idempotency ownership weakness.
-- Stage 8 test isolation/discovery defects and production API build/start mismatch.
-- Stage 9 audit found eight Arabic-key manifests that would have omitted **772 images** despite a correct top-level Git image count; parser support + payload-count invariant added.
-- Stage 9 helper expectation drift corrected from 76 to the observed/recognized 86 helpers.
-- Stage 9 found a third real manifest shape (`filename` + `pdf_page` + `book_page`) in `كتاب القراءة`; explicit compatibility support and regression tests added.
-- Stage 9 first real DB import exposed Python/JavaScript numeric JSON digest drift (`9.0` vs `9`); canonical integral-number normalization fixed the cross-language digest contract.
-
-## Important decisions
-
-- PostgreSQL is self-hosted/private behind Backend; browser never connects directly.
-- Supabase is not the target platform and legacy DB data/schema are not compatibility targets.
-- Full access code = exactly 6 digits; Class access code = exactly 7 digits.
-- Full Code becomes the returning Student identifier only after activation; password remains the authentication secret.
-- Recovery resets the secret; it never reveals the original password.
-- `alwaslh-go` is a canonical source input. Raw repository assets never ship as a frontend bundle.
-- Stage 9 preserves source documents/assets/order/provenance and **does not infer Lesson entities from filenames**.
-- Duplicate source blobs remain reportable review evidence unless a later semantic rule proves them invalid.
-- Legacy application remains **NO-GO** for production until final parity/release gates pass.
-
-## NOT YET VERIFIED / remaining release risks
-
-- final CI on the documentation-only Stage 9 closure head;
-- actual production-host PostgreSQL networking, pool tuning, load behavior and backup/restore drill;
-- API/reverse-proxy perimeter rate limiting and final security hardening;
-- object/media storage runtime and ordered PDF/media processing;
-- Gemini prompt contracts, golden tests, durable workers, multi-project/key failover and runtime;
-- complete Admin product;
-- post-auth Student learning product, Practice Engine and trusted scoring;
-- account-scoped Offline Sync/PWA/outbox lifecycle;
-- full performance/security/accessibility/device/staging/rollback/release gates.
+Preview does **not** redefine final Production architecture. أي workaround خاص بالمنصة مؤقت ويحتاج impact + exit path؛ الأسرار لا تدخل Git أو chat.
 
 ## Next Action
 
-**Closure gate:** wait for both Stage 9 dedicated CI and the full regression workflow to pass on this documentation head. If green, Stage 9 is fully closed and the next implementation stage is **Stage 10 — Media Pipeline**.
+1. Close Product Review documentation/CI on the current planning HEAD.
+2. Stage10 Preview Sync.
+3. Stage6/8 auth/device refactor.
+4. OCR Foundation.
+5. revised Stage11 provider-neutral AI contracts/benchmark.
+6. Stage12 durable multi-provider high-throughput execution.
+7. Continue Super Admin + Student stages according to `MASTER_REBUILD_ROADMAP.md` and the legacy coverage gate.
+
+Routine design details may now be chosen by engineering according to the documented product rules; only genuine Business Rule conflicts should reopen product discussion.
