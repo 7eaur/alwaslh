@@ -266,8 +266,8 @@ export class StudentActivationService {
            $1, 'full_access', $2, $3, $4,
            jsonb_build_object(
              'flow', 'two_step_activation',
-             'activation_ticket_hash', $5,
-             'device_fingerprint', $6
+             'activation_ticket_hash', $5::text,
+             'device_fingerprint', $6::text
            )
          )`,
         [profile.id, accessCode.id, entitlement.id, idempotencyKey, ticketHash, deviceKey.fingerprintSha256],
@@ -289,7 +289,7 @@ export class StudentActivationService {
            profile_id, event_type, identifier_hash_sha256, metadata
          ) values
            ($1, 'account_activated', $2, jsonb_build_object('flow', 'two_step_activation')),
-           ($1, 'device_registered', $2, jsonb_build_object('device_id', $3, 'fingerprint', $4))`,
+           ($1, 'device_registered', $2, jsonb_build_object('device_id', $3::text, 'fingerprint', $4::text))`,
         [profile.id, hashAuditValue(accessCode.code), device.id, deviceKey.fingerprintSha256],
       );
 
