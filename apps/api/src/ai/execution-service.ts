@@ -12,6 +12,8 @@ export interface AiExecutionProfile {
   maxAttempts: number;
   retryBaseMs: number;
   retryMaxMs: number;
+  globalMaxConcurrent?: number;
+  capacityBackoffMs?: number;
 }
 
 export interface AiPlanUnitInput {
@@ -67,6 +69,22 @@ function assertExecutionProfile(profile: AiExecutionProfile): void {
   if (!Number.isFinite(profile.retryMaxMs) || profile.retryMaxMs < profile.retryBaseMs) {
     throw new Error("ai_retry_max_invalid");
   }
+  if (
+    profile.globalMaxConcurrent !== undefined &&
+    (!Number.isInteger(profile.globalMaxConcurrent) ||
+      profile.globalMaxConcurrent < 1 ||
+      profile.globalMaxConcurrent > 10_000)
+  ) {
+    throw new Error("ai_global_capacity_invalid");
+  }
+  if (
+    profile.capacityBackoffMs !== undefined &&
+    (!Number.isInteger(profile.capacityBackoffMs) ||
+      profile.capacityBackoffMs < 10 ||
+      profile.capacityBackoffMs > 60_000)
+  ) {
+    throw new Error("ai_capacity_backoff_invalid");
+  }
 }
 
 function shouldEscalate(request: AiGenerationRequest, validation: AiValidationResult): boolean {
@@ -77,6 +95,9 @@ function shouldEscalate(request: AiGenerationRequest, validation: AiValidationRe
 }
 
 export class AiExecutionService {
+  private readonly globalMaxConcurrent: number;
+  private readonly capacityBackoffMs: number;
+
   constructor(
     private readonly database: Database,
     private readonly router: AiModelRouter,
@@ -85,6 +106,8 @@ export class AiExecutionService {
     private readonly random: () => number = Math.random,
   ) {
     assertExecutionProfile(profile);
+    this.globalMaxConcurrent = profile.globalMaxConcurrent ?? 4;
+    this.capacityBackoffMs = profile.capacityBackoffMs ?? 250;
   }
 
   async enqueue(input: EnqueueAiPlanInput): Promise<{ job: AiJobRecord; replayed: boolean }> {
@@ -147,7 +170,25 @@ export class AiExecutionService {
 
     const request = aiGenerationRequestSchema.parse(claimed.input_payload);
     const envelope = buildPromptEnvelope(request);
-    const routes = this.router.routesFor(request);
+    const configuredRoutes = this.router.routesFor(request);
+    let routes = configuredRoutes;
+
+    if (claimed.resume_route_key) {
+      const resumeIndex = configuredRoutes.findIndex((route) => route.routeKey === claimed.resume_route_key);
+      if (resumeIndex < 0) {
+        const failure = {
+          code: "ai_resume_route_unavailable",
+          message: `resume route is no longer configured: ${claimed.resume_route_key}`,
+        };
+        await this.database.transaction(async (executor) => {
+          await this.repository.persistProviderFailure(executor, claimed, failure, "failed", null);
+          await this.repository.refreshJob(executor, claimed.job_id);
+        });
+        return { jobId: claimed.job_id, unitId: claimed.id, status: "failed" };
+      }
+      routes = configuredRoutes.slice(resumeIndex);
+    }
+
     if (routes.length === 0) {
       const failure = { code: "ai_route_unavailable", message: "no benchmark-approved route is available" };
       await this.database.transaction(async (executor) => {
@@ -160,8 +201,26 @@ export class AiExecutionService {
     let lastProviderFailure: AiProviderError | null = null;
     for (const [routeIndex, route] of routes.entries()) {
       const attempt = await this.database.transaction((executor) =>
-        this.repository.startAttempt(executor, claimed, route),
+        this.repository.startAttempt(executor, claimed, route, this.globalMaxConcurrent),
       );
+
+      if (!attempt.started) {
+        const nextAttemptAt = new Date(Date.now() + this.capacityBackoffMs);
+        await this.database.transaction(async (executor) => {
+          await this.repository.deferForCapacity(
+            executor,
+            claimed,
+            route.routeKey,
+            nextAttemptAt,
+            attempt.dimension,
+            attempt.current,
+            attempt.limit,
+          );
+          await this.repository.refreshJob(executor, claimed.job_id);
+        });
+        return { jobId: claimed.job_id, unitId: claimed.id, status: "retrying", routeKey: route.routeKey };
+      }
+
       const startedAt = Date.now();
       let providerResult: AiProviderGenerateResult;
       try {
