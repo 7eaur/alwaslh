@@ -136,7 +136,7 @@ export class AuthService {
   ): Promise<{ token: string; profile: SessionProfile }> {
     const credential = await this.verifyCredential(identifierInput, password);
     if (credential.role !== "admin") {
-      throw new AppError("FORBIDDEN", "دخول الطالب يتطلب التحقق من الجهاز المسجل", 403);
+      throw new AppError("UNAUTHORIZED", "بيانات الدخول غير صحيحة", 401);
     }
     return this.db.transaction(async (tx) => {
       const token = await this.createSession(tx, credential, null, userAgent);
@@ -154,7 +154,7 @@ export class AuthService {
   async startStudentLogin(identifierInput: string, password: string): Promise<StudentLoginChallenge> {
     const credential = await this.verifyCredential(identifierInput, password);
     if (credential.role !== "student") {
-      throw new AppError("FORBIDDEN", "استخدم بوابة الإدارة لهذا الحساب", 403);
+      throw new AppError("UNAUTHORIZED", "بيانات الدخول غير صحيحة", 401);
     }
     if (
       credential.must_change_password &&
@@ -283,12 +283,31 @@ export class AuthService {
           input.challengeToken,
           input.signature,
         );
-        const devices = await tx.query<{ id: string }>(
-          `insert into student_devices (profile_id, public_key_spki, public_key_sha256, label)
-           values ($1, $2, $3, 'primary')
-           returning id`,
-          [challenge.profile_id, deviceKey.publicKeySpki, deviceKey.fingerprintSha256],
+        const historical = await tx.query<{ id: string }>(
+          `select id
+           from student_devices
+           where profile_id = $1 and public_key_sha256 = $2
+           limit 1`,
+          [challenge.profile_id, deviceKey.fingerprintSha256],
         );
+        if (historical[0]) {
+          throw new AppError("CONFLICT", "إعادة ربط الجهاز تتطلب مفتاح جهاز جديدًا", 409);
+        }
+
+        let devices: { id: string }[];
+        try {
+          devices = await tx.query<{ id: string }>(
+            `insert into student_devices (profile_id, public_key_spki, public_key_sha256, label)
+             values ($1, $2, $3, 'primary')
+             returning id`,
+            [challenge.profile_id, deviceKey.publicKeySpki, deviceKey.fingerprintSha256],
+          );
+        } catch (error) {
+          if ((error as { code?: string }).code === "23505") {
+            throw new AppError("CONFLICT", "تعذر إعادة ربط الجهاز بهذا المفتاح", 409);
+          }
+          throw error;
+        }
         const device = devices[0];
         if (!device) throw new AppError("CONFLICT", "تعذر تسجيل الجهاز الجديد", 409);
         deviceId = device.id;
