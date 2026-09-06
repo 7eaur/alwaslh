@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildApp } from "../../src/app.js";
+import { validateDevicePublicKey } from "../../src/auth/device-crypto.js";
 import { AuthService } from "../../src/auth/service.js";
 import { loadConfig } from "../../src/config.js";
 import { createDatabase } from "../../src/db.js";
+import { createTestDeviceKey, type TestDeviceKey } from "../device-test-key.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error("DATABASE_URL is required for access integration tests");
@@ -55,9 +57,23 @@ test("code generation, renewal, idempotency, no-waste and concurrent redemption"
   await auth.createCredential(studentId, "stage7-student-1", "StudentAccess123!");
   await auth.createCredential(secondId, "stage7-student-2", "StudentAccess456!");
 
+  async function registerDevice(profileId: string, key: TestDeviceKey): Promise<void> {
+    const validated = validateDevicePublicKey(key.publicKeySpki);
+    await db.query(
+      `insert into student_devices (profile_id, public_key_spki, public_key_sha256, label)
+       values ($1, $2, $3, 'stage7-integration')`,
+      [profileId, validated.publicKeySpki, validated.fingerprintSha256],
+    );
+  }
+
+  const firstDevice = createTestDeviceKey();
+  const secondDevice = createTestDeviceKey();
+  await registerDevice(studentId, firstDevice);
+  await registerDevice(secondId, secondDevice);
+
   const app = buildApp({ config, database: db });
 
-  async function login(identifier: string, password: string): Promise<string> {
+  async function adminLogin(identifier: string, password: string): Promise<string> {
     const response = await app.inject({
       method: "POST",
       url: "/v1/auth/login",
@@ -68,9 +84,36 @@ test("code generation, renewal, idempotency, no-waste and concurrent redemption"
     return cookieFrom(response);
   }
 
-  const adminCookie = await login("stage7-admin", "AdminAccess123!");
-  const studentCookie = await login("stage7-student-1", "StudentAccess123!");
-  const secondCookie = await login("stage7-student-2", "StudentAccess456!");
+  async function studentLogin(
+    identifier: string,
+    password: string,
+    device: TestDeviceKey,
+  ): Promise<string> {
+    const start = await app.inject({
+      method: "POST",
+      url: "/v1/student/login/start",
+      headers: { origin },
+      payload: { identifier, password },
+    });
+    assert.equal(start.statusCode, 200);
+    assert.equal(start.json().purpose, "login");
+    const challengeToken = start.json().challengeToken as string;
+    const complete = await app.inject({
+      method: "POST",
+      url: "/v1/student/login/complete",
+      headers: { origin },
+      payload: {
+        challengeToken,
+        signature: device.signChallenge("login", challengeToken),
+      },
+    });
+    assert.equal(complete.statusCode, 200);
+    return cookieFrom(complete);
+  }
+
+  const adminCookie = await adminLogin("stage7-admin", "AdminAccess123!");
+  const studentCookie = await studentLogin("stage7-student-1", "StudentAccess123!", firstDevice);
+  const secondCookie = await studentLogin("stage7-student-2", "StudentAccess456!", secondDevice);
 
   const generatedClass = await app.inject({
     method: "POST",
