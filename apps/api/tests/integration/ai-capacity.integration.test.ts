@@ -6,7 +6,7 @@ import type {
   AiProviderGenerateInput,
   AiProviderGenerateResult,
 } from "../../src/ai/provider.js";
-import { AiModelRouter, type AiModelRoute } from "../../src/ai/router.js";
+import { type AiModelRoute, AiModelRouter } from "../../src/ai/router.js";
 import { createDatabase } from "../../src/db.js";
 import { AI_GOLDEN_FIXTURES } from "../fixtures/ai-golden.js";
 
@@ -164,15 +164,20 @@ async function assertBackpressureCase(
   assert.equal((await secondService.processNext())?.status, "completed");
   assert.equal(secondAdapter.calls.length, 1);
 
-  const completed = await db.query<{ status: string; attempt_count: number; resume_route_key: string | null }>(
-    "select status, attempt_count, resume_route_key from ai_job_units where job_id = $1",
-    [secondJob.job.id],
-  );
+  const completed = await db.query<{
+    status: string;
+    attempt_count: number;
+    resume_route_key: string | null;
+  }>("select status, attempt_count, resume_route_key from ai_job_units where job_id = $1", [
+    secondJob.job.id,
+  ]);
   assert.equal(completed[0]?.status, "completed");
   assert.equal(completed[0]?.attempt_count, 1);
   assert.equal(completed[0]?.resume_route_key, null);
 
-  const firstState = await db.query<{ status: string }>("select status from ai_jobs where id = $1", [firstJob.job.id]);
+  const firstState = await db.query<{ status: string }>("select status from ai_jobs where id = $1", [
+    firstJob.job.id,
+  ]);
   assert.equal(firstState[0]?.status, "completed");
 }
 
@@ -180,12 +185,10 @@ test("Stage12 distributed backpressure is race-safe and bounds global/provider/p
   const db = createDatabase(databaseUrl);
   try {
     const raceAdapter = new DeferredAdapter("race-provider");
-    const raceRoute = route(
-      "race-route",
-      raceAdapter.providerKey,
-      "race-model",
-      { providerMaxConcurrent: 5, modelMaxConcurrent: 5 },
-    );
+    const raceRoute = route("race-route", raceAdapter.providerKey, "race-model", {
+      providerMaxConcurrent: 5,
+      modelMaxConcurrent: 5,
+    });
     const raceService = service(db, raceAdapter, raceRoute, 1);
     const raceJob = await raceService.enqueue({
       idempotencyKey: "stage12-capacity-global-race",
@@ -203,10 +206,7 @@ test("Stage12 distributed backpressure is race-safe and bounds global/provider/p
     assert.equal(raceAdapter.calls.length, 1);
     raceAdapter.release();
     const raceResults = await Promise.all([raceA, raceB]);
-    assert.deepEqual(
-      raceResults.map((result) => result?.status).sort(),
-      ["completed", "retrying"],
-    );
+    assert.deepEqual(raceResults.map((result) => result?.status).sort(), ["completed", "retrying"]);
     const raceUnits = await db.query<{
       status: string;
       attempt_count: number;
@@ -233,36 +233,28 @@ test("Stage12 distributed backpressure is race-safe and bounds global/provider/p
       id: "global",
       expectedDimension: "global",
       globalMaxConcurrent: 1,
-      firstRoute: route(
-        "global-a",
-        "global-provider-a",
-        "global-model-a",
-        { providerMaxConcurrent: 5, modelMaxConcurrent: 5 },
-      ),
-      secondRoute: route(
-        "global-b",
-        "global-provider-b",
-        "global-model-b",
-        { providerMaxConcurrent: 5, modelMaxConcurrent: 5 },
-      ),
+      firstRoute: route("global-a", "global-provider-a", "global-model-a", {
+        providerMaxConcurrent: 5,
+        modelMaxConcurrent: 5,
+      }),
+      secondRoute: route("global-b", "global-provider-b", "global-model-b", {
+        providerMaxConcurrent: 5,
+        modelMaxConcurrent: 5,
+      }),
     });
 
     await assertBackpressureCase(db, {
       id: "provider",
       expectedDimension: "provider",
       globalMaxConcurrent: 10,
-      firstRoute: route(
-        "provider-a",
-        "shared-provider",
-        "provider-model-a",
-        { providerMaxConcurrent: 1, modelMaxConcurrent: 5 },
-      ),
-      secondRoute: route(
-        "provider-b",
-        "shared-provider",
-        "provider-model-b",
-        { providerMaxConcurrent: 1, modelMaxConcurrent: 5 },
-      ),
+      firstRoute: route("provider-a", "shared-provider", "provider-model-a", {
+        providerMaxConcurrent: 1,
+        modelMaxConcurrent: 5,
+      }),
+      secondRoute: route("provider-b", "shared-provider", "provider-model-b", {
+        providerMaxConcurrent: 1,
+        modelMaxConcurrent: 5,
+      }),
     });
 
     await assertBackpressureCase(db, {
@@ -289,18 +281,14 @@ test("Stage12 distributed backpressure is race-safe and bounds global/provider/p
       id: "model",
       expectedDimension: "model",
       globalMaxConcurrent: 10,
-      firstRoute: route(
-        "model-a",
-        "model-provider",
-        "shared-model",
-        { providerMaxConcurrent: 5, modelMaxConcurrent: 1 },
-      ),
-      secondRoute: route(
-        "model-b",
-        "model-provider",
-        "shared-model",
-        { providerMaxConcurrent: 5, modelMaxConcurrent: 1 },
-      ),
+      firstRoute: route("model-a", "model-provider", "shared-model", {
+        providerMaxConcurrent: 5,
+        modelMaxConcurrent: 1,
+      }),
+      secondRoute: route("model-b", "model-provider", "shared-model", {
+        providerMaxConcurrent: 5,
+        modelMaxConcurrent: 1,
+      }),
     });
   } finally {
     await db.close();
