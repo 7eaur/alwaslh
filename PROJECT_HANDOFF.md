@@ -7,10 +7,10 @@
 - Product: Arabic educational platform with independent Student PWA, Admin Web and Backend API.
 - Repository: `7eaur/alwaslh`.
 - Branch: `planning/product-evolution-review`; draft PR #12.
-- Exact latest verified executable head: `592123dae33f0cfce2ecd36e9577764767faa95a`.
+- Latest fully verified executable baseline: `592123dae33f0cfce2ecd36e9577764767faa95a`.
 - Stage11 Provider-Neutral AI Prompt / Output Contracts: **VERIFIED**.
-- Stages 1–10 + OCR remain green under the same regression head.
-- Active phase: **Stage12 Durable Provider-Neutral High-Throughput AI Execution**.
+- Active phase: **Stage12 Durable Provider-Neutral AI Execution — ACTIVE / NOT YET VERIFIED**.
+- Current Stage12 executable fix head: `cc2e2b6696c0a0b02b18f4d14e3c3cb39b0397e6`.
 - Deployment: `DEFERRED BY PRODUCT OWNER`; Git auto-deploy remains disabled. Hosted behavior is not PASS until explicitly re-enabled and verified.
 
 ## Stable architecture
@@ -19,7 +19,7 @@
 Admin Web ──┐
             ├── apps/api ── private PostgreSQL
 Student PWA ┘      │
-                   ├── media storage abstraction / Stage10 media identity
+                   ├── Stage10 media identity/storage abstraction
                    ├── reviewed OCR text / OCR Foundation
                    ├── Stage11 provider-neutral AI contracts
                    ├── Stage12 durable AI execution
@@ -28,114 +28,129 @@ Student PWA ┘      │
 
 Hard boundaries:
 
-- browser never receives DB credentials or performs authoritative business writes directly;
+- browser never receives DB/provider secrets or performs authoritative business writes directly;
 - auth/authorization/entitlements are server-owned;
 - upload/media success is independent from OCR/AI/TTS;
-- source media is canonical evidence;
-- downstream AI book generation uses reviewed source/page evidence;
+- source media + reviewed OCR remain canonical evidence;
+- provider/model payloads stay behind adapters;
+- provider calls happen outside DB transactions;
+- stale/expired/cancelled AI workers cannot commit results;
 - no valuable legacy capability is removed without Product Owner approval.
 
 ## Verified lower-layer baseline
 
-- Stage6/8: two-step activation, device-bound Student sessions, forced recovery and explicit P-256 reset/rebind — VERIFIED.
-- Stage7: Full Code 6 digits / Class Code 7 digits, transactional/idempotent entitlement rules — VERIFIED.
-- Stage9: 15 roots / 48 source documents / 5,552 images / deterministic re-import — VERIFIED.
-- Stage10: deterministic Sharp/Poppler media variants/order/checksum/provenance/idempotency — VERIFIED.
-- OCR Foundation: durable lease/retry/review/search layer over Stage10 media; only reviewed/approved OCR is downstream approved evidence — VERIFIED.
+- Stage6/8 activation/login/recovery/device policy — VERIFIED.
+- Stage7 transactional access codes/entitlements — VERIFIED.
+- Stage9 deterministic content source import — VERIFIED; 15 roots / 48 source documents / 5,552 images.
+- Stage10 deterministic media identity/order/checksum/provenance — VERIFIED.
+- OCR durable lease/retry/review/search foundation — VERIFIED.
+- Stage11 provider-neutral prompt/output contracts, provenance/count/answer/duplicate validation and benchmark harness — VERIFIED.
 
-## Stage11 — what was implemented
+Exact shared Stage11 regression head: `592123dae33f0cfce2ecd36e9577764767faa95a`:
 
-`apps/api/src/ai` now contains:
+- Stage11 `34004445273` — SUCCESS.
+- OCR `34004445384` — SUCCESS.
+- Stage10 `34004445278` — SUCCESS.
+- Stage9 `34004445277` — SUCCESS.
+- Full Rebuild `34004445394` — SUCCESS including Stage8 Chromium E2E.
 
-- `contracts.ts` — Zod-backed provider-neutral request/output/source/question contracts;
-- `prompt-registry.ts` — versioned Prompt Registry and provider-neutral prompt envelopes;
-- `validators.ts` — schema/semantic/provenance/notation/count/duplicate validation;
-- `benchmark.ts` — common provider-adapter benchmark harness and usage/result summaries.
+## Stage12 discovery result
 
-Supported modes:
+Do not create another queue.
 
-`lesson_summary`, `question_generation`, `comprehensive_lesson_content`, `multi_version_quiz`, `exact_question_extraction`, `exact_exam_extraction`, `replica_question_extraction`, `regenerate_question`, `page_detection`.
+Actual source inspection proved:
 
-Legacy AI `extract_text` is intentionally replaced by the already-verified OCR Foundation rather than duplicating text extraction inside AI generation.
+- `database/migrations/0004_ai_and_sync.sql` already defines `ai_jobs`, `ai_job_units`, `ai_outputs`;
+- no current AI execution route was registered in `apps/api/src/app.ts`;
+- `apps/api/src/server.ts` starts HTTP only;
+- no AI worker command existed in `apps/api/package.json`;
+- `apps/api/src/ai` contained Stage11 contracts/registry/validators/benchmark only;
+- there was no AI execution integration test;
+- Admin showed an AI operations shell but no authoritative execution API.
 
-## Stage11 correctness rules
+Decision: reuse/extend the existing durable AI tables and connect them to Stage11.
 
-- inputs are bounded source/page chunks with checksum identity;
-- approved OCR is the primary text path; vision fallback is explicit and review-gated;
-- evidence outside the request source/page set is invalid;
-- exact-source quotes must exist in reviewed OCR when text evidence exists;
-- MCQ requires four options; T/F requires exactly `["صح", "خطأ"]`;
-- requested counts/version counts are enforced;
-- a known option answer requires exact agreement between index and answer text;
-- uncertain answers cannot carry fabricated index/text;
-- exact/exam/replica modes do **not** use external knowledge to manufacture an answer when source evidence is insufficient;
-- exact/religious content requires review;
-- Arabic/notation rules preserve scientific tokens such as `H2O` while validating visible numeral policy;
-- exact duplicates are invalid for generated content;
-- near-duplicates are `review_required` rather than auto-discarded;
-- regeneration returns one changed question while preserving type/difficulty;
-- output kind must match the registered mode.
+## Stage12 implementation now present
 
-## Direct-question boundary
+First execution batch landed at `9f44881a24cc30fed958f72f6f5bbc1fc4f9b1a8`, with formatting fixes through `cc2e2b6696c0a0b02b18f4d14e3c3cb39b0397e6`.
 
-Stage11 preserves legacy `direct` questions at the AI extraction contract so exact source/exam data is not lost. Current `0003_learning.sql` Question Bank supports only `multiple_choice | true_false`.
+Implemented:
 
-Therefore direct extraction is reviewable AI output but **not automatically publishable Question Bank data**. Stage11 did not widen the DB enum merely to pass tests. A later publish/persistence contract must resolve this explicitly.
+- additive `database/migrations/0012_ai_execution.sql`;
+- durable lease fields + attempt telemetry over existing AI job/unit/output primitives;
+- `AiProviderAdapter` and classified provider errors;
+- `AiModelRouter` route abstraction;
+- `AiExecutionRepository`;
+- `AiExecutionService`;
+- deterministic idempotency + plan fingerprint conflict detection;
+- short transactional `SKIP LOCKED` claims;
+- provider calls outside DB transactions;
+- Stage11 validation before output acceptance;
+- bounded route cascade + retry/backoff/jitter;
+- lease-protected final writes;
+- cancellation and stale-worker protection;
+- partial-success job reconciliation;
+- provider/model/project/credential alias + tokens/latency/error/request/cost-micros telemetry without persisting secrets;
+- Stage12 PostgreSQL integration tests;
+- `.github/workflows/stage12-ai-execution.yml`.
 
-## Exact Stage11 evidence
-
-Exact head: `592123dae33f0cfce2ecd36e9577764767faa95a`.
-
-- Stage11 AI Contract Verification `34004445273` — SUCCESS.
-- OCR Foundation Verification `34004445384` — SUCCESS.
-- Stage10 Media Pipeline `34004445278` — SUCCESS.
-- Stage9 Content Import Verification `34004445277` — SUCCESS.
-- Rebuild Stage Verification `34004445394` — SUCCESS, including Chromium activation/returning-login/recovery/rebind E2E.
-
-Stage11 tests prove registry coverage/versioning, provider-neutral envelopes, chemistry notation, exact unresolved-answer review, exact quote rejection, religious review, exact duplicate rejection, wrong answer/index rejection, requested-count rejection, source/page provenance rejection, near-duplicate review and benchmark adapter failure/usage accounting.
-
-No live provider/model quality claim was made; provider credentials/pricing/routing remain `NOT YET VERIFIED` until authorized benchmark execution.
-
-## Architecture decisions added by Stage11
-
-- **AD-080:** provider-neutral AI contracts; provider-specific payloads do not leak into domain services.
-- **AD-081:** reviewed OCR + source/page/checksum evidence is the primary book-generation path; vision fallback is explicit/reviewed.
-- **AD-082:** exact modes never invent certainty; unresolved answers remain unknown/review-required.
-- **AD-083:** validators distinguish deterministic invalid output from human-review cases.
-- **AD-084:** direct extraction is preserved but not silently persisted into the current Question Bank schema.
-- **AD-085:** production routing/cascade requires benchmark evidence; Stage11 only supplies the common harness/contracts.
-
-## Active Stage12 target
-
-Do not create another orchestration architecture. Start by inspecting `database/migrations/0004_ai_and_sync.sql` and all AI job callers, then reuse/extend `ai_jobs`, `ai_job_units` and `ai_outputs` only where evidence requires it.
-
-Target pipeline:
+Pipeline:
 
 ```text
 Generation Plan
-→ reviewed OCR source/page chunks
-→ durable small units
-→ scheduler/backpressure
+→ Stage11 typed requests
+→ ai_jobs / ai_job_units
+→ claim + lease
 → AiModelRouter
-→ provider/model adapter
-→ Stage11 structured output
+→ provider adapter outside transaction
 → Stage11 validation
-→ partial success persistence
-→ Admin review
+→ lease-protected output/attempt write
+→ completed | review_required | retrying | failed
+→ aggregate job progress
 ```
 
-Stage12 requirements:
+## Stage12 invariants
 
-- deterministic per-unit idempotency;
-- bounded global/provider/project/model concurrency;
-- retry/backoff/jitter/cooldown by classified failure;
-- partial success, cancel/resume/progress;
-- no whole-book repeated prompts or giant in-memory batches;
-- server-only provider configuration and budget ceilings;
-- provider/model health and telemetry;
-- prompt/source/model/token/latency/error/cost metadata;
-- benchmark-approved cheap/fast → stronger-model cascade only for failed/uncertain units;
-- never switch keys/projects to evade quotas or provider terms.
+- no provider/network call in a DB transaction;
+- no stale lease may write completion/failure/output;
+- cancel removes current execution authority;
+- same idempotency key with different plan fingerprint is rejected;
+- provider/model fields remain execution metadata, not Stage11 domain contract fields;
+- provider secrets are server-only and not stored;
+- exact-source review rules remain authoritative;
+- invalid output retries only within configured max attempts;
+- review-required output stays review-required instead of inventing certainty;
+- partial success preserves completed units;
+- no credential/project rotation is allowed to evade provider quotas/terms.
+
+## Current CI state
+
+Exact head `00c1affe9e7fb1fce4d9e305e7bd650beb8c4e9b` failed all six triggered workflows at the same API lint gate before deeper verification because Biome still requested one import-format change in `apps/api/src/ai/execution-service.ts`.
+
+- Stage12 `34005458936` — FAILURE at lint; typecheck/tests/build/migrations/integration skipped.
+- Stage11 `34005458938` — FAILURE from shared lint.
+- OCR `34005458953` — FAILURE from shared lint.
+- Stage10 `34005458954` — FAILURE from shared lint.
+- Stage9 `34005458943` — FAILURE from shared lint.
+- Full Rebuild `34005458950` — FAILURE from shared lint.
+
+The requested Biome layout was applied in `cc2e2b6696c0a0b02b18f4d14e3c3cb39b0397e6`.
+
+**Do not report Stage12 as VERIFIED until one exact executable head passes Stage12 + Stage11 + OCR + Stage10 + Stage9 + Full Rebuild.**
+
+## Open Stage12 work after core verification
+
+1. Fix any evidence-backed TypeScript/SQL/runtime defect exposed after lint clears.
+2. Add bounded global/provider/project/model concurrency/backpressure.
+3. Add explicit route health/cooldown/budget eligibility.
+4. Add a dedicated worker entrypoint/lifecycle with graceful shutdown and bounded polling.
+5. Add authenticated Admin execution/query/cancel/review surfaces after the core worker contract is stable.
+6. Run real provider/model benchmark evidence before selecting production defaults.
+7. Keep live credentials/pricing/production routing `NOT YET VERIFIED` until explicitly configured and tested.
+
+## Direct-question boundary
+
+Stage11 preserves `direct` extraction. Current `0003_learning.sql` Question Bank persists only `multiple_choice | true_false`. Direct extraction remains reviewable AI output but is not automatically publishable Question Bank data. Do not widen persistence silently.
 
 ## Deployment / remaining work
 
@@ -143,15 +158,18 @@ Hosted Student/Admin/API/media/OCR/AI execution remains `NOT YET VERIFIED` while
 
 Ordered work:
 
-1. Stage12 durable provider-neutral high-throughput AI execution.
-2. Curriculum structure extension and Stage13+ from `MASTER_REBUILD_ROADMAP.md`.
-3. Resolve direct-question publish persistence before Question Bank publishing depends on it.
-4. Later restore/verify hosted runtime only when deployment is explicitly re-enabled.
+1. Make Stage12 execution core same-head green.
+2. Add concurrency/backpressure + health/cooldown/budget + worker lifecycle.
+3. Add Admin execution operations after backend stability.
+4. Benchmark real providers/models before production routing.
+5. Curriculum structure extension and Stage13+ from `MASTER_REBUILD_ROADMAP.md`.
+6. Resolve direct-question publish persistence.
+7. Verify hosted runtime only when deployment is explicitly re-enabled.
 
 ## Continuation protocol
 
-After every meaningful batch update Status, Engineering Log and Handoff; update specialized docs and parity evidence when affected; preserve exact commit/CI evidence; unexecuted work is `NOT YET VERIFIED`; never weaken tests/security/business rules for a green build.
+After every meaningful batch update Status + Engineering Log; update this Handoff whenever architecture/branch/CI/Preview state changes; update specialized AI/parity docs when affected; preserve exact commit/CI/runtime evidence; unexecuted work is `NOT YET VERIFIED`; never weaken tests/security/business rules for a green build.
 
 ## Current transition decision
 
-**Stage11 is VERIFIED on `592123d…`; Stage11 + OCR + Stage10 + Stage9 + Full Rebuild/Chromium are green on that same executable head. Deployment remains deferred. Continue with Stage12 discovery and durable execution design.**
+**Stage11 remains VERIFIED on `592123d…`. Stage12 core is implemented but NOT YET VERIFIED. The correct orchestration direction is reuse/extension of `ai_jobs / ai_job_units / ai_outputs`; current executable fix head is `cc2e2b6…`. Continue by making the Stage12 core and all lower-layer regressions green on one exact head before adding concurrency/backpressure or Admin surfaces.**
