@@ -18,6 +18,8 @@ if (!fixture) throw new Error("Stage12 capacity golden fixture is missing");
 const request = fixture.request;
 const validOutput = fixture.output;
 
+type RouteCapacity = NonNullable<AiModelRoute["capacity"]>;
+
 class DeferredAdapter implements AiProviderAdapter {
   readonly started: Promise<void>;
   readonly calls: AiProviderGenerateInput[] = [];
@@ -61,7 +63,7 @@ function route(
   routeKey: string,
   providerKey: string,
   modelKey: string,
-  capacity: AiModelRoute["capacity"],
+  capacity: RouteCapacity,
   projectAlias?: string,
 ): AiModelRoute {
   return {
@@ -174,9 +176,59 @@ async function assertBackpressureCase(
   assert.equal(firstState[0]?.status, "completed");
 }
 
-test("Stage12 distributed backpressure bounds global/provider/project/model concurrency without consuming retries", async () => {
+test("Stage12 distributed backpressure is race-safe and bounds global/provider/project/model concurrency", async () => {
   const db = createDatabase(databaseUrl);
   try {
+    const raceAdapter = new DeferredAdapter("race-provider");
+    const raceRoute = route(
+      "race-route",
+      raceAdapter.providerKey,
+      "race-model",
+      { providerMaxConcurrent: 5, modelMaxConcurrent: 5 },
+    );
+    const raceService = service(db, raceAdapter, raceRoute, 1);
+    const raceJob = await raceService.enqueue({
+      idempotencyKey: "stage12-capacity-global-race",
+      units: [
+        { unitKey: "race-a", request },
+        { unitKey: "race-b", request },
+      ],
+    });
+
+    const raceA = raceService.processNext();
+    const raceB = raceService.processNext();
+    await raceAdapter.started;
+    const firstSettled = await Promise.race([raceA, raceB]);
+    assert.equal(firstSettled?.status, "retrying");
+    assert.equal(raceAdapter.calls.length, 1);
+    raceAdapter.release();
+    const raceResults = await Promise.all([raceA, raceB]);
+    assert.deepEqual(
+      raceResults.map((result) => result?.status).sort(),
+      ["completed", "retrying"],
+    );
+    const raceUnits = await db.query<{
+      status: string;
+      attempt_count: number;
+      resume_route_key: string | null;
+      capacity_deferred_count: number;
+    }>(
+      `select status, attempt_count, resume_route_key, capacity_deferred_count
+       from ai_job_units where job_id = $1 order by position`,
+      [raceJob.job.id],
+    );
+    const blockedRaceUnit = raceUnits.find((unit) => unit.status === "retrying");
+    assert.ok(blockedRaceUnit);
+    assert.equal(blockedRaceUnit.attempt_count, 1);
+    assert.equal(blockedRaceUnit.resume_route_key, raceRoute.routeKey);
+    assert.equal(blockedRaceUnit.capacity_deferred_count, 1);
+    await db.query(
+      "update ai_job_units set next_attempt_at = now() where job_id = $1 and status = 'retrying'",
+      [raceJob.job.id],
+    );
+    assert.equal((await raceService.processNext())?.status, "completed");
+    assert.equal(raceAdapter.calls.length, 2);
+
     await assertBackpressureCase(db, {
       id: "global",
       expectedDimension: "global",
