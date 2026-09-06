@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import {
-  OcrProviderError,
   type OcrProvider,
+  OcrProviderError,
   type OcrProviderInput,
   type OcrProviderResult,
 } from "./provider.js";
