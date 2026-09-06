@@ -9,7 +9,7 @@ import { MediaPipelineService } from "../../src/media/service.js";
 import { FileSystemMediaStorage } from "../../src/media/storage.js";
 import type { OcrProvider, OcrProviderInput, OcrProviderResult } from "../../src/ocr/provider.js";
 import { OcrProviderError } from "../../src/ocr/provider.js";
-import { OcrExtractionService, type OcrExtractionProfile } from "../../src/ocr/service.js";
+import { type OcrExtractionProfile, OcrExtractionService } from "../../src/ocr/service.js";
 import { TesseractOcrProvider } from "../../src/ocr/tesseract-provider.js";
 
 const databaseUrl = process.env.DATABASE_URL;

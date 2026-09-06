@@ -37,6 +37,13 @@ export interface ClaimedOcrExtraction extends OcrExtractionRow {
   lease_token: string;
 }
 
+export interface ApprovedOcrSearchRow {
+  id: string;
+  media_asset_id: string;
+  source_page_number: number | null;
+  text: string;
+}
+
 interface ExistingIdentityRow extends OcrExtractionRow {}
 
 export async function loadOcrInputVariant(
@@ -348,8 +355,8 @@ export async function searchApprovedOcrText(
   db: QueryExecutor,
   query: string,
   limit: number,
-): Promise<readonly { id: string; media_asset_id: string; source_page_number: number | null; text: string }[]> {
-  return db.query<{ id: string; media_asset_id: string; source_page_number: number | null; text: string }>(
+): Promise<readonly ApprovedOcrSearchRow[]> {
+  return db.query<ApprovedOcrSearchRow>(
     `select e.id,
             v.media_asset_id,
             a.source_page_number,

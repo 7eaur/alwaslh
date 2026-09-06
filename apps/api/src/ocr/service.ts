@@ -4,7 +4,7 @@ import type { Database } from "../db.js";
 import { AppError } from "../errors.js";
 import type { MediaStorage } from "../media/storage.js";
 import { normalizeOcrText } from "./normalize.js";
-import { OcrProviderError, type OcrProvider } from "./provider.js";
+import { type OcrProvider, OcrProviderError } from "./provider.js";
 import {
   claimNextOcrExtraction,
   completeOcrExtraction,
@@ -13,9 +13,9 @@ import {
   getOcrExtraction,
   loadClaimedOcrInput,
   loadOcrInputVariant,
+  type OcrExtractionRow,
   reviewOcrExtraction,
   searchApprovedOcrText,
-  type OcrExtractionRow,
 } from "./repository.js";
 
 export interface OcrExtractionProfile {
@@ -76,9 +76,7 @@ function buildIdempotencyKey(
   provider: OcrProvider,
   profile: OcrExtractionProfile,
 ): string {
-  return `ocr-v1-${sha256(
-    [variantId, checksum, provider.key, provider.version, profile.key].join("\n"),
-  )}`;
+  return `ocr-v1-${sha256([variantId, checksum, provider.key, provider.version, profile.key].join("\n"))}`;
 }
 
 function retryDelaySeconds(attemptCount: number): number {
@@ -123,12 +121,7 @@ export class OcrExtractionService {
       throw new AppError("CONFLICT", "وسائط الصفحة غير جاهزة لاستخراج النص", 409);
     }
 
-    const idempotencyKey = buildIdempotencyKey(
-      variant.id,
-      variant.checksum_sha256,
-      provider,
-      profile,
-    );
+    const idempotencyKey = buildIdempotencyKey(variant.id, variant.checksum_sha256, provider, profile);
     return this.database.transaction((tx) =>
       ensureOcrExtraction(tx, {
         inputMediaVariantId: variant.id,
@@ -150,13 +143,7 @@ export class OcrExtractionService {
     assertProvider(provider);
     assertProfile(profile);
     const claimed = await this.database.transaction((tx) =>
-      claimNextOcrExtraction(
-        tx,
-        provider.key,
-        provider.version,
-        profile.key,
-        profile.leaseSeconds,
-      ),
+      claimNextOcrExtraction(tx, provider.key, provider.version, profile.key, profile.leaseSeconds),
     );
     if (!claimed) return null;
 
@@ -187,10 +174,7 @@ export class OcrExtractionService {
         ...(signal ? { signal } : {}),
       });
       const confidence = providerResult.meanConfidence;
-      if (
-        confidence !== null &&
-        (!Number.isFinite(confidence) || confidence < 0 || confidence > 100)
-      ) {
+      if (confidence !== null && (!Number.isFinite(confidence) || confidence < 0 || confidence > 100)) {
         throw new Error("ocr_provider_invalid_output");
       }
       if (typeof providerResult.rawText !== "string") {
@@ -253,9 +237,7 @@ export class OcrExtractionService {
         extractionId,
         actorProfileId: actor.id,
         decision,
-        ...(replacementNormalizedText === undefined
-          ? {}
-          : { replacementNormalizedText }),
+        ...(replacementNormalizedText === undefined ? {} : { replacementNormalizedText }),
       }),
     );
   }

@@ -1,5 +1,10 @@
 import { spawn } from "node:child_process";
-import { OcrProviderError, type OcrProvider, type OcrProviderInput, type OcrProviderResult } from "./provider.js";
+import {
+  OcrProviderError,
+  type OcrProvider,
+  type OcrProviderInput,
+  type OcrProviderResult,
+} from "./provider.js";
 
 interface ParsedWord {
   lineKey: string;
@@ -74,7 +79,11 @@ export class TesseractOcrProvider implements OcrProvider {
     this.pageSegmentationMode = options.pageSegmentationMode ?? 6;
     this.timeoutMs = options.timeoutMs ?? 60_000;
     this.maxOutputBytes = options.maxOutputBytes ?? 12 * 1024 * 1024;
-    if (!Number.isInteger(this.pageSegmentationMode) || this.pageSegmentationMode < 0 || this.pageSegmentationMode > 13) {
+    if (
+      !Number.isInteger(this.pageSegmentationMode) ||
+      this.pageSegmentationMode < 0 ||
+      this.pageSegmentationMode > 13
+    ) {
       throw new Error("ocr_tesseract_psm_invalid");
     }
     if (!Number.isInteger(this.timeoutMs) || this.timeoutMs < 1_000 || this.timeoutMs > 5 * 60_000) {
@@ -114,15 +123,7 @@ export class TesseractOcrProvider implements OcrProvider {
 
       const child = spawn(
         this.binary,
-        [
-          "stdin",
-          "stdout",
-          "-l",
-          languageSpec,
-          "--psm",
-          String(this.pageSegmentationMode),
-          "tsv",
-        ],
+        ["stdin", "stdout", "-l", languageSpec, "--psm", String(this.pageSegmentationMode), "tsv"],
         { stdio: ["pipe", "pipe", "pipe"] },
       );
       const stdout: Buffer[] = [];
@@ -149,13 +150,23 @@ export class TesseractOcrProvider implements OcrProvider {
       signal?.addEventListener("abort", handleAbort, { once: true });
 
       child.on("error", (error) => {
-        fail(new OcrProviderError("ocr_engine_unavailable", "Tesseract executable is unavailable", false, { cause: error }));
+        fail(
+          new OcrProviderError("ocr_engine_unavailable", "Tesseract executable is unavailable", false, {
+            cause: error,
+          }),
+        );
       });
       child.stdout.on("data", (chunk: Buffer) => {
         if (settled) return;
         outputBytes += chunk.byteLength;
         if (outputBytes > this.maxOutputBytes) {
-          fail(new OcrProviderError("ocr_engine_output_too_large", "Tesseract output exceeded the safety limit", false));
+          fail(
+            new OcrProviderError(
+              "ocr_engine_output_too_large",
+              "Tesseract output exceeded the safety limit",
+              false,
+            ),
+          );
           return;
         }
         stdout.push(chunk);
@@ -165,7 +176,11 @@ export class TesseractOcrProvider implements OcrProvider {
       });
       child.stdin.on("error", (error: NodeJS.ErrnoException) => {
         if (error.code !== "EPIPE") {
-          fail(new OcrProviderError("ocr_engine_input_failed", "Failed to send image bytes to Tesseract", true, { cause: error }));
+          fail(
+            new OcrProviderError("ocr_engine_input_failed", "Failed to send image bytes to Tesseract", true, {
+              cause: error,
+            }),
+          );
         }
       });
       child.on("close", (code) => {
