@@ -9,12 +9,14 @@ const LoginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-const ResetSchema = z.object({
-  token: z.string().min(32).max(128),
-  newPassword: z.string().min(8).max(128),
+const StudentLoginCompleteSchema = z.object({
+  challengeToken: z.string().min(32).max(128),
+  signature: z.string().min(64).max(256),
+  publicKeySpki: z.string().min(80).max(4096).optional(),
+  newPassword: z.string().min(8).max(128).optional(),
 });
 
-const RecoveryIssueSchema = z.object({
+const StudentAdminMutationSchema = z.object({
   profileId: z.string().uuid(),
 });
 
@@ -81,11 +83,31 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, auth
     }
   });
 
+  // This route is intentionally Admin-only. Student password-only login would
+  // bypass the registered-device security boundary.
   app.post("/v1/auth/login", async (request, reply) => {
     const input = parseBody(LoginSchema, request.body);
     const result = await auth.login(input.identifier, input.password, request.headers["user-agent"]);
     reply.header("Set-Cookie", sessionCookie(config, result.token, config.SESSION_TTL_HOURS * 3600));
     return { profile: result.profile };
+  });
+
+  app.post("/v1/student/login/start", async (request) => {
+    const input = parseBody(LoginSchema, request.body);
+    return auth.startStudentLogin(input.identifier, input.password);
+  });
+
+  app.post("/v1/student/login/complete", async (request, reply) => {
+    const input = parseBody(StudentLoginCompleteSchema, request.body);
+    const result = await auth.completeStudentLogin({
+      challengeToken: input.challengeToken,
+      signature: input.signature,
+      ...(input.publicKeySpki ? { publicKeySpki: input.publicKeySpki } : {}),
+      ...(input.newPassword ? { newPassword: input.newPassword } : {}),
+      ...(request.headers["user-agent"] ? { userAgent: request.headers["user-agent"] } : {}),
+    });
+    reply.header("Set-Cookie", sessionCookie(config, result.token, config.SESSION_TTL_HOURS * 3600));
+    return { profile: result.profile, deviceId: result.deviceId };
   });
 
   app.post("/v1/auth/logout", async (request, reply) => {
@@ -110,18 +132,18 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, auth
     return { profile };
   });
 
-  app.post("/v1/admin/auth/recovery-token", async (request) => {
+  app.post("/v1/admin/auth/temporary-password", async (request) => {
     const actor = await currentProfile(request, config, auth);
     if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
-    const input = parseBody(RecoveryIssueSchema, request.body);
-    const token = await auth.issueRecoveryToken(actor, input.profileId);
-    return { recoveryToken: token, expiresInMinutes: 30 };
+    const input = parseBody(StudentAdminMutationSchema, request.body);
+    return auth.issueTemporaryPassword(actor, input.profileId);
   });
 
-  app.post("/v1/auth/reset-password", async (request, reply) => {
-    const input = parseBody(ResetSchema, request.body);
-    await auth.resetPassword(input.token, input.newPassword);
-    reply.header("Set-Cookie", clearSessionCookie(config));
-    return { status: "password_reset" };
+  app.post("/v1/admin/auth/device-rebind", async (request) => {
+    const actor = await currentProfile(request, config, auth);
+    if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
+    const input = parseBody(StudentAdminMutationSchema, request.body);
+    await auth.resetStudentDevice(actor, input.profileId);
+    return { status: "device_rebind_allowed" };
   });
 }
