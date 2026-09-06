@@ -84,11 +84,7 @@ test("code generation, renewal, idempotency, no-waste and concurrent redemption"
     return cookieFrom(response);
   }
 
-  async function studentLogin(
-    identifier: string,
-    password: string,
-    device: TestDeviceKey,
-  ): Promise<string> {
+  async function studentLogin(identifier: string, password: string, device: TestDeviceKey): Promise<string> {
     const start = await app.inject({
       method: "POST",
       url: "/v1/student/login/start",
