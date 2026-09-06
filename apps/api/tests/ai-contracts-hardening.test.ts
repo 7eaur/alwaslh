@@ -56,13 +56,10 @@ test("Stage11 rejects an answerText that disagrees with correctOptionIndex", () 
 });
 
 test("Stage11 rejects generated output that misses the requested question count", () => {
-  const validation = validateAiGenerationOutput(
-    request({ multipleChoice: 2, trueFalse: 0, direct: 0 }),
-    {
-      kind: "question_set",
-      questions: [validQuestion()],
-    },
-  );
+  const validation = validateAiGenerationOutput(request({ multipleChoice: 2, trueFalse: 0, direct: 0 }), {
+    kind: "question_set",
+    questions: [validQuestion()],
+  });
 
   assert.equal(validation.status, "invalid");
   assert.ok(validation.issues.some((issue) => issue.code === "requested_count_mismatch"));
@@ -83,18 +80,18 @@ test("Stage11 rejects provenance outside the request source/page set", () => {
 });
 
 test("Stage11 sends near-duplicate generated questions to review without treating them as exact duplicates", () => {
-  const validation = validateAiGenerationOutput(
-    request({ multipleChoice: 2, trueFalse: 0, direct: 0 }),
-    {
-      kind: "question_set",
-      questions: [
-        validQuestion("ما الصيغة الكيميائية التي تمثل الماء في هذا الدرس؟"),
-        validQuestion("ما الصيغة الكيميائية التي تمثل الماء في الدرس؟"),
-      ],
-    },
-  );
+  const validation = validateAiGenerationOutput(request({ multipleChoice: 2, trueFalse: 0, direct: 0 }), {
+    kind: "question_set",
+    questions: [
+      validQuestion("ما الصيغة الكيميائية التي تمثل الماء في هذا الدرس؟"),
+      validQuestion("ما الصيغة الكيميائية التي تمثل الماء في الدرس؟"),
+    ],
+  });
 
   assert.equal(validation.status, "review_required");
   assert.ok(validation.issues.some((issue) => issue.code === "near_duplicate_question"));
-  assert.equal(validation.issues.some((issue) => issue.code === "duplicate_question"), false);
+  assert.equal(
+    validation.issues.some((issue) => issue.code === "duplicate_question"),
+    false,
+  );
 });
