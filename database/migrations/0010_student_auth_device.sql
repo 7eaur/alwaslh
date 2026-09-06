@@ -25,6 +25,8 @@ CREATE TABLE student_devices (
 CREATE UNIQUE INDEX ux_student_devices_one_active_per_profile
   ON student_devices(profile_id)
   WHERE revoked_at IS NULL;
+CREATE UNIQUE INDEX ux_student_devices_profile_key_history
+  ON student_devices(profile_id, public_key_sha256);
 CREATE INDEX idx_student_devices_public_key_hash
   ON student_devices(public_key_sha256);
 CREATE INDEX idx_student_devices_profile_history
