@@ -177,7 +177,7 @@ export class AiExecutionService {
         lastProviderFailure = classified;
         const latencyMs = Math.max(0, Date.now() - startedAt);
         await this.database.transaction((executor) =>
-          this.repository.finishAttemptFailure(executor, attempt.id, classified, latencyMs),
+          this.repository.finishAttemptFailure(executor, claimed, attempt.id, classified, latencyMs),
         );
         if (routeIndex < routes.length - 1) continue;
         break;
@@ -190,6 +190,7 @@ export class AiExecutionService {
         await this.database.transaction((executor) =>
           this.repository.finishAttemptSuccess(
             executor,
+            claimed,
             attempt.id,
             validation.status,
             latencyMs,
@@ -213,6 +214,7 @@ export class AiExecutionService {
       await this.database.transaction(async (executor) => {
         await this.repository.finishAttemptSuccess(
           executor,
+          claimed,
           attempt.id,
           validation.status,
           latencyMs,

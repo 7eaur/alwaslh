@@ -7,9 +7,20 @@ ALTER TABLE ai_job_units
   ADD COLUMN lease_token uuid,
   ADD COLUMN lease_expires_at timestamptz;
 
+-- Any pre-Stage12 running row had no lease authority. Make it reclaimable before
+-- enforcing the running-lease invariant instead of leaving an unclaimable row.
+UPDATE ai_job_units
+SET status = 'retrying',
+    next_attempt_at = coalesce(next_attempt_at, now())
+WHERE status = 'running';
+
 ALTER TABLE ai_job_units
   ADD CONSTRAINT ai_job_units_max_attempts_valid CHECK (max_attempts BETWEEN 1 AND 20),
-  ADD CONSTRAINT ai_job_units_lease_pair CHECK ((lease_token IS NULL) = (lease_expires_at IS NULL));
+  ADD CONSTRAINT ai_job_units_running_lease_shape CHECK (
+    (status = 'running' AND lease_token IS NOT NULL AND lease_expires_at IS NOT NULL)
+    OR
+    (status <> 'running' AND lease_token IS NULL AND lease_expires_at IS NULL)
+  );
 
 CREATE TABLE ai_execution_attempts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

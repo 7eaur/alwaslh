@@ -208,11 +208,10 @@ export class AiExecutionRepository {
     return claimed;
   }
 
-  async startAttempt(
+  private async assertActiveLease(
     executor: QueryExecutor,
     unit: Pick<AiClaimedUnit, "id" | "lease_token">,
-    route: AiModelRoute,
-  ): Promise<{ id: string; attemptNumber: number }> {
+  ): Promise<void> {
     const locked = await executor.query<{ id: string }>(
       `select id from ai_job_units
        where id = $1 and status = 'running' and lease_token = $2 and lease_expires_at > now()
@@ -220,6 +219,14 @@ export class AiExecutionRepository {
       [unit.id, unit.lease_token],
     );
     if (!locked[0]) throw new Error("ai_lease_lost");
+  }
+
+  async startAttempt(
+    executor: QueryExecutor,
+    unit: Pick<AiClaimedUnit, "id" | "lease_token">,
+    route: AiModelRoute,
+  ): Promise<{ id: string; attemptNumber: number }> {
+    await this.assertActiveLease(executor, unit);
 
     const next = await executor.query<{ attempt_number: number }>(
       `select coalesce(max(attempt_number), 0)::int + 1 as attempt_number
@@ -257,6 +264,7 @@ export class AiExecutionRepository {
 
   async finishAttemptSuccess(
     executor: QueryExecutor,
+    unit: Pick<AiClaimedUnit, "id" | "lease_token">,
     attemptId: string,
     validationStatus: AiValidationStatus,
     latencyMs: number,
@@ -264,6 +272,8 @@ export class AiExecutionRepository {
     providerRequestId?: string,
     metadata?: Record<string, unknown>,
   ): Promise<void> {
+    await this.assertActiveLease(executor, unit);
+
     const costMicros =
       usage.estimatedCostUsd === undefined
         ? null
@@ -293,10 +303,13 @@ export class AiExecutionRepository {
 
   async finishAttemptFailure(
     executor: QueryExecutor,
+    unit: Pick<AiClaimedUnit, "id" | "lease_token">,
     attemptId: string,
     error: { code: string; message: string; retryable: boolean },
     latencyMs: number,
   ): Promise<void> {
+    await this.assertActiveLease(executor, unit);
+
     const rows = await executor.query<{ id: string }>(
       `update ai_execution_attempts
        set status = 'failed', retryable = $2, error_code = $3, error_message = $4,
@@ -453,20 +466,20 @@ export class AiExecutionRepository {
     if (!jobs[0]) throw new Error("ai_job_not_found");
 
     await executor.query(
+      `update ai_job_units
+       set status = 'cancelled', lease_token = null, lease_expires_at = null,
+           next_attempt_at = null, completed_at = now(),
+           last_error_code = 'job_cancelled', last_error_message = 'job cancelled'
+       where job_id = $1 and status in ('queued', 'running', 'retrying')`,
+      [jobId],
+    );
+    await executor.query(
       `update ai_execution_attempts a
        set status = 'cancelled', completed_at = now(), retryable = false,
            error_code = coalesce(error_code, 'job_cancelled'),
            error_message = coalesce(error_message, 'job cancelled while provider attempt was running')
        from ai_job_units u
        where u.job_id = $1 and a.job_unit_id = u.id and a.status = 'running'`,
-      [jobId],
-    );
-    await executor.query(
-      `update ai_job_units
-       set status = 'cancelled', lease_token = null, lease_expires_at = null,
-           next_attempt_at = null, completed_at = now(),
-           last_error_code = 'job_cancelled', last_error_message = 'job cancelled'
-       where job_id = $1 and status in ('queued', 'running', 'retrying')`,
       [jobId],
     );
     return this.refreshJob(executor, jobId);

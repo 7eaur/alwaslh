@@ -282,6 +282,30 @@ test("Stage12 execution is durable, leased, retryable, cancellable and partial-s
     );
     assert.equal(staleState[0]?.status, "running");
     assert.equal(staleState[0]?.attempt_count, 1);
+    const staleAttemptBeforeRecovery = await db.query<{ status: string; completed_at: Date | null }>(
+      `select a.status, a.completed_at
+       from ai_execution_attempts a
+       join ai_job_units u on u.id = a.job_unit_id
+       where u.job_id = $1`,
+      [staleJob.job.id],
+    );
+    assert.equal(staleAttemptBeforeRecovery[0]?.status, "running");
+    assert.equal(staleAttemptBeforeRecovery[0]?.completed_at, null);
+
+    const staleRecovered = await staleService.processNext();
+    assert.equal(staleRecovered?.status, "completed");
+    const staleAttempts = await db.query<{ status: string; error_code: string | null }>(
+      `select a.status, a.error_code
+       from ai_execution_attempts a
+       join ai_job_units u on u.id = a.job_unit_id
+       where u.job_id = $1
+       order by a.attempt_number`,
+      [staleJob.job.id],
+    );
+    assert.deepEqual(staleAttempts, [
+      { status: "failed", error_code: "lease_expired" },
+      { status: "completed", error_code: null },
+    ]);
 
     const cancelling = new DeferredAdapter("cancel-provider");
     const cancelService = new AiExecutionService(db, routerFor(cancelling), profile, undefined, () => 0.5);
