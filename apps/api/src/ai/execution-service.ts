@@ -1,9 +1,13 @@
 import { createHash } from "node:crypto";
 import type { Database } from "../db.js";
-import { aiGenerationRequestSchema, type AiGenerationRequest } from "./contracts.js";
+import { type AiGenerationRequest, aiGenerationRequestSchema } from "./contracts.js";
 import { AiExecutionRepository, type AiJobRecord } from "./execution-repository.js";
 import { buildPromptEnvelope, getPromptDefinition } from "./prompt-registry.js";
-import { classifyAiProviderError, type AiProviderError, type AiProviderGenerateResult } from "./provider.js";
+import {
+  type AiProviderError,
+  type AiProviderGenerateResult,
+  classifyAiProviderError,
+} from "./provider.js";
 import type { AiModelRouter } from "./router.js";
 import { type AiValidationResult, validateAiGenerationOutput } from "./validators.js";
 
@@ -50,7 +54,9 @@ function canonicalize(value: unknown): unknown {
 }
 
 function planFingerprint(value: unknown): string {
-  return createHash("sha256").update(JSON.stringify(canonicalize(value))).digest("hex");
+  return createHash("sha256")
+    .update(JSON.stringify(canonicalize(value)))
+    .digest("hex");
 }
 
 function assertExecutionProfile(profile: AiExecutionProfile): void {
@@ -60,7 +66,8 @@ function assertExecutionProfile(profile: AiExecutionProfile): void {
   if (!Number.isInteger(profile.maxAttempts) || profile.maxAttempts < 1 || profile.maxAttempts > 20) {
     throw new Error("ai_max_attempts_invalid");
   }
-  if (!Number.isFinite(profile.retryBaseMs) || profile.retryBaseMs < 0) throw new Error("ai_retry_base_invalid");
+  if (!Number.isFinite(profile.retryBaseMs) || profile.retryBaseMs < 0)
+    throw new Error("ai_retry_base_invalid");
   if (!Number.isFinite(profile.retryMaxMs) || profile.retryMaxMs < profile.retryBaseMs) {
     throw new Error("ai_retry_max_invalid");
   }
@@ -99,8 +106,10 @@ export class AiExecutionService {
       seen.add(unitKey);
       return { unitKey, position, request: aiGenerationRequestSchema.parse(unit.request) };
     });
+    const firstUnit = units[0];
+    if (!firstUnit) throw new Error("ai_plan_empty");
 
-    const firstDefinition = getPromptDefinition(units[0]!.request.mode);
+    const firstDefinition = getPromptDefinition(firstUnit.request.mode);
     for (const unit of units) {
       const definition = getPromptDefinition(unit.request.mode);
       if (definition.key !== firstDefinition.key || definition.version !== firstDefinition.version) {
@@ -117,7 +126,7 @@ export class AiExecutionService {
     return this.database.transaction((executor) =>
       this.repository.createPlan(executor, {
         ...(input.createdByProfileId ? { createdByProfileId: input.createdByProfileId } : {}),
-        jobType: units[0]!.request.mode,
+        jobType: firstUnit.request.mode,
         promptKey: firstDefinition.key,
         promptVersion: firstDefinition.version,
         priority,
@@ -154,7 +163,9 @@ export class AiExecutionService {
 
     let lastProviderFailure: AiProviderError | null = null;
     for (const [routeIndex, route] of routes.entries()) {
-      const attempt = await this.database.transaction((executor) => this.repository.startAttempt(executor, claimed, route));
+      const attempt = await this.database.transaction((executor) =>
+        this.repository.startAttempt(executor, claimed, route),
+      );
       const startedAt = Date.now();
       let providerResult: AiProviderGenerateResult;
       try {
@@ -213,7 +224,14 @@ export class AiExecutionService {
           providerResult.providerRequestId,
           providerResult.metadata,
         );
-        await this.repository.persistOutputOutcome(executor, claimed, providerResult.output, validation, status, nextAttemptAt);
+        await this.repository.persistOutputOutcome(
+          executor,
+          claimed,
+          providerResult.output,
+          validation,
+          status,
+          nextAttemptAt,
+        );
         await this.repository.refreshJob(executor, claimed.job_id);
       });
       return { jobId: claimed.job_id, unitId: claimed.id, status, routeKey: route.routeKey, validation };
