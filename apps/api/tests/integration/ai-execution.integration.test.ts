@@ -214,10 +214,10 @@ test("Stage12 execution is durable, leased, retryable, cancellable and partial-s
       provider_key: string;
       retryable: boolean | null;
     }>(
-      `select status, provider_key, retryable
+      `select a.status, a.provider_key, a.retryable
        from ai_execution_attempts a
        join ai_job_units u on u.id = a.job_unit_id
-       where u.job_id = $1 order by attempt_number`,
+       where u.job_id = $1 order by a.attempt_number`,
       [cascadeJob.job.id],
     );
     assert.deepEqual(
