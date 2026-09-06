@@ -1,13 +1,13 @@
 import type { ZodIssue } from "zod";
 import {
   type AiGenerationOutput,
-  aiGenerationOutputSchema,
   type AiGenerationRequest,
-  aiGenerationRequestSchema,
   type AiQuestion,
   type AiQuestionTarget,
   type AiSourceChunk,
   type AiSourceEvidence,
+  aiGenerationOutputSchema,
+  aiGenerationRequestSchema,
 } from "./contracts.js";
 import { getPromptDefinition } from "./prompt-registry.js";
 
@@ -88,10 +88,7 @@ function sourceKey(source: Pick<AiSourceChunk, "mediaAssetId" | "pageNumber">): 
   return `${source.mediaAssetId}:${source.pageNumber}`;
 }
 
-function findSource(
-  request: AiGenerationRequest,
-  evidence: AiSourceEvidence,
-): AiSourceChunk | undefined {
+function findSource(request: AiGenerationRequest, evidence: AiSourceEvidence): AiSourceChunk | undefined {
   return request.sourceChunks.find((source) => sourceKey(source) === sourceKey(evidence));
 }
 
@@ -194,7 +191,13 @@ function validateQuestionShape(question: AiQuestion, path: string, issues: AiVal
     );
   }
   if (question.type === "direct" && question.options.length !== 0) {
-    pushIssue(issues, "direct_options_present", "error", `${path}.options`, "direct questions must have no options");
+    pushIssue(
+      issues,
+      "direct_options_present",
+      "error",
+      `${path}.options`,
+      "direct questions must have no options",
+    );
   }
 
   if (question.answerStatus === "known") {
@@ -209,7 +212,13 @@ function validateQuestionShape(question: AiQuestion, path: string, issues: AiVal
         );
       }
       if (!question.answerText?.trim()) {
-        pushIssue(issues, "known_answer_missing", "error", `${path}.answerText`, "known direct answer requires answerText");
+        pushIssue(
+          issues,
+          "known_answer_missing",
+          "error",
+          `${path}.answerText`,
+          "known direct answer requires answerText",
+        );
       }
     } else {
       if (question.correctOptionIndex === null || question.correctOptionIndex >= question.options.length) {
@@ -233,16 +242,14 @@ function validateQuestionShape(question: AiQuestion, path: string, issues: AiVal
         }
       }
     }
-  } else {
-    if (question.correctOptionIndex !== null || question.answerText !== null) {
-      pushIssue(
-        issues,
-        "uncertain_answer_claimed",
-        "error",
-        path,
-        "unknown/review-required answers must not claim a correct option or answer text",
-      );
-    }
+  } else if (question.correctOptionIndex !== null || question.answerText !== null) {
+    pushIssue(
+      issues,
+      "uncertain_answer_claimed",
+      "error",
+      path,
+      "unknown/review-required answers must not claim a correct option or answer text",
+    );
   }
 }
 
@@ -310,7 +317,11 @@ function validateQuestion(
       "exact extraction correctly leaves an unproven answer unresolved",
     );
   }
-  if (question.answerStatus === "known" && !question.explanation?.trim() && request.mode !== "exact_question_extraction") {
+  if (
+    question.answerStatus === "known" &&
+    !question.explanation?.trim() &&
+    request.mode !== "exact_question_extraction"
+  ) {
     pushIssue(
       issues,
       "explanation_missing",
@@ -392,13 +403,25 @@ function validateRequestedCounts(
   }
   if (request.mode === "regenerate_question" && output.kind === "question_set") {
     if (output.questions.length !== 1) {
-      pushIssue(issues, "regenerate_count", "error", "questions", "regenerate mode must return exactly one question");
+      pushIssue(
+        issues,
+        "regenerate_count",
+        "error",
+        "questions",
+        "regenerate mode must return exactly one question",
+      );
       return;
     }
     const regenerated = output.questions[0];
     if (!regenerated) return;
     if (regenerated.type !== request.originalQuestion.type) {
-      pushIssue(issues, "regenerate_type_changed", "error", "questions.0.type", "regeneration must preserve question type");
+      pushIssue(
+        issues,
+        "regenerate_type_changed",
+        "error",
+        "questions.0.type",
+        "regeneration must preserve question type",
+      );
     }
     if (regenerated.difficulty !== request.originalQuestion.difficulty) {
       pushIssue(
@@ -468,10 +491,7 @@ function validateSummaryEvidence(
   }
 }
 
-export function validateAiGenerationOutput(
-  requestInput: unknown,
-  outputInput: unknown,
-): AiValidationResult {
+export function validateAiGenerationOutput(requestInput: unknown, outputInput: unknown): AiValidationResult {
   const requestResult = aiGenerationRequestSchema.safeParse(requestInput);
   if (!requestResult.success) {
     return { status: "invalid", issues: zodIssues("request", requestResult.error.issues) };
