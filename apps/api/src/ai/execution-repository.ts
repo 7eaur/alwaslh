@@ -279,7 +279,12 @@ export class AiExecutionRepository {
     if (!counts) throw new Error("ai_capacity_count_failed");
 
     if (counts.global_running >= globalMaxConcurrent) {
-      return { started: false, dimension: "global", current: counts.global_running, limit: globalMaxConcurrent };
+      return {
+        started: false,
+        dimension: "global",
+        current: counts.global_running,
+        limit: globalMaxConcurrent,
+      };
     }
     if (counts.provider_running >= capacity.providerMaxConcurrent) {
       return {
@@ -289,10 +294,7 @@ export class AiExecutionRepository {
         limit: capacity.providerMaxConcurrent,
       };
     }
-    if (
-      capacity.projectMaxConcurrent !== null &&
-      counts.project_running >= capacity.projectMaxConcurrent
-    ) {
+    if (capacity.projectMaxConcurrent !== null && counts.project_running >= capacity.projectMaxConcurrent) {
       return {
         started: false,
         dimension: "project",
