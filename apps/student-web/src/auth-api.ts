@@ -8,6 +8,12 @@ export type ApiErrorCode =
   | "INTERNAL_ERROR"
   | "SERVICE_UNAVAILABLE";
 
+export type StudentChallengePurpose =
+  | "login"
+  | "password_change"
+  | "device_rebind"
+  | "password_change_rebind";
+
 export interface SessionProfile {
   id: string;
   role: "student" | "admin";
@@ -23,11 +29,31 @@ export interface EntitlementView {
   expiresAt: string | null;
 }
 
+export interface ActivationVerificationResponse {
+  activationTicket: string;
+  accountIdentifier: string;
+  expiresInSeconds: number;
+}
+
 export interface ActivationResponse {
   profile: SessionProfile;
   entitlement: EntitlementView;
   accountIdentifier: string;
+  deviceId: string;
   replayed: boolean;
+}
+
+export interface StudentLoginChallenge {
+  challengeToken: string;
+  purpose: StudentChallengePurpose;
+  requiresDeviceRegistration: boolean;
+  mustChangePassword: boolean;
+  expiresInSeconds: number;
+}
+
+export interface StudentLoginResponse {
+  profile: SessionProfile;
+  deviceId: string;
 }
 
 interface PublicErrorBody {
@@ -100,14 +126,23 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return payload as T;
 }
 
-export async function activateStudent(
-  code: string,
-  password: string,
-  idempotencyKey: string,
-): Promise<ActivationResponse> {
-  return request<ActivationResponse>("/v1/student/activate", {
+export async function verifyActivation(code: string): Promise<ActivationVerificationResponse> {
+  return request<ActivationVerificationResponse>("/v1/student/activation/verify", {
     method: "POST",
-    body: JSON.stringify({ code, password, idempotencyKey }),
+    body: JSON.stringify({ code }),
+  });
+}
+
+export async function completeActivation(input: {
+  activationTicket: string;
+  password: string;
+  idempotencyKey: string;
+  devicePublicKeySpki: string;
+  deviceProof: string;
+}): Promise<ActivationResponse> {
+  return request<ActivationResponse>("/v1/student/activation/complete", {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }
 
@@ -116,12 +151,26 @@ export async function restoreStudentSession(): Promise<SessionProfile> {
   return result.profile;
 }
 
-export async function loginStudent(identifier: string, password: string): Promise<SessionProfile> {
-  const result = await request<ProfileResponse>("/v1/auth/login", {
+export async function startStudentLogin(
+  identifier: string,
+  password: string,
+): Promise<StudentLoginChallenge> {
+  return request<StudentLoginChallenge>("/v1/student/login/start", {
     method: "POST",
     body: JSON.stringify({ identifier, password }),
   });
-  return result.profile;
+}
+
+export async function completeStudentLogin(input: {
+  challengeToken: string;
+  signature: string;
+  publicKeySpki?: string;
+  newPassword?: string;
+}): Promise<StudentLoginResponse> {
+  return request<StudentLoginResponse>("/v1/student/login/complete", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function logoutStudent(): Promise<void> {
@@ -131,13 +180,6 @@ export async function logoutStudent(): Promise<void> {
 export async function listStudentEntitlements(): Promise<EntitlementView[]> {
   const result = await request<EntitlementsResponse>("/v1/student/access/entitlements");
   return result.entitlements;
-}
-
-export async function resetStudentPassword(token: string, newPassword: string): Promise<void> {
-  await request<{ status: "password_reset" }>("/v1/auth/reset-password", {
-    method: "POST",
-    body: JSON.stringify({ token, newPassword }),
-  });
 }
 
 export function normalizeAccessCode(value: string): string {
