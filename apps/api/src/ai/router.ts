@@ -6,6 +6,12 @@ import type {
 } from "./contracts.js";
 import type { AiProviderAdapter } from "./provider.js";
 
+export interface AiRouteCapacity {
+  providerMaxConcurrent?: number;
+  projectMaxConcurrent?: number;
+  modelMaxConcurrent?: number;
+}
+
 export interface AiModelRoute {
   routeKey: string;
   providerKey: string;
@@ -17,13 +23,35 @@ export interface AiModelRoute {
   modes?: readonly AiGenerationMode[];
   subjectDomains?: readonly AiSubjectDomain[];
   sourceSensitivities?: readonly AiSourceSensitivity[];
+  capacity?: AiRouteCapacity;
   enabled?: boolean;
+}
+
+export interface ResolvedAiRouteCapacity {
+  providerMaxConcurrent: number;
+  projectMaxConcurrent: number | null;
+  modelMaxConcurrent: number;
 }
 
 export type AiRouteAvailability = (route: AiModelRoute, request: AiGenerationRequest) => boolean;
 
 function includesOrAll<T>(values: readonly T[] | undefined, value: T): boolean {
   return !values || values.includes(value);
+}
+
+function assertCapacityValue(routeKey: string, name: string, value: number | undefined): void {
+  if (value === undefined) return;
+  if (!Number.isInteger(value) || value < 1 || value > 10_000) {
+    throw new Error(`ai_route_capacity_invalid:${routeKey}:${name}`);
+  }
+}
+
+export function resolveRouteCapacity(route: AiModelRoute): ResolvedAiRouteCapacity {
+  return {
+    providerMaxConcurrent: route.capacity?.providerMaxConcurrent ?? 1,
+    projectMaxConcurrent: route.projectAlias ? (route.capacity?.projectMaxConcurrent ?? 1) : null,
+    modelMaxConcurrent: route.capacity?.modelMaxConcurrent ?? 1,
+  };
 }
 
 export class AiModelRouter {
@@ -49,6 +77,12 @@ export class AiModelRouter {
       }
       if (!Number.isInteger(route.tier) || route.tier < 1)
         throw new Error(`ai_route_tier_invalid:${route.routeKey}`);
+      assertCapacityValue(route.routeKey, "provider", route.capacity?.providerMaxConcurrent);
+      assertCapacityValue(route.routeKey, "project", route.capacity?.projectMaxConcurrent);
+      assertCapacityValue(route.routeKey, "model", route.capacity?.modelMaxConcurrent);
+      if (!route.projectAlias && route.capacity?.projectMaxConcurrent !== undefined) {
+        throw new Error(`ai_route_project_capacity_without_project:${route.routeKey}`);
+      }
     }
   }
 
