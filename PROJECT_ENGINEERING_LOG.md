@@ -1,31 +1,29 @@
 # PROJECT ENGINEERING LOG
 
-> Engineering source of truth for product understanding, architecture decisions, implementation history, verification evidence and remaining work. Start with `DOCUMENTATION_INDEX.md`, then `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md`, Product Decision docs, `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`, and the legacy coverage/audit references.
+> Engineering source of truth for product understanding, architecture decisions, implementation history, verification evidence and remaining work. Start with `DOCUMENTATION_INDEX.md`, then `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md`, Product Decision docs, `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`, and legacy coverage/audit references.
 
 ## Project Understanding
 
-**الوسيلة الذكية** منصة تعليمية عربية بسطحين رئيسيين مستقلين:
+**الوسيلة الذكية** منصة تعليمية عربية بسطحين مستقلين لنفس المنتج:
 
-- **Student PWA (`apps/student-web`)**: Welcome/Auth، المنهج، Reader، الملخصات، `اختبر نفسك`، الاختبارات والنماذج، الملاحظات، المفضلة، `يحتاج مراجعة`، التقدم، الإنجازات الشخصية، Push Notifications وOffline/PWA. تطبيق ويب قابل للتثبيت ويعمل أيضًا من Browser.
-- **Admin Web (`apps/admin-web`)**: Super Admin واحد يدير الصفوف/المواد/الدروس/المحتوى، الرفع والمعالجة، OCR/TTS، الطلاب والأكواد، AI authoring، Question Bank/QA، النشر، Import/Export والتقارير.
-- **Backend API (`apps/api`)**: الحد الوحيد للوصول إلى PostgreSQL الخاصة وتنفيذ Auth/Authorization/Entitlements والعمليات authoritative.
+- **Student Web/PWA (`apps/student-web`)**: Welcome/Auth، curriculum، Reader، summaries، `اختبر نفسك`، tests/models، Notes، Favorites، Needs Review، progress/private achievements، Notifications وOffline/PWA. Mobile-first، RTL، قابل للتثبيت ويعمل أيضًا من Browser.
+- **Admin Web (`apps/admin-web`)**: Super Admin واحد حاليًا لإدارة curriculum/content/media/OCR/TTS/AI authoring/Question Bank/students/codes/recovery/device reset/notifications/import-export/reports/audit.
+- **Backend API (`apps/api`)**: المسار الوحيد لبيانات PostgreSQL وتطبيق Auth/Authorization/Entitlements والعمليات authoritative.
 
 ### Product governance
 
-- الفكرة الأساسية ثابتة.
-- التطبيق القديم reference/inventory للفكرة والمميزات والسيناريوهات والمشكلات.
+- الفكرة الأساسية ثابتة؛ لا ننسخ التطبيق القديم تقنيًا أو بصريًا بشكل أعمى.
+- التطبيق القديم inventory إلزامي للمميزات والسيناريوهات والمشكلات.
 - **لا تُحذف Feature قديمة ذات قيمة بدون قرار صريح من Product Owner.**
-- `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` coverage gates قبل إغلاق Student/Admin product stages.
-- تفاصيل القديم محفوظة أيضًا في `PROJECT_DEEP_AUDIT.md`, `PROJECT_FULL_AUDIT_CATALOG.md`, `PROJECT_REBUILD_BLUEPRINT.md`, `OFFLINE_MODE.md`, `OFFLINE_MODE_README.md`.
-- يمكن تغيير UI/Architecture/Flow إذا بقيت قيمة الميزة وبُنيت بطريقة أفضل.
-- Product Review Batches 01–06 حسمت Core Product بما يكفي لاستئناف التنفيذ؛ التفاصيل الروتينية تُختار هندسيًا وفق القرارات المسجلة.
-- `DOCUMENTATION_INDEX.md` هو خريطة التوثيق، و`NEXT_CONVERSATION_PROMPT.md` هو startup prompt للمحادثات الجديدة.
+- `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` hard gates قبل إغلاق Student/Admin feature stages.
+- Product Review Batches 01–06 حسمت Core Product بما يكفي لاستمرار التنفيذ.
+- أي شيء غير مفحوص أو غير منفذ = `NOT YET VERIFIED`.
 
 ### Sources
 
-- `7eaur/alwaslh`: legacy reference + rebuild repository.
-- `7eaur/alwaslh-go`: canonical curriculum/media source input.
-- pinned Stage9 revision: `f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
+- repo: `7eaur/alwaslh`.
+- canonical curriculum/media source: `7eaur/alwaslh-go` pinned at `f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23` for Stage9 inventory.
+- repository docs + GitHub Actions + runtime evidence are continuity source; chat memory is not.
 
 ## Architecture
 
@@ -33,65 +31,60 @@
 Admin Web ──┐
             ├── Backend API ── PostgreSQL (private)
 Student PWA ┘       │
-                    ├── media/object storage
-                    ├── OCR extraction + searchable text
-                    ├── cached/versioned TTS audio
-                    ├── durable provider-neutral AI workers/jobs
-                    ├── Web Push / notification delivery
+                    ├── durable media/blob storage abstraction
+                    ├── OCR extraction + searchable approved text
+                    ├── cached/versioned TTS
+                    ├── durable provider/model-neutral AI workers/jobs
+                    ├── Web Push / In-App notifications
                     └── account/device-scoped offline sync
 ```
 
 Rules:
-- Browser never receives PostgreSQL credentials.
-- Auth/Authorization/Entitlements server-owned.
-- PostgreSQL clean-slate/migration-owned.
-- Student PWA and Admin Web are separate runtime/UX surfaces; Admin bundles/navigation do not belong in Student UX.
-- Student remains installable Web/PWA but must also work in Browser without installation.
-- media transforms server-owned/deterministic.
-- normal Upload never depends on OCR/AI/TTS.
-- OCR is reusable/provider-abstracted.
-- TTS uses approved text and is cached by published content revision.
-- AI provider/model credentials and execution are server-owned; domain is not tied to Gemini.
-- Student assessment sessions use Published Admin-reviewed Question Bank only.
-- Offline is account/device-scoped and designed to reduce repeated server fetches.
-- Design System is unified through shared brand/tokens/components; page-by-page component/style duplication is not acceptable as final design.
-- Root-cause fixes are mandatory; Preview workarounds require documented exit paths.
-- During development, stable/verified batches are synchronized to the temporary Preview environment for Product Owner supervision/testing, without redefining Production architecture.
 
-## Verified engineering baseline — Stages 1–10
+- Browser never receives PostgreSQL credentials and does not authorize through Supabase PostgREST.
+- Auth/Authorization/Entitlements are server-owned.
+- Student and Admin are independent deployable/runtime surfaces.
+- final activation account creation remains one transaction.
+- registered device identity must be cryptographic application-device key, not IP/User-Agent/browser fingerprint.
+- upload must remain independent from OCR/AI/TTS availability.
+- source media remains canonical evidence; Student receives appropriate variants.
+- AI/OCR/TTS remain provider/model-neutral abstractions where applicable.
+- Preview is temporary supervision/runtime evidence and does not redefine Production architecture.
+- root-cause fixes are mandatory; Preview workarounds require explicit impact + exit path.
+
+## Verified Engineering Baseline — Stages 1–10
 
 ### Stage 1 — Product Inventory — CLI PASS
 Legacy feature/user-flow inventory and parity safety net.
 
 ### Stage 2 — Brand — CLI PASS
-Owned teal/open-book identity, Arabic typography/tokens/accessibility rules.
+Owned brand/tokens/accessibility direction.
 
 ### Stage 3 — UX Architecture — CLI PASS
-Initial Admin/Student IA and critical state contracts; later product decisions may refactor flows explicitly.
+Initial Admin/Student IA and critical state contracts; later Product decisions explicitly refine flows.
 
 ### Stage 4 — PostgreSQL — CLI/RUNTIME PASS
-Clean PostgreSQL16 data platform.
+Migration-owned PostgreSQL16 data platform.
 
 ### Stage 5 — Engineering Foundation — CLI/RUNTIME PASS
-API runtime, bounded DB pool/transactions, migrations, config/logging/errors, strict TS/lint/tests/builds/CI.
+API runtime, bounded pool/transactions, config/logging/errors, strict TS/lint/tests/build/CI.
 
-### Stage 6 — Auth & Authorization — CLI/RUNTIME PASS baseline
-scrypt credentials, opaque HttpOnly sessions, role isolation, Origin protection, lockout, reset-only recovery, explicit Admin bootstrap.
+### Stage 6 — Auth & Authorization — VERIFIED BASELINE / PARTIAL REOPEN PENDING
+scrypt credentials, opaque HttpOnly sessions, role isolation, Origin protection, lockout, explicit Admin bootstrap. Product decisions require two-step activation/recovery/device additions before final closure.
 
 ### Stage 7 — Access Codes & Entitlements — CLI/RUNTIME PASS
 - Full Code = 6 digits.
 - Class Code = 7 digits.
-- crypto generation.
+- crypto-secure generation.
 - Arabic/Persian normalization.
-- row-lock transactional/idempotent redemption.
-- renewal/no-waste/revoke/audit/concurrency tests.
+- transactional row-lock redemption.
+- idempotency/race safety/renewal/no-waste/revoke/audit.
 
-### Stage 8 — Activation/Login/Recovery — CLI/PostgreSQL/Chromium PASS baseline
-Verified baseline used `Full Code + password` in one activation request and proved invalid code → activation → entitlement → logout → returning login → Admin recovery → reset → old password rejected → new password accepted.
+### Stage 8 — Activation/Login/Recovery — VERIFIED BASELINE / PARTIAL REOPEN PENDING
+Baseline Chromium flow proves activation -> entitlement -> logout -> returning login -> Admin recovery -> password reset. Product target requires two-step activation, temporary-password forced change and registered-device challenge/rebind.
 
-**Product decisions now require partial Stage6/8 reopen** for two-step activation, temporary-password forced change and registered-device challenge/rebind.
-
-### Stage 9 — Deterministic `alwaslh-go` import — CLI/PostgreSQL RUNTIME PASS
+### Stage 9 — Deterministic source import — CLI/PostgreSQL RUNTIME PASS
+Canonical inventory:
 
 ```text
 15 subject roots
@@ -105,270 +98,188 @@ Verified baseline used `Full Code + password` in one activation request and prov
 100 duplicate blob groups / 201 paths retained for REVIEW
 ```
 
-Canonical SHA-256:
-`7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`
-
-Critical defects fixed included Arabic manifests that would omit 772 images, helper-count drift, third manifest schema, and Python/JS `9.0` vs `9` digest mismatch.
+Canonical digest: `7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`.
 
 ### Stage 10 — Media Pipeline — CLI/PostgreSQL/MEDIA RUNTIME PASS
-Migration `0009_media_pipeline.sql` introduced media assets/variants. Verified:
-- deterministic storage keys/order;
-- path traversal prevention;
-- bounded concurrency 1..8;
-- Sharp `source/display/thumbnail/ai` variants;
-- SHA-256/bytes/dimensions;
-- Stage9 provenance;
-- source-byte-bound idempotency;
-- exact replay verification;
-- cleanup after storage/metadata/abort failures;
-- local Poppler PDF extraction;
-- malformed PDF creates zero successful rows;
-- real 2-page PDF E2E preserved page order `[1,2]` and positions `[100,101]`.
+Canonical migration `0009_media_pipeline.sql` and media services verify deterministic storage keys/order, path traversal protection, bounded concurrency, Sharp source/display/thumbnail/ai variants, hashes/bytes/dimensions, Stage9 provenance, byte-bound idempotency, replay, cleanup, abort/retry behavior and local Poppler PDF extraction.
 
-Final head:
-`27c6a2ef1118ee44d2e63471e4f925e1296283e0`
+Original Stage10 final baseline: `27c6a2ef1118ee44d2e63471e4f925e1296283e0` with Stage10 `33302270707`, Stage9 `33302270692`, Full Rebuild `33302270695` SUCCESS.
 
-Final CI:
-- Stage10 `33302270707` SUCCESS.
-- Stage9 regression `33302270692` SUCCESS.
-- Full Rebuild `33302270695` SUCCESS including Chromium E2E.
+## Product Review Closure — 2026-09-06
 
-## Product Decisions — Batches 01–04
+The required docs-head verification was independently checked on `e293defdaf87169ddbed0cc0c7cae2c525464c23`:
 
-Canonical detailed record: `docs/product/PRODUCT_EVOLUTION_REVIEW.md`.
+- Stage10 `33999128114` — `SUCCESS`.
+- Stage9 `33999128132` — `SUCCESS`.
+- Full Rebuild `33999128111` — `SUCCESS`.
 
-### Account/Access
-- PED-002 Welcome before auth.
-- PED-003 two-step activation using one-time ticket while final account write remains atomic.
-- PED-004 Admin-assisted temporary password + session revocation + forced password change.
-- PED-013 returning `لدي حساب بالفعل` path.
-- PED-014 one registered cryptographic application-device key; different/lost device requires Admin reset/rebind.
-- PED-033 Full Code 6 digits + Class Code 7 digits retained as core. Student can redeem more Class Codes after login and own multiple class entitlements; Stage7 renewal/no-waste guarantees remain.
+Result: Product Review documentation closure = PASS. Implementation bridge resumed in the documented order.
 
-### Student learning
-- PED-011 no silent removal of valuable legacy learning features.
-- PED-012 Summary / Self Practice / Full Test / Model are distinct flows.
-- PED-016 Notes / Favorites / Needs Review are separate semantics.
-- PED-017 private achievements; no Global Leaderboard requirement.
-- PED-022 Reader: original page + optional OCR/published Text View.
-- PED-023 TTS `استماع للدرس`: cached derived media from approved text, not generated per Play.
-- PED-024 Arabic search to exact lesson/page.
-- PED-025 no independent Highlight system now.
-- PED-026 Student custom tests consume Published Question Bank only; no live AI generation.
-- PED-027 original ministerial model distinct from future simulation.
-- PED-031 `اختبر نفسك` gives immediate feedback after every question; Full Tests/Models review at end.
+## Stage10 Preview Sync — Implementation Batch
 
-### Offline/Performance
-- PED-015 Offline first-class with revisions/outbox/account-device scope.
-- PED-028 explicit Lesson + Subject + Book download when appropriate; Download Manager and storage budgets.
-- PED-029 maximum 14-day signed offline authorization lease capped by entitlement expiry.
-- PED-032 Student-facing image delivery uses optimized variants/lazy-responsive loading while retaining source evidence. Browser readability/quality tuning is NOT YET VERIFIED.
+### Repository/runtime changes
 
-### Curriculum/Admin
-- PED-018 explicit flexible hierarchy with multiple classes/subjects and optional Unit.
-- PED-019 Import/Export required with scoped validation/preview/result reporting.
-- PED-020 Draft → Review → Published.
-- PED-034 contextual in-place instructions are mandatory UX; no hidden essential instructions.
-- PED-035 Admin scope = **Super Admin only**; no multi-role RBAC product work now.
-- PED-036 no mandatory annual curriculum version lifecycle. Optional source year/edition metadata only when useful.
+Implementation commits culminated in `68be2f5e750ba3d53bf31fae1641182f29516627`.
 
-### AI/OCR
-- PED-007 AI text-first from reusable OCR.
-- PED-008 provider-abstracted OCR.
-- PED-009 legacy decision established server-only credential scheduling; superseded/expanded by Batch05 to provider/model-neutral routing.
-- PED-010 upload independent from AI.
-- PED-021 preserve valuable legacy generation modes/outcomes.
-- PED-037 generated-from-book questions require source + page provenance before publish.
-- PED-038 high-throughput durable generation architecture: chunking, queues, bounded concurrency/backpressure, retry/cooldown, partial-success persistence, idempotency, cancel/resume, validation/dedupe/provenance, usage metrics.
-- PED-039 Legacy Feature Coverage Gate before closing Student/Admin product stages.
+Changes:
 
-## Product Decision — Batch 05
+- root `vercel.json` is now the single combined Preview deployment contract;
+- explicit `outputDirectory: dist-vercel` fixes the prior Vite-default `dist` mismatch;
+- explicit Git deployments enabled;
+- `/` -> Student, `/admin/*` -> Admin, `/api/*` -> Fastify serverless API;
+- `scripts/build-vercel-preview.mjs` builds all three surfaces and fails fast if API/Student/Admin/combined output files are missing;
+- Admin Preview asset base = `/admin/`;
+- Student `VITE_API_BASE_URL` contract added and Preview uses `/api`;
+- API deployment config supports `DATABASE_SSL=require`, bounded `DATABASE_POOL_MAX`, explicit `ALLOWED_ORIGINS`, proxy awareness and configurable cookie SameSite;
+- TLS does **not** use `rejectUnauthorized:false`; certificate verification remains default;
+- root serverless wrapper constructs the same Fastify app and DB contract rather than duplicating business logic;
+- Preview hardening SQL is tracked under `database/preview/`.
 
-Canonical detailed record: `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
+### Implementation CI evidence
 
-- **PED-040 Notes media parity:** Notes launch with text + image + capture + audio. Binary media uses blob/media storage, not base64 records.
-- **PED-041 Auto Needs Review:** repeated mistakes can automatically create a Needs Review item; implementation default target = two independent mistakes on the same question, configurable after measurement.
-- **PED-042 Weak areas:** progress/mastery/weak-area recommendations are server-derived from sufficient real evidence; never from one answer or client-declared score.
-- **PED-043 Push Notifications:** Web/PWA Push from initial product where supported; gentle study reminders default max 3/week and never more than 1/day, with quiet hours/opt-out and In-App fallback.
-- **PED-044 Provider/model-neutral AI:** no hard Gemini lock-in. Use adapters and cost+quality+throughput routing across benchmarked providers/models.
-- **PED-045 Model cascade:** cheap/fast approved model first when suitable, then escalate only failed/uncertain unit to stronger model.
-- **PED-046 Root-Cause Change Policy:** patching around defects is not final architecture; understand contracts/callers/side-effects and fix the source problem. Preview workaround must have known-issue/exit-path documentation.
-- **PED-047 Unified Design System:** one brand/token/component system, shared states/responsiveness/a11y, duplicate-component/style audit before Stage13/14 closure.
-- **PED-048 Engineering discretion:** routine details no longer require product discussion if they preserve recorded Business Rules, legacy coverage and verification requirements.
+Final implementation head `68be2f5e750ba3d53bf31fae1641182f29516627`:
 
-AI provider/model routing details: `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
+- Stage10 Media Pipeline `34000105615` — `SUCCESS`.
+- Stage9 Content Import Verification `34000105600` — `SUCCESS`.
+- Rebuild Stage Verification `34000105608` — `SUCCESS`.
+- Chromium activation / returning-login / recovery E2E inside Full Rebuild — `SUCCESS`.
 
-## Product Decision — Batch 06
+### Supabase Preview migration/security evidence
 
-Canonical detailed record: `docs/product/PRODUCT_DECISIONS_BATCH_06.md`.
+Project `linksoftt`, ref `dhlqqgnxsqawidjmedvq`:
 
-- **PED-049 Runtime surfaces:** Student PWA and Admin Web are independent surfaces sharing Backend/brand primitives, not one combined frontend experience.
-- **PED-050 Installable Student Web App:** Student remains Web/PWA installable like the old product outcome, while keeping correct Service Worker/offline/update/accessibility behavior and browser usability without install.
-- **PED-051 Live development Preview:** stable/verified batches are synchronized to Supabase/Vercel temporary Preview for supervision/testing; Preview is not Production architecture. Canonical policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
-- **PED-052 Legacy documentation reference:** parity matrix + deep/full audits + rebuild blueprint + Offline docs remain mandatory reference when implementing modules.
-- **PED-053 Documentation memory:** repository docs, CI and runtime evidence—not chat memory—are project continuity source. `DOCUMENTATION_INDEX.md` + `NEXT_CONVERSATION_PROMPT.md` make continuation deterministic.
+- `0009_media_pipeline` applied, version `20260905234708`.
+- `preview_media_pipeline_lockdown` applied, version `20260905234729`.
+- `media_assets` and `media_variants` exist.
+- RLS enabled on both.
+- `anon` table SELECT = false on both.
+- `authenticated` table SELECT = false on both.
+- zero permissive RLS policies exist for those tables.
+- expected Stage10 indexes directly verified.
 
-## Architecture Decisions
+This preserves the architecture: Supabase is temporary PostgreSQL/testing host; Browser business access still goes only through `apps/api`.
 
-- **AD-001** Preserve product value, not legacy mistakes.
-- **AD-002** Security/data integrity before feature velocity.
-- **AD-003** Version-controlled migrations canonical.
-- **AD-004** Separate Admin/Student runtime concerns.
-- **AD-005** Server-owned Auth/Authorization/Entitlements.
-- **AD-006** AI secrets/durable execution server-side.
-- **AD-007** AI provider scheduling/failover belongs in workers.
-- **AD-008** Offline sync account/device-scoped with revisions/tombstones/outbox.
-- **AD-009** `alwaslh-go` source pipeline, not frontend asset dump.
-- **AD-012** Private PostgreSQL behind Backend.
-- **AD-013** Clean-slate data model.
-- **AD-015** Executable verification mandatory for Stage PASS.
-- **AD-016** Repository-owned handoff/status/log mandatory.
-- **AD-018** Final activation account creation remains one transaction.
-- **AD-023** Page/source order deterministic and independent of async completion.
-- **AD-028** Canonical media processing server-owned.
-- **AD-029** Media idempotency bound to exact source provenance+bytes.
-- **AD-030** Supabase/Vercel Preview does not redefine final architecture.
-- **AD-031** Legacy parity is decision inventory; no valuable removal without owner decision.
-- **AD-032** Product decision may reopen verified stage only with impact analysis + executable regression.
-- **AD-033** Two-step activation uses temporary ticket while final write remains atomic.
-- **AD-034** Upload cannot depend on OCR/AI/TTS availability.
-- **AD-035** OCR reusable/provider-abstracted.
-- **AD-036** AI text-first by default; original source remains evidence/fallback.
-- **AD-037** AI credentials/projects scheduled server-side with health/rate/cooldown/failover; expanded by AD-054.
-- **AD-038** Student account uses registered cryptographic application-device identity, not fingerprint/IP/user-agent.
-- **AD-039** Offline first-class and low-request.
-- **AD-040** Notes/Favorites/Needs Review separate product semantics.
-- **AD-041** Achievements private; no Global Leaderboard requirement.
-- **AD-042** Human Admin review required before publish.
-- **AD-043** Curriculum hierarchy explicit/flexible, not generic tree/filename-derived.
-- **AD-044** Reader keeps original page as visual truth plus optional approved text view.
-- **AD-045** TTS audio cached/versioned derived media.
-- **AD-046** Student tests consume published Admin-reviewed Question Bank only.
-- **AD-047** Original ministerial and simulated models are distinct.
-- **AD-048** Offline protected access max 14-day lease capped by entitlement expiry.
-- **AD-049** Student media delivery prefers optimized variants while source originals remain canonical evidence.
-- **AD-050** Current Admin product has one Super Admin role; avoid unnecessary RBAC.
-- **AD-051** Generated source-based questions require source/page provenance to publish.
-- **AD-052** High-volume AI generation is durable chunked work with backpressure/partial persistence, never one giant HTTP request.
-- **AD-053** Legacy feature matrix is a release coverage gate for feature-heavy Student/Admin stages.
-- **AD-054** AI domain is provider/model-neutral; provider-specific transport/errors/credentials stay behind adapters.
-- **AD-055** AI routing is benchmark/cost/quality aware and may use model cascade; free tier is not automatically production-suitable.
-- **AD-056** Notes media files use proper media/blob storage and account/device sync, not large base64 DB payloads.
-- **AD-057** Weak-area/review automation is server-derived from repeated evidence and remains explainable to Student.
-- **AD-058** Web Push is opt-in and rate-limited with gentle defaults and In-App fallback.
-- **AD-059** Root-cause modification policy is mandatory; temporary workaround requires explicit removal path.
-- **AD-060** Unified shared Design System/components are mandatory; duplication audit gates Student/Admin completion.
-- **AD-061** Student PWA and Admin Web are independent deployable/runtime surfaces sharing API and design primitives, not one combined user interface.
-- **AD-062** Temporary Supabase/Vercel deployment is a continuous development Preview/supervision layer only; stable batches sync after CI and receive runtime evidence.
-- **AD-063** Repository documentation index + specialized decision docs are continuity contracts; legacy audit docs remain mandatory implementation references.
+### Preview branch evidence
+
+- prior Preview baseline: `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`.
+- initial Stage10 sync merge: `b85194085fa5ffdc866f692f837a7a7b105c34b2`.
+- final verified build-contract sync merge: `479db8183695c69786d3f4c9e2bde8aba5caeaff`.
+- Preview blocker/evidence doc head: `d064cc7fedbb4095c82006e51192271c22e70b73`.
+
+### Media Preview boundary
+
+Inspected actual Stage10 code:
+
+- storage domain is abstracted by `MediaStorage`;
+- concrete verified adapter is currently `FileSystemMediaStorage`;
+- PDF processor shells out to `pdfinfo` / `pdftoppm`;
+- `apps/api/src/app.ts` does not expose Student/Admin media-processing HTTP routes yet.
+
+Therefore Vercel ephemeral filesystem is **not** accepted as durable media storage, and Poppler availability in Vercel remains `NOT YET VERIFIED`. Durable Preview media adapter/processing belongs to the media/OCR integration work; no filesystem patch is promoted to Production architecture.
+
+## Architecture Decisions Added/Confirmed
+
+- **AD-064 — Single Preview deployment contract:** combined Student/Admin/API Preview routing/build output is defined once at repository root; app-local competing Vercel contracts are not the final design.
+- **AD-065 — Verified TLS defaults:** Preview PostgreSQL TLS may be required by configuration without globally disabling certificate verification.
+- **AD-066 — Preview DB hardening stays additive:** canonical schema migration remains production-portable; Supabase-specific RLS/revoke hardening lives in explicit Preview migrations.
+- **AD-067 — Preview media durability boundary:** Stage10 filesystem storage is a verified local/runtime implementation, not proof of durable serverless storage. A durable adapter is required before claiming hosted media persistence.
+- **AD-068 — External quota is not an app workaround trigger:** provider build-rate exhaustion must be recorded and retried after quota clears; it does not justify auth/validation/business-rule bypasses or fake runtime PASS.
 
 ## Audit Findings
 
-| ID | Severity | Area | Problem | Solution / Status |
-|---|---|---|---|---|
-| SEC-001 | P0 | Admin Auth | Legacy anonymous privileged mutation | FIXED Stage6 |
-| SEC-002..011 | P0 | Authorization | public/browser DB privilege paths | ELIMINATED by private backend architecture |
-| DATA-015 | P0 | Activation | legacy partial/nontransactional activation | FIXED baseline; new two-step refactor must retain atomic final transaction |
-| DATA-018 | P0 | Class Codes | racy redemption | FIXED Stage7 |
-| SEC-015..018 | P1 | Credentials | plaintext/reversible recovery | FIXED; Admin reset only |
-| DATA-025 | P1 | Assessment | client-trusted score/rank | REMAINING; Stage15 trusted engine |
-| OFF-* | P1/P2 | Offline | stale/global/cross-account cache risk | REBUILD required; PED-015/028/029 direction decided |
-| AI-* | P1/P2 | AI | browser-owned jobs/weak validation | REBUILD required; PED-007/021/038/044/045 direction decided |
-| CONTENT-009-* | P1/P2 | Content | manifest/helper/digest completeness defects | FIXED Stage9 |
-| MEDIA-010-* | P1/P2 | Media | order/idempotency/failure/PDF defects | FIXED Stage10 runtime |
-| PREVIEW-010-001 | P2 | Vercel | Stage10 direct deploy expects root `dist` | OPEN; Preview reconciliation required |
-| PREVIEW-010-002 | P2 | Preview Media | serverless FS ephemeral/Poppler unproven | NOT YET VERIFIED |
-| PRODUCT-001 | P1 | Product Strategy | blind parity risks weak UX | Controlled by Product Review + PED-039 |
-| PRODUCT-002 | P1 | Activation UX | baseline combines code+password | DECIDED refactor pending |
-| PRODUCT-003 | P1 | Device Policy | password-only login does not enforce one-device rule | DECIDED architecture; implementation pending |
-| PRODUCT-004 | P1 | Offline/Load | repeated fetches conflict with offline/low-load goal | DECIDED architecture; implementation pending |
-| PRODUCT-005 | P2 | Reader | image-only experience lacks text/search/audio | DECIDED Reader/Text/Search/TTS; implementation pending |
-| PRODUCT-006 | P1 | Assessment | live Student AI would raise cost/uncertainty | DECIDED Published Question Bank only |
-| PRODUCT-007 | P1 | Source correctness | generated questions without page provenance hard to review | PED-037 DECIDED; implementation pending |
-| PRODUCT-008 | P2 | Personal Learning | legacy note media/base64 patterns risk payload/storage bloat | PED-040/AD-056 DECIDED; implementation pending |
-| PRODUCT-009 | P2 | UX Consistency | page-specific component/style duplication would create drift | PED-047/AD-060 hard gate; implementation audit pending |
-| AI-NEW-001 | P1 | AI Cost | repeated image-to-model use wastes tokens | OCR text-first decided |
-| AI-NEW-002 | P1 | AI Scale | giant/brittle generation requests lose progress and overload provider/server | PED-038 durable chunk/backpressure architecture decided |
-| AI-NEW-003 | P1 | AI Lock-in | single-provider architecture limits cost/reliability options | PED-044/045 provider-neutral routing decided |
-| ENG-001 | P1 | Maintainability | patch-style fixes can hide root defects/duplicate contracts | PED-046/AD-059 mandatory root-cause policy |
-| DOC-001 | P2 | Continuity | chat-memory dependency can cause repeated/contradictory work | PED-053/AD-063; DOCUMENTATION_INDEX + NEXT_CONVERSATION_PROMPT added |
-| PREVIEW-DEV-001 | P2 | Delivery | stable rebuild work can diverge from owner-visible Preview | PED-051/AD-062; continuous verified Preview sync policy added |
+| ID | Severity | Area | Problem | Evidence | Impact | Solution | Status |
+|---|---|---|---|---|---|---|---|
+| SEC-001 | P0 | Admin Auth | Legacy anonymous privileged mutation | legacy audit | account/security compromise risk | private Backend authorization | FIXED Stage6 |
+| DATA-015 | P0 | Activation | legacy partial/nontransactional activation | baseline audit | partial accounts/code consumption | atomic final transaction | BASELINE FIXED; two-step reopen pending |
+| DATA-018 | P0 | Class Codes | racy redemption | Stage7 tests | double redemption/no-waste violation | row locks + transaction + idempotency | FIXED Stage7 |
+| CONTENT-009-* | P1/P2 | Content | manifest/helper/digest completeness defects | Stage9 inventory/tests | missing/wrong source import | deterministic audited importer | FIXED Stage9 |
+| MEDIA-010-* | P1/P2 | Media | order/idempotency/failure/PDF defects | Stage10 CI | corrupt/non-repeatable variants | deterministic media pipeline | FIXED Stage10 |
+| PREVIEW-010-001 | P2 | Vercel Build | planning branch expected `dist` while combined Preview outputs `dist-vercel` | failed Vercel build logs | deployment failure | root `vercel.json` + combined build contract + fail-fast outputs | FIXED IN REPO; fresh hosted deployment blocked by quota |
+| PREVIEW-010-002 | P2 | Preview Media | serverless FS durability and Poppler unproven | actual storage/pdf code inspection | cannot claim durable hosted media processing | durable adapter/runtime before hosted claim | NOT YET VERIFIED |
+| PREVIEW-010-003 | P1 | Vercel Quota | new deployment rejected by provider build-rate limit | Vercel status on `68be2f5…`: `Deployment rate limited — retry in 24 hours.` | blocks required live Student/Admin/API verification | retry already-synced branch after quota window; no security/business workaround | BLOCKED EXTERNALLY |
+| PRODUCT-002 | P1 | Activation UX | baseline combines code+password | Product Review PED-003 | does not meet final flow | two-step ticket + atomic finalization | PENDING Stage6/8 reopen |
+| PRODUCT-003 | P1 | Device Policy | password-only login lacks registered-device enforcement | PED-014/AD-038 | account can move devices without intended challenge | cryptographic application-device challenge/rebind | PENDING |
+| PRODUCT-006 | P1 | Assessment | live Student AI would raise cost/uncertainty | Product Review | unreviewed questions | Published Question Bank only | DECIDED; implementation pending |
+| AI-NEW-002 | P1 | AI Scale | giant requests lose progress and overload providers | Product Review | brittle expensive generation | durable chunks/queue/backpressure | PENDING Stage12 |
+| DOC-001 | P2 | Continuity | chat-memory dependency | repository governance | repeated/contradictory work | Status/Log/Handoff/specialized docs | CONTROLLED |
 
 ## Tests & Verification
 
-### Verified technical baseline
+### Final implementation head before documentation-only updates
 
-Final Stage10 documentation head `27c6a2ef1118ee44d2e63471e4f925e1296283e0`:
-- Stage10 `33302270707` SUCCESS.
-- Stage9 regression `33302270692` SUCCESS.
-- Full Rebuild `33302270695` SUCCESS including Chromium E2E.
+`68be2f5e750ba3d53bf31fae1641182f29516627`
 
-### Product-review decisions
+- Stage10 `34000105615` — SUCCESS.
+- Stage9 `34000105600` — SUCCESS.
+- Full Rebuild `34000105608` — SUCCESS.
+- Chromium activation/returning-login/recovery — SUCCESS.
 
-Batches 01–06 are **design/product/engineering-governance decisions only** unless they refer to already verified Stage1–10 behavior. New two-step activation/device binding, PWA final install/update behavior, image delivery tuning, OCR runtime, Reader Text/Search/TTS, Published Question Bank custom tests, Notes media sync, auto Needs Review, Push, 14-day Offline lease, multi-provider high-throughput AI execution and continuous Preview synchronization are `NOT YET VERIFIED` until their implementation/runtime gates run.
+### Supabase direct verification
 
-## Temporary Preview
+- migrations through `0009` plus Preview lockdown registered.
+- media tables exist with RLS.
+- `anon`/`authenticated` direct SELECT revoked.
+- Stage10 indexes present.
 
-Canonical policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
+### Vercel runtime verification
 
-- Supabase `linksoftt` temporary only.
-- migrations through `0008` applied; `0009` pending there.
-- Preview RLS/revokes block direct browser table access.
-- Vercel team `wasl15`, project `alwaslh`.
-- preview branch `preview/supabase-vercel` at `1eb623ef0cd3f7b47af7aa6add08c87d88f84f81`.
-- READY deployment and `/api/health` HTTP 200 verified.
-- Preview remains pre-Stage10.
-- direct Stage10 branch deployment error: `No Output Directory named "dist" found after the Build completed.`
-- Vercel filesystem/Poppler durability is NOT YET VERIFIED.
-- policy now requires stable batches to sync to Preview after CI and receive recorded deployment/runtime verification.
+Fresh Stage10 deployment = **NOT YET VERIFIED** because Vercel refused the build before deployment creation due rate limit.
+
+Pending after quota clears:
+
+- exact deployment commit = `NOT YET VERIFIED`;
+- deployment `READY` = `NOT YET VERIFIED`;
+- Student `/` = `NOT YET VERIFIED` on fresh Stage10 Preview;
+- Admin `/admin` = `NOT YET VERIFIED`;
+- `/api/health` = `NOT YET VERIFIED`;
+- `/api/ready` against Supabase = `NOT YET VERIFIED`;
+- hosted media durability/Poppler = `NOT YET VERIFIED`.
+
+## Legacy Feature Coverage Impact
+
+Stage10 Preview Sync is infrastructure/schema/deployment work. It implements or removes no Student/Admin legacy capability. Therefore:
+
+- no `PRODUCT_FEATURE_PARITY_MATRIX.md` feature row is promoted by this batch;
+- no legacy capability is marked `REMOVE`;
+- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` remains mandatory unchanged for Stage13/14+ feature closure.
 
 ## Known Issues / Remaining Risk
 
-- Product Review current HEAD still requires final documentation-head CI closure before implementation transition is declared complete.
-- Stage6/8 auth/device refactor not implemented.
-- Stage10 code/migration not synchronized into Preview.
-- Student PWA final install/update lifecycle not yet runtime-verified under the revised product contract.
-- Student image-delivery/browser readability tuning not verified.
-- OCR provider benchmark/runtime not implemented.
+- **P1 external blocker:** Vercel build-rate quota prevents final Stage10 Preview runtime verification.
+- Stage6/8 partial reopen not implemented.
+- durable hosted media adapter/runtime not implemented.
+- OCR Extraction Foundation not implemented.
+- Student PWA final install/update/offline lease not runtime-verified.
 - Reader Text/Search/TTS not implemented.
-- Practice/Published Question Bank and auto Needs Review not implemented.
-- Push Notification delivery/runtime not implemented.
-- Offline 14-day lease/download runtime not verified.
-- Stage11 provider-neutral contracts/benchmark and Stage12 durable router/scheduler/cascade not implemented.
-- Admin/Student full product stages not implemented.
-- production backup/restore/load/security/performance/accessibility/staging/release gates remain later work.
+- Published Question Bank practice/test engine not implemented.
+- Notes media sync, auto Needs Review, Push and progress/weak-area pipelines not implemented.
+- Stage11 provider-neutral AI benchmark/contracts and Stage12 durable router/scheduler/cascade not implemented.
+- Admin/Student complete product stages not implemented.
+- later performance/security/accessibility/content-load/staging/release/production/ops gates remain.
 
-## Remaining Work
+## Remaining Work — Ordered
 
-1. Close Product Review documentation/CI on current planning HEAD; no more routine product questions required before implementation.
-2. Reconcile every legacy feature via `PRODUCT_FEATURE_PARITY_MATRIX.md` before closing Student/Admin product stages.
-3. Synchronize Stage10 into Supabase/Vercel Preview and fix Vercel build/routing from root cause; verify optimized media delivery and document runtime evidence.
-4. Reopen Stage6/8 for two-step activation + registered-device flow and rerun API/PostgreSQL/security/Chromium gates; sync stable result to Preview.
-5. Implement OCR Extraction Foundation.
-6. Implement Stage11 provider-neutral AI prompt/output/provenance/golden contracts + model benchmark runner.
-7. Implement Stage12 durable multi-provider/model routing, scheduler, cascade, backpressure, budgets and telemetry.
-8. Build Super Admin curriculum/upload/OCR/AI review/Question Bank/Import-Export/Notification product.
-9. Build Student PWA Reader/Summaries/Practice/Tests/Models/Notes/Favorites/NeedsReview/Progress/Push product.
-10. Build Offline/PWA with explicit downloads, revision sync/outbox and 14-day lease.
-11. After each stable batch: sync Preview, deploy, verify, document.
-12. Execute performance/security/tests/accessibility/content-load/staging/release/production/operations gates.
+1. After Vercel build-rate window clears, deploy current `preview/supabase-vercel` without changing Business/Security contracts.
+2. Verify deployment `READY`, exact commit, Student, Admin, `/api/health`, `/api/ready`, and document Stage10 hosted limitations.
+3. Only then declare Stage10 Preview Sync complete.
+4. Stage6/8 partial reopen: two-step activation, temp-password forced change, registered-device challenge/rebind; API/PostgreSQL/security/Chromium gates; Preview sync.
+5. OCR Extraction Foundation.
+6. Stage11 provider/model-neutral AI contracts + golden benchmark/provenance/validators.
+7. Stage12 durable high-throughput provider/model-neutral execution.
+8. Continue Stage13+ from `MASTER_REBUILD_ROADMAP.md` with legacy coverage and unified Design System gates.
 
 ## Documentation / Continuity Protocol
 
 After every meaningful batch:
-- update this log؛
-- update `PROJECT_STATUS.md`؛
-- update `PROJECT_HANDOFF.md` when business/roadmap/baseline/Preview changes؛
-- update relevant Product Decision/AI/Preview docs؛
-- update `PRODUCT_FEATURE_PARITY_MATRIX.md` / coverage evidence as implementation lands؛
-- retain exact commit/CI/deployment/runtime evidence؛
-- unexecuted = `NOT YET VERIFIED`.
 
-Continuity entrypoints:
-- `DOCUMENTATION_INDEX.md`؛
-- `PROJECT_HANDOFF.md`؛
-- `NEXT_CONVERSATION_PROMPT.md`.
+- update `PROJECT_ENGINEERING_LOG.md`;
+- update `PROJECT_STATUS.md`;
+- update `PROJECT_HANDOFF.md` when architecture/branch/CI/Preview state changes;
+- update specialized Product/AI/Preview docs;
+- update parity/coverage evidence when actual features land;
+- retain exact commit/CI/deployment/runtime evidence;
+- unexecuted = `NOT YET VERIFIED`.
 
 ## Current State
 
-**Stages 1–10 retain verified technical gates. Product Review Batches 01–06 are recorded. Core access, Reader, Practice, Offline, Super Admin, Notes, Push, progress, provider-neutral high-throughput AI, separate Student/Admin runtime surfaces, installable Student PWA and continuous temporary Preview policy are decided. Root-cause engineering, unified Design System, legacy coverage and repository-owned documentation are mandatory governance. New implementation work remains NOT YET VERIFIED and should now resume in the documented bridge order.**
+**Product Review is closed. Stage10 Preview engineering integration, Supabase migration/security hardening, regression CI and Preview branch synchronization are complete. Fresh Vercel runtime deployment is NOT YET VERIFIED because the provider rejected the build due a temporary build-rate limit. Stage10 Preview Sync is therefore not declared complete, and Stage6/8 implementation must not begin until that runtime gate is verified.**
