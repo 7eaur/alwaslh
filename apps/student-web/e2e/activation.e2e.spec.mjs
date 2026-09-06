@@ -48,7 +48,7 @@ test("student activation and returning login use the persisted browser device ke
   const verify = await verifyPromise;
   expect(verify.status()).toBe(200);
   expect((await verify.json()).accountIdentifier).toBe(accountCode);
-  await expect(page.getByText(/دون استهلاكه/)).toBeVisible();
+  await expect(page.locator(".form-alert.is-success").filter({ hasText: "تم التحقق من الرمز" })).toBeVisible();
 
   await page.getByLabel("كلمة المرور الخاصة بك").fill(initialPassword);
   await page.getByLabel("تأكيد كلمة المرور").fill(initialPassword);
