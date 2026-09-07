@@ -14,6 +14,10 @@ function response(body: unknown, status = 200): Response {
   });
 }
 
+function requestPath(url: string): string {
+  return new URL(url, "http://admin.test").pathname;
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -33,7 +37,7 @@ describe("admin api client", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("/v1/admin/me");
+    expect(requestPath(url)).toBe("/v1/admin/me");
     expect(init.credentials).toBe("include");
   });
 
@@ -46,7 +50,7 @@ describe("admin api client", () => {
     await loginAdmin("admin-user", "StrongPassword123!");
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("/v1/auth/login");
+    expect(requestPath(url)).toBe("/v1/auth/login");
     expect(init.method).toBe("POST");
     expect(init.body).toBe(JSON.stringify({ identifier: "admin-user", password: "StrongPassword123!" }));
     expect(new Headers(init.headers).get("Content-Type")).toBe("application/json");
@@ -74,9 +78,9 @@ describe("admin api client", () => {
     });
     await updateCurriculumLesson("33333333-3333-4333-8333-333333333333", { sectionId: null, position: 4 });
 
-    expect(fetchMock.mock.calls[0]?.[0]).toBe("/v1/admin/curriculum/lessons");
+    expect(requestPath(fetchMock.mock.calls[0]?.[0] as string)).toBe("/v1/admin/curriculum/lessons");
     expect((fetchMock.mock.calls[0]?.[1] as RequestInit).method).toBe("POST");
-    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+    expect(requestPath(fetchMock.mock.calls[1]?.[0] as string)).toBe(
       "/v1/admin/curriculum/lessons/33333333-3333-4333-8333-333333333333",
     );
     expect((fetchMock.mock.calls[1]?.[1] as RequestInit).method).toBe("PATCH");
