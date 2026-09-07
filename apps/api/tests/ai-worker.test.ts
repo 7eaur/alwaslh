@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  AiWorkerRuntime,
-  runAiWorkerProcess,
   type AiWorkerProcessor,
+  AiWorkerRuntime,
   type AiWorkerSleeper,
+  runAiWorkerProcess,
 } from "../src/ai/worker-runtime.js";
 
 const baseOptions = {
@@ -36,13 +36,9 @@ test("AI worker bounds concurrent slots and drains in-flight work before databas
     },
   };
 
-  const runtime = new AiWorkerRuntime(
-    processor,
-    { ...baseOptions, concurrency: 2 },
-    async () => {
-      throw new Error("ai_worker_unexpected_idle_sleep");
-    },
-  );
+  const runtime = new AiWorkerRuntime(processor, { ...baseOptions, concurrency: 2 }, async () => {
+    throw new Error("ai_worker_unexpected_idle_sleep");
+  });
   const shutdown = new AbortController();
   let closed = false;
   let activeAtClose = -1;
