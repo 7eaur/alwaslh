@@ -7,7 +7,7 @@ import type {
   AiProviderGenerateResult,
 } from "../../src/ai/provider.js";
 import { AiProviderError } from "../../src/ai/provider.js";
-import { AiModelRouter, type AiModelRoute } from "../../src/ai/router.js";
+import { type AiModelRoute, AiModelRouter } from "../../src/ai/router.js";
 import { createDatabase } from "../../src/db.js";
 import { AI_GOLDEN_FIXTURES } from "../fixtures/ai-golden.js";
 
@@ -143,7 +143,9 @@ test("Stage12 operational controls enforce kill switches, cooldown and race-safe
     assert.equal(globalBlockedState[0]?.resume_route_key, globalKillRoute.routeKey);
     assert.equal(globalBlockedState[0]?.last_error_code, "global_kill_switch");
     await resetGlobalControl(db);
-    await db.query("update ai_job_units set next_attempt_at = now() where job_id = $1", [globalKillJob.job.id]);
+    await db.query("update ai_job_units set next_attempt_at = now() where job_id = $1", [
+      globalKillJob.job.id,
+    ]);
     assert.equal((await globalKillService.processNext())?.status, "completed");
     assert.equal(globalKillAdapter.calls.length, 1);
     const globalKillCompleted = await db.query<{ attempt_count: number }>(
@@ -170,7 +172,9 @@ test("Stage12 operational controls enforce kill switches, cooldown and race-safe
     await db.query("update ai_route_runtime_state set kill_switch = false where route_key = $1", [
       routeKillRoute.routeKey,
     ]);
-    await db.query("update ai_job_units set next_attempt_at = now() where job_id = $1", [routeKillJob.job.id]);
+    await db.query("update ai_job_units set next_attempt_at = now() where job_id = $1", [
+      routeKillJob.job.id,
+    ]);
     assert.equal((await routeKillService.processNext())?.status, "completed");
 
     const cooldownRoute = route("stage12-control-retry-after", "cooldown-provider", "cooldown-model");
@@ -214,7 +218,9 @@ test("Stage12 operational controls enforce kill switches, cooldown and race-safe
       "update ai_route_runtime_state set cooldown_until = now() - interval '1 second' where route_key = $1",
       [cooldownRoute.routeKey],
     );
-    await db.query("update ai_job_units set next_attempt_at = now() where job_id = $1", [cooldownSecond.job.id]);
+    await db.query("update ai_job_units set next_attempt_at = now() where job_id = $1", [
+      cooldownSecond.job.id,
+    ]);
     assert.equal((await cooldownService.processNext())?.status, "completed");
     assert.equal(cooldownAdapter.calls.length, 2);
     await cooldownService.cancel(cooldownFirst.job.id);
@@ -279,7 +285,11 @@ test("Stage12 operational controls enforce kill switches, cooldown and race-safe
     );
     assert.equal((await budgetService.processNext())?.status, "completed");
 
-    const routeBudgetRoute = route("stage12-control-route-budget", "route-budget-provider", "route-budget-model");
+    const routeBudgetRoute = route(
+      "stage12-control-route-budget",
+      "route-budget-provider",
+      "route-budget-model",
+    );
     const routeBudgetAdapter = new SequenceAdapter(routeBudgetRoute.providerKey, [
       { output: validOutput },
       { output: validOutput },
@@ -320,7 +330,9 @@ test("Stage12 operational controls enforce kill switches, cooldown and race-safe
        where route_key = $1`,
       [routeBudgetRoute.routeKey],
     );
-    await db.query("update ai_job_units set next_attempt_at = now() where job_id = $1", [routeBudgetSecond.job.id]);
+    await db.query("update ai_job_units set next_attempt_at = now() where job_id = $1", [
+      routeBudgetSecond.job.id,
+    ]);
     assert.equal((await routeBudgetService.processNext())?.status, "completed");
     assert.equal(routeBudgetAdapter.calls.length, 2);
     assert.equal(routeBudgetFirst.job.status, "queued");

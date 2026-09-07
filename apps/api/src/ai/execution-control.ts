@@ -168,13 +168,7 @@ export class AiExecutionControl {
     }
 
     assertBudgetState("global", globalControl);
-    const globalBudget = await this.checkBudget(
-      executor,
-      "global",
-      globalControl,
-      now,
-      undefined,
-    );
+    const globalBudget = await this.checkBudget(executor, "global", globalControl, now, undefined);
     if (!globalBudget.allowed) return globalBudget;
 
     assertBudgetState("route", routeState);
@@ -248,10 +242,7 @@ export class AiExecutionControl {
     state: BudgetState,
     now: Date,
     routeKey: string | undefined,
-  ): Promise<
-    | { allowed: true; reservationUsdMicros: string }
-    | AiControlBlocked
-  > {
+  ): Promise<{ allowed: true; reservationUsdMicros: string } | AiControlBlocked> {
     if (!budgetStateConfigured(state)) {
       return { allowed: true, reservationUsdMicros: "0" };
     }
