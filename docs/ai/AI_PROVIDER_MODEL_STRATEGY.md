@@ -34,21 +34,30 @@ Generation Plan / Service
 
 Provider-specific payloads, errors and usage metadata stay inside adapters. Provider/network calls happen outside database transactions.
 
+The process-level scheduler is separate from Fastify:
+
+```text
+standalone worker process
+→ fixed AiWorkerRuntime slots
+→ AiExecutionService.processNext()
+→ durable PostgreSQL claim/admission/lease
+```
+
 ## Verified checkpoints
 
-### Stage11 contract layer
+### Stage11 contract layer — VERIFIED
 
-Stage11 is **VERIFIED** and provides provider-neutral Zod request/output/source/question contracts, versioned Prompt Registry, deterministic schema/semantic/provenance/count/notation/duplicate validators, explicit `valid | invalid | review_required`, exact-source uncertainty handling, golden tests and provider-neutral benchmark harness.
+Stage11 provides provider-neutral Zod request/output/source/question contracts, versioned Prompt Registry, deterministic schema/semantic/provenance/count/notation/duplicate validators, explicit `valid | invalid | review_required`, exact-source uncertainty handling, golden tests and provider-neutral benchmark harness.
 
-### Stage12 durable execution core
+### Stage12 durable execution core — VERIFIED
 
-Verified executable checkpoint: `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
+Checkpoint: `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
 
 Verified: existing `ai_jobs / ai_job_units / ai_outputs` reuse, idempotent plans, `SKIP LOCKED` claims, UUID leases, stale-worker rejection, attempt telemetry, provider calls outside transactions, Stage11 validation, bounded cascade/retry, cancellation safety and partial success.
 
-### Stage12 distributed capacity / backpressure
+### Stage12 distributed capacity / backpressure — VERIFIED
 
-Verified checkpoint: `881102ff94711f908104cd068a003ad598609944`.
+Checkpoint: `881102ff94711f908104cd068a003ad598609944`.
 
 - PostgreSQL-coordinated global/provider/project/model concurrency;
 - transaction-scoped advisory admission lock only around count/check/attempt insert;
@@ -57,18 +66,9 @@ Verified checkpoint: `881102ff94711f908104cd068a003ad598609944`.
 - capacity pressure does not silently escalate to a more expensive route;
 - race tests prove concurrent workers cannot over-admit configured limits.
 
-### Stage12 health / cooldown / budget controls
+### Stage12 health / cooldown / budget controls — VERIFIED
 
-Verified checkpoint: `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`.
-
-Same-head verification:
-
-- Stage12 `34086168715` — SUCCESS.
-- Stage11 `34086168704` — SUCCESS.
-- OCR `34086168712` — SUCCESS.
-- Stage10 `34086168727` — SUCCESS.
-- Stage9 `34086168687` — SUCCESS.
-- Full Rebuild `34086168772` — SUCCESS including Chromium.
+Checkpoint: `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`.
 
 Verified controls:
 
@@ -93,6 +93,52 @@ route_key
 ```
 
 `route_key` is not globally unique. Migration `0014_ai_execution_controls.sql` uses a surrogate UUID primary key plus `UNIQUE NULLS NOT DISTINCT` over the full identity. Cooldown, health, route budget configuration and route budget usage aggregation use that same identity.
+
+### Stage12 explicit pause / resume / progress — VERIFIED
+
+Checkpoint: `8c8c03668921d8b4d873d1a0d3139c4eb1740ca9`.
+
+Verified semantics:
+
+- `ai_jobs.paused_at` is a durable operator scheduling gate, separate from aggregate execution status;
+- `resume_route_key` remains internal route continuation and is not job resume;
+- pause and claim serialize on the same job row;
+- pause blocks new claims without revoking an already-valid in-flight lease;
+- resume preserves completed/review outputs, attempt counts, retry/backoff and route continuation;
+- completed/failed/cancelled jobs cannot resume;
+- progress is derived from durable unit state;
+- expired non-exhausted leases are released immediately to durable `retrying`, including while paused.
+
+Lifecycle ownership cleanup on `e7b95042a017ea558db9f769a46a37f155273a15` removed obsolete duplicate claim/recovery implementations from `AiExecutionRepository`; `AiJobLifecycleRepository` is the single owner. The full same-head matrix remained green.
+
+### Stage12 dedicated worker runtime — VERIFIED
+
+Final executable head: `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
+
+Same-head verification:
+
+- Stage12 `34089764278` — SUCCESS including worker lifecycle + execution/capacity/control/pause PostgreSQL regressions.
+- Stage11 `34089764339` — SUCCESS.
+- OCR `34089764349` — SUCCESS.
+- Stage10 `34089764277` — SUCCESS.
+- Stage9 `34089764344` — SUCCESS.
+- Full Rebuild `34089764467` — SUCCESS including Chromium.
+
+Verified runtime behavior:
+
+- Fastify remains HTTP-only;
+- fixed bounded worker slots;
+- no large in-memory prefetch queue;
+- one `processNext()` call per slot at a time;
+- bounded exponential idle polling/backoff;
+- useful work resets polling delay;
+- graceful stop prevents new claims and wakes idle slots;
+- in-flight work is not aborted and drains under its existing lease authority;
+- database closes after drain;
+- unexpected processor failures are fail-fast rather than silently retried forever;
+- abrupt process death is recovered by the existing durable lease-expiry path.
+
+Detailed contract: `docs/ai/STAGE12_WORKER_RUNTIME.md`.
 
 ## Budget evidence boundary
 
@@ -158,44 +204,43 @@ Use the same source-controlled cases across candidates. Include Arabic prose, re
 
 Measure structured validity, answer correctness, explanation quality, source/page fidelity, unresolved-answer honesty, duplicate/near-duplicate rate, Arabic/scientific notation quality, tokens, latency, estimated/actual cost where available and Admin acceptance/edit rate.
 
-## Explicit pause / resume / progress — active next work
+## Worker bootstrap boundary
 
-`resume_route_key` is an internal route continuation field and is **not** user/job resume.
+The **worker lifecycle is verified**, but a live production bootstrap is intentionally not fabricated.
 
-The next Stage12 batch must add explicit job-level lifecycle semantics:
+Still `NOT YET VERIFIED`:
 
-- pause stops new claims for that job;
-- already leased/in-flight work retains lease authority and may finish safely;
-- resume makes unfinished work claimable without resetting successful outputs or attempt counts;
-- completed/cancelled terminal jobs cannot be resumed;
-- progress is derived from durable unit state, never client-authoritative;
-- race coverage must include pausing while a provider call is already in flight.
+- authorized live provider credentials;
+- live provider adapters in production configuration;
+- benchmark-approved production routes/models;
+- a production `worker.ts` entrypoint constructing those adapters/routes;
+- hosted worker runtime.
 
-## Worker lifecycle — after pause/resume
+Once authorized live configuration exists, the standalone bootstrap should:
 
-`apps/api/src/server.ts` is HTTP-only. The AI worker must be a separate process/runtime, not a polling loop embedded in Fastify.
+```text
+load server-only provider configuration
+→ create Database
+→ create approved adapters + AiModelRouter
+→ create AiExecutionService
+→ create AiWorkerRuntime
+→ map SIGTERM/SIGINT to AbortController
+→ runAiWorkerProcess()
+→ close DB after graceful drain
+```
 
-Required worker behavior:
-
-- bounded concurrent slots;
-- bounded idle polling/backoff;
-- graceful shutdown stops new claims first;
-- in-flight work drains while leases remain valid;
-- abrupt process death is recovered by existing lease expiry logic;
-- DB closes after drain;
-- no huge in-memory batches.
-
-A live-provider worker bootstrap is still **NOT YET VERIFIED**. Do not invent credentials or a fake production route merely to claim a complete entrypoint.
+Do not add placeholder adapters, fake credentials or invented routes merely to make this script executable.
 
 ## Current implementation status
 
 - Stage11 provider-neutral contracts / Prompt Registry / validators / golden harness: **VERIFIED**.
 - Stage12 durable execution core: **VERIFIED**.
 - Stage12 distributed concurrency/backpressure: **VERIFIED**.
-- Stage12 health/cooldown/Retry-After/global+route budget admission: **VERIFIED** on `7c3c5645…`.
-- Explicit job pause/resume/progress: **ACTIVE NEXT / NOT YET VERIFIED**.
-- Dedicated worker runtime: **NOT YET VERIFIED**.
+- Stage12 health/cooldown/Retry-After/global+route budget admission: **VERIFIED**.
+- Stage12 explicit job pause/resume/progress + lease recovery: **VERIFIED**.
+- Stage12 bounded dedicated worker lifecycle/runtime: **VERIFIED** on `45a902eb…`.
 - Live provider adapters with authorized credentials: **NOT YET VERIFIED**.
 - Live cross-provider/model benchmark: **NOT YET VERIFIED**.
 - Production routing/budget values and actual provider billing: **NOT YET VERIFIED**.
+- Production live worker bootstrap: **NOT YET VERIFIED**.
 - Hosted AI worker/runtime: **NOT YET VERIFIED** while deployment remains deferred by Product Owner.

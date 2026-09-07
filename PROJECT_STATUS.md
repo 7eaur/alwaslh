@@ -1,35 +1,35 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage12 Durable Provider-Neutral AI Execution — core + distributed capacity/backpressure + health/cooldown/Retry-After/budget controls + explicit job pause/resume/progress **VERIFIED**; dedicated bounded worker runtime **IMPLEMENTED / VERIFICATION PENDING**.
+- **Current Phase:** Stage12 Durable Provider-Neutral AI Execution backend lifecycle/runtime **VERIFIED**: durable core, distributed capacity/backpressure, health/cooldown/Retry-After/budget controls, explicit pause/resume/progress, centralized claim/lease recovery ownership, and bounded dedicated worker runtime.
 - **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
-- **Latest fully verified executable baseline:** `e7b95042a017ea558db9f769a46a37f155273a15`.
-- **Pause/resume closure head:** `8c8c03668921d8b4d873d1a0d3139c4eb1740ca9`.
-- **Lifecycle ownership cleanup:** `e7b95042a017ea558db9f769a46a37f155273a15` — removed obsolete duplicate claim/expired-lease recovery implementations from `AiExecutionRepository`; `AiJobLifecycleRepository` is the single owner.
-- **Deployment:** `DEFERRED BY PRODUCT OWNER`. Git auto-deployment remains intentionally disabled; hosted runtime is `NOT YET VERIFIED`.
+- **Latest fully verified executable baseline:** `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
+- **Deployment:** `DEFERRED BY PRODUCT OWNER`. Hosted Student/Admin/API/media/OCR/AI worker runtime remains `NOT YET VERIFIED`.
 
 ## Latest fully verified same-head matrix
 
-Exact executable head: `e7b95042a017ea558db9f769a46a37f155273a15`.
+Exact executable head: `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
 
-- Stage12 AI Execution Verification `34089070993` — **SUCCESS** including existing lifecycle, distributed capacity, operational controls, pause/resume/progress and paused-lease recovery.
-- Stage11 AI Contract Verification `34089071172` — **SUCCESS**.
-- OCR Foundation Verification `34089070998` — **SUCCESS** including real Tesseract.
-- Stage10 Media Pipeline `34089071005` — **SUCCESS**.
-- Stage9 Content Import Verification `34089071023` — **SUCCESS**.
-- Rebuild Stage Verification `34089071001` — **SUCCESS** including Chromium.
+- Stage12 AI Execution Verification `34089764278` — **SUCCESS** including bounded worker lifecycle, execution lifecycle, capacity, controls, pause/resume/progress and paused-lease recovery.
+- Stage11 AI Contract Verification `34089764339` — **SUCCESS**.
+- OCR Foundation Verification `34089764349` — **SUCCESS** including real Tesseract.
+- Stage10 Media Pipeline `34089764277` — **SUCCESS**.
+- Stage9 Content Import Verification `34089764344` — **SUCCESS**.
+- Rebuild Stage Verification `34089764467` — **SUCCESS** including Chromium.
 
-Earlier Stage12 checkpoints:
+Stage12 checkpoints:
 
 - execution core: `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`;
 - distributed capacity/backpressure: `881102ff94711f908104cd068a003ad598609944`;
 - distributed operational controls: `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`;
-- explicit pause/resume/progress behavior: `8c8c03668921d8b4d873d1a0d3139c4eb1740ca9`.
+- explicit pause/resume/progress: `8c8c03668921d8b4d873d1a0d3139c4eb1740ca9`;
+- lifecycle ownership cleanup: `e7b95042a017ea558db9f769a46a37f155273a15`;
+- bounded dedicated worker runtime: `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
 
 ## Verified Stage12 behavior
 
-Verified through `0015_ai_job_lifecycle.sql`:
+Verified through `0015_ai_job_lifecycle.sql` plus the process-level worker runtime:
 
-- existing `ai_jobs / ai_job_units / ai_outputs` reused; no parallel queue;
+- existing `ai_jobs / ai_job_units / ai_outputs` reused; no second queue;
 - deterministic plan idempotency/fingerprint conflict detection;
 - durable short `SKIP LOCKED` unit claims + UUID leases;
 - stale/expired/cancelled workers cannot finalize attempts/units/outputs;
@@ -38,91 +38,63 @@ Verified through `0015_ai_job_lifecycle.sql`:
 - bounded cascade/retry/backoff/jitter;
 - cancellation + partial success;
 - PostgreSQL-coordinated global/provider/project/model capacity;
-- capacity/control deferral does not consume another semantic retry;
-- global and full-route kill switches;
+- operational deferral does not consume another semantic retry or force expensive-route escalation;
+- global + full-route kill switches;
 - persisted Retry-After/health cooldown;
 - conservative global + route budget admission;
-- full route runtime identity: route + provider + project + credential + model;
-- no operational pressure causes silent expensive-route escalation;
+- full route runtime identity = route + provider + project + credential + model;
 - `ai_jobs.paused_at` is an operator scheduling gate separate from aggregate execution status;
 - pause and claim serialize on the same job-row lock;
-- pause stops new claims without revoking an already valid in-flight lease;
-- resume preserves accepted outputs, attempt counts, retry/backoff and route continuation;
+- pause blocks new claims without revoking an already valid in-flight lease;
+- resume preserves accepted outputs, attempts, retry/backoff and route continuation;
 - terminal completed/failed/cancelled jobs cannot resume;
-- progress is derived from durable unit rows;
-- expired non-exhausted leases are released to durable `retrying`, including while the job is paused;
-- job claim and expired-lease recovery ownership is centralized in `AiJobLifecycleRepository`.
+- progress is server-derived from durable unit rows;
+- expired non-exhausted leases are released to durable `retrying`, including while paused;
+- `AiJobLifecycleRepository` is the single owner for job claim + expired-lease recovery;
+- worker runtime uses fixed bounded slots and never prefetches a large in-memory batch;
+- idle polling uses bounded exponential backoff and resets after useful work;
+- graceful stop prevents new `processNext()` calls, wakes idle slots, lets in-flight calls drain under existing lease authority, then closes the database;
+- unexpected worker processor failures are fail-fast rather than hidden in an infinite polling loop;
+- abrupt process death remains recoverable through existing durable lease expiry logic.
 
-Budget reservation remains a safety ceiling, not proof of actual provider billing. Live pricing/billing evidence is `NOT YET VERIFIED`.
+Detailed contracts:
 
-Detailed lifecycle contract: `docs/ai/STAGE12_JOB_LIFECYCLE.md`.
+- `docs/ai/STAGE12_JOB_LIFECYCLE.md`;
+- `docs/ai/STAGE12_WORKER_RUNTIME.md`;
+- `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`.
 
-## Current isolated batch — dedicated worker runtime
+## Worker verification evidence
 
-Implementation is being added under `apps/api/src/ai/worker-runtime.ts` and is **NOT YET VERIFIED** until the Stage12 + lower-layer matrix passes on one exact implementation head.
+`apps/api/tests/ai-worker.test.ts` proves:
 
-Architecture:
-
-```text
-standalone future worker bootstrap
-→ fixed worker slots
-→ one AiExecutionService.processNext() per slot at a time
-→ durable PostgreSQL claim/lease/admission
-→ provider call outside DB transaction
-→ durable result
-→ next unit or bounded idle sleep/backoff
-```
-
-Runtime rules:
-
-- `apps/api/src/server.ts` remains HTTP-only; no queue polling is embedded in Fastify;
-- slot count is fixed/bounded; no large in-memory prefetch batch;
-- empty queue polling backs off to a configured ceiling and resets after useful work;
-- graceful stop aborts idle sleeps and prevents new `processNext()` calls;
-- in-flight `processNext()` calls are not aborted and drain under their existing lease authority;
-- database close happens after slots drain;
-- unexpected processor errors are fail-fast: stop new claims, drain other in-flight slots, close resources, rethrow;
-- abrupt process death is recovered by existing Stage12 lease-expiry logic;
-- no fake provider route/credential/bootstrap is added merely to claim production readiness.
-
-Detailed runtime contract: `docs/ai/STAGE12_WORKER_RUNTIME.md`.
-
-## Verification gates for current worker batch
-
-Stage12 must prove:
-
-- fixed concurrent slots never exceed configured runtime concurrency;
-- stop signal prevents subsequent claims;
+- runtime concurrency never exceeds configured slots;
+- shutdown starts no later claims;
 - in-flight calls drain before database close;
-- idle polling has bounded exponential backoff;
-- useful work resets idle polling delay;
+- idle polling backs off to a configured ceiling;
+- useful work resets idle backoff;
 - unexpected processor failure stops the runtime and still closes resources;
-- invalid/unbounded worker settings are rejected;
-- existing PostgreSQL execution/capacity/control/pause regressions remain green;
-- Stage11/OCR/Stage10/Stage9/Full Rebuild + Chromium remain green on the same exact head.
+- invalid/unbounded runtime settings are rejected.
 
-Until those gates pass: **dedicated worker runtime = NOT YET VERIFIED**.
+Stage12 workflow then runs the same worker test explicitly before the PostgreSQL lifecycle/capacity/control/pause integration tests. All passed on `45a902eb…`.
 
-## Explicit live-runtime boundary
+## Explicit live-runtime boundary — NOT YET VERIFIED
 
-Still `NOT YET VERIFIED` and intentionally not invented:
+Stage12 runtime closure does **not** invent production provider configuration. Still intentionally unverified:
 
 - authorized live AI provider adapters/credentials;
-- benchmark-approved production routes/models;
-- production `worker.ts` bootstrap constructing those routes/adapters;
+- live benchmark-approved production routes/models;
+- a production `worker.ts` bootstrap constructing those live adapters/routes;
 - hosted worker deployment/runtime;
 - current provider pricing and actual billing reconciliation.
 
-A future live worker bootstrap will wire `SIGTERM/SIGINT` into the verified runtime shutdown signal only after real provider configuration is authorized and benchmarked.
+A future live worker bootstrap should create the database/router/`AiExecutionService`, wire `SIGTERM/SIGINT` into the verified worker shutdown signal, and use `runAiWorkerProcess()` to close the database after drain. It must only be added when real provider configuration is authorized and benchmarked.
 
-## Remaining Stage12 work
+## Next ordered engineering work
 
-1. Run/fix the dedicated worker runtime batch until Stage12 + Stage11 + OCR + Stage10 + Stage9 + Full Rebuild/Chromium are green on one exact head.
-2. Close worker documentation with exact commit/run evidence.
-3. Run real provider/model benchmark evidence before any production route/model defaults or live bootstrap.
-4. Keep credentials, current pricing, actual provider billing and hosted worker runtime `NOT YET VERIFIED` until explicitly configured/tested.
-
-Admin AI execution/query/cancel/review UI/API remains Stage13 integration after Stage12 backend lifecycle/runtime stability.
+1. Continue the post-Stage12 roadmap with curriculum structure extension / Stage13 backend preparation while preserving current contracts.
+2. Run live provider/model benchmark evidence **before** any production AI route/model defaults or live AI worker bootstrap.
+3. Resolve `direct` question persistence explicitly before Question Bank publish workflows depend on it.
+4. Keep deployment/hosted runtime deferred until the Product Owner explicitly re-enables it.
 
 ## Stable lower-layer boundaries
 
@@ -131,13 +103,18 @@ Admin AI execution/query/cancel/review UI/API remains Stage13 integration after 
 - OCR derives only from ready media; only reviewed/approved OCR is downstream approved text evidence.
 - Student auth/device rules from Stage6/8 remain unchanged.
 - Question Bank currently persists only `multiple_choice | true_false`; AI `direct` extraction remains reviewable output, not auto-publishable data.
+- configured AI budget reservations are safety ceilings, not proof of actual provider invoice accuracy.
 
 ## Repository housekeeping
 
-A temporary branch named `tmp-unused-do-not-use` was accidentally created at the verified pause baseline while preparing the cleanup commit. It contains no unique code and is not referenced by PR #12. The connected GitHub tool exposes branch creation/update but not ref deletion, so branch deletion remains a **P3 repository-housekeeping item** rather than being hidden or force-worked-around.
+A temporary branch named `tmp-unused-do-not-use` was accidentally created at the verified pause baseline while preparing the lifecycle ownership cleanup. It contains no unique code and is not referenced by PR #12. The connected GitHub tool exposes branch creation/update but not ref deletion, so deletion remains a **P3 repository-housekeeping item** instead of being hidden behind a workaround.
 
 ## Last verified build/test
 
-**Last fully green executable head:** `e7b95042a017ea558db9f769a46a37f155273a15`.
+**Last fully green executable head:** `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
 
-**Current implementation state:** dedicated worker runtime implementation in progress / verification pending. Deployment remains deferred.
+**Stage12 backend lifecycle/runtime:** **VERIFIED**.
+
+**Live provider bootstrap / hosted worker:** **NOT YET VERIFIED**.
+
+**Deployment:** `DEFERRED BY PRODUCT OWNER`.

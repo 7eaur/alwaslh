@@ -1,9 +1,19 @@
 # STAGE12 JOB LIFECYCLE — PAUSE / RESUME / PROGRESS
 
-Status: **IMPLEMENTED / VERIFICATION PENDING**
+Status: **VERIFIED**.
 
-Parent verified baseline: `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`.
-Documentation closure for that baseline: `6cac332f356b9f1b4faf3d7fb5b9b736a1e076b4`.
+Behavior closure head: `8c8c03668921d8b4d873d1a0d3139c4eb1740ca9`.
+Lifecycle ownership cleanup head: `e7b95042a017ea558db9f769a46a37f155273a15`.
+Latest same-head executable verification including worker runtime: `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
+
+Verification evidence on the latest executable head:
+
+- Stage12 `34089764278` — SUCCESS including execution lifecycle, capacity, operational controls, pause/resume/progress, paused-lease recovery and worker lifecycle.
+- Stage11 `34089764339` — SUCCESS.
+- OCR `34089764349` — SUCCESS.
+- Stage10 `34089764277` — SUCCESS.
+- Stage9 `34089764344` — SUCCESS.
+- Full Rebuild `34089764467` — SUCCESS including Chromium.
 
 ## Problem
 
@@ -24,9 +34,9 @@ The effective progress status may therefore be `paused` while the underlying dur
 
 ## Concurrency contract
 
-Pause must be race-safe with claims.
+Pause is race-safe with claims.
 
-`claimNext` now locks both the selected `ai_jobs` row and `ai_job_units` row in the short claim transaction:
+`claimNext` locks both the selected `ai_jobs` row and `ai_job_units` row in the short claim transaction:
 
 ```text
 FOR UPDATE OF j, u SKIP LOCKED
@@ -59,7 +69,7 @@ Therefore:
 
 ## Lease expiry while paused
 
-A separate correctness issue was identified during design: previously an expired running lease could remain represented as `running` until a future claim reclaimed it.
+A correctness issue was identified during design: previously an expired running lease could remain represented as `running` until a future claim reclaimed it.
 
 That is misleading when the job is paused because no claim should occur.
 
@@ -72,6 +82,19 @@ Stage12 lifecycle recovery now:
 5. claim remains blocked while `paused_at` is set.
 
 This makes progress reflect actual execution authority: an expired worker is no longer shown as running.
+
+## Ownership contract
+
+Post-verification audit found obsolete alternate claim/recovery implementations still present in `AiExecutionRepository` after `AiJobLifecycleRepository` became the real owner.
+
+They were removed on `e7b95042a017ea558db9f769a46a37f155273a15`.
+
+Current ownership is explicit:
+
+- `AiJobLifecycleRepository`: job claim, pause/resume, progress, expired-lease reconciliation;
+- `AiExecutionRepository`: plan/attempt/output/cancel/aggregate execution persistence.
+
+The six-workflow matrix remained green after this cleanup, proving the removed paths were obsolete and behavior stayed intact.
 
 ## Progress contract
 
@@ -106,13 +129,13 @@ The client does not submit or authoritatively calculate progress.
 
 No new job enum is introduced because pause is a scheduling-control dimension, not a replacement execution state.
 
-## Verification plan
+## Verified scenarios
 
-The Stage12 workflow adds schema checks and a PostgreSQL/browser-independent lifecycle integration suite covering:
+Stage12 integration coverage proves:
 
 1. pause before first claim → zero attempt consumption;
 2. resume → claim becomes possible;
-3. pause during a real deferred provider call → in-flight lease remains valid;
+3. pause during a deferred provider call → in-flight lease remains valid;
 4. no second claim while paused;
 5. successful in-flight completion preserves pause for unfinished siblings;
 6. resume continues remaining work without resetting accepted units/attempt counts;
@@ -121,16 +144,22 @@ The Stage12 workflow adds schema checks and a PostgreSQL/browser-independent lif
 9. resume after lease recovery creates the next legitimate attempt;
 10. cancellation remains terminal and clears pause.
 
-Until CI passes on one exact head, this batch is **NOT YET VERIFIED**.
+A separate timing-dependent generic retry test was also corrected without weakening Retry-After behavior: generic retry no longer depends on a 10 ms wall-clock cooldown, while the dedicated operational-control integration continues to verify a 60-second Retry-After route cooldown explicitly.
 
-## Non-goals
+## Related worker lifecycle
 
-This batch does not add:
+The dedicated process-level worker runtime is now also **VERIFIED** and remains separate from Fastify.
+
+See `docs/ai/STAGE12_WORKER_RUNTIME.md` for bounded slots, bounded polling, graceful drain and fail-fast behavior.
+
+## Explicit non-goals / future evidence
+
+This lifecycle layer does not claim:
 
 - Admin UI/API integration (Stage13 concern);
 - live provider adapters/credentials;
 - production routing defaults;
-- dedicated worker runtime;
+- production live-provider `worker.ts` bootstrap;
 - hosted deployment.
 
-The next isolated batch after this closes is the dedicated AI worker process with bounded slots, bounded polling and graceful drain.
+Those remain separate work/evidence. No fake provider configuration should be added merely to make a production bootstrap appear complete.

@@ -6,15 +6,35 @@
 
 - Repo: `7eaur/alwaslh`.
 - Branch: `planning/product-evolution-review`; draft PR #12.
-- Latest fully verified executable baseline: `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`.
-- Controls documentation closure: `6cac332f356b9f1b4faf3d7fb5b9b736a1e076b4`.
+- Latest fully verified executable baseline: `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
 - Stage11 contracts: **VERIFIED**.
 - Stage12 durable core: **VERIFIED**.
 - Stage12 distributed capacity/backpressure: **VERIFIED**.
 - Stage12 kill-switch/cooldown/Retry-After/budget admission: **VERIFIED**.
-- Current batch: explicit job pause/resume/progress **IMPLEMENTED / VERIFICATION PENDING**.
-- Next only after closure: dedicated AI worker lifecycle.
+- Stage12 explicit job pause/resume/progress: **VERIFIED**.
+- Stage12 dedicated bounded worker runtime: **VERIFIED**.
+- Live provider adapters/benchmark/production worker bootstrap: **NOT YET VERIFIED**.
 - Deployment: `DEFERRED BY PRODUCT OWNER`; do not re-enable or publish without a new explicit instruction.
+
+## Latest same-head verification
+
+Exact executable head `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`:
+
+- Stage12 `34089764278` — SUCCESS including dedicated worker lifecycle + lifecycle/capacity/control/pause PostgreSQL regressions.
+- Stage11 `34089764339` — SUCCESS.
+- OCR `34089764349` — SUCCESS.
+- Stage10 `34089764277` — SUCCESS.
+- Stage9 `34089764344` — SUCCESS.
+- Full Rebuild `34089764467` — SUCCESS including Chromium.
+
+Important Stage12 predecessor checkpoints:
+
+- core `dfd9a456…`;
+- distributed capacity `881102ff…`;
+- operational controls `7c3c5645…`;
+- pause/resume/progress `8c8c0366…`;
+- lifecycle ownership cleanup `e7b95042…`;
+- worker runtime closure `45a902eb…`.
 
 ## Stable runtime architecture
 
@@ -26,6 +46,7 @@ Student PWA ┘      │
                    ├── reviewed OCR text
                    ├── Stage11 provider-neutral AI contracts
                    ├── Stage12 durable execution/admission/control
+                   ├── Stage12 dedicated bounded worker runtime
                    └── later TTS / notifications / offline sync
 ```
 
@@ -34,23 +55,11 @@ Hard rules:
 - browser never gets DB/provider secrets;
 - provider calls remain outside DB transactions;
 - stale/expired/cancelled workers cannot commit attempts/outputs;
-- no key/project rotation to evade limits/terms;
+- no key/project rotation to evade provider limits/terms;
 - operational pressure is not semantic failure;
 - valuable legacy capability is not removed without Product Owner approval;
-- root-cause fixes only; no weakening tests/security/business rules.
-
-## Latest verified checkpoint
-
-Exact executable head `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`:
-
-- Stage12 `34086168715` — SUCCESS.
-- Stage11 `34086168704` — SUCCESS.
-- OCR `34086168712` — SUCCESS.
-- Stage10 `34086168727` — SUCCESS.
-- Stage9 `34086168687` — SUCCESS.
-- Full Rebuild `34086168772` — SUCCESS including Chromium.
-
-Verified Stage12 controls include global/provider/project/model capacity, global/full-route kill switches, Retry-After/health cooldown, conservative global+route budgets and full route runtime identity.
+- root-cause fixes only; no weakened tests/security/business rules;
+- Fastify remains HTTP-only and never owns queue polling.
 
 ## Route runtime identity
 
@@ -64,86 +73,102 @@ route_key
 + model_used
 ```
 
-This rule was established after unchanged lifecycle regression exposed cross-router reuse. The fix is verified on `7c3c5645…`.
+This is verified and must remain consistent across cooldown, health and route-budget queries.
 
-## Current pause/resume/progress design
+## Job lifecycle contract — VERIFIED
 
-`resume_route_key` remains internal scheduler continuation. Job pause is separate.
+`resume_route_key` is scheduler continuation only. Job pause is separate.
 
-New durable control:
+Durable control:
 
 - `ai_jobs.paused_at` — operator scheduling gate;
 - existing `ai_job_status` remains aggregate execution state;
-- effective progress can report `paused` while execution status remains queued/running/retrying.
+- effective progress may report `paused` while execution status stays queued/running/retrying.
 
-Concurrency contract:
+Concurrency:
 
 - claim locks both job and unit rows (`FOR UPDATE OF j, u SKIP LOCKED`);
 - pause/resume locks the same job row;
-- if claim commits first, that unit is legitimately in-flight and pause may follow;
+- if claim commits first, that unit is legitimately in-flight and may finish;
 - if pause commits first, no later claim from that job is allowed;
-- pause never revokes a valid already-started lease.
+- pause does not revoke a valid in-flight lease.
 
-Resume contract:
+Resume:
 
 - clears only `paused_at`;
-- preserves completed/review outputs, attempt counts, retry/backoff and route continuation;
-- terminal completed/failed/cancelled jobs are not resumable;
-- cancellation remains terminal and clears pause.
+- preserves accepted outputs, attempts, retry/backoff and route continuation;
+- completed/failed/cancelled jobs are not resumable;
+- cancellation remains terminal.
 
-Progress contract is server-derived from durable unit rows and exposes accepted/completed/review/failed/cancelled/queued/running/retrying/settled/remaining totals and integer settled percentage.
+Lease expiry:
 
-## Lease expiry hardening in current batch
+- expired running attempt closes as `failed/lease_expired`;
+- non-exhausted unit becomes durable `retrying` immediately with lease fields cleared;
+- exhausted unit follows terminal max-attempt handling;
+- paused jobs remain non-claimable;
+- progress reflects real execution authority.
 
-An expired running lease previously stayed represented as `running` until a later claim reclaimed it. This is incorrect while a job is paused.
+Ownership hardening:
 
-The new lifecycle recovery immediately:
-
-1. closes expired running attempt as `failed/lease_expired`;
-2. releases non-exhausted unit to `retrying` and clears lease fields;
-3. leaves exhausted units to existing terminal max-attempt handling;
-4. refreshes aggregate state;
-5. still blocks claims while paused.
+- `AiJobLifecycleRepository` is the single owner of job claim + expired-lease recovery;
+- obsolete alternate implementations were removed from `AiExecutionRepository` on `e7b95042…` and the six-workflow matrix remained green.
 
 Detailed design: `docs/ai/STAGE12_JOB_LIFECYCLE.md`.
 
-## Current verification gate
+## Worker lifecycle contract — VERIFIED
 
-Do **not** mark pause/resume/progress verified until the exact implementation head passes:
+`apps/api/src/server.ts` remains HTTP-only.
 
-- Stage12 lint/typecheck/unit/build;
-- clean migrations + Stage12 DB contracts;
-- existing execution lifecycle;
-- capacity tests;
-- control tests;
-- new pause/resume/progress + paused-lease recovery tests;
-- Stage11 regression;
-- OCR regression;
-- Stage10 regression;
-- Stage9 regression;
-- Full Rebuild + Chromium.
+`apps/api/src/ai/worker-runtime.ts` provides the process-level scheduler:
 
-Any failure must be fixed from evidence. No test weakening.
+- fixed bounded slots;
+- exactly one `processNext()` per slot at a time;
+- no large in-memory prefetch batch;
+- empty queue uses bounded exponential idle backoff;
+- successful processing resets a slot to minimum polling delay;
+- graceful stop prevents any later `processNext()` call and wakes idle sleeps;
+- already-running `processNext()` calls are not aborted; they drain under their existing lease authority;
+- database closes after all slots drain;
+- unexpected processor errors are fail-fast: stop claims, drain siblings, close resources, rethrow;
+- abrupt death relies on the existing durable lease expiry/retry contract.
 
-## Worker lifecycle — after pause/resume only
+`runAiWorkerProcess()` takes an `AbortSignal`; a future standalone live bootstrap should map `SIGTERM/SIGINT` to it.
 
-`apps/api/src/server.ts` is HTTP-only. Worker must be a separate process/runtime with:
+Worker verification in `apps/api/tests/ai-worker.test.ts` covers concurrency bounds, stop/no-new-claim behavior, drain-before-close, bounded idle backoff, backoff reset, fail-fast resource cleanup and invalid configuration rejection. Stage12 `34089764278` runs this explicitly before the PostgreSQL regressions.
 
-- bounded slots;
-- bounded idle polling/backoff;
-- graceful shutdown: stop new claims, drain in-flight, close DB last;
-- crash recovery via existing lease expiry;
-- no huge in-memory batches.
+Detailed design: `docs/ai/STAGE12_WORKER_RUNTIME.md`.
 
-Do not invent live provider credentials/routes just to make worker bootstrap appear complete. Live adapters/benchmark/production routing remain `NOT YET VERIFIED`.
+## Live-provider boundary — NOT YET VERIFIED
+
+Do not confuse the verified worker lifecycle with production AI configuration. Still unverified by design:
+
+- authorized live AI provider adapters and credentials;
+- live provider/model benchmark evidence;
+- benchmark-approved production routes/models;
+- production `worker.ts` bootstrap constructing those real adapters/routes;
+- current pricing and actual provider billing reconciliation;
+- hosted worker deployment/runtime.
+
+Do **not** create fake adapters, placeholder credentials or invented production routes merely to make an entrypoint runnable.
 
 ## Other unresolved boundaries
 
 - AI `direct` extraction is not silently publishable because current Question Bank persists only MCQ/T/F.
-- actual provider billing/pricing remains unverified; configured budget reservations are safety ceilings only.
-- hosted runtime remains unverified while deployment is deferred.
-- Stage13 Admin AI operations integration waits until backend Stage12 lifecycle is stable.
+- configured budget reservations are safety ceilings, not billing truth.
+- OCR production-quality benchmark beyond current smoke/integration evidence remains separate future evidence.
+- hosted Student/Admin/API/media/OCR/AI runtime remains unverified while deployment is deferred.
+
+## Next ordered work
+
+1. Continue the roadmap with curriculum structure extension / Stage13 backend preparation while preserving Stage12 contracts.
+2. Before any production AI routing/bootstrap, execute the live benchmark with authorized providers/models and current terms/pricing.
+3. Resolve direct-question persistence explicitly before publish workflows depend on it.
+4. Keep deployment disabled until the Product Owner explicitly re-enables it.
+
+## Repository housekeeping
+
+A temporary branch `tmp-unused-do-not-use` was accidentally created while preparing the lifecycle ownership cleanup. It points to already-verified history, contains no unique code and is not used by PR #12. The connected GitHub tool has no ref-delete action, so deletion is tracked as P3 housekeeping rather than hidden behind a workaround.
 
 ## Continuation rule
 
-After every meaningful batch update `PROJECT_STATUS.md` and `PROJECT_ENGINEERING_LOG.md`; update this Handoff when architecture/branch/CI/runtime state changes; update AI strategy/parity docs when affected; preserve exact commits/run IDs; mark anything not executed/tested as `NOT YET VERIFIED`.
+After every meaningful batch update `PROJECT_STATUS.md` and `PROJECT_ENGINEERING_LOG.md`; update this Handoff when architecture/branch/CI/runtime state changes; update specialized docs and AI strategy when affected; preserve exact commits/run IDs; mark anything not executed/tested as `NOT YET VERIFIED`.

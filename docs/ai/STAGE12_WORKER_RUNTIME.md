@@ -1,6 +1,17 @@
 # Stage12 AI Worker Runtime
 
-Status: **IMPLEMENTED / VERIFICATION PENDING**.
+Status: **VERIFIED**.
+
+Verified executable head: `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
+
+Same-head evidence:
+
+- Stage12 `34089764278` — SUCCESS including the explicit worker lifecycle step plus all execution/capacity/control/pause PostgreSQL regressions.
+- Stage11 `34089764339` — SUCCESS.
+- OCR `34089764349` — SUCCESS.
+- Stage10 `34089764277` — SUCCESS.
+- Stage9 `34089764344` — SUCCESS.
+- Full Rebuild `34089764467` — SUCCESS including Chromium.
 
 This document defines the dedicated Stage12 worker lifecycle. It intentionally does **not** claim a live-provider bootstrap: no production AI adapter, credential set, benchmark-approved route or hosted worker process exists yet.
 
@@ -90,9 +101,9 @@ process disappears
 
 No new recovery queue is introduced.
 
-## Verification coverage
+## Verified coverage
 
-`apps/api/tests/ai-worker.test.ts` covers:
+`apps/api/tests/ai-worker.test.ts` proves:
 
 - slot concurrency never exceeds the configured bound;
 - shutdown starts no new claims after the signal;
@@ -102,7 +113,9 @@ No new recovery queue is introduced.
 - unexpected processor errors fail fast while resources still close;
 - invalid/unbounded worker settings are rejected.
 
-Stage12 CI also keeps the PostgreSQL lease-expiry integration tests, which cover crash-style recovery at the durable execution layer.
+Stage12 CI runs this test explicitly before the PostgreSQL integration suite. Existing lease-expiry integration tests continue to cover crash-style recovery at the durable execution layer.
+
+The initial worker implementation head `dac86de3a0b843b94f736b03192f27a1693fed04` failed shared Biome import/format checks before TypeScript/runtime execution. `45a902eb…` applied formatter-only corrections; runtime behavior and assertions were unchanged. The final same-head matrix passed.
 
 ## Explicitly not yet implemented / verified
 
