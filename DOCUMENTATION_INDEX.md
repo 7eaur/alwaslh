@@ -1,35 +1,35 @@
 # DOCUMENTATION INDEX — الوسيلة الذكية
 
-> هذا الملف هو خريطة التوثيق للمشروع. الهدف أن يستطيع أي مهندس أو محادثة استئناف العمل من المستودع نفسه بدون الاعتماد على chat memory. الحالة التنفيذية الحالية تؤخذ من `PROJECT_HANDOFF.md` و`PROJECT_STATUS.md` و`PROJECT_ENGINEERING_LOG.md`، وأي شيء غير منفذ/مختبر يوسم `NOT YET VERIFIED`.
+> خريطة التوثيق الرسمية للمشروع. الهدف أن يستطيع أي مهندس/محادثة استئناف العمل من المستودع نفسه دون الاعتماد على chat memory. الحالة التنفيذية تؤخذ من `PROJECT_HANDOFF.md` و`PROJECT_STATUS.md` و`PROJECT_ENGINEERING_LOG.md`; أي شيء غير منفذ/مختبر يوسم `NOT YET VERIFIED`.
 
 ## 1. ابدأ من هنا دائمًا
 
 اقرأ بالترتيب:
 
-1. `PROJECT_HANDOFF.md` — handoff الحالي، الحدود المعمارية، آخر exact head والـCI evidence.
-2. `PROJECT_STATUS.md` — المرحلة الحالية، ما اكتمل، ما بقي، آخر verification، والخطوة التالية.
-3. `PROJECT_ENGINEERING_LOG.md` — التاريخ الهندسي المتسلسل، Architecture Decisions، Audit Findings، Changes/Tests/Known Issues.
-4. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` — قرارات المنتج Batches 01–04.
-5. `docs/product/PRODUCT_DECISIONS_BATCH_05.md` — Notes/Notifications/AI provider-neutral/root-cause/design-system decisions.
-6. `docs/product/PRODUCT_DECISIONS_BATCH_06.md` — Student PWA vs Admin Web، deployment policy، legacy/documentation continuity.
+1. `PROJECT_HANDOFF.md` — السياق التنفيذي والحدود المعمارية وآخر exact head/CI evidence.
+2. `PROJECT_STATUS.md` — المرحلة الحالية وما اكتمل وما بقي.
+3. `PROJECT_ENGINEERING_LOG.md` — التاريخ الهندسي، Architecture Decisions، Audit Findings، Tests/Known Issues.
+4. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` — قرارات المنتج Batches 01–04، ومنها PED-018 Curriculum hierarchy.
+5. `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
+6. `docs/product/PRODUCT_DECISIONS_BATCH_06.md`.
 7. `MASTER_REBUILD_ROADMAP.md` — الخطة التنفيذية والمراحل القادمة.
-8. `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md` — runtime/Preview architecture policy؛ لا تتجاوز قرار Product Owner الحالي بتأجيل النشر.
-9. `NEXT_CONVERSATION_PROMPT.md` — Prompt جاهز لمحادثة جديدة، لكن الملفات أعلاه تظل المصدر الأعلى.
+8. `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md` — runtime/Preview policy؛ لا تتجاوز قرار Product Owner الحالي بتأجيل النشر.
+9. `NEXT_CONVERSATION_PROMPT.md` — مساعد للاستئناف فقط؛ الملفات أعلاه أعلى منه سلطة.
 
-## 2. مرجع التطبيق القديم — لا تتجاهله
+## 2. Legacy coverage — لا تتجاهله
 
-التطبيق القديم مرجع **للفكرة، المميزات، السيناريوهات، المشاكل والدروس**، لكنه ليس specification تقنيًا أو تصميمًا يجب نسخه.
+التطبيق القديم مرجع للفكرة والمميزات والسيناريوهات والمشاكل والدروس، وليس specification تقنيًا يجب نسخه.
 
-عند تنفيذ أي Student/Admin module راجع حسب الحاجة:
+راجع عند تنفيذ Student/Admin modules:
 
-- `PRODUCT_FEATURE_PARITY_MATRIX.md` — inventory شامل للمميزات/السيناريوهات المطلوبة.
-- `PROJECT_DEEP_AUDIT.md` — تحليل معمق للمشروع القديم ومشكلاته.
-- `PROJECT_FULL_AUDIT_CATALOG.md` — catalog موسع للأدلة والمشكلات والمكونات.
-- `PROJECT_REBUILD_BLUEPRINT.md` — blueprint وفهم إعادة البناء.
-- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` — hard gate يمنع ضياع Feature ذات قيمة.
-- `OFFLINE_MODE.md` و`OFFLINE_MODE_README.md` — مرجع Offline القديم/المطلوب.
+- `PRODUCT_FEATURE_PARITY_MATRIX.md`؛
+- `PROJECT_DEEP_AUDIT.md`؛
+- `PROJECT_FULL_AUDIT_CATALOG.md`؛
+- `PROJECT_REBUILD_BLUEPRINT.md`؛
+- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`؛
+- `OFFLINE_MODE.md` و`OFFLINE_MODE_README.md`.
 
-### قاعدة legacy coverage
+قاعدة التغطية:
 
 ```text
 Legacy capability
@@ -39,160 +39,194 @@ Legacy capability
 → test/acceptance evidence
 ```
 
-لا تُغلق Stage13/14 feature parity قبل إكمال هذا الربط.
+لا تُغلق Stage13/14 feature parity قبل اكتمال هذا الربط.
 
-## 3. Architecture / Foundation
+## 3. Foundation / Architecture
 
-- `DATABASE_PLATFORM_ARCHITECTURE.md` — منصة PostgreSQL والحدود.
-- `PROJECT_REBUILD_BLUEPRINT.md` — blueprint العام.
-- `MASTER_REBUILD_ROADMAP.md` — مراحل التنفيذ.
-- `docs/engineering/CLI_VERIFICATION_GATES.md` — verification policy/gates.
-- `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md` — runtime/preview architecture policy.
+- `DATABASE_PLATFORM_ARCHITECTURE.md` — PostgreSQL platform boundaries.
+- `PROJECT_REBUILD_BLUEPRINT.md` — target blueprint.
+- `MASTER_REBUILD_ROADMAP.md` — execution stages.
+- `docs/engineering/CLI_VERIFICATION_GATES.md` — verification policy.
+- `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md` — runtime/deployment architecture policy.
 
-Current foundation through Stage12 is verified on the exact executable head recorded in Status/Handoff/Log. Browser surfaces never own PostgreSQL/provider secrets or authoritative server state.
+Browser surfaces never own PostgreSQL/provider secrets or authoritative server state.
 
-## 4. Auth / Access / Activation
+## 4. Auth / Access / Activation — VERIFIED
 
-Stage6–8 target refactor is **VERIFIED**, including:
+Stage6–8 verified scope includes:
 
-- two-step Full Code activation ticket flow;
-- mandatory password creation/change behavior;
-- registered P-256 device challenge + device-bound session;
+- two-step Full Code activation ticket;
+- mandatory password creation/change;
+- P-256 registered application-device challenge + device-bound session;
 - temporary-password recovery + session revocation + forced private replacement;
 - Admin device reset/rebind + historical-key reuse rejection;
 - Full/Class Code transactional entitlement rules.
 
-Use `PROJECT_ENGINEERING_LOG.md` for exact closure heads, tests and findings. Do not resurrect the older password-only/device-bypass behavior.
+Exact heads/tests live in `PROJECT_ENGINEERING_LOG.md`.
 
-## 5. Content source / import
+## 5. Content source / import — Stage9 VERIFIED
 
-Canonical `alwaslh-go` source revision:
+Canonical `alwaslh-go` revision:
 
 `f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
 
-Stage9 verified facts:
+Verified inventory:
 
-- 15 subject roots؛
-- 48 source documents؛
-- 5,552 images؛
-- 4,218 JPG؛
-- 1,334 WEBP؛
-- 86 recognized helpers؛
-- 24 manifests؛
-- 0 fatal inventory issues؛
-- canonical inventory SHA-256 `7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`.
+- 15 subject roots;
+- 48 source documents;
+- 5,552 images;
+- 4,218 JPG;
+- 1,334 WEBP;
+- 86 recognized helpers;
+- 24 manifests;
+- 0 fatal inventory issues;
+- canonical SHA-256 `7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`.
 
-Relevant docs/contracts/tooling live under `content/` and content sections of `PROJECT_ENGINEERING_LOG.md`.
+Important boundary: Stage9 source records are **provenance/evidence**, not curriculum hierarchy authority.
 
-## 6. Media Pipeline
+## 6. Curriculum Structure — Stage13 backend foundation VERIFIED
 
-Stage10 is **VERIFIED** at CLI + PostgreSQL + media runtime level.
+Canonical doc:
+
+- `docs/curriculum/CURRICULUM_STRUCTURE.md`.
+
+Verified executable head:
+
+`6484677dffa80ca0658ce5837750d824e1bb6943`
+
+Verified hierarchy:
+
+```text
+Class / Grade
+→ Subject Offering (`subject_class_links`)
+→ Unit / Section (optional, `curriculum_sections`)
+→ Lesson
+→ Content / pages / resources
+```
+
+Key rules:
+
+- do **not** create a parallel `subject_offerings` table;
+- do **not** introduce a recursive Generic Tree without a new product decision;
+- `lessons.section_id` is optional;
+- PostgreSQL composite FK guarantees lesson and section belong to the same Class/Subject Offering;
+- Admin curriculum mutations are audited in `curriculum_events`;
+- no destructive Admin DELETE route in the verified foundation;
+- filenames/folders do not silently create curriculum hierarchy.
+
+Same-head evidence:
+
+- Stage13 `34092024879` SUCCESS;
+- Stage12 `34092024902` SUCCESS;
+- Stage11 `34092024875` SUCCESS;
+- OCR `34092024895` SUCCESS;
+- Stage10 `34092024854` SUCCESS;
+- Stage9 `34092024883` SUCCESS;
+- Full Rebuild `34092024916` SUCCESS including Chromium.
+
+Current next work: Stage13 Admin Web curriculum/content integration over this API.
+
+## 7. Media Pipeline — Stage10 VERIFIED
 
 Relevant docs:
 
-- `docs/media/MEDIA_PIPELINE_ARCHITECTURE.md`.
-- `docs/media/MEDIA_STAGE_DOD.md`.
-- migration `database/migrations/0009_media_pipeline.sql`.
+- `docs/media/MEDIA_PIPELINE_ARCHITECTURE.md`;
+- `docs/media/MEDIA_STAGE_DOD.md`;
+- `database/migrations/0009_media_pipeline.sql`.
 
-Student browser media quality/delivery tuning is a later product/runtime gate and remains separate from core processing proof.
+Student browser media quality/delivery tuning remains a later product/runtime gate.
 
-## 7. OCR / AI / TTS
+## 8. OCR / AI / TTS
 
 ### OCR — VERIFIED
 
-OCR Foundation is verified with durable lease/retry, checksum/media guards, review gates, approved-only downstream text and real Tesseract Arabic/English integration evidence. Exact heads/runs are in `PROJECT_ENGINEERING_LOG.md`.
+Durable lease/retry, checksum/media guards, review gates, approved-only downstream text and real Tesseract integration are verified.
 
 ### AI — Stage11 + Stage12 backend lifecycle/runtime VERIFIED
 
 Canonical docs:
 
-- `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` — provider/model-neutral strategy, benchmark/routing/evidence boundaries.
-- `docs/ai/STAGE12_JOB_LIFECYCLE.md` — explicit pause/resume/progress, claim locking and expired-lease recovery.
-- `docs/ai/STAGE12_WORKER_RUNTIME.md` — bounded worker slots/polling, graceful drain and fail-fast process behavior.
+- `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`;
+- `docs/ai/STAGE12_JOB_LIFECYCLE.md`;
+- `docs/ai/STAGE12_WORKER_RUNTIME.md`.
 
-Latest fully verified executable AI/backend head:
+Stage12 verified scope: durable jobs/units/leases, bounded retry/cascade, distributed capacity/backpressure, kill/cooldown/Retry-After/budget controls, full route runtime identity, cancellation/partial success, pause/resume/progress, centralized lifecycle ownership and dedicated bounded worker runtime separate from Fastify.
 
-`45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`
-
-Same-head evidence:
-
-- Stage12 `34089764278` SUCCESS؛
-- Stage11 `34089764339` SUCCESS؛
-- OCR `34089764349` SUCCESS؛
-- Stage10 `34089764277` SUCCESS؛
-- Stage9 `34089764344` SUCCESS؛
-- Full Rebuild `34089764467` SUCCESS including Chromium.
-
-Verified Stage12 scope includes durable plans/units/leases, bounded retry/cascade, distributed capacity/backpressure, kill switches, Retry-After/health cooldown, conservative budgets, full route runtime identity, cancellation/partial success, explicit pause/resume/progress, centralized claim/lease-recovery ownership and a dedicated bounded worker lifecycle separate from Fastify.
-
-Still **NOT YET VERIFIED** and must not be faked:
+Still `NOT YET VERIFIED` and must not be faked:
 
 - authorized live provider adapters/credentials;
-- live cross-provider/model benchmark;
-- production route/model defaults;
-- production live-provider `worker.ts` bootstrap;
-- current pricing / actual provider billing reconciliation;
-- hosted AI worker runtime while deployment is deferred.
-
-AI remains provider-neutral and is not locked to Gemini or any provider. Free/near-free routes can be benchmark candidates but cannot become production dependencies without evidence.
+- live provider/model benchmark;
+- production routes/models;
+- production live-provider worker bootstrap;
+- current pricing/actual billing reconciliation;
+- hosted AI worker runtime.
 
 ### TTS — NOT YET VERIFIED
 
-Target rule remains approved text → cached/versioned audio. Do not generate on every Play. TTS implementation/runtime is a later stage and must not be inferred from OCR/AI completion.
+Target remains approved text → cached/versioned audio. No generation per Play.
 
-## 8. Student product target
+## 9. Student product target
 
-`apps/student-web` is the Student product: installable Web/PWA, browser-usable, mobile-first and eventually offline-first for synchronized/downloaded content.
+`apps/student-web` is installable Web/PWA and browser-usable. Core target includes Welcome/auth, curriculum, Reader, Text/Search/TTS, summaries, Practice/Tests/Models, ministerials, Notes, Favorites, Needs Review, progress/private achievements, notifications, multiple Class Codes and Offline downloads.
 
-Core target includes Welcome, verified activation/returning login, curriculum, Reader page/text/search/TTS, summaries, `اختبر نفسك`, tests/models, original ministerials, Notes text/image/capture/audio, Favorites, Needs Review, progress/private achievements, Push/In-App notifications, multiple Class Codes/access and Offline downloads.
+Stage6/8 auth/device foundation is verified; later Student work must preserve it.
 
-Auth/device backend foundations are verified; later Student product features must preserve those contracts.
+## 10. Admin product target — Stage13 ACTIVE
 
-## 9. Admin product target
+`apps/admin-web` is separate Super Admin Web.
 
-`apps/admin-web` is a separate Super Admin Web surface.
+Core target:
 
-Core target includes curriculum/classes/subjects/optional units/lessons, upload/media processing, OCR/TTS status, AI generation/jobs, Question Bank/QA, Draft→Review→Published, students/accounts/codes/recovery/device rebind, notifications, Import/Export/reports/settings/audit.
+```text
+Auth/Shell
+→ Overview
+→ Curriculum/Content
+→ Media/OCR/TTS state
+→ AI Jobs/Generation
+→ Question Bank/Review/Publish
+→ Students/Codes/Recovery/Device Rebind
+→ Notifications
+→ Import/Export/Reports
+→ Settings/Audit
+```
 
-Stage13/Admin AI operations must consume the verified Stage12 backend contracts rather than introducing a new queue, client-owned progress or direct provider calls.
+Curriculum backend is now verified. Admin Web must consume `/v1/admin/curriculum` and must not introduce direct DB access, page-local authoritative storage or duplicate curriculum/AI queues.
 
-Admin and Student share Design System primitives/brand where appropriate but must not share navigation/auth UX or leak functionality between surfaces.
+## 11. Deployment / Preview status
 
-## 10. Deployment / Preview status
+Reference: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
 
-Architecture/policy reference: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
-
-**Current operational decision:** deployment is `DEFERRED BY PRODUCT OWNER`.
+**Current decision:** deployment is `DEFERRED BY PRODUCT OWNER`.
 
 Therefore:
 
-- do not auto-sync stable branches to Preview merely because older policy described that flow;
+- do not auto-sync/deploy based on older Preview policy;
 - do not re-enable Git auto-deployment;
-- hosted Student/Admin/API/media/OCR/AI worker behavior remains `NOT YET VERIFIED` unless deployment is explicitly re-enabled and runtime evidence is recorded;
-- Preview history does not redefine final Production architecture.
+- hosted Student/Admin/API/media/OCR/AI behavior remains `NOT YET VERIFIED` until explicitly re-enabled and tested;
+- Preview history does not redefine Production architecture.
 
-## 11. Documentation governance
+## 12. Documentation governance
 
 After every meaningful batch:
 
-- update `PROJECT_STATUS.md`؛
-- update `PROJECT_ENGINEERING_LOG.md`؛
-- update `PROJECT_HANDOFF.md` when architecture/branch/CI/runtime state changes؛
-- update specialized docs and this index when their status changes؛
-- update legacy parity/coverage evidence for implemented product features؛
-- record exact commit/CI/runtime evidence؛
-- use `NOT YET VERIFIED` for anything not actually tested.
+- update `PROJECT_STATUS.md`;
+- update `PROJECT_ENGINEERING_LOG.md`;
+- update `PROJECT_HANDOFF.md` when architecture/branch/CI/runtime changes;
+- update specialized docs and this index when status changes;
+- update parity/coverage evidence for implemented product features;
+- record exact commit/run evidence;
+- use `NOT YET VERIFIED` for unexecuted work.
 
-Do not let a specialized document remain `PENDING` after its exact executable head is verified; stale documentation is treated as an engineering defect.
+Stale `PENDING` documentation after exact-head verification is an engineering defect.
 
-## 12. Engineering non-negotiables
+## 13. Engineering non-negotiables
 
-- no patching around root causes as final architecture؛
-- understand inputs/outputs/dependencies/callers/side effects/edge cases before changes؛
-- no weakened tests/auth/validation to make CI green؛
-- no hidden errors or duplicate alternate implementations؛
-- unified Design System/shared components where appropriate؛
-- preserve valuable legacy outcomes unless Product Owner explicitly approves removal؛
-- incremental verified changes over blind rewrite؛
-- Evidence > Assumptions؛
-- deployment state and live-provider readiness are evidence boundaries, not labels to infer.
+- Correctness > Cleverness;
+- Evidence > Assumptions;
+- no patching around root causes as final architecture;
+- no weakened tests/auth/validation to make CI green;
+- no hidden errors or duplicate authority implementations;
+- unified Design System/shared primitives where appropriate;
+- preserve valuable legacy outcomes unless Product Owner explicitly approves removal;
+- incremental verified changes over blind rewrite;
+- deployment/live-provider readiness are evidence boundaries, not states to infer.

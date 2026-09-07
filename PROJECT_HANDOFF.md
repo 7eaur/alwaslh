@@ -1,174 +1,141 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> Source-of-truth order: `DOCUMENTATION_INDEX.md` → this file → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → product decisions → AI strategy → parity/coverage docs → roadmap. Repository + GitHub Actions are authoritative; unverified work is always `NOT YET VERIFIED`.
+> Source-of-truth order: `DOCUMENTATION_INDEX.md` → this file → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → product decisions → specialized architecture docs → parity/coverage docs → roadmap. Repository + GitHub Actions are authoritative; unverified work is always `NOT YET VERIFIED`.
 
 ## Repository / phase
 
 - Repo: `7eaur/alwaslh`.
 - Branch: `planning/product-evolution-review`; draft PR #12.
-- Latest fully verified executable baseline: `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
-- Stage11 contracts: **VERIFIED**.
-- Stage12 durable core: **VERIFIED**.
-- Stage12 distributed capacity/backpressure: **VERIFIED**.
-- Stage12 kill-switch/cooldown/Retry-After/budget admission: **VERIFIED**.
-- Stage12 explicit job pause/resume/progress: **VERIFIED**.
-- Stage12 dedicated bounded worker runtime: **VERIFIED**.
-- Live provider adapters/benchmark/production worker bootstrap: **NOT YET VERIFIED**.
-- Deployment: `DEFERRED BY PRODUCT OWNER`; do not re-enable or publish without a new explicit instruction.
+- Latest fully verified executable baseline: `6484677dffa80ca0658ce5837750d824e1bb6943`.
+- Stage1–10 + OCR + Stage11: **VERIFIED**.
+- Stage12 backend lifecycle/runtime: **VERIFIED**.
+- Stage13 Curriculum Structure backend foundation: **VERIFIED**.
+- Current next work: Stage13 Super Admin Web curriculum/content integration.
+- Live AI provider adapters/benchmark/production worker bootstrap: **NOT YET VERIFIED**.
+- Deployment: `DEFERRED BY PRODUCT OWNER`; do not re-enable/publish without new explicit instruction.
 
-## Latest same-head verification
+## Latest exact same-head verification
 
-Exact executable head `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`:
+Executable head `6484677dffa80ca0658ce5837750d824e1bb6943`:
 
-- Stage12 `34089764278` — SUCCESS including dedicated worker lifecycle + lifecycle/capacity/control/pause PostgreSQL regressions.
-- Stage11 `34089764339` — SUCCESS.
-- OCR `34089764349` — SUCCESS.
-- Stage10 `34089764277` — SUCCESS.
-- Stage9 `34089764344` — SUCCESS.
-- Full Rebuild `34089764467` — SUCCESS including Chromium.
+- Stage13 Curriculum Backend `34092024879` — SUCCESS.
+- Stage12 AI Execution `34092024902` — SUCCESS.
+- Stage11 AI Contracts `34092024875` — SUCCESS.
+- OCR Foundation `34092024895` — SUCCESS.
+- Stage10 Media Pipeline `34092024854` — SUCCESS.
+- Stage9 Content Import `34092024883` — SUCCESS.
+- Full Rebuild `34092024916` — SUCCESS including Chromium Student activation/login/recovery E2E.
 
-Important Stage12 predecessor checkpoints:
+The initial Stage13 implementation head `70621c2f…` failed shared Biome formatting before TypeScript/runtime verification. `6484677d…` contains formatter-only corrections and is the executable closure.
 
-- core `dfd9a456…`;
-- distributed capacity `881102ff…`;
-- operational controls `7c3c5645…`;
-- pause/resume/progress `8c8c0366…`;
-- lifecycle ownership cleanup `e7b95042…`;
-- worker runtime closure `45a902eb…`.
-
-## Stable runtime architecture
+## Stable target architecture
 
 ```text
 Admin Web ──┐
             ├── apps/api ── private PostgreSQL
 Student PWA ┘      │
+                   ├── explicit curriculum hierarchy
+                   ├── Stage9 source/provenance inventory
                    ├── Stage10 media evidence
                    ├── reviewed OCR text
                    ├── Stage11 provider-neutral AI contracts
                    ├── Stage12 durable execution/admission/control
-                   ├── Stage12 dedicated bounded worker runtime
+                   ├── Stage12 bounded worker runtime
                    └── later TTS / notifications / offline sync
 ```
 
 Hard rules:
 
-- browser never gets DB/provider secrets;
-- provider calls remain outside DB transactions;
-- stale/expired/cancelled workers cannot commit attempts/outputs;
-- no key/project rotation to evade provider limits/terms;
+- browser never owns PostgreSQL/provider secrets or authoritative permission/progress/publish state;
+- no browser-direct database mutation;
+- provider calls stay outside long DB transactions;
+- Fastify remains HTTP-only; AI polling is a separate runtime;
+- no duplicate queue or duplicate curriculum authority;
+- no key/project rotation to evade provider terms;
 - operational pressure is not semantic failure;
-- valuable legacy capability is not removed without Product Owner approval;
-- root-cause fixes only; no weakened tests/security/business rules;
-- Fastify remains HTTP-only and never owns queue polling.
+- root-cause fixes only; do not weaken tests/security/business rules;
+- preserve valuable legacy capability unless Product Owner explicitly approves removal.
 
-## Route runtime identity
+## Curriculum hierarchy contract — VERIFIED
 
-Never assume `route_key` is globally unique. Operational state is keyed by:
+PED-018 is now executable:
 
 ```text
-route_key
-+ provider_key
-+ provider_project_alias
-+ credential_alias
-+ model_used
+Class / Grade
+→ Subject Offering
+→ Unit / Section (optional)
+→ Lesson
+→ Content / pages / resources
 ```
 
-This is verified and must remain consistent across cooldown, health and route-budget queries.
+Important implementation decisions:
 
-## Job lifecycle contract — VERIFIED
+- `classes` is the Class/Grade authority;
+- `subjects` is the Subject authority;
+- existing `subject_class_links` is the Subject Offering authority; **do not create a parallel `subject_offerings` table**;
+- `curriculum_sections` is exactly one optional intermediate layer; **do not introduce a recursive generic tree** without a new product requirement;
+- `lessons.section_id` may be null;
+- `lessons_section_scope_fk` enforces that section and lesson share the same `(class_id, subject_id)` Offering;
+- Stage9 source inventory is provenance/evidence and must not silently define curriculum hierarchy from filenames/folders;
+- Admin curriculum lifecycle is non-destructive by default: status/archive rather than DELETE;
+- `curriculum_events` is the audit trail for Admin curriculum mutation.
 
-`resume_route_key` is scheduler continuation only. Job pause is separate.
+Detailed contract: `docs/curriculum/CURRICULUM_STRUCTURE.md`.
 
-Durable control:
+## Admin curriculum backend — VERIFIED
 
-- `ai_jobs.paused_at` — operator scheduling gate;
-- existing `ai_job_status` remains aggregate execution state;
-- effective progress may report `paused` while execution status stays queued/running/retrying.
+Admin-only `/v1/admin/curriculum` API supports snapshot + create/update for classes, subjects, offerings, sections and lessons. It uses existing session/Admin authorization and public error envelopes.
 
-Concurrency:
+Verified scenarios include:
 
-- claim locks both job and unit rows (`FOR UPDATE OF j, u SKIP LOCKED`);
-- pause/resume locks the same job row;
-- if claim commits first, that unit is legitimately in-flight and may finish;
-- if pause commits first, no later claim from that job is allowed;
-- pause does not revoke a valid in-flight lease.
+- Admin authentication;
+- duplicate conflicts;
+- optional unsectioned lessons;
+- same-offering section assignment;
+- API and direct-DB rejection of cross-offering section assignment;
+- lesson detach from section without deletion;
+- reordering/status/archive while preserving lesson rows;
+- durable Admin mutation audit;
+- no destructive lesson DELETE route.
 
-Resume:
+Stage13 Admin Web must consume this contract rather than creating page-local storage or direct DB access.
 
-- clears only `paused_at`;
-- preserves accepted outputs, attempts, retry/backoff and route continuation;
-- completed/failed/cancelled jobs are not resumable;
-- cancellation remains terminal.
+## Stage12 AI contract — remains VERIFIED
 
-Lease expiry:
+Do not regress these rules while integrating Admin AI screens:
 
-- expired running attempt closes as `failed/lease_expired`;
-- non-exhausted unit becomes durable `retrying` immediately with lease fields cleared;
-- exhausted unit follows terminal max-attempt handling;
-- paused jobs remain non-claimable;
-- progress reflects real execution authority.
+- reuse `ai_jobs / ai_job_units / ai_outputs`; no second queue;
+- durable UUID leases + stale-worker rejection;
+- bounded global/provider/project/model capacity;
+- cooldown/Retry-After/kill switches/budget admission are DB-coordinated;
+- route runtime identity = route + provider + project + credential + model;
+- pause is `ai_jobs.paused_at`, separate from execution status;
+- `AiJobLifecycleRepository` owns claim + expired-lease recovery;
+- dedicated worker uses bounded slots/backoff, graceful drain and fail-fast unexpected errors;
+- progress is server-derived;
+- provider calls remain outside DB transactions.
 
-Ownership hardening:
-
-- `AiJobLifecycleRepository` is the single owner of job claim + expired-lease recovery;
-- obsolete alternate implementations were removed from `AiExecutionRepository` on `e7b95042…` and the six-workflow matrix remained green.
-
-Detailed design: `docs/ai/STAGE12_JOB_LIFECYCLE.md`.
-
-## Worker lifecycle contract — VERIFIED
-
-`apps/api/src/server.ts` remains HTTP-only.
-
-`apps/api/src/ai/worker-runtime.ts` provides the process-level scheduler:
-
-- fixed bounded slots;
-- exactly one `processNext()` per slot at a time;
-- no large in-memory prefetch batch;
-- empty queue uses bounded exponential idle backoff;
-- successful processing resets a slot to minimum polling delay;
-- graceful stop prevents any later `processNext()` call and wakes idle sleeps;
-- already-running `processNext()` calls are not aborted; they drain under their existing lease authority;
-- database closes after all slots drain;
-- unexpected processor errors are fail-fast: stop claims, drain siblings, close resources, rethrow;
-- abrupt death relies on the existing durable lease expiry/retry contract.
-
-`runAiWorkerProcess()` takes an `AbortSignal`; a future standalone live bootstrap should map `SIGTERM/SIGINT` to it.
-
-Worker verification in `apps/api/tests/ai-worker.test.ts` covers concurrency bounds, stop/no-new-claim behavior, drain-before-close, bounded idle backoff, backoff reset, fail-fast resource cleanup and invalid configuration rejection. Stage12 `34089764278` runs this explicitly before the PostgreSQL regressions.
-
-Detailed design: `docs/ai/STAGE12_WORKER_RUNTIME.md`.
-
-## Live-provider boundary — NOT YET VERIFIED
-
-Do not confuse the verified worker lifecycle with production AI configuration. Still unverified by design:
-
-- authorized live AI provider adapters and credentials;
-- live provider/model benchmark evidence;
-- benchmark-approved production routes/models;
-- production `worker.ts` bootstrap constructing those real adapters/routes;
-- current pricing and actual provider billing reconciliation;
-- hosted worker deployment/runtime.
-
-Do **not** create fake adapters, placeholder credentials or invented production routes merely to make an entrypoint runnable.
+Live provider/model configuration remains unverified. Do not invent fake provider credentials/routes to make an entrypoint appear complete.
 
 ## Other unresolved boundaries
 
-- AI `direct` extraction is not silently publishable because current Question Bank persists only MCQ/T/F.
-- configured budget reservations are safety ceilings, not billing truth.
-- OCR production-quality benchmark beyond current smoke/integration evidence remains separate future evidence.
-- hosted Student/Admin/API/media/OCR/AI runtime remains unverified while deployment is deferred.
+- current Question Bank persists only `multiple_choice | true_false`; AI `direct` extraction must not be silently published;
+- TTS implementation/runtime remains `NOT YET VERIFIED`;
+- Student entitlement-filtered curriculum read API is not implemented yet;
+- content Draft→Review→Published Admin workflow is not implemented yet;
+- hosted Student/Admin/API/media/OCR/AI runtime remains unverified while deployment is deferred;
+- temporary branch `tmp-unused-do-not-use` is P3 repository housekeeping only.
 
 ## Next ordered work
 
-1. Continue the roadmap with curriculum structure extension / Stage13 backend preparation while preserving Stage12 contracts.
-2. Before any production AI routing/bootstrap, execute the live benchmark with authorized providers/models and current terms/pricing.
-3. Resolve direct-question persistence explicitly before publish workflows depend on it.
-4. Keep deployment disabled until the Product Owner explicitly re-enables it.
-
-## Repository housekeeping
-
-A temporary branch `tmp-unused-do-not-use` was accidentally created while preparing the lifecycle ownership cleanup. It points to already-verified history, contains no unique code and is not used by PR #12. The connected GitHub tool has no ref-delete action, so deletion is tracked as P3 housekeeping rather than hidden behind a workaround.
+1. Inspect `apps/admin-web` actual code, current auth shell/routing/state/design primitives and legacy coverage before editing.
+2. Implement the simplest maintainable Admin curriculum management UX over the verified API: loading/error/empty states, class/subject/offering/optional section/lesson flows, archive/status, responsive/a11y.
+3. Add browser/API verification for the Admin curriculum flow and update parity/coverage evidence.
+4. Continue Stage13 content/media/OCR and AI operations on existing backend contracts.
+5. Resolve `direct` question persistence before Question Bank publish depends on it.
+6. Run authorized live AI provider/model benchmark before production routing/bootstrap.
+7. Keep deployment disabled until Product Owner explicitly re-enables it.
 
 ## Continuation rule
 
-After every meaningful batch update `PROJECT_STATUS.md` and `PROJECT_ENGINEERING_LOG.md`; update this Handoff when architecture/branch/CI/runtime state changes; update specialized docs and AI strategy when affected; preserve exact commits/run IDs; mark anything not executed/tested as `NOT YET VERIFIED`.
+After every meaningful batch update `PROJECT_STATUS.md` and `PROJECT_ENGINEERING_LOG.md`; update this Handoff when architecture/branch/CI/runtime state changes; update specialized docs/parity evidence when affected; preserve exact commit/run IDs; mark anything not executed/tested as `NOT YET VERIFIED`.
