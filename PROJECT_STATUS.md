@@ -1,105 +1,90 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage12 Durable Provider-Neutral AI Execution — execution core **VERIFIED**; concurrency/backpressure + health/budget + worker lifecycle remain **ACTIVE / NOT YET VERIFIED**.
+- **Current Phase:** Stage12 Durable Provider-Neutral AI Execution — execution core + distributed concurrency/backpressure **VERIFIED**; health/cooldown/budget implementation is **ACTIVE / NOT YET VERIFIED**; worker lifecycle remains pending.
 - **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
-- **Latest fully verified executable baseline:** `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
+- **Latest fully verified executable baseline:** `881102ff94711f908104cd068a003ad598609944`.
 - **Deployment:** `DEFERRED BY PRODUCT OWNER`. Git auto-deployment remains intentionally disabled; hosted runtime is `NOT YET VERIFIED`.
 
-## Verified baseline through Stage12 execution core
+## Verified baseline through Stage12 distributed backpressure
 
-Stages 1–10, OCR, Stage11 and the first durable Stage12 execution core are verified on one exact executable head.
+Stages 1–10, OCR, Stage11, Stage12 durable execution core and distributed capacity/backpressure are verified on one exact executable head.
 
-Exact verified executable head: `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
+Exact verified executable head: `881102ff94711f908104cd068a003ad598609944`.
 
-- Stage12 AI Execution Verification `34006710501` — **SUCCESS**.
-- Stage11 AI Contract Verification `34006710456` — **SUCCESS**.
-- OCR Foundation Verification `34006710511` — **SUCCESS** including real Tesseract runtime.
-- Stage10 Media Pipeline `34006710490` — **SUCCESS** including real PDF extraction/transform/replay.
-- Stage9 Content Import Verification `34006710461` — **SUCCESS** including complete 5,552-image inventory + idempotent re-import.
-- Rebuild Stage Verification `34006710470` — **SUCCESS** including Stage8 Chromium activation/login/recovery browser E2E.
+- Stage12 AI Execution Verification `34007356406` — **SUCCESS**, including PostgreSQL distributed global/provider/project/model capacity races.
+- Stage11 AI Contract Verification `34007356417` — **SUCCESS**.
+- OCR Foundation Verification `34007356407` — **SUCCESS**.
+- Stage10 Media Pipeline `34007356429` — **SUCCESS**.
+- Stage9 Content Import Verification `34007356442` — **SUCCESS**.
+- Rebuild Stage Verification `34007356410` — **SUCCESS** including Chromium.
 
-## Stage12 discovery decision
+Historical execution-core checkpoint remains `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
 
-`database/migrations/0004_ai_and_sync.sql` already contained `ai_jobs`, `ai_job_units` and `ai_outputs`, but there was no current AI execution route, worker entrypoint or integration test consuming them. The implementation therefore **reuses and extends the existing durable AI tables** instead of creating a second queue/orchestration system.
+## Verified Stage12 execution + capacity behavior
 
-## Verified Stage12 execution core
+Implemented and verified:
 
-Implemented and now verified:
-
-- additive `database/migrations/0012_ai_execution.sql`;
-- deterministic generation-plan idempotency + plan fingerprint conflict detection;
-- durable unit claiming with `FOR UPDATE SKIP LOCKED`;
-- UUID lease token + expiry;
-- strong `running ↔ active lease` database invariant;
-- stale/expired worker rejection for attempt telemetry, unit state and output writes;
-- attempt history/telemetry per provider route;
+- reuse of existing `ai_jobs / ai_job_units / ai_outputs` rather than a parallel queue;
+- additive `0012_ai_execution.sql` + `0013_ai_capacity_control.sql`;
+- deterministic plan idempotency + fingerprint conflict detection;
+- durable `FOR UPDATE SKIP LOCKED` unit claim;
+- UUID lease token + expiry and stale-worker rejection;
 - provider-neutral `AiProviderAdapter` + `AiModelRouter`;
 - provider/network execution outside DB transactions;
-- Stage11 schema/semantic/provenance/duplicate validation before durable output acceptance;
-- bounded route cascade;
-- retryable-error retry with exponential backoff + jitter and max attempts;
-- `review_required` as a durable non-fabricated review state;
-- partial-success job counter reconciliation;
-- cancellation that removes worker write authority and preserves lock ordering;
-- optional provider/model/project/credential aliases, provider request id, tokens, latency, errors and cost-micros telemetry without storing secrets;
-- PostgreSQL lifecycle coverage for idempotency, lease behavior, stale-worker recovery, cascade, retry, cancellation and partial success.
+- Stage11 validation before durable output acceptance;
+- bounded cascade/retry/backoff/jitter;
+- partial success + cancellation safety;
+- distributed global/provider/project/model admission coordinated by PostgreSQL advisory transaction lock;
+- capacity deferral via `resume_route_key` without consuming another semantic retry attempt;
+- `capacity_deferred_count` telemetry;
+- no silent escalation to a more expensive route merely because the intended route is at capacity.
 
-### Execution pipeline
+### Capacity verification note
 
-```text
-Generation Plan
-→ Stage11 typed source/page requests
-→ durable ai_jobs / ai_job_units
-→ short transactional claim + lease
-→ AiModelRouter
-→ provider adapter call OUTSIDE DB transaction
-→ Stage11 validation
-→ lease-protected attempt/output persistence
-→ retry | review_required | completed | failed
-→ job progress / partial-success reconciliation
-```
+The first capacity head `0091ba38953ac773bcece2edb58847efdec7c26d` was blocked at shared Biome formatting/import ordering before runtime verification. Formatting-only corrections produced `881102ff94711f908104cd068a003ad598609944`; all six same-head workflows then passed. No capacity assertion was weakened.
 
-## Evidence-backed defects fixed during Stage12 core
+## Current Stage12 health/cooldown/budget batch — implementation present, verification pending
 
-### Shared formatter gate
+The active batch adds:
 
-Head `00c1affe9e7fb1fce4d9e305e7bd650beb8c4e9b` failed all six workflows at the same API Biome gate. This was formatting-only; TypeScript/PostgreSQL steps had not executed. Fixed without semantic changes.
+- `database/migrations/0014_ai_execution_controls.sql`;
+- singleton global execution control with kill switch + optional budget window;
+- route runtime state keyed by immutable route identity (`route/provider/project/credential/model`);
+- route kill switch;
+- persisted route cooldown;
+- Retry-After propagation to distributed cooldown state;
+- consecutive retryable-failure health tracking with threshold cooldown;
+- conservative global + route budget reservation windows checked before attempt creation;
+- attempt-level global/route budget reservation telemetry;
+- operational deferral using the existing `resume_route_key` without consuming semantic retry count;
+- `control_deferred_count` + explicit control reason telemetry;
+- new PostgreSQL integration coverage for global/route kill switches, cooldown/Retry-After, race-safe global budget admission and route budget ceilings.
 
-### AI-012-009 — stale attempt telemetry write
+Budget semantics are intentionally conservative: configured per-attempt reservation is treated as a pre-call ceiling contribution, and admission sums `max(reservation, reported estimated cost)` inside the configured window. This is **not a claim of actual provider billing accuracy**; live pricing/billing remains `NOT YET VERIFIED` until authorized provider adapters and benchmark evidence exist.
 
-Static review found that unit/output writes were lease-protected but an old worker could still finalize its `ai_execution_attempts` row after lease expiry. Fix at `592e3848fc347ef7aeca9c9de75d4519e2d9433b`:
+**Do not mark this control batch VERIFIED until Stage12 + Stage11 + OCR + Stage10 + Stage9 + Full Rebuild pass on one exact executable head.**
 
-- `finishAttemptSuccess/Failure` now require the current unexpired unit lease;
-- migration enforces the strong running-lease shape;
-- cancellation uses unit→attempt lock ordering;
-- integration test proves stale attempt remains running until recovery, then becomes `failed/lease_expired`, and a new leased attempt may complete.
-
-### Integration test SQL ambiguity
-
-Stage12 run `34006606146` on `592e3848…` passed lint, typecheck, unit tests, build, clean migrations and DB contract checks, then failed only because the test query selected unqualified `status` after joining two tables that both expose that column. Production execution logic was not failing. The test was corrected to `a.status` / `a.attempt_number` in `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`, after which all six verification workflows passed.
-
-## Stage12 invariants now verified
+## Stage12 invariants preserved
 
 - no provider/network call occurs inside a DB transaction;
-- running AI units always have an active lease identity shape;
+- no running unit exists without lease identity;
 - stale/expired/cancelled workers cannot finalize attempts, units or outputs;
 - cancellation clears current execution authority;
+- operational backpressure/cooldown/budget blocks do not consume another semantic retry attempt;
 - same idempotency key with a changed plan fingerprint is rejected;
 - provider/model/project/credential fields remain execution metadata, not Stage11 domain contracts;
 - provider secrets are not persisted;
 - exact-source review requirements remain authoritative;
-- retries are bounded;
 - partial successes survive sibling failures;
 - direct-question Question Bank persistence remains unresolved and is not silently widened.
 
 ## Remaining Stage12 work
 
-1. Add **distributed bounded global/provider/project/model concurrency + scheduler backpressure**. Durable claim safety alone is not a throughput limiter.
-2. Add route health/cooldown/Retry-After and budget ceilings/kill switch without credential rotation to evade quotas or terms.
-3. Add explicit progress/resume semantics where needed by the Stage12 job contract.
-4. Add a dedicated worker lifecycle separate from the HTTP server, with graceful shutdown and bounded polling.
-5. Run real provider/model benchmark evidence before enabling production routes/defaults.
-6. Keep live credentials, current pricing, production routing and hosted worker runtime `NOT YET VERIFIED` until explicitly configured/tested.
+1. Verify the current health/cooldown/Retry-After/budget/kill-switch batch and fix only evidence-backed failures.
+2. Add explicit progress/resume semantics where needed by the Stage12 job contract.
+3. Add a dedicated worker lifecycle separate from the HTTP server, with graceful shutdown and bounded polling.
+4. Run real provider/model benchmark evidence before enabling production routes/defaults.
+5. Keep live credentials, current pricing, actual provider billing, production routing and hosted worker runtime `NOT YET VERIFIED` until explicitly configured/tested.
 
 Admin execution/query/cancel/review UI/API remains a Stage13 integration concern after the backend worker contract stabilizes.
 
@@ -113,6 +98,6 @@ Admin execution/query/cancel/review UI/API remains a Stage13 integration concern
 
 ## Last build/test
 
-**Last fully green executable head:** `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
+**Last fully green executable head:** `881102ff94711f908104cd068a003ad598609944`.
 
-**Next engineering batch:** Stage12 distributed concurrency/backpressure, built as a separate batch above the verified core.
+**Current engineering batch:** Stage12 health/cooldown/Retry-After/budget controls — implementation pending same-head verification.

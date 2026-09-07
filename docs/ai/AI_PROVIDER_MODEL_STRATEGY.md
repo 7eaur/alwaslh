@@ -1,6 +1,6 @@
 # AI PROVIDER / MODEL STRATEGY
 
-> Decision snapshot: 2026-09-06. Provider pricing/free tiers/rate limits change frequently; re-check official terms before live benchmarking or production routing. Architecture must not depend on today's prices.
+> Decision snapshot: 2026-09-07. Provider pricing/free tiers/rate limits change frequently; re-check official terms before live benchmarking or production routing. Architecture must not depend on today's prices.
 
 ## Goal
 
@@ -24,6 +24,7 @@ No direct provider calls from domain services.
 Generation Plan / Service
 → Stage11 typed request + Prompt Registry
 → Stage12 durable unit + lease
+→ distributed operational admission
 → Stage12 AiModelRouter
 → AiProviderAdapter
 → normalized structured Stage11 output
@@ -49,18 +50,18 @@ Stage11 is **VERIFIED**. It provides:
 
 No live provider/model quality claim was made in Stage11.
 
-## Stage12 verified durable execution core
+## Stage12 verified durable execution + distributed capacity
 
-Exact executable checkpoint: `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`.
+Exact executable checkpoint: `881102ff94711f908104cd068a003ad598609944`.
 
 Verification matrix on that same head:
 
-- Stage12 `34006710501` — SUCCESS.
-- Stage11 `34006710456` — SUCCESS.
-- OCR `34006710511` — SUCCESS.
-- Stage10 `34006710490` — SUCCESS.
-- Stage9 `34006710461` — SUCCESS.
-- Full Rebuild `34006710470` — SUCCESS including Chromium.
+- Stage12 `34007356406` — SUCCESS.
+- Stage11 `34007356417` — SUCCESS.
+- OCR `34007356407` — SUCCESS.
+- Stage10 `34007356429` — SUCCESS.
+- Stage9 `34007356442` — SUCCESS.
+- Full Rebuild `34007356410` — SUCCESS including Chromium.
 
 Verified execution behavior:
 
@@ -77,11 +78,9 @@ Verified execution behavior:
 - retryable errors use bounded retry/backoff/jitter;
 - partial success is preserved;
 - cancellation removes current worker write authority;
-- telemetry supports provider/model/project/credential aliases, request id, input/output tokens, latency, validation/error state and optional cost micros without storing provider secrets.
-
-### Important hardening
-
-`AI-012-009` found that stale workers could originally finalize attempt telemetry after lease expiry even though unit/output writes were protected. The fix lease-protects attempt success/failure too, enforces the strong running-lease DB shape and uses consistent unit→attempt lock ordering. Integration coverage proves the stale attempt is recovered as `lease_expired` before a new attempt completes.
+- PostgreSQL advisory-lock admission bounds global/provider/project/model running attempts across worker processes;
+- capacity pressure defers the intended route with `resume_route_key` instead of consuming another semantic retry or silently escalating to a more expensive route;
+- telemetry supports provider/model/project/credential aliases, request id, input/output tokens, latency, validation/error state, capacity deferrals and optional cost micros without storing provider secrets.
 
 ## Input/source policy
 
@@ -138,42 +137,48 @@ job unit
 
 Never regenerate already accepted units because another unit failed.
 
-Capacity pressure is **not** semantic failure. The next Stage12 batch must defer/backpressure work when the intended route has no capacity rather than silently escalating to a more expensive route merely because it is free.
+Capacity/cooldown/budget pressure is **operational**, not semantic. It must defer work on the intended route rather than silently escalating merely because another route currently has room.
 
-## Distributed concurrency / backpressure — active next work
+## Distributed concurrency / backpressure — VERIFIED
 
-Durable `SKIP LOCKED` claims prevent duplicate unit ownership, but they are not sufficient throughput control across multiple worker processes.
+Verified on `881102ff…`:
 
-Required capacity policy:
-
-- database-coordinated, not only process-local;
+- database-coordinated admission, not process-local semaphore only;
 - bounded global running attempts;
 - bounded provider running attempts;
 - bounded project/account running attempts where configured;
 - bounded model running attempts;
 - race-safe under concurrent workers;
-- capacity exhaustion defers the unit without consuming a semantic retry attempt;
+- capacity exhaustion defers without consuming another semantic retry attempt;
 - backpressure retry time is short/bounded and distinct from provider failure backoff;
-- no automatic provider/key/project rotation to evade quota/terms;
-- capacity state must remain observable in telemetry/tests.
+- no provider/key/project rotation to evade quota/terms;
+- capacity state is observable through `resume_route_key`, `capacity_deferred_count` and tests.
 
-## Health / cooldown / budget policy — not yet verified
+## Health / cooldown / budget policy — implementation active, NOT YET VERIFIED
 
-After capacity control:
+The current isolated implementation batch adds:
 
-- honor provider `Retry-After` / explicit cooldown;
-- track configured route/provider health state;
-- temporarily exclude unhealthy/cooling routes;
-- budget ceilings and kill switch must stop new work before overspend;
-- legitimate failover only across intentionally authorized providers/projects;
-- free-tier/price assumptions are never hard-coded architecture.
+- singleton global kill switch;
+- route kill switch;
+- route runtime identity pinned to route/provider/project/credential/model;
+- persisted route cooldown;
+- provider Retry-After → distributed cooldown;
+- consecutive retryable-failure tracking + configurable threshold cooldown;
+- optional global budget window;
+- optional route budget window;
+- per-attempt global/route budget reservation persisted before provider execution;
+- admission under the same PostgreSQL transaction-scoped advisory lock as capacity control;
+- operational deferral without semantic retry consumption;
+- PostgreSQL tests for kill switches, cooldown/Retry-After and race-safe budget ceilings.
+
+Budget policy is conservative by design. For each configured budget scope, a pre-call reservation is counted and the window usage uses `max(reservation, reported estimated cost)`. This prevents new work from being admitted beyond the configured reservation ceiling, but **does not claim actual provider invoice accuracy**. Production budget values require live provider pricing, token ceilings and billing evidence.
 
 ## Credential policy
 
 - all provider secrets are server-only;
 - no provider keys in Student/Admin bundles or repository files;
 - DB/UI may reference non-secret provider/project/credential aliases only;
-- credentials/projects may have health/cooldown/budget metadata;
+- route runtime state may reference those aliases for health/cooldown/budget identity but stores no secret values;
 - legitimate failover is allowed only across intentionally configured authorized accounts/projects;
 - multiple keys in one provider project do not imply extra quota;
 - no routing behavior may evade provider limits or terms.
@@ -225,11 +230,12 @@ Stage12 still needs a dedicated worker runtime separate from the HTTP server wit
 ## Current implementation status
 
 - Provider-neutral Stage11 contracts/Prompt Registry/validators/golden harness: **VERIFIED**.
-- Durable Stage12 execution core / leasing / retry / cascade / partial-success / telemetry: **VERIFIED** on `dfd9a456…`.
-- Distributed concurrency/backpressure: **ACTIVE / NOT YET VERIFIED**.
-- Route health/cooldown/budget ceilings: **NOT YET VERIFIED**.
+- Durable Stage12 execution core / leasing / retry / cascade / partial-success / telemetry: **VERIFIED**.
+- Distributed global/provider/project/model concurrency/backpressure: **VERIFIED** on `881102ff…`.
+- Route health/cooldown/Retry-After/budget ceilings/kill switch: **IMPLEMENTED / VERIFICATION PENDING**.
 - Dedicated worker runtime: **NOT YET VERIFIED**.
 - Live provider adapters with authorized credentials: **NOT YET VERIFIED**.
 - Live cross-provider/model benchmark results: **NOT YET VERIFIED**.
 - Production default routing/budget configuration: **NOT YET VERIFIED**.
+- Actual provider billing accuracy/reconciliation: **NOT YET VERIFIED**.
 - Hosted AI worker/runtime behavior: **NOT YET VERIFIED** while deployment remains deferred by Product Owner.

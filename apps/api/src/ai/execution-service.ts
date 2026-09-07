@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { Database } from "../db.js";
 import { type AiGenerationRequest, aiGenerationRequestSchema } from "./contracts.js";
+import { AiExecutionControl } from "./execution-control.js";
 import { AiExecutionRepository, type AiJobRecord } from "./execution-repository.js";
 import { buildPromptEnvelope, getPromptDefinition } from "./prompt-registry.js";
 import { type AiProviderError, type AiProviderGenerateResult, classifyAiProviderError } from "./provider.js";
@@ -14,6 +15,7 @@ export interface AiExecutionProfile {
   retryMaxMs: number;
   globalMaxConcurrent?: number;
   capacityBackoffMs?: number;
+  operationalBackoffMs?: number;
 }
 
 export interface AiPlanUnitInput {
@@ -85,6 +87,14 @@ function assertExecutionProfile(profile: AiExecutionProfile): void {
   ) {
     throw new Error("ai_capacity_backoff_invalid");
   }
+  if (
+    profile.operationalBackoffMs !== undefined &&
+    (!Number.isInteger(profile.operationalBackoffMs) ||
+      profile.operationalBackoffMs < 10 ||
+      profile.operationalBackoffMs > 300_000)
+  ) {
+    throw new Error("ai_operational_backoff_invalid");
+  }
 }
 
 function shouldEscalate(request: AiGenerationRequest, validation: AiValidationResult): boolean {
@@ -97,6 +107,7 @@ function shouldEscalate(request: AiGenerationRequest, validation: AiValidationRe
 export class AiExecutionService {
   private readonly globalMaxConcurrent: number;
   private readonly capacityBackoffMs: number;
+  private readonly operationalBackoffMs: number;
 
   constructor(
     private readonly database: Database,
@@ -104,10 +115,12 @@ export class AiExecutionService {
     private readonly profile: AiExecutionProfile,
     private readonly repository = new AiExecutionRepository(),
     private readonly random: () => number = Math.random,
+    private readonly control = new AiExecutionControl(),
   ) {
     assertExecutionProfile(profile);
     this.globalMaxConcurrent = profile.globalMaxConcurrent ?? 4;
     this.capacityBackoffMs = profile.capacityBackoffMs ?? 250;
+    this.operationalBackoffMs = profile.operationalBackoffMs ?? 30_000;
   }
 
   async enqueue(input: EnqueueAiPlanInput): Promise<{ job: AiJobRecord; replayed: boolean }> {
@@ -200,10 +213,39 @@ export class AiExecutionService {
 
     let lastProviderFailure: AiProviderError | null = null;
     for (const [routeIndex, route] of routes.entries()) {
-      const attempt = await this.database.transaction((executor) =>
-        this.repository.startAttempt(executor, claimed, route, this.globalMaxConcurrent),
-      );
+      const admission = await this.database.transaction(async (executor) => {
+        const controlAdmission = await this.control.prepareAttempt(executor, route);
+        if (!controlAdmission.allowed) {
+          return { kind: "control" as const, controlAdmission };
+        }
+        const attempt = await this.repository.startAttempt(
+          executor,
+          claimed,
+          route,
+          this.globalMaxConcurrent,
+          controlAdmission.reservations,
+        );
+        return { kind: "attempt" as const, attempt };
+      });
 
+      if (admission.kind === "control") {
+        const nextAttemptAt =
+          admission.controlAdmission.nextAttemptAt ?? new Date(Date.now() + this.operationalBackoffMs);
+        await this.database.transaction(async (executor) => {
+          await this.repository.deferForControl(
+            executor,
+            claimed,
+            route.routeKey,
+            nextAttemptAt,
+            admission.controlAdmission.reason,
+            admission.controlAdmission.message,
+          );
+          await this.repository.refreshJob(executor, claimed.job_id);
+        });
+        return { jobId: claimed.job_id, unitId: claimed.id, status: "retrying", routeKey: route.routeKey };
+      }
+
+      const attempt = admission.attempt;
       if (!attempt.started) {
         const nextAttemptAt = new Date(Date.now() + this.capacityBackoffMs);
         await this.database.transaction(async (executor) => {
@@ -235,9 +277,10 @@ export class AiExecutionService {
         const classified = classifyAiProviderError(error);
         lastProviderFailure = classified;
         const latencyMs = Math.max(0, Date.now() - startedAt);
-        await this.database.transaction((executor) =>
-          this.repository.finishAttemptFailure(executor, claimed, attempt.id, classified, latencyMs),
-        );
+        await this.database.transaction(async (executor) => {
+          await this.repository.finishAttemptFailure(executor, claimed, attempt.id, classified, latencyMs);
+          await this.control.recordProviderFailure(executor, route, classified);
+        });
         if (routeIndex < routes.length - 1) continue;
         break;
       }
@@ -246,8 +289,8 @@ export class AiExecutionService {
       const validation = validateAiGenerationOutput(request, providerResult.output);
       const canEscalate = routeIndex < routes.length - 1 && shouldEscalate(request, validation);
       if (canEscalate) {
-        await this.database.transaction((executor) =>
-          this.repository.finishAttemptSuccess(
+        await this.database.transaction(async (executor) => {
+          await this.repository.finishAttemptSuccess(
             executor,
             claimed,
             attempt.id,
@@ -256,8 +299,9 @@ export class AiExecutionService {
             providerResult.usage ?? {},
             providerResult.providerRequestId,
             providerResult.metadata,
-          ),
-        );
+          );
+          await this.control.recordProviderSuccess(executor, route);
+        });
         continue;
       }
 
@@ -281,6 +325,7 @@ export class AiExecutionService {
           providerResult.providerRequestId,
           providerResult.metadata,
         );
+        await this.control.recordProviderSuccess(executor, route);
         await this.repository.persistOutputOutcome(
           executor,
           claimed,

@@ -1,5 +1,6 @@
 import type { QueryExecutor } from "../db.js";
 import type { AiGenerationRequest } from "./contracts.js";
+import type { AiBudgetReservations, AiOperationalBlockReason } from "./execution-control.js";
 import { type AiModelRoute, resolveRouteCapacity } from "./router.js";
 import type { AiValidationResult, AiValidationStatus } from "./validators.js";
 
@@ -38,6 +39,7 @@ export interface AiClaimedUnit {
   lease_expires_at: Date;
   resume_route_key: string | null;
   capacity_deferred_count: number;
+  control_deferred_count: number;
 }
 
 export interface AiPlanUnitRecord {
@@ -215,7 +217,7 @@ export class AiExecutionRepository {
        returning u.id, u.job_id, u.unit_key, u.position, u.status,
                  u.input_payload, u.attempt_count, u.max_attempts,
                  u.lease_token, u.lease_expires_at,
-                 u.resume_route_key, u.capacity_deferred_count`,
+                 u.resume_route_key, u.capacity_deferred_count, u.control_deferred_count`,
       [leaseSeconds],
     );
     const claimed = rows[0] ?? null;
@@ -248,6 +250,7 @@ export class AiExecutionRepository {
     unit: Pick<AiClaimedUnit, "id" | "lease_token">,
     route: AiModelRoute,
     globalMaxConcurrent: number,
+    budgetReservations: AiBudgetReservations,
   ): Promise<AiAttemptStartResult> {
     await this.assertActiveLease(executor, unit);
 
@@ -320,8 +323,9 @@ export class AiExecutionRepository {
     const inserted = await executor.query<{ id: string }>(
       `insert into ai_execution_attempts (
          job_unit_id, attempt_number, provider_key, provider_project_alias,
-         credential_alias, model_used, route_key, benchmark_version
-       ) values ($1, $2, $3, $4, $5, $6, $7, $8)
+         credential_alias, model_used, route_key, benchmark_version,
+         global_budget_reservation_usd_micros, route_budget_reservation_usd_micros
+       ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        returning id`,
       [
         unit.id,
@@ -332,6 +336,8 @@ export class AiExecutionRepository {
         route.modelKey,
         route.routeKey,
         route.benchmarkVersion,
+        budgetReservations.globalUsdMicros,
+        budgetReservations.routeUsdMicros,
       ],
     );
     await executor.query(
@@ -375,6 +381,32 @@ export class AiExecutionRepository {
         nextAttemptAt,
         `capacity ${dimension} ${current}/${limit}; resume route ${routeKey}`,
       ],
+    );
+    if (!rows[0]) throw new Error("ai_lease_lost");
+  }
+
+  async deferForControl(
+    executor: QueryExecutor,
+    unit: Pick<AiClaimedUnit, "id" | "lease_token">,
+    routeKey: string,
+    nextAttemptAt: Date,
+    reason: AiOperationalBlockReason,
+    message: string,
+  ): Promise<void> {
+    const rows = await executor.query<{ id: string }>(
+      `update ai_job_units
+       set status = 'retrying',
+           next_attempt_at = $4,
+           lease_token = null,
+           lease_expires_at = null,
+           resume_route_key = $3,
+           control_deferred_count = control_deferred_count + 1,
+           last_error_code = $5,
+           last_error_message = $6,
+           completed_at = null
+       where id = $1 and status = 'running' and lease_token = $2 and lease_expires_at > now()
+       returning id`,
+      [unit.id, unit.lease_token, routeKey, nextAttemptAt, reason, message],
     );
     if (!rows[0]) throw new Error("ai_lease_lost");
   }

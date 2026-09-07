@@ -22,9 +22,11 @@ Repository state:
 
 - repo: `7eaur/alwaslh`;
 - branch: `planning/product-evolution-review` / draft PR #12;
-- latest fully verified executable baseline: `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`;
+- latest fully verified executable baseline: `881102ff94711f908104cd068a003ad598609944`;
 - Stage12 execution core: **VERIFIED**;
-- Stage12 distributed backpressure/health/budget/worker lifecycle: **ACTIVE / NOT YET VERIFIED**.
+- Stage12 distributed concurrency/backpressure: **VERIFIED**;
+- Stage12 health/cooldown/Retry-After/budget controls: **IMPLEMENTED / VERIFICATION PENDING**;
+- Stage12 resume/progress/worker lifecycle: **NOT YET VERIFIED**.
 
 ## Architecture
 
@@ -35,7 +37,7 @@ Student PWA ┘       │
                     ├── Stage10 media/blob identity
                     ├── OCR extraction + reviewed searchable text
                     ├── Stage11 provider-neutral AI contracts
-                    ├── Stage12 durable AI execution
+                    ├── Stage12 durable AI execution + distributed admission/control
                     ├── later TTS / notifications
                     └── account/device-scoped offline sync
 ```
@@ -51,6 +53,7 @@ Architecture rules:
 - provider/model-specific payloads remain behind adapters;
 - provider/network calls do not run inside long DB transactions;
 - stale/expired/cancelled workers may not commit execution results or telemetry;
+- distributed concurrency and operational controls are coordinated by PostgreSQL, not only process memory;
 - no credential/project switching to evade provider quotas/terms;
 - root-cause fixes are required; no test/security/business-rule weakening for green CI.
 
@@ -81,13 +84,14 @@ Stage9 canonical source inventory
 → approved searchable/reusable text
 ```
 
-### AI execution core — VERIFIED
+### AI execution — CORE + DISTRIBUTED CAPACITY VERIFIED
 
 ```text
 reviewed OCR/source-page chunks
 → Stage11 typed generation request
 → durable ai_jobs / ai_job_units
 → short transactional claim + lease
+→ distributed operational admission
 → AiModelRouter
 → provider adapter call OUTSIDE DB transaction
 → Stage11 structured validation
@@ -95,6 +99,8 @@ reviewed OCR/source-page chunks
 → retry | review_required | completed | failed
 → job progress / partial success
 ```
+
+Capacity pressure is operational, not semantic: the unit keeps its intended `resume_route_key`, does not consume another semantic retry, and does not silently jump to a more expensive route merely because it has capacity.
 
 ## Stage Classification
 
@@ -112,7 +118,7 @@ reviewed OCR/source-page chunks
 | 10 Media Pipeline | KEEP | VERIFIED |
 | OCR Foundation | KEEP | VERIFIED |
 | 11 AI Contracts | KEEP | VERIFIED |
-| 12 AI Execution | REBUILD execution layer over existing durable tables | CORE VERIFIED; remaining operational controls ACTIVE |
+| 12 AI Execution | REBUILD execution layer over existing durable tables | CORE + CAPACITY VERIFIED; CONTROLS ACTIVE |
 
 ## Changes Made
 
@@ -205,7 +211,7 @@ Implemented:
 - Stage12 PostgreSQL integration tests;
 - Stage12 GitHub Actions verification workflow.
 
-Execution invariants now verified:
+Execution invariants verified:
 
 1. claim/lease is a short DB transaction;
 2. provider/network call happens outside the transaction;
@@ -222,19 +228,55 @@ Execution invariants now verified:
 13. partial success updates aggregate job counters instead of losing completed units;
 14. cancellation and attempt completion use compatible unit→attempt lock ordering.
 
-Telemetry stores when available:
+### Stage12 Distributed Concurrency / Backpressure — VERIFIED
 
-- provider key;
-- model used;
-- project/credential aliases, not secret values;
-- route key / benchmark version;
-- provider request id;
-- input/output token counts;
-- latency;
-- optional estimated cost in USD micros;
-- validation status;
-- retryability/error code/message;
-- provider metadata.
+Final verified head: `881102ff94711f908104cd068a003ad598609944`.
+
+Implemented:
+
+- additive `database/migrations/0013_ai_capacity_control.sql`;
+- route capacity policy for provider/project/model;
+- service-level global capacity;
+- PostgreSQL transaction-scoped advisory lock serializes only admission + attempt insert, never provider calls;
+- running attempt counts enforce global/provider/project/model ceilings across worker processes;
+- `resume_route_key` preserves the intended route when capacity is full;
+- `capacity_deferred_count` records operational deferrals;
+- repeated capacity deferrals do not increment `attempt_count` again;
+- capacity pressure does not trigger route cascade;
+- race tests prove two simultaneous workers cannot over-admit a global/provider/project/model limit.
+
+Verification:
+
+- Stage12 `34007356406` — SUCCESS.
+- Stage11 `34007356417` — SUCCESS.
+- OCR `34007356407` — SUCCESS.
+- Stage10 `34007356429` — SUCCESS.
+- Stage9 `34007356442` — SUCCESS.
+- Full Rebuild `34007356410` — SUCCESS including Chromium.
+
+The initial capacity head `0091ba38953ac773bcece2edb58847efdec7c26d` failed shared Biome formatting/import ordering before runtime steps. Formatting-only fixes produced `881102ff…`; no runtime assertion or business rule was weakened.
+
+### Stage12 Health / Cooldown / Budget Controls — ACTIVE / NOT YET VERIFIED
+
+Current isolated implementation batch adds:
+
+- `database/migrations/0014_ai_execution_controls.sql`;
+- `AiExecutionControl` as a separate distributed operational-admission module;
+- singleton global kill switch;
+- route runtime identity pinned to route/provider/project/credential/model;
+- route kill switch;
+- persisted cooldown state;
+- provider Retry-After → distributed cooldown;
+- consecutive retryable-failure health counter + threshold cooldown;
+- optional global + route budget windows;
+- pre-call global/route budget reservations persisted on each attempt;
+- budget admission under the same advisory transaction lock as capacity;
+- usage calculation uses `max(configured reservation, reported estimated cost)` inside the active window;
+- `control_deferred_count` + explicit operational reason;
+- operational deferral keeps `resume_route_key` and does not consume another semantic retry;
+- PostgreSQL integration tests for kill switches, cooldown/Retry-After, race-safe global budget admission and route budget ceiling.
+
+Budget control is a **configured reservation ceiling**, not proof of actual provider invoice accuracy. Live pricing, token ceilings, provider billing and reconciliation remain `NOT YET VERIFIED`.
 
 ## Architecture Decisions
 
@@ -253,6 +295,9 @@ Historical AD-064–079 remain valid for Preview/build/TLS/media/auth/OCR bounda
 - **AD-090** — cascade is bounded to explicitly configured routes and must not rotate credentials/projects to evade quotas or terms.
 - **AD-091** — partial success is first-class; one failed unit does not erase completed units.
 - **AD-092** — distributed throughput limits must be database-coordinated, not only process-local, because multiple worker processes may run concurrently.
+- **AD-093** — capacity/control pressure is operational state: preserve `resume_route_key`, defer without another semantic retry, and never escalate solely because the intended route is temporarily blocked.
+- **AD-094** — global/route kill switch, cooldown and budget admission are PostgreSQL-coordinated and checked before attempt insertion/provider execution.
+- **AD-095** — budget admission uses conservative configured reservations; actual provider billing remains a separate unverified evidence layer.
 
 ## Audit Findings
 
@@ -280,11 +325,13 @@ Historical AD-064–079 remain valid for Preview/build/TLS/media/auth/OCR bounda
 | AI-012-003 | P1 | AI Transactions | provider call inside transaction would hold DB resources | architecture review | contention/timeouts | provider call outside DB transaction | FIXED + VERIFIED |
 | AI-012-004 | P1 | AI Idempotency | same request key could represent changed plan | execution review | duplicate/wrong plan replay | canonical plan fingerprint conflict check | FIXED + VERIFIED |
 | AI-012-005 | P1 | AI Cancellation | late worker could commit after cancel | execution review | cancelled job resurrected | clear lease + stale-write rejection | FIXED + VERIFIED |
-| AI-012-006 | P1 | AI Scale | no bounded distributed global/provider/project/model concurrency policy yet | Stage12 requirements | provider/DB overload risk | DB-coordinated capacity/backpressure | OPEN / ACTIVE NEXT |
-| AI-012-007 | P1 | AI Operations | no health/cooldown/budget policy yet | Stage12 requirements | uncontrolled route eligibility/cost | route state + cooldown + budget ceilings | OPEN |
+| AI-012-006 | P1 | AI Scale | no bounded distributed global/provider/project/model concurrency policy | Stage12 requirements | provider/DB overload risk | DB-coordinated capacity/backpressure | FIXED + VERIFIED |
+| AI-012-007 | P1 | AI Operations | no distributed health/cooldown/budget/kill-switch policy | Stage12 requirements | uncontrolled route eligibility/cost | PostgreSQL runtime controls + tests | ACTIVE / NOT YET VERIFIED |
 | AI-012-008 | P2 | AI Worker | HTTP server is not a worker lifecycle | code inventory | no production polling/shutdown path | dedicated worker entrypoint/runtime | OPEN |
 | AI-012-009 | P1 | AI Lease Telemetry | stale worker could finalize attempt telemetry after lease expiry | static review before CI closure | misleading telemetry + stale state transition | lease-protect attempt completion + strong running-lease constraint | FIXED + VERIFIED |
 | AI-012-010 | P3 | Stage12 Test | joined lifecycle test used ambiguous unqualified `status` | run `34006606146`, PostgreSQL `42702` | false-negative verification | qualify `a.status` / `a.attempt_number` | FIXED + VERIFIED |
+| AI-012-011 | P3 | Stage12 Capacity Validation | initial capacity head failed shared Biome formatting/import ordering | head `0091ba…` | blocked runtime signal | formatter-only correction, assertions unchanged | FIXED + VERIFIED |
+| AI-012-012 | P2 | AI Budget Evidence | configured reservation ceiling is not actual provider billing evidence | no live provider/pricing yet | false cost certainty if overstated | keep billing/pricing explicitly NOT YET VERIFIED | CONTROLLED / OPEN EVIDENCE |
 | PREVIEW-010-002 | P2 | Hosted Media/AI | hosted durable media/OCR/AI runtime unproven | deployment deferred | cannot claim hosted pipeline | verify later when deployment re-enabled | NOT YET VERIFIED |
 | DOC-001 | P2 | Continuity | chat-memory dependency | governance audit | repeated/contradictory work | Status/Log/Handoff maintained in repo | CONTROLLED |
 
@@ -327,24 +374,34 @@ Intermediate head `592e3848fc347ef7aeca9c9de75d4519e2d9433b`:
 
 Final executable core head `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`:
 
-- Stage12 AI Execution Verification `34006710501` — **SUCCESS**: lint, strict typecheck, 36 unit tests, build, clean migrations, DB contract checks, PostgreSQL idempotency/lease/stale-recovery/cascade/retry/cancellation/partial-success lifecycle.
-- Stage11 AI Contract Verification `34006710456` — **SUCCESS**.
-- OCR Foundation Verification `34006710511` — **SUCCESS**, including real Tesseract.
-- Stage10 Media Pipeline `34006710490` — **SUCCESS**, including real two-page PDF extraction/transforms/storage/replay/stable order.
-- Stage9 Content Import Verification `34006710461` — **SUCCESS**, including complete 5,552-image inventory + re-import idempotency.
-- Rebuild Stage Verification `34006710470` — **SUCCESS**, including Stage8 Chromium activation/returning-login/recovery flow.
+- Stage12 AI Execution Verification `34006710501` — SUCCESS.
+- Stage11 AI Contract Verification `34006710456` — SUCCESS.
+- OCR Foundation Verification `34006710511` — SUCCESS including real Tesseract.
+- Stage10 Media Pipeline `34006710490` — SUCCESS including real PDF lifecycle.
+- Stage9 Content Import Verification `34006710461` — SUCCESS including complete 5,552-image inventory + re-import.
+- Rebuild Stage Verification `34006710470` — SUCCESS including Stage8 Chromium.
 
-**Result:** Stage12 durable execution core is VERIFIED on one exact head. Remaining Stage12 operational controls are separate unverified work.
+### Stage12 distributed capacity closure
+
+Exact executable head `881102ff94711f908104cd068a003ad598609944`:
+
+- Stage12 AI Execution Verification `34007356406` — **SUCCESS**, including distributed global/provider/project/model capacity tests and race-safe admission.
+- Stage11 AI Contract Verification `34007356417` — **SUCCESS**.
+- OCR Foundation Verification `34007356407` — **SUCCESS**.
+- Stage10 Media Pipeline `34007356429` — **SUCCESS**.
+- Stage9 Content Import Verification `34007356442` — **SUCCESS**.
+- Rebuild Stage Verification `34007356410` — **SUCCESS** including Chromium.
+
+**Result:** Stage12 durable execution core + distributed backpressure are VERIFIED on one exact head. Health/cooldown/budget is the next isolated verification batch.
 
 ## Known Issues / Remaining Risk
 
 - deployment remains `DEFERRED BY PRODUCT OWNER`;
 - hosted Student/Admin/API/media/OCR/AI workers remain `NOT YET VERIFIED`;
 - production OCR quality benchmark remains unexecuted;
-- live AI provider/model benchmark, credentials, current pricing, production routing and actual cost evidence are unexecuted;
+- live AI provider/model benchmark, credentials, current pricing, production routing and actual billing evidence are unexecuted;
 - direct extracted-question persistence into Question Bank remains unresolved;
-- distributed global/provider/project/model concurrency/backpressure remains open;
-- route health/cooldown/budget ceiling/kill switch remains open;
+- health/cooldown/Retry-After/budget/kill-switch batch is implemented but not yet same-head verified;
 - dedicated AI worker lifecycle remains open;
 - explicit resume/progress API surface remains open;
 - Admin AI operations integration belongs to Stage13 after backend stability;
@@ -354,13 +411,12 @@ Final executable core head `dfd9a45618e42c2e657dad0ba7b2c2f17e2b8fbf`:
 
 ## Remaining Work — Ordered
 
-1. Implement and verify Stage12 distributed concurrency/backpressure.
-2. Implement and verify route health/cooldown/Retry-After + budget ceilings/kill switch.
-3. Complete resume/progress semantics and dedicated worker lifecycle with graceful shutdown/bounded polling.
-4. Run real benchmark evidence before production provider/model defaults.
-5. Proceed to curriculum structure extension / Stage13+ according to `MASTER_REBUILD_ROADMAP.md` once Stage12 DoD is closed.
-6. Resolve direct-question publish persistence before Question Bank publish workflows depend on it.
-7. Restore/verify hosted deployment only when Product Owner explicitly re-enables it.
+1. Verify the current Stage12 health/cooldown/Retry-After/budget/kill-switch batch and fix only evidence-backed failures.
+2. Complete resume/progress semantics and dedicated worker lifecycle with graceful shutdown/bounded polling.
+3. Run real benchmark evidence before production provider/model defaults.
+4. Proceed to curriculum structure extension / Stage13+ according to `MASTER_REBUILD_ROADMAP.md` once Stage12 DoD is closed.
+5. Resolve direct-question publish persistence before Question Bank publish workflows depend on it.
+6. Restore/verify hosted deployment only when Product Owner explicitly re-enables it.
 
 ## Documentation / Continuity Protocol
 
@@ -375,4 +431,4 @@ After every meaningful batch:
 
 ## Current State
 
-**Stage12 execution core is VERIFIED on `dfd9a456…` with Stage12 + Stage11 + OCR + Stage10 + Stage9 + Full Rebuild/Chromium all green on the same executable head. The next Stage12 batch is distributed concurrency/backpressure; health/budget/worker lifecycle and real provider benchmark remain NOT YET VERIFIED. Deployment remains deferred.**
+**Stage12 execution core + distributed capacity/backpressure are VERIFIED on `881102ff…` with Stage12 + Stage11 + OCR + Stage10 + Stage9 + Full Rebuild/Chromium all green on the same executable head. The isolated health/cooldown/Retry-After/budget/kill-switch batch is implemented but NOT YET VERIFIED. Deployment remains deferred.**
