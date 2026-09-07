@@ -7,6 +7,7 @@ import {
   logoutAdmin,
   restoreAdminSession,
 } from "./admin-api";
+import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
 import { LoginScreen } from "./LoginScreen";
 
@@ -122,6 +123,8 @@ function BrandBlock({ auth = false }: { auth?: boolean }) {
   );
 }
 
+type AdminWorkspace = "curriculum" | "content-operations";
+
 function AdminShell({
   profile,
   onLogout,
@@ -131,17 +134,29 @@ function AdminShell({
   onLogout: () => Promise<void>;
   onSessionExpired: () => void;
 }) {
+  const [workspace, setWorkspace] = useState<AdminWorkspace>("curriculum");
+
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar" aria-label="التنقل الرئيسي">
         <BrandBlock />
         <nav className="admin-nav" aria-label="أقسام الإدارة">
-          <span className="nav-item is-active" aria-current="page">
+          <button
+            className={`nav-item nav-button${workspace === "curriculum" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "curriculum" ? "page" : undefined}
+            onClick={() => setWorkspace("curriculum")}
+          >
             المنهج والمحتوى
-          </span>
-          <span className="nav-item is-disabled">
-            الوسائط وOCR <small>مرحلة لاحقة</small>
-          </span>
+          </button>
+          <button
+            className={`nav-item nav-button${workspace === "content-operations" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "content-operations" ? "page" : undefined}
+            onClick={() => setWorkspace("content-operations")}
+          >
+            الوسائط وOCR
+          </button>
           <span className="nav-item is-disabled">
             الذكاء الاصطناعي <small>مرحلة لاحقة</small>
           </span>
@@ -161,7 +176,11 @@ function AdminShell({
         </div>
       </aside>
       <main className="admin-main">
-        <CurriculumWorkspace onSessionExpired={onSessionExpired} />
+        {workspace === "curriculum" ? (
+          <CurriculumWorkspace onSessionExpired={onSessionExpired} />
+        ) : (
+          <ContentOperationsWorkspace onSessionExpired={onSessionExpired} />
+        )}
       </main>
     </div>
   );
