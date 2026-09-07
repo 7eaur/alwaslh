@@ -168,9 +168,7 @@ test("Admin content operations preserve source order and provide OCR review with
     assert.equal(operations.summary.pendingOcrCount, 2);
     assert.equal(operations.documents[0].title, "كتاب الفيزياء التجريبي");
     assert.equal(operations.documents[0].pendingOcrCount, 2);
-    assert.ok(
-      operations.facets.subjects.some((facet: { slug: string }) => facet.slug === "chemistry"),
-    );
+    assert.ok(operations.facets.subjects.some((facet: { slug: string }) => facet.slug === "chemistry"));
 
     const examFilter = await app.inject({
       method: "GET",
