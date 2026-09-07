@@ -102,6 +102,34 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
 });
 
+test("admin reviews source media and pending OCR through the operations workspace", async ({ page }) => {
+  await login(page);
+  await page.getByRole("button", { name: "الوسائط وOCR" }).click();
+
+  await expect(page.getByRole("heading", { name: "الوسائط وOCR" })).toBeVisible();
+  await expect(page.getByText("كتاب تشغيل الوسائط التجريبي", { exact: true })).toBeVisible();
+  await expect(page.getByText("1", { exact: true })).toHaveCount(5);
+
+  const documentCard = page.locator("article.content-document-card").filter({
+    has: page.getByText("كتاب تشغيل الوسائط التجريبي", { exact: true }),
+  });
+  await documentCard.getByRole("button", { name: "فتح التفاصيل" }).click();
+  await expect(page.getByText("001.jpg", { exact: true })).toBeVisible();
+  await expect(page.getByText("4 نسخ معالجة", { exact: true })).toBeVisible();
+  await expect(page.getByText("جاهز", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: /بانتظار المراجعة/ }).click();
+  await expect(page.getByRole("heading", { name: "001.jpg" })).toBeVisible();
+  await expect(page.getByText("نص خام يحتاج المراجعة", { exact: true })).toBeVisible();
+
+  const reviewedText = page.getByLabel("النص بعد المراجعة");
+  await reviewedText.fill("نص مصحح ومعتمد من الإدارة");
+  await page.getByRole("button", { name: "اعتماد النص" }).click();
+
+  await expect(page.getByText("معتمد", { exact: true })).toBeVisible();
+  await expect(reviewedText).toHaveValue("نص مصحح ومعتمد من الإدارة");
+});
+
 test("admin curriculum remains usable at a narrow viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
