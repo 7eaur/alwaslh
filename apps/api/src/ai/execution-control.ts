@@ -44,11 +44,6 @@ interface GlobalRuntimeControl extends BudgetState {
 }
 
 interface RouteRuntimeState extends BudgetState {
-  route_key: string;
-  provider_key: string;
-  provider_project_alias: string | null;
-  credential_alias: string | null;
-  model_used: string;
   kill_switch: boolean;
   cooldown_until: Date | null;
   consecutive_failures: number;
@@ -58,10 +53,6 @@ interface RouteRuntimeState extends BudgetState {
 
 interface RuntimeClock {
   now: Date;
-}
-
-function sameNullable(left: string | null, right: string | undefined): boolean {
-  return left === (right ?? null);
 }
 
 function asBigInt(value: string): bigint {
@@ -85,6 +76,16 @@ function assertBudgetState(scope: "global" | "route", state: BudgetState): void 
 function normalizedRetryAfterMs(error: AiProviderError): number | null {
   if (error.retryAfterMs === undefined || !Number.isFinite(error.retryAfterMs)) return null;
   return Math.max(0, Math.round(error.retryAfterMs));
+}
+
+function routeIdentityValues(route: AiModelRoute): readonly unknown[] {
+  return [
+    route.routeKey,
+    route.providerKey,
+    route.projectAlias ?? null,
+    route.credentialAlias ?? null,
+    route.modelKey,
+  ];
 }
 
 export class AiExecutionControl {
@@ -112,35 +113,24 @@ export class AiExecutionControl {
       `insert into ai_route_runtime_state (
          route_key, provider_key, provider_project_alias, credential_alias, model_used
        ) values ($1, $2, $3, $4, $5)
-       on conflict (route_key) do nothing`,
-      [
-        route.routeKey,
-        route.providerKey,
-        route.projectAlias ?? null,
-        route.credentialAlias ?? null,
-        route.modelKey,
-      ],
+       on conflict on constraint ai_route_runtime_state_identity_unique do nothing`,
+      routeIdentityValues(route),
     );
     const routeRows = await executor.query<RouteRuntimeState>(
-      `select route_key, provider_key, provider_project_alias, credential_alias, model_used,
-              kill_switch, cooldown_until, consecutive_failures, failure_threshold,
+      `select kill_switch, cooldown_until, consecutive_failures, failure_threshold,
               failure_cooldown_ms, budget_limit_usd_micros, budget_window_started_at,
               budget_window_ends_at, budget_reservation_usd_micros
        from ai_route_runtime_state
        where route_key = $1
+         and provider_key = $2
+         and provider_project_alias is not distinct from $3::text
+         and credential_alias is not distinct from $4::text
+         and model_used = $5
        for update`,
-      [route.routeKey],
+      routeIdentityValues(route),
     );
     const routeState = routeRows[0];
     if (!routeState) throw new Error("ai_route_runtime_state_missing");
-    if (
-      routeState.provider_key !== route.providerKey ||
-      routeState.model_used !== route.modelKey ||
-      !sameNullable(routeState.provider_project_alias, route.projectAlias) ||
-      !sameNullable(routeState.credential_alias, route.credentialAlias)
-    ) {
-      throw new Error(`ai_route_runtime_identity_mismatch:${route.routeKey}`);
-    }
 
     if (globalControl.kill_switch) {
       return {
@@ -172,7 +162,7 @@ export class AiExecutionControl {
     if (!globalBudget.allowed) return globalBudget;
 
     assertBudgetState("route", routeState);
-    const routeBudget = await this.checkBudget(executor, "route", routeState, now, route.routeKey);
+    const routeBudget = await this.checkBudget(executor, "route", routeState, now, route);
     if (!routeBudget.allowed) return routeBudget;
 
     return {
@@ -190,37 +180,41 @@ export class AiExecutionControl {
     error: AiProviderError,
   ): Promise<void> {
     const retryAfterMs = normalizedRetryAfterMs(error);
-    const rows = await executor.query<{ route_key: string }>(
+    const rows = await executor.query<{ id: string }>(
       `update ai_route_runtime_state
        set consecutive_failures = case
-             when $2 then consecutive_failures + 1
+             when $6 then consecutive_failures + 1
              else consecutive_failures
            end,
            cooldown_until = case
-             when $3::integer is not null and $3::integer > 0 then
+             when $7::integer is not null and $7::integer > 0 then
                greatest(
                  coalesce(cooldown_until, '-infinity'::timestamptz),
-                 now() + ($3::double precision * interval '1 millisecond')
+                 now() + ($7::double precision * interval '1 millisecond')
                )
-             when $2 and consecutive_failures + 1 >= failure_threshold then
+             when $6 and consecutive_failures + 1 >= failure_threshold then
                greatest(
                  coalesce(cooldown_until, '-infinity'::timestamptz),
                  now() + (failure_cooldown_ms::double precision * interval '1 millisecond')
                )
              else cooldown_until
            end,
-           last_error_code = $4,
+           last_error_code = $8,
            last_failure_at = now(),
            updated_at = now()
        where route_key = $1
-       returning route_key`,
-      [route.routeKey, error.retryable, retryAfterMs, error.code],
+         and provider_key = $2
+         and provider_project_alias is not distinct from $3::text
+         and credential_alias is not distinct from $4::text
+         and model_used = $5
+       returning id`,
+      [...routeIdentityValues(route), error.retryable, retryAfterMs, error.code],
     );
     if (!rows[0]) throw new Error("ai_route_runtime_state_missing");
   }
 
   async recordProviderSuccess(executor: QueryExecutor, route: AiModelRoute): Promise<void> {
-    const rows = await executor.query<{ route_key: string }>(
+    const rows = await executor.query<{ id: string }>(
       `update ai_route_runtime_state
        set consecutive_failures = 0,
            cooldown_until = case
@@ -230,8 +224,12 @@ export class AiExecutionControl {
            last_success_at = now(),
            updated_at = now()
        where route_key = $1
-       returning route_key`,
-      [route.routeKey],
+         and provider_key = $2
+         and provider_project_alias is not distinct from $3::text
+         and credential_alias is not distinct from $4::text
+         and model_used = $5
+       returning id`,
+      routeIdentityValues(route),
     );
     if (!rows[0]) throw new Error("ai_route_runtime_state_missing");
   }
@@ -241,7 +239,7 @@ export class AiExecutionControl {
     scope: "global" | "route",
     state: BudgetState,
     now: Date,
-    routeKey: string | undefined,
+    route: AiModelRoute | undefined,
   ): Promise<{ allowed: true; reservationUsdMicros: string } | AiControlBlocked> {
     if (!budgetStateConfigured(state)) {
       return { allowed: true, reservationUsdMicros: "0" };
@@ -279,15 +277,7 @@ export class AiExecutionControl {
              where started_at >= $1 and started_at < $2`,
             [windowStart, windowEnd],
           )
-        : await executor.query<{ used_usd_micros: string }>(
-            `select coalesce(
-               sum(greatest(route_budget_reservation_usd_micros, coalesce(estimated_cost_usd_micros, 0))),
-               0
-             )::text as used_usd_micros
-             from ai_execution_attempts
-             where route_key = $1 and started_at >= $2 and started_at < $3`,
-            [routeKey, windowStart, windowEnd],
-          );
+        : await this.routeBudgetUsage(executor, route, windowStart, windowEnd);
 
     const used = asBigInt(rows[0]?.used_usd_micros ?? "0");
     const reservation = asBigInt(state.budget_reservation_usd_micros);
@@ -302,5 +292,29 @@ export class AiExecutionControl {
     }
 
     return { allowed: true, reservationUsdMicros: reservation.toString() };
+  }
+
+  private async routeBudgetUsage(
+    executor: QueryExecutor,
+    route: AiModelRoute | undefined,
+    windowStart: Date,
+    windowEnd: Date,
+  ): Promise<readonly { used_usd_micros: string }[]> {
+    if (!route) throw new Error("ai_route_budget_identity_missing");
+    return executor.query<{ used_usd_micros: string }>(
+      `select coalesce(
+         sum(greatest(route_budget_reservation_usd_micros, coalesce(estimated_cost_usd_micros, 0))),
+         0
+       )::text as used_usd_micros
+       from ai_execution_attempts
+       where route_key = $1
+         and provider_key = $2
+         and provider_project_alias is not distinct from $3::text
+         and credential_alias is not distinct from $4::text
+         and model_used = $5
+         and started_at >= $6
+         and started_at < $7`,
+      [...routeIdentityValues(route), windowStart, windowEnd],
+    );
   }
 }

@@ -51,7 +51,8 @@ CREATE TABLE ai_execution_runtime_control (
 INSERT INTO ai_execution_runtime_control (singleton) VALUES (true);
 
 CREATE TABLE ai_route_runtime_state (
-  route_key text PRIMARY KEY,
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  route_key text NOT NULL,
   provider_key text NOT NULL,
   provider_project_alias text,
   credential_alias text,
@@ -69,6 +70,13 @@ CREATE TABLE ai_route_runtime_state (
   last_failure_at timestamptz,
   last_success_at timestamptz,
   updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT ai_route_runtime_state_identity_unique UNIQUE NULLS NOT DISTINCT (
+    route_key,
+    provider_key,
+    provider_project_alias,
+    credential_alias,
+    model_used
+  ),
   CONSTRAINT ai_route_runtime_state_route_nonblank CHECK (length(btrim(route_key)) > 0),
   CONSTRAINT ai_route_runtime_state_provider_nonblank CHECK (length(btrim(provider_key)) > 0),
   CONSTRAINT ai_route_runtime_state_model_nonblank CHECK (length(btrim(model_used)) > 0),
@@ -98,13 +106,13 @@ CREATE TABLE ai_route_runtime_state (
 );
 
 CREATE INDEX idx_ai_route_runtime_state_cooldown
-  ON ai_route_runtime_state(cooldown_until, route_key)
+  ON ai_route_runtime_state(cooldown_until, route_key, provider_key, model_used)
   WHERE cooldown_until IS NOT NULL;
 
 CREATE INDEX idx_ai_execution_attempts_global_budget_window
   ON ai_execution_attempts(started_at, global_budget_reservation_usd_micros);
 
 CREATE INDEX idx_ai_execution_attempts_route_budget_window
-  ON ai_execution_attempts(route_key, started_at, route_budget_reservation_usd_micros);
+  ON ai_execution_attempts(route_key, provider_key, model_used, started_at, route_budget_reservation_usd_micros);
 
 COMMIT;
