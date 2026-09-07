@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ApiRequestError } from "./admin-api";
 import {
   createCurriculumLesson,
   fetchAdminCurriculum,
@@ -86,7 +85,7 @@ describe("admin api client", () => {
   it("converts network failures into an explicit service-unavailable error", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
 
-    await expect(fetchAdminCurriculum()).rejects.toMatchObject<ApiRequestError>({
+    await expect(fetchAdminCurriculum()).rejects.toMatchObject({
       code: "SERVICE_UNAVAILABLE",
       status: 0,
     });
@@ -100,7 +99,7 @@ describe("admin api client", () => {
       ),
     );
 
-    await expect(fetchAdminCurriculum()).rejects.toMatchObject<ApiRequestError>({
+    await expect(fetchAdminCurriculum()).rejects.toMatchObject({
       code: "CONFLICT",
       message: "السجل موجود بالفعل",
       status: 409,
