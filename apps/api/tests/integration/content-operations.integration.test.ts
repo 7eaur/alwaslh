@@ -168,7 +168,9 @@ test("Admin content operations preserve source order and provide OCR review with
     assert.equal(operations.summary.pendingOcrCount, 2);
     assert.equal(operations.documents[0].title, "كتاب الفيزياء التجريبي");
     assert.equal(operations.documents[0].pendingOcrCount, 2);
-    assert.ok(operations.facets.subjects.some((facet) => facet.slug === "chemistry"));
+    assert.ok(
+      operations.facets.subjects.some((facet: { slug: string }) => facet.slug === "chemistry"),
+    );
 
     const examFilter = await app.inject({
       method: "GET",
@@ -187,12 +189,12 @@ test("Admin content operations preserve source order and provide OCR review with
     assert.equal(detail.statusCode, 200);
     const assets = detail.json().detail.assets;
     assert.deepEqual(
-      assets.map((asset) => asset.filename),
+      assets.map((asset: { filename: string }) => asset.filename),
       ["001.jpg", "002.jpg"],
     );
     assert.equal(assets[0].media.status, "ready");
     assert.deepEqual(
-      assets[0].media.variants.map((variant) => variant.kind),
+      assets[0].media.variants.map((variant: { kind: string }) => variant.kind),
       ["source", "display", "thumbnail", "ai"],
     );
     assert.equal(assets[0].media.ocrExtractions.length, 2);
