@@ -5,6 +5,8 @@ import { registerStudentActivationRoutes } from "./activation/http.js";
 import { StudentActivationService } from "./activation/service.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
+import { AdminContentOperationsService } from "./content/admin-operations.js";
+import { registerAdminContentOperationsRoutes } from "./content/admin-operations-http.js";
 import { type AppConfig, allowedOrigins } from "./config.js";
 import { registerCurriculumRoutes } from "./curriculum/http.js";
 import { CurriculumService } from "./curriculum/service.js";
@@ -29,6 +31,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const access = new AccessService(database);
   const activation = new StudentActivationService(database);
   const curriculum = new CurriculumService(database);
+  const contentOperations = new AdminContentOperationsService(database);
 
   app.addHook("onRequest", async (request, reply) => {
     const origin = request.headers.origin;
@@ -52,6 +55,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerStudentActivationRoutes(app, config, auth, activation);
   registerAccessRoutes(app, config, auth, access);
   registerCurriculumRoutes(app, config, auth, curriculum);
+  registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
 
   app.get("/health", async () => ({
     status: "ok",

@@ -1,4 +1,4 @@
-name: Stage 13 Curriculum Verification
+name: Stage 13 Admin Product Verification
 
 on:
   pull_request:
@@ -8,12 +8,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: stage13-curriculum-${{ github.event.pull_request.number || github.ref }}
+  group: stage13-admin-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  stage13-curriculum-backend:
-    name: Stage 13 · Curriculum structure backend
+  stage13-admin-backend:
+    name: Stage 13 · Curriculum + content operations backend
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -54,20 +54,23 @@ jobs:
           npm run build --prefix apps/api
       - name: Apply all migrations on clean PostgreSQL
         run: npm run db:migrate --prefix apps/api
-      - name: Verify curriculum PostgreSQL contracts
+      - name: Verify curriculum and processing PostgreSQL contracts
         run: |
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('curriculum_sections','curriculum_events') and relkind='r'")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('curriculum_sections','curriculum_events','content_source_documents','content_source_assets','media_assets','media_variants','ocr_extractions') and relkind='r'")" = "7"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from information_schema.columns where table_name='subject_class_links' and column_name in ('status','updated_at')")" = "2"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from information_schema.columns where table_name='lessons' and column_name='section_id'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('curriculum_sections_offering_fk','curriculum_sections_scope_id_unique','curriculum_sections_slug_unique','lessons_section_scope_fk','curriculum_events_metadata_object')")" = "5"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_subject_class_links_class_status_position','idx_curriculum_sections_offering_position','idx_lessons_offering_section_position','idx_curriculum_events_resource_created','idx_curriculum_events_actor_created')")" = "5"
-      - name: Run Admin curriculum API and PostgreSQL scope tests
-        run: node --test --import tsx tests/integration/curriculum.integration.test.ts
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_subject_class_links_class_status_position','idx_curriculum_sections_offering_position','idx_lessons_offering_section_position','idx_curriculum_events_resource_created','idx_curriculum_events_actor_created','idx_media_assets_status_created','idx_ocr_extractions_review_pending')")" = "7"
+      - name: Run Admin curriculum and content operations API tests
+        run: >-
+          node --test --import tsx
+          tests/integration/curriculum.integration.test.ts
+          tests/integration/content-operations.integration.test.ts
         working-directory: apps/api
 
-  stage13-admin-curriculum-browser:
-    name: Stage 13 · Admin curriculum browser E2E
-    needs: stage13-curriculum-backend
+  stage13-admin-browser:
+    name: Stage 13 · Admin browser E2E
+    needs: stage13-admin-backend
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -120,5 +123,5 @@ jobs:
         run: npm run auth:create-admin --prefix apps/api
       - name: Install Chromium
         run: npx --prefix apps/admin-web playwright install --with-deps chromium
-      - name: Run real browser Admin curriculum flow
+      - name: Run real browser Admin flows
         run: npm run test:e2e --prefix apps/admin-web
