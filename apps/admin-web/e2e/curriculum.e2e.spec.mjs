@@ -89,7 +89,7 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await page.getByLabel("حالة درس الدرس الإداري المحدّث").selectOption("inactive");
   await waitForSaved(page);
   const updatedLessonRow = page.getByText("الدرس الإداري المحدّث", { exact: true }).locator("xpath=ancestor::li");
-  await expect(updatedLessonRow.getByText("غير نشط", { exact: true })).toBeVisible();
+  await expect(updatedLessonRow.locator(".status-badge")).toHaveText("غير نشط");
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
