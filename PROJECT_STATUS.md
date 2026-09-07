@@ -1,40 +1,26 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage13 Super Admin Product — Admin Web curriculum management **IMPLEMENTED / VERIFICATION PENDING**.
+- **Current Phase:** Stage13 Super Admin Product — Admin Curriculum Web **VERIFIED**; next isolated batch is **Content / Media / OCR Operations**.
 - **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
-- **Latest fully verified executable baseline:** `6484677dffa80ca0658ce5837750d824e1bb6943`.
-- **Current Admin Curriculum executable implementation head:** `b2f7eb8277de1c2de841ad050b3a416f2ecfeee7` — **VERIFICATION PENDING**.
+- **Latest fully verified executable baseline:** `d3e621e6f60cc56ee3838b7df36a86ebafa37524`.
 - **Deployment:** `DEFERRED BY PRODUCT OWNER`. Hosted Student/Admin/API/media/OCR/AI worker runtime remains `NOT YET VERIFIED`.
+- **Old database:** intentionally out of current scope per Product Owner; repository migrations, tests and current PostgreSQL contracts are authoritative for ongoing development.
 
 ## Latest fully verified same-head matrix
 
-Exact verified executable head: `6484677dffa80ca0658ce5837750d824e1bb6943`.
+Exact executable head: `d3e621e6f60cc56ee3838b7df36a86ebafa37524`.
 
-- Stage13 Curriculum backend `34092024879` — SUCCESS.
-- Stage12 AI Execution `34092024902` — SUCCESS.
-- Stage11 AI Contracts `34092024875` — SUCCESS.
-- OCR Foundation `34092024895` — SUCCESS.
-- Stage10 Media `34092024854` — SUCCESS.
-- Stage9 Content Import `34092024883` — SUCCESS.
-- Full Rebuild `34092024916` — SUCCESS including Chromium.
+- Stage13 Curriculum Verification `34168788666` — SUCCESS, including Admin Chromium E2E.
+- Stage12 AI Execution `34168788667` — SUCCESS.
+- Stage11 AI Contracts `34168788661` — SUCCESS.
+- OCR Foundation `34168788704` — SUCCESS.
+- Stage10 Media Pipeline `34168788646` — SUCCESS.
+- Stage9 Content Import `34168788663` — SUCCESS.
+- Full Rebuild `34168788747` — SUCCESS, including existing Student Chromium activation/login/recovery coverage.
 
-## Verified curriculum backend contract
+## Stage13 Admin Curriculum Web — VERIFIED
 
-```text
-Class / Grade
-→ Subject Offering (`subject_class_links`)
-→ Unit / Section (optional)
-→ Lesson
-→ Content / pages / resources
-```
-
-`subject_class_links` remains the only Subject Offering authority. `curriculum_sections` is one optional layer only. `lessons.section_id` is nullable and cross-offering assignment is blocked by PostgreSQL. Stage9 source inventory remains provenance evidence, not curriculum authority.
-
-## Current isolated batch — Admin Curriculum Web
-
-The previous `apps/admin-web` was a static shell without session restore, API integration or real curriculum operations. It is classified **REBUILD inside the same Admin surface** while preserving Brand tokens and the separate Super Admin product boundary.
-
-Implemented architecture:
+Verified browser architecture:
 
 ```text
 Admin Web
@@ -42,84 +28,108 @@ Admin Web
 → POST /v1/auth/login when signed out
 → HttpOnly server session
 → GET /v1/admin/curriculum
-→ Admin-only mutation routes
-→ authoritative snapshot refresh after successful mutation
+→ Admin-only curriculum mutations
+→ authoritative server snapshot refresh
 ```
 
-Implemented UI behavior:
+Verified behavior:
 
-- Admin login and automatic session restoration;
+- separate Admin login and automatic session restoration;
 - server-backed logout;
-- real curriculum counts only, no fake dashboard metrics;
+- real curriculum counts, no fake dashboard metrics;
 - create Class / Subject / Subject Offering / optional Section / Lesson;
 - sectioned and unsectioned lessons;
 - rename Class/Subject/Section/Lesson;
-- edit Class/Offering/Section/Lesson ordering;
-- edit `active | inactive | archived` state;
-- move a lesson between sections or detach it to the Offering root;
-- explicit loading, empty, network-error and mutation-feedback states;
-- RTL responsive Admin layout;
-- future modules are visibly marked as later work instead of dead interactive controls;
+- explicit ordering and `active | inactive | archived` state;
+- move Lesson between Sections or detach to Offering root;
+- loading, empty, network-error and mutation-feedback states;
+- RTL responsive layout and 390px horizontal-overflow check;
 - no destructive DELETE UI.
 
-Code ownership:
+Chromium verified:
 
-- `apps/admin-web/src/App.tsx` — session + shell ownership;
-- `apps/admin-web/src/LoginScreen.tsx` — Admin credential UX;
-- `apps/admin-web/src/admin-api.ts` — typed API/session client;
-- `apps/admin-web/src/CurriculumWorkspace.tsx` — curriculum operations;
-- `docs/admin/STAGE13_ADMIN_CURRICULUM_UI.md` — detailed contract.
+```text
+login
+→ create Class
+→ create Subject
+→ link Offering
+→ create Section
+→ create Lesson
+→ move/detach Lesson
+→ rename Lesson
+→ change status
+→ reload + restore server session
+→ logout
+```
 
-Correctness fixes made before CI:
+## CI hardening during closure
 
-1. Password input is passed exactly as entered; only the identifier is trimmed.
-2. Logout does not pretend success if the server request fails.
-3. A Git write divergence created while recording the implementation was repaired with an explicit merge commit instead of force-rewriting history. `b2f7eb82…` contains both implementation and documentation ancestry.
+The final closure did not weaken product assertions. Test-harness issues were corrected at their source:
 
-## Verification gate for current batch
+1. fresh `Response` per mocked fetch instead of reusing a consumed body;
+2. API-client tests assert URL path rather than assuming relative URLs when `VITE_API_BASE_URL` is configured;
+3. Playwright selectors were scoped to real interactive controls instead of regex/fuzzy label matches;
+4. duplicate visible/accessibility text assertions were scoped to the intended UI element;
+5. Stage12 distributed-capacity race now uses two independent jobs, so job-row locking cannot short-circuit the capacity gate before the race is exercised.
 
-Do **not** promote the verified baseline until one exact executable head passes:
+## Stable architecture boundaries
 
-1. Admin ESLint;
-2. strict TypeScript typecheck;
-3. Admin Vitest API-client tests;
-4. Admin production build with explicit `VITE_API_BASE_URL`;
-5. Stage13 backend clean PostgreSQL + API integration tests;
-6. fresh-PostgreSQL Chromium Admin E2E proving login → create hierarchy → lesson move/rename/status → reload/session restore → logout;
-7. narrow viewport overflow check;
-8. Stage12/11/OCR/10/9 regressions;
-9. Full Rebuild including existing Chromium coverage.
-
-Current Admin Curriculum UI: **NOT YET VERIFIED** until these gates pass.
-
-## Stable lower-layer boundaries
-
-- Stage12 backend lifecycle/runtime remains VERIFIED on the last green baseline.
-- Stage9 source inventory remains 15 roots / 48 source documents / 5,552 images.
-- Stage10 media checksum/order remains authoritative source evidence.
-- only reviewed/approved OCR is approved downstream text evidence.
-- Student auth/device rules remain unchanged.
+- `subject_class_links` remains the only Subject Offering authority.
+- `curriculum_sections` remains one optional layer only.
+- Stage9 source inventory remains provenance/evidence, not curriculum authority.
+- Stage10 `media_assets/media_variants` remain derived media authority.
+- only completed OCR with `not_required | approved` review state is approved downstream text evidence.
+- `lesson_assets` exists but is **not currently linked automatically** to Stage10 `media_assets`; therefore source/media/OCR operations must not be presented as published lesson content yet.
+- browser must not run OCR/AI workers or mutate PostgreSQL directly.
+- Stage12 `ai_jobs / ai_job_units / ai_outputs` remains the single AI execution authority.
 - Question Bank still persists only `multiple_choice | true_false`; AI `direct` remains reviewable output only.
-- configured AI budget reservations are safety ceilings, not invoice truth.
 
-Still intentionally `NOT YET VERIFIED`:
+## Current isolated batch — Content / Media / OCR Operations
+
+Repository discovery is complete enough to start the batch:
+
+- Stage9 already stores ordered source documents/assets and provenance.
+- Stage10 already stores media processing status plus `source/display/thumbnail/ai` variants.
+- OCR already stores durable extraction, retry, confidence and review state.
+- `apps/api/src/app.ts` currently exposes no Admin HTTP surface for media/OCR operations.
+- `apps/admin-web` currently marks “الوسائط وOCR” as a later module.
+
+The next implementation will add a thin Admin operations/read-review layer over the existing authorities, not a second media/OCR pipeline. Upload task history and lesson publication/linking remain separate contracts unless implemented and verified in the same future batch.
+
+## Legacy coverage state
+
+Verified implementation evidence from the Admin Curriculum batch now covers the implemented subset of:
+
+- `PUB-002` separate Admin login;
+- `ADMIN-007` Admin navigation foundation;
+- `ADMIN-008` responsive Admin shell;
+- `CLASS-A-001..003`, `CLASS-A-005..007`, `CLASS-A-010` where represented by current hierarchy operations;
+- `LES-A-001..003`, `LES-A-006..007` for current hierarchy/list/filter/edit/order behavior.
+
+Still open: server search/pagination, preview, destructive dependency-aware delete semantics, bulk lesson operations, uploads, media processing/progress/history, OCR operations UI, AI authoring/review, Question Bank publish, students/codes, notifications, imports/exports/reports/settings/audit.
+
+## Still intentionally NOT YET VERIFIED
 
 - authorized live AI provider adapters/credentials;
-- live provider/model benchmark;
-- production AI route/model defaults;
+- live provider/model benchmark and production route/model defaults;
 - production live-provider worker bootstrap;
-- hosted worker runtime;
-- hosted Admin/Student/API runtime while deployment is deferred.
+- hosted worker/runtime behavior;
+- hosted Admin/Student/API runtime while deployment is deferred;
+- Draft → Review → Published content workflow;
+- Stage10 media → `lesson_assets` publication/linking contract;
+- TTS implementation/runtime.
 
 ## Next ordered work
 
-1. Close or fix Admin Curriculum Web from CI/browser evidence only.
-2. On green closure update Status/Engineering Log/Handoff/Documentation Index/specialized Admin docs and legacy coverage with exact run IDs.
-3. Continue Stage13 content/media/OCR surfaces.
-4. Continue Stage13 AI operations using the existing Stage12 queue/runtime only.
-5. Resolve `direct` Question Bank persistence before publish flows depend on it.
-6. Continue students/codes/recovery/device-rebind, notifications, import-export, reports, settings and audit.
-7. Keep deployment disabled until explicit Product Owner re-enable instruction.
+1. Build Stage13 Admin Content/Media/OCR read-model and Admin-only HTTP contracts over existing Stage9/10/OCR tables.
+2. Add OCR pending/detail/review operations without browser-owned worker execution or duplicate SQL lifecycle.
+3. Activate the Admin “الوسائط وOCR” workspace with search/filter/status/detail/review UX plus loading/error/empty/responsive/a11y states.
+4. Add PostgreSQL/API/unit/Chromium verification and update parity evidence.
+5. Define upload/progress/history and media→lesson publication/linking explicitly before implementing those flows.
+6. Continue Stage13 AI Operations using the existing Stage12 queue/runtime only.
+7. Resolve `direct` Question Bank persistence before publish flows depend on it.
+8. Continue students/codes/recovery/device-rebind, notifications, import-export, reports, settings and audit.
+9. Keep deployment disabled until explicit Product Owner re-enable instruction.
 
 ## Repository housekeeping
 
@@ -127,8 +137,6 @@ Still intentionally `NOT YET VERIFIED`:
 
 ## Last build/test
 
-**Last fully green executable head:** `6484677dffa80ca0658ce5837750d824e1bb6943`.
-
-**Current executable implementation head:** `b2f7eb8277de1c2de841ad050b3a416f2ecfeee7` — **VERIFICATION PENDING**.
+**Last fully green executable head:** `d3e621e6f60cc56ee3838b7df36a86ebafa37524`.
 
 **Deployment:** `DEFERRED BY PRODUCT OWNER`.

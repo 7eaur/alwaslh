@@ -1,33 +1,31 @@
 # STAGE13 ADMIN CURRICULUM UI
 
-Status: **IMPLEMENTED / VERIFICATION PENDING**
+Status: **VERIFIED**
 
-Parent verified executable baseline: `6484677dffa80ca0658ce5837750d824e1bb6943`.
+Verified executable closure: `d3e621e6f60cc56ee3838b7df36a86ebafa37524`.
 Backend contract: `docs/curriculum/CURRICULUM_STRUCTURE.md`.
 
 ## Purpose
 
-Replace the static Admin foundation shell with the first real Super Admin product surface without creating parallel data authority or client-owned business rules.
+This batch turns the previous static Admin shell into the first real Super Admin product surface while keeping PostgreSQL and business rules server-owned.
 
-The browser remains a consumer of `apps/api` only. It never writes PostgreSQL directly and never embeds database/provider credentials.
-
-## Authentication flow
+## Authentication and data flow
 
 ```text
 Admin Web load
 → GET /v1/admin/me
-→ valid Admin session: open workspace
-→ missing/expired session: show Admin login
+→ valid session: workspace
+→ missing session: Admin login
 → POST /v1/auth/login
-→ HttpOnly server session cookie
-→ curriculum workspace
+→ HttpOnly server session
+→ GET /v1/admin/curriculum
+→ Admin-only curriculum mutations
+→ authoritative snapshot refresh
 ```
 
-Logout uses `POST /v1/auth/logout`. The UI must not claim logout success if the server request fails.
+Logout is server-backed. The browser does not own authoritative curriculum data or database/provider credentials.
 
-## Curriculum workspace
-
-The UI consumes the verified hierarchy:
+## Verified curriculum workspace
 
 ```text
 Class
@@ -36,70 +34,77 @@ Class
 → Lesson
 ```
 
-Current implemented operations:
+Verified behavior:
 
-- real server-derived counts for classes, subjects, offerings and lessons;
-- create Class;
-- create Subject;
-- link Subject to Class as an Offering;
-- create optional Section/Unit;
-- create sectioned or unsectioned Lesson;
+- server-derived counts for classes, subjects, offerings and lessons;
+- create Class, Subject, Offering, optional Section and Lesson;
+- sectioned and unsectioned lessons;
 - rename Class/Subject/Section/Lesson;
-- update explicit ordering for Class/Offering/Section/Lesson;
-- update `active | inactive | archived` state;
+- edit Class/Offering/Section/Lesson ordering;
+- edit `active | inactive | archived` state;
 - move Lesson between Sections or detach it to the Offering root;
-- refresh authoritative snapshot after every successful mutation;
-- explicit loading, empty, network-error and mutation feedback states;
-- responsive RTL Admin layout;
-- no destructive DELETE control.
+- explicit loading, empty, network-error and mutation-feedback states;
+- responsive RTL layout;
+- lifecycle controls preserve records rather than exposing destructive curriculum removal in this foundation.
 
-The UI deliberately does **not** derive hierarchy from Stage9 filenames/source folders.
+Stage9 filenames/source folders are never treated as curriculum authority.
 
-## Navigation rule
+## Executable verification
 
-Only implemented Admin modules are interactive. Future Media/OCR, AI Operations, Students/Access and Reports/Settings modules are visibly marked as later work instead of using dead buttons or placeholder dashboards.
+Exact head `d3e621e6f60cc56ee3838b7df36a86ebafa37524` passed:
 
-## Verification contract
+- Stage13 Curriculum Verification `34168788666` — SUCCESS;
+- Stage12 AI Execution `34168788667` — SUCCESS;
+- Stage11 AI Contracts `34168788661` — SUCCESS;
+- OCR Foundation `34168788704` — SUCCESS;
+- Stage10 Media `34168788646` — SUCCESS;
+- Stage9 Content Import `34168788663` — SUCCESS;
+- Full Rebuild `34168788747` — SUCCESS.
 
-The Stage13 workflow is extended with a fresh-PostgreSQL Chromium job. Closure requires one exact head to pass:
+Stage13 Chromium proves on fresh PostgreSQL:
 
-1. Admin ESLint;
-2. strict TypeScript typecheck;
-3. Admin API-client unit tests;
-4. production Admin build with explicit `VITE_API_BASE_URL`;
-5. all migrations on clean PostgreSQL;
-6. explicit Super Admin bootstrap;
-7. real browser unauthenticated → login flow;
-8. Class + Subject + Offering + Section + Lesson creation through the browser;
-9. Lesson move/rename/status mutation through the browser;
-10. reload with server session restoration;
-11. logout back to Admin login;
-12. narrow-viewport horizontal-overflow check;
-13. existing Stage13 backend and lower-layer regression workflows.
+1. Admin login;
+2. Class + Subject + Offering + Section + Lesson creation;
+3. Lesson move/detach;
+4. Lesson rename;
+5. Lesson status mutation;
+6. reload with server session restoration;
+7. logout back to Admin login;
+8. 390px viewport without horizontal overflow.
 
-Until those checks pass this UI remains **NOT YET VERIFIED**.
+## Test-harness hardening during closure
 
-## Legacy coverage targeted by this batch
+No production authorization/business rule was weakened. Closure corrected:
 
-This batch targets the first implementation evidence for:
+- mocked fetch response reuse;
+- URL assertions that assumed no configured API base URL;
+- ambiguous Playwright label/text selectors;
+- Stage12 global-capacity race coverage that originally used units sharing one job-row lock instead of independent jobs competing for the same global slot.
 
-- `PUB-002` separate Admin login;
-- `ADMIN-007` grouped Admin navigation foundation;
-- `ADMIN-008` responsive Admin shell;
-- `CLASS-A-001..003`, `CLASS-A-005..007`, `CLASS-A-010` where supported by the current hierarchy operations;
-- `LES-A-001..003`, `LES-A-006..007` for the current curriculum list/filter/edit/order foundation.
+The final same-head matrix proves the hardened tests and production contracts together.
 
-Deletion semantics, bulk lesson operations, uploads/media/OCR/AI authoring, preview/search/pagination and the rest of Stage13 parity remain separate work and must not be marked complete from this batch.
+## Legacy coverage evidenced by this batch
 
-## Deferred boundaries
+Verified implementation/test evidence exists for the implemented subset of:
 
-Still `NOT YET VERIFIED` / not implemented in this batch:
+- `PUB-002`;
+- `ADMIN-007`, `ADMIN-008`;
+- `CLASS-A-001..003`, `CLASS-A-005..007`, `CLASS-A-010` where represented by current hierarchy operations;
+- `LES-A-001..003`, `LES-A-006`, `LES-A-007`.
 
-- operational Admin dashboard beyond real curriculum counts;
-- content/media upload and processing UI;
-- OCR review UI;
-- AI job operations/review UI;
+This is not blanket Stage13 parity. Search, preview, dependency-aware removal, bulk lesson actions, upload/media/progress/history, OCR operations UI, AI authoring/review, export and publish flows remain separate work.
+
+## Next Stage13 boundary
+
+The next batch activates “الوسائط وOCR” only after adding a thin Admin API/read-review layer over existing Stage9 source, Stage10 media and OCR authorities. It must not create a second queue or present processing evidence as published Lesson content.
+
+Still `NOT YET VERIFIED`:
+
+- content/media upload workflow and processing-history UI;
+- OCR operations/review UI;
+- media→`lesson_assets` publication/linking contract;
+- AI Operations UI;
 - Question Bank Draft → Review → Published UI;
 - student/account/access-code management UI;
-- notifications/import-export/reports/settings/audit screens;
-- hosted Admin deployment, because deployment remains deferred by the Product Owner.
+- notifications/import-export/reports/settings/audit;
+- hosted Admin runtime while deployment remains deferred.
