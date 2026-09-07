@@ -78,8 +78,9 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   });
   await expect(unsectioned).toContainText("الدرس الإداري الأول");
 
-  await page.getByText("تعديل اسم الدرس الدرس الإداري الأول", { exact: true }).click();
-  const renameInput = page.getByLabel("تعديل اسم الدرس الدرس الإداري الأول");
+  const lessonRow = unsectioned.getByText("الدرس الإداري الأول", { exact: true }).locator("xpath=ancestor::li");
+  await lessonRow.locator("summary").filter({ hasText: "تعديل اسم الدرس الدرس الإداري الأول" }).click();
+  const renameInput = lessonRow.getByLabel("تعديل اسم الدرس الدرس الإداري الأول");
   await renameInput.fill("الدرس الإداري المحدّث");
   await renameInput.locator("xpath=ancestor::form").getByRole("button", { name: "حفظ" }).click();
   await waitForSaved(page);
