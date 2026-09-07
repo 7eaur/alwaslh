@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 const adminIdentifier = "stage13-admin-ui";
 const adminPassword = "Stage13AdminUiPass123!";
 const testClassOptionLabel = "الصف الإداري التجريبي — نشط";
+const testSubjectOptionLabel = "العلوم الإدارية التجريبية";
 
 async function login(page) {
   await page.goto("/");
@@ -15,6 +16,12 @@ async function login(page) {
 
 async function waitForSaved(page) {
   await expect(page.getByText("تم حفظ التغيير وتحديث بيانات المنهج.")).toBeVisible();
+}
+
+async function selectTestOffering(page) {
+  const selectors = page.locator(".selector-row").getByRole("combobox");
+  await selectors.nth(0).selectOption({ label: testClassOptionLabel });
+  await selectors.nth(1).selectOption({ label: testSubjectOptionLabel });
 }
 
 test("admin signs in and manages the curriculum hierarchy without destructive deletes", async ({ page }) => {
@@ -30,7 +37,7 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
 
   await page.getByText("إضافة مادة جديدة", { exact: true }).click();
   const subjectForm = page.locator('form[aria-label="نموذج إضافة مادة"]');
-  await subjectForm.getByLabel("اسم المادة").fill("العلوم الإدارية التجريبية");
+  await subjectForm.getByLabel("اسم المادة").fill(testSubjectOptionLabel);
   await subjectForm.getByLabel("المعرّف القصير").fill("admin-test-science");
   await subjectForm.getByRole("button", { name: "حفظ المادة" }).click();
   await waitForSaved(page);
@@ -38,14 +45,13 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await page.getByText("ربط مادة بصف", { exact: true }).click();
   const offeringForm = page.locator('form[aria-label="نموذج ربط مادة بصف"]');
   await offeringForm.getByLabel("الصف للربط").selectOption({ label: "الصف الإداري التجريبي" });
-  await offeringForm.getByLabel("المادة للربط").selectOption({ label: "العلوم الإدارية التجريبية" });
+  await offeringForm.getByLabel("المادة للربط").selectOption({ label: testSubjectOptionLabel });
   await offeringForm.getByLabel("الترتيب (اختياري)").fill("4");
   await offeringForm.getByRole("button", { name: "إنشاء الربط" }).click();
   await waitForSaved(page);
 
-  await page.getByLabel("الصف").selectOption({ label: testClassOptionLabel });
-  await page.getByLabel("المادة ضمن الصف").selectOption({ label: "العلوم الإدارية التجريبية" });
-  await expect(page.getByRole("heading", { name: "العلوم الإدارية التجريبية" })).toBeVisible();
+  await selectTestOffering(page);
+  await expect(page.getByRole("heading", { name: testSubjectOptionLabel })).toBeVisible();
 
   await page.getByText("إضافة وحدة أو قسم", { exact: true }).click();
   const sectionForm = page.locator('form[aria-label="نموذج إضافة وحدة"]');
@@ -87,8 +93,7 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await page.reload();
   await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toHaveCount(0);
-  await page.getByLabel("الصف").selectOption({ label: testClassOptionLabel });
-  await page.getByLabel("المادة ضمن الصف").selectOption({ label: "العلوم الإدارية التجريبية" });
+  await selectTestOffering(page);
   await expect(page.getByText("الدرس الإداري المحدّث", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("button", { name: /حذف/ })).toHaveCount(0);
