@@ -228,8 +228,10 @@ test("Stage12 execution is durable, leased, retryable, cancellable and partial-s
       ],
     );
 
+    // This is the generic retry contract. Retry-After/cooldown behavior has its
+    // own explicit Stage12 control integration coverage and must not be timing-dependent here.
     const flaky = new SequenceAdapter("flaky-provider", [
-      new AiProviderError("rate_limited", "try later", true, 10),
+      new AiProviderError("provider_busy", "try later", true),
       { output: validOutput },
     ]);
     const retryService = new AiExecutionService(db, routerFor(flaky), profile, undefined, () => 0.5);
