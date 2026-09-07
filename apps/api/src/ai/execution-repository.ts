@@ -149,26 +149,6 @@ export class AiExecutionRepository {
     return { job, replayed };
   }
 
-  async reconcileExpiredAttempts(executor: QueryExecutor): Promise<readonly string[]> {
-    const rows = await executor.query<{ job_id: string }>(
-      `with expired_units as (
-         select id, job_id
-         from ai_job_units
-         where status = 'running' and lease_expires_at <= now()
-       ), closed_attempts as (
-         update ai_execution_attempts a
-         set status = 'failed', completed_at = now(), retryable = true,
-             error_code = coalesce(error_code, 'lease_expired'),
-             error_message = coalesce(error_message, 'worker lease expired before attempt completion')
-         from expired_units e
-         where a.job_unit_id = e.id and a.status = 'running'
-         returning e.job_id
-       )
-       select distinct job_id from closed_attempts`,
-    );
-    return rows.map((row) => row.job_id);
-  }
-
   async finalizeExpiredExhausted(executor: QueryExecutor): Promise<readonly string[]> {
     const rows = await executor.query<{ job_id: string }>(
       `update ai_job_units
@@ -184,52 +164,6 @@ export class AiExecutionRepository {
        returning job_id`,
     );
     return [...new Set(rows.map((row) => row.job_id))];
-  }
-
-  async claimNext(executor: QueryExecutor, leaseSeconds: number): Promise<AiClaimedUnit | null> {
-    const rows = await executor.query<AiClaimedUnit>(
-      `with candidate as (
-         select u.id
-         from ai_job_units u
-         join ai_jobs j on j.id = u.job_id
-         where j.cancel_requested_at is null
-           and j.status in ('queued', 'running', 'retrying')
-           and (u.attempt_count < u.max_attempts or u.resume_route_key is not null)
-           and (
-             u.status = 'queued'
-             or (u.status = 'retrying' and (u.next_attempt_at is null or u.next_attempt_at <= now()))
-             or (u.status = 'running' and u.lease_expires_at <= now())
-           )
-         order by j.priority asc, j.created_at asc, u.position asc
-         for update of u skip locked
-         limit 1
-       )
-       update ai_job_units u
-       set status = 'running',
-           attempt_count = u.attempt_count + case when u.resume_route_key is null then 1 else 0 end,
-           next_attempt_at = null,
-           lease_token = gen_random_uuid(),
-           lease_expires_at = now() + make_interval(secs => $1::int),
-           started_at = coalesce(u.started_at, now()),
-           completed_at = null
-       from candidate c
-       where u.id = c.id
-       returning u.id, u.job_id, u.unit_key, u.position, u.status,
-                 u.input_payload, u.attempt_count, u.max_attempts,
-                 u.lease_token, u.lease_expires_at,
-                 u.resume_route_key, u.capacity_deferred_count, u.control_deferred_count`,
-      [leaseSeconds],
-    );
-    const claimed = rows[0] ?? null;
-    if (claimed) {
-      await executor.query(
-        `update ai_jobs
-         set status = 'running', started_at = coalesce(started_at, now()), completed_at = null
-         where id = $1 and cancel_requested_at is null`,
-        [claimed.job_id],
-      );
-    }
-    return claimed;
   }
 
   private async assertActiveLease(
