@@ -1,16 +1,16 @@
 # PROJECT STATUS
 
-- **Current Phase:** Stage13 Super Admin Product — Curriculum Structure backend foundation **VERIFIED**; next focus is Admin Web curriculum/content surface integration.
+- **Current Phase:** Stage13 Super Admin Product — Admin Web curriculum management **IMPLEMENTED / VERIFICATION PENDING** on top of the verified Curriculum backend foundation.
 - **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
 - **Latest fully verified executable baseline:** `6484677dffa80ca0658ce5837750d824e1bb6943`.
-- **Previous Stage12 closure:** `45a902eb94cf574ebbcf29e1d0e9b2ca0ae6f894`.
+- **Current Admin Curriculum implementation commit:** `f4d5c4fed02ee0793efc4ecb68d91e3a83bf56cc` — **VERIFICATION PENDING**.
 - **Deployment:** `DEFERRED BY PRODUCT OWNER`. Hosted Student/Admin/API/media/OCR/AI worker runtime remains `NOT YET VERIFIED`.
 
 ## Latest fully verified same-head matrix
 
 Exact executable head: `6484677dffa80ca0658ce5837750d824e1bb6943`.
 
-- Stage13 Curriculum Backend Verification `34092024879` — **SUCCESS**.
+- Stage13 Curriculum Verification backend job `34092024879` — **SUCCESS**.
 - Stage12 AI Execution Verification `34092024902` — **SUCCESS**.
 - Stage11 AI Contract Verification `34092024875` — **SUCCESS**.
 - OCR Foundation Verification `34092024895` — **SUCCESS**.
@@ -18,61 +18,89 @@ Exact executable head: `6484677dffa80ca0658ce5837750d824e1bb6943`.
 - Stage9 Content Import Verification `34092024883` — **SUCCESS**.
 - Rebuild Stage Verification `34092024916` — **SUCCESS**, including Chromium Student activation/login/recovery E2E.
 
-The initial curriculum implementation head `70621c2f73e13b542960ad0ee3f7c850e0350e00` failed shared Biome formatting before TypeScript/runtime checks. `6484677d…` contains formatting-only corrections; behavior and assertions were unchanged.
-
-## Verified Curriculum Structure backend foundation
-
-Product contract from PED-018:
+The verified backend hierarchy remains:
 
 ```text
 Class / Grade
-→ Subject Offering
+→ Subject Offering (`subject_class_links`)
 → Unit / Section (optional)
 → Lesson
 → Content / pages / resources
 ```
 
-Verified architecture:
+`subject_class_links` remains the only Subject Offering authority. `curriculum_sections` is one optional layer only. `lessons.section_id` is nullable and protected by the verified cross-offering composite FK. Stage9 source inventory remains provenance evidence and never silently defines curriculum hierarchy.
 
-- existing `classes` remains Class/Grade authority;
-- existing `subjects` remains Subject authority;
-- existing `subject_class_links` is the **Subject Offering** authority; no duplicate `subject_offerings` table exists;
-- `curriculum_sections` is exactly one optional hierarchy layer;
-- `lessons.section_id` is nullable, so lessons may live directly under an Offering;
-- composite `lessons_section_scope_fk` prevents a lesson from referencing a section belonging to another Class/Subject Offering;
-- Stage9 `content_source_documents/assets` remains source/provenance inventory, not curriculum authority;
-- hierarchy is never derived implicitly from filenames/folders;
-- `curriculum_events` records Admin curriculum mutations;
-- Admin curriculum mutation is non-destructive by default: create/edit/reorder/status/archive/attach/detach, no DELETE route.
+## Current isolated batch — Admin Curriculum Web
 
-Migration: `database/migrations/0016_curriculum_structure.sql`.
-Detailed contract: `docs/curriculum/CURRICULUM_STRUCTURE.md`.
+The previous `apps/admin-web` was a static Foundation shell with no session restore, API client or product operations. This batch classifies it as **REBUILD inside the same Admin surface** while preserving shared Brand tokens and the separate Admin product boundary.
 
-## Verified Admin curriculum API foundation
-
-Admin-only backend routes now exist for:
+Implemented browser architecture:
 
 ```text
-GET    /v1/admin/curriculum
-POST   /v1/admin/curriculum/classes
-PATCH  /v1/admin/curriculum/classes/:classId
-POST   /v1/admin/curriculum/subjects
-PATCH  /v1/admin/curriculum/subjects/:subjectId
-POST   /v1/admin/curriculum/offerings
-PATCH  /v1/admin/curriculum/offerings/:classId/:subjectId
-POST   /v1/admin/curriculum/sections
-PATCH  /v1/admin/curriculum/sections/:sectionId
-POST   /v1/admin/curriculum/lessons
-PATCH  /v1/admin/curriculum/lessons/:lessonId
+Admin Web
+→ GET /v1/admin/me session restore
+→ POST /v1/auth/login when signed out
+→ HttpOnly server session
+→ GET /v1/admin/curriculum
+→ Admin-only mutation routes
+→ authoritative snapshot refresh after mutation
 ```
 
-Verified behavior includes Admin authentication, duplicate-conflict handling, optional unsectioned lessons, cross-offering section rejection at both API and PostgreSQL levels, detach-without-delete, archive/status persistence, snapshot reads and durable audit events.
+Current UI operations:
 
-## Stable Stage12 boundary
+- Admin login, session restore and server-backed logout;
+- real curriculum counts only; no placeholder operational metrics;
+- create Class and Subject;
+- create Class↔Subject Offering;
+- create optional Section/Unit;
+- create sectioned or unsectioned Lesson;
+- rename Class/Subject/Section/Lesson;
+- edit explicit Class/Offering/Section/Lesson ordering;
+- edit `active | inactive | archived` lifecycle state;
+- move Lesson between Sections or detach it to the Offering root;
+- loading, empty, network-error and mutation-feedback states;
+- responsive RTL Admin layout;
+- future Admin modules visibly marked as later work rather than dead interactive controls;
+- no destructive DELETE UI.
 
-Stage12 backend lifecycle/runtime remains **VERIFIED** after the new migration/API work. The new exact head passed the full Stage12 worker/lifecycle/capacity/control/pause regression suite.
+Implementation is split into:
 
-Still intentionally `NOT YET VERIFIED`:
+- `apps/admin-web/src/admin-api.ts` — typed browser API/session contract;
+- `apps/admin-web/src/LoginScreen.tsx` — Admin-only authentication UX;
+- `apps/admin-web/src/CurriculumWorkspace.tsx` — curriculum hierarchy operations;
+- `apps/admin-web/src/App.tsx` — session/shell ownership only;
+- `docs/admin/STAGE13_ADMIN_CURRICULUM_UI.md` — detailed contract and verification gate.
+
+Two correctness issues were fixed before the first commit instead of being left as UI quirks:
+
+1. Admin password input is passed exactly as entered; only the identifier is trimmed. The UI must not alter credential semantics.
+2. Logout does not claim local success if the server logout request fails; failure routes back through explicit session error/recovery instead of pretending the server session was revoked.
+
+## Verification gate for current batch
+
+Do **not** promote the verified baseline until one exact implementation head passes:
+
+1. Admin ESLint;
+2. strict TypeScript typecheck;
+3. Admin API-client Vitest tests;
+4. Admin production build with explicit `VITE_API_BASE_URL`;
+5. existing Stage13 backend clean PostgreSQL + API integration tests;
+6. fresh-PostgreSQL Chromium Admin E2E:
+   - unauthenticated login screen;
+   - Admin login;
+   - Class + Subject + Offering + Section + Lesson creation;
+   - Lesson move, rename and status mutation;
+   - browser reload + session restoration;
+   - logout;
+   - narrow-viewport overflow check;
+7. lower-layer Stage12/11/OCR/10/9 regressions;
+8. Full Rebuild including existing Chromium coverage.
+
+Current Admin Curriculum UI status: **NOT YET VERIFIED** until those gates pass.
+
+## Stable Stage12 and AI boundary
+
+Stage12 backend lifecycle/runtime remains **VERIFIED** on the last green baseline. Still intentionally `NOT YET VERIFIED`:
 
 - authorized live AI provider adapters/credentials;
 - live provider/model benchmark;
@@ -85,12 +113,12 @@ Do not invent fake production routes/adapters to close those boundaries.
 
 ## Next ordered engineering work
 
-1. Build the Stage13 Admin Web shell/curriculum management UX on top of the verified `/v1/admin/curriculum` contract.
-2. Add content/media/OCR management surfaces while preserving Stage9/10/OCR authority boundaries.
-3. Add AI job operations/review UI against verified Stage12 contracts; do not introduce a second queue/client-owned progress.
-4. Resolve AI `direct` question persistence explicitly before Question Bank publish workflows depend on it.
-5. Continue students/codes/recovery/device rebind, notifications, import/export/reports/settings/audit according to Stage13 coverage gates.
-6. Run live AI provider/model benchmark before any production AI routing/bootstrap.
+1. Close/fix the Admin Curriculum Web batch from CI/browser evidence only; no test weakening.
+2. After same-head green closure, update `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `DOCUMENTATION_INDEX.md`, specialized Admin docs, and legacy coverage evidence with exact commit/run IDs.
+3. Continue Stage13 content/media/OCR management surfaces while preserving Stage9/10/OCR authority boundaries.
+4. Add AI job operations/review UI against verified Stage12 contracts; no second queue/client-owned progress.
+5. Resolve AI `direct` question persistence before Question Bank publish workflows depend on it.
+6. Continue students/codes/recovery/device rebind, notifications, import/export/reports/settings/audit according to Stage13 coverage gates.
 7. Keep deployment disabled until the Product Owner explicitly re-enables it.
 
 ## Stable lower-layer facts
@@ -112,6 +140,6 @@ Temporary branch `tmp-unused-do-not-use` contains no unique code and is not refe
 
 **Curriculum Structure / Stage13 backend foundation:** **VERIFIED**.
 
-**Next focus:** Stage13 Admin Web curriculum/content integration.
+**Admin Curriculum Web:** **IMPLEMENTED / VERIFICATION PENDING** on `f4d5c4fed02ee0793efc4ecb68d91e3a83bf56cc`.
 
 **Deployment:** `DEFERRED BY PRODUCT OWNER`.
