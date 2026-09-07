@@ -1,85 +1,60 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> Source of truth: `DOCUMENTATION_INDEX.md` → this file → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → Product decisions → `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` → parity/coverage docs → roadmap. Repository + CI evidence are authoritative.
+> Source-of-truth order: `DOCUMENTATION_INDEX.md` → this file → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → product decisions → AI strategy → parity/coverage docs → roadmap. Repository + GitHub Actions are authoritative; unverified work is always `NOT YET VERIFIED`.
 
-## Product / repository state
+## Repository / phase
 
-- Product: Arabic educational platform with independent Student PWA, Admin Web and Backend API.
-- Repository: `7eaur/alwaslh`.
+- Repo: `7eaur/alwaslh`.
 - Branch: `planning/product-evolution-review`; draft PR #12.
 - Latest fully verified executable baseline: `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`.
-- Stage11 Provider-Neutral AI Prompt / Output Contracts: **VERIFIED**.
-- Stage12 durable AI execution core: **VERIFIED**.
-- Stage12 distributed global/provider/project/model backpressure: **VERIFIED**.
-- Stage12 global/route kill switch + health/cooldown/Retry-After + budget admission: **VERIFIED**.
-- Active Stage12 work: explicit job pause/resume/progress semantics, then dedicated worker lifecycle.
-- Deployment: `DEFERRED BY PRODUCT OWNER`; Git auto-deploy remains disabled. Hosted behavior is `NOT YET VERIFIED` until explicitly re-enabled and tested.
+- Controls documentation closure: `6cac332f356b9f1b4faf3d7fb5b9b736a1e076b4`.
+- Stage11 contracts: **VERIFIED**.
+- Stage12 durable core: **VERIFIED**.
+- Stage12 distributed capacity/backpressure: **VERIFIED**.
+- Stage12 kill-switch/cooldown/Retry-After/budget admission: **VERIFIED**.
+- Current batch: explicit job pause/resume/progress **IMPLEMENTED / VERIFICATION PENDING**.
+- Next only after closure: dedicated AI worker lifecycle.
+- Deployment: `DEFERRED BY PRODUCT OWNER`; do not re-enable or publish without a new explicit instruction.
 
-## Stable architecture
+## Stable runtime architecture
 
 ```text
 Admin Web ──┐
             ├── apps/api ── private PostgreSQL
 Student PWA ┘      │
-                   ├── Stage10 media identity/storage abstraction
-                   ├── reviewed OCR text / OCR Foundation
+                   ├── Stage10 media evidence
+                   ├── reviewed OCR text
                    ├── Stage11 provider-neutral AI contracts
-                   ├── Stage12 durable AI execution + distributed admission/control
+                   ├── Stage12 durable execution/admission/control
                    └── later TTS / notifications / offline sync
 ```
 
-Hard boundaries:
+Hard rules:
 
-- browser never receives DB/provider secrets or performs authoritative business writes directly;
-- auth/authorization/entitlements are server-owned;
-- upload/media success is independent from OCR/AI/TTS;
-- source media + reviewed OCR remain canonical evidence;
-- provider/model payloads stay behind adapters;
-- provider calls happen outside DB transactions;
-- stale/expired/cancelled workers cannot finalize attempts, units or outputs;
-- no credential/project switching to evade provider quotas/terms;
-- no valuable legacy capability is removed without Product Owner approval.
+- browser never gets DB/provider secrets;
+- provider calls remain outside DB transactions;
+- stale/expired/cancelled workers cannot commit attempts/outputs;
+- no key/project rotation to evade limits/terms;
+- operational pressure is not semantic failure;
+- valuable legacy capability is not removed without Product Owner approval;
+- root-cause fixes only; no weakening tests/security/business rules.
 
-## Exact verified checkpoint
+## Latest verified checkpoint
 
-Executable head `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`:
+Exact executable head `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`:
 
-- Stage12 AI Execution Verification `34086168715` — **SUCCESS** including lifecycle, distributed capacity races, kill switches, Retry-After cooldown, global budget race and route budget ceiling.
-- Stage11 AI Contract Verification `34086168704` — **SUCCESS**.
-- OCR Foundation Verification `34086168712` — **SUCCESS** including real Tesseract.
-- Stage10 Media Pipeline `34086168727` — **SUCCESS**.
-- Stage9 Content Import Verification `34086168687` — **SUCCESS**.
-- Rebuild Stage Verification `34086168772` — **SUCCESS** including Chromium.
+- Stage12 `34086168715` — SUCCESS.
+- Stage11 `34086168704` — SUCCESS.
+- OCR `34086168712` — SUCCESS.
+- Stage10 `34086168727` — SUCCESS.
+- Stage9 `34086168687` — SUCCESS.
+- Full Rebuild `34086168772` — SUCCESS including Chromium.
 
-This exact head is the current rollback/reference point.
+Verified Stage12 controls include global/provider/project/model capacity, global/full-route kill switches, Retry-After/health cooldown, conservative global+route budgets and full route runtime identity.
 
-## Verified Stage12 execution / backpressure / operational controls
+## Route runtime identity
 
-Implemented through `7c3c5645…`:
-
-- additive `0012_ai_execution.sql`, `0013_ai_capacity_control.sql`, `0014_ai_execution_controls.sql`;
-- deterministic plan idempotency + fingerprint conflicts;
-- durable `SKIP LOCKED` unit claim;
-- UUID leases + strong running-lease DB shape;
-- attempt history/telemetry;
-- `AiProviderAdapter` / `AiModelRouter`;
-- provider calls outside transactions;
-- Stage11 validation before acceptance;
-- bounded cascade + retry/backoff/jitter;
-- stale-worker recovery;
-- cancellation + stale-write rejection;
-- partial-success reconciliation;
-- PostgreSQL-coordinated global/provider/project/model capacity;
-- capacity/control deferral through `resume_route_key` without extra semantic attempt consumption;
-- global and per-route kill switches;
-- persisted Retry-After/health cooldown;
-- global and exact-route budget reservation windows;
-- `capacity_deferred_count` and `control_deferred_count` telemetry;
-- operational pressure never silently escalates just because another route has room.
-
-### Route runtime identity rule
-
-Do **not** assume `route_key` is globally unique. Independent routers may reuse a route key. Operational state is keyed by the full identity:
+Never assume `route_key` is globally unique. Operational state is keyed by:
 
 ```text
 route_key
@@ -89,81 +64,86 @@ route_key
 + model_used
 ```
 
-Migration `0014` enforces this using a surrogate UUID PK plus `UNIQUE NULLS NOT DISTINCT` over the full identity. Cooldown/health/budget reads and route-budget attempt accounting all use the same full identity.
+This rule was established after unchanged lifecycle regression exposed cross-router reuse. The fix is verified on `7c3c5645…`.
 
-This rule exists because controls head `3b4b98cbb7bb60a92146bb817d90df458e3862f4` exposed `ai_route_runtime_identity_mismatch:route-1` in the unchanged Stage12 lifecycle. Root-cause repair `7c3c5645…` restored compatibility and all same-head workflows passed.
+## Current pause/resume/progress design
 
-## Budget evidence boundary
+`resume_route_key` remains internal scheduler continuation. Job pause is separate.
 
-Budget admission is deliberately conservative:
+New durable control:
 
-- configured pre-call reservation is persisted on the attempt;
-- window usage counts `max(reservation, reported estimated cost)`;
-- admission refuses a new attempt if its reservation would exceed the configured ceiling.
+- `ai_jobs.paused_at` — operator scheduling gate;
+- existing `ai_job_status` remains aggregate execution state;
+- effective progress can report `paused` while execution status remains queued/running/retrying.
 
-This is **not** proof of actual provider invoice accuracy. Live pricing, token ceilings, billing reconciliation and production budget values remain `NOT YET VERIFIED` until authorized provider adapters + benchmark evidence exist.
+Concurrency contract:
 
-## Stage12 invariants
+- claim locks both job and unit rows (`FOR UPDATE OF j, u SKIP LOCKED`);
+- pause/resume locks the same job row;
+- if claim commits first, that unit is legitimately in-flight and pause may follow;
+- if pause commits first, no later claim from that job is allowed;
+- pause never revokes a valid already-started lease.
 
-- no provider/network call in DB transaction;
-- no running unit without lease identity;
-- no stale lease may write attempt completion, unit completion/failure or outputs;
-- cancel removes current execution authority;
-- same idempotency key with different plan fingerprint is rejected;
-- provider/model fields remain execution metadata, not Stage11 domain contract fields;
-- provider secrets are server-only and not stored;
-- exact-source review rules remain authoritative;
-- invalid output retries only inside max attempts;
-- review-required output stays review-required instead of inventing certainty;
-- partial success preserves completed units;
-- capacity/cooldown/budget deferral does not consume another semantic retry;
-- cascade is bounded and may not rotate credentials/projects to evade limits.
+Resume contract:
 
-## Active next batch — explicit pause/resume/progress
+- clears only `paused_at`;
+- preserves completed/review outputs, attempt counts, retry/backoff and route continuation;
+- terminal completed/failed/cancelled jobs are not resumable;
+- cancellation remains terminal and clears pause.
 
-`database/migrations/0004_ai_and_sync.sql` currently defines `ai_job_status` as:
+Progress contract is server-derived from durable unit rows and exposes accepted/completed/review/failed/cancelled/queued/running/retrying/settled/remaining totals and integer settled percentage.
 
-`queued | running | retrying | completed | failed | cancelled`.
+## Lease expiry hardening in current batch
 
-`resume_route_key` is an internal execution-route continuation field. It is **not** job-level resume and must never be presented as such.
+An expired running lease previously stayed represented as `running` until a later claim reclaimed it. This is incorrect while a job is paused.
 
-The next batch must provide explicit job lifecycle semantics:
+The new lifecycle recovery immediately:
 
-1. pause stops **new claims** for that job;
-2. an already leased/in-flight unit keeps its lease and can safely finish/fail;
-3. resume makes unfinished queued/retrying units claimable again without resetting accepted outputs or attempt counts;
-4. cancelled/completed terminal jobs cannot be resumed;
-5. progress is server-derived from durable unit states and exposes accepted/failed/running/retrying/queued totals;
-6. behavior must be race-tested with an in-flight provider call.
+1. closes expired running attempt as `failed/lease_expired`;
+2. releases non-exhausted unit to `retrying` and clears lease fields;
+3. leaves exhausted units to existing terminal max-attempt handling;
+4. refreshes aggregate state;
+5. still blocks claims while paused.
 
-## Worker lifecycle after pause/resume
+Detailed design: `docs/ai/STAGE12_JOB_LIFECYCLE.md`.
 
-`apps/api/src/server.ts` is HTTP-only and performs Fastify shutdown. The AI worker must be a **separate process/runtime**, not a polling loop embedded in the HTTP server.
+## Current verification gate
 
-Worker requirements:
+Do **not** mark pause/resume/progress verified until the exact implementation head passes:
 
-- bounded worker slots;
+- Stage12 lint/typecheck/unit/build;
+- clean migrations + Stage12 DB contracts;
+- existing execution lifecycle;
+- capacity tests;
+- control tests;
+- new pause/resume/progress + paused-lease recovery tests;
+- Stage11 regression;
+- OCR regression;
+- Stage10 regression;
+- Stage9 regression;
+- Full Rebuild + Chromium.
+
+Any failure must be fixed from evidence. No test weakening.
+
+## Worker lifecycle — after pause/resume only
+
+`apps/api/src/server.ts` is HTTP-only. Worker must be a separate process/runtime with:
+
+- bounded slots;
 - bounded idle polling/backoff;
-- graceful shutdown stops new claims first;
-- in-flight provider work drains normally while lease authority is valid;
-- process death remains recoverable through existing lease expiry logic;
-- database closes only after worker drain;
-- no huge in-memory batch state.
+- graceful shutdown: stop new claims, drain in-flight, close DB last;
+- crash recovery via existing lease expiry;
+- no huge in-memory batches.
 
-A live provider bootstrap is still `NOT YET VERIFIED`; do not invent provider credentials/configuration just to make an entrypoint look complete.
+Do not invent live provider credentials/routes just to make worker bootstrap appear complete. Live adapters/benchmark/production routing remain `NOT YET VERIFIED`.
 
-## Direct-question boundary
+## Other unresolved boundaries
 
-Stage11 preserves `direct` extraction. Current `0003_learning.sql` Question Bank persists only `multiple_choice | true_false`. Direct extraction remains reviewable AI output but is not automatically publishable Question Bank data. Do not widen persistence silently.
+- AI `direct` extraction is not silently publishable because current Question Bank persists only MCQ/T/F.
+- actual provider billing/pricing remains unverified; configured budget reservations are safety ceilings only.
+- hosted runtime remains unverified while deployment is deferred.
+- Stage13 Admin AI operations integration waits until backend Stage12 lifecycle is stable.
 
-## Deployment / hosted runtime
+## Continuation rule
 
-Hosted Student/Admin/API/media/OCR/AI execution remains `NOT YET VERIFIED` while deployment is deferred. Do not publish or re-enable Git deployment without a new Product Owner instruction.
-
-## Continuation protocol
-
-After every meaningful batch update Status + Engineering Log; update this Handoff whenever architecture/branch/CI/Preview state changes; update specialized AI/parity docs when affected; preserve exact commit/CI/runtime evidence; unexecuted work is `NOT YET VERIFIED`; never weaken tests/security/business rules for a green build.
-
-## Current transition decision
-
-**Operational controls are VERIFIED on `7c3c5645…`. Implement explicit pause/resume/progress next. Only after that closes should the dedicated worker lifecycle be implemented.**
+After every meaningful batch update `PROJECT_STATUS.md` and `PROJECT_ENGINEERING_LOG.md`; update this Handoff when architecture/branch/CI/runtime state changes; update AI strategy/parity docs when affected; preserve exact commits/run IDs; mark anything not executed/tested as `NOT YET VERIFIED`.

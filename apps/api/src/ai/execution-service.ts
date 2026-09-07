@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
-import type { Database } from "../db.js";
+import type { Database, QueryExecutor } from "../db.js";
 import { type AiGenerationRequest, aiGenerationRequestSchema } from "./contracts.js";
 import { AiExecutionControl } from "./execution-control.js";
 import { AiExecutionRepository, type AiJobRecord } from "./execution-repository.js";
+import { AiJobLifecycleRepository, type AiJobProgress } from "./job-lifecycle.js";
 import { buildPromptEnvelope, getPromptDefinition } from "./prompt-registry.js";
 import { type AiProviderError, type AiProviderGenerateResult, classifyAiProviderError } from "./provider.js";
 import type { AiModelRouter } from "./router.js";
@@ -39,6 +40,7 @@ export interface AiProcessedUnit {
 }
 
 const ESCALATABLE_REVIEW_CODES = new Set(["generated_answer_uncertain", "near_duplicate_question"]);
+const TERMINAL_JOB_STATUSES = new Set<AiJobRecord["status"]>(["completed", "failed", "cancelled"]);
 
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -116,6 +118,7 @@ export class AiExecutionService {
     private readonly repository = new AiExecutionRepository(),
     private readonly random: () => number = Math.random,
     private readonly control = new AiExecutionControl(),
+    private readonly lifecycle = new AiJobLifecycleRepository(),
   ) {
     assertExecutionProfile(profile);
     this.globalMaxConcurrent = profile.globalMaxConcurrent ?? 4;
@@ -173,11 +176,11 @@ export class AiExecutionService {
   async processNext(): Promise<AiProcessedUnit | null> {
     const claimed = await this.database.transaction(async (executor) => {
       const touched = new Set<string>([
-        ...(await this.repository.reconcileExpiredAttempts(executor)),
+        ...(await this.lifecycle.reconcileExpiredAttempts(executor)),
         ...(await this.repository.finalizeExpiredExhausted(executor)),
       ]);
-      for (const jobId of touched) await this.repository.refreshJob(executor, jobId);
-      return this.repository.claimNext(executor, this.profile.leaseSeconds);
+      for (const jobId of touched) await this.refreshJob(executor, jobId);
+      return this.lifecycle.claimNext(executor, this.profile.leaseSeconds);
     });
     if (!claimed) return null;
 
@@ -195,7 +198,7 @@ export class AiExecutionService {
         };
         await this.database.transaction(async (executor) => {
           await this.repository.persistProviderFailure(executor, claimed, failure, "failed", null);
-          await this.repository.refreshJob(executor, claimed.job_id);
+          await this.refreshJob(executor, claimed.job_id);
         });
         return { jobId: claimed.job_id, unitId: claimed.id, status: "failed" };
       }
@@ -206,7 +209,7 @@ export class AiExecutionService {
       const failure = { code: "ai_route_unavailable", message: "no benchmark-approved route is available" };
       await this.database.transaction(async (executor) => {
         await this.repository.persistProviderFailure(executor, claimed, failure, "failed", null);
-        await this.repository.refreshJob(executor, claimed.job_id);
+        await this.refreshJob(executor, claimed.job_id);
       });
       return { jobId: claimed.job_id, unitId: claimed.id, status: "failed" };
     }
@@ -240,7 +243,7 @@ export class AiExecutionService {
             admission.controlAdmission.reason,
             admission.controlAdmission.message,
           );
-          await this.repository.refreshJob(executor, claimed.job_id);
+          await this.refreshJob(executor, claimed.job_id);
         });
         return { jobId: claimed.job_id, unitId: claimed.id, status: "retrying", routeKey: route.routeKey };
       }
@@ -258,7 +261,7 @@ export class AiExecutionService {
             attempt.current,
             attempt.limit,
           );
-          await this.repository.refreshJob(executor, claimed.job_id);
+          await this.refreshJob(executor, claimed.job_id);
         });
         return { jobId: claimed.job_id, unitId: claimed.id, status: "retrying", routeKey: route.routeKey };
       }
@@ -334,7 +337,7 @@ export class AiExecutionService {
           status,
           nextAttemptAt,
         );
-        await this.repository.refreshJob(executor, claimed.job_id);
+        await this.refreshJob(executor, claimed.job_id);
       });
       return { jobId: claimed.job_id, unitId: claimed.id, status, routeKey: route.routeKey, validation };
     }
@@ -353,13 +356,35 @@ export class AiExecutionService {
     const status: "retrying" | "failed" = retrying ? "retrying" : "failed";
     await this.database.transaction(async (executor) => {
       await this.repository.persistProviderFailure(executor, claimed, failure, status, nextAttemptAt);
-      await this.repository.refreshJob(executor, claimed.job_id);
+      await this.refreshJob(executor, claimed.job_id);
     });
     return { jobId: claimed.job_id, unitId: claimed.id, status };
   }
 
+  async pause(jobId: string): Promise<AiJobProgress> {
+    return this.database.transaction((executor) => this.lifecycle.requestPause(executor, jobId));
+  }
+
+  async resume(jobId: string): Promise<AiJobProgress> {
+    return this.database.transaction((executor) => this.lifecycle.requestResume(executor, jobId));
+  }
+
+  async progress(jobId: string): Promise<AiJobProgress> {
+    return this.database.transaction((executor) => this.lifecycle.getProgress(executor, jobId));
+  }
+
   async cancel(jobId: string): Promise<AiJobRecord> {
-    return this.database.transaction((executor) => this.repository.requestCancel(executor, jobId));
+    return this.database.transaction(async (executor) => {
+      const job = await this.repository.requestCancel(executor, jobId);
+      await this.lifecycle.clearPause(executor, jobId);
+      return job;
+    });
+  }
+
+  private async refreshJob(executor: QueryExecutor, jobId: string): Promise<AiJobRecord> {
+    const job = await this.repository.refreshJob(executor, jobId);
+    if (TERMINAL_JOB_STATUSES.has(job.status)) await this.lifecycle.clearPause(executor, jobId);
+    return job;
   }
 
   private retryDelayMs(attemptCount: number): number {
