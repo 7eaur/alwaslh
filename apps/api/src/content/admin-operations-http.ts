@@ -27,7 +27,11 @@ const ReviewSchema = z.object({
   replacementText: z.string().max(250_000).optional(),
 });
 
-async function adminActor(request: Parameters<typeof currentProfile>[0], config: AppConfig, auth: AuthService) {
+async function adminActor(
+  request: Parameters<typeof currentProfile>[0],
+  config: AppConfig,
+  auth: AuthService,
+) {
   const actor = await currentProfile(request, config, auth);
   if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
   return actor;

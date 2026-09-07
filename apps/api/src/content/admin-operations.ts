@@ -116,7 +116,10 @@ export interface SourceAssetOperationsView {
 }
 
 export interface ContentOperationsDocumentDetail {
-  document: Omit<ContentOperationsDocument, "assetCount" | "mediaCount" | "readyMediaCount" | "failedMediaCount" | "pendingOcrCount">;
+  document: Omit<
+    ContentOperationsDocument,
+    "assetCount" | "mediaCount" | "readyMediaCount" | "failedMediaCount" | "pendingOcrCount"
+  >;
   assets: SourceAssetOperationsView[];
   pagination: {
     total: number;
@@ -400,7 +403,11 @@ export class AdminContentOperationsService {
     };
   }
 
-  async documentDetail(documentId: string, limit: number, offset: number): Promise<ContentOperationsDocumentDetail> {
+  async documentDetail(
+    documentId: string,
+    limit: number,
+    offset: number,
+  ): Promise<ContentOperationsDocumentDetail> {
     const documents = await this.database.query<DocumentRow>(
       `select id, source_path, class_slug, class_name, subject_slug, subject_name,
               kind, title, hijri_year, exam_track, position, updated_at
