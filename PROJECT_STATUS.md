@@ -4,6 +4,7 @@
 - **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
 - **Latest fully verified executable baseline:** `6484677dffa80ca0658ce5837750d824e1bb6943`.
 - **Current Admin Curriculum implementation commit:** `f4d5c4fed02ee0793efc4ecb68d91e3a83bf56cc` — **VERIFICATION PENDING**.
+- **Current reconciled branch head:** `936cbe5a5041a38f228c3d6e01c4ca74f5277e75` once the branch ref is advanced to the merge commit.
 - **Deployment:** `DEFERRED BY PRODUCT OWNER`. Hosted Student/Admin/API/media/OCR/AI worker runtime remains `NOT YET VERIFIED`.
 
 ## Latest fully verified same-head matrix
@@ -71,10 +72,11 @@ Implementation is split into:
 - `apps/admin-web/src/App.tsx` — session/shell ownership only;
 - `docs/admin/STAGE13_ADMIN_CURRICULUM_UI.md` — detailed contract and verification gate.
 
-Two correctness issues were fixed before the first commit instead of being left as UI quirks:
+Correctness decisions before CI:
 
-1. Admin password input is passed exactly as entered; only the identifier is trimmed. The UI must not alter credential semantics.
-2. Logout does not claim local success if the server logout request fails; failure routes back through explicit session error/recovery instead of pretending the server session was revoked.
+1. Admin password input is passed exactly as entered; only the identifier is trimmed. The UI does not alter credential semantics.
+2. Logout does not claim local success if the server logout request fails; failure routes through explicit session error/recovery instead of pretending the server session was revoked.
+3. The implementation/status branch divergence created during Git writing is reconciled by explicit merge commit `936cbe5a5041a38f228c3d6e01c4ca74f5277e75`, preserving both histories rather than force-rewriting or hiding the mistake.
 
 ## Verification gate for current batch
 
@@ -140,6 +142,6 @@ Temporary branch `tmp-unused-do-not-use` contains no unique code and is not refe
 
 **Curriculum Structure / Stage13 backend foundation:** **VERIFIED**.
 
-**Admin Curriculum Web:** **IMPLEMENTED / VERIFICATION PENDING** on `f4d5c4fed02ee0793efc4ecb68d91e3a83bf56cc`.
+**Admin Curriculum Web:** **IMPLEMENTED / VERIFICATION PENDING**.
 
 **Deployment:** `DEFERRED BY PRODUCT OWNER`.
