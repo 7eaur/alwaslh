@@ -61,7 +61,7 @@ describe("admin api client", () => {
   });
 
   it("keeps lesson creation and movement on the documented routes", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response({}));
+    const fetchMock = vi.fn().mockImplementation(async () => response({}));
     vi.stubGlobal("fetch", fetchMock);
 
     await createCurriculumLesson({
