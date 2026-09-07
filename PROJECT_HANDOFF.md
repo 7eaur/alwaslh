@@ -7,12 +7,12 @@
 - Product: Arabic educational platform with independent Student PWA, Admin Web and Backend API.
 - Repository: `7eaur/alwaslh`.
 - Branch: `planning/product-evolution-review`; draft PR #12.
-- Latest fully verified executable baseline: `881102ff94711f908104cd068a003ad598609944`.
+- Latest fully verified executable baseline: `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`.
 - Stage11 Provider-Neutral AI Prompt / Output Contracts: **VERIFIED**.
 - Stage12 durable AI execution core: **VERIFIED**.
 - Stage12 distributed global/provider/project/model backpressure: **VERIFIED**.
-- Active Stage12 work: **health/cooldown/Retry-After/budget controls — IMPLEMENTED / VERIFICATION PENDING**.
-- After controls: resume/progress → dedicated worker lifecycle → real provider/model benchmark.
+- Stage12 global/route kill switch + health/cooldown/Retry-After + budget admission: **VERIFIED**.
+- Active Stage12 work: explicit job pause/resume/progress semantics, then dedicated worker lifecycle.
 - Deployment: `DEFERRED BY PRODUCT OWNER`; Git auto-deploy remains disabled. Hosted behavior is `NOT YET VERIFIED` until explicitly re-enabled and tested.
 
 ## Stable architecture
@@ -24,7 +24,7 @@ Student PWA ┘      │
                    ├── Stage10 media identity/storage abstraction
                    ├── reviewed OCR text / OCR Foundation
                    ├── Stage11 provider-neutral AI contracts
-                   ├── Stage12 durable AI execution + distributed controls
+                   ├── Stage12 durable AI execution + distributed admission/control
                    └── later TTS / notifications / offline sync
 ```
 
@@ -42,22 +42,22 @@ Hard boundaries:
 
 ## Exact verified checkpoint
 
-Executable head `881102ff94711f908104cd068a003ad598609944`:
+Executable head `7c3c5645d28479ae2305b4fd9ee47cb1754eb8a1`:
 
-- Stage12 AI Execution Verification `34007356406` — **SUCCESS**, including distributed capacity/backpressure races.
-- Stage11 AI Contract Verification `34007356417` — **SUCCESS**.
-- OCR Foundation Verification `34007356407` — **SUCCESS**.
-- Stage10 Media Pipeline `34007356429` — **SUCCESS**.
-- Stage9 Content Import Verification `34007356442` — **SUCCESS**.
-- Rebuild Stage Verification `34007356410` — **SUCCESS** including Chromium.
+- Stage12 AI Execution Verification `34086168715` — **SUCCESS** including lifecycle, distributed capacity races, kill switches, Retry-After cooldown, global budget race and route budget ceiling.
+- Stage11 AI Contract Verification `34086168704` — **SUCCESS**.
+- OCR Foundation Verification `34086168712` — **SUCCESS** including real Tesseract.
+- Stage10 Media Pipeline `34086168727` — **SUCCESS**.
+- Stage9 Content Import Verification `34086168687` — **SUCCESS**.
+- Rebuild Stage Verification `34086168772` — **SUCCESS** including Chromium.
 
 This exact head is the current rollback/reference point.
 
-## Verified Stage12 execution + backpressure
+## Verified Stage12 execution / backpressure / operational controls
 
-Implemented through `881102ff…`:
+Implemented through `7c3c5645…`:
 
-- additive `0012_ai_execution.sql` and `0013_ai_capacity_control.sql`;
+- additive `0012_ai_execution.sql`, `0013_ai_capacity_control.sql`, `0014_ai_execution_controls.sql`;
 - deterministic plan idempotency + fingerprint conflicts;
 - durable `SKIP LOCKED` unit claim;
 - UUID leases + strong running-lease DB shape;
@@ -70,35 +70,40 @@ Implemented through `881102ff…`:
 - cancellation + stale-write rejection;
 - partial-success reconciliation;
 - PostgreSQL-coordinated global/provider/project/model capacity;
-- `resume_route_key` continuation when capacity blocks;
-- no semantic retry increment on repeated capacity deferral;
-- `capacity_deferred_count` telemetry;
-- race tests proving two workers cannot over-admit the same global/provider/project/model limits.
+- capacity/control deferral through `resume_route_key` without extra semantic attempt consumption;
+- global and per-route kill switches;
+- persisted Retry-After/health cooldown;
+- global and exact-route budget reservation windows;
+- `capacity_deferred_count` and `control_deferred_count` telemetry;
+- operational pressure never silently escalates just because another route has room.
 
-Capacity pressure is operational, not semantic. It does not silently escalate to a more expensive route.
+### Route runtime identity rule
 
-## Current controls batch — do not call verified yet
+Do **not** assume `route_key` is globally unique. Independent routers may reuse a route key. Operational state is keyed by the full identity:
 
-The active batch introduces `0014_ai_execution_controls.sql` plus `AiExecutionControl`.
+```text
+route_key
++ provider_key
++ provider_project_alias
++ credential_alias
++ model_used
+```
 
-Target behavior now implemented for verification:
+Migration `0014` enforces this using a surrogate UUID PK plus `UNIQUE NULLS NOT DISTINCT` over the full identity. Cooldown/health/budget reads and route-budget attempt accounting all use the same full identity.
 
-1. singleton global kill switch;
-2. route kill switch;
-3. route runtime identity pinned to route/provider/project/credential/model;
-4. persisted cooldown state;
-5. Retry-After creates a distributed cooldown visible to later workers;
-6. consecutive retryable failures can trigger configured threshold cooldown;
-7. optional global budget window with per-attempt reservation;
-8. optional route budget window with per-attempt reservation;
-9. admission is checked under the same PostgreSQL advisory transaction lock used by distributed capacity;
-10. budget admission occurs before attempt insertion/provider call;
-11. operational block reuses `resume_route_key` and increments `control_deferred_count` without consuming another semantic retry;
-12. tests cover kill switches, cooldown/Retry-After, global budget race and route budget ceiling.
+This rule exists because controls head `3b4b98cbb7bb60a92146bb817d90df458e3862f4` exposed `ai_route_runtime_identity_mismatch:route-1` in the unchanged Stage12 lifecycle. Root-cause repair `7c3c5645…` restored compatibility and all same-head workflows passed.
 
-Budget reservation is deliberately conservative and is **not actual billing evidence**. Live provider pricing, billing reconciliation and production budget values remain `NOT YET VERIFIED`.
+## Budget evidence boundary
 
-## Current Stage12 invariants
+Budget admission is deliberately conservative:
+
+- configured pre-call reservation is persisted on the attempt;
+- window usage counts `max(reservation, reported estimated cost)`;
+- admission refuses a new attempt if its reservation would exceed the configured ceiling.
+
+This is **not** proof of actual provider invoice accuracy. Live pricing, token ceilings, billing reconciliation and production budget values remain `NOT YET VERIFIED` until authorized provider adapters + benchmark evidence exist.
+
+## Stage12 invariants
 
 - no provider/network call in DB transaction;
 - no running unit without lease identity;
@@ -111,18 +116,41 @@ Budget reservation is deliberately conservative and is **not actual billing evid
 - invalid output retries only inside max attempts;
 - review-required output stays review-required instead of inventing certainty;
 - partial success preserves completed units;
-- capacity/control deferral does not consume another semantic retry;
+- capacity/cooldown/budget deferral does not consume another semantic retry;
 - cascade is bounded and may not rotate credentials/projects to evade limits.
 
-## Next verification order
+## Active next batch — explicit pause/resume/progress
 
-1. Stage12 lint + strict typecheck + unit/build.
-2. Clean PostgreSQL migrations through `0014` + DB contract assertions.
-3. Existing Stage12 lifecycle test.
-4. Distributed capacity race test.
-5. New kill-switch/cooldown/Retry-After/budget test.
-6. Stage11 + OCR + Stage10 + Stage9 + Full Rebuild on the same exact head.
-7. Only after all green: mark controls VERIFIED and move to resume/progress + worker lifecycle.
+`database/migrations/0004_ai_and_sync.sql` currently defines `ai_job_status` as:
+
+`queued | running | retrying | completed | failed | cancelled`.
+
+`resume_route_key` is an internal execution-route continuation field. It is **not** job-level resume and must never be presented as such.
+
+The next batch must provide explicit job lifecycle semantics:
+
+1. pause stops **new claims** for that job;
+2. an already leased/in-flight unit keeps its lease and can safely finish/fail;
+3. resume makes unfinished queued/retrying units claimable again without resetting accepted outputs or attempt counts;
+4. cancelled/completed terminal jobs cannot be resumed;
+5. progress is server-derived from durable unit states and exposes accepted/failed/running/retrying/queued totals;
+6. behavior must be race-tested with an in-flight provider call.
+
+## Worker lifecycle after pause/resume
+
+`apps/api/src/server.ts` is HTTP-only and performs Fastify shutdown. The AI worker must be a **separate process/runtime**, not a polling loop embedded in the HTTP server.
+
+Worker requirements:
+
+- bounded worker slots;
+- bounded idle polling/backoff;
+- graceful shutdown stops new claims first;
+- in-flight provider work drains normally while lease authority is valid;
+- process death remains recoverable through existing lease expiry logic;
+- database closes only after worker drain;
+- no huge in-memory batch state.
+
+A live provider bootstrap is still `NOT YET VERIFIED`; do not invent provider credentials/configuration just to make an entrypoint look complete.
 
 ## Direct-question boundary
 
@@ -138,4 +166,4 @@ After every meaningful batch update Status + Engineering Log; update this Handof
 
 ## Current transition decision
 
-**Capacity/backpressure is VERIFIED on `881102ff…`. Verify the isolated health/cooldown/Retry-After/budget batch next. Do not mix worker/Admin/live-provider concerns into this verification cycle.**
+**Operational controls are VERIFIED on `7c3c5645…`. Implement explicit pause/resume/progress next. Only after that closes should the dedicated worker lifecycle be implemented.**
