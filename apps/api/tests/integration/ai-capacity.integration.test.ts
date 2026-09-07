@@ -190,12 +190,13 @@ test("Stage12 distributed backpressure is race-safe and bounds global/provider/p
       modelMaxConcurrent: 5,
     });
     const raceService = service(db, raceAdapter, raceRoute, 1);
-    const raceJob = await raceService.enqueue({
-      idempotencyKey: "stage12-capacity-global-race",
-      units: [
-        { unitKey: "race-a", request },
-        { unitKey: "race-b", request },
-      ],
+    const raceJobA = await raceService.enqueue({
+      idempotencyKey: "stage12-capacity-global-race-a",
+      units: [{ unitKey: "race-a", request }],
+    });
+    const raceJobB = await raceService.enqueue({
+      idempotencyKey: "stage12-capacity-global-race-b",
+      units: [{ unitKey: "race-b", request }],
     });
 
     const raceA = raceService.processNext();
@@ -214,8 +215,8 @@ test("Stage12 distributed backpressure is race-safe and bounds global/provider/p
       capacity_deferred_count: number;
     }>(
       `select status, attempt_count, resume_route_key, capacity_deferred_count
-       from ai_job_units where job_id = $1 order by position`,
-      [raceJob.job.id],
+       from ai_job_units where job_id in ($1, $2) order by job_id, position`,
+      [raceJobA.job.id, raceJobB.job.id],
     );
     const blockedRaceUnit = raceUnits.find((unit) => unit.status === "retrying");
     assert.ok(blockedRaceUnit);
@@ -223,8 +224,8 @@ test("Stage12 distributed backpressure is race-safe and bounds global/provider/p
     assert.equal(blockedRaceUnit.resume_route_key, raceRoute.routeKey);
     assert.equal(blockedRaceUnit.capacity_deferred_count, 1);
     await db.query(
-      "update ai_job_units set next_attempt_at = now() where job_id = $1 and status = 'retrying'",
-      [raceJob.job.id],
+      "update ai_job_units set next_attempt_at = now() where job_id in ($1, $2) and status = 'retrying'",
+      [raceJobA.job.id, raceJobB.job.id],
     );
     assert.equal((await raceService.processNext())?.status, "completed");
     assert.equal(raceAdapter.calls.length, 2);
