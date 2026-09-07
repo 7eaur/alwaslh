@@ -1,4 +1,5 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { ApiRequestError, isMissingSessionError } from "./admin-api";
 import {
   type ContentDocumentDetail,
@@ -148,14 +149,25 @@ export function ContentOperationsWorkspace({ onSessionExpired }: Props) {
         setOcr(result);
         setReplacementText(result.normalizedText ?? result.rawText ?? "");
         setOcrState("ready");
-        if (detail) await openDocument(detail.document.id);
+
+        if (detail) {
+          try {
+            const refreshedDetail = await fetchContentDocument(detail.document.id);
+            setDetail(refreshedDetail);
+            setDetailState("ready");
+            setDetailError("");
+          } catch (cause) {
+            setDetailState("error");
+            handleError(cause, setDetailError);
+          }
+        }
         await loadOverview();
       } catch (cause) {
         setOcrState("error");
         handleError(cause, setOcrError);
       }
     },
-    [detail, handleError, loadOverview, ocr, openDocument, replacementText],
+    [detail, handleError, loadOverview, ocr, replacementText],
   );
 
   const canGoNext = useMemo(() => {

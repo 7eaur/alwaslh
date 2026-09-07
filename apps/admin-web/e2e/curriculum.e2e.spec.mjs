@@ -108,7 +108,10 @@ test("admin reviews source media and pending OCR through the operations workspac
 
   await expect(page.getByRole("heading", { name: "الوسائط وOCR" })).toBeVisible();
   await expect(page.getByText("كتاب تشغيل الوسائط التجريبي", { exact: true })).toBeVisible();
-  await expect(page.getByText("1", { exact: true })).toHaveCount(5);
+
+  const metrics = page.locator(".content-metrics");
+  await expect(metrics.locator(".metric-card").filter({ hasText: "المستندات" })).toContainText("1");
+  await expect(metrics.locator(".metric-card").filter({ hasText: "OCR للمراجعة" })).toContainText("1");
 
   const documentCard = page.locator("article.content-document-card").filter({
     has: page.getByText("كتاب تشغيل الوسائط التجريبي", { exact: true }),
@@ -126,8 +129,9 @@ test("admin reviews source media and pending OCR through the operations workspac
   await reviewedText.fill("نص مصحح ومعتمد من الإدارة");
   await page.getByRole("button", { name: "اعتماد النص" }).click();
 
-  await expect(page.getByText("معتمد", { exact: true })).toBeVisible();
+  await expect(page.locator(".ocr-review-panel .status-badge")).toHaveText("معتمد");
   await expect(reviewedText).toHaveValue("نص مصحح ومعتمد من الإدارة");
+  await expect(metrics.locator(".metric-card").filter({ hasText: "OCR للمراجعة" })).toContainText("0");
 });
 
 test("admin curriculum remains usable at a narrow viewport", async ({ page }) => {
