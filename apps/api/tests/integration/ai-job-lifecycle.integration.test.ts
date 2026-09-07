@@ -10,8 +10,13 @@ import type {
 import { AiModelRouter } from "../../src/ai/router.js";
 import { createDatabase, type Database } from "../../src/db.js";
 
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) throw new Error("DATABASE_URL is required for Stage12 lifecycle integration tests");
+function requireDatabaseUrl(): string {
+  const value = process.env.DATABASE_URL;
+  if (!value) throw new Error("DATABASE_URL is required for Stage12 lifecycle integration tests");
+  return value;
+}
+
+const databaseUrl = requireDatabaseUrl();
 
 const request: AiGenerationRequest = {
   mode: "question_generation",
