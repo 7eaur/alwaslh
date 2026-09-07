@@ -52,8 +52,8 @@ export function registerAdminContentOperationsRoutes(
         ...(query.subjectSlug ? { subjectSlug: query.subjectSlug } : {}),
         ...(query.kind ? { kind: query.kind } : {}),
         ...(query.q ? { query: query.q } : {}),
-        limit: query.limit,
-        offset: query.offset,
+        limit: query.limit ?? 30,
+        offset: query.offset ?? 0,
       }),
     };
   });
@@ -62,7 +62,13 @@ export function registerAdminContentOperationsRoutes(
     await adminActor(request, config, auth);
     const params = parseBody(DocumentParamsSchema, request.params);
     const query = parseBody(DetailQuerySchema, request.query);
-    return { detail: await operations.documentDetail(params.documentId, query.limit, query.offset) };
+    return {
+      detail: await operations.documentDetail(
+        params.documentId,
+        query.limit ?? 50,
+        query.offset ?? 0,
+      ),
+    };
   });
 
   app.get("/v1/admin/content-operations/ocr/:extractionId", async (request) => {
