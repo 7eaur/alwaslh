@@ -155,6 +155,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return payload as T;
 }
 
+export function adminApiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return request<T>(path, init);
+}
+
 export function isMissingSessionError(error: unknown): boolean {
   return error instanceof ApiRequestError && (error.code === "UNAUTHORIZED" || error.code === "FORBIDDEN");
 }
