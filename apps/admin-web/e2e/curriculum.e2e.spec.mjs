@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const adminIdentifier = "stage13-admin-ui";
 const adminPassword = "Stage13AdminUiPass123!";
+const testClassOptionLabel = "الصف الإداري التجريبي — نشط";
 
 async function login(page) {
   await page.goto("/");
@@ -42,7 +43,7 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await offeringForm.getByRole("button", { name: "إنشاء الربط" }).click();
   await waitForSaved(page);
 
-  await page.getByLabel("الصف").selectOption({ label: /الصف الإداري التجريبي/ });
+  await page.getByLabel("الصف").selectOption({ label: testClassOptionLabel });
   await page.getByLabel("المادة ضمن الصف").selectOption({ label: "العلوم الإدارية التجريبية" });
   await expect(page.getByRole("heading", { name: "العلوم الإدارية التجريبية" })).toBeVisible();
 
@@ -86,7 +87,7 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await page.reload();
   await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toHaveCount(0);
-  await page.getByLabel("الصف").selectOption({ label: /الصف الإداري التجريبي/ });
+  await page.getByLabel("الصف").selectOption({ label: testClassOptionLabel });
   await page.getByLabel("المادة ضمن الصف").selectOption({ label: "العلوم الإدارية التجريبية" });
   await expect(page.getByText("الدرس الإداري المحدّث", { exact: true })).toBeVisible();
 
