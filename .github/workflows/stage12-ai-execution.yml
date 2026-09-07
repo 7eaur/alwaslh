@@ -63,6 +63,9 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from information_schema.columns where table_name='ai_execution_attempts' and column_name in ('global_budget_reservation_usd_micros','route_budget_reservation_usd_micros')")" = "2"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ai_job_units_max_attempts_valid','ai_job_units_running_lease_shape','ai_job_units_control_deferred_nonnegative','ai_execution_attempts_unit_number_unique','ai_execution_runtime_control_budget_shape','ai_route_runtime_state_budget_shape','ai_route_runtime_state_identity_unique')")" = "7"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_ai_job_units_stage12_claim','idx_ai_execution_attempts_unit_started','idx_ai_execution_attempts_route_started','idx_ai_job_units_capacity_resume','idx_ai_route_runtime_state_cooldown','idx_ai_execution_attempts_global_budget_window','idx_ai_execution_attempts_route_budget_window','idx_ai_jobs_claimable_unpaused')")" = "8"
+      - name: Run bounded polling and graceful worker lifecycle tests
+        run: node --test --import tsx tests/ai-worker.test.ts
+        working-directory: apps/api
       - name: Run PostgreSQL idempotency, lease, cascade, retry, cancellation and partial-success tests
         run: node --test --import tsx tests/integration/ai-execution.integration.test.ts
         working-directory: apps/api
