@@ -386,7 +386,7 @@ export class AdminContentOperationsService {
         failedMediaCount: Number(total.failed_media_count),
         pendingOcrCount: Number(total.pending_ocr_count),
       },
-      facets: { classes, subjects },
+      facets: { classes: [...classes], subjects: [...subjects] },
       documents: rows.map((row) => ({
         ...mapDocument(row),
         assetCount: Number(row.asset_count),
