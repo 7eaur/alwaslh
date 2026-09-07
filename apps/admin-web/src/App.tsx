@@ -1,82 +1,167 @@
-const sections = [
-  "نظرة عامة",
-  "المحتوى",
-  "الاختبارات والذكاء الاصطناعي",
-  "الطلاب والوصول",
-  "الإشعارات",
-  "التقارير",
-  "النظام",
-] as const;
+import { useCallback, useEffect, useState } from "react";
+import type { ReactNode } from "react";
+import {
+  ApiRequestError,
+  type AdminProfile,
+  isMissingSessionError,
+  logoutAdmin,
+  restoreAdminSession,
+} from "./admin-api";
+import { CurriculumWorkspace } from "./CurriculumWorkspace";
+import { LoginScreen } from "./LoginScreen";
+
+function errorMessage(error: unknown): string {
+  if (error instanceof ApiRequestError) return error.message;
+  return "حدث خطأ غير متوقع. أعد المحاولة، وإذا استمر الخطأ راجع سجل التشغيل.";
+}
 
 export function App() {
+  const [session, setSession] = useState<AdminProfile | null>(null);
+  const [sessionState, setSessionState] = useState<"restoring" | "signed_out" | "signed_in" | "error">(
+    "restoring",
+  );
+  const [sessionError, setSessionError] = useState("");
+
+  const restore = useCallback(async () => {
+    setSessionState("restoring");
+    setSessionError("");
+    try {
+      const profile = await restoreAdminSession();
+      setSession(profile);
+      setSessionState("signed_in");
+    } catch (error) {
+      setSession(null);
+      if (isMissingSessionError(error)) {
+        setSessionState("signed_out");
+        return;
+      }
+      setSessionError(errorMessage(error));
+      setSessionState("error");
+    }
+  }, []);
+
+  useEffect(() => {
+    void restore();
+  }, [restore]);
+
+  if (sessionState === "restoring") {
+    return (
+      <FullPageState
+        title="جارٍ التحقق من جلسة الإدارة"
+        body="نراجع الجلسة الآمنة قبل عرض أي بيانات إدارية."
+      />
+    );
+  }
+
+  if (sessionState === "error") {
+    return (
+      <FullPageState title="تعذر الوصول إلى خدمة الإدارة" body={sessionError}>
+        <button className="primary-button" type="button" onClick={() => void restore()}>
+          إعادة المحاولة
+        </button>
+      </FullPageState>
+    );
+  }
+
+  if (sessionState === "signed_out" || !session) {
+    return (
+      <LoginScreen
+        onAuthenticated={(profile) => {
+          setSession(profile);
+          setSessionState("signed_in");
+        }}
+      />
+    );
+  }
+
+  return (
+    <AdminShell
+      profile={session}
+      onSessionExpired={() => {
+        setSession(null);
+        setSessionState("signed_out");
+      }}
+      onLogout={async () => {
+        try {
+          await logoutAdmin();
+          setSession(null);
+          setSessionState("signed_out");
+        } catch (error) {
+          setSessionError(errorMessage(error));
+          setSessionState("error");
+        }
+      }}
+    />
+  );
+}
+
+function FullPageState({ title, body, children }: { title: string; body: string; children?: ReactNode }) {
+  return (
+    <main className="auth-page">
+      <section className="auth-card" aria-live="polite">
+        <BrandBlock auth />
+        <h1>{title}</h1>
+        <p>{body}</p>
+        {children}
+      </section>
+    </main>
+  );
+}
+
+function BrandBlock({ auth = false }: { auth?: boolean }) {
+  return (
+    <div className={auth ? "brand-block auth-brand" : "brand-block"}>
+      <span className="brand-mark" aria-hidden="true">
+        و
+      </span>
+      <div>
+        <strong>الوسيلة الذكية</strong>
+        <small>{auth ? "لوحة الإدارة" : "إدارة المحتوى والتشغيل"}</small>
+      </div>
+    </div>
+  );
+}
+
+function AdminShell({
+  profile,
+  onLogout,
+  onSessionExpired,
+}: {
+  profile: AdminProfile;
+  onLogout: () => Promise<void>;
+  onSessionExpired: () => void;
+}) {
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar" aria-label="التنقل الرئيسي">
-        <div className="brand-block">
-          <span className="brand-mark" aria-hidden="true">و</span>
-          <div>
-            <strong>الوسيلة الذكية</strong>
-            <small>لوحة الإدارة</small>
-          </div>
-        </div>
-
-        <nav className="admin-nav">
-          {sections.map((section, index) => (
-            <button
-              className={index === 0 ? "nav-item is-active" : "nav-item"}
-              key={section}
-              type="button"
-            >
-              {section}
-            </button>
-          ))}
+        <BrandBlock />
+        <nav className="admin-nav" aria-label="أقسام الإدارة">
+          <span className="nav-item is-active" aria-current="page">
+            المنهج والمحتوى
+          </span>
+          <span className="nav-item is-disabled">
+            الوسائط وOCR <small>مرحلة لاحقة</small>
+          </span>
+          <span className="nav-item is-disabled">
+            الذكاء الاصطناعي <small>مرحلة لاحقة</small>
+          </span>
+          <span className="nav-item is-disabled">
+            الطلاب والوصول <small>مرحلة لاحقة</small>
+          </span>
+          <span className="nav-item is-disabled">
+            التقارير والإعدادات <small>مرحلة لاحقة</small>
+          </span>
         </nav>
+        <div className="sidebar-account">
+          <span>الحساب الحالي</span>
+          <strong>{profile.displayName ?? "مدير النظام"}</strong>
+          <button className="sidebar-button" type="button" onClick={() => void onLogout()}>
+            تسجيل الخروج
+          </button>
+        </div>
       </aside>
-
       <main className="admin-main">
-        <header className="page-header">
-          <div>
-            <p className="eyebrow">مركز التشغيل</p>
-            <h1>نظرة عامة</h1>
-            <p className="page-description">
-              هذه هي قشرة التطبيق الجديدة فقط. البيانات الحقيقية ستتصل بعد تدقيق قاعدة البيانات،
-              ولن نستخدم أرقامًا وهمية في لوحة التشغيل.
-            </p>
-          </div>
-          <div className="header-actions">
-            <button className="secondary-button" type="button">سجل العمليات</button>
-            <button className="primary-button" type="button">إضافة محتوى</button>
-          </div>
-        </header>
-
-        <section className="foundation-notice" aria-labelledby="foundation-title">
-          <div>
-            <span className="status-dot" aria-hidden="true" />
-            <h2 id="foundation-title">Foundation mode</h2>
-          </div>
-          <p>
-            Admin وStudent أصبحا تطبيقين منفصلين. الخطوة التالية هي ربط هذه القشرة بعقود البيانات
-            الآمنة بعد Database Reality Audit.
-          </p>
-        </section>
-
-        <section className="workspace-grid" aria-label="مناطق العمل الرئيسية">
-          <article>
-            <span className="section-kicker">CONTENT</span>
-            <h2>إدارة المحتوى</h2>
-            <p>الصفوف والمواد والدروس والرفع والمعالجة ضمن مسار واحد واضح.</p>
-          </article>
-          <article>
-            <span className="section-kicker">AI</span>
-            <h2>عمليات الذكاء الاصطناعي</h2>
-            <p>Jobs وحالات التنفيذ وإعادة المحاولة بدل عمليات طويلة مرتبطة بصفحة المتصفح.</p>
-          </article>
-          <article>
-            <span className="section-kicker">ACCESS</span>
-            <h2>الطلاب والوصول</h2>
-            <p>حسابات وEntitlements وأكواد في نموذج تشغيل موحد قابل للتدقيق.</p>
-          </article>
-        </section>
+        <CurriculumWorkspace onSessionExpired={onSessionExpired} />
       </main>
     </div>
   );
