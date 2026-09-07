@@ -63,11 +63,7 @@ export function registerAdminContentOperationsRoutes(
     const params = parseBody(DocumentParamsSchema, request.params);
     const query = parseBody(DetailQuerySchema, request.query);
     return {
-      detail: await operations.documentDetail(
-        params.documentId,
-        query.limit ?? 50,
-        query.offset ?? 0,
-      ),
+      detail: await operations.documentDetail(params.documentId, query.limit ?? 50, query.offset ?? 0),
     };
   });
 
