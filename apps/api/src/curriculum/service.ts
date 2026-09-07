@@ -296,12 +296,7 @@ function lessonView(row: LessonRow): CurriculumLessonView {
   };
 }
 
-function addPatch(
-  sets: string[],
-  values: unknown[],
-  column: string,
-  value: unknown,
-): void {
+function addPatch(sets: string[], values: unknown[], column: string, value: unknown): void {
   values.push(value);
   sets.push(`${column} = $${values.length}`);
 }
@@ -342,11 +337,7 @@ async function assertSubjectAvailable(tx: QueryExecutor, subjectId: string): Pro
   if (row.status === "archived") throw new AppError("CONFLICT", "لا يمكن استخدام مادة مؤرشفة", 409);
 }
 
-async function assertOfferingAvailable(
-  tx: QueryExecutor,
-  classId: string,
-  subjectId: string,
-): Promise<void> {
+async function assertOfferingAvailable(tx: QueryExecutor, classId: string, subjectId: string): Promise<void> {
   const rows = await tx.query<{
     offering_status: CurriculumRecordStatus;
     class_status: CurriculumRecordStatus;
@@ -362,7 +353,11 @@ async function assertOfferingAvailable(
   );
   const row = rows[0];
   if (!row) throw new AppError("NOT_FOUND", "عرض المادة غير موجود لهذا الصف", 404);
-  if (row.class_status === "archived" || row.subject_status === "archived" || row.offering_status === "archived") {
+  if (
+    row.class_status === "archived" ||
+    row.subject_status === "archived" ||
+    row.offering_status === "archived"
+  ) {
     throw new AppError("CONFLICT", "لا يمكن الإضافة إلى عرض مادة مؤرشف", 409);
   }
 }
@@ -448,7 +443,8 @@ export class CurriculumService {
       const values: unknown[] = [classId];
       const sets: string[] = [];
       if (input.name !== undefined) addPatch(sets, values, "name", requiredText(input.name));
-      if (input.description !== undefined) addPatch(sets, values, "description", nullableText(input.description));
+      if (input.description !== undefined)
+        addPatch(sets, values, "description", nullableText(input.description));
       if (input.position !== undefined) addPatch(sets, values, "position", input.position);
       if (input.status !== undefined) addPatch(sets, values, "status", input.status);
       if (sets.length === 0) throw new AppError("BAD_REQUEST", "لم يتم إرسال أي تغيير", 400);
@@ -495,7 +491,8 @@ export class CurriculumService {
       const values: unknown[] = [subjectId];
       const sets: string[] = [];
       if (input.name !== undefined) addPatch(sets, values, "name", requiredText(input.name));
-      if (input.description !== undefined) addPatch(sets, values, "description", nullableText(input.description));
+      if (input.description !== undefined)
+        addPatch(sets, values, "description", nullableText(input.description));
       if (input.status !== undefined) addPatch(sets, values, "status", input.status);
       if (sets.length === 0) throw new AppError("BAD_REQUEST", "لم يتم إرسال أي تغيير", 400);
 
@@ -597,7 +594,8 @@ export class CurriculumService {
       const values: unknown[] = [sectionId];
       const sets: string[] = [];
       if (input.title !== undefined) addPatch(sets, values, "title", requiredText(input.title));
-      if (input.description !== undefined) addPatch(sets, values, "description", nullableText(input.description));
+      if (input.description !== undefined)
+        addPatch(sets, values, "description", nullableText(input.description));
       if (input.position !== undefined) addPatch(sets, values, "position", input.position);
       if (input.status !== undefined) addPatch(sets, values, "status", input.status);
       if (sets.length === 0) throw new AppError("BAD_REQUEST", "لم يتم إرسال أي تغيير", 400);
