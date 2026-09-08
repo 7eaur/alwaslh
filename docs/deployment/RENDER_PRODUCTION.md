@@ -69,13 +69,13 @@ Root `.node-version` pins `22.22.0` for Render static-site builds. The API Docke
 
 `DATABASE_SSL=disable` is intentional only for same-workspace Render connectivity.
 
-The API runs migrations before startup using:
+Render Free Web Services do not support paid-only pre-deploy commands. Therefore the free API starts with:
 
 ```text
-node apps/api/dist/migrate.js
+node apps/api/dist/migrate.js && node apps/api/dist/server.js
 ```
 
-The migrator remains checksum-protected, idempotent, and advisory-lock guarded.
+The migrator is checksum-protected, idempotent, and advisory-lock guarded, so repeated service starts remain safe in test mode.
 
 Because the free Render database expires after 30 days, it is a temporary development datastore only. Before expiry, Integration must either upgrade it or explicitly migrate to the next approved datastore.
 
