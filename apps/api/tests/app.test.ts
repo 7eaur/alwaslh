@@ -16,6 +16,7 @@ const config: AppConfig = {
   SESSION_TTL_HOURS: 168,
   SESSION_COOKIE_SAME_SITE: "lax",
   ALLOWED_ORIGINS: "http://localhost:5173",
+  MEDIA_STORAGE_ROOT: "./.test-media-storage",
 };
 
 function fakeDatabase(options: { ready?: boolean } = {}): Database {
