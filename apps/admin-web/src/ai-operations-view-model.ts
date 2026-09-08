@@ -103,6 +103,7 @@ export interface AiReviewOutputView {
   reviewedAt: string | null;
   sourceProvenance: readonly AiSourceProvenanceView[];
   reviewHistory: readonly AiReviewHistoryEventView[];
+  reviewPagination: AiPaginationView;
   allowedReviewActions: readonly AiReviewAction[];
 }
 
