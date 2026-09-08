@@ -64,6 +64,22 @@ Run `34283442253` — Stage13E Combined Integration Verification
 
 No Stage13E checkout/lint/typecheck/test/build/PostgreSQL/Chromium command executed in these attempts.
 
+## Runner-label / workflow configuration audit
+
+A runner-label mismatch was explicitly checked and ruled out on the inspected workflows:
+
+- current Stage10 Media Pipeline: `runs-on: ubuntu-latest`;
+- current Stage11 AI Contract Verification: `runs-on: ubuntu-latest`;
+- current Stage13E Combined Integration: `runs-on: ubuntu-latest`;
+- verified Full Rebuild workflow at `4eca7de...`: its jobs also use `runs-on: ubuntu-latest`.
+
+More importantly, the same Stage10 and Stage11 workflows have known green runs with actual GitHub-hosted runner execution:
+
+- Stage10 success `34177369777` / job `101909353790` executed setup, checkout, Node setup, dependencies, lint/typecheck/unit/build, migrations, PostgreSQL integration and real PDF smoke;
+- Stage11 success `34177369753` / job `101909353876` executed setup, checkout, Node setup, dependencies, lint/typecheck/tests/build.
+
+Therefore the incident is **not explained by a custom/self-hosted runner label, missing runner label, or a Stage13E-only `runs-on` configuration error**. Changing `ubuntu-latest` or introducing self-hosted infrastructure without separate product need would be unsupported by evidence.
+
 ## Public platform status check
 
 GitHub Status was checked for September 8, 2026. No public GitHub Actions incident was reported for that date.
@@ -75,6 +91,8 @@ Therefore the evidence does **not** support classifying CI-001 as a known global
 The repository owner account is confirmed through the connected GitHub integration to have `admin` permission on `7eaur/alwaslh`.
 
 The integration can read workflow runs/jobs/steps and can request reruns, but it does not expose the repository/account Actions billing, usage, budget, or runner-allocation settings needed to verify the exact account-side cause.
+
+Direct attempts to read repository Actions administration endpoints such as `/actions/permissions` and `/actions/runners` through the available generic GitHub connector are rejected by the connector allowlist before reaching GitHub. This is a tooling visibility boundary, not evidence that repository Actions permissions or runner inventory are wrong.
 
 GitHub documentation states that private repositories use account-plan GitHub-hosted runner allowances and that usage can be blocked after included quota is exhausted when additional paid usage is unavailable. This is a **diagnostic possibility only**, not a finding about this account until usage/billing evidence is inspected.
 
@@ -98,6 +116,7 @@ Do not:
 - remove PostgreSQL/browser gates;
 - replace real APIs with mocks/test-only endpoints;
 - alter Stage13E workflow semantics merely to make a pre-checkout failure look green;
+- replace `ubuntu-latest` with custom/self-hosted labels without independent evidence/need;
 - create a second queue/lifecycle;
 - promote Stage13E to `main` without executable evidence;
 - begin Stage13F without explicit Product Owner ordering override;
@@ -106,7 +125,7 @@ Do not:
 ## Recovery procedure
 
 1. Inspect account/repository GitHub Actions usage/budget/payment and Actions availability through the GitHub account UI or another administrative channel that exposes those settings.
-2. Restore/confirm standard GitHub-hosted runner allocation for this private repository if an account-side restriction is found.
+2. Restore/confirm standard GitHub-hosted `ubuntu-latest` runner allocation for this private repository if an account-side restriction is found.
 3. Re-run the **unchanged** Stage13E Combined Integration workflow.
 4. A recovery attempt counts as infrastructure recovery only after a real runner executes at least `Set up job` / checkout steps.
 5. Any command that then executes and fails becomes a real engineering failure and must be root-caused in the owning DB/API/Admin/test layer.
@@ -118,4 +137,4 @@ Do not:
 
 `CI-001` is a **repository-wide verification-infrastructure blocker with scope verified and exact root cause unverified**.
 
-The correct engineering action is to preserve the candidate and gates unchanged until runner allocation becomes available or account-side evidence identifies a concrete administrative cause. Product-code churn is not justified by the current evidence.
+The runner-label/YAML explanation has been ruled out on the inspected workflows. The correct engineering action is to preserve the candidate and gates unchanged until standard GitHub-hosted runner allocation becomes available or account-side evidence identifies a concrete administrative cause. Product-code or workflow-label churn is not justified by the current evidence.
