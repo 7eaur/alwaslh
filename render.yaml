@@ -5,18 +5,16 @@ databases:
   - name: alwaslh-prod-postgres-7eaur
     databaseName: alwaslh
     user: alwaslh_app
-    plan: 0.1c-256mb
+    plan: free
     region: frankfurt
     postgresMajorVersion: "16"
-    diskSizeGB: 1
-    storageAutoscalingEnabled: false
     ipAllowList: []
 
 services:
   - type: web
     name: alwaslh-prod-api-7eaur
     runtime: docker
-    plan: 0.5c-512mb
+    plan: free
     region: frankfurt
     branch: main
     autoDeploy: true
@@ -38,7 +36,7 @@ services:
       - key: DATABASE_SSL
         value: disable
       - key: DATABASE_POOL_MAX
-        value: "10"
+        value: "5"
       - key: SESSION_COOKIE_NAME
         value: alwaslh_session
       - key: SESSION_TTL_HOURS
@@ -49,10 +47,6 @@ services:
         value: https://alwaslh-prod-student-7eaur.onrender.com,https://alwaslh-prod-admin-7eaur.onrender.com
       - key: MEDIA_STORAGE_ROOT
         value: /app/runtime-data/media
-    disk:
-      name: alwaslh-prod-media-7eaur
-      mountPath: /app/runtime-data/media
-      sizeGB: 1
 
   - type: web
     name: alwaslh-prod-student-7eaur
@@ -62,6 +56,8 @@ services:
     buildCommand: npm install --include=dev --no-audit --no-fund --prefix apps/student-web && npm run build --prefix apps/student-web
     staticPublishPath: apps/student-web/dist
     envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
       - key: VITE_API_BASE_URL
         value: https://alwaslh-prod-api-7eaur.onrender.com
     routes:
@@ -87,6 +83,8 @@ services:
     buildCommand: npm install --include=dev --no-audit --no-fund --prefix apps/admin-web && npm run build --prefix apps/admin-web
     staticPublishPath: apps/admin-web/dist
     envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
       - key: VITE_API_BASE_URL
         value: https://alwaslh-prod-api-7eaur.onrender.com
     routes:
