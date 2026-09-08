@@ -87,7 +87,7 @@ jobs:
         run: |
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname='ai_output_review_events' and relkind='r'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_type where typname='ai_output_review_action')" = "1"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ai_output_review_events_output_revision_unique','ai_output_review_events_payload_shape','ai_output_review_events_note_length')")" = "3"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ai_output_review_events_output_revision_unique','ai_output_review_events_payload_shape','ai_output_review_events_note_length','ai_output_review_events_reject_note_required')")" = "4"
 
       - name: Run Stage13E Backend authority regressions
         working-directory: apps/api
