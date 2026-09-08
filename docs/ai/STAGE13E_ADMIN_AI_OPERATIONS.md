@@ -14,6 +14,8 @@ Current combined branch is documented in `PROJECT_EXECUTION_QUEUE.md` and `PROJE
 - Stage13E review does not publish into Stage13F Question Bank and does not mutate raw provider output in place.
 - Admin edits/approvals pass the same Stage11 semantic authority as provider output.
 - `review_required` may be accepted by the human Admin review authority; semantic `invalid` may not.
+- Human review mutation is available only for **execution-stable unit outputs**: `completed | review_required`.
+- Outputs attached to `queued | running | retrying | failed | cancelled` units remain observable for diagnosis/provenance but are **inspection-only** and expose no review mutation authority.
 
 ## 2. Job lifecycle / progress
 
@@ -183,9 +185,12 @@ Effective reviewed output:
 
 Review actions:
 
+- unit status outside `completed | review_required` → `[]` even if an `ai_outputs` row exists;
 - terminal approve/reject → `[]`;
-- open review → edit + reject;
+- open stable review → edit + reject;
 - approve only when current candidate passes Stage11 semantic authority (`valid` or `review_required`, never `invalid`).
+
+This stable-unit gate prevents an Admin review revision from being attached to an output row that Stage12 may still replace during retry/re-execution.
 
 ## 8. Job controls
 
@@ -246,26 +251,29 @@ type ReviewRequest =
 
 Rules:
 
+- output's owning unit must currently be `completed` or `review_required`; otherwise → `409` and no review event;
 - approve + `editedOutput` → `400`;
 - edit without `editedOutput` → `400`;
 - reject missing/blank-after-trim note → `400`;
 - unknown fields → `400`;
 - rejected request bodies create no review event.
 
-### Shared semantic guard
+### Shared semantic + execution-stability guard
 
 Review transaction:
 
-1. locks owning `ai_outputs` row;
-2. reads canonical `ai_job_units.input_payload`;
-3. chooses normalized/latest-edited candidate;
-4. executes Stage11 `validateAiGenerationOutput` inside the same transaction;
-5. writes append-only review revision only if allowed.
+1. locks the owning `ai_outputs` **and** `ai_job_units` rows together;
+2. verifies unit status is execution-stable (`completed | review_required`);
+3. reads canonical `ai_job_units.input_payload`;
+4. chooses normalized/latest-edited candidate;
+5. executes Stage11 `validateAiGenerationOutput` inside the same transaction;
+6. writes append-only review revision only if allowed.
 
-This prevents schema-valid human edits from bypassing provenance, requested count, answer shape, notation, duplicate, exact-source and other Stage11 rules.
+This prevents schema-valid human edits from bypassing provenance, requested count, answer shape, notation, duplicate, exact-source and other Stage11 rules, and prevents a human approval/rejection from surviving as authority over an output that a retry could replace.
 
 ### Edit
 
+- output must belong to an execution-stable unit;
 - output must match Stage11 schema;
 - cannot change output `kind` when stored normalized output is schema-valid;
 - semantic `invalid` → `400`, no revision;
@@ -274,6 +282,7 @@ This prevents schema-valid human edits from bypassing provenance, requested coun
 
 ### Approve
 
+- output must belong to an execution-stable unit;
 - uses latest edit, otherwise normalized output;
 - candidate revalidated inside locked transaction;
 - schema/semantic invalid → `409`, no terminal revision;
@@ -283,13 +292,14 @@ This prevents schema-valid human edits from bypassing provenance, requested coun
 
 ### Reject
 
+- output must belong to an execution-stable unit;
 - non-empty reason required;
 - creates terminal reject event with no reviewed output;
 - `effectiveReviewedOutput = null`.
 
 ### Concurrency / audit
 
-- owning output row is locked before next revision decision;
+- owning output and unit rows are locked before execution-state/revision decision;
 - `(ai_output_id, revision)` is unique;
 - after approve/reject all later review mutations return `409`;
 - concurrent terminal requests serialize and at most one succeeds;
@@ -309,7 +319,7 @@ Expected classes:
 - `401 UNAUTHORIZED`: no valid session;
 - `403 FORBIDDEN`: non-Admin or origin-policy failure;
 - `404 NOT_FOUND`: unknown resource;
-- `409 CONFLICT`: stale/illegal lifecycle action, retry ceiling/no failed unit, invalid approval candidate or finished review;
+- `409 CONFLICT`: stale/illegal lifecycle action, retry ceiling/no failed unit, output unit not execution-stable, invalid approval candidate or finished review;
 - `500 INTERNAL_ERROR`: durable data violates stored contract/invariant.
 
 Frontend must refresh canonical state on `409`, not invent an optimistic replacement state.
@@ -349,14 +359,33 @@ The unique `(ai_output_id, revision)` btree also serves latest-revision lookup w
 
 **Execution state:** code/migration/test changes exist on the combined branch but remain `NOT YET VERIFIED` because current GitHub hosted jobs terminate before checkout.
 
+### Static audit finding — AI-013E-REVIEW-002
+
+**Severity:** P1 Data/Review integrity.
+
+**Symptom:** Stage12 persists `ai_outputs` with `ON CONFLICT (job_unit_id) DO UPDATE` during retry/re-execution, while Stage13E review events are append-only and remain attached to the same output row. The original Stage13E service allowed review actions solely from review/semantic state and did not gate them on `ai_job_units.status`.
+
+**Root cause:** human review authority was not explicitly bound to an execution-stable output lifecycle boundary.
+
+**Blast radius:** an Admin could review a `failed`/`retrying` output, then Stage12 could replace that row's normalized/raw output during retry while the prior approve/reject event remained, making a stale human decision appear to govern different generated content.
+
+**Fix location:** Stage13E Backend review authority, not Frontend and not Stage12 retry semantics.
+
+**Fix:** only unit statuses `completed | review_required` expose review actions; `reviewOutput()` locks `ai_outputs` and `ai_job_units` together and returns `409` for any other status before writing an event. Non-stable outputs remain inspection-only.
+
+**Regression:** action-authority integration test creates real `failed` and `retrying` units with output rows, requires `allowedReviewActions=[]`, requires approve/reject mutations to return `409`, and proves no review event is written.
+
+**Execution state:** implementation/test commits `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` and `6494a0ee232cf646eae693054b129db752aee40e` remain `NOT YET VERIFIED` because run `34199202570`, job `101973855894`, terminated before checkout with `steps=null`.
+
 ## 12. Security / performance
 
 - pagination bounded to 100;
 - list/detail avoid raw provider payloads;
 - credentials/provider metadata/internal error text are excluded;
 - provider/network calls are not introduced in Admin transactions;
-- review transaction is short and row-scoped;
+- review transaction is short and row-scoped to one output + owning unit;
 - action availability is server-derived;
+- non-stable outputs are read-only to avoid stale human authority over retryable content;
 - no second lifecycle/queue;
 - no duplicate latest-review index beyond the unique revision index.
 
@@ -367,26 +396,26 @@ Combined Stage13E workflow is expected to execute:
 1. API lint/typecheck/unit/build;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB contract;
-4. Admin authorization/secret/provenance/review/action/retry/race integration tests;
+4. Admin authorization/secret/provenance/review/action/retry/race integration tests, including non-stable output review denial;
 5. Stage12 execution/capacity/control/lifecycle regressions;
 6. auth regression;
 7. fresh DB reset;
 8. real Admin bootstrap + deterministic Stage13E fixtures;
 9. real Chromium happy path, pause/resume, approve/reload, session expiry, stale-review 409 and 390px.
 
-Latest combined HEAD after the durable reject-reason static-audit fix:
+Latest executable candidate code/test HEAD before this documentation commit:
 
-`bc1bf508897796d0a74d22126094e83180b7ec79`
+`6494a0ee232cf646eae693054b129db752aee40e`
 
 Latest run:
 
-`34197629003`
+`34199202570`
 
 Job:
 
-`101968795653`
+`101973855894`
 
-Observed: job ended before checkout with no executable steps. Therefore the latest migration/code/test state remains **NOT YET VERIFIED** and Stage13E is not closed.
+Observed: job ended before checkout with no executable steps (`steps=null`). Therefore the latest code/migration/test state remains **NOT YET VERIFIED** and Stage13E is not closed.
 
 ## 14. Non-goals / open work
 
