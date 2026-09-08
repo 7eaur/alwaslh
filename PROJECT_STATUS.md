@@ -2,7 +2,7 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable evidence أعلى من prose. للتفاصيل اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, و`PROJECT_EXECUTION_QUEUE.md`.
 
-Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 + four P2 fixes, final static closure audit found no additional proven defect, Roadmap + Legacy Coverage are closure-ready, executable verification remains blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; Stage13E has four P1 + four P2 fixes in candidate, final static audit found no additional proven defect, closure + selective-promotion readiness are prepared, executable verification remains blocked before checkout.**
 
 ## Current Position
 
@@ -165,14 +165,19 @@ Local fallback was investigated: `/mnt/data/alwaslh-stage13e` is an empty direct
 
 Interpretation: **current executable blocker is GitHub hosted-runner allocation, not an executed product/test failure.** Exact external account/platform cause remains `NOT YET VERIFIED` with available permissions.
 
-## Closure Readiness
+## Closure + Promotion Readiness
 
 Prepared while EXEC-004 is externally blocked:
 
-- `MASTER_REBUILD_ROADMAP.md` now records Stage13E as combined candidate/execution pending and Stage13F as ordered-blocked;
-- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` now distinguishes `CANDIDATE / EXECUTION PENDING` from VERIFIED and maps relevant Stage13E legacy rows without overclaiming acceptance;
+- `MASTER_REBUILD_ROADMAP.md` records Stage13E as combined candidate/execution pending and Stage13F as ordered-blocked;
+- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` distinguishes `CANDIDATE / EXECUTION PENDING` from VERIFIED and maps relevant Stage13E legacy rows without overclaiming acceptance;
 - candidate-targeted legacy rows include `LES-A-035/036/037`, `AIRULE-025`, `AI-OPS-012/013/014/015/017`;
-- complete page-detection batch-save authoring, bulk-generation trigger, full generated/manual editors, exports and Stage13F Question Bank publication remain explicitly not closed.
+- complete page-detection batch-save authoring, bulk-generation trigger, full generated/manual editors, exports and Stage13F Question Bank publication remain explicitly not closed;
+- promotion audit at merge base `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455` found candidate 53 commits ahead/current audited main 77 commits ahead, but **zero changed-file overlap** between the 36 Stage13E files and the 19 files changed on `main` since that base;
+- `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` is the exact 36-file promotion authority;
+- after candidate combined + wider PASS, a short-lived promotion branch must be built from latest `main`, only manifest files overlaid, then combined + wider gates rerun on that exact promotion HEAD before `main` promotion.
+
+Do not merge the candidate's stale commit history and do not create the promotion branch before executable candidate evidence exists.
 
 ## Immediate Next Work
 
@@ -180,9 +185,9 @@ Prepared while EXEC-004 is externally blocked:
 2. Retain all four P1 fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions.
 3. Re-run the unchanged combined Stage13E gate when a real runner is allocated.
 4. Any executed failure → root-cause fix in owning layer + regression.
-5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regressions.
-6. Wider PASS → promote accepted Stage13E runtime to `main` while preserving latest central docs.
-7. Convert only actually proven candidate legacy rows to VERIFIED and add Stage13E Closure Report to Issue #16.
+5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regressions on candidate.
+6. Follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`; build/reverify exact promotion HEAD from latest `main`.
+7. Promotion-head PASS → promote to `main`, convert only actually proven candidate legacy rows to VERIFIED, update closure docs and add Stage13E Closure Report to Issue #16.
 8. Only then begin Stage13F.
 
 ## Open Boundaries
