@@ -124,10 +124,16 @@ Latest runtime/test-head run:
 Latest candidate/docs-head run:
 
 - `34281764765` on `e9793a5222758a7d17aad08f91993cb7431631b7`;
-- job `102247948380`;
-- `steps=[]`; no repository command executed.
+- attempt `2`;
+- job `102250318378`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- completed before checkout; no repository command executed.
+
+The workflow explicitly runs `npm test --prefix apps/api`, and API `test:unit` is `node --import tsx --test tests/*.test.ts`, so the new `ai-admin-job-list-query-shape.test.ts` is inside the unchanged executable gate rather than orphaned test code.
 
 No executed product/test failure exists on the current candidate. `CI-001` remains P1 external hosted-runner allocation; exact external/account cause is `NOT YET VERIFIED`.
+
+Local fallback check on 2026-09-09 found no repository checkout in the execution container and no DNS access to private GitHub, so no local PASS is claimed.
 
 ## 9. Exact next action
 
