@@ -541,21 +541,28 @@ export class AdminAiOperationsService {
       or ($1 = 'paused' and j.paused_at is not null and j.status not in ('completed','failed','cancelled'))
       or ($1 <> 'paused' and j.status::text = $1 and (j.status in ('completed','failed','cancelled') or j.paused_at is null))
     ) and ($2::text is null or j.job_type = $2)`;
-    const rows = await this.database.query<JobRow>(
-      `${JOB_SELECT}
-       where ${where}
-       group by j.id
-       order by j.created_at desc, j.id desc
-       limit $3 offset $4`,
-      [status, jobType, filters.limit, filters.offset],
-    );
-    const totals = await this.database.query<{ count: string }>(
-      `select count(*) from ai_jobs j where ${where}`,
-      [status, jobType],
-    );
+    const snapshot = await this.readSnapshot(async (tx) => {
+      const rows = await tx.query<JobRow>(
+        `${JOB_SELECT}
+         where ${where}
+         group by j.id
+         order by j.created_at desc, j.id desc
+         limit $3 offset $4`,
+        [status, jobType, filters.limit, filters.offset],
+      );
+      const totals = await tx.query<{ count: string }>(
+        `select count(*) from ai_jobs j where ${where}`,
+        [status, jobType],
+      );
+      return { rows, totals };
+    });
     return {
-      jobs: rows.map(mapJob),
-      pagination: { total: Number(totals[0]?.count ?? 0), limit: filters.limit, offset: filters.offset },
+      jobs: snapshot.rows.map(mapJob),
+      pagination: {
+        total: Number(snapshot.totals[0]?.count ?? 0),
+        limit: filters.limit,
+        offset: filters.offset,
+      },
     };
   }
 
@@ -568,20 +575,21 @@ export class AdminAiOperationsService {
     units: AdminAiUnitView[];
     pagination: { total: number; limit: number; offset: number };
   }> {
-    const jobs = await this.database.query<JobRow>(`${JOB_SELECT} where j.id = $1 group by j.id`, [jobId]);
-    const job = jobs[0];
-    if (!job) throw new AppError("NOT_FOUND", "مهمة الذكاء الاصطناعي غير موجودة", 404);
-    const [units, allowedActions] = await Promise.all([
-      this.database.query<UnitRow>(
+    const snapshot = await this.readSnapshot(async (tx) => {
+      const jobs = await tx.query<JobRow>(`${JOB_SELECT} where j.id = $1 group by j.id`, [jobId]);
+      const job = jobs[0];
+      if (!job) throw new AppError("NOT_FOUND", "مهمة الذكاء الاصطناعي غير موجودة", 404);
+      const units = await tx.query<UnitRow>(
         `${UNIT_SELECT} where u.job_id = $1 order by u.position, u.id limit $2 offset $3`,
         [jobId, unitLimit, unitOffset],
-      ),
-      this.database.transaction((tx) => this.lifecycle.getAllowedActions(tx, jobId)),
-    ]);
+      );
+      const allowedActions = await this.lifecycle.getAllowedActions(tx, jobId);
+      return { job, units, allowedActions };
+    });
     return {
-      job: { ...mapJob(job), allowedActions },
-      units: units.map(mapUnit),
-      pagination: { total: job.total, limit: unitLimit, offset: unitOffset },
+      job: { ...mapJob(snapshot.job), allowedActions: snapshot.allowedActions },
+      units: snapshot.units.map(mapUnit),
+      pagination: { total: snapshot.job.total, limit: unitLimit, offset: unitOffset },
     };
   }
 
@@ -594,11 +602,11 @@ export class AdminAiOperationsService {
     attempts: AdminAiAttemptView[];
     attemptPagination: { total: number; limit: number; offset: number };
   }> {
-    const units = await this.database.query<UnitRow>(`${UNIT_SELECT} where u.id = $1`, [unitId]);
-    const unit = units[0];
-    if (!unit) throw new AppError("NOT_FOUND", "وحدة الذكاء الاصطناعي غير موجودة", 404);
-    const [attempts, totals] = await Promise.all([
-      this.database.query<AttemptRow>(
+    const snapshot = await this.readSnapshot(async (tx) => {
+      const units = await tx.query<UnitRow>(`${UNIT_SELECT} where u.id = $1`, [unitId]);
+      const unit = units[0];
+      if (!unit) throw new AppError("NOT_FOUND", "وحدة الذكاء الاصطناعي غير موجودة", 404);
+      const attempts = await tx.query<AttemptRow>(
         `select id, attempt_number, provider_key, provider_project_alias, model_used,
                 route_key, benchmark_version, status, validation_status, retryable,
                 input_tokens, output_tokens, latency_ms, estimated_cost_usd_micros,
@@ -606,22 +614,26 @@ export class AdminAiOperationsService {
          from ai_execution_attempts
          where job_unit_id = $1 order by attempt_number desc limit $2 offset $3`,
         [unitId, attemptLimit, attemptOffset],
-      ),
-      this.database.query<{ count: string }>(
+      );
+      const totals = await tx.query<{ count: string }>(
         "select count(*) from ai_execution_attempts where job_unit_id = $1",
         [unitId],
-      ),
-    ]);
+      );
+      return { unit, attempts, totals };
+    });
     return {
-      unit: mapUnit(unit),
-      attempts: attempts.map(mapAttempt),
-      attemptPagination: { total: Number(totals[0]?.count ?? 0), limit: attemptLimit, offset: attemptOffset },
+      unit: mapUnit(snapshot.unit),
+      attempts: snapshot.attempts.map(mapAttempt),
+      attemptPagination: {
+        total: Number(snapshot.totals[0]?.count ?? 0),
+        limit: attemptLimit,
+        offset: attemptOffset,
+      },
     };
   }
 
   async outputDetail(outputId: string, reviewLimit = 100, reviewOffset = 0): Promise<AdminAiOutputDetail> {
-    const snapshot = await this.database.transaction(async (tx) => {
-      await tx.query("set transaction isolation level repeatable read");
+    const snapshot = await this.readSnapshot(async (tx) => {
       const rows = await tx.query<OutputRow>(
         `select o.id, o.job_unit_id, o.validation_status, o.raw_response, o.normalized_output,
                 o.validation_errors, o.semantic_warnings, o.reviewed_by_profile_id, o.reviewed_at,
@@ -823,6 +835,13 @@ export class AdminAiOperationsService {
       ]);
     });
     return this.outputDetail(outputId);
+  }
+
+  private async readSnapshot<T>(work: (tx: QueryExecutor) => Promise<T>): Promise<T> {
+    return this.database.transaction(async (tx) => {
+      await tx.query("set transaction isolation level repeatable read");
+      return work(tx);
+    });
   }
 
   private async lockJob(
