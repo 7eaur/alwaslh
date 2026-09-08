@@ -55,14 +55,22 @@ describe("Stage13E AI operations API transport", () => {
     expect(url.searchParams.get("attemptOffset")).toBe("50");
   });
 
-  it("reads only the documented output envelope and never requests a raw-response route", async () => {
-    const output = { id: "output-1", hasRawResponse: true, rawResponse: { secret: "must-not-be-used" } };
+  it("paginates review audit through the documented output route without requesting raw response", async () => {
+    const output = {
+      id: "output-1",
+      hasRawResponse: true,
+      reviewPagination: { total: 105, limit: 50, offset: 100 },
+      rawResponse: { secret: "must-not-be-used" },
+    };
     const fetchMock = vi.fn().mockResolvedValue(response({ output }));
     vi.stubGlobal("fetch", fetchMock);
-    const result = await fetchAiOutputDetail("output-1");
+    const result = await fetchAiOutputDetail("output-1", 50, 100);
     expect(result.id).toBe("output-1");
     expect(result.hasRawResponse).toBe(true);
-    expect(new URL(fetchMock.mock.calls[0]?.[0] as string, "http://admin.test").pathname).toBe("/v1/admin/ai/outputs/output-1");
+    const url = new URL(fetchMock.mock.calls[0]?.[0] as string, "http://admin.test");
+    expect(url.pathname).toBe("/v1/admin/ai/outputs/output-1");
+    expect(url.searchParams.get("reviewLimit")).toBe("50");
+    expect(url.searchParams.get("reviewOffset")).toBe("100");
   });
 
   it("sends the strict discriminated review payloads", async () => {
