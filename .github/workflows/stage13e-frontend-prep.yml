@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - frontend/stage13e-ai-operations
+    paths:
+      - apps/admin-web/**
+      - .github/workflows/stage13e-frontend-prep.yml
   pull_request:
   workflow_dispatch:
 
