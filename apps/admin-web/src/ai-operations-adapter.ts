@@ -11,10 +11,8 @@ import type {
 import type {
   AiAttemptView,
   AiGenerationOutputView,
-  AiJobAction,
   AiJobDetailView,
   AiJobSummaryView,
-  AiReviewAction,
   AiReviewOutputView,
   AiSourceEvidenceView,
   AiSourceProvenanceView,
@@ -22,14 +20,6 @@ import type {
   AiUnitView,
   AiValidationIssueView,
 } from "./ai-operations-view-model";
-
-export type AmendedAiJobDetailResponse = AiJobDetailResponse & {
-  allowedActions: AiJobAction[];
-};
-
-export type AmendedAiOutputDetailApi = AiOutputDetailApi & {
-  allowedReviewActions: AiReviewAction[];
-};
 
 function sourceEvidence(source: AiSourceEvidenceApi): AiSourceEvidenceView {
   return {
@@ -150,7 +140,7 @@ export function mapValidationIssues(value: unknown): AiValidationIssueView[] {
   });
 }
 
-export function mapAiOutputDetail(output: AmendedAiOutputDetailApi): AiReviewOutputView {
+export function mapAiOutputDetail(output: AiOutputDetailApi): AiReviewOutputView {
   return {
     id: output.id,
     validationStatus: output.validationStatus,
@@ -216,10 +206,10 @@ function mapUnit(unit: AiUnitApi, attempts: readonly AiAttemptApi[] = []): AiUni
   };
 }
 
-export function mapAiJobDetail(response: AmendedAiJobDetailResponse): AiJobDetailView {
+export function mapAiJobDetail(response: AiJobDetailResponse): AiJobDetailView {
   return {
     ...mapAiJobSummary(response.job),
-    allowedActions: [...response.allowedActions],
+    allowedActions: [...response.job.allowedActions],
     units: response.units.map((unit) => mapUnit(unit, unit.latestAttempt ? [unit.latestAttempt] : [])),
   };
 }

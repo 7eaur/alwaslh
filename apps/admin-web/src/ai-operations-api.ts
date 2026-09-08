@@ -89,6 +89,10 @@ export interface AiJobListItemApi {
   progress: AiJobProgressCountsApi;
 }
 
+export interface AiJobDetailItemApi extends AiJobListItemApi {
+  allowedActions: AiJobAction[];
+}
+
 export interface AiAttemptApi {
   id: string;
   attemptNumber: number;
@@ -158,6 +162,7 @@ export interface AiOutputDetailApi {
   semanticWarnings: unknown;
   hasRawResponse: boolean;
   reviewStatus: AiReviewStatus;
+  allowedReviewActions: AiReviewAction[];
   effectiveReviewedOutput: AiGenerationOutputApi | null;
   reviewedByProfileId: string | null;
   reviewedAt: string | null;
@@ -173,7 +178,7 @@ export interface AiJobsResponse {
 }
 
 export interface AiJobDetailResponse {
-  job: AiJobListItemApi;
+  job: AiJobDetailItemApi;
   units: AiUnitApi[];
   pagination: { total: number; limit: number; offset: number };
 }

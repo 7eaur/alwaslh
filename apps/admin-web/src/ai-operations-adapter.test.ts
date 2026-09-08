@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AiAttemptApi } from "./ai-operations-api";
-import {
-  mapAiAttempt,
-  mapAiJobDetail,
-  mapAiOutputDetail,
-  type AmendedAiJobDetailResponse,
-  type AmendedAiOutputDetailApi,
-} from "./ai-operations-adapter";
+import type { AiAttemptApi, AiJobDetailResponse, AiOutputDetailApi } from "./ai-operations-api";
+import { mapAiAttempt, mapAiJobDetail, mapAiOutputDetail } from "./ai-operations-adapter";
 
 describe("Stage13E AI operations adapter", () => {
   it("drops provider-internal error text even if an unexpected runtime field is present", () => {
@@ -49,6 +43,7 @@ describe("Stage13E AI operations adapter", () => {
       hasRawResponse: true,
       rawResponse: { providerSecret: true },
       reviewStatus: "pending",
+      allowedReviewActions: ["edit", "approve", "reject"],
       effectiveReviewedOutput: null,
       reviewedByProfileId: null,
       reviewedAt: null,
@@ -56,8 +51,7 @@ describe("Stage13E AI operations adapter", () => {
       reviewHistory: [],
       createdAt: "2026-09-08T01:00:00Z",
       updatedAt: "2026-09-08T01:00:00Z",
-      allowedReviewActions: ["edit", "approve", "reject"],
-    } as AmendedAiOutputDetailApi & { rawResponse: unknown };
+    } as AiOutputDetailApi & { rawResponse: unknown };
 
     const view = mapAiOutputDetail(output);
     expect(view.hasRawResponse).toBe(true);
@@ -65,8 +59,8 @@ describe("Stage13E AI operations adapter", () => {
     expect(view.allowedReviewActions).toEqual(["edit", "approve", "reject"]);
   });
 
-  it("preserves server-derived job action arrays without deriving from lifecycle status", () => {
-    const response: AmendedAiJobDetailResponse = {
+  it("preserves server-derived job action arrays from job detail without deriving from lifecycle status", () => {
+    const response: AiJobDetailResponse = {
       job: {
         id: "job-1",
         jobType: "lesson",
@@ -83,6 +77,7 @@ describe("Stage13E AI operations adapter", () => {
         completedAt: "2026-09-08T01:01:00Z",
         createdAt: "2026-09-08T01:00:00Z",
         updatedAt: "2026-09-08T01:01:00Z",
+        allowedActions: ["retry"],
         progress: {
           totalUnits: 1,
           acceptedUnits: 0,
@@ -100,7 +95,6 @@ describe("Stage13E AI operations adapter", () => {
       },
       units: [],
       pagination: { total: 0, limit: 50, offset: 0 },
-      allowedActions: ["retry"],
     };
 
     expect(mapAiJobDetail(response).allowedActions).toEqual(["retry"]);

@@ -1,29 +1,11 @@
-export type AiJobExecutionStatus =
-  | "queued"
-  | "running"
-  | "retrying"
-  | "completed"
-  | "failed"
-  | "cancelled";
-
+export type AiJobExecutionStatus = "queued" | "running" | "retrying" | "completed" | "failed" | "cancelled";
 export type AiJobLifecycleStatus = AiJobExecutionStatus | "paused";
 export type AiUnitStatus = AiJobExecutionStatus | "review_required";
 export type AiAttemptStatus = "running" | "completed" | "failed" | "cancelled";
 export type AiValidationStatus = "pending" | "valid" | "invalid" | "review_required";
 export type AiValidationSeverity = "error" | "review" | "warning";
 export type AiReviewStatus = "pending" | "edited" | "approved" | "rejected";
-
-export type AiGenerationMode =
-  | "lesson_summary"
-  | "question_generation"
-  | "comprehensive_lesson_content"
-  | "multi_version_quiz"
-  | "exact_question_extraction"
-  | "exact_exam_extraction"
-  | "replica_question_extraction"
-  | "regenerate_question"
-  | "page_detection";
-
+export type AiGenerationMode = "lesson_summary" | "question_generation" | "comprehensive_lesson_content" | "multi_version_quiz" | "exact_question_extraction" | "exact_exam_extraction" | "replica_question_extraction" | "regenerate_question" | "page_detection";
 export type AiQuestionType = "multiple_choice" | "true_false" | "direct";
 export type AiDifficulty = "easy" | "medium" | "hard";
 export type AiAnswerStatus = "known" | "unknown" | "review_required";
@@ -79,35 +61,11 @@ export interface AiQuestionView {
 }
 
 export type AiGenerationOutputView =
-  | {
-      kind: "summary";
-      summary: string;
-      sourceEvidence: readonly AiSourceEvidenceView[];
-    }
-  | {
-      kind: "question_set";
-      questions: readonly AiQuestionView[];
-    }
-  | {
-      kind: "multi_version_quiz";
-      versions: readonly {
-        label: string;
-        questions: readonly AiQuestionView[];
-      }[];
-    }
-  | {
-      kind: "lesson_content";
-      summary: string;
-      summaryEvidence: readonly AiSourceEvidenceView[];
-      questions: readonly AiQuestionView[];
-    }
-  | {
-      kind: "page_detection";
-      title: string;
-      pageNumber: number | null;
-      contentPreview: string;
-      sourceEvidence: readonly AiSourceEvidenceView[];
-    };
+  | { kind: "summary"; summary: string; sourceEvidence: readonly AiSourceEvidenceView[] }
+  | { kind: "question_set"; questions: readonly AiQuestionView[] }
+  | { kind: "multi_version_quiz"; versions: readonly { label: string; questions: readonly AiQuestionView[] }[] }
+  | { kind: "lesson_content"; summary: string; summaryEvidence: readonly AiSourceEvidenceView[]; questions: readonly AiQuestionView[] }
+  | { kind: "page_detection"; title: string; pageNumber: number | null; contentPreview: string; sourceEvidence: readonly AiSourceEvidenceView[] };
 
 export interface AiValidationIssueView {
   code: string;
@@ -207,6 +165,8 @@ export interface AiOperationsWorkspaceModel {
   selectedJobError: string | null;
   selectedJob: AiJobDetailView | null;
   selectedUnitId: string | null;
+  selectedUnitState: "idle" | "loading" | "error" | "ready";
+  selectedUnitError: string | null;
   isRefreshing: boolean;
   feedback: AiOperationsFeedback | null;
 }
@@ -320,9 +280,5 @@ export function formatTokens(value: number | null): string {
 
 export function formatCost(value: number | null): string {
   if (value === null) return "—";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 6,
-  }).format(value);
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 6 }).format(value);
 }

@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { ReactNode } from "react";
+import type { AiGenerationOutputApi, AiReviewMutationInput } from "./ai-operations-api";
 import {
   type AiAttemptView,
   type AiGenerationOutputView,
@@ -35,7 +37,7 @@ interface Props {
   onSelectJob: (jobId: string) => void;
   onSelectUnit: (unitId: string) => void;
   onJobAction: (jobId: string, action: AiJobAction) => void;
-  onReviewAction: (outputId: string, action: AiReviewAction) => void;
+  onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
 }
 
 function formatDateTime(value: string | null): string {
@@ -52,8 +54,9 @@ function statusClass(status: string): string {
   return "is-neutral";
 }
 
-export function AiOperationsWorkspace({ model, onRefresh, onSelectJob, onSelectUnit, onJobAction, onReviewAction }: Props) {
+export function AiOperationsWorkspace({ model, onRefresh, onSelectJob, onSelectUnit, onJobAction, onReviewSubmit }: Props) {
   const selectedUnit = model.selectedJob?.units.find((unit) => unit.id === model.selectedUnitId) ?? null;
+  const mutationPending = model.feedback?.kind === "busy";
 
   return (
     <section className="ai-ops" aria-labelledby="ai-ops-title">
@@ -62,17 +65,17 @@ export function AiOperationsWorkspace({ model, onRefresh, onSelectJob, onSelectU
           <p className="eyebrow">تشغيل ومراجعة الذكاء الاصطناعي</p>
           <h1 id="ai-ops-title">عمليات AI</h1>
           <p className="page-description">
-            متابعة الحالة الفعلية من الخادم ومراجعة المخرجات قبل أي اعتماد لاحق. اعتماد Stage13E هو اعتماد مخرج AI بعد المراجعة فقط، وليس نشرًا إلى بنك الأسئلة.
+            متابعة الحالة الفعلية من الخادم ومراجعة المخرجات قبل أي اعتماد لاحق. اعتماد Stage13E هو قرار مراجعة للمخرج فقط، وليس نشرًا إلى بنك الأسئلة.
           </p>
         </div>
-        <button className="secondary-button" type="button" onClick={onRefresh} disabled={model.isRefreshing || model.state === "loading"}>
+        <button className="secondary-button" type="button" onClick={onRefresh} disabled={model.isRefreshing || model.state === "loading" || mutationPending}>
           {model.isRefreshing ? "جارٍ التحديث…" : "تحديث الحالة"}
         </button>
       </header>
 
       <div className="ai-authority-note" role="note">
         <strong>الخادم هو مصدر الحالة والصلاحيات.</strong>
-        <span>الواجهة لا تستنتج lifecycle أو صلاحية pause/resume/cancel/retry أو قرارات المراجعة من enum محلي.</span>
+        <span>الواجهة لا تستنتج lifecycle أو صلاحية إجراءات التشغيل والمراجعة من الحالة المحلية.</span>
       </div>
 
       {model.feedback ? <div className={`mutation-feedback is-${model.feedback.kind}`} aria-live="polite">{model.feedback.message}</div> : null}
@@ -98,10 +101,19 @@ export function AiOperationsWorkspace({ model, onRefresh, onSelectJob, onSelectU
 
           <section className="ai-detail-pane" aria-labelledby="ai-job-detail-title">
             {model.selectedJobState === "idle" ? <StatePanel title="اختر مهمة" body="افتح مهمة لرؤية وحداتها ومحاولاتها ومخرجات المراجعة." /> : null}
-            {model.selectedJobState === "loading" ? <StatePanel title="جارٍ تحميل تفاصيل المهمة" body="نحمّل التفاصيل عند الطلب." /> : null}
+            {model.selectedJobState === "loading" ? <StatePanel title="جارٍ تحميل تفاصيل المهمة" body="نحمّل الوحدات والإجراءات المتاحة من الخادم." /> : null}
             {model.selectedJobState === "error" ? <StatePanel title="تعذر تحميل تفاصيل المهمة" body={model.selectedJobError ?? "تعذر إكمال الطلب."} /> : null}
             {model.selectedJobState === "ready" && model.selectedJob ? (
-              <JobDetail job={model.selectedJob} selectedUnit={selectedUnit} onSelectUnit={onSelectUnit} onJobAction={onJobAction} onReviewAction={onReviewAction} />
+              <JobDetail
+                job={model.selectedJob}
+                selectedUnit={selectedUnit}
+                selectedUnitState={model.selectedUnitState}
+                selectedUnitError={model.selectedUnitError}
+                mutationPending={mutationPending}
+                onSelectUnit={onSelectUnit}
+                onJobAction={onJobAction}
+                onReviewSubmit={onReviewSubmit}
+              />
             ) : null}
           </section>
         </div>
@@ -126,12 +138,15 @@ function JobCard({ job, selected, onSelect }: { job: AiJobSummaryView; selected:
   );
 }
 
-function JobDetail({ job, selectedUnit, onSelectUnit, onJobAction, onReviewAction }: {
+function JobDetail({ job, selectedUnit, selectedUnitState, selectedUnitError, mutationPending, onSelectUnit, onJobAction, onReviewSubmit }: {
   job: AiJobDetailView;
   selectedUnit: AiUnitView | null;
+  selectedUnitState: AiOperationsWorkspaceModel["selectedUnitState"];
+  selectedUnitError: string | null;
+  mutationPending: boolean;
   onSelectUnit: (unitId: string) => void;
   onJobAction: (jobId: string, action: AiJobAction) => void;
-  onReviewAction: (outputId: string, action: AiReviewAction) => void;
+  onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
 }) {
   return (
     <div className="ai-job-detail">
@@ -155,10 +170,10 @@ function JobDetail({ job, selectedUnit, onSelectUnit, onJobAction, onReviewActio
         <span>Prompt: <code>{job.promptKey}@{job.promptVersion}</code></span>
       </div>
 
-      <div className="ai-action-row" aria-label="إجراءات المهمة">
-        {job.allowedActions.length === 0 ? <span className="empty-inline">لا توجد إجراءات تشغيل متاحة من الخادم للحالة الحالية.</span> : null}
+      <div className="ai-action-row" aria-label="إجراءات المهمة المتاحة من الخادم">
+        {job.allowedActions.length === 0 ? <span className="empty-inline">لا توجد إجراءات تشغيل متاحة للحالة الحالية.</span> : null}
         {job.allowedActions.map((action) => (
-          <button className={action === "cancel" ? "ai-danger-button" : "secondary-button small-button"} type="button" key={action} onClick={() => onJobAction(job.id, action)}>
+          <button className={action === "cancel" ? "ai-danger-button" : "secondary-button small-button"} type="button" key={action} disabled={mutationPending} onClick={() => onJobAction(job.id, action)}>
             {jobActionLabel(action)}
           </button>
         ))}
@@ -177,28 +192,24 @@ function JobDetail({ job, selectedUnit, onSelectUnit, onJobAction, onReviewActio
           </div>
         </section>
         <section className="ai-unit-detail" aria-live="polite">
-          {selectedUnit ? <UnitDetail unit={selectedUnit} onReviewAction={onReviewAction} /> : <StatePanel title="اختر وحدة" body="تفاصيل المحاولات والمخرجات تُعرض للوحدة المحددة فقط." />}
+          {selectedUnitState === "loading" ? <StatePanel title="جارٍ تحميل تفاصيل الوحدة" body="نحمّل سجل المحاولات والمخرج والمراجعة من الخادم." /> : null}
+          {selectedUnitState === "error" ? <StatePanel title="تعذر تحميل الوحدة" body={selectedUnitError ?? "تعذر إكمال الطلب."} /> : null}
+          {selectedUnitState === "ready" && selectedUnit ? <UnitDetail unit={selectedUnit} mutationPending={mutationPending} onReviewSubmit={onReviewSubmit} /> : null}
+          {selectedUnitState === "idle" ? <StatePanel title="اختر وحدة" body="تفاصيل المحاولات والمخرجات تُعرض للوحدة المحددة فقط." /> : null}
         </section>
       </div>
     </div>
   );
 }
 
-function UnitDetail({ unit, onReviewAction }: { unit: AiUnitView; onReviewAction: (outputId: string, action: AiReviewAction) => void }) {
+function UnitDetail({ unit, mutationPending, onReviewSubmit }: { unit: AiUnitView; mutationPending: boolean; onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean> }) {
   return (
     <div className="ai-unit-detail-body">
       <div className="ai-detail-heading compact">
         <div><p className="section-kicker">الوحدة {unit.position + 1}</p><h3>{generationModeLabel(unit.mode)}</h3><p><code>{unit.unitKey}</code></p></div>
         <span className={`ai-status ${statusClass(unit.status)}`}>{unitStatusLabel(unit.status)}</span>
       </div>
-
-      {unit.lastErrorCode ? (
-        <div className="ai-error-detail" role="status">
-          <strong>{unit.lastErrorCode}</strong>
-          <span>{publicOperationalErrorLabel(unit.lastErrorCode)}</span>
-        </div>
-      ) : null}
-
+      {unit.lastErrorCode ? <div className="ai-error-detail" role="status"><strong>{unit.lastErrorCode}</strong><span>{publicOperationalErrorLabel(unit.lastErrorCode)}</span></div> : null}
       <SourceProvenance sources={unit.sourceProvenance} />
 
       <section className="ai-subsection" aria-labelledby={`attempts-${unit.id}`}>
@@ -208,7 +219,7 @@ function UnitDetail({ unit, onReviewAction }: { unit: AiUnitView; onReviewAction
 
       <section className="ai-subsection" aria-labelledby={`output-${unit.id}`}>
         <h4 id={`output-${unit.id}`}>مراجعة المخرَج</h4>
-        {unit.output ? <ReviewOutput output={unit.output} onReviewAction={onReviewAction} /> : <p className="empty-inline">لا يوجد مخرَج محفوظ لهذه الوحدة حتى الآن.</p>}
+        {unit.output ? <ReviewOutput output={unit.output} mutationPending={mutationPending} onReviewSubmit={onReviewSubmit} /> : <p className="empty-inline">لا يوجد مخرَج محفوظ لهذه الوحدة حتى الآن.</p>}
       </section>
     </div>
   );
@@ -236,25 +247,76 @@ function AttemptCard({ attempt }: { attempt: AiAttemptView }) {
   );
 }
 
-function ReviewOutput({ output, onReviewAction }: { output: NonNullable<AiUnitView["output"]>; onReviewAction: (outputId: string, action: AiReviewAction) => void }) {
+function ReviewOutput({ output, mutationPending, onReviewSubmit }: {
+  output: NonNullable<AiUnitView["output"]>;
+  mutationPending: boolean;
+  onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
+}) {
+  const [mode, setMode] = useState<"edit" | "reject" | null>(null);
+  const [editedJson, setEditedJson] = useState("");
+  const [note, setNote] = useState("");
+  const [clientError, setClientError] = useState("");
   const visibleOutput = output.effectiveReviewedOutput ?? (output.reviewStatus === "pending" ? output.normalizedOutput : null);
+
+  function openEdit() {
+    setMode("edit");
+    setEditedJson(JSON.stringify(output.effectiveReviewedOutput ?? output.normalizedOutput ?? {}, null, 2));
+    setNote("");
+    setClientError("");
+  }
+
+  function openReject() {
+    setMode("reject");
+    setNote("");
+    setClientError("");
+  }
+
+  async function submitEdit() {
+    let editedOutput: AiGenerationOutputApi;
+    try {
+      const parsed = JSON.parse(editedJson) as unknown;
+      if (!parsed || typeof parsed !== "object" || typeof (parsed as { kind?: unknown }).kind !== "string") {
+        setClientError("المخرج المعدل يجب أن يكون JSON منظمًا ويحتوي نوع المخرج kind.");
+        return;
+      }
+      editedOutput = parsed as AiGenerationOutputApi;
+    } catch {
+      setClientError("تعذر قراءة JSON المعدل. صحح الصياغة ثم أعد المحاولة.");
+      return;
+    }
+    const trimmed = note.trim();
+    const input: AiReviewMutationInput = trimmed
+      ? { action: "edit", editedOutput, note: trimmed }
+      : { action: "edit", editedOutput };
+    if (await onReviewSubmit(output.id, input)) {
+      setMode(null);
+      setClientError("");
+    }
+  }
+
+  async function submitReject() {
+    const reason = note.trim();
+    if (!reason) {
+      setClientError("سبب الرفض مطلوب.");
+      return;
+    }
+    if (await onReviewSubmit(output.id, { action: "reject", note: reason })) {
+      setMode(null);
+      setClientError("");
+    }
+  }
+
   return (
     <div className="ai-review-output">
       <div className="ai-review-header">
         <div>
-          <span className={`ai-status ${statusClass(output.validationStatus)}`}>{validationStatusLabel(output.validationStatus)}</span>
+          <span className={`ai-status ${statusClass(output.validationStatus)}`}>{validationStatusLabel(output.validationStatus)}</span>{" "}
           <span className={`ai-status ${statusClass(output.reviewStatus)}`}>{reviewStatusLabel(output.reviewStatus)}</span>
           {output.reviewedAt ? <p>آخر مراجعة: {formatDateTime(output.reviewedAt)}{output.reviewedBy ? ` · ${output.reviewedBy}` : ""}</p> : <p>لم يسجل قرار مراجعة بشري لهذا المخرَج بعد.</p>}
         </div>
       </div>
 
-      {output.hasRawResponse ? (
-        <div className="ai-authority-note" role="note">
-          <strong>توجد استجابة خام محفوظة في الخادم.</strong>
-          <span>لا يعرض Frontend محتوى الاستجابة الخام؛ المعروض هنا هو المخرج المنظم/المراجع فقط.</span>
-        </div>
-      ) : null}
-
+      {output.hasRawResponse ? <div className="ai-authority-note" role="note"><strong>توجد استجابة خام محفوظة في الخادم.</strong><span>لا يعرض Frontend محتواها؛ المعروض هو المخرج المنظم أو المراجع فقط.</span></div> : null}
       <SourceProvenance sources={output.sourceProvenance} />
       {output.validationIssues.length > 0 ? <IssueList title="أخطاء التحقق" issues={output.validationIssues} /> : null}
       {output.semanticWarnings.length > 0 ? <IssueList title="ملاحظات التحقق الدلالي" issues={output.semanticWarnings} /> : null}
@@ -266,48 +328,48 @@ function ReviewOutput({ output, onReviewAction }: { output: NonNullable<AiUnitVi
         />
       )}
 
-      <div className="ai-review-actions" aria-label="إجراءات مراجعة المخرَج">
-        {output.allowedReviewActions.length === 0 ? <span className="empty-inline">لا توجد إجراءات مراجعة متاحة من الخادم.</span> : null}
-        {output.allowedReviewActions.map((action) => (
-          <button className={action === "reject" ? "ai-danger-button" : action === "approve" ? "primary-button small-button" : "secondary-button small-button"} type="button" key={action} onClick={() => onReviewAction(output.id, action)}>
-            {reviewActionLabel(action)}
-          </button>
-        ))}
+      {output.reviewHistory.length > 0 ? (
+        <details className="ai-review-history">
+          <summary>سجل المراجعة ({output.reviewHistory.length})</summary>
+          <ol>{output.reviewHistory.map((event) => <li key={event.id}><strong>{reviewActionLabel(event.action)}</strong><span>{event.actorDisplayName ?? event.actorProfileId} · {formatDateTime(event.createdAt)}</span>{event.note ? <p>{event.note}</p> : null}</li>)}</ol>
+        </details>
+      ) : null}
+
+      <div className="ai-review-actions" aria-label="إجراءات مراجعة المخرَج المتاحة من الخادم">
+        {output.allowedReviewActions.length === 0 ? <span className="empty-inline">لا توجد إجراءات مراجعة متاحة.</span> : null}
+        {output.allowedReviewActions.includes("edit") ? <button className="secondary-button small-button" type="button" disabled={mutationPending} onClick={openEdit}>{reviewActionLabel("edit")}</button> : null}
+        {output.allowedReviewActions.includes("approve") ? <button className="primary-button small-button" type="button" disabled={mutationPending} onClick={() => void onReviewSubmit(output.id, { action: "approve" })}>{reviewActionLabel("approve")}</button> : null}
+        {output.allowedReviewActions.includes("reject") ? <button className="ai-danger-button" type="button" disabled={mutationPending} onClick={openReject}>{reviewActionLabel("reject")}</button> : null}
       </div>
+
+      {mode === "edit" && output.allowedReviewActions.includes("edit") ? (
+        <div className="ai-review-editor" role="region" aria-label="تحرير المخرج المنظم">
+          <label><span>المخرج المنظم بصيغة JSON</span><textarea value={editedJson} onChange={(event) => setEditedJson(event.target.value)} rows={16} spellCheck={false} /></label>
+          <label><span>ملاحظة المراجعة (اختيارية)</span><textarea value={note} onChange={(event) => setNote(event.target.value)} rows={3} /></label>
+          <p className="field-help">يُرسل المخرج المعدل إلى Stage11 semantic validation على الخادم قبل حفظ أي revision.</p>
+          {clientError ? <p className="field-error" role="alert">{clientError}</p> : null}
+          <div className="ai-review-editor-actions"><button className="primary-button small-button" type="button" disabled={mutationPending} onClick={() => void submitEdit()}>حفظ التعديل والتحقق</button><button className="secondary-button small-button" type="button" disabled={mutationPending} onClick={() => setMode(null)}>إلغاء</button></div>
+        </div>
+      ) : null}
+
+      {mode === "reject" && output.allowedReviewActions.includes("reject") ? (
+        <div className="ai-review-editor" role="region" aria-label="رفض المخرج">
+          <label><span>سبب الرفض</span><textarea value={note} onChange={(event) => setNote(event.target.value)} rows={4} required /></label>
+          {clientError ? <p className="field-error" role="alert">{clientError}</p> : null}
+          <div className="ai-review-editor-actions"><button className="ai-danger-button" type="button" disabled={mutationPending} onClick={() => void submitReject()}>تأكيد الرفض</button><button className="secondary-button small-button" type="button" disabled={mutationPending} onClick={() => setMode(null)}>إلغاء</button></div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function IssueList({ title, issues }: { title: string; issues: AiReviewOutputViewLikeIssues }) {
-  return (
-    <div className="ai-validation-issues" aria-label={title}>
-      {issues.map((issue, index) => (
-        <article key={`${issue.code}-${issue.path}-${index}`} className={`is-${issue.severity}`}>
-          <strong>{issue.code}</strong><span>{issue.message}</span><code>{issue.path}</code>
-        </article>
-      ))}
-    </div>
-  );
+function IssueList({ title, issues }: { title: string; issues: NonNullable<AiUnitView["output"]>["validationIssues"] }) {
+  return <div className="ai-validation-issues" aria-label={title}>{issues.map((issue, index) => <article key={`${issue.code}-${issue.path}-${index}`} className={`is-${issue.severity}`}><strong>{issue.code}</strong><span>{issue.message}</span><code>{issue.path}</code></article>)}</div>;
 }
-
-type AiReviewOutputViewLikeIssues = NonNullable<AiUnitView["output"]>["validationIssues"];
 
 function SourceProvenance({ sources }: { sources: readonly AiSourceProvenanceView[] }) {
   return (
-    <div className="ai-provenance">
-      <h6>مصدر الوحدة</h6>
-      {sources.length === 0 ? <p className="empty-inline">لا توجد بيانات provenance متاحة.</p> : (
-        <ul>{sources.map((source) => (
-          <li key={`${source.mediaAssetId}-${source.pageNumber}`}>
-            <span>صفحة <strong>{source.pageNumber}</strong> · {source.inputKind === "approved_ocr" ? "OCR معتمد" : "Vision fallback"}</span>
-            <code>media: {source.mediaAssetId}</code>
-            <code>sha256: {source.inputChecksumSha256}</code>
-            {source.ocrExtractionId ? <code>ocr: {source.ocrExtractionId}</code> : null}
-            {source.contentSourceAssetId ? <code>source: {source.contentSourceAssetId}</code> : null}
-          </li>
-        ))}</ul>
-      )}
-    </div>
+    <div className="ai-provenance"><h6>مصدر الوحدة</h6>{sources.length === 0 ? <p className="empty-inline">لا توجد بيانات provenance متاحة.</p> : <ul>{sources.map((source) => <li key={`${source.mediaAssetId}-${source.pageNumber}`}><span>صفحة <strong>{source.pageNumber}</strong> · {source.inputKind === "approved_ocr" ? "OCR معتمد" : "Vision fallback"}</span><code>media: {source.mediaAssetId}</code><code>sha256: {source.inputChecksumSha256}</code>{source.ocrExtractionId ? <code>ocr: {source.ocrExtractionId}</code> : null}{source.contentSourceAssetId ? <code>source: {source.contentSourceAssetId}</code> : null}</li>)}</ul>}</div>
   );
 }
 
@@ -320,32 +382,11 @@ function OutputBody({ output }: { output: AiGenerationOutputView }) {
 }
 
 function QuestionList({ title, questions }: { title: string; questions: readonly AiQuestionView[] }) {
-  return (
-    <section className="ai-question-section">
-      <div className="ai-pane-heading compact"><h5>{title}</h5><span className="count-pill">{questions.length}</span></div>
-      {questions.length === 0 ? <p className="empty-inline">لا توجد أسئلة في هذا المخرَج.</p> : null}
-      <ol className="ai-question-list">{questions.map((question, index) => (
-        <li key={`${index}-${question.prompt.slice(0, 40)}`}>
-          <div className="ai-question-meta"><span>{questionTypeLabel(question.type)}</span><span>{difficultyLabel(question.difficulty)}</span><span>{answerStatusLabel(question.answerStatus)}</span></div>
-          <strong>{question.prompt}</strong>
-          {question.options.length > 0 ? <ul className="ai-option-list">{question.options.map((option, optionIndex) => <li key={`${optionIndex}-${option.slice(0, 30)}`} className={question.correctOptionIndex === optionIndex ? "is-correct" : ""}>{option}{question.correctOptionIndex === optionIndex ? <span> · الإجابة المثبتة</span> : null}</li>)}</ul> : null}
-          {question.answerText ? <p><strong>الإجابة:</strong> {question.answerText}</p> : null}
-          {question.explanation ? <p><strong>الشرح:</strong> {question.explanation}</p> : null}
-          {question.method ? <p><strong>الطريقة:</strong> {question.method}</p> : null}
-          <Evidence evidence={question.sourceEvidence} />
-        </li>
-      ))}</ol>
-    </section>
-  );
+  return <section className="ai-question-section"><div className="ai-pane-heading compact"><h5>{title}</h5><span className="count-pill">{questions.length}</span></div>{questions.length === 0 ? <p className="empty-inline">لا توجد أسئلة في هذا المخرَج.</p> : null}<ol className="ai-question-list">{questions.map((question, index) => <li key={`${index}-${question.prompt.slice(0, 40)}`}><div className="ai-question-meta"><span>{questionTypeLabel(question.type)}</span><span>{difficultyLabel(question.difficulty)}</span><span>{answerStatusLabel(question.answerStatus)}</span></div><strong>{question.prompt}</strong>{question.options.length > 0 ? <ul className="ai-option-list">{question.options.map((option, optionIndex) => <li key={`${optionIndex}-${option.slice(0, 30)}`} className={question.correctOptionIndex === optionIndex ? "is-correct" : ""}>{option}{question.correctOptionIndex === optionIndex ? <span> · الإجابة المثبتة</span> : null}</li>)}</ul> : null}{question.answerText ? <p><strong>الإجابة:</strong> {question.answerText}</p> : null}{question.explanation ? <p><strong>الشرح:</strong> {question.explanation}</p> : null}{question.method ? <p><strong>الطريقة:</strong> {question.method}</p> : null}<Evidence evidence={question.sourceEvidence} /></li>)}</ol></section>;
 }
 
 function Evidence({ evidence }: { evidence: readonly AiSourceEvidenceView[] }) {
-  return (
-    <div className="ai-provenance">
-      <h6>إحالة المخرج</h6>
-      {evidence.length === 0 ? <p className="empty-inline">لا توجد إحالة مصدر في المخرج المنظم.</p> : <ul>{evidence.map((source, index) => <li key={`${source.mediaAssetId}-${source.pageNumber}-${index}`}><span>صفحة <strong>{source.pageNumber}</strong></span><code>media: {source.mediaAssetId}</code>{source.ocrExtractionId ? <code>ocr: {source.ocrExtractionId}</code> : null}{source.quote ? <blockquote>{source.quote}</blockquote> : null}</li>)}</ul>}
-    </div>
-  );
+  return <div className="ai-provenance"><h6>إحالة المخرج</h6>{evidence.length === 0 ? <p className="empty-inline">لا توجد إحالة مصدر في المخرج المنظم.</p> : <ul>{evidence.map((source, index) => <li key={`${source.mediaAssetId}-${source.pageNumber}-${index}`}><span>صفحة <strong>{source.pageNumber}</strong></span><code>media: {source.mediaAssetId}</code>{source.ocrExtractionId ? <code>ocr: {source.ocrExtractionId}</code> : null}{source.quote ? <blockquote>{source.quote}</blockquote> : null}</li>)}</ul>}</div>;
 }
 
 function Metric({ label, value }: { label: string; value: number }) { return <div><dt>{label}</dt><dd>{value}</dd></div>; }
