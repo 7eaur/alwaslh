@@ -543,7 +543,10 @@ export class AiExecutionRepository {
   async requestCancel(executor: QueryExecutor, jobId: string): Promise<AiJobRecord> {
     const jobs = await executor.query<{ id: string }>(
       `update ai_jobs
-       set cancel_requested_at = coalesce(cancel_requested_at, now()), status = 'cancelled', completed_at = now()
+       set cancel_requested_at = coalesce(cancel_requested_at, now()),
+           status = 'cancelled',
+           paused_at = null,
+           completed_at = now()
        where id = $1
        returning id`,
       [jobId],
