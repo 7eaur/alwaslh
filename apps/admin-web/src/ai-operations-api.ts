@@ -189,9 +189,7 @@ export interface AiUnitDetailResponse {
   attemptPagination: { total: number; limit: number; offset: number };
 }
 
-export interface AiOutputDetailResponse {
-  output: AiOutputDetailApi;
-}
+export interface AiOutputDetailResponse { output: AiOutputDetailApi }
 
 export interface AiJobFilters {
   status?: AiJobLifecycleStatus;
@@ -212,6 +210,10 @@ function withQuery(path: string, values: Record<string, string | number | undefi
   }
   const suffix = query.toString();
   return suffix ? `${path}?${suffix}` : path;
+}
+
+function reviewBody(input: AiReviewMutationInput): string {
+  return JSON.stringify(input, (key, value) => key === "quote" && value === null ? undefined : value);
 }
 
 export function fetchAiJobs(filters: AiJobFilters = {}): Promise<AiJobsResponse> {
@@ -236,14 +238,13 @@ export function fetchAiOutputDetail(outputId: string): Promise<AiOutputDetailApi
 }
 
 export function mutateAiJob(jobId: string, action: AiJobAction): Promise<AiJobProgressApi> {
-  return adminApiRequest<{ progress: AiJobProgressApi }>(`/v1/admin/ai/jobs/${jobId}/${action}`, { method: "POST" })
-    .then((result) => result.progress);
+  return adminApiRequest<{ progress: AiJobProgressApi }>(`/v1/admin/ai/jobs/${jobId}/${action}`, { method: "POST" }).then((result) => result.progress);
 }
 
 export function reviewAiOutput(outputId: string, input: AiReviewMutationInput): Promise<AiOutputDetailApi> {
   return adminApiRequest<AiOutputDetailResponse>(`/v1/admin/ai/outputs/${outputId}/review`, {
     method: "PATCH",
-    body: JSON.stringify(input),
+    body: reviewBody(input),
   }).then((result) => result.output);
 }
 

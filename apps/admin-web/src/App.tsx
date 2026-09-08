@@ -8,6 +8,7 @@ import {
   restoreAdminSession,
 } from "./admin-api";
 import { AiOperationsPage } from "./AiOperationsPage";
+import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
@@ -41,25 +42,11 @@ export function App() {
     }
   }, []);
 
-  useEffect(() => {
-    void restore();
-  }, [restore]);
+  useEffect(() => { void restore(); }, [restore]);
 
-  if (sessionState === "restoring") {
-    return <FullPageState title="جارٍ التحقق من جلسة الإدارة" body="نراجع الجلسة الآمنة قبل عرض أي بيانات إدارية." />;
-  }
-
-  if (sessionState === "error") {
-    return (
-      <FullPageState title="تعذر الوصول إلى خدمة الإدارة" body={sessionError}>
-        <button className="primary-button" type="button" onClick={() => void restore()}>إعادة المحاولة</button>
-      </FullPageState>
-    );
-  }
-
-  if (sessionState === "signed_out" || !session) {
-    return <LoginScreen onAuthenticated={(profile) => { setSession(profile); setSessionState("signed_in"); }} />;
-  }
+  if (sessionState === "restoring") return <FullPageState title="جارٍ التحقق من جلسة الإدارة" body="نراجع الجلسة الآمنة قبل عرض أي بيانات إدارية." />;
+  if (sessionState === "error") return <FullPageState title="تعذر الوصول إلى خدمة الإدارة" body={sessionError}><button className="primary-button" type="button" onClick={() => void restore()}>إعادة المحاولة</button></FullPageState>;
+  if (sessionState === "signed_out" || !session) return <LoginScreen onAuthenticated={(profile) => { setSession(profile); setSessionState("signed_in"); }} />;
 
   return (
     <AdminShell
@@ -84,19 +71,13 @@ function FullPageState({ title, body, children }: { title: string; body: string;
 }
 
 function BrandBlock({ auth = false }: { auth?: boolean }) {
-  return (
-    <div className={auth ? "brand-block auth-brand" : "brand-block"}>
-      <span className="brand-mark" aria-hidden="true">و</span>
-      <div><strong>الوسيلة الذكية</strong><small>{auth ? "لوحة الإدارة" : "إدارة المحتوى والتشغيل"}</small></div>
-    </div>
-  );
+  return <div className={auth ? "brand-block auth-brand" : "brand-block"}><span className="brand-mark" aria-hidden="true">و</span><div><strong>الوسيلة الذكية</strong><small>{auth ? "لوحة الإدارة" : "إدارة المحتوى والتشغيل"}</small></div></div>;
 }
 
 type AdminWorkspace = "curriculum" | "content-ingestion" | "content-operations" | "ai-operations";
 
 function AdminShell({ profile, onLogout, onSessionExpired }: { profile: AdminProfile; onLogout: () => Promise<void>; onSessionExpired: () => void }) {
   const [workspace, setWorkspace] = useState<AdminWorkspace>("curriculum");
-
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar" aria-label="التنقل الرئيسي">
@@ -109,22 +90,10 @@ function AdminShell({ profile, onLogout, onSessionExpired }: { profile: AdminPro
           <span className="nav-item is-disabled">الطلاب والوصول <small>مرحلة لاحقة</small></span>
           <span className="nav-item is-disabled">التقارير والإعدادات <small>مرحلة لاحقة</small></span>
         </nav>
-        <div className="sidebar-account">
-          <span>الحساب الحالي</span>
-          <strong>{profile.displayName ?? "مدير النظام"}</strong>
-          <button className="sidebar-button" type="button" onClick={() => void onLogout()}>تسجيل الخروج</button>
-        </div>
+        <div className="sidebar-account"><span>الحساب الحالي</span><strong>{profile.displayName ?? "مدير النظام"}</strong><button className="sidebar-button" type="button" onClick={() => void onLogout()}>تسجيل الخروج</button></div>
       </aside>
       <main className="admin-main">
-        {workspace === "curriculum" ? (
-          <CurriculumWorkspace onSessionExpired={onSessionExpired} />
-        ) : workspace === "content-ingestion" ? (
-          <ContentIngestionWorkspace onSessionExpired={onSessionExpired} />
-        ) : workspace === "content-operations" ? (
-          <ContentOperationsWorkspace onSessionExpired={onSessionExpired} />
-        ) : (
-          <AiOperationsPage onSessionExpired={onSessionExpired} />
-        )}
+        {workspace === "curriculum" ? <CurriculumWorkspace onSessionExpired={onSessionExpired} /> : workspace === "content-ingestion" ? <ContentIngestionWorkspace onSessionExpired={onSessionExpired} /> : workspace === "content-operations" ? <ContentOperationsWorkspace onSessionExpired={onSessionExpired} /> : <AiOperationsPage onSessionExpired={onSessionExpired} />}
       </main>
     </div>
   );

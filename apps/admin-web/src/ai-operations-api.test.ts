@@ -6,23 +6,20 @@ import {
   fetchAiOutputDetail,
   isAiConflictError,
   reviewAiOutput,
+  type AiGenerationOutputApi,
 } from "./ai-operations-api";
 
 function response(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 }
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
+afterEach(() => { vi.unstubAllGlobals(); });
 
 describe("Stage13E AI operations API transport", () => {
   it("encodes bounded job filters through the shared authenticated transport", async () => {
     const fetchMock = vi.fn().mockResolvedValue(response({ jobs: [], pagination: { total: 0, limit: 30, offset: 60 } }));
     vi.stubGlobal("fetch", fetchMock);
-
     await fetchAiJobs({ status: "retrying", jobType: "lesson", limit: 30, offset: 60 });
-
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     const parsed = new URL(url, "http://admin.test");
     expect(parsed.pathname).toBe("/v1/admin/ai/jobs");
@@ -36,9 +33,7 @@ describe("Stage13E AI operations API transport", () => {
   it("uses the documented job detail pagination query", async () => {
     const fetchMock = vi.fn().mockResolvedValue(response({ job: { id: "job-1" }, units: [], pagination: { total: 0, limit: 25, offset: 50 } }));
     vi.stubGlobal("fetch", fetchMock);
-
     await fetchAiJobDetail("job-1", 25, 50);
-
     const url = new URL(fetchMock.mock.calls[0]?.[0] as string, "http://admin.test");
     expect(url.pathname).toBe("/v1/admin/ai/jobs/job-1");
     expect(url.searchParams.get("unitLimit")).toBe("25");
@@ -49,43 +44,44 @@ describe("Stage13E AI operations API transport", () => {
     const output = { id: "output-1", hasRawResponse: true, rawResponse: { secret: "must-not-be-used" } };
     const fetchMock = vi.fn().mockResolvedValue(response({ output }));
     vi.stubGlobal("fetch", fetchMock);
-
     const result = await fetchAiOutputDetail("output-1");
-
     expect(result.id).toBe("output-1");
     expect(result.hasRawResponse).toBe(true);
     expect(new URL(fetchMock.mock.calls[0]?.[0] as string, "http://admin.test").pathname).toBe("/v1/admin/ai/outputs/output-1");
   });
 
   it("sends the strict discriminated review payloads", async () => {
-    const output = { id: "output-1" };
-    const fetchMock = vi.fn().mockResolvedValue(response({ output }));
+    const fetchMock = vi.fn().mockResolvedValue(response({ output: { id: "output-1" } }));
     vi.stubGlobal("fetch", fetchMock);
-    const editedOutput = { kind: "summary" as const, summary: "ملخص", sourceEvidence: [] };
-
+    const editedOutput: AiGenerationOutputApi = { kind: "summary", summary: "ملخص", sourceEvidence: [] };
     await reviewAiOutput("output-1", { action: "edit", editedOutput, note: "مراجعة" });
     await reviewAiOutput("output-1", { action: "approve" });
     await reviewAiOutput("output-1", { action: "reject", note: "المصدر غير كافٍ" });
+    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).body).toBe(JSON.stringify({ action: "edit", editedOutput, note: "مراجعة" }));
+    expect((fetchMock.mock.calls[1]?.[1] as RequestInit).body).toBe(JSON.stringify({ action: "approve" }));
+    expect((fetchMock.mock.calls[2]?.[1] as RequestInit).body).toBe(JSON.stringify({ action: "reject", note: "المصدر غير كافٍ" }));
+  });
 
-    const editInit = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    const approveInit = fetchMock.mock.calls[1]?.[1] as RequestInit;
-    const rejectInit = fetchMock.mock.calls[2]?.[1] as RequestInit;
-    expect(editInit.body).toBe(JSON.stringify({ action: "edit", editedOutput, note: "مراجعة" }));
-    expect(approveInit.body).toBe(JSON.stringify({ action: "approve" }));
-    expect(rejectInit.body).toBe(JSON.stringify({ action: "reject", note: "المصدر غير كافٍ" }));
+  it("does not send presentation-only null source quotes back to the strict Stage11 schema", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response({ output: { id: "output-1" } }));
+    vi.stubGlobal("fetch", fetchMock);
+    const editedOutput = {
+      kind: "summary",
+      summary: "ملخص",
+      sourceEvidence: [{ mediaAssetId: "asset-1", pageNumber: 1, quote: null }],
+    } as unknown as AiGenerationOutputApi;
+    await reviewAiOutput("output-1", { action: "edit", editedOutput });
+    expect((fetchMock.mock.calls[0]?.[1] as RequestInit).body).toBe(JSON.stringify({
+      action: "edit",
+      editedOutput: { kind: "summary", summary: "ملخص", sourceEvidence: [{ mediaAssetId: "asset-1", pageNumber: 1 }] },
+    }));
   });
 
   it("preserves 409 as a canonical-refresh conflict signal", async () => {
     const fetchMock = vi.fn().mockResolvedValue(response({ error: { code: "CONFLICT", message: "تغيرت الحالة" } }, 409));
     vi.stubGlobal("fetch", fetchMock);
-
     let caught: unknown;
-    try {
-      await reviewAiOutput("output-1", { action: "approve" });
-    } catch (error) {
-      caught = error;
-    }
-
+    try { await reviewAiOutput("output-1", { action: "approve" }); } catch (error) { caught = error; }
     expect(caught).toBeInstanceOf(ApiRequestError);
     expect(isAiConflictError(caught)).toBe(true);
   });
