@@ -4,7 +4,7 @@
 >
 > **Authority:** current code + PostgreSQL migrations + executable evidence أعلى من هذا الملف. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 — Single Owner mode; Stage13E static audit complete; durable reject-reason DB fix applied; executable runner still unavailable.**
+Last synchronized: **2026-09-08 — Single Owner mode; Stage13E static audit complete with two P1 integrity fixes; executable runner still unavailable before checkout.**
 
 ## 1. Resume procedure
 
@@ -107,7 +107,7 @@ Verified through Stage13D. Do not replace this baseline with docs-only or unexec
 
 `main` is the latest Integration-approved **development baseline**.
 
-Central docs entered Single Owner mode through the `d0e27548...` lineage and continue advancing with documentation synchronization. Always live-check current `main` HEAD.
+Central docs are maintained directly on `main` under Single Owner mode. Always live-check current `main` HEAD before work.
 
 Legacy archive:
 
@@ -123,9 +123,13 @@ Current combined candidate branch:
 
 `integration/stage13e-ai-operations`
 
-Latest specialized-doc HEAD at this synchronization:
+Current branch HEAD at this synchronization:
 
-`083992bc7b0b7edf0c88e0b029cc49e10aeca345`
+`1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`
+
+Latest runtime/test candidate beneath that docs commit:
+
+`6494a0ee232cf646eae693054b129db752aee40e`
 
 ## 7. Stage13E candidate lineage
 
@@ -176,7 +180,17 @@ Feature branches predated later central docs, so direct history merge was reject
 - `4ba77703866762c471257bbb914590b817ecc82e` — real deterministic E2E fixture;
 - `807f733838e2fab2620652025b255c3bc404fec1` — combined workflow.
 
-This avoids importing stale unrelated feature-branch docs/history.
+Static audit then added:
+
+- `730989b8bde404b229544c473bba02b05c7e75b4` — durable reject-note DB invariant + redundant-index removal;
+- `6589d6e53de7ca8cd82b424e5c1496186eb701f1` — direct PostgreSQL reject-note regression;
+- `bc1bf508897796d0a74d22126094e83180b7ec79` — DB contract workflow assertion update;
+- `083992bc7b0b7edf0c88e0b029cc49e10aeca345` — first specialized contract sync;
+- `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` — bind human review authority to stable unit state;
+- `6494a0ee232cf646eae693054b129db752aee40e` — failed/retrying output regression;
+- `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9` — specialized contract sync after stable-review fix.
+
+Selective integration avoids importing stale unrelated feature-branch docs/history.
 
 ## 8. Stage13E real-browser authority
 
@@ -216,11 +230,11 @@ Inspected actual code:
 - Frontend API/adapter/view-model contracts;
 - `admin-operations-http.ts`, `admin-operations.ts`;
 - `job-lifecycle.ts`, `execution-repository.ts`, review validator;
-- Stage11 validator issue shape and Stage12 output persistence;
+- Stage11 validator issue shape and Stage12 output persistence/retry interaction;
 - API/Admin package scripts;
 - migration `0018_ai_admin_review.sql` plus relevant base AI migrations.
 
-Confirmed:
+Confirmed after fixes:
 
 - Admin role enforced at HTTP boundary;
 - list/detail query bounds max 100;
@@ -228,14 +242,18 @@ Confirmed:
 - `allowedActions` uses Stage12 lifecycle authority;
 - cancel uses Stage12 execution cancellation and clears pause;
 - retry remains same Stage12 queue and keeps attempt history;
-- review is short transaction + owning output row lock + Stage11 semantic validation;
+- human review is only available for unit state `completed | review_required`;
+- failed/retrying/cancelled/running/queued outputs may be inspected but cannot be edited/approved/rejected;
+- review mutation locks owning output + unit rows before state/revision decision and runs Stage11 semantic validation in the same short transaction;
 - frontend consumes server authority rather than reconstructing lifecycle;
 - validator issue objects match Frontend adapter mapping;
 - workflow commands match actual package scripts;
 - deterministic fixtures respect normal durable tables/constraints;
-- no confirmed second lifecycle or cross-contract drift found.
+- no confirmed second lifecycle or additional cross-contract drift found.
 
-### Root defect found — AI-013E-DB-001 P1
+### Root defect — AI-013E-DB-001 P1
+
+**Area:** Data/Audit Integrity.
 
 **Symptom:** reject reason was required at HTTP/service boundary but not by PostgreSQL.
 
@@ -245,33 +263,43 @@ Confirmed:
 
 **Correct owning layer:** PostgreSQL because reason presence is a durable row invariant independent of transport.
 
-**Fix commit:**
+**Fix:** `730989b8bde404b229544c473bba02b05c7e75b4` adds `ai_output_review_events_reject_note_required` and removes a redundant latest-output index because UNIQUE `(ai_output_id, revision)` supports backward latest lookup.
 
-`730989b8bde404b229544c473bba02b05c7e75b4`
+**Regression:** `6589d6e53de7ca8cd82b424e5c1496186eb701f1` preserves HTTP 400 tests and directly proves NULL/blank DB reject rows fail with zero review events.
 
-- adds `ai_output_review_events_reject_note_required` check;
-- removes redundant latest-output index because UNIQUE `(ai_output_id, revision)` btree supports latest lookup via backward scan.
+**Workflow contract:** `bc1bf508897796d0a74d22126094e83180b7ec79` requires all four Stage13E DB constraints.
 
-**Regression commit:**
+**Execution:** `NOT YET VERIFIED` because jobs terminate before checkout.
 
-`6589d6e53de7ca8cd82b424e5c1496186eb701f1`
+### Root defect — AI-013E-REVIEW-002 P1
 
-- existing HTTP missing/blank reason 400 tests remain;
-- direct DB NULL reject insert must fail;
-- direct DB whitespace-only reject insert must fail;
-- failed writes must leave no review events.
+**Area:** Data/Review Integrity.
 
-**Workflow contract commit:**
+**Symptom:** Stage12 `persistOutputOutcome()` can update the existing `ai_outputs` row for a retry/re-execution using `ON CONFLICT (job_unit_id) DO UPDATE`, while Stage13E review events are append-only on the same output id. Original review authority derived actions from semantic/review state without checking `ai_job_units.status`.
 
-`bc1bf508897796d0a74d22126094e83180b7ec79`
+**Root cause:** human review authority was not bound to an execution-stable output boundary.
 
-DB contract check now requires four Stage13E constraints including reject-note-required.
+**Blast radius:** Admin could review a failed/retrying output; Stage12 could later replace normalized/raw output during retry while old approve/reject/edit history remained, making a stale human decision appear to govern different generated content.
 
-**Specialized contract sync:**
+**Correct owning layer:** Stage13E Backend review authority. Do not delete audit history and do not weaken Stage12 retry.
 
-`083992bc7b0b7edf0c88e0b029cc49e10aeca345`
+**Fix commit:** `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a`.
 
-Execution of these changes remains `NOT YET VERIFIED` because GitHub jobs currently terminate before checkout.
+- `allowedReviewActions=[]` unless unit is `completed|review_required`;
+- `reviewOutput()` locks `ai_outputs` and owning `ai_job_units` together;
+- non-stable state returns `409` before any review event;
+- stable output still uses Stage11 semantic validation and append-only audit.
+
+**Regression commit:** `6494a0ee232cf646eae693054b129db752aee40e`.
+
+- real failed output row → inspection only, no actions;
+- real retrying output row → inspection only, no actions;
+- approve/reject mutation → `409`;
+- review-event count across both outputs remains zero.
+
+**Specialized contract:** `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`.
+
+**Execution:** `NOT YET VERIFIED` because run `34199202570`, job `101973855894`, ended before checkout with `steps=null`.
 
 ## 10. Combined executable gate
 
@@ -284,7 +312,7 @@ Expected execution:
 1. API lint/typecheck/unit/build;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB contract;
-4. Stage13E authorization/action/review/race/integrity tests;
+4. Stage13E authorization/action/review/race/integrity/stable-review tests;
 5. Stage12 execution/capacity/control/lifecycle regressions;
 6. auth regression;
 7. fresh DB reset;
@@ -292,14 +320,21 @@ Expected execution:
 9. seed/assert real Stage13E fixtures;
 10. Chromium happy/pause/resume/approve/reload/session-expiry/stale-409/390px.
 
-Latest run after DB fix:
+Latest runtime/test run:
 
-- run `34197629003`;
-- head `bc1bf508897796d0a74d22126094e83180b7ec79`;
-- job `101968795653`;
-- ended without executable steps/checkout.
+- run `34199202570`;
+- head `6494a0ee232cf646eae693054b129db752aee40e`;
+- job `101973855894`;
+- ended without executable steps/checkout (`steps=null`).
 
-Earlier combined run `34193380473` attempts 1 and 2 had the same condition.
+Latest branch-head docs run:
+
+- run `34199371763`;
+- head `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`;
+- job `101974393620`;
+- same pre-checkout condition.
+
+Previous post-fix runs `34197944201`, `34197629003`, and combined run `34193380473` attempts 1/2 had the same condition.
 
 No executed product/test failure exists for the latest candidate.
 
@@ -310,26 +345,27 @@ Finding `CI-001`:
 - Severity P1 verification infrastructure;
 - GitHub hosted job allocation terminates before checkout;
 - external/account/platform root cause remains `NOT YET VERIFIED` due lack of administration/billing evidence;
-- do not weaken tests or churn product code;
+- do not weaken tests or churn product code merely because jobs never start;
 - local fallback is unavailable in current assistant runtime because private repository network/clone access is unavailable; no local PASS is claimed.
 
 ## 12. Exact next action
 
 Read `PROJECT_EXECUTION_QUEUE.md` first. Current dependency sequence:
 
-1. complete central Single Owner documentation synchronization and record Issue #16 report;
-2. Stage13E static audit is complete for current candidate surfaces; retain AI-013E-DB-001 fix;
-3. keep Stage13E outside `main`;
-4. when GitHub allocates a real runner, execute the current combined gate unchanged;
-5. any executed failure → root-cause fix + regression;
-6. combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions;
-7. wider PASS → promote Stage13E runtime to `main` preserving latest central docs;
-8. update Legacy Coverage/Roadmap/central docs and close Stage13E;
-9. only then implement Stage13F under current dependency rule.
+1. keep Stage13E outside `main`;
+2. retain AI-013E-DB-001 and AI-013E-REVIEW-002 root-cause fixes and regressions;
+3. rerun the unchanged combined gate on current Stage13E branch when GitHub allocates a real runner;
+4. any executed failure → root-cause fix + regression in owning layer;
+5. combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions;
+6. wider PASS → promote Stage13E runtime to `main` preserving latest central docs;
+7. update Legacy Coverage/Roadmap/central docs and close Stage13E;
+8. only then implement Stage13F under current dependency rule.
 
 ## 13. Open work / risks
 
 - `CI-001` P1 — runner allocation before checkout.
+- `AI-013E-DB-001` P1 — fixed, executable verification pending.
+- `AI-013E-REVIEW-002` P1 — fixed, executable verification pending.
 - Stage13E latest candidate executable evidence.
 - `AI-011-005` P2 — direct generated-question persistence; Stage13F owns resolution.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
