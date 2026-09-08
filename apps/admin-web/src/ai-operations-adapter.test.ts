@@ -30,7 +30,7 @@ describe("Stage13E AI operations adapter", () => {
     expect("errorMessage" in view).toBe(false);
   });
 
-  it("drops an unexpected raw response and exposes only hasRawResponse", () => {
+  it("drops an unexpected raw response and preserves server review pagination", () => {
     const output = {
       id: "output-1",
       jobId: "job-1",
@@ -49,6 +49,7 @@ describe("Stage13E AI operations adapter", () => {
       reviewedAt: null,
       sourceProvenance: [],
       reviewHistory: [],
+      reviewPagination: { total: 105, limit: 50, offset: 100 },
       createdAt: "2026-09-08T01:00:00Z",
       updatedAt: "2026-09-08T01:00:00Z",
     } as AiOutputDetailApi & { rawResponse: unknown };
@@ -57,6 +58,7 @@ describe("Stage13E AI operations adapter", () => {
     expect(view.hasRawResponse).toBe(true);
     expect("rawResponse" in view).toBe(false);
     expect(view.allowedReviewActions).toEqual(["edit", "approve", "reject"]);
+    expect(view.reviewPagination).toEqual({ total: 105, limit: 50, offset: 100 });
   });
 
   it("preserves server-derived job actions and unit pagination without deriving client authority", () => {
