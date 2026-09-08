@@ -9,11 +9,12 @@
 1. **الكود الحالي + PostgreSQL migrations + GitHub Actions executable evidence**.
 2. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` للقرارات الحالية الصريحة التي تتقدم على سياسات أقدم.
 3. `PROJECT_HANDOFF.md` + `PROJECT_STATUS.md` + `PROJECT_ENGINEERING_LOG.md` للحالة التنفيذية الحالية والسجل.
-4. Product Decisions (`PRODUCT_EVOLUTION_REVIEW` ثم Batches 05/06) للـBusiness/Product rules.
-5. الوثائق المتخصصة لكل Stage/Module.
-6. `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` لضمان عدم ضياع Legacy capabilities.
-7. `MASTER_REBUILD_ROADMAP.md` للترتيب المستهدف.
-8. Legacy audits/PRD/TODO/root legacy code كأدلة تاريخية فقط.
+4. `PROJECT_INTEGRATION_CONTINUITY.md` كـoperational snapshot مفصل للمحادثة الرئيسية؛ لا يتقدم على executable evidence أو central permanent history.
+5. Product Decisions (`PRODUCT_EVOLUTION_REVIEW` ثم Batches 05/06) للـBusiness/Product rules.
+6. الوثائق المتخصصة لكل Stage/Module.
+7. `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` لضمان عدم ضياع Legacy capabilities.
+8. `MASTER_REBUILD_ROADMAP.md` للترتيب المستهدف.
+9. Legacy audits/PRD/TODO/root legacy code كأدلة تاريخية فقط.
 
 إذا لم يوجد executable evidence لادعاء ما، حالته `NOT YET VERIFIED` حتى لو كانت الوثيقة تصفه كهدف.
 
@@ -24,18 +25,19 @@
 3. `PROJECT_HANDOFF.md` — handoff تنفيذي قابل للاستئناف.
 4. `PROJECT_STATUS.md` — المرحلة الحالية وما اكتمل وما بقي.
 5. `PROJECT_ENGINEERING_LOG.md` — التاريخ، القرارات المعمارية، findings، tests/evidence.
-6. `docs/workstreams/TEAM_OPERATING_MODEL.md` — طريقة عمل الفريق الدائم والتنسيق عبر GitHub.
-7. ملف workstream الخاص بالمحادثة: `BACKEND_WORKSTREAM.md` أو `FRONTEND_WORKSTREAM.md` أو `INTEGRATION_WORKSTREAM.md`.
-8. GitHub Command Board الخاص بالـworkstream ثم Team Room عند وجود نقاش مشترك.
-9. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` — قرارات Product Owner الحالية.
-10. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` — Product Decisions الأساسية.
-11. `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
-12. `docs/product/PRODUCT_DECISIONS_BATCH_06.md` — اقرأه تاريخيًا مع تطبيق Current Overrides على PED-051.
-13. `PRODUCT_FEATURE_PARITY_MATRIX.md`.
-14. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
-15. `MASTER_REBUILD_ROADMAP.md`.
-16. الوثائق المتخصصة للمرحلة الحالية والمرحلة التالية.
-17. Legacy audit docs عند تنفيذ Module له سلوك قديم يجب مقارنته.
+6. إذا كانت المحادثة هي **Main Integration / Architecture / QA / Release** أو بديلة عنها: اقرأ `PROJECT_INTEGRATION_CONTINUITY.md` كاملًا.
+7. `docs/workstreams/TEAM_OPERATING_MODEL.md` — طريقة عمل الفريق الدائم والتنسيق عبر GitHub.
+8. ملف workstream الخاص بالمحادثة: `BACKEND_WORKSTREAM.md` أو `FRONTEND_WORKSTREAM.md` أو `INTEGRATION_WORKSTREAM.md`.
+9. GitHub Command Board الخاص بالـworkstream ثم Team Room عند وجود نقاش مشترك.
+10. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` — قرارات Product Owner الحالية.
+11. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` — Product Decisions الأساسية.
+12. `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
+13. `docs/product/PRODUCT_DECISIONS_BATCH_06.md` — اقرأه تاريخيًا مع تطبيق Current Overrides على PED-051.
+14. `PRODUCT_FEATURE_PARITY_MATRIX.md`.
+15. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
+16. `MASTER_REBUILD_ROADMAP.md`.
+17. الوثائق المتخصصة للمرحلة الحالية والمرحلة التالية.
+18. Legacy audit docs عند تنفيذ Module له سلوك قديم يجب مقارنته.
 
 `NEXT_CONVERSATION_PROMPT.md` هو Launcher مختصر فقط؛ يوجّهك إلى هذه القائمة ولا يكرر الحالة.
 
@@ -43,13 +45,14 @@
 
 | File | Authority / Purpose |
 |---|---|
-| `PROJECT_HANDOFF.md` | أفضل ملف للاستئناف: branch/PR/head، الفكرة، boundaries، verified stages، current next work، known issues |
+| `PROJECT_HANDOFF.md` | أفضل ملف للاستئناف على مستوى المشروع: branch/PR/head، الفكرة، boundaries، verified stages، current next work، known issues |
 | `PROJECT_STATUS.md` | ملخص الحالة الحالية، exact CI، blockers والمتبقي بالترتيب |
 | `PROJECT_ENGINEERING_LOG.md` | سجل زمني تراكمي، Architecture Decisions، Findings P0–P3، Changes، Verification، Known Issues |
+| `PROJECT_INTEGRATION_CONTINUITY.md` | الذاكرة التشغيلية التفصيلية للمحادثة الرئيسية: current team branches/reports/WIP/decisions/root causes/CI/exact next action؛ تُحدّث أثناء العمل ولا تستبدل evidence |
 | `docs/workstreams/TEAM_OPERATING_MODEL.md` | نظام الفريق الدائم: ownership، commands/reports، branch/contract/integration rules |
 | `docs/workstreams/BACKEND_WORKSTREAM.md` | مسؤوليات Backend/Platform وطريقة self-review/reporting والعمل الحالي |
 | `docs/workstreams/FRONTEND_WORKSTREAM.md` | مسؤوليات Frontend/Product وUX/a11y/API-integration والعمل الحالي |
-| `docs/workstreams/INTEGRATION_WORKSTREAM.md` | مسؤوليات Architecture/Integration/QA/Release وقواعد القبول والدمج |
+| `docs/workstreams/INTEGRATION_WORKSTREAM.md` | مسؤوليات Architecture/Integration/QA/Release وقواعد القبول والدمج واستمرارية المحادثة الرئيسية |
 | `MASTER_REBUILD_ROADMAP.md` | الخطة من المراحل الحالية حتى release/cutover؛ لا يحل محل evidence |
 | `NEXT_CONVERSATION_PROMPT.md` | Prompt قصير لمحادثة جديدة؛ ليس Source of Truth بذاته |
 | `TODO.md` | Legacy/Historical only؛ لا تستخدمه كقائمة العمل الحالية |
@@ -62,6 +65,8 @@
 - Issue `#16` — **Integration / Architecture / QA / Release Board**: قرارات القبول/الدمج/evidence.
 
 آخر `COMMAND` في Board الفريق هو scope الحالي. بعد كل batch يرفع الفريق `REPORT` في Board الخاصة به ويحدّث ملف workstream. لا يوجد تنسيق رسمي يعتمد على chat memory فقط.
+
+المحادثة الرئيسية تحدّث `PROJECT_INTEGRATION_CONTINUITY.md` بعد أي REPORT/قرار/HEAD/CI/root-cause/merge/Stage transition مهم. إذا تقدمت branch بعد آخر REPORT، يجب تسجيلها كـ`observed WIP / NOT YET VERIFIED` حتى تتم مراجعتها.
 
 ## 4. فهم المنتج وLegacy parity
 
@@ -128,7 +133,7 @@ Do not weaken these boundaries during later UI work.
 
 Important open boundary: live provider adapters/credentials/benchmark/production AI routing remain `NOT YET VERIFIED`; do not claim a provider is production-ready without measured evidence.
 
-**Current engineering stage is Stage13E — Admin AI Operations / Review.** It must reuse Stage12 durable jobs/units/attempts and must not introduce a browser-owned queue or second AI lifecycle.
+**Current engineering stage is Stage13E — Admin AI Operations / Review.** It must reuse Stage12 durable jobs/units/attempts and must not introduce a browser-owned queue or second AI lifecycle. Main-chat dynamic Stage13E state is tracked in `PROJECT_INTEGRATION_CONTINUITY.md` plus Boards #13–#16.
 
 ## 8. UX / Brand / Offline
 
@@ -191,13 +196,14 @@ After every meaningful batch:
 2. update `PROJECT_STATUS.md`;
 3. append/update `PROJECT_ENGINEERING_LOG.md` with changes, ADs, findings and evidence;
 4. update `PROJECT_HANDOFF.md` when current stage/boundary/branch/CI changes;
-5. update the specialized module doc;
-6. update Legacy Coverage evidence for newly implemented legacy capabilities;
-7. update parity notes where a legacy capability moves to VERIFIED;
-8. update Roadmap only when stage status/order changes;
-9. never mark PASS from prose or Build alone—use executable evidence;
-10. leave unverified items explicitly `NOT YET VERIFIED`.
+5. **Integration/Main chat updates `PROJECT_INTEGRATION_CONTINUITY.md` whenever replacement-chat context changes, even before Stage closure;**
+6. update the specialized module doc;
+7. update Legacy Coverage evidence for newly implemented legacy capabilities;
+8. update parity notes where a legacy capability moves to VERIFIED;
+9. update Roadmap only when stage status/order changes;
+10. never mark PASS from prose or Build alone—use executable evidence;
+11. leave unverified items explicitly `NOT YET VERIFIED`.
 
-Workstream chats additionally update their own workstream file + Command Board report. Integration Lead owns synchronization of central status/log/handoff after accepting work.
+Workstream chats additionally update their own workstream file + Command Board report. Integration Lead owns synchronization of central status/log/handoff after accepting work and owns the persistent Integration continuity snapshot during active work.
 
 This convention exists specifically so a new conversation can continue from the repository without knowing prior chat history.
