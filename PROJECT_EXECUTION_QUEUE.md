@@ -4,7 +4,7 @@
 >
 > **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 — Single Owner documentation synchronized; Stage13E static audit complete with one P1 DB-integrity fix; executable verification blocked before checkout.**
+Last synchronized: **2026-09-08 — Single Owner active; Stage13E static audit found and fixed two P1 integrity defects; executable verification still blocked before checkout.**
 
 ## 1. Operating mode
 
@@ -48,9 +48,13 @@ Current combined candidate branch:
 
 `integration/stage13e-ai-operations`
 
-Latest candidate HEAD at this synchronization:
+Current branch HEAD at this synchronization:
 
-`083992bc7b0b7edf0c88e0b029cc49e10aeca345`
+`1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`
+
+Latest runtime/test candidate beneath that docs commit:
+
+`6494a0ee232cf646eae693054b129db752aee40e`
 
 Historical candidate sources remain evidence only:
 
@@ -97,7 +101,7 @@ Acceptance satisfied: a replacement conversation reading repository + Issue #16 
 
 **Priority: P1**
 
-**Status: DONE for current candidate surfaces**
+**Status: DONE for current candidate surfaces; reopen only if later evidence exposes a new defect**
 
 Inspected actual implementation:
 
@@ -105,6 +109,7 @@ Inspected actual implementation:
 - Admin AI list/detail/output/review services;
 - Stage12 job lifecycle pause/resume/retry;
 - Stage12 cancellation implementation;
+- Stage12 output persistence/retry interaction;
 - Stage11 review validation + validator issue shapes;
 - output persistence and secret/error storage boundaries;
 - Frontend API DTOs/adapter/view model/page/workspace;
@@ -121,8 +126,10 @@ Confirmed:
 - Admin authorization enforced;
 - raw response/credential/provider metadata/internal error messages are not exposed;
 - cancel clears pause in Stage12 authority;
-- retry preserves history and uses Stage12 state;
-- review uses output row lock + Stage11 semantic validation;
+- retry preserves attempt history and uses Stage12 state;
+- review is short-transactional and uses Stage11 semantic validation;
+- review mutation now locks output + owning unit and is permitted only for stable `completed | review_required` unit outputs;
+- failed/retrying outputs remain observable but are inspection-only;
 - Frontend refreshes canonical state after mutation/409;
 - validator issues match Frontend adapter shape;
 - fixtures use normal durable tables, no test-only endpoint;
@@ -143,9 +150,25 @@ Changes:
 - `bc1bf508897796d0a74d22126094e83180b7ec79` — workflow DB contract now checks all four Stage13E constraints.
 - `083992bc7b0b7edf0c88e0b029cc49e10aeca345` — specialized Stage13E contract synchronized.
 
-No other confirmed root defect was found in the inspected Stage13E candidate surfaces.
+Execution remains `NOT YET VERIFIED`.
 
-Execution of these fixes remains `NOT YET VERIFIED`.
+#### Finding AI-013E-REVIEW-002 — P1 Data/Review Integrity
+
+**Symptom:** Stage12 can rewrite the existing `ai_outputs` row during retry/re-execution using `ON CONFLICT (job_unit_id) DO UPDATE`, while Stage13E review events are append-only on the same output id. Original Stage13E review authority did not inspect `ai_job_units.status`.
+
+**Root cause:** human review authority was not explicitly bound to an execution-stable output lifecycle boundary.
+
+**Impact:** a human approve/reject/edit could be recorded for a failed/retrying output, then Stage12 could replace normalized/raw output during retry while the old review event remained, making stale review authority appear attached to different generated content.
+
+**Correct fix location:** Stage13E Backend review authority. Do not delete audit events and do not weaken Stage12 retry semantics.
+
+Changes:
+
+- `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` — `allowedReviewActions=[]` unless unit is `completed|review_required`; mutation locks `ai_outputs` + `ai_job_units` and returns `409` for every other unit state before writing an event.
+- `6494a0ee232cf646eae693054b129db752aee40e` — real failed/retrying output regressions: inspection remains available, review actions absent, mutations return `409`, audit event count remains zero.
+- `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9` — specialized contract synchronized.
+
+Execution remains `NOT YET VERIFIED`.
 
 ---
 
@@ -164,7 +187,7 @@ Expected gate:
 1. API lint/typecheck/unit/build;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB constraints;
-4. Stage13E authorization/action/review/concurrency/DB-integrity tests;
+4. Stage13E authorization/action/review/concurrency/DB-integrity/stable-review tests;
 5. Stage12 execution/capacity/control/lifecycle regressions;
 6. auth regression;
 7. fresh DB reset;
@@ -172,30 +195,30 @@ Expected gate:
 9. deterministic real Stage13E fixtures + invariant assertions;
 10. Chromium happy path + pause/resume + approve/reload + real session expiry + real stale-review 409 + 390px.
 
-Latest run on current candidate doc HEAD:
+Latest runtime/test run:
 
-- run `34197944201`;
-- head `083992bc7b0b7edf0c88e0b029cc49e10aeca345`;
-- job `101969795143`;
+- run `34199202570`;
+- head `6494a0ee232cf646eae693054b129db752aee40e`;
+- job `101973855894`;
 - completed with no executable steps/checkout (`steps=null`).
 
-Previous post-fix run:
+Latest branch-head docs run:
 
-- run `34197629003`;
-- head `bc1bf508897796d0a74d22126094e83180b7ec79`;
-- job `101968795653`;
-- same pre-checkout condition.
+- run `34199371763`;
+- head `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`;
+- job `101974393620`;
+- same pre-checkout condition (`steps=null`).
 
-Earlier combined run `34193380473` attempts 1/2 also ended before checkout.
+Previous post-fix runs `34197944201`, `34197629003` and earlier combined run `34193380473` attempts 1/2 also ended before checkout.
 
 Interpretation:
 
 - not product/test failure evidence;
 - external/account/platform cause remains `NOT YET VERIFIED`;
-- do not weaken tests or churn candidate code;
+- do not weaken tests or churn candidate code to satisfy a job that never starts;
 - local fallback is unavailable in current assistant runtime because private-repo clone/network access is unavailable; no local PASS is claimed.
 
-**Exact next action:** rerun the unchanged combined gate when GitHub allocates a real runner. If any command executes and fails, root-cause it before any Stage promotion.
+**Exact next action:** rerun the unchanged combined gate on current branch HEAD when GitHub allocates a real runner. If any command executes and fails, root-cause it before any Stage promotion.
 
 ---
 
@@ -277,6 +300,7 @@ Follow `MASTER_REBUILD_ROADMAP.md` after Admin closure:
 - `AI-011-005` P2 — direct generated-question persistence unresolved; Stage13F owns resolution.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
 - `AI-013E-DB-001` P1 — reject-reason DB invariant fixed in candidate; executable verification pending.
+- `AI-013E-REVIEW-002` P1 — stale human-review authority across retryable output replacement fixed in candidate; executable verification pending.
 - Later Admin/Student/assessment/offline/product stages remain incomplete by Roadmap.
 - Hosting/VPS intentionally not a current blocker.
 
