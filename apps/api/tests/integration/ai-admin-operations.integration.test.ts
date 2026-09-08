@@ -154,6 +154,7 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
   const review = await insertJob(db, suffix, "review", "completed", "review_required", { withOutput: true });
   const reject = await insertJob(db, suffix, "reject", "completed", "review_required", { withOutput: true });
   const race = await insertJob(db, suffix, "race", "completed", "review_required", { withOutput: true });
+  const history = await insertJob(db, suffix, "history", "completed", "review_required", { withOutput: true });
   const failed = await insertJob(db, suffix, "failed", "failed", "failed", {
     attemptCount: 1,
     maxAttempts: 1,
@@ -164,7 +165,35 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
   });
   const control = await insertJob(db, suffix, "control", "queued", "queued");
   const pausedCancel = await insertJob(db, suffix, "paused-cancel", "queued", "queued");
-  assert.ok(review.outputId && reject.outputId && race.outputId);
+  assert.ok(review.outputId && reject.outputId && race.outputId && history.outputId);
+
+  const historyLatestOutput = structuredClone(validOutput);
+  if (historyLatestOutput.kind !== "question_set" || !historyLatestOutput.questions[0]) {
+    throw new Error("Stage13E fixture must be a non-empty question_set");
+  }
+  historyLatestOutput.questions[0] = {
+    ...historyLatestOutput.questions[0],
+    prompt: "أحدث مراجعة يجب أن تبقى authority حتى عند فتح صفحة قديمة",
+  };
+  await db.query(
+    `insert into ai_output_review_events (
+       ai_output_id, revision, action, actor_profile_id, reviewed_output, note
+     )
+     select $1, series.revision, 'edit'::ai_output_review_action, $2, $3::jsonb,
+            'history-revision-' || series.revision::text
+     from generate_series(1, 104) as series(revision)`,
+    [history.outputId, adminId, JSON.stringify(validOutput)],
+  );
+  await db.query(
+    `insert into ai_output_review_events (
+       ai_output_id, revision, action, actor_profile_id, reviewed_output, note
+     ) values ($1, 105, 'approve', $2, $3::jsonb, 'canonical-latest-review')`,
+    [history.outputId, adminId, JSON.stringify(historyLatestOutput)],
+  );
+  await db.query(
+    "update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1",
+    [history.outputId, adminId],
+  );
 
   const app = buildApp({ config, database: db });
   try {
@@ -220,7 +249,34 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
     assert.equal(outputBefore.statusCode, 200);
     assert.equal(outputBefore.json().output.reviewStatus, "pending");
     assert.equal(outputBefore.json().output.hasRawResponse, true);
+    assert.deepEqual(outputBefore.json().output.reviewPagination, { total: 0, limit: 100, offset: 0 });
     assert.equal(JSON.stringify(outputBefore.json()).includes("raw-stage13e-secret"), false);
+
+    const invalidReviewPage = await app.inject({
+      method: "GET",
+      url: `/v1/admin/ai/outputs/${history.outputId}?reviewLimit=101&reviewOffset=0`,
+      headers: { cookie: adminCookie },
+    });
+    assert.equal(invalidReviewPage.statusCode, 400);
+
+    const oldHistoryPage = await app.inject({
+      method: "GET",
+      url: `/v1/admin/ai/outputs/${history.outputId}?reviewLimit=50&reviewOffset=100`,
+      headers: { cookie: adminCookie },
+    });
+    assert.equal(oldHistoryPage.statusCode, 200);
+    const oldHistoryJson = oldHistoryPage.json().output;
+    assert.deepEqual(oldHistoryJson.reviewPagination, { total: 105, limit: 50, offset: 100 });
+    assert.deepEqual(
+      oldHistoryJson.reviewHistory.map((event: { revision: number }) => event.revision),
+      [5, 4, 3, 2, 1],
+    );
+    assert.equal(oldHistoryJson.reviewStatus, "approved");
+    assert.deepEqual(oldHistoryJson.allowedReviewActions, []);
+    assert.equal(
+      oldHistoryJson.effectiveReviewedOutput.questions[0].prompt,
+      historyLatestOutput.questions[0].prompt,
+    );
 
     const editedOutput = structuredClone(validOutput);
     if (editedOutput.kind !== "question_set" || !editedOutput.questions[0]) {
