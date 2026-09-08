@@ -11,6 +11,7 @@ This document is the Frontend-facing contract for Stage13E. It builds on the exi
 - Unsafe `/v1/*` requests continue to use the existing origin/CORS protection.
 - The browser must not infer or persist canonical lifecycle state independently.
 - Stage13E review does not publish to Stage13F Question Bank and does not modify raw provider output in place.
+- Admin edits/approvals remain subject to the same Stage11 semantic validation authority as provider-produced output. Human-review-only (`review_required`) findings may be accepted by Admin; semantic `invalid` findings may not.
 
 ## 2. Shared status/progress semantics
 
@@ -324,17 +325,29 @@ All control endpoints are Admin-only unsafe requests and return:
 }
 ```
 
+### Shared semantic guard
+
+The review mutation locks the owning `ai_outputs` row, reads the canonical `ai_job_units.input_payload`, and applies the existing Stage11 `validateAiGenerationOutput` authority **inside the same transaction before writing a review event**.
+
+- `invalid` semantic validation is never review-approvable.
+- `review_required` is allowed to proceed because Stage13E Admin review is the human-review authority requested by those findings/modes.
+- This prevents a schema-valid manual edit from bypassing source provenance, requested-count, answer-shape, notation, duplicate, exact-source and related Stage11 rules.
+
 ### Edit
 
 - `editedOutput` is required.
 - It must match the Stage11 `AiGenerationOutput` schema.
 - If the stored normalized output is schema-valid, edit cannot change its output `kind`.
-- Creates a new append-only review revision; it does not mutate `raw_response` or `normalized_output`.
+- It is then revalidated against the canonical Stage11 request; semantic `invalid` -> `400 BAD_REQUEST` and no review revision is written.
+- A semantic `valid` or `review_required` edit creates a new append-only review revision.
+- It does not mutate `raw_response` or `normalized_output`.
 
 ### Approve
 
 - Uses the latest edited draft when one exists; otherwise uses the stored normalized output.
-- The selected output must be schema-valid or approval returns `409`.
+- The selected candidate is revalidated against the canonical Stage11 request in the same locked transaction.
+- Semantic `invalid` (including schema-invalid) -> `409 CONFLICT`; no terminal approval event is written.
+- `valid` and `review_required` candidates are approvable by Admin.
 - Creates a terminal `approve` review event.
 - Stage13E approval **does not publish** the result into Question Bank/Stage13F.
 
@@ -346,7 +359,7 @@ All control endpoints are Admin-only unsafe requests and return:
 
 ### Review concurrency / audit
 
-- Review mutation locks the owning `ai_outputs` row before deciding the next revision.
+- Review mutation locks the owning `ai_outputs` row before deciding the next revision or semantic candidate.
 - Review history is append-only in `ai_output_review_events`.
 - `(ai_output_id, revision)` is unique in PostgreSQL.
 - Once latest action is `approve` or `reject`, any later edit/approve/reject returns `409`.
@@ -363,11 +376,11 @@ All errors use the existing public envelope:
 
 Expected Stage13E HTTP classes:
 
-- `400 BAD_REQUEST`: invalid UUID/query/body, pagination outside bounds, missing edit payload, missing reject reason, invalid edited output shape/kind.
+- `400 BAD_REQUEST`: invalid UUID/query/body, pagination outside bounds, missing edit payload, missing reject reason, invalid edited output shape/kind, or semantically invalid Admin edit.
 - `401 UNAUTHORIZED`: no valid session.
 - `403 FORBIDDEN`: authenticated non-Admin caller or origin policy rejection.
 - `404 NOT_FOUND`: unknown job/unit/output.
-- `409 CONFLICT`: lifecycle action not allowed in current state, retry attempt ceiling, no retryable failed unit, invalid/finished review transition.
+- `409 CONFLICT`: lifecycle action not allowed in current state, retry attempt ceiling, no retryable failed unit, semantically invalid approval candidate, or invalid/finished review transition.
 - `500 INTERNAL_ERROR`: stored durable data violates a Backend invariant/contract.
 
 Frontend must not convert a `409` into a local optimistic state transition; refresh canonical server state instead.
@@ -394,7 +407,7 @@ No Stage12 lifecycle table is duplicated.
 - Attempt observability intentionally omits credentials and provider metadata.
 - Output detail returns normalized/reviewed educational data but never raw provider response.
 - Provider/network calls are not introduced in Admin DB transactions.
-- Review mutation is a short DB transaction and uses row locking only for the reviewed output.
+- Review mutation is a short DB transaction and locks only the reviewed `ai_outputs` row while deriving and validating the candidate.
 
 ## 13. Verification state
 
@@ -406,6 +419,7 @@ Implemented test/workflow coverage includes intended checks for:
 - source page/checksum provenance;
 - edit/approve/reject persistence;
 - review race serialization;
+- semantic Admin review guard: valid edit accepted, Stage11 `invalid` edit rejected, `review_required` candidate approvable by Admin, invalid approval rejected;
 - failed-job retry history + one-attempt extension + hard ceiling;
 - pause/resume/cancel behavior;
 - Stage12 durable execution/capacity/control/lifecycle regressions;
@@ -413,7 +427,9 @@ Implemented test/workflow coverage includes intended checks for:
 - clean migrations/schema assertions;
 - lint/typecheck/unit/build.
 
-Current blocker: after the initial Stage13E CI run reached Biome and exposed formatting/import hygiene, that source issue was fixed in `0b617538c84c4722c289ddbf6186d12c5ab6c27b`. Three subsequent job attempts failed before any runner was provisioned (`runner_id=0`, `steps=[]`). Therefore clean migration/integration/regression results for the current head remain **NOT YET VERIFIED** and Stage13E is **not yet Ready for integration**.
+Current blocker: the initial Stage13E CI run `34184515829` allocated a runner and exposed Biome formatting/import hygiene; that source issue was fixed in `0b617538c84c4722c289ddbf6186d12c5ab6c27b` without weakening CI. Subsequent runs/attempts repeatedly fail before any hosted runner is provisioned. Evidence includes `runner_id=0`, empty runner name and `steps=[]`, including run `34185062185` attempts 1/2/3, run `34185372543` on `99072af...`, and run `34185691717` on semantic-regression head `3e00f616...`.
+
+Therefore current-head lint/typecheck/unit/build, clean migration, Stage13E integration and Stage12/auth regression execution remain **NOT YET VERIFIED** and Stage13E is **not yet Ready for integration**.
 
 ## 14. Explicit non-goals / still open
 
