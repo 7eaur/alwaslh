@@ -2,7 +2,7 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable evidence أعلى من prose. للتفاصيل اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, و`PROJECT_EXECUTION_QUEUE.md`.
 
-Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 root fixes plus four P2 hardenings, including safe HTTP pagination offsets; executable verification still blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 + four P2 fixes, final static closure audit found no additional proven defect, Roadmap + Legacy Coverage are closure-ready, executable verification remains blocked before checkout.**
 
 ## Current Position
 
@@ -42,6 +42,7 @@ Stable boundaries:
 - any multi-query Admin AI read model must assemble one response from one short repeatable-read database snapshot; page/total, progress/actions and latest-history authority cannot mix concurrent committed states.
 - bounded Admin pages must also bound expensive database aggregation work when query shape can do so directly; do not add speculative indexes before fixing the owning query shape.
 - accepted pagination offsets must be safely representable end-to-end; invalid/unsafe offsets are rejected at HTTP validation before service/DB execution.
+- Stage13E progress semantics reuse the Stage12 lifecycle calculation; no duplicate progress authority exists.
 
 ## Current Definition of Done
 
@@ -90,7 +91,7 @@ Do not replace this baseline until a newer matrix actually executes green.
 | Stage13B Admin Curriculum UI | VERIFIED incl. Chromium |
 | Stage13C Content/Media/OCR | VERIFIED incl. Chromium |
 | Stage13D Upload/History/Publication Linking | VERIFIED incl. Chromium |
-| Stage13E Admin AI Operations / Review | **COMBINED CANDIDATE / NOT YET VERIFIED** |
+| Stage13E Admin AI Operations / Review | **COMBINED CANDIDATE / EXECUTION PENDING / NOT YET VERIFIED** |
 | Stage13F Question Bank / Quiz Builder | BLOCKED by Stage13E closure |
 | Stage13G Remaining Admin | REQUIRED later |
 | Stage14–25 Product/Hardening | REQUIRED later |
@@ -130,6 +131,12 @@ Bounded Review History pagination plus independent canonical-latest review preve
 
 All four P1 and four P2 findings are **FIXED IN CANDIDATE / EXECUTION PENDING**.
 
+## Stage13E Final Static Closure Audit
+
+Final inspection covered HTTP/body/query validation, UUID/status/note/schema alignment, Stage12 progress authority reuse, mutation/canonical-refresh behavior, Review History/current-authority separation, snapshot consistency, Job-list query shape/index use and regression inclusion in the Combined Gate.
+
+**Result:** no additional proven Stage13E defect after `AI-013E-API-008`. Do not add speculative changes merely because executable CI is unavailable.
+
 ## Stage13E Browser Contract
 
 Real fixtures provide 51 Units, 51 Attempts, 101 review edits, a deterministic stale-review race Job and a later-page marker Job. Chromium covers complete pagination, canonical latest authority, pause/resume, approve/reload, session expiry, stale-review 409 and 390px overflow with no fake API/test-only endpoint/sleep race.
@@ -145,7 +152,27 @@ Latest runtime/test-head attempt:
 - job `102253102885`;
 - conclusion `failure`, but `steps=[]` and no checkout/repository command executed.
 
-Interpretation: **current executable blocker is GitHub hosted-runner allocation, not an executed product/test failure.** External account/platform root cause remains `NOT YET VERIFIED` with available permissions.
+Latest candidate/docs-head attempt:
+
+- run `34283442253`;
+- head `c48d1e597497e6054340f71235c78937082b9371`;
+- attempt `2`;
+- job `102256556365`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- no checkout/repository command executed.
+
+Local fallback was investigated: `/mnt/data/alwaslh-stage13e` is an empty directory, not a checkout; npm registry access times out and no authenticated private-repository checkout is available. No local PASS is claimed.
+
+Interpretation: **current executable blocker is GitHub hosted-runner allocation, not an executed product/test failure.** Exact external account/platform cause remains `NOT YET VERIFIED` with available permissions.
+
+## Closure Readiness
+
+Prepared while EXEC-004 is externally blocked:
+
+- `MASTER_REBUILD_ROADMAP.md` now records Stage13E as combined candidate/execution pending and Stage13F as ordered-blocked;
+- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` now distinguishes `CANDIDATE / EXECUTION PENDING` from VERIFIED and maps relevant Stage13E legacy rows without overclaiming acceptance;
+- candidate-targeted legacy rows include `LES-A-035/036/037`, `AIRULE-025`, `AI-OPS-012/013/014/015/017`;
+- complete page-detection batch-save authoring, bulk-generation trigger, full generated/manual editors, exports and Stage13F Question Bank publication remain explicitly not closed.
 
 ## Immediate Next Work
 
@@ -155,7 +182,7 @@ Interpretation: **current executable blocker is GitHub hosted-runner allocation,
 4. Any executed failure → root-cause fix in owning layer + regression.
 5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regressions.
 6. Wider PASS → promote accepted Stage13E runtime to `main` while preserving latest central docs.
-7. Update Legacy Coverage/Roadmap/central docs and add Stage13E Closure Report to Issue #16.
+7. Convert only actually proven candidate legacy rows to VERIFIED and add Stage13E Closure Report to Issue #16.
 8. Only then begin Stage13F.
 
 ## Open Boundaries
