@@ -4,7 +4,7 @@
 >
 > **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has four P1 root fixes plus two P2 snapshot-consistency hardenings; executable verification remains blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 root fixes plus three P2 hardenings (snapshot consistency + bounded Job-list aggregation); executable verification remains blocked before checkout.**
 
 ## 1. Operating mode
 
@@ -45,9 +45,9 @@ Current active product stage: **Stage13E — Admin AI Operations / Review**.
 
 Current combined candidate branch: `integration/stage13e-ai-operations`.
 
-Current candidate docs HEAD: `dd723f2451a0b2edcdaab2e6045a626cae44c15d`.
+Current candidate docs HEAD: `e9793a5222758a7d17aad08f91993cb7431631b7`.
 
-Latest runtime/test HEAD immediately below docs: `10f32c72a684a8243a789a3561426a68dad1bcea`.
+Latest runtime/test HEAD immediately below docs: `6efce1510231de5d569c4b96dbdffa3d4d488b31`.
 
 Historical candidate sources remain evidence only:
 
@@ -92,6 +92,7 @@ Inspected actual Admin AI HTTP/service/lifecycle/review/persistence/frontend/fix
 - polling/refresh stay on current pages;
 - selected historical review page never becomes current review authority;
 - all multi-query Admin AI read models use one short repeatable-read database snapshot;
+- List Jobs applies the bounded Job page before Unit status aggregation;
 - real fixtures use durable tables and real APIs only.
 
 #### AI-013E-DB-001 — P1 Data/Audit Integrity
@@ -148,6 +149,20 @@ Frontend previously exposed only first 30 Jobs / 50 Units / 50 Attempts. Fixed w
 
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
+#### AI-013E-PERF-007 — P2 Admin Job-list Bounded Aggregation
+
+**Problem:** `listJobs()` originally joined and aggregated `ai_job_units` for all matching durable Jobs, then applied `LIMIT/OFFSET`; bounded HTTP pagination therefore did not bound expensive Unit aggregation work.
+
+**Impact:** a 30-row Admin page could become progressively more expensive as AI Job/Unit history grows even though only one bounded page is returned.
+
+**Correct fix:** `8501d2e0317c0e1e4eb83b72c997e321ee79fe81` pages/filter/orders `ai_jobs` first in a CTE, then computes Unit status counts only for the selected Jobs using correlated `LATERAL` aggregation. No speculative index or denormalized counter was added.
+
+**Regression:** `6efce1510231de5d569c4b96dbdffa3d4d488b31` adds `apps/api/tests/ai-admin-job-list-query-shape.test.ts`, proving the page boundary appears before Unit aggregation, old global join shape is absent, parameters/total-count/snapshot behavior are preserved.
+
+**Specialized doc:** `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`.
+
+**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
+
 ---
 
 ### EXEC-004 — Stage13E executable same-head gate
@@ -160,7 +175,7 @@ Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Expected gate:
 
-1. API lint/typecheck/unit/build, including Output Detail and List/Job/Unit snapshot regressions;
+1. API lint/typecheck/unit/build, including Output Detail, List/Job/Unit snapshot and Job-list query-shape regressions;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB constraints;
 4. Stage13E authorization/action/review/concurrency/DB/stable-review/review-history pagination tests;
@@ -173,17 +188,17 @@ Expected gate:
 
 Latest runtime/test-head run:
 
-- run `34279168308`;
-- head `10f32c72a684a8243a789a3561426a68dad1bcea`;
-- job `102239495903`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`;
-- no checkout or repository command executed.
+- run `34281631521`;
+- head `6efce1510231de5d569c4b96dbdffa3d4d488b31`;
+- job `102247518121`;
+- `steps=[]` / no checkout or repository command executed.
 
-Latest candidate/docs-head run at sync:
+Latest candidate/docs-head run:
 
-- run `34279304388`;
-- head `dd723f2451a0b2edcdaab2e6045a626cae44c15d`;
-- ended before repository execution; read Issue #16/latest Actions for exact job metadata on resume.
+- run `34281764765`;
+- head `e9793a5222758a7d17aad08f91993cb7431631b7`;
+- job `102247948380`;
+- `steps=[]` / no repository execution.
 
 Interpretation: this is not product/test failure evidence. External account/platform cause remains `NOT YET VERIFIED`. Do not weaken tests or churn product code because a job never starts.
 
@@ -238,6 +253,7 @@ Follow `MASTER_REBUILD_ROADMAP.md`: Stage14 Student Product → Stage15 Assessme
 - `AI-013E-OPS-004` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-005` P2 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-006` P2 — fixed in candidate; executable verification pending.
+- `AI-013E-PERF-007` P2 — fixed in candidate; executable verification pending.
 - later Admin/Student/assessment/offline/product stages remain incomplete.
 - Hosting/VPS intentionally not a current blocker.
 
