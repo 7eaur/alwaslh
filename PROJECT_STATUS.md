@@ -28,10 +28,11 @@
 - **Integration / Architecture / QA / Release** — Board Issue `#16`; persistent guide `docs/workstreams/INTEGRATION_WORKSTREAM.md`.
 - **Team Room** — Issue `#13` للعقود/blockers/القرارات المشتركة.
 - Team-wide rules: `docs/workstreams/TEAM_OPERATING_MODEL.md`.
+- **Main Integration persistent memory:** `PROJECT_INTEGRATION_CONTINUITY.md` — operational snapshot للمنتج/المعمارية/branches/reports/WIP/decisions/root-causes/CI/exact-next-action بحيث يمكن استبدال المحادثة الرئيسية دون chat history.
 
 كل workstream يستخدم branch قصيرة من أحدث Integration-approved HEAD، يراجع نفسه، ثم يرفع `REPORT` في Board الخاصة به. Integration Lead وحده يقرر القبول/الدمج وStage PASS بعد same-head cross-boundary verification. Backend/Frontend لا يعلنان Stage VERIFIED منفردين.
 
-**Continuity/quality gates إلزامية:** بعد كل batch/Stage يجب أن توجد commits + tests + workstream report + exact next action بحيث تستطيع محادثة جديدة الاستمرار من GitHub فقط. أي bug/failure مهم يحتاج Root Cause + blast radius + correct fix location + regression test؛ ممنوع test weakening/security bypass/hidden catch/duplicate authority/random timeout كحل نهائي. نهاية كل Stage تحتاج Closure Report ثم مزامنة central docs بعد قبول Integration.
+**Continuity/quality gates إلزامية:** بعد كل batch/Stage يجب أن توجد commits + tests + workstream report + exact next action بحيث تستطيع محادثة جديدة الاستمرار من GitHub فقط. أي bug/failure مهم يحتاج Root Cause + blast radius + correct fix location + regression test؛ ممنوع test weakening/security bypass/hidden catch/duplicate authority/random timeout كحل نهائي. نهاية كل Stage تحتاج Closure Report ثم مزامنة central docs بعد قبول Integration. المحادثة الرئيسية تحدث `PROJECT_INTEGRATION_CONTINUITY.md` أثناء العمل بعد أي REPORT/قرار/HEAD/CI/root-cause/merge/Stage transition مهم، ولا تنتظر نهاية Stage.
 
 ## Fully Verified Same-Head Matrix
 
@@ -114,7 +115,7 @@ Legacy coverage `LES-A-010..015` is now VERIFIED. `LES-A-016+` remains NOT YET V
 
 ## Current Next Work — Stage13E
 
-Backend command is tracked in Issue `#14`; Frontend command is tracked in Issue `#15`. Integration/acceptance is tracked in Issue `#16`.
+Backend command is tracked in Issue `#14`; Frontend command is tracked in Issue `#15`. Integration/acceptance is tracked in Issue `#16`. Current branch/report/WIP details live in `PROJECT_INTEGRATION_CONTINUITY.md` and must be live-checked against GitHub before decisions.
 
 Implement only after discovery of the actual Stage12 callers/contracts:
 
@@ -167,6 +168,6 @@ Do not sync/deploy to Vercel/Supabase or re-enable auto-deployment until a new e
 
 Canonical startup path:
 
-`README.md → DOCUMENTATION_INDEX.md → PROJECT_HANDOFF.md → PROJECT_STATUS.md → PROJECT_ENGINEERING_LOG.md → TEAM_OPERATING_MODEL/workstream board → CURRENT_PRODUCT_OVERRIDES → Product Decisions → Parity/Coverage → Roadmap → specialized docs`.
+`README.md → DOCUMENTATION_INDEX.md → PROJECT_HANDOFF.md → PROJECT_STATUS.md → PROJECT_ENGINEERING_LOG.md → [Main Integration: PROJECT_INTEGRATION_CONTINUITY.md] → TEAM_OPERATING_MODEL/workstream board → CURRENT_PRODUCT_OVERRIDES → Product Decisions → Parity/Coverage → Roadmap → specialized docs`.
 
 `TODO.md`, root legacy code, legacy PRD/audits are historical references and must not override current executable evidence.
