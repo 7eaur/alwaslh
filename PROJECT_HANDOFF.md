@@ -2,241 +2,245 @@
 
 > **Purpose:** a replacement engineer/chat must be able to resume from GitHub without prior conversation memory.
 
-Last synchronized: 2026-09-08 — Render production cutover.
+Last synchronized: 2026-09-08 — Render production cutover, Docker/Poppler correction and Vercel retirement guard.
 
-## 0. Mandatory startup procedure
+## 0. Mandatory startup
 
 Before changing code:
 
 1. Confirm repo `7eaur/alwaslh`.
 2. Treat **`main` as the production source branch**.
-3. Read `README.md` and `DOCUMENTATION_INDEX.md`.
-4. Read this file, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, and for Integration/Main also `PROJECT_INTEGRATION_CONTINUITY.md`.
-5. Read `docs/workstreams/TEAM_OPERATING_MODEL.md` and the role-specific workstream file.
-6. Read latest GitHub commands/reports: Team Room `#13`, Backend `#14`, Frontend `#15`, Integration `#16`.
-7. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` before older Product Decisions.
-8. For hosting/release work read `docs/deployment/RENDER_PRODUCTION.md` and root `render.yaml`.
-9. Inspect actual code/callers/migrations/tests before changing an area.
-10. Live-check branch HEADs, GitHub Actions and Render deploy state; prose is not executable evidence.
-11. Anything not inspected/tested = `NOT YET VERIFIED`.
+3. Read `README.md` → `DOCUMENTATION_INDEX.md` → this file → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md`.
+4. Main/Integration replacement also reads `PROJECT_INTEGRATION_CONTINUITY.md`.
+5. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
+6. Read `docs/workstreams/TEAM_OPERATING_MODEL.md` + role workstream.
+7. Read latest Team Room `#13`, Backend `#14`, Frontend `#15`, Integration `#16` messages.
+8. Hosting work: read root `render.yaml` + `docs/deployment/RENDER_PRODUCTION.md`.
+9. Inspect actual code/migrations/tests before changing an area.
+10. Live-check branch HEADs, GitHub Actions, Render resources/deploys/logs and external old hosting status.
+11. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-## 1. Repository / Git / Production state
+## 1. Repository / Git / production state
 
-- Repo: `7eaur/alwaslh`
-- Production branch: **`main`**
-- Render cutover source commit: `febd8ca2fe047a0b3a961bf73060289ed35e79c6`
-- Old legacy `main` preserved at `archive/legacy-main-2026-09-08` → `5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`
-- `planning/product-evolution-review` remains historical/integration context during transition but is no longer the production deploy source.
-- Draft PR #12 remains historical/current-development context and its body may be stale.
-- Latest fully verified executable pre-hosting head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
-- Do not rewrite history casually. The force move of `main` during cutover was explicitly Product Owner-authorized and protected by the archive branch.
+- Repo: `7eaur/alwaslh`.
+- Production branch: **`main`**.
+- Render cutover began at `febd8ca2fe047a0b3a961bf73060289ed35e79c6`.
+- Current Render runtime correction commit: `48334137aad5c975a25076bdb463d3d25ac3f258`.
+- Previous legacy `main` preserved at `archive/legacy-main-2026-09-08` → `5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
+- `planning/product-evolution-review` is kept synchronized for current engineering continuity but **is not a production deploy source**.
+- Draft PR #12 remains historical/current-development context; its body may be stale.
+- Latest fully verified application baseline remains `4eca7de8877ac9e2289b9c7990c912d33c256935`.
+
+The force move of `main` was Product Owner-authorized and protected by the archive branch. Do not casually rewrite production history again.
 
 ## 2. Product idea
 
-**الوسيلة الذكية** is an Arabic education platform managing trustworthy curriculum/content, controlled student access, learning/practice and review.
+**الوسيلة الذكية** منصة تعليمية عربية لإدارة منهج ومحتوى موثوق، وصول الطالب، القراءة/التعلم/التدريب والمراجعة.
 
-### Student Web/PWA — `apps/student-web`
+### Student Web/PWA
+Secure Full-Code activation, returning device-bound login, entitlement-filtered curriculum, Reader/media/text/search/TTS, Practice/Tests/Models, Notes/Favorites/Needs Review, progress/private achievements, notifications and Offline/PWA.
 
-Secure Full-Code activation and returning device-bound login; entitlement-filtered curriculum; Reader/media/text/search/TTS; Practice/Tests/Models; Notes/Favorites/Needs Review; progress/private achievements; notifications; explicit Offline/PWA lifecycle.
+### Admin Web
+Curriculum/content authoring, image/PDF/mixed ingestion, media/OCR review, AI operations/review, Question Bank/Quiz Builder/publish, students/codes/recovery/device operations, notifications/import-export/reports/settings/audit.
 
-### Admin Web — `apps/admin-web`
+### Backend API
+Fastify + PostgreSQL own Auth/Authorization/Entitlements, curriculum/business data, durable media/OCR/AI state, review/publication and trusted assessment/progress. Browser never owns those authorities.
 
-Curriculum/content authoring; image/PDF/mixed ingestion; media/OCR review; AI operations/review; Question Bank/Quiz Builder/publish; students/codes/recovery/device reset; notifications/import-export/reports/settings/audit.
+Legacy is capability/scenario/failure reference, not target architecture.
 
-### Backend API — `apps/api`
+## 3. Permanent team
 
-Authority for Auth/Authorization/Entitlements, curriculum/business data, PostgreSQL mutations, media/OCR/AI state/review, and trusted publication/assessment/progress. Browser never owns those authorities.
+- Backend / Platform — Issue `#14`, `docs/workstreams/BACKEND_WORKSTREAM.md`.
+- Frontend / Product — Issue `#15`, `docs/workstreams/FRONTEND_WORKSTREAM.md`.
+- Integration / Architecture / QA / Release — Issue `#16`, `docs/workstreams/INTEGRATION_WORKSTREAM.md`.
+- Shared Team Room — Issue `#13`.
+- Main operational memory — `PROJECT_INTEGRATION_CONTINUITY.md`.
 
-## 3. Permanent engineering team topology
+Chats are replaceable. GitHub is the coordination/memory bus.
 
-### Backend / Platform
-- Guide: `docs/workstreams/BACKEND_WORKSTREAM.md`
-- Board: Issue `#14`
-- Owns API/PostgreSQL/server authority/workers/security/backend tests.
-
-### Frontend / Product
-- Guide: `docs/workstreams/FRONTEND_WORKSTREAM.md`
-- Board: Issue `#15`
-- Owns Admin/Student UX, API integration, responsive/a11y/PWA/frontend tests.
-
-### Integration / Architecture / QA / Release
-- Guide: `docs/workstreams/INTEGRATION_WORKSTREAM.md`
-- Board: Issue `#16`
-- Owns architecture coherence, review, integration, same-head gates, central docs and Render production release verification.
-
-### Shared Team Room
-- Issue `#13`
-- Cross-team contracts, blockers and architecture decisions.
-
-Chats are replaceable. Repository docs + Boards + code/evidence are the memory.
-
-## 4. Delivery / branching model after Render cutover
+## 4. Production delivery model
 
 ```text
 latest Integration-approved main
-→ short Backend or Frontend branch
+→ short Backend/Frontend branch
 → implementation + tests + REPORT
 → Integration review
-→ integration candidate / cross-boundary verification
+→ integration candidate + cross-boundary gates
 → merge accepted changes to main
 → Render auto-deploy from main
 → hosted verification
 ```
 
-Rules:
+Feature branches never deploy directly to production. Stage readiness from one team never equals Stage VERIFIED.
 
-- Backend/Frontend do not deploy feature branches as production.
-- `main` must remain production-quality.
-- An unverified stage does not enter `main` just because Render can auto-deploy it.
-- Root cause, not patching.
-- End of each Stage requires Closure Report + Integration acceptance + central-doc sync.
+## 5. Product Owner overrides
 
-## 5. Current Product Owner overrides
+Current authority: `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
 
-Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
-
-Current operational facts:
-
-1. **Render is the primary production hosting platform and deployment is re-enabled.**
-2. **`main` is production source.**
-3. **Old Supabase database is not production authority and legacy data migration remains out of current scope.**
-4. **Repository documentation is official memory.**
-5. **No patching/test/security weakening.**
-6. **Stage13E stays outside `main` until its gates pass.**
+- **Render is primary production hosting and deployment is re-enabled.**
+- **`main` is production source.**
+- old Supabase DB is not production authority; legacy data migration remains out of scope.
+- repository documentation is official memory.
+- root-cause only; no test/security/business-rule weakening.
+- Stage13E remains outside `main` until its gates pass.
 
 ## 6. Stable architecture / business boundaries
 
 ```text
 Student Static/PWA ─┐
-                    ├── Fastify API ── Render Managed PostgreSQL
-Admin Static ───────┘       │
-                            ├── Auth / Access / Curriculum
-                            ├── Source / Media / OCR
-                            ├── AI contracts/execution/review
-                            └── Persistent media disk on API
+                    ├── Docker Fastify API ── Render Managed PostgreSQL
+Admin Static ───────┘             │
+                                  └── Render persistent media disk
 ```
 
-Stable rules:
+Core rules:
 
-- Full Code = 6 digits; Class Code = 7 digits.
-- activation verification non-consuming; final activation atomic.
-- returning Student requires password + registered ECDSA P-256 proof.
-- Admin auth/recovery separate and secure.
-- Curriculum: Class → Subject Offering → optional Section → Lesson.
-- Source import is provenance, not curriculum authority.
+- Full Code 6 digits; Class Code 7 digits.
+- activation verify non-consuming; finalization atomic.
+- returning Student = password + registered ECDSA P-256 device proof.
+- Curriculum = Class → Subject Offering → optional Section → Lesson.
+- source import is provenance, never curriculum authority.
 - `media ready != published`.
-- Upload/media success independent from OCR/AI/TTS.
-- AI contracts provider-neutral and exact modes never fabricate unknown answers.
-- provider calls outside long DB transactions; lease-protected writes.
+- upload/media success independent from OCR/AI/TTS.
+- exact/extraction AI never fabricates unknown answers.
+- provider calls outside long DB transactions; durable lease-protected state.
 - Fastify HTTP separate from AI worker runtime.
-- raw provider output/internal credentials never client authority.
-- Student ultimately consumes reviewed/published authority.
+- secrets/raw provider internals never browser authority.
+- production media storage must be durable.
 
 ## 7. Render production architecture
 
-Canonical: `render.yaml` + `docs/deployment/RENDER_PRODUCTION.md`.
+Canonical files: root `render.yaml` + `docs/deployment/RENDER_PRODUCTION.md`.
 
 Declared resources:
 
-- `alwaslh-prod-student-7eaur` — Student static site.
-- `alwaslh-prod-admin-7eaur` — Admin static site.
-- `alwaslh-prod-api-7eaur` — Fastify Node service, `starter` plan.
-- `alwaslh-prod-postgres-7eaur` — PostgreSQL 16, `basic-256mb`.
-- `alwaslh-prod-media-7eaur` — 1 GB persistent disk mounted at `/opt/render/project/src/runtime-data/media`.
+- `alwaslh-prod-student-7eaur` — Student static/CDN.
+- `alwaslh-prod-admin-7eaur` — Admin static/CDN.
+- `alwaslh-prod-api-7eaur` — **Docker Fastify service**, current plan ID `0.5c-512mb`.
+- `alwaslh-prod-postgres-7eaur` — PostgreSQL 16, plan `0.1c-256mb`, 1 GB initial disk.
+- `alwaslh-prod-media-7eaur` — 1 GB persistent API disk at `/app/runtime-data/media`.
 
-Region: Frankfurt for API/DB locality.
+Region: Frankfurt for API/DB locality. Render previews are disabled; production source is `main` only.
 
-Why the disk is mandatory: current Stage13D media authority uses `FileSystemMediaStorage`. Render service filesystem is ephemeral without a persistent disk; production uploads must survive deploys/restarts.
+### API Docker reason
 
-This makes API intentionally single-instance for now. Do not pretend the disk is shared. Future horizontal scaling requires a real shared/object-storage adapter architecture decision.
+`apps/api/src/media/pdf-processor.ts` calls `pdfinfo` and `pdftoppm`. Render native runtimes do not guarantee Poppler, so the API uses `apps/api/Dockerfile` pinned to Node `22.22.0` and explicitly installs `poppler-utils`.
 
-No Render AI worker is declared yet because Stage12 explicitly lacks production `worker.ts` bootstrap/live provider routes/credentials. Do not put the worker loop inside Fastify as a hosting shortcut.
+`apps/api/docker-entrypoint.sh` prepares the media mount then drops to the non-root `node` user using `gosu`.
+
+Render runs compiled migration code as `preDeployCommand`:
+
+`node apps/api/dist/migrate.js`
+
+and starts:
+
+`node apps/api/dist/server.js`.
+
+The image includes `database/migrations`.
+
+### Media durability
+
+Current `FileSystemMediaStorage` requires the disk. This intentionally makes the API single-instance and disables zero-downtime deploys. Future horizontal scale requires a real object/shared storage adapter; do not fake shared local disk.
+
+### AI worker
+
+No Render AI worker yet. Stage12 production provider/bootstrap remains incomplete. Do not move the worker loop into Fastify to simplify hosting.
 
 ## 8. Old hosting retirement
 
-Repository-side Vercel path was retired at cutover:
+### Vercel
 
-- `vercel.json` removed;
-- `scripts/build-vercel-preview.mjs` removed;
-- `api/[...path].js` removed.
+The old Vercel runtime/build path is retired:
 
-Legacy Supabase/Cloudflare material may remain only as historical/audit/reference evidence unless independently proven unused and removed through a normal cleanup batch.
+- `scripts/build-vercel-preview.mjs` removed.
+- `api/[...path].js` serverless adapter removed.
+- old Vercel build/rewrite configuration removed.
 
-External provider-dashboard projects/hooks are not automatically deleted by repository changes. Disconnect them only after Render is confirmed live; do not delete legacy data as part of deployment cutover.
+A **minimal `vercel.json` kill-switch is intentionally retained** because the external Vercel project `alwaslh` is still linked to GitHub:
+
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": { "deploymentEnabled": false }
+}
+```
+
+During cutover, deleting this guard caused pushes to create unwanted Vercel deployments. The guard was restored at `429e2d4165099ab3cfcd8d53522897870f3f90ec`; the immediate follow-up check showed no new deployment after that commit. Keep it until provider-side Git disconnect is confirmed.
+
+### Supabase
+
+Connected Supabase inspection identified project `dhlqqgnxsqawidjmedvq` whose public table names match Alwaslh rebuild schema (`ai_jobs`, `media_assets`, `content_source_assets`, `auth_sessions`, etc.). It remains active temporarily because Render is not yet live.
+
+After Render DB/API/session/media verification passes, **pause** this old Alwaslh Supabase project rather than deleting data. Deletion requires a separate data-retention decision. The separate `himma-lab` Supabase project is unrelated and must not be touched.
 
 ## 9. Verified stage history
 
-VERIFIED:
+Verified through Stage13D:
+
 - Stages1–10
 - OCR Foundation
-- Stage11 AI Contracts
-- Stage12 durable AI execution/runtime backend
-- Stage13A Curriculum backend
+- Stage11 provider-neutral AI contracts
+- Stage12 durable AI backend/runtime
+- Stage13A Curriculum Backend
 - Stage13B Admin Curriculum UI incl. Chromium
 - Stage13C Content/Media/OCR Operations incl. Chromium
-- Stage13D Upload/Processing History/Publication Linking incl. Chromium
+- Stage13D Upload/History/Publication Linking incl. Chromium
 
-Latest fully verified executable head remains `4eca7de8877ac9e2289b9c7990c912d33c256935` with the known same-head 9-workflow SUCCESS matrix recorded in `PROJECT_STATUS.md`.
+Latest fully green application baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`; exact run matrix is in `PROJECT_STATUS.md`.
 
-## 10. Current work — Stage13E
-
-Do not confuse Render cutover with Stage13E completion.
+## 10. Current Stage13E work
 
 Backend candidate:
 - branch `backend/stage13e-ai-operations`
 - HEAD `348c02646d0ff873fd305beff16f41c46d9c0285`
 - REPORT #14 `5579330147`
-- structurally accepted candidate; current-head executable gates still blocked by hosted runner allocation.
+- structurally accepted; executable same-head gates blocked by GitHub hosted-runner allocation.
 
 Frontend candidate:
 - branch `frontend/stage13e-ai-operations`
 - HEAD `e42644944ca3fcc7e225a263a6e9699bcb70b9f7`
 - REPORT #15 `5579436581`
-- real production binding implemented; Integration requested only bounded real-browser session-expiry and stale-review `409` regression preparation.
+- real production binding exists; Integration requested only bounded real-browser session-expiry + stale-review `409` regression preparation.
 
-Neither branch is in `main`.
+Neither candidate is in `main`.
 
-## 11. Render first-deploy verification gate
+## 11. GitHub Actions blocker
 
-After Blueprint apply, Integration must verify:
+Recent independent workflows have ended before checkout with no hosted runner and `steps=[]`. This is infrastructure/account/platform allocation evidence, not a product regression.
 
-1. database healthy;
+Do not weaken gates or churn code to obtain a different result. When a runner executes, fix only actual failures at the owning layer.
+
+## 12. Render first-deploy gate
+
+Blueprint has not yet been applied. After Apply, Integration must verify:
+
+1. PostgreSQL healthy;
 2. migrations applied;
-3. API deploy live;
+3. Docker API build/live and Poppler PDF path works;
 4. `/health` 200;
-5. `/ready` 200 and DB connectivity;
-6. Student static site live;
-7. Admin static site live;
-8. production CORS/session behavior from both origins;
+5. `/ready` 200 + DB connectivity;
+6. Student live;
+7. Admin live;
+8. production CORS/session from both origins;
 9. Student activation/login/recovery smoke;
 10. Admin login/curriculum/content smoke;
-11. Stage13D media upload survives API restart/redeploy;
-12. no startup/runtime errors or secret/raw-provider leakage.
+11. Stage13D mixed image/PDF processing;
+12. media survives API redeploy/restart;
+13. logs contain no startup/migration/runtime errors or secret/raw-provider leakage.
 
-Until then, Render hosting is configured but hosted runtime is `NOT YET VERIFIED`.
+Until then hosted runtime = `NOT YET VERIFIED`.
 
-## 12. Known risks/open work
+## 13. Known open work
 
-- `AI-011-005` P2 — `direct` persistence into Stage13F Question Bank unresolved.
-- `AI-012-019` P2 — live provider benchmark/config/routes/bootstrap unverified.
-- GitHub hosted-runner allocation currently prevents new executable CI evidence.
-- production AI worker not yet deployable by design.
-- API single-instance while media uses Render disk.
-- full Student learning product, Offline/PWA and later stages incomplete.
+- Render Blueprint Apply + hosted verification.
+- provider-side Vercel Git unlink after Render live.
+- pause old Alwaslh Supabase after Render live.
+- `AI-011-005` direct Question Bank persistence unresolved.
+- `AI-012-019` live AI provider benchmark/routes/bootstrap unverified.
+- production AI worker intentionally absent.
+- Stage13E verification/integration incomplete.
+- full Student learning/offline/later stages incomplete.
 
-## 13. What NOT to do
+## 14. Session-end documentation rule
 
-- Do not restore old root Supabase architecture as target.
-- Do not migrate old DB without explicit Product Owner decision.
-- Do not deploy feature branches as production.
-- Do not create duplicate media/OCR/AI lifecycles.
-- Do not use ephemeral media storage in production.
-- Do not broaden credentialed CORS to `*`.
-- Do not expose provider credentials/raw internals.
-- Do not run a fake AI worker.
-- Do not weaken tests/auth/business rules to obtain green status.
-- Do not call hosted runtime or Stage13E VERIFIED without actual evidence.
-
-## 14. Before ending any future session
-
-Workstream chats update their workstream file + Board REPORT. Integration updates `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, specialized docs and Render deployment evidence when relevant. Record exact Git commit, Render resource/deploy IDs and verification results.
+Every workstream updates role doc + Board REPORT. Integration updates `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, this Handoff, `PROJECT_INTEGRATION_CONTINUITY.md`, specialized docs and deployment evidence. Record exact Git HEAD, GitHub runs and Render resource/deploy IDs.
