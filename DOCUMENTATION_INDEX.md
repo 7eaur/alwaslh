@@ -70,16 +70,20 @@
 | `DATABASE_PLATFORM_ARCHITECTURE.md` | PostgreSQL platform authority/constraints |
 | `docs/curriculum/CURRICULUM_STRUCTURE.md` | Stage13 Curriculum contract: Class → Offering → optional Section → Lesson |
 | `docs/admin/STAGE13_ADMIN_CURRICULUM_UI.md` | Admin curriculum Web behavior + E2E evidence |
-| `docs/admin/STAGE13_CONTENT_MEDIA_OCR_OPERATIONS.md` | **Stage13C verified** operations/read-review contract over Stage9→10→OCR |
+| `docs/admin/STAGE13_CONTENT_MEDIA_OCR_OPERATIONS.md` | **Stage13C VERIFIED** operations/read-review contract over Stage9→10→OCR |
+| `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md` | **Stage13D VERIFIED** image/PDF/mixed upload, durable task history, explicit Lesson linking and Draft→Review→Published evidence |
 | `docs/media/MEDIA_PIPELINE_ARCHITECTURE.md` | Stage10 media architecture |
 | `docs/media/MEDIA_STAGE_DOD.md` | media definition of done/evidence |
 | `database/migrations/0008_content_source_import.sql` | Stage9 source/provenance schema |
 | `database/migrations/0009_media_pipeline.sql` | Stage10 media schema |
 | `database/migrations/0011_ocr_foundation.sql` | OCR durable schema |
+| `database/migrations/0017_content_ingestion_publication.sql` | Stage13D durable ingestion/publication schema |
 
-Stage9 source import details and inventory evidence are also preserved in `PROJECT_ENGINEERING_LOG.md`, Stage9 CI, import tests/reports under the repository, and the canonical source repository `7eaur/alwaslh-go`.
+Stage9 source import details and inventory evidence are preserved in `PROJECT_ENGINEERING_LOG.md`, Stage9 CI, import tests/reports and canonical source repository `7eaur/alwaslh-go`.
 
 Canonical content source inventory remains `7eaur/alwaslh-go` pinned by Stage9 evidence. Source folder names are provenance/facets, not curriculum business hierarchy.
+
+Stage13D explicitly separates media processing from curriculum publication. A ready media asset is not student-visible Lesson content until it is linked as Draft, reviewed and explicitly Published.
 
 ## 6. Auth / Access / Student activation
 
@@ -108,6 +112,8 @@ Do not weaken these boundaries during later UI work.
 
 Important open boundary: live provider adapters/credentials/benchmark/production AI routing remain `NOT YET VERIFIED`; do not claim a provider is production-ready without measured evidence.
 
+**Current engineering stage is Stage13E — Admin AI Operations / Review.** It must reuse Stage12 durable jobs/units/attempts and must not introduce a browser-owned queue or second AI lifecycle.
+
 ## 8. UX / Brand / Offline
 
 - `packages/brand/` — canonical brand tokens/primitives.
@@ -119,25 +125,26 @@ Important open boundary: live provider adapters/credentials/benchmark/production
 
 Executable head:
 
-`260cfef1c48d1290611103f8443d222f8cd041b6`
+`4eca7de8877ac9e2289b9c7990c912d33c256935`
 
 Same-head SUCCESS evidence:
 
-- Stage13 Admin Product `34173006035` — Backend + Admin Chromium;
-- Stage12 AI Execution `34173006025`;
-- Stage11 AI Contracts `34173006065`;
-- OCR Foundation `34173006050`;
-- Stage10 Media Pipeline `34173006043`;
-- Stage9 Content Import `34173006055`;
-- Full Rebuild `34173006036` — includes Student Chromium.
+- Stage13D Admin Upload UI `34177369743` — API/Admin quality gates + clean migrations + real Chromium mixed upload/publication/history + narrow viewport;
+- Stage13D Content Ingestion `34177369784` — backend integration/schema verification;
+- Stage13 Admin Product `34177369748` — Backend + Admin Chromium regression;
+- Stage12 AI Execution `34177369812`;
+- Stage11 AI Contracts `34177369753`;
+- OCR Foundation `34177369750`;
+- Stage10 Media Pipeline `34177369777`;
+- Stage9 Content Import `34177369756`;
+- Full Rebuild `34177369768` — includes Student Chromium.
 
-Stage13C Admin Content/Media/OCR is therefore **VERIFIED**. Next work begins at Stage13D Upload / Processing History / explicit media→Lesson publication linking.
+Stage13D Upload / Processing History / Publication Linking is therefore **VERIFIED**. Legacy `LES-A-010..015` is closed by executable evidence. Documentation commits after this executable head are docs descendants and do not replace it as runtime evidence.
 
 ## 10. Current implementation sequence
 
 ```text
-VERIFIED through Stage13C
-→ Stage13D Upload / Processing History / Publication Linking
+VERIFIED through Stage13D
 → Stage13E Admin AI Operations / Review
 → Stage13F Question Bank / Review / Publish
 → Stage13G Students / Codes / Recovery / Notifications / Import-Export / Reports / Settings / Audit
@@ -170,8 +177,9 @@ After every meaningful batch:
 4. update `PROJECT_HANDOFF.md` when current stage/boundary/branch/CI changes;
 5. update the specialized module doc;
 6. update Legacy Coverage evidence for newly implemented legacy capabilities;
-7. update Roadmap only when stage status/order changes;
-8. never mark PASS from prose or Build alone—use executable evidence;
-9. leave unverified items explicitly `NOT YET VERIFIED`.
+7. update parity notes where a legacy capability moves to VERIFIED;
+8. update Roadmap only when stage status/order changes;
+9. never mark PASS from prose or Build alone—use executable evidence;
+10. leave unverified items explicitly `NOT YET VERIFIED`.
 
 This convention exists specifically so a new conversation can continue from the repository without knowing prior chat history.
