@@ -4,7 +4,7 @@
 >
 > **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 — Single Owner active; Stage13E static audit found and fixed two P1 integrity defects; executable verification still blocked before checkout.**
+Last synchronized: **2026-09-08 — Single Owner active; Stage13E static/operational audit found and fixed three P1 defects, including durable-history pagination; executable verification remains blocked before checkout.**
 
 ## 1. Operating mode
 
@@ -14,6 +14,7 @@ Last synchronized: **2026-09-08 — Single Owner active; Stage13E static audit f
 - Hosting/deployment: fully outside current scope until Product Owner provides VPS and explicitly reopens it.
 - `main`: latest Integration-approved development baseline, not deployment authority.
 - Use short task/stage branches when isolation is useful; do not merge a Stage without required executable evidence.
+- Root-cause fixes only. No test weakening, auth bypass, fake APIs, client-owned durable state, duplicate lifecycle, or timeout-based masking.
 
 ## 2. Mandatory startup
 
@@ -30,7 +31,7 @@ Last synchronized: **2026-09-08 — Single Owner active; Stage13E static audit f
 11. current stage specialized docs + actual code/migrations/tests
 12. Legacy Coverage + Roadmap when closing/starting a stage
 
-Then live-check `main`, active branch HEADs and Actions before conclusions.
+Then live-check `main`, active branch HEADs and GitHub Actions before conclusions.
 
 ## 3. Immutable verified context
 
@@ -48,13 +49,13 @@ Current combined candidate branch:
 
 `integration/stage13e-ai-operations`
 
-Current branch HEAD at this synchronization:
+Current candidate HEAD:
 
-`1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`
+`70f6fe218124498ccb6667e3aefa2e8dd21599a4`
 
-Latest runtime/test candidate beneath that docs commit:
+Latest runtime/test head immediately below that documentation commit:
 
-`6494a0ee232cf646eae693054b129db752aee40e`
+`ae772db53e218037a2b140e9dc08e6528f1a1ac8`
 
 Historical candidate sources remain evidence only:
 
@@ -83,92 +84,113 @@ Completed:
 
 - `PROJECT_EXECUTION_QUEUE.md` created.
 - `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md` created.
-- `DOCUMENTATION_INDEX.md` updated.
-- `NEXT_CONVERSATION_PROMPT.md` updated.
-- `PROJECT_HANDOFF.md` updated.
-- `PROJECT_STATUS.md` updated.
-- `PROJECT_INTEGRATION_CONTINUITY.md` updated.
-- `PROJECT_ENGINEERING_LOG.md` updated with AD-137/138 and current findings.
-- `CURRENT_PRODUCT_OVERRIDES.md` includes PO-OVR-007 Single Owner.
+- `DOCUMENTATION_INDEX.md`, `NEXT_CONVERSATION_PROMPT.md`, `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_ENGINEERING_LOG.md`, and Product Overrides synchronized.
 - old workstream docs marked historical/superseded.
-- Roadmap reviewed: stage order already matches current execution; hosting stages remain later and require VPS, so no structural rewrite required now.
+- Roadmap reviewed: hosting stages remain future-only and require explicit VPS reopening.
 
-Acceptance satisfied: a replacement conversation reading repository + Issue #16 is not directed to create/wait for Backend/Frontend chats or hosted deployment work.
+Acceptance: a replacement conversation reading repository + Issue #16 is not directed to create/wait for Backend/Frontend chats or hosted deployment work.
 
 ---
 
-### EXEC-003 — Stage13E combined candidate static audit
+### EXEC-003 — Stage13E combined candidate static/operational audit
 
 **Priority: P1**
 
-**Status: DONE for current candidate surfaces; reopen only if later evidence exposes a new defect**
+**Status: DONE for currently inspected surfaces; reopen whenever later evidence exposes a real defect**
 
 Inspected actual implementation:
 
 - Admin HTTP authorization/query/body validation;
 - Admin AI list/detail/output/review services;
-- Stage12 job lifecycle pause/resume/retry;
-- Stage12 cancellation implementation;
-- Stage12 output persistence/retry interaction;
-- Stage11 review validation + validator issue shapes;
-- output persistence and secret/error storage boundaries;
-- Frontend API DTOs/adapter/view model/page/workspace;
-- real E2E BrowserContext helper/spec;
+- Stage12 lifecycle pause/resume/retry/cancellation/output persistence;
+- Stage11 review validation + issue shapes;
+- output/attempt storage + secret/error boundaries;
+- Frontend API DTOs/adapter/view-model/controller/workspace;
+- Jobs/Units/Attempts pagination behavior;
+- real BrowserContext helper/spec;
 - deterministic PostgreSQL fixture seed;
-- migration `0018_ai_admin_review.sql` and relevant base AI migrations;
+- migration `0018_ai_admin_review.sql` plus relevant base AI migrations;
 - API/Admin package scripts;
 - combined workflow commands.
 
-Confirmed:
+Confirmed after fixes:
 
 - no second queue/lifecycle;
-- server owns job/review action availability;
+- server owns lifecycle/review action availability;
 - Admin authorization enforced;
-- raw response/credential/provider metadata/internal error messages are not exposed;
+- raw response/credential/provider metadata/internal error messages excluded from Frontend contract;
 - cancel clears pause in Stage12 authority;
-- retry preserves attempt history and uses Stage12 state;
-- review is short-transactional and uses Stage11 semantic validation;
-- review mutation now locks output + owning unit and is permitted only for stable `completed | review_required` unit outputs;
-- failed/retrying outputs remain observable but are inspection-only;
-- Frontend refreshes canonical state after mutation/409;
-- validator issues match Frontend adapter shape;
-- fixtures use normal durable tables, no test-only endpoint;
+- retry preserves history and uses Stage12 state;
+- human review is short-transactional, Stage11-validated, and only allowed for stable `completed | review_required` unit outputs;
+- failed/retrying/in-flight/cancelled outputs remain inspection-only;
+- Frontend refreshes canonical state after mutations/409;
+- complete durable Jobs/Units/Attempts history is reachable through bounded server pagination rather than truncated or loaded unbounded;
+- polling/refresh stays on the currently selected server pages;
+- fixtures use normal durable tables and real APIs, no test-only endpoint;
 - workflow commands match package scripts.
 
 #### Finding AI-013E-DB-001 — P1 Data/Audit Integrity
 
-**Symptom:** reject reason required by HTTP/service but original PostgreSQL migration allowed direct/future DB writer to create reject event with NULL/blank note.
+**Problem:** reject reason required by HTTP/service but original PostgreSQL migration allowed direct/future DB writer to create reject event with NULL/blank note.
 
 **Root cause:** durable audit invariant existed only at caller validation.
 
-**Correct fix:** PostgreSQL check constraint because terminal rejection reason is a row-level business/audit invariant.
+**Correct fix:** PostgreSQL check constraint because terminal rejection reason is a row-level transport-independent invariant.
 
 Changes:
 
 - `730989b8bde404b229544c473bba02b05c7e75b4` — adds `ai_output_review_events_reject_note_required`; removes redundant latest-review index.
 - `6589d6e53de7ca8cd82b424e5c1496186eb701f1` — direct PostgreSQL NULL/blank reject regression while preserving HTTP 400 tests.
-- `bc1bf508897796d0a74d22126094e83180b7ec79` — workflow DB contract now checks all four Stage13E constraints.
-- `083992bc7b0b7edf0c88e0b029cc49e10aeca345` — specialized Stage13E contract synchronized.
+- `bc1bf508897796d0a74d22126094e83180b7ec79` — workflow DB contract checks all four Stage13E constraints.
 
-Execution remains `NOT YET VERIFIED`.
+**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
 #### Finding AI-013E-REVIEW-002 — P1 Data/Review Integrity
 
-**Symptom:** Stage12 can rewrite the existing `ai_outputs` row during retry/re-execution using `ON CONFLICT (job_unit_id) DO UPDATE`, while Stage13E review events are append-only on the same output id. Original Stage13E review authority did not inspect `ai_job_units.status`.
+**Problem:** Stage12 can rewrite an existing `ai_outputs` row during retry/re-execution while Stage13E review events remain append-only on that output id. Original review authority did not inspect `ai_job_units.status`.
 
-**Root cause:** human review authority was not explicitly bound to an execution-stable output lifecycle boundary.
+**Root cause:** human review authority was not bound to an execution-stable output lifecycle boundary.
 
-**Impact:** a human approve/reject/edit could be recorded for a failed/retrying output, then Stage12 could replace normalized/raw output during retry while the old review event remained, making stale review authority appear attached to different generated content.
+**Impact:** a review could govern one generated result, then a retry could replace the row while the old human decision remained attached.
 
-**Correct fix location:** Stage13E Backend review authority. Do not delete audit events and do not weaken Stage12 retry semantics.
+**Correct fix location:** Stage13E Backend review authority; do not delete audit history or weaken Stage12 retry.
 
 Changes:
 
-- `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` — `allowedReviewActions=[]` unless unit is `completed|review_required`; mutation locks `ai_outputs` + `ai_job_units` and returns `409` for every other unit state before writing an event.
-- `6494a0ee232cf646eae693054b129db752aee40e` — real failed/retrying output regressions: inspection remains available, review actions absent, mutations return `409`, audit event count remains zero.
-- `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9` — specialized contract synchronized.
+- `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` — actions empty unless unit `completed|review_required`; mutation locks output+unit and returns `409` otherwise.
+- `6494a0ee232cf646eae693054b129db752aee40e` — real failed/retrying output regressions: inspection works, mutation denied, no audit event.
+- `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9` — specialized contract sync.
 
-Execution remains `NOT YET VERIFIED`.
+**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
+
+#### Finding AI-013E-OPS-003 — P1 Admin Operations / Durable History Accessibility
+
+**Problem:** Backend exposed bounded pagination but Frontend hard-coded and discarded it, so Admin could see only first 30 Jobs, first 50 Units and first 50 Attempts.
+
+**Evidence:** Stage12 allows plans up to 5,000 units; `GET /v1/admin/ai/jobs`, Job Detail and Unit Detail return `total/limit/offset`; previous controller always requested offsets 0 and view model did not retain pagination.
+
+**Impact:** durable PostgreSQL operational history could exist but be unreachable from the Admin product, including Unit 51+ requiring review or older attempt history needed for diagnosis.
+
+**Correct fix:** preserve server pagination through transport → adapter → view model → controller → Workspace; render accessible Previous/Next controls; refresh/poll current page only; never load unlimited history in browser.
+
+Implementation/testing lineage:
+
+- `92f4d0f8d78697a717efc486420db336534bcc69` — pagination view contract/helpers.
+- `8b932faa2d1989e5144e5ea29f84273511347736` — adapter preserves server pagination.
+- `0974142fd71c8cfd5c847c699f10e5ab9de51f7b` — controller page offsets + canonical refresh/polling on current pages.
+- `3411c1fdceae76fadb8ad3fad190b9fbe21f29d9` — Jobs/Units/Attempts navigation UI.
+- `382726705724a2130381e7be9ec56bf54c4fc6dc` — responsive pagination layout.
+- `3ab137c96bacaacd23191afc152c013ce46fec6d` — boundary helper unit tests.
+- `27de2d6f550508ac88eeacb355e3b6a0d9eff994` — adapter pagination regression.
+- `8dd1d712f1bd644c332ea26c4cf3b3c989425fd1` — attempt pagination transport regression.
+- `66ac7bd31763c8313299a8179f7afe327b88ea55` / `ae772db53e218037a2b140e9dc08e6528f1a1ac8` — real PostgreSQL pagination fixtures, hardened SQL.
+- `a9e97e3470396edadab13e21ca76b3c71a68965f` — workflow fixture assertions.
+- `c3420181380e0af4cff835504044b5b0c1df679f` — real Chromium Jobs/Units/Attempts pagination regression.
+- `70f6fe218124498ccb6667e3aefa2e8dd21599a4` — specialized Admin documentation.
+
+Real browser fixture now proves a second Jobs page, Unit 51 and Attempt 1 on the second Attempts page using real Backend/PostgreSQL state.
+
+**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
 ---
 
@@ -193,32 +215,27 @@ Expected gate:
 7. fresh DB reset;
 8. real Admin bootstrap;
 9. deterministic real Stage13E fixtures + invariant assertions;
-10. Chromium happy path + pause/resume + approve/reload + real session expiry + real stale-review 409 + 390px.
+10. real Chromium complete Jobs/Units/Attempts history pagination;
+11. Chromium pause/resume + approve/reload + real session expiry + real stale-review 409 + 390px.
 
-Latest runtime/test run:
+Latest runtime/test run after pagination hardening:
 
-- run `34199202570`;
-- head `6494a0ee232cf646eae693054b129db752aee40e`;
-- job `101973855894`;
-- completed with no executable steps/checkout (`steps=null`).
+- run `34249182219`;
+- head `ae772db53e218037a2b140e9dc08e6528f1a1ac8`;
+- job `102138902680`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- no checkout, lint, typecheck, unit, build, PostgreSQL, integration or Chromium command executed.
 
-Latest branch-head docs run:
-
-- run `34199371763`;
-- head `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`;
-- job `101974393620`;
-- same pre-checkout condition (`steps=null`).
-
-Previous post-fix runs `34197944201`, `34197629003` and earlier combined run `34193380473` attempts 1/2 also ended before checkout.
+Earlier Stage13E runs had the same pre-checkout condition.
 
 Interpretation:
 
 - not product/test failure evidence;
-- external/account/platform cause remains `NOT YET VERIFIED`;
-- do not weaken tests or churn candidate code to satisfy a job that never starts;
-- local fallback is unavailable in current assistant runtime because private-repo clone/network access is unavailable; no local PASS is claimed.
+- external/account/platform cause remains `NOT YET VERIFIED` because current connector cannot read Billing/Actions account settings;
+- do not weaken tests or churn product code to satisfy a job that never starts;
+- no local PASS is claimed.
 
-**Exact next action:** rerun the unchanged combined gate on current branch HEAD when GitHub allocates a real runner. If any command executes and fails, root-cause it before any Stage promotion.
+**Exact next action:** rerun the unchanged combined gate on the current candidate when GitHub allocates a real runner. Any command that actually executes and fails must be root-caused before Stage promotion.
 
 ---
 
@@ -301,6 +318,7 @@ Follow `MASTER_REBUILD_ROADMAP.md` after Admin closure:
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
 - `AI-013E-DB-001` P1 — reject-reason DB invariant fixed in candidate; executable verification pending.
 - `AI-013E-REVIEW-002` P1 — stale human-review authority across retryable output replacement fixed in candidate; executable verification pending.
+- `AI-013E-OPS-003` P1 — Admin durable-history truncation fixed with bounded server pagination + real browser regression; executable verification pending.
 - Later Admin/Student/assessment/offline/product stages remain incomplete by Roadmap.
 - Hosting/VPS intentionally not a current blocker.
 
