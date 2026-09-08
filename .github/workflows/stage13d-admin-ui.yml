@@ -99,4 +99,5 @@ jobs:
       - name: Install Chromium
         run: npx --prefix apps/admin-web playwright install --with-deps chromium
       - name: Run Stage13D real browser flow
-        run: npx --prefix apps/admin-web playwright test e2e/content-ingestion.e2e.spec.mjs
+        working-directory: apps/admin-web
+        run: npx playwright test e2e/content-ingestion.e2e.spec.mjs
