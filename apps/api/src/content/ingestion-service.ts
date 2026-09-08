@@ -392,11 +392,16 @@ export class AdminContentIngestionService {
     };
   }
 
-  async createTask(actorProfileId: string, input: CreateContentIngestionInput): Promise<ContentIngestionTaskDetail> {
+  async createTask(
+    actorProfileId: string,
+    input: CreateContentIngestionInput,
+  ): Promise<ContentIngestionTaskDetail> {
     if (input.items.length < 1 || input.items.length > 100) {
       throw new AppError("BAD_REQUEST", "يجب اختيار ملف واحد على الأقل وبحد أقصى 100 ملف", 400);
     }
-    input.items.forEach((item) => validateDescriptor(item.filename, item.mimeType, item.byteSize));
+    for (const item of input.items) {
+      validateDescriptor(item.filename, item.mimeType, item.byteSize);
+    }
 
     const taskId = await this.db.transaction(async (tx) => {
       const lessonRows = await tx.query<{ status: "active" | "inactive" | "archived" }>(
@@ -409,14 +414,44 @@ export class AdminContentIngestionService {
         throw new AppError("CONFLICT", "لا يمكن رفع محتوى إلى درس مؤرشف", 409);
       }
 
-      const existingRows = await tx.query<{ id: string }>(
-        `select id from content_ingestion_tasks
+      const existingRows = await tx.query<{ id: string; lesson_id: string; item_count: number }>(
+        `select id, lesson_id, item_count from content_ingestion_tasks
           where created_by_profile_id = $1 and client_request_id = $2
           for update`,
         [actorProfileId, input.clientRequestId],
       );
       const existing = existingRows[0];
-      if (existing) return existing.id;
+      if (existing) {
+        if (existing.lesson_id !== input.lessonId || existing.item_count !== input.items.length) {
+          throw new AppError("CONFLICT", "معرف الطلب مستخدم لمهمة رفع مختلفة", 409);
+        }
+        const existingItems = await tx.query<{
+          position: number;
+          filename: string;
+          mime_type: string;
+          declared_byte_size: string;
+        }>(
+          `select position, filename, mime_type, declared_byte_size
+             from content_ingestion_items
+            where task_id = $1
+            order by position`,
+          [existing.id],
+        );
+        const sameContract = existingItems.every((item, index) => {
+          const requested = input.items[index];
+          return (
+            requested !== undefined &&
+            item.position === index &&
+            item.filename === normalizedFilename(requested.filename) &&
+            item.mime_type === requested.mimeType &&
+            Number(item.declared_byte_size) === requested.byteSize
+          );
+        });
+        if (!sameContract || existingItems.length !== input.items.length) {
+          throw new AppError("CONFLICT", "معرف الطلب مستخدم لمهمة رفع مختلفة", 409);
+        }
+        return existing.id;
+      }
 
       const taskRows = await tx.query<{ id: string }>(
         `insert into content_ingestion_tasks (
@@ -491,7 +526,8 @@ export class AdminContentIngestionService {
         const locked = lockedRows[0];
         if (!locked) throw new AppError("NOT_FOUND", "عنصر الرفع غير موجود", 404);
         if (locked.status !== "pending_upload") {
-          if (locked.source_checksum_sha256 === checksum && Number(locked.byte_size) === bytes.byteLength) return;
+          if (locked.source_checksum_sha256 === checksum && Number(locked.byte_size) === bytes.byteLength)
+            return;
           throw new AppError("CONFLICT", "تم رفع محتوى مختلف لهذا العنصر بالفعل", 409);
         }
 
@@ -691,7 +727,14 @@ export class AdminContentIngestionService {
       } catch (error) {
         const code = processingErrorCode(error);
         const message = processingErrorMessage(error);
-        await this.db.transaction(async (tx) => {
+        const markedFailed = await this.db.transaction(async (tx) => {
+          const leaseRows = await tx.query<{ id: string }>(
+            `select id from content_ingestion_tasks
+              where id = $1 and status = 'processing' and processing_token = $2
+              for update`,
+            [taskId, token],
+          );
+          if (!leaseRows[0]) return false;
           await tx.query(
             `update content_ingestion_items
                 set status = 'failed', last_error_code = $3, last_error_message = $4
@@ -717,7 +760,11 @@ export class AdminContentIngestionService {
               where id = $1 and processing_token = $2`,
             [taskId, token, code, message],
           );
+          return true;
         });
+        if (!markedFailed) {
+          return this.detail(taskId);
+        }
         return this.detail(taskId);
       }
     }
@@ -772,7 +819,7 @@ export class AdminContentIngestionService {
                 max(mv.storage_key) filter (where mv.kind = 'thumbnail') as thumbnail_key,
                 max(mv.storage_key) filter (where mv.kind = 'ai') as ai_key,
                 max(mv.mime_type) filter (where mv.kind = 'display') as display_mime_type,
-                max(mv.byte_size)::text filter (where mv.kind = 'display') as display_byte_size,
+                (max(mv.byte_size) filter (where mv.kind = 'display'))::text as display_byte_size,
                 max(mv.width) filter (where mv.kind = 'display') as display_width,
                 max(mv.height) filter (where mv.kind = 'display') as display_height,
                 max(mv.checksum_sha256) filter (where mv.kind = 'display') as display_checksum,
@@ -884,7 +931,11 @@ export class AdminContentIngestionService {
     action: "submit_review" | "return_to_draft" | "publish",
   ): Promise<ContentIngestionTaskDetail> {
     await this.db.transaction(async (tx) => {
-      const taskRows = await tx.query<{ lesson_id: string; archived_at: Date | null; linked_at: Date | null }>(
+      const taskRows = await tx.query<{
+        lesson_id: string;
+        archived_at: Date | null;
+        linked_at: Date | null;
+      }>(
         `select lesson_id, archived_at, linked_at
            from content_ingestion_tasks
           where id = $1
@@ -926,10 +977,16 @@ export class AdminContentIngestionService {
             where ingestion_task_id = $1`,
           [taskId, actorProfileId],
         );
-        await recordCurriculumEvent(tx, actorProfileId, task.lesson_id, "lesson_content_submitted_for_review", {
-          taskId,
-          assetCount: assetRows.length,
-        });
+        await recordCurriculumEvent(
+          tx,
+          actorProfileId,
+          task.lesson_id,
+          "lesson_content_submitted_for_review",
+          {
+            taskId,
+            assetCount: assetRows.length,
+          },
+        );
       } else if (action === "return_to_draft") {
         if (assetRows.some((asset) => asset.publication_status !== "review")) {
           throw new AppError("CONFLICT", "يمكن إعادة محتوى المراجعة فقط إلى مسودة", 409);
