@@ -2,7 +2,7 @@
 
 > Engineering source of truth for product understanding, architecture decisions, audit findings, changes, verification and remaining work. Code/migrations + executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last consolidated: **2026-09-08 — Single Owner mode; hosting deferred until VPS; Stage13E static audit found/fixed durable reject-reason integrity gap; executable verification blocked before checkout.**
+Last consolidated: **2026-09-08 — Single Owner mode; hosting deferred until VPS; Stage13E static audit found/fixed two P1 integrity defects; executable verification blocked before checkout.**
 
 ## 1. Project Understanding
 
@@ -153,10 +153,11 @@ reviewed source
 → lease-protected attempt/output
 → accepted | review_required | retry | failed
 → Stage13E Admin read/control
+→ stable output only (`completed|review_required`)
 → append-only edit/approve/reject review
 ```
 
-Stage13E review remains distinct from Stage13F Question Bank publication.
+Stage13E review remains distinct from Stage13F Question Bank publication. Failed/retrying/running/queued/cancelled outputs may be inspected but are not review-mutable.
 
 ## 5. Chronological Engineering History
 
@@ -257,6 +258,11 @@ Core candidate includes:
 - deterministic real session-expiry/stale-review browser fixtures;
 - no Stage13F publication.
 
+Static audit then hardened two integrity boundaries:
+
+1. reject reason is now durable at PostgreSQL boundary;
+2. human review is now bound to execution-stable outputs so retry/re-execution cannot replace content underneath a prior review decision.
+
 ## 6. Architecture Decisions
 
 Active/historically important decisions:
@@ -280,6 +286,7 @@ Active/historically important decisions:
 - **AD-136** — when older branches diverge, prefer selective/rebase integration that preserves current central docs/contracts over blind history merge.
 - **AD-137** — **Single Owner engineering mode**: one replaceable conversation owns Product/Architecture/Backend/Frontend/UX/Security/Performance/QA/Git/Documentation; Issue #16 + Queue + Continuity are the active operational bus.
 - **AD-138** — **durable review invariants belong in PostgreSQL as well as transport validation**. Stage13E reject reason must be nonblank at the DB boundary, not only in HTTP/service validation.
+- **AD-139** — **human AI review authority is valid only after unit execution is stable**. Stage13E review mutation is allowed only for `completed | review_required`; outputs from retryable/in-flight/failed/cancelled states are inspection-only. Review transaction locks both output and owning unit before decision.
 
 ## 7. Audit Findings
 
@@ -300,6 +307,7 @@ Active/historically important decisions:
 | DOC-003 | P2 | Team | parallel chats drifted/created merge debt | duplicate coordination overhead | Single Owner mode | SUPERSEDED / CONTROLLED |
 | CI-001 | P1 | GitHub Actions | hosted jobs terminate before checkout | no new executable evidence | keep gates unchanged; retry when runner exists | OPEN / EXTERNAL CAUSE NOT YET VERIFIED |
 | AI-013E-DB-001 | P1 | AI Review / DB | reject reason required by product contract but not DB | future/direct writer could create incomplete terminal audit | DB check + direct insert regression | FIXED IN CANDIDATE / EXECUTION PENDING |
+| AI-013E-REVIEW-002 | P1 | AI Review / Retry Integrity | review could be recorded on output that Stage12 may later replace | stale human decision could appear to govern different AI content | bind review to stable unit states + lock output/unit + regressions | FIXED IN CANDIDATE / EXECUTION PENDING |
 
 ### AI-013E-DB-001 Root Cause Record
 
@@ -319,26 +327,59 @@ Active/historically important decisions:
 
 **Verification:** NOT YET VERIFIED because GitHub runner does not reach checkout.
 
+### AI-013E-REVIEW-002 Root Cause Record
+
+**Symptom:** Stage12 `persistOutputOutcome()` can overwrite the same `ai_outputs` row during retry/re-execution using `ON CONFLICT (job_unit_id) DO UPDATE`, while Stage13E review events remain append-only on that output id. Original Stage13E review availability/mutation did not inspect the owning `ai_job_units.status`.
+
+**Root cause:** human review authority was derived from review/semantic state but not from execution stability.
+
+**Broken invariant:** a human review decision must govern a stable generated artifact that cannot be replaced by the execution lifecycle underneath it.
+
+**Blast radius:** a failed/retrying output could be edited/approved/rejected, then Stage12 retry could replace normalized/raw output while prior review history remained, making stale human authority appear attached to different generated content.
+
+**Correct fix location:** Stage13E Backend review authority. Deleting audit events would destroy history; weakening Stage12 retry would be the wrong owning layer.
+
+**Fix:** commit `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` limits `allowedReviewActions` to owning unit state `completed | review_required`, locks `ai_outputs` + `ai_job_units` in the review transaction, and returns `409` before any audit write for all other states.
+
+**Regression:** `6494a0ee232cf646eae693054b129db752aee40e` creates actual failed and retrying unit/output rows; both stay inspectable but expose zero review actions, approve/reject return `409`, and no review event is written.
+
+**Specialized contract:** `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`.
+
+**Verification:** NOT YET VERIFIED. Run `34199202570`, job `101973855894`, and docs-head run `34199371763`, job `101974393620`, both ended before checkout with `steps=null`.
+
 ## 8. Stage13E Static Audit Evidence
 
 Reviewed on combined candidate:
 
 - Admin HTTP authorization/query/body validation;
 - Admin service list/detail/provenance/secret filtering;
-- output row-lock review transaction;
+- output + owning-unit locked review transaction;
 - Stage11 semantic review validator;
 - Stage12 pause/resume/retry and cancellation authority;
+- Stage12 output persistence/retry interaction;
 - attempt/output persistence issue shapes;
 - Frontend DTO/API/adapter/view-model/controller/workspace;
 - real BrowserContext E2E helper and deterministic fixtures;
 - migration integrity/indexes;
 - API/Admin package scripts and combined workflow commands.
 
-Confirmed no additional duplicate authority or proven cross-contract mismatch in inspected surfaces.
+Confirmed after fixes:
 
-Current specialized contract head:
+- no second queue/lifecycle;
+- server owns job/review action authority;
+- raw/credential/provider/internal error data excluded from frontend contract;
+- retry remains Stage12 authority and preserves attempt history;
+- human review is bound to stable unit execution states only;
+- non-stable outputs are inspection-only;
+- no additional proven cross-contract mismatch in inspected surfaces.
 
-`integration/stage13e-ai-operations @ 083992bc7b0b7edf0c88e0b029cc49e10aeca345`.
+Current Stage13E branch head:
+
+`integration/stage13e-ai-operations @ 1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`.
+
+Latest runtime/test candidate:
+
+`6494a0ee232cf646eae693054b129db752aee40e`.
 
 ## 9. Verification Evidence
 
@@ -348,20 +389,28 @@ Latest fully green executable baseline:
 
 Same-head successful runs listed in `PROJECT_STATUS.md`.
 
-Latest Stage13E post-fix run:
+Latest Stage13E runtime/test run:
 
-- run `34197629003`;
-- head `bc1bf508897796d0a74d22126094e83180b7ec79`;
-- job `101968795653`;
+- run `34199202570`;
+- head `6494a0ee232cf646eae693054b129db752aee40e`;
+- job `101973855894`;
+- no executable steps / no checkout (`steps=null`).
+
+Latest branch-head docs run:
+
+- run `34199371763`;
+- head `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`;
+- job `101974393620`;
 - no executable steps / no checkout.
 
-Earlier combined run `34193380473` attempts 1 and 2 had the same pre-checkout condition.
+Previous post-fix runs and earlier combined run `34193380473` attempts 1/2 had the same pre-checkout condition.
 
 These conclusions do not invalidate the verified Stage13D baseline and do not verify the Stage13E candidate.
 
 ## 10. Known Issues / Remaining Risk
 
 - Stage13E latest candidate still needs executable lint/typecheck/unit/build/PostgreSQL/integration/Chromium evidence.
+- `AI-013E-DB-001` and `AI-013E-REVIEW-002` are fixed in candidate but execution pending.
 - GitHub runner allocation root cause remains externally unverified.
 - live provider/model benchmark/routes/credentials/bootstrap unverified.
 - Question Bank direct-question persistence unresolved until Stage13F.
@@ -374,8 +423,8 @@ Canonical task authority is `PROJECT_EXECUTION_QUEUE.md`.
 
 Current order:
 
-1. finish Single Owner central documentation synchronization.
-2. Stage13E static audit complete; retain AI-013E-DB-001 root fix.
+1. keep Stage13E outside `main`.
+2. retain both Stage13E P1 integrity fixes/regressions.
 3. execute same-head Stage13E combined gate when runner is allocated.
 4. fix any executed failure from root cause.
 5. run wider same-head regressions after combined PASS.
