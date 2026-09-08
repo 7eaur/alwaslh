@@ -1,161 +1,186 @@
 # Render Production Deployment — الوسيلة الذكية
 
-Status: **ACTIVE PRODUCTION HOSTING TARGET** as of 2026-09-08.
+Status: **ACTIVE PRODUCTION HOSTING TARGET / FIRST BLUEPRINT APPLY PENDING** as of 2026-09-08.
 
 ## 1. Production authority
 
-Render is now the primary hosting platform for the current rebuilt product.
+Render is the primary hosting platform for the rebuilt product.
 
-Production source branch:
+Production source branch: `main`.
 
-`main`
+Development continues on short-lived Backend/Frontend/Integration branches. A feature reaches production only after Integration acceptance and merge into `main`; Render then auto-deploys from `main`.
 
-Development continues on short-lived Backend/Frontend/Integration branches. A feature is promoted to production only after Integration acceptance and merge into `main`. Render auto-deploys from `main`; feature branches are not production deploy sources.
-
-The legacy `main` head from before this cutover is preserved at:
-
-`archive/legacy-main-2026-09-08`
-
-It is rollback/reference history only and must not be used as the current architecture target.
+Legacy pre-cutover `main` is preserved at `archive/legacy-main-2026-09-08` and is rollback/reference history only.
 
 ## 2. Render topology
 
-All current hosted product surfaces are declared in root `render.yaml`:
+Root `render.yaml` declares:
 
 ```text
 Student static site ─┐
-                     ├── public Fastify API ── Render Managed PostgreSQL
-Admin static site ───┘           │
-                                 └── persistent media disk
+                     ├── Docker Fastify API ── Render Managed PostgreSQL
+Admin static site ───┘            │
+                                  └── persistent media disk
 ```
 
 Resources:
 
-- `alwaslh-prod-student-7eaur` — Student Vite static site / CDN.
-- `alwaslh-prod-admin-7eaur` — Super Admin Vite static site / CDN.
-- `alwaslh-prod-api-7eaur` — Fastify Node web service.
-- `alwaslh-prod-postgres-7eaur` — Render Managed PostgreSQL 16.
-- `alwaslh-prod-media-7eaur` — persistent disk mounted only on the API service at `/opt/render/project/src/runtime-data/media`.
+- `alwaslh-prod-student-7eaur` — Student Vite static/CDN.
+- `alwaslh-prod-admin-7eaur` — Super Admin Vite static/CDN.
+- `alwaslh-prod-api-7eaur` — Dockerized Fastify service.
+- `alwaslh-prod-postgres-7eaur` — Render PostgreSQL 16.
+- `alwaslh-prod-media-7eaur` — persistent API media disk mounted at `/app/runtime-data/media`.
 
-Region: `frankfurt` for API/database locality and proximity to the expected user region.
+Region: `frankfurt` for API/database locality.
 
-## 3. Why the API is not free-tier
+Render Blueprint preview environments are explicitly disabled. Production deploy source is `main` only.
 
-Stage13D stores uploaded canonical media through `FileSystemMediaStorage`. Render web-service filesystems are ephemeral unless a persistent disk is attached. Therefore production API deployment requires a paid web-service plan that supports a disk. Deploying uploads onto an ephemeral filesystem is explicitly rejected because files would disappear on restarts/deploys.
+## 3. Why API uses Docker
 
-The initial declaration intentionally uses the smallest practical durable topology:
+Stage10 PDF processing executes OS binaries `pdfinfo` and `pdftoppm` from Poppler. Render's documented native runtime tool list does not guarantee Poppler.
 
-- API: `starter`;
-- PostgreSQL: `basic-256mb`, 1 GB initial storage;
-- media disk: 1 GB initially, grow-only;
-- Student/Admin static sites: CDN/static hosting.
+Therefore the API uses `apps/api/Dockerfile` based on pinned Node `22.22.0` and explicitly installs:
 
-Review capacity/cost after real metrics; do not scale before evidence.
+- `poppler-utils` for PDF inspection/rendering;
+- `ca-certificates`;
+- `gosu` for dropping runtime privileges to the `node` user after preparing the media mount.
 
-## 4. Database lifecycle
+This makes the PDF runtime reproducible instead of relying on an undeclared host package.
 
-`DATABASE_URL` is injected from the Render PostgreSQL resource and uses Render's same-region private network.
+`apps/api/docker-entrypoint.sh` prepares/chowns the media mount and then executes the application as the non-root `node` user.
 
-`DATABASE_SSL=disable` is intentional for the internal same-workspace connection. External database connections must use TLS separately.
+The Docker image includes compiled API output plus `database/migrations`, so Render can run migrations without TypeScript tooling at runtime.
 
-The API start command runs:
+## 4. Runtime version pinning
+
+Root `.node-version` pins `22.22.0` for Render static-site builds. The API Docker image is also explicitly `node:22.22.0-bookworm-slim`.
+
+Do not rely on Render's changing Node default for production reproducibility.
+
+## 5. Database lifecycle
+
+`DATABASE_URL` is injected from the Render PostgreSQL resource through private same-workspace connectivity.
+
+`DATABASE_SSL=disable` is intentional only for this internal Render connection. External DB connections require TLS.
+
+For the paid Docker API service, Render runs the migration as a pre-deploy command:
 
 ```text
-npm run db:migrate --prefix apps/api
-→ npm start --prefix apps/api
+node apps/api/dist/migrate.js
 ```
 
-The repository migrator is idempotent, checksum-protected, and guarded by a PostgreSQL advisory lock. This allows safe restart/deploy migration execution while the API remains single-instance because the persistent disk itself enforces that constraint.
+Then the service starts with:
 
-No legacy Supabase schema/database is the production authority.
+```text
+node apps/api/dist/server.js
+```
 
-## 5. Media durability
+The migrator is checksum-protected, idempotent and guarded by a PostgreSQL advisory lock.
 
-`MEDIA_STORAGE_ROOT` must equal the Render disk mount:
+No legacy Supabase database/schema is the current production authority.
 
-`/opt/render/project/src/runtime-data/media`
+## 6. Media durability
 
-Do not change this to `/tmp`, a build directory, or any ephemeral path in production.
+`MEDIA_STORAGE_ROOT=/app/runtime-data/media` and the Render disk is mounted at the same path.
 
-Render persistent disks are single-service and single-instance resources. Consequences accepted for the current Stage13 architecture:
+Current Stage13D media authority uses `FileSystemMediaStorage`; a Render service filesystem without an attached disk is ephemeral. Production uploads on ephemeral storage would be a data-loss defect and are prohibited.
 
-- API horizontal autoscaling is not enabled while filesystem media authority remains local-disk based;
-- deploys can have brief restart downtime;
-- the AI worker cannot assume access to this disk from another Render service.
+Persistent-disk consequences accepted for the current architecture:
 
-If future architecture needs horizontally scaled media consumers, replace filesystem media storage with an explicit shared object-storage adapter through a separate architecture decision. Do not fake shared-disk semantics.
+- API is single-instance while this local disk is authoritative;
+- zero-downtime deploys are unavailable for the disk-backed API;
+- other Render services cannot access this disk;
+- pre-deploy jobs cannot access this disk, which is fine because migrations only need PostgreSQL.
 
-## 6. AI worker hosting boundary
+Future horizontal scaling must introduce a real shared/object-storage adapter by architecture decision. Never simulate shared disk semantics.
 
-Stage12 verified the worker runtime abstraction, but the repository explicitly does **not** yet contain a production `worker.ts` bootstrap with benchmark-authorized live provider routes/credentials.
+## 7. AI worker hosting boundary
 
-Therefore no Render background worker is declared yet.
+Stage12 verified durable worker abstractions but the repository still lacks an authorized production `worker.ts` bootstrap with benchmark-approved provider routes/credentials.
 
-This remains `NOT YET VERIFIED` until the authorized provider benchmark/configuration work produces a real standalone bootstrap. At that point add a Render worker through `render.yaml`; do not run the durable worker loop inside Fastify merely to make hosting easier.
+No Render background worker is declared yet. Do not run a polling worker inside Fastify as a hosting shortcut.
 
-## 7. Frontend/API contract
+The worker becomes a separate Render service only after the live-provider/bootstrap stage is implemented and verified.
+
+## 8. Frontend/API contract
 
 Both static sites compile with:
 
 `VITE_API_BASE_URL=https://alwaslh-prod-api-7eaur.onrender.com`
 
-The API allows only the two production static-site origins in `ALLOWED_ORIGINS`.
+API production CORS allows only:
 
-Session cookies remain server-owned, HttpOnly, Secure in production and `SameSite=Lax`. Browser calls use `credentials: include`.
+- `https://alwaslh-prod-student-7eaur.onrender.com`
+- `https://alwaslh-prod-admin-7eaur.onrender.com`
 
-When custom domains are introduced, update all three together:
+Sessions remain server-owned, HttpOnly, Secure in production and `SameSite=Lax`; frontend calls use `credentials: include`.
 
-1. Render custom domains/TLS;
-2. `VITE_API_BASE_URL` for Student/Admin;
-3. API `ALLOWED_ORIGINS`.
+When custom domains are added, update Render domains/TLS, both frontend API build values, and API `ALLOWED_ORIGINS` together. Never use credentialed CORS `*`.
 
-Never broaden production CORS to `*` while credentialed sessions are used.
-
-## 8. Production delivery workflow
+## 9. Production delivery workflow
 
 ```text
 Backend/Frontend short branch
-→ workstream REPORT + tests
+→ REPORT + tests
 → Integration review
-→ integration candidate / cross-boundary gates
+→ cross-boundary gates
 → merge accepted state to main
-→ Render auto-deploy from main
-→ hosted health/runtime verification
-→ deployment evidence recorded in central docs
+→ Render auto-deploy
+→ hosted verification
+→ central evidence update
 ```
 
-A GitHub commit by itself is not a release approval. Only Integration-approved changes reach `main`.
+A Git commit alone is not release approval.
 
-## 9. Old deployment path retirement
+## 10. Vercel retirement
 
-The current rebuilt product no longer uses the former single-project Vercel preview/serverless proxy path.
+The rebuilt product no longer uses the former Vercel build/serverless proxy path.
 
-Removed at cutover:
+Removed:
 
-- root `vercel.json`;
 - `scripts/build-vercel-preview.mjs`;
-- `api/[...path].js` Vercel serverless adapter.
+- `api/[...path].js` serverless adapter;
+- all former Vercel build/rewrite runtime configuration.
 
-Legacy Supabase/Cloudflare material may remain only where it is historical/audit/reference content. It is not current deployment authority.
+A **minimal root `vercel.json` retirement guard is intentionally retained**:
 
-If an old Vercel/Supabase project remains connected in a provider dashboard, disconnect/delete its Git deployment hook after Render is confirmed live. Do not delete old external data merely as part of hosting cutover.
+```json
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": { "deploymentEnabled": false }
+}
+```
 
-## 10. Verification required after first Render apply
+Reason: the external Vercel project `alwaslh` is still GitHub-linked. During cutover, removing the guard caused pushes to `main`/`planning` to create unwanted Vercel deployments. Restoring this guard stopped new automatic Git deployments in the observed follow-up check.
 
-Before calling hosted runtime VERIFIED:
+This file is not a deployment path; it is a kill-switch until the external Git integration is disconnected from Vercel. Do not delete it before provider-side unlink is confirmed.
 
-- Render database status healthy;
-- migrations applied successfully;
+Old Supabase/Cloudflare material may remain only as historical/audit/reference evidence. Do not delete external data as part of a hosting cutover.
+
+## 11. Supabase retirement boundary
+
+Connected Supabase inspection found a project whose public tables match the current rebuild schema (`ai_jobs`, `media_assets`, `content_source_assets`, `auth_sessions`, etc.). Because Render is not live yet, it remains active temporarily as a rollback/continuity resource.
+
+Do not pause/delete it before Render DB/API/session/media verification passes. After Render is confirmed healthy, pause the old Alwaslh Supabase project rather than deleting data immediately; deletion requires a separate explicit data-retention decision.
+
+## 12. Verification required after first Render apply
+
+Before calling hosted runtime `VERIFIED`:
+
+- Render PostgreSQL healthy;
+- all migrations applied successfully;
+- API image build succeeds and Poppler availability is confirmed by real PDF processing;
 - API deploy `live`;
-- `GET /health` returns 200;
-- `GET /ready` returns 200 and proves DB connectivity;
+- `/health` returns 200;
+- `/ready` returns 200 and proves DB connectivity;
 - Student static deploy live;
 - Admin static deploy live;
-- CORS/session login path works from both frontends;
-- Student activation/login/recovery smoke path;
-- Admin login/curriculum/content operations smoke path;
-- persistent media upload survives an API redeploy/restart;
-- no secrets/raw provider metadata in browser responses;
-- Render logs contain no startup/migration/runtime errors.
+- CORS/session login works from both frontends;
+- Student activation/login/recovery smoke;
+- Admin login/curriculum/content smoke;
+- Stage13D image + PDF/mixed ingestion succeeds;
+- uploaded media survives API redeploy/restart;
+- no credentials/raw provider internals leak;
+- Render logs show no startup/migration/runtime errors.
 
-Until these checks execute, Render hosting is configured/deploying but hosted runtime remains `NOT YET VERIFIED`.
+Until these execute, Render hosting is configured but hosted runtime remains `NOT YET VERIFIED`.
