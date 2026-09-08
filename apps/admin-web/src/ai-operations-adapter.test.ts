@@ -59,7 +59,7 @@ describe("Stage13E AI operations adapter", () => {
     expect(view.allowedReviewActions).toEqual(["edit", "approve", "reject"]);
   });
 
-  it("preserves server-derived job action arrays from job detail without deriving from lifecycle status", () => {
+  it("preserves server-derived job actions and unit pagination without deriving client authority", () => {
     const response: AiJobDetailResponse = {
       job: {
         id: "job-1",
@@ -79,24 +79,26 @@ describe("Stage13E AI operations adapter", () => {
         updatedAt: "2026-09-08T01:01:00Z",
         allowedActions: ["retry"],
         progress: {
-          totalUnits: 1,
+          totalUnits: 75,
           acceptedUnits: 0,
           completedUnits: 0,
           reviewRequiredUnits: 0,
-          failedUnits: 1,
+          failedUnits: 75,
           cancelledUnits: 0,
           queuedUnits: 0,
           runningUnits: 0,
           retryingUnits: 0,
-          settledUnits: 1,
+          settledUnits: 75,
           remainingUnits: 0,
           progressPercent: 100,
         },
       },
       units: [],
-      pagination: { total: 0, limit: 50, offset: 0 },
+      pagination: { total: 75, limit: 50, offset: 50 },
     };
 
-    expect(mapAiJobDetail(response).allowedActions).toEqual(["retry"]);
+    const mapped = mapAiJobDetail(response);
+    expect(mapped.allowedActions).toEqual(["retry"]);
+    expect(mapped.unitPagination).toEqual({ total: 75, limit: 50, offset: 50 });
   });
 });
