@@ -2,7 +2,7 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable verification تتقدم على prose. اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, و`PROJECT_INTEGRATION_CONTINUITY.md` للتفاصيل.
 
-آخر تحديث: 2026-09-08 — hosting/deployment fully deferred until VPS; Stage13E combined candidate remains current work.
+آخر تحديث: 2026-09-08 — hosting/deployment fully deferred until VPS; Stage13E combined candidate remains current work and verification is blocked only by GitHub runner allocation.
 
 ## Current Position
 
@@ -12,7 +12,7 @@
 - Legacy pre-rebuild archive: `archive/legacy-main-2026-09-08` → `5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
 - Latest fully verified application baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 - Current product work: **Stage13E Admin AI Operations / Review — COMBINED INTEGRATION CANDIDATE / NOT YET VERIFIED / OUTSIDE `main`**.
-- GitHub Actions: hosted-runner allocation blocker has repeatedly produced `runner_id=0`, `steps=[]`; this is verification infrastructure evidence, not product-failure evidence.
+- GitHub Actions: hosted-runner allocation blocker has repeatedly produced jobs with no executable steps; this is verification infrastructure evidence, not product-failure evidence.
 
 ## Product / Architecture
 
@@ -108,8 +108,6 @@ Combined Integration:
 - combined workflow HEAD `807f733838e2fab2620652025b255c3bc404fec1`
 - Integration Report #16 `5580151268`
 
-The combined candidate contains only Stage13E API/Admin/tests/migration/specialized docs/workflows + Integration fixture/workflow. No unrelated Student product change is included.
-
 ## Stage13E Combined Browser Contract
 
 Fixture variables:
@@ -117,43 +115,46 @@ Fixture variables:
 - `STAGE13E_E2E_JOB_TYPE=stage13e_e2e_happy`
 - `STAGE13E_E2E_RACE_JOB_TYPE=stage13e_e2e_race`
 
-Combined Chromium covers:
+Combined Chromium covers authenticated happy path, pause/resume, approve + reload durability, real session expiry, real stale-action `409` canonical refresh and 390px overflow. No mock API, route interception, fake 401/409, test-only Backend endpoint, cookie forging or sleep-based race.
 
-- authenticated happy path;
-- pause/resume;
-- approve + reload durability;
-- real same-context session logout/expiry handling;
-- real stale-action `409` canonical refresh;
-- 390px overflow regression.
+## Latest Stage13E Executable Attempts
 
-No mock API, route interception, fake 401/409, test-only Backend endpoint, cookie forging or sleep-based race.
+Run: `34193380473`
 
-## Latest Stage13E Executable Attempt
+HEAD: `807f733838e2fab2620652025b255c3bc404fec1`
 
-Initial combined run:
+Attempt 1:
 
-- run `34193380473`
 - job `101955846938`
-- HEAD `807f733838e2fab2620652025b255c3bc404fec1`
-- result ended before checkout: `runner_id=0`, `runner_name=""`, `steps=[]`.
+- ended before checkout
+- `runner_id=0`
+- `steps=[]`
 
-A rerun of failed jobs was requested on 2026-09-08 after the Product Owner removed hosting from the roadmap. Its executed result must be inspected before changing Stage status.
+Attempt 2, explicitly rerun after hosting was removed from the roadmap:
 
-Interpretation rule: a workflow conclusion with no runner/steps is not application failure. Any future executed failing step must be treated as a real defect until root cause proves otherwise.
+- job `101958463625`
+- `run_attempt=2`
+- `steps=[]`
+- no job logs were produced
+- no checkout and no executable product/test step.
+
+Interpretation: Stage13E remains **verification-blocked by GitHub runner allocation only**. There is still no executed failure attributable to code, migration, fixture, API or browser tests.
+
+A local execution fallback was also checked from the current assistant environment, but repository network access is unavailable there, so no local test claim is made.
 
 ## Immediate Next Work
 
-1. Inspect the rerun of Stage13E combined gate on `integration/stage13e-ai-operations`.
-2. If executable steps run and fail, fix root cause in the owning layer and add regression coverage.
-3. If combined gate passes, run required wider same-head regressions.
-4. Promote Stage13E to `main` only after executable PASS.
-5. Synchronize `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, specialized docs, Legacy Coverage and roadmap.
-6. Start Stage13F only after Stage13E closure.
+1. Keep Stage13E outside `main` until executable verification passes.
+2. Keep the combined gate unchanged; rerun when GitHub allocates an actual runner.
+3. If executable steps run and fail, fix root cause in the owning layer and add regression coverage.
+4. If combined gate passes, run required wider same-head regressions.
+5. Promote Stage13E to `main`, then synchronize `PROJECT_ENGINEERING_LOG.md`, central/specialized docs, Legacy Coverage and roadmap.
+6. Start Stage13F only after Stage13E closure unless Product Owner explicitly changes the stage dependency rule.
 7. Do **not** perform any hosting/deployment work until an explicit future VPS command.
 
 ## High-Priority Open Boundaries
 
-- Stage13E same-head executable verification.
+- Stage13E executable verification is blocked only by GitHub runner allocation.
 - `AI-011-005` P2 — `direct` AI question persistence for Stage13F unresolved.
 - `AI-012-019` P2 — live AI provider benchmark/config/routes/bootstrap unverified.
 - live-provider/production AI worker bootstrap absent by design; do not couple it to Fastify.
