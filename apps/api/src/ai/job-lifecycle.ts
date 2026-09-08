@@ -167,7 +167,7 @@ export class AiJobLifecycleRepository {
        limit 1`,
       [jobId],
     );
-    if (exhausted[0]) throw new Error("ai_job_retry_limit_reached");
+    if (exhausted[0]) throw new Error("ai_job_not_retryable:attempt_limit");
 
     const retried = await executor.query<{ id: string }>(
       `update ai_job_units
