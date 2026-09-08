@@ -1,8 +1,8 @@
 # PROJECT ENGINEERING LOG — الوسيلة الذكية
 
-> Engineering source of truth for project understanding, architecture decisions, audit findings, implementation history, tests and remaining work. Code/migrations, executable GitHub Actions, and actual Render runtime evidence outrank prose. Anything not executed/tested is `NOT YET VERIFIED`.
+> Engineering source of truth for project understanding, architecture decisions, audit findings, implementation history, tests and remaining work. Code/migrations and executable verification outrank prose. Anything not executed/tested is `NOT YET VERIFIED`.
 
-Last consolidated: 2026-09-08 — Render production cutover.
+Last consolidated: 2026-09-08 — hosting/deployment fully deferred until VPS; Stage13E combined candidate assembled and awaiting executable runner.
 
 ## 1. Project Understanding
 
@@ -30,8 +30,9 @@ Governance:
 - repository docs, not chat memory, are project memory;
 - permanent Backend/Frontend/Integration workstreams coordinate through GitHub Issues #13–#16;
 - root-cause/no-patching mandatory;
-- old Supabase database/data migration is outside current scope unless reopened explicitly;
-- **Render is current primary production hosting platform; `main` is production source.**
+- old database/data migration is outside current scope unless reopened explicitly;
+- **hosting/deployment are fully deferred until a VPS is available and Product Owner explicitly reopens them**;
+- **`main` is the Integration-approved development baseline, not a current production branch**.
 
 ## 2. Architecture Summary
 
@@ -49,14 +50,7 @@ Admin Web ───────┘       │
                          └── Stage13 Admin operations/publication
 ```
 
-Production hosting now maps this architecture to Render:
-
-```text
-Student static/CDN ─┐
-                    ├── Render Fastify API ── Render Managed PostgreSQL
-Admin static/CDN ───┘           │
-                                └── Render persistent media disk
-```
+Current architecture work is intentionally provider-neutral at the product layer. Existing hosting files remain historical/portable configuration only and are not current engineering tasks or Stage gates.
 
 ### Stable authority boundaries
 
@@ -76,7 +70,7 @@ Admin static/CDN ───┘           │
 - durable workers use leases and DB-coordinated capacity/controls.
 - Fastify HTTP remains separate from worker polling.
 - Student uses reviewed/published authority, not raw AI output.
-- production file uploads must use durable storage.
+- future deployment must preserve these boundaries rather than reshape them around a hosting provider.
 
 ## 3. Stage Ledger
 
@@ -99,10 +93,10 @@ Admin static/CDN ───┘           │
 | 13B Admin Curriculum Web | REBUILD UI | VERIFIED |
 | 13C Content/Media/OCR Operations | IMPROVE over existing authorities | VERIFIED |
 | 13D Upload/History/Publication Linking | REBUILD unsafe legacy upload state | VERIFIED incl. Chromium |
-| 13E Admin AI Operations / Review | REQUIRED | IN PROGRESS / NOT YET VERIFIED / outside main |
+| 13E Admin AI Operations / Review | REQUIRED | COMBINED CANDIDATE / NOT YET VERIFIED / outside main |
 | 13F–G Remaining Admin | REQUIRED | NOT YET VERIFIED |
-| 14+ Student/Learning/Release | REQUIRED | NOT YET VERIFIED according to Roadmap |
-| Render hosted runtime | deployment architecture | CONFIGURED / NOT YET VERIFIED until first apply + runtime checks |
+| 14+ Student/Learning | REQUIRED | NOT YET VERIFIED according to Roadmap |
+| Hosting / deployment | FUTURE | FULLY DEFERRED UNTIL VPS |
 
 ## 4. Verified Core Flows
 
@@ -194,7 +188,7 @@ Typed modes, Prompt Registry, provenance, strict validators, exact-answer rules,
 
 ### Stage12 Durable AI Execution / Runtime — VERIFIED backend/runtime
 
-Durable jobs/units/attempts/outputs, leases, capacity, controls, pause/progress, cleanup and bounded worker runtime. Live production provider bootstrap remains unverified.
+Durable jobs/units/attempts/outputs, leases, capacity, controls, pause/progress, cleanup and bounded worker runtime. Live provider bootstrap remains unverified.
 
 ### Stage13A/B Curriculum + Admin — VERIFIED
 
@@ -225,57 +219,76 @@ Legacy `LES-A-010..015` closed by executable evidence.
 
 Persistent Backend, Frontend and Integration roles use short feature branches, workstream docs and Boards #14/#15/#16 plus Team Room #13. GitHub must be enough for replacement chats to resume. Integration alone closes stages.
 
-### Stage13E candidates — IN PROGRESS
+### Stage13E Backend candidate — ACCEPTED STRUCTURALLY / NOT YET EXECUTABLE-VERIFIED
 
-Backend `backend/stage13e-ai-operations` @ `348c02646d0ff873fd305beff16f41c46d9c0285`:
+`backend/stage13e-ai-operations @ 348c02646d0ff873fd305beff16f41c46d9c0285`
+
+Provides:
 
 - Admin jobs/units/attempts/outputs;
-- server progress + action authority;
+- server progress + `allowedActions`;
 - Stage12 pause/resume/cancel/retry reuse;
+- safe provider/model/project observability;
 - strict append-only review audit via `0018_ai_admin_review.sql`;
 - Stage11 semantic validation;
+- server-derived `allowedReviewActions`;
+- strict review HTTP union;
 - no raw/internal provider leakage;
 - no Stage13F publication.
 
-Frontend `frontend/stage13e-ai-operations` @ `e42644944ca3fcc7e225a263a6e9699bcb70b9f7`:
+### Stage13E Frontend candidate — ACCEPTED AS INTEGRATION CANDIDATE
 
-- real authenticated transport/adapter/controller/navigation;
-- server action arrays;
-- canonical refresh on mutation/409;
-- review UX/provenance/history;
-- happy-path Chromium + 390px prepared;
-- still owes bounded real browser session-expiry and stale-review 409 regression preparation.
+`frontend/stage13e-ai-operations`
 
-Both remain outside `main`; same-head executable gates are blocked by current GitHub hosted-runner allocation issue.
+- Product/Test HEAD `7bf2f8c32907032551aace9f3aa27681040c4b0f`;
+- documented branch HEAD `1eb141e950e96c9f53ffd103a386d59166113c16`;
+- REPORT #15 `5579577424`;
+- Integration Review #15 `5580147549`.
 
-### Render Production Cutover — ACTIVE / HOSTED VERIFICATION PENDING
+Provides real authenticated transport/adapter/controller/navigation, server action arrays, canonical refresh on mutation/409, review UX/provenance/history, happy/reload/session-expiry/stale-review browser preparation and 390px regression. No route interception/mock API/fake 401/409/test-only Backend endpoint/manual cookie mutation/sleep race.
 
-Product Owner explicitly re-enabled deployment on 2026-09-08 and selected Render as the primary production hosting platform.
+### Stage13E Combined Integration candidate — ASSEMBLED / NOT YET VERIFIED
 
-Cutover actions:
+Branch:
 
-- legacy `main` `5d16c9ae...` archived at `archive/legacy-main-2026-09-08`;
-- current rebuilt integration state promoted to `main` through cutover commit `febd8ca2fe047a0b3a961bf73060289ed35e79c6`;
-- root `render.yaml` added;
-- `docs/deployment/RENDER_PRODUCTION.md` added;
-- `.env.example` corrected from stale Supabase settings to current API/Postgres/Vite contract;
-- Vercel-specific `vercel.json`, `scripts/build-vercel-preview.mjs`, `api/[...path].js` removed;
-- Product Overrides changed from deployment deferred to Render-primary production;
-- `main` is now the only production source branch; short feature branches require Integration acceptance before merge.
+`integration/stage13e-ai-operations @ 807f733838e2fab2620652025b255c3bc404fec1`
 
-Declared Render topology:
+Selective assembly:
 
-- Student static CDN;
-- Admin static CDN;
-- Fastify API `starter` in Frankfurt;
-- Render PostgreSQL 16 `basic-256mb` in Frankfurt;
-- 1 GB persistent media disk on API.
+- `227f4c9dba99e7b8c93d25caebe86e38108d4a5c` — Backend candidate;
+- `a60274fedf55fb45b6684743da24b24004339917` — Frontend candidate;
+- `4ba77703866762c471257bbb914590b817ecc82e` — real E2E fixture seed;
+- `807f733838e2fab2620652025b255c3bc404fec1` — combined integration workflow.
 
-The API is intentionally not free-tier because current `FileSystemMediaStorage` requires durable disk. Using Render ephemeral filesystem would cause media data loss across deploys/restarts.
+The selective strategy avoided importing stale/diverged feature history. Combined gate covers API/Admin lint/typecheck/unit/build, clean PostgreSQL migrations/contracts, Stage13E + Stage12/auth regressions, real Admin bootstrap, durable fixture seed, and Chromium happy/reload/session-expiry/stale-409/390px.
 
-No Render AI worker is declared because Stage12 production worker/provider bootstrap does not exist yet. This is an intentional architecture boundary, not missing deployment wiring.
+Fixture contract:
 
-Hosted runtime remains `NOT YET VERIFIED` until Blueprint apply + database/API/frontend/session/media verification.
+- `STAGE13E_E2E_JOB_TYPE=stage13e_e2e_happy`;
+- `STAGE13E_E2E_RACE_JOB_TYPE=stage13e_e2e_race`.
+
+Run `34193380473`:
+
+- attempt 1 job `101955846938`: no checkout, `steps=[]`;
+- attempt 2 job `101958463625`: `run_attempt=2`, `steps=[]`, no job logs.
+
+No executable product/test step ran in either attempt. Stage13E remains `NOT YET VERIFIED`; no application defect has been observed from these runs.
+
+A local fallback was checked from the current assistant runtime, but repository network access is unavailable in that environment, so no local test result is claimed.
+
+### Hosting/deployment history — SUPERSEDED AS CURRENT WORK
+
+Earlier on 2026-09-08 the repository temporarily moved through Render-oriented production/development configuration and provider-retirement work. Those commits/files remain historical repository evidence. Product Owner later explicitly overrode that direction and ordered:
+
+`DEPLOYMENT / HOSTING FULLY DEFERRED UNTIL VPS IS AVAILABLE`.
+
+Therefore:
+
+- no current Stage includes provider configuration, deploy, hosted smoke, hosted database/media verification or cutover cleanup;
+- no hosted provider is current production authority;
+- `main` is development Integration baseline;
+- existing deployment files are not deleted just to erase history, but are inactive until a future VPS command;
+- future deployment design must be derived from the mature product architecture rather than driving it now.
 
 ## 6. Architecture Decisions
 
@@ -296,11 +309,14 @@ Historical decisions remain embodied in code/history. Active decisions include:
 - **AD-126** — archive is non-destructive.
 - **AD-127** — persistent Backend/Frontend/Integration workstreams coordinate through GitHub, not chat memory.
 - **AD-128** — short-lived feature branches; Integration alone declares Stage VERIFIED.
-- **AD-129** — **`main` is the production source branch; only Integration-approved state is promoted to it.**
-- **AD-130** — **Render is the primary production platform for Student/Admin/API/PostgreSQL.** Production resources are declared through root `render.yaml`.
-- **AD-131** — **Stage13D media requires persistent Render disk while FileSystemMediaStorage remains authoritative; ephemeral production storage is prohibited.** Current consequence: API remains single-instance until explicit shared/object-storage architecture replaces it.
-- **AD-132** — **Do not deploy a fake AI worker.** A Render background worker is added only after authorized live-provider routing and a real standalone worker bootstrap exist.
-- **AD-133** — **legacy Vercel serverless deployment path is retired; old `main` is preserved as an archive rather than deleted.**
+- **AD-129 (historical)** — previous `main` production-source decision; **operationally superseded by AD-134**.
+- **AD-130 (historical)** — previous Render-primary decision; **operationally superseded by AD-134**.
+- **AD-131 (historical deployment constraint)** — durable media requirement remains architecturally valid, but provider-specific Render disk action is not current work.
+- **AD-132** — do not deploy/fake an AI worker before authorized live-provider routing and real standalone bootstrap exist.
+- **AD-133** — old Vercel serverless path remains retired historical implementation.
+- **AD-134** — **hosting/deployment are fully deferred until VPS availability and explicit Product Owner reactivation; no Stage closure currently includes hosted evidence.**
+- **AD-135** — **`main` is the Integration-approved development baseline. Current delivery stops at merge + executable regression + documentation closure.**
+- **AD-136** — **Stage13E combines Backend/Frontend selectively over current Integration lineage when old feature history has diverged; do not import stale unrelated history.**
 
 ## 7. Audit Findings
 
@@ -312,22 +328,22 @@ Historical decisions remain embodied in code/history. Active decisions include:
 | AUTH-006-004 | P1 | Student Auth | password-only device bypass | device boundary bypass | challenge + bound session | FIXED + VERIFIED |
 | OCR-011-001 | P1 | OCR | no durable canonical extraction | unreliable downstream text | durable OCR pipeline | FIXED + VERIFIED |
 | AI-011-005 | P2 | Question Bank | `direct` output not safely persisted | unsafe publish risk | Stage13F explicit rule | OPEN |
-| AI-012-019 | P2 | Live AI | no authorized benchmark/provider bootstrap | cannot claim production AI | benchmark/config before live worker/routes | OPEN / NOT YET VERIFIED |
+| AI-012-019 | P2 | Live AI | no authorized benchmark/provider bootstrap | cannot claim live-provider readiness | benchmark/config before live worker/routes | OPEN / NOT YET VERIFIED |
 | CONTENT-013-002 | P1 | Publication | media lacked explicit Lesson publication authority | ready could be mistaken as published | Stage13D Draft/Review/Published | FIXED + VERIFIED |
 | CONTENT-013-005 | P1 | Upload state | browser-owned upload truth unsafe | lost/racy state | durable server tasks/items | FIXED + VERIFIED |
 | CONTENT-013-006 | P1 | Mixed ordering | async completion could reorder content | educational corruption | selected order + deterministic expansion | FIXED + VERIFIED |
 | CONTENT-013-007 | P2 | Retry/lease | retry/late write risk | inconsistent media/task state | lease + idempotency + stale guards | FIXED + VERIFIED |
 | DOC-001 | P2 | Continuity | chat-memory/stale docs risk | contradictory work | central docs + continuity file | CONTROLLED |
 | DOC-003 | P2 | Team | parallel chats may drift | merge debt / duplicate work | Boards/workstreams/Integration gate | CONTROLLED |
-| DEPLOY-001 | P0 | Media durability | Render API filesystem would be ephemeral without disk | uploaded media loss on deploy/restart | paid API + persistent disk + durable mount | **CONTROLLED BY BLUEPRINT / HOSTED VERIFY PENDING** |
-| DEPLOY-002 | P1 | Release source | old `main` still pointed to legacy architecture | Render could deploy obsolete product | archive old main + promote rebuilt state to `main` | **FIXED IN GIT / HOSTED VERIFY PENDING** |
-| DEPLOY-003 | P2 | Legacy hosting | Vercel serverless path remained in repo | competing deployment authority/confusion | remove Vercel-specific build/config/adapter | **FIXED IN REPO** |
-| DEPLOY-004 | P2 | AI worker | temptation to host worker without real provider bootstrap | fake/nonfunctional production architecture | intentionally omit worker until Stage12 live bootstrap exists | CONTROLLED |
-| CI-001 | P1 | GitHub Actions | hosted jobs currently fail before checkout with `steps=[]` | no new executable gate evidence | keep gates unchanged; rerun when runner allocation works | OPEN / EXTERNAL CAUSE NOT YET VERIFIED |
+| DEPLOY-001 | P3 | Historical deployment | previous Render media durability design no longer current work | distraction if treated as blocker | preserve historical evidence; defer all deployment until VPS | DEFERRED / NON-BLOCKING |
+| DEPLOY-002 | P3 | Historical release source | old production-branch semantics conflict with current development-only policy | coordination confusion | PO-OVR-001 + AD-135 redefine `main` as development baseline | SUPERSEDED |
+| DEPLOY-003 | P3 | Legacy hosting | retired Vercel path exists only as history/guard context | low current impact | no action until VPS planning if still relevant | DEFERRED / NON-BLOCKING |
+| DEPLOY-004 | P2 | AI worker | temptation to host worker without real provider bootstrap | fake/nonfunctional architecture | keep worker separate; implement only after live provider readiness | CONTROLLED |
+| CI-001 | P1 | GitHub Actions | hosted jobs fail before checkout with `steps=[]` | blocks new executable gate evidence | keep gates unchanged; rerun when runner allocation works | OPEN / EXTERNAL |
 
 ## 8. Verification Evidence
 
-Latest fully green **pre-Render executable** head:
+Latest fully green executable head:
 
 `4eca7de8877ac9e2289b9c7990c912d33c256935`
 
@@ -345,32 +361,31 @@ Same-head matrix:
 
 Current GitHub runner-allocation failures execute no repository steps, so they do not invalidate this baseline and do not verify newer heads.
 
-Render cutover Git/config commits are deployment configuration evidence only. Hosted runtime requires separate Render evidence.
+Stage13E combined run `34193380473` attempts 1 and 2 both ended with no executable steps. This is CI infrastructure evidence only.
 
 ## 9. Known Issues / Remaining Risk
 
-- first Render Blueprint apply/runtime verification pending;
-- external old provider dashboard hooks may still need manual/provider-side disconnection after Render is live;
-- Stage13E remains outside main and not executable-verified;
-- live AI provider/model benchmark/credentials/routes/bootstrap unverified;
-- production AI worker absent by design;
-- current media disk makes API single-instance; future scale may require object storage;
-- `direct` Question Bank persistence unresolved;
-- Student full learning product/TTS/offline/later stages remain incomplete;
-- final legacy coverage not closed;
-- P3 temporary branch housekeeping remains.
+- Stage13E remains outside `main` and not executable-verified.
+- GitHub hosted runner allocation currently blocks new executable evidence.
+- live AI provider/model benchmark/credentials/routes/bootstrap unverified.
+- live-provider worker bootstrap absent by design.
+- `direct` Question Bank persistence unresolved.
+- Student full learning product/TTS/offline/later stages remain incomplete.
+- final legacy coverage not closed.
+- VPS deployment architecture is intentionally future work and not a current blocker.
 
 ## 10. Remaining Work — Ordered
 
-1. Apply Render Blueprint from committed `render.yaml` and verify DB/API/Student/Admin/media durability.
-2. Record exact Render resource/deploy IDs, logs, health and migration evidence.
-3. Frontend Stage13E completes bounded session-expiry + stale-review 409 browser regression preparation.
-4. When GitHub runner execution returns, run unchanged Backend/Frontend Stage13E gates.
-5. Create Stage13E integration branch from latest `main`, combine accepted candidates, run same-head API/Admin/Postgres/Chromium/regression matrix.
-6. Merge Stage13E only after PASS to `main`; observe Render auto-deploy and run hosted Stage13E smoke/evidence.
-7. Close Stage13E docs/Legacy Coverage/Roadmap, then issue Stage13F.
-8. Stage13F Question Bank, Stage13G remaining Admin, Stage14+ Student/Learning/Offline/release.
-9. Live AI provider benchmark/bootstrap before Render worker creation.
+1. Keep Stage13E combined workflow unchanged and rerun when GitHub allocates an actual runner.
+2. If executable Stage13E step fails, fix root cause at owning layer and add regression protection.
+3. After Stage13E combined PASS, run wider same-head regressions.
+4. Promote accepted Stage13E runtime to `main` while preserving latest central docs.
+5. Close Stage13E central/specialized docs + Legacy Coverage + Roadmap.
+6. Stage13F Question Bank/Quiz Builder/Publish, including explicit resolution of `AI-011-005` direct semantics.
+7. Stage13G remaining Admin.
+8. Stage14+ Student learning/Reader, assessment/practice, offline/PWA, personal data, notifications, statistics/achievements/exports, performance/security/release-hardening.
+9. Resolve live AI provider benchmark/bootstrap only when its product stage requires it; do not couple worker to Fastify.
+10. VPS hosting/deployment design only after Product Owner explicitly reopens it.
 
 ## 11. Documentation Continuity Contract
 
@@ -380,8 +395,10 @@ After meaningful changes:
 
 - workstream updates its role file + Board REPORT;
 - Integration updates `PROJECT_STATUS.md`, this Log, `PROJECT_HANDOFF.md`, `PROJECT_INTEGRATION_CONTINUITY.md` and specialized docs;
-- deployment changes update `docs/deployment/RENDER_PRODUCTION.md` + exact Render resource/deploy evidence;
-- record exact Git HEAD + run/deploy IDs;
+- record exact Git HEAD + executable run IDs;
+- update Legacy Coverage/Roadmap at Stage closure;
 - mark everything else `NOT YET VERIFIED`.
+
+No deployment/provider evidence is currently required or expected.
 
 Never leave a replacement conversation dependent on information that exists only in chat.
