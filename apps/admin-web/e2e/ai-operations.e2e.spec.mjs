@@ -90,7 +90,7 @@ test("Admin AI operations navigate complete durable job, unit and attempt histor
   await expect(page.getByText("المحاولة 1", { exact: true })).toBeVisible();
 });
 
-test("Admin AI operations use server actions, persist review and survive reload", async ({ page }) => {
+test("Admin AI operations keep canonical review authority while navigating the full audit and survive reload", async ({ page }) => {
   await login(page);
   await openAiWorkspace(page);
   await openSeededJob(page);
@@ -107,10 +107,26 @@ test("Admin AI operations use server actions, persist review and survive reload"
   await expect(unit).toBeVisible();
   await unit.click();
   await expect(page.getByRole("heading", { name: "مراجعة المخرَج" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "اعتماد بعد المراجعة" })).toBeVisible();
-  await page.getByRole("button", { name: "اعتماد بعد المراجعة" }).click();
+
+  const reviewPagination = page.getByRole("navigation", { name: "صفحات سجل مراجعة مخرج AI" });
+  await expect(reviewPagination).toContainText("1–50 من 101");
+  await reviewPagination.getByRole("button", { name: "التالي" }).click();
+  await expect(reviewPagination).toContainText("51–100 من 101");
+  await reviewPagination.getByRole("button", { name: "التالي" }).click();
+  await expect(reviewPagination).toContainText("101–101 من 101");
+
+  await page.getByText("سجل المراجعة (101)", { exact: true }).click();
+  await expect(page.getByText("stage13e-e2e-review-1", { exact: true })).toBeVisible();
+
+  // The displayed audit page contains the oldest revision, but action authority must
+  // still come from the canonical latest revision queried independently by the server.
+  const approve = page.getByRole("button", { name: "اعتماد بعد المراجعة" });
+  await expect(approve).toBeVisible();
+  await expect(approve).toBeEnabled();
+  await approve.click();
   await expect(page.getByText("معتمد بعد المراجعة", { exact: true })).toBeVisible();
   await expect(page.getByText("لا توجد إجراءات مراجعة متاحة.", { exact: true })).toBeVisible();
+  await expect(reviewPagination).toContainText("101–102 من 102");
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
@@ -118,6 +134,7 @@ test("Admin AI operations use server actions, persist review and survive reload"
   await openSeededJob(page);
   await page.locator(".ai-unit-card").first().click();
   await expect(page.getByText("معتمد بعد المراجعة", { exact: true })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "صفحات سجل مراجعة مخرج AI" })).toContainText("1–50 من 102");
 });
 
 test("Admin AI operations return to login after the real Admin session expires", async ({ page }) => {
