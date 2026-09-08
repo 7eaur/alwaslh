@@ -13,6 +13,7 @@ import type {
   AiGenerationOutputView,
   AiJobDetailView,
   AiJobSummaryView,
+  AiPaginationView,
   AiReviewOutputView,
   AiSourceEvidenceView,
   AiSourceProvenanceView,
@@ -187,7 +188,11 @@ export function mapAiJobSummary(job: AiJobListItemApi): AiJobSummaryView {
   };
 }
 
-function mapUnit(unit: AiUnitApi, attempts: readonly AiAttemptApi[] = []): AiUnitView {
+function mapUnit(
+  unit: AiUnitApi,
+  attempts: readonly AiAttemptApi[] = [],
+  attemptPagination: AiPaginationView | null = null,
+): AiUnitView {
   return {
     id: unit.id,
     unitKey: unit.unitKey,
@@ -202,6 +207,7 @@ function mapUnit(unit: AiUnitApi, attempts: readonly AiAttemptApi[] = []): AiUni
     lastErrorCode: unit.lastErrorCode,
     sourceProvenance: unit.sourceProvenance.map(sourceProvenance),
     attempts: attempts.map(mapAiAttempt),
+    attemptPagination,
     output: null,
   };
 }
@@ -211,9 +217,15 @@ export function mapAiJobDetail(response: AiJobDetailResponse): AiJobDetailView {
     ...mapAiJobSummary(response.job),
     allowedActions: [...response.job.allowedActions],
     units: response.units.map((unit) => mapUnit(unit, unit.latestAttempt ? [unit.latestAttempt] : [])),
+    unitPagination: { ...response.pagination },
   };
 }
 
-export function enrichAiUnit(unit: AiUnitApi, attempts: readonly AiAttemptApi[], output: AiReviewOutputView | null): AiUnitView {
-  return { ...mapUnit(unit, attempts), output };
+export function enrichAiUnit(
+  unit: AiUnitApi,
+  attempts: readonly AiAttemptApi[],
+  output: AiReviewOutputView | null,
+  attemptPagination: AiPaginationView,
+): AiUnitView {
+  return { ...mapUnit(unit, attempts, { ...attemptPagination }), output };
 }
