@@ -4,7 +4,7 @@
 >
 > **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 root fixes plus three P2 hardenings (snapshot consistency + bounded Job-list aggregation); executable verification remains blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 root fixes plus four P2 hardenings (snapshot consistency, bounded Job aggregation, safe HTTP pagination offsets); executable verification remains blocked before checkout.**
 
 ## 1. Operating mode
 
@@ -45,9 +45,9 @@ Current active product stage: **Stage13E — Admin AI Operations / Review**.
 
 Current combined candidate branch: `integration/stage13e-ai-operations`.
 
-Current candidate docs HEAD: `e9793a5222758a7d17aad08f91993cb7431631b7`.
+Current candidate docs HEAD: `c48d1e597497e6054340f71235c78937082b9371`.
 
-Latest runtime/test HEAD immediately below docs: `6efce1510231de5d569c4b96dbdffa3d4d488b31`.
+Latest runtime/test HEAD immediately below docs: `d60218b518fb0fe453c21386e77cd35a2228ad07`.
 
 Historical candidate sources remain evidence only:
 
@@ -93,6 +93,7 @@ Inspected actual Admin AI HTTP/service/lifecycle/review/persistence/frontend/fix
 - selected historical review page never becomes current review authority;
 - all multi-query Admin AI read models use one short repeatable-read database snapshot;
 - List Jobs applies the bounded Job page before Unit status aggregation;
+- all Stage13E pagination offsets are bounded to JavaScript safe integers before service/DB execution;
 - real fixtures use durable tables and real APIs only.
 
 #### AI-013E-DB-001 — P1 Data/Audit Integrity
@@ -115,51 +116,39 @@ Frontend previously exposed only first 30 Jobs / 50 Units / 50 Attempts. Fixed w
 
 #### AI-013E-OPS-004 — P1 Review Audit Completeness / Authority Isolation
 
-**Problem:** output detail returned only newest 100 append-only review events with no total/offset. Older audit revisions were unreachable. Original service also derived current review state/actions/effective output from `history[0]`, so naive pagination could make an old page appear current.
-
-**Root fix:** bounded `reviewLimit/reviewOffset`, `reviewPagination`, separate canonical-latest query, independent Frontend review offset, accessible Review History paging, and real >100 browser fixture. Only canonical latest revision drives current authority.
+Output detail originally returned only newest 100 append-only review events and derived current state from the displayed page. Fixed with bounded review pagination plus an independent canonical-latest authority and real >100 browser fixture.
 
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
 #### AI-013E-OPS-005 — P2 Output Detail Snapshot Consistency
 
-**Problem:** output row, audit page, count and canonical latest review were separate top-level reads under PostgreSQL `READ COMMITTED`.
-
-**Impact:** a review commit between those reads could produce one internally mixed HTTP response. No durable corruption, but audit/read-model correctness is weakened.
-
-**Correct fix:** all four reads execute in one short `REPEATABLE READ` transaction; mapping/parsing occurs after commit; no write lock and no provider/network call is introduced.
-
-**Regression:** `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`.
-
-**Commit:** `9d59f84fb516db5cfaf89382f548c3eea595e365`.
+Output row, audit page, count and canonical latest review were separate top-level reads. Fixed by one short `REPEATABLE READ` snapshot. Regression: `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`.
 
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
 #### AI-013E-OPS-006 — P2 Admin Multi-query Read-model Consistency
 
-**Problem:** List Jobs page/total, Job Detail progress/units/allowed-actions, and Unit Detail summary/attempt-page/total were separate top-level reads.
-
-**Impact:** a worker/lifecycle commit between reads could make one response internally contradictory without corrupting durable rows.
-
-**Correct fix:** private `readSnapshot()` is now the single read policy for List Jobs, Job Detail, Unit Detail and Output Detail. It opens one short `REPEATABLE READ` transaction; read snapshots contain no write lock/provider call. Mutation transactions remain unchanged.
-
-**Regression:** `apps/api/tests/ai-admin-read-snapshots.test.ts` forbids top-level queries for List/Job/Unit reads, verifies repeatable-read is first in each transaction, and explicitly exercises Stage12 `getAllowedActions` within the Job Detail snapshot.
-
-**Commits:** `6a146c26b771a991530f12b1c1c12b6e3b43263b`, `f5c5dddfdcb807b87fd18796e8b1154118a51f6e`, `10f32c72a684a8243a789a3561426a68dad1bcea`.
+List Jobs page/total, Job Detail progress/units/allowed-actions, and Unit Detail summary/attempt-page/total were separate reads. Fixed by shared `readSnapshot()` and `apps/api/tests/ai-admin-read-snapshots.test.ts`.
 
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
 #### AI-013E-PERF-007 — P2 Admin Job-list Bounded Aggregation
 
-**Problem:** `listJobs()` originally joined and aggregated `ai_job_units` for all matching durable Jobs, then applied `LIMIT/OFFSET`; bounded HTTP pagination therefore did not bound expensive Unit aggregation work.
+`listJobs()` originally aggregated Units for every matching durable Job before `LIMIT/OFFSET`. Fixed by paging Jobs first and aggregating Units only for the selected page. Regression: `apps/api/tests/ai-admin-job-list-query-shape.test.ts`.
 
-**Impact:** a 30-row Admin page could become progressively more expensive as AI Job/Unit history grows even though only one bounded page is returned.
+**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
-**Correct fix:** `8501d2e0317c0e1e4eb83b72c997e321ee79fe81` pages/filter/orders `ai_jobs` first in a CTE, then computes Unit status counts only for the selected Jobs using correlated `LATERAL` aggregation. No speculative index or denormalized counter was added.
+#### AI-013E-API-008 — P2 Safe Pagination Input Boundary
 
-**Regression:** `6efce1510231de5d569c4b96dbdffa3d4d488b31` adds `apps/api/tests/ai-admin-job-list-query-shape.test.ts`, proving the page boundary appears before Unit aggregation, old global join shape is absent, parameters/total-count/snapshot behavior are preserved.
+**Problem:** `offset`, `unitOffset`, `attemptOffset`, and `reviewOffset` accepted any non-negative JavaScript integer. Integer-looking values outside the safe-integer range could pass HTTP validation and reach PostgreSQL pagination as a representation/DB error instead of client `400`.
 
-**Specialized doc:** `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`.
+**Correct fix:** one shared `PaginationOffsetSchema` now enforces `0..Number.MAX_SAFE_INTEGER` for all Stage13E offsets. This is a representation bound, not a smaller product paging cap.
+
+**Regression:** `apps/api/tests/ai-admin-pagination-bounds.test.ts` uses real Fastify routing/error mapping to prove all four unsafe offsets return `400 BAD_REQUEST` before service execution, while `Number.MAX_SAFE_INTEGER` remains accepted. It is included automatically by the existing `npm test --prefix apps/api` gate.
+
+**Commits:** `887f772df927c8d24df0003b76b9cb7ea0313e15`, final regression `d60218b518fb0fe453c21386e77cd35a2228ad07`. An initial DB integration-test attempt was removed (`6b04c9f50256d96fda9b2f1c322775ddf682aa9f`) after the safety layer rejected a workflow rewrite containing an existing fixed browser-test credential; no workflow was weakened.
+
+**Specialized doc:** `docs/ai/STAGE13E_ADMIN_AI_HTTP_VALIDATION.md`.
 
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
@@ -175,7 +164,7 @@ Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Expected gate:
 
-1. API lint/typecheck/unit/build, including Output Detail, List/Job/Unit snapshot and Job-list query-shape regressions;
+1. API lint/typecheck/unit/build, including pagination-bound, Output Detail, List/Job/Unit snapshot and Job-list query-shape regressions;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB constraints;
 4. Stage13E authorization/action/review/concurrency/DB/stable-review/review-history pagination tests;
@@ -188,17 +177,10 @@ Expected gate:
 
 Latest runtime/test-head run:
 
-- run `34281631521`;
-- head `6efce1510231de5d569c4b96dbdffa3d4d488b31`;
-- job `102247518121`;
+- run `34283353562`;
+- head `d60218b518fb0fe453c21386e77cd35a2228ad07`;
+- job `102253102885`;
 - `steps=[]` / no checkout or repository command executed.
-
-Latest candidate/docs-head run:
-
-- run `34281764765`;
-- head `e9793a5222758a7d17aad08f91993cb7431631b7`;
-- job `102247948380`;
-- `steps=[]` / no repository execution.
 
 Interpretation: this is not product/test failure evidence. External account/platform cause remains `NOT YET VERIFIED`. Do not weaken tests or churn product code because a job never starts.
 
@@ -254,6 +236,7 @@ Follow `MASTER_REBUILD_ROADMAP.md`: Stage14 Student Product → Stage15 Assessme
 - `AI-013E-OPS-005` P2 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-006` P2 — fixed in candidate; executable verification pending.
 - `AI-013E-PERF-007` P2 — fixed in candidate; executable verification pending.
+- `AI-013E-API-008` P2 — fixed in candidate; executable verification pending.
 - later Admin/Student/assessment/offline/product stages remain incomplete.
 - Hosting/VPS intentionally not a current blocker.
 
