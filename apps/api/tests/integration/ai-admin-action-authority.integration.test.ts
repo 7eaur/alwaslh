@@ -17,8 +17,8 @@ const request = fixture.request;
 const validOutput = aiGenerationOutputSchema.parse(fixture.output);
 const origin = "http://localhost:5173";
 
-type JobStatus = "queued" | "completed" | "failed";
-type UnitStatus = "queued" | "review_required" | "failed";
+type JobStatus = "queued" | "retrying" | "completed" | "failed";
+type UnitStatus = "queued" | "retrying" | "review_required" | "failed";
 
 interface JobFixture {
   jobId: string;
@@ -125,7 +125,21 @@ test("Stage13E exposes authoritative job/review actions and strict review bodies
   const review = await insertJob(db, suffix, "review", "completed", "review_required", { withOutput: true });
   const reject = await insertJob(db, suffix, "reject", "completed", "review_required", { withOutput: true });
   const strict = await insertJob(db, suffix, "strict", "completed", "review_required", { withOutput: true });
-  assert.ok(review.outputId && reject.outputId && strict.outputId);
+  const failedOutput = await insertJob(db, suffix, "failed-output", "failed", "failed", {
+    attemptCount: 1,
+    withOutput: true,
+  });
+  const retryingOutput = await insertJob(db, suffix, "retrying-output", "retrying", "retrying", {
+    attemptCount: 1,
+    withOutput: true,
+  });
+  assert.ok(
+    review.outputId &&
+      reject.outputId &&
+      strict.outputId &&
+      failedOutput.outputId &&
+      retryingOutput.outputId,
+  );
 
   const app = buildApp({ config, database: db });
   try {
@@ -177,6 +191,42 @@ test("Stage13E exposes authoritative job/review actions and strict review bodies
 
     const pendingOutput = await getJson(app, sessionCookie, `/v1/admin/ai/outputs/${review.outputId}`);
     assert.deepEqual(pendingOutput.output.allowedReviewActions, ["edit", "approve", "reject"]);
+
+    const failedOutputDetail = await getJson(
+      app,
+      sessionCookie,
+      `/v1/admin/ai/outputs/${failedOutput.outputId}`,
+    );
+    assert.deepEqual(failedOutputDetail.output.allowedReviewActions, []);
+
+    const retryingOutputDetail = await getJson(
+      app,
+      sessionCookie,
+      `/v1/admin/ai/outputs/${retryingOutput.outputId}`,
+    );
+    assert.deepEqual(retryingOutputDetail.output.allowedReviewActions, []);
+
+    const failedApprove = await app.inject({
+      method: "PATCH",
+      url: `/v1/admin/ai/outputs/${failedOutput.outputId}/review`,
+      headers: { cookie: sessionCookie, origin },
+      payload: { action: "approve" },
+    });
+    assert.equal(failedApprove.statusCode, 409);
+
+    const retryingReject = await app.inject({
+      method: "PATCH",
+      url: `/v1/admin/ai/outputs/${retryingOutput.outputId}/review`,
+      headers: { cookie: sessionCookie, origin },
+      payload: { action: "reject", note: "Execution is still retrying" },
+    });
+    assert.equal(retryingReject.statusCode, 409);
+
+    const unstableEvents = await db.query<{ count: string }>(
+      "select count(*) from ai_output_review_events where ai_output_id = any($1::uuid[])",
+      [[failedOutput.outputId, retryingOutput.outputId]],
+    );
+    assert.equal(Number(unstableEvents[0]?.count), 0);
 
     const approved = await app.inject({
       method: "PATCH",
