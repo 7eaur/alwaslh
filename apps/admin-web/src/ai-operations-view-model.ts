@@ -11,6 +11,7 @@ export type AiUnitStatus = AiJobExecutionStatus | "review_required";
 export type AiAttemptStatus = "running" | "completed" | "failed" | "cancelled";
 export type AiValidationStatus = "pending" | "valid" | "invalid" | "review_required";
 export type AiValidationSeverity = "error" | "review" | "warning";
+export type AiReviewStatus = "pending" | "edited" | "approved" | "rejected";
 
 export type AiGenerationMode =
   | "lesson_summary"
@@ -28,12 +29,6 @@ export type AiDifficulty = "easy" | "medium" | "hard";
 export type AiAnswerStatus = "known" | "unknown" | "review_required";
 export type AiJobAction = "pause" | "resume" | "cancel" | "retry";
 export type AiReviewAction = "edit" | "approve" | "reject";
-
-export interface AiActionAvailability<TAction extends string> {
-  action: TAction;
-  allowed: boolean;
-  reason: string | null;
-}
 
 export interface AiJobProgressView {
   jobId: string;
@@ -58,8 +53,16 @@ export interface AiSourceEvidenceView {
   mediaAssetId: string;
   pageNumber: number;
   ocrExtractionId: string | null;
-  checksumSha256: string | null;
   quote: string | null;
+}
+
+export interface AiSourceProvenanceView {
+  mediaAssetId: string;
+  pageNumber: number;
+  inputChecksumSha256: string;
+  inputKind: "approved_ocr" | "vision_fallback";
+  ocrExtractionId: string | null;
+  contentSourceAssetId: string | null;
 }
 
 export interface AiQuestionView {
@@ -113,15 +116,30 @@ export interface AiValidationIssueView {
   message: string;
 }
 
+export interface AiReviewHistoryEventView {
+  id: string;
+  revision: number;
+  action: AiReviewAction;
+  actorProfileId: string;
+  actorDisplayName: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
 export interface AiReviewOutputView {
   id: string;
   validationStatus: AiValidationStatus;
+  reviewStatus: AiReviewStatus;
   normalizedOutput: AiGenerationOutputView | null;
-  rawOutput: unknown;
+  effectiveReviewedOutput: AiGenerationOutputView | null;
+  hasRawResponse: boolean;
   validationIssues: readonly AiValidationIssueView[];
+  semanticWarnings: readonly AiValidationIssueView[];
   reviewedBy: string | null;
   reviewedAt: string | null;
-  actions: readonly AiActionAvailability<AiReviewAction>[];
+  sourceProvenance: readonly AiSourceProvenanceView[];
+  reviewHistory: readonly AiReviewHistoryEventView[];
+  allowedReviewActions: readonly AiReviewAction[];
 }
 
 export interface AiAttemptView {
@@ -131,6 +149,7 @@ export interface AiAttemptView {
   providerKey: string;
   projectAlias: string | null;
   modelUsed: string;
+  routeKey: string;
   benchmarkVersion: string;
   validationStatus: AiValidationStatus | null;
   retryable: boolean | null;
@@ -139,7 +158,6 @@ export interface AiAttemptView {
   latencyMs: number | null;
   estimatedCostUsd: number | null;
   errorCode: string | null;
-  errorMessage: string | null;
   startedAt: string;
   completedAt: string | null;
 }
@@ -149,13 +167,14 @@ export interface AiUnitView {
   unitKey: string;
   position: number;
   mode: AiGenerationMode;
+  subjectDomain: string;
   status: AiUnitStatus;
   attemptCount: number;
   maxAttempts: number;
-  modelUsed: string | null;
-  projectAlias: string | null;
+  nextAttemptAt: string | null;
+  leaseExpiresAt: string | null;
   lastErrorCode: string | null;
-  lastErrorMessage: string | null;
+  sourceProvenance: readonly AiSourceProvenanceView[];
   attempts: readonly AiAttemptView[];
   output: AiReviewOutputView | null;
 }
@@ -167,10 +186,10 @@ export interface AiJobSummaryView {
   promptVersion: string;
   createdAt: string;
   progress: AiJobProgressView;
-  actions: readonly AiActionAvailability<AiJobAction>[];
 }
 
 export interface AiJobDetailView extends AiJobSummaryView {
+  allowedActions: readonly AiJobAction[];
   units: readonly AiUnitView[];
 }
 
@@ -194,20 +213,13 @@ export interface AiOperationsWorkspaceModel {
 
 export function jobStatusLabel(status: AiJobLifecycleStatus): string {
   switch (status) {
-    case "queued":
-      return "في الانتظار";
-    case "running":
-      return "قيد التنفيذ";
-    case "retrying":
-      return "إعادة محاولة";
-    case "paused":
-      return "متوقفة مؤقتًا";
-    case "completed":
-      return "مكتملة";
-    case "failed":
-      return "فشلت";
-    case "cancelled":
-      return "ملغاة";
+    case "queued": return "في الانتظار";
+    case "running": return "قيد التنفيذ";
+    case "retrying": return "إعادة محاولة";
+    case "paused": return "متوقفة مؤقتًا";
+    case "completed": return "مكتملة";
+    case "failed": return "فشلت";
+    case "cancelled": return "ملغاة";
   }
 }
 
@@ -218,37 +230,31 @@ export function unitStatusLabel(status: AiUnitStatus): string {
 
 export function validationStatusLabel(status: AiValidationStatus): string {
   switch (status) {
-    case "pending":
-      return "لم تُفحص بعد";
-    case "valid":
-      return "اجتازت التحقق";
-    case "invalid":
-      return "غير صالحة";
-    case "review_required":
-      return "تحتاج مراجعة بشرية";
+    case "pending": return "لم تُفحص بعد";
+    case "valid": return "اجتازت التحقق";
+    case "invalid": return "غير صالحة";
+    case "review_required": return "تحتاج مراجعة بشرية";
   }
+}
+
+export function reviewStatusLabel(status: AiReviewStatus): string {
+  if (status === "edited") return "معدّل بانتظار قرار نهائي";
+  if (status === "approved") return "معتمد بعد المراجعة";
+  if (status === "rejected") return "مرفوض";
+  return "بانتظار المراجعة";
 }
 
 export function generationModeLabel(mode: AiGenerationMode): string {
   switch (mode) {
-    case "lesson_summary":
-      return "ملخص درس";
-    case "question_generation":
-      return "توليد أسئلة";
-    case "comprehensive_lesson_content":
-      return "محتوى درس شامل";
-    case "multi_version_quiz":
-      return "اختبار متعدد النماذج";
-    case "exact_question_extraction":
-      return "استخراج أسئلة مطابق للمصدر";
-    case "exact_exam_extraction":
-      return "استخراج اختبار مطابق للمصدر";
-    case "replica_question_extraction":
-      return "استخراج نسخة مطابقة";
-    case "regenerate_question":
-      return "إعادة توليد سؤال";
-    case "page_detection":
-      return "اكتشاف صفحة/حدود";
+    case "lesson_summary": return "ملخص درس";
+    case "question_generation": return "توليد أسئلة";
+    case "comprehensive_lesson_content": return "محتوى درس شامل";
+    case "multi_version_quiz": return "اختبار متعدد النماذج";
+    case "exact_question_extraction": return "استخراج أسئلة مطابق للمصدر";
+    case "exact_exam_extraction": return "استخراج اختبار مطابق للمصدر";
+    case "replica_question_extraction": return "استخراج نسخة مطابقة";
+    case "regenerate_question": return "إعادة توليد سؤال";
+    case "page_detection": return "اكتشاف صفحة/حدود";
   }
 }
 
@@ -283,15 +289,23 @@ export function reviewActionLabel(action: AiReviewAction): string {
   return "رفض المخرَج";
 }
 
-export function actionIsAllowed<TAction extends string>(
-  actions: readonly AiActionAvailability<TAction>[],
-  action: TAction,
-): boolean {
-  return actions.find((candidate) => candidate.action === action)?.allowed ?? false;
+export function actionIsAllowed<TAction extends string>(actions: readonly TAction[], action: TAction): boolean {
+  return actions.includes(action);
 }
 
 export function describeProgress(progress: AiJobProgressView): string {
   return `${progress.progressPercent}% · ${progress.settledUnits} من ${progress.totalUnits} وحدات مستقرة · ${progress.remainingUnits} متبقية`;
+}
+
+export function publicOperationalErrorLabel(code: string): string {
+  switch (code) {
+    case "capacity_backpressure": return "مؤجلة مؤقتًا بسبب سعة التشغيل";
+    case "lease_expired": return "انتهت مهلة محاولة التنفيذ وسيعاد تقييمها من الخادم";
+    case "lease_expired_max_attempts": return "انتهت مهلة التنفيذ بعد استنفاد المحاولات";
+    case "validation_invalid": return "المخرج لم يجتز تحقق Stage11";
+    case "job_cancelled": return "ألغيت المهمة من الإدارة";
+    default: return "يوجد رمز خطأ تشغيلي مسجل في الخادم";
+  }
 }
 
 export function formatLatency(latencyMs: number | null): string {

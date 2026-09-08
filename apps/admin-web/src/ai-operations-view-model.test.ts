@@ -7,8 +7,8 @@ import {
   formatLatency,
   generationModeLabel,
   jobStatusLabel,
+  publicOperationalErrorLabel,
   validationStatusLabel,
-  type AiActionAvailability,
   type AiJobAction,
   type AiJobProgressView,
 } from "./ai-operations-view-model";
@@ -46,17 +46,11 @@ describe("Stage13E AI operations view model", () => {
     expect(jobStatusLabel(paused.executionStatus)).toBe("إعادة محاولة");
   });
 
-  it("takes action availability from the supplied server-adapter view state and never infers lifecycle rules", () => {
-    const actions: readonly AiActionAvailability<AiJobAction>[] = [
-      { action: "pause", allowed: true, reason: null },
-      { action: "resume", allowed: false, reason: "غير متاح وفق الحالة authoritative" },
-      { action: "cancel", allowed: false, reason: "قرار الخادم" },
-      { action: "retry", allowed: true, reason: null },
-    ];
-
+  it("takes action availability only from the server-supplied arrays", () => {
+    const actions: readonly AiJobAction[] = ["pause", "cancel"];
     expect(actionIsAllowed(actions, "pause")).toBe(true);
     expect(actionIsAllowed(actions, "resume")).toBe(false);
-    expect(actionIsAllowed(actions, "retry")).toBe(true);
+    expect(actionIsAllowed(actions, "retry")).toBe(false);
   });
 
   it("covers the exact Stage11 generation modes needed by Admin review", () => {
@@ -71,6 +65,12 @@ describe("Stage13E AI operations view model", () => {
     expect(answerStatusLabel("review_required")).toBe("الإجابة تحتاج مراجعة");
     expect(validationStatusLabel("review_required")).toBe("تحتاج مراجعة بشرية");
     expect(validationStatusLabel("invalid")).toBe("غير صالحة");
+  });
+
+  it("maps only safe public operational error codes to presentation copy", () => {
+    expect(publicOperationalErrorLabel("capacity_backpressure")).toContain("سعة التشغيل");
+    expect(publicOperationalErrorLabel("validation_invalid")).toContain("Stage11");
+    expect(publicOperationalErrorLabel("provider-secret-message")).toBe("يوجد رمز خطأ تشغيلي مسجل في الخادم");
   });
 
   it("formats optional operational telemetry without exposing credentials", () => {
