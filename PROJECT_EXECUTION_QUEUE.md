@@ -4,7 +4,7 @@
 >
 > **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 — Single Owner active; Stage13E audit found/fixed four P1 defects including complete Review History pagination with canonical-latest isolation; executable verification remains blocked before checkout.**
+Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has four P1 root fixes plus one P2 snapshot-consistency hardening; executable verification remains blocked before checkout.**
 
 ## 1. Operating mode
 
@@ -45,9 +45,9 @@ Current active product stage: **Stage13E — Admin AI Operations / Review**.
 
 Current combined candidate branch: `integration/stage13e-ai-operations`.
 
-Current candidate docs HEAD: `b344c6cdc21ce71e5d8c6b34bb2dc7f6e42b5ebb`.
+Current candidate docs HEAD: `bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`.
 
-Latest runtime/test HEAD immediately below docs: `6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b`.
+Latest runtime/test HEAD immediately below docs: `9d59f84fb516db5cfaf89382f548c3eea595e365`.
 
 Historical candidate sources remain evidence only:
 
@@ -91,6 +91,7 @@ Inspected actual Admin AI HTTP/service/lifecycle/review/persistence/frontend/fix
 - complete Jobs/Units/Attempts/Review History is reachable through bounded server pagination;
 - polling/refresh stay on current pages;
 - selected historical review page never becomes current review authority;
+- one Output Detail response reads output/page/count/latest under one repeatable database snapshot;
 - real fixtures use durable tables and real APIs only.
 
 #### AI-013E-DB-001 — P1 Data/Audit Integrity
@@ -115,22 +116,13 @@ Frontend previously exposed only first 30 Jobs / 50 Units / 50 Attempts. Fixed w
 
 **Problem:** output detail returned only newest 100 append-only review events with no total/offset. Older audit revisions were unreachable. Original service also derived current review state/actions/effective output from `history[0]`, so naive pagination could make an old page appear current.
 
-**Root cause:** review history was modeled as a bounded display array instead of durable paginated audit authority, and historical-page selection was coupled to current review derivation.
+**Root fix:** bounded `reviewLimit/reviewOffset`, `reviewPagination`, separate canonical-latest query, independent Frontend review offset, accessible Review History paging, and real >100 browser fixture. Only canonical latest revision drives current authority.
 
-**Correct fix:**
-
-- Backend `reviewLimit/reviewOffset`, max 100;
-- `reviewPagination { total, limit, offset }`;
-- requested audit page query separated from canonical-latest one-row query;
-- only canonical latest revision drives `reviewStatus`, `allowedReviewActions`, `effectiveReviewedOutput`;
-- Frontend keeps independent review offset and preserves it through polling/refresh/409;
-- accessible Review History Previous/Next navigation; no unbounded browser loading.
-
-Regression/evidence lineage:
+Key runtime/test lineage:
 
 - `d242e0542df4402392780098418cdd015cb11107` — Backend paged history + canonical-latest separation.
 - `f04fe2beeff79dea0353f69fbe5e2774fe5703ea` — bounded HTTP query.
-- `e33d43c19c8b954429036bba24ca0f3c72d0ba15` — 105-revision Backend regression: request old page revisions 5..1 but current state still revision 105 approved/no-actions/latest output.
+- `e33d43c19c8b954429036bba24ca0f3c72d0ba15` — 105-revision Backend regression.
 - `9c18826acbc8f2deeb42f70b2e0f651321504f94`, `2c82e8790b066a2ac035f8eee8c172136a0ed28a`, `72711ec8aaefc09fa4e2979008b0be03beb526c3` — Frontend DTO/view-model/adapter contract.
 - `de3a9dc260871ab913bd9d60350479b60de708b9` — independent controller review offset.
 - `bf782c92bd74436831e74391768c53c9cd9cb075` — Review History UI navigation.
@@ -139,7 +131,19 @@ Regression/evidence lineage:
 - `f95c1a9ee5e800125bdcc665c5a64d0fe10a1fd9` — Chromium complete audit navigation + current-authority isolation.
 - `6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b` — workflow fixture assertions.
 
-Real browser contract: pages 1–50, 51–100, 101–101 are reachable; revision 1 is visible; approve remains governed by latest revision while oldest page is open; approve creates revision 102 and reload preserves canonical approved state.
+**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
+
+#### AI-013E-OPS-005 — P2 Output Detail Snapshot Consistency
+
+**Problem:** after OPS-004, output row, audit page, count and canonical latest review were still separate top-level reads under PostgreSQL `READ COMMITTED`.
+
+**Impact:** a review commit between those reads could produce one internally mixed HTTP response: new current review state paired with older reviewer/time or page/count metadata. No durable corruption, but audit/read-model correctness is weakened.
+
+**Correct fix:** all four reads execute in one short `REPEATABLE READ` transaction; mapping/parsing occurs after commit; no write lock and no provider/network call is introduced.
+
+**Regression:** `apps/api/tests/ai-admin-output-detail-snapshot.test.ts` forbids output-detail reads outside the transaction, asserts repeatable-read is established first, and preserves approved state/actor/time/pagination mapping.
+
+**Commit:** `9d59f84fb516db5cfaf89382f548c3eea595e365`.
 
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
@@ -155,7 +159,7 @@ Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Expected gate:
 
-1. API lint/typecheck/unit/build;
+1. API lint/typecheck/unit/build, including Output Detail snapshot regression;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB constraints;
 4. Stage13E authorization/action/review/concurrency/DB/stable-review/review-history pagination tests;
@@ -166,17 +170,26 @@ Expected gate:
 9. Chromium Jobs/Units/Attempts/Review History pagination;
 10. Chromium pause/resume, approve/reload, session expiry, stale-review 409, 390px.
 
-Latest runtime/test run:
+Latest runtime/test-head run:
 
-- run `34275316004`;
-- head `6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b`;
-- job `102226771007`;
+- run `34277281675`;
+- head `9d59f84fb516db5cfaf89382f548c3eea595e365`;
+- job `102233304479`;
 - `runner_id=0`, `runner_name=""`, `steps=[]`;
 - no checkout or repository command executed.
 
+Latest candidate/docs-head run:
+
+- run `34277419491`;
+- head `bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`;
+- job `102233751450`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`.
+
+A prior candidate run `34275641643` was manually re-run unchanged; attempt 2 job `102231252401` again ended before checkout with `runner_id=0`, `steps=[]`.
+
 Interpretation: this is not product/test failure evidence. External account/platform cause remains `NOT YET VERIFIED`. Do not weaken tests or churn product code because a job never starts.
 
-**Exact next action:** rerun unchanged combined gate on current candidate when a real runner is allocated. Any command that actually executes and fails must be root-caused before Stage promotion.
+**Exact next action:** execute the unchanged combined gate when GitHub allocates a real runner. Any command that actually executes and fails must be root-caused before Stage promotion.
 
 ---
 
@@ -225,6 +238,7 @@ Follow `MASTER_REBUILD_ROADMAP.md`: Stage14 Student Product → Stage15 Assessme
 - `AI-013E-REVIEW-002` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-003` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-004` P1 — fixed in candidate; executable verification pending.
+- `AI-013E-OPS-005` P2 — fixed in candidate; executable verification pending.
 - later Admin/Student/assessment/offline/product stages remain incomplete.
 - Hosting/VPS intentionally not a current blocker.
 
