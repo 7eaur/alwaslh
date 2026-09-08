@@ -4,19 +4,19 @@
 
 ## 1. Source of Truth precedence
 
-عند التعارض استخدم الترتيب:
+عند التعارض:
 
-1. **current code + PostgreSQL migrations + executable GitHub Actions + actual Render runtime evidence**.
-2. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` للقرارات التشغيلية الحالية.
-3. `PROJECT_HANDOFF.md` + `PROJECT_STATUS.md` + `PROJECT_ENGINEERING_LOG.md` للحالة والسجل المركزي.
-4. `PROJECT_INTEGRATION_CONTINUITY.md` للـcurrent Integration operational snapshot.
-5. Product Decisions للـBusiness/Product rules.
-6. specialized Stage/module/deployment docs.
-7. `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` لمنع ضياع legacy capability.
-8. `MASTER_REBUILD_ROADMAP.md` للترتيب المستهدف.
-9. legacy audits/PRD/TODO/root legacy code كأدلة تاريخية فقط.
+1. **current code + PostgreSQL migrations + executable test/CI evidence**.
+2. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
+3. `PROJECT_HANDOFF.md` + `PROJECT_STATUS.md` + `PROJECT_ENGINEERING_LOG.md`.
+4. `PROJECT_INTEGRATION_CONTINUITY.md` — detailed resumable snapshot.
+5. `PROJECT_EXECUTION_QUEUE.md` — exact active tasks/order/blockers.
+6. Product Decisions + specialized stage/module docs.
+7. `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
+8. `MASTER_REBUILD_ROADMAP.md`.
+9. historical legacy/workstream/deployment docs.
 
-إذا لم يوجد executable/hosted evidence لادعاء runtime، يبقى `NOT YET VERIFIED`.
+Anything not inspected/executed = `NOT YET VERIFIED`.
 
 ## 2. Mandatory startup order
 
@@ -25,141 +25,153 @@
 3. `PROJECT_HANDOFF.md`
 4. `PROJECT_STATUS.md`
 5. `PROJECT_ENGINEERING_LOG.md`
-6. Main/Integration replacement only: `PROJECT_INTEGRATION_CONTINUITY.md`
-7. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-8. `docs/workstreams/TEAM_OPERATING_MODEL.md`
-9. role workstream: Backend / Frontend / Integration
-10. latest role GitHub Board + Team Room when cross-team
-11. if release/hosting involved: root `render.yaml` + `docs/deployment/RENDER_PRODUCTION.md`
-12. Product Decisions / Parity / Coverage / Roadmap
-13. current specialized stage docs
-14. legacy audits only when relevant to a capability being preserved/rebuilt
+6. `PROJECT_INTEGRATION_CONTINUITY.md`
+7. **`PROJECT_EXECUTION_QUEUE.md`**
+8. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+9. **`docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md`**
+10. active GitHub Issue `#16` latest comments
+11. Product Decisions / Parity / Coverage / Roadmap as relevant
+12. current specialized stage docs
+13. actual code/migrations/tests before modifying that area
+14. legacy audits/code only when needed to preserve a capability or understand a failure
 
 `NEXT_CONVERSATION_PROMPT.md` is Launcher only.
 
-## 3. Central state / governance files
+## 3. Current operating model — SINGLE OWNER
 
-| File | Authority / Purpose |
+Product Owner retired the permanent Backend/Frontend multi-chat model on 2026-09-08.
+
+Active:
+
+- `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md`
+- `PROJECT_EXECUTION_QUEUE.md`
+- Issue `#16` — sole Project Execution Board
+
+Historical/closed:
+
+- Issue `#13` — Team Room
+- Issue `#14` — Backend Board
+- Issue `#15` — Frontend Board
+- `docs/workstreams/TEAM_OPERATING_MODEL.md`
+- `docs/workstreams/BACKEND_WORKSTREAM.md`
+- `docs/workstreams/FRONTEND_WORKSTREAM.md`
+- `docs/workstreams/INTEGRATION_WORKSTREAM.md`
+
+Historical files/issues remain evidence only; do not place new commands/reports there.
+
+## 4. Central state files
+
+| File | Purpose |
 |---|---|
-| `PROJECT_HANDOFF.md` | resumable project handoff: production branch, architecture, team, current stage, hosting, known risks |
-| `PROJECT_STATUS.md` | concise current state, baseline, blockers, Render state, next work |
-| `PROJECT_ENGINEERING_LOG.md` | cumulative architecture decisions, findings, changes, tests and remaining work |
-| `PROJECT_INTEGRATION_CONTINUITY.md` | detailed current memory for Main Integration: branch heads/reports/decisions/root causes/CI/Render/exact next action |
-| `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | current Product Owner decisions; currently Render-primary deployment + main production branch |
-| `docs/workstreams/TEAM_OPERATING_MODEL.md` | permanent team ownership/command/report/branch/continuity rules |
-| `docs/workstreams/BACKEND_WORKSTREAM.md` | Backend ownership/self-review/current handoff |
-| `docs/workstreams/FRONTEND_WORKSTREAM.md` | Frontend ownership/UX/API/a11y/current handoff |
-| `docs/workstreams/INTEGRATION_WORKSTREAM.md` | Architecture/Integration/QA/Release rules |
-| `MASTER_REBUILD_ROADMAP.md` | target stage sequence; not runtime evidence |
+| `PROJECT_HANDOFF.md` | complete replacement-engineer startup/context |
+| `PROJECT_STATUS.md` | concise current stage/baseline/blockers |
+| `PROJECT_ENGINEERING_LOG.md` | cumulative architecture decisions/findings/changes/tests |
+| `PROJECT_INTEGRATION_CONTINUITY.md` | detailed current branch/contract/root-cause/CI/exact-next-action memory |
+| `PROJECT_EXECUTION_QUEUE.md` | sole ordered implementation queue |
+| `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | current Product Owner overrides |
+| `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md` | current engineering method/quality gates |
+| `MASTER_REBUILD_ROADMAP.md` | target stage sequence, not runtime evidence |
 | `NEXT_CONVERSATION_PROMPT.md` | compact startup launcher |
-| `TODO.md` | historical only |
 
-### GitHub Team Coordination
+## 5. Hosting / deployment policy — CURRENT
 
-- Issue `#13` — Team Room: contracts/blockers/architecture decisions.
-- Issue `#14` — Backend Command Board / reports.
-- Issue `#15` — Frontend Command Board / reports.
-- Issue `#16` — Integration/QA/Release decisions/evidence.
+**Deployment is deferred and out of current development scope until Product Owner provides a VPS and explicitly reopens deployment.**
 
-Latest `COMMAND`/Integration Review governs workstream scope. Each workstream updates its role file + Board REPORT. Integration updates central docs and `PROJECT_INTEGRATION_CONTINUITY.md` as soon as resume state changes.
+Consequences:
 
-## 4. Production / Deployment — CURRENT
+- do not provision or debug Render/Vercel/Railway as current work;
+- hosted runtime is not a Stage gate;
+- absence of VPS does not block product development;
+- `main` is the latest Integration-approved **development baseline**, not a deployment contract;
+- keep application architecture portable for later VPS deployment.
+
+Historical deployment files may remain in Git for evidence/portability but are not current task authority.
+
+## 6. Product / architecture summary
+
+**الوسيلة الذكية** منصة تعليمية عربية بسطحين مستقلين:
+
+- `apps/student-web`: Student Web/PWA;
+- `apps/admin-web`: Super Admin Web;
+- `apps/api`: authoritative Fastify/TypeScript API;
+- `database/migrations`: PostgreSQL schema/integrity authority.
+
+Core flow:
+
+`source provenance → media → OCR → AI → reviewed/published content → entitled Student learning/assessment`.
+
+Stable boundaries:
+
+- browser does not own canonical durable business state;
+- Full Code = 6 digits; Class Code = 7 digits;
+- Student returning login requires password + registered P-256 device proof;
+- Curriculum = Class → Subject Offering → optional Section → Lesson;
+- source inventory = provenance, not curriculum hierarchy;
+- `media ready != published`;
+- Stage13D publication is explicit Draft → Review → Published;
+- raw AI/provider output is never automatic student authority;
+- provider calls outside long DB transactions;
+- Fastify HTTP remains separate from durable AI worker;
+- no test weakening/auth bypass/fake API/duplicate lifecycle.
+
+## 7. Product / parity references
 
 | File | Purpose |
 |---|---|
-| `render.yaml` | **production Infrastructure-as-Code** for Render; deploys from `main` |
-| `docs/deployment/RENDER_PRODUCTION.md` | Render topology, DB/media durability, branching/release workflow, first-deploy verification |
-| `.env.example` | current local/current-runtime env contract; never secret storage |
-| `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | Product Owner deployment authority: `DEPLOYMENT RE-ENABLED — RENDER PRIMARY` |
-
-Current facts:
-
-- **`main` is production source branch.**
-- Render is primary hosting target for Student/Admin/API/PostgreSQL.
-- legacy main preserved at `archive/legacy-main-2026-09-08`.
-- repository Vercel serverless path has been retired.
-- feature branches do not deploy directly to production.
-- hosted runtime is `NOT YET VERIFIED` until the first Render Blueprint apply and health/session/media checks pass.
-- current `FileSystemMediaStorage` requires Render Persistent Disk; ephemeral production upload storage is prohibited.
-- no production Render AI worker yet because Stage12 live provider/bootstrap is not implemented.
-
-## 5. Product / Legacy parity
-
-| File | Purpose |
-|---|---|
-| `PRODUCT_FEATURE_PARITY_MATRIX.md` | required inventory of valuable legacy capability/scenarios |
+| `PRODUCT_FEATURE_PARITY_MATRIX.md` | valuable legacy capabilities/scenarios |
 | `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` | capability → disposition → implementation → acceptance evidence |
-| `docs/product/PRODUCT_EVOLUTION_REVIEW.md` | core Product Decisions |
+| `docs/product/PRODUCT_EVOLUTION_REVIEW.md` | Product Decisions |
 | `docs/product/PRODUCT_DECISIONS_BATCH_05.md` | product/AI/design/root-cause decisions |
-| `docs/product/PRODUCT_DECISIONS_BATCH_06.md` | Student/Admin/PWA/documentation and historical Preview policy |
-| `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | current Product Owner decisions; overrides older conflicting deployment policy |
-| `PROJECT_DEEP_AUDIT.md` | legacy deep audit/reference |
-| `PROJECT_FULL_AUDIT_CATALOG.md` | expanded historical evidence catalog |
-| `PROJECT_REBUILD_BLUEPRINT.md` | historical synthesis, below newer decisions/evidence |
-| `docs/prd.md` | legacy/reference PRD |
-| `docs/SOURCE_INVENTORY.md` | historical source inventory |
+| `docs/product/PRODUCT_DECISIONS_BATCH_06.md` | Student/Admin/PWA/documentation decisions |
+| `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | current overrides |
+| `PROJECT_DEEP_AUDIT.md` / `PROJECT_FULL_AUDIT_CATALOG.md` | historical deep evidence |
 
-Legacy code is a capability/failure reference, not the current architecture target.
+Legacy architecture is reference only.
 
-## 6. Data / Curriculum / Content
+## 8. Data / Content / Curriculum
 
-| File | Purpose / State |
-|---|---|
-| `DATABASE_PLATFORM_ARCHITECTURE.md` | PostgreSQL platform architecture/constraints |
-| `docs/curriculum/CURRICULUM_STRUCTURE.md` | Class → Subject Offering → optional Section → Lesson |
-| `docs/admin/STAGE13_ADMIN_CURRICULUM_UI.md` | Admin curriculum UI behavior/evidence |
-| `docs/admin/STAGE13_CONTENT_MEDIA_OCR_OPERATIONS.md` | Stage13C VERIFIED operations over Stage9→10→OCR |
-| `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md` | Stage13D VERIFIED mixed upload/history/Draft→Review→Published |
-| `docs/media/MEDIA_PIPELINE_ARCHITECTURE.md` | Stage10 media architecture |
-| `docs/media/MEDIA_STAGE_DOD.md` | media DoD/evidence |
-| `database/migrations/0008_content_source_import.sql` | Stage9 provenance schema |
-| `database/migrations/0009_media_pipeline.sql` | Stage10 media schema |
-| `database/migrations/0011_ocr_foundation.sql` | OCR durable schema |
-| `database/migrations/0017_content_ingestion_publication.sql` | Stage13D ingestion/publication schema |
+Important current docs/migrations:
 
-Canonical content source remains `7eaur/alwaslh-go` pinned by Stage9 evidence. Source names/folders are provenance, not curriculum authority.
+- `DATABASE_PLATFORM_ARCHITECTURE.md`
+- `docs/curriculum/CURRICULUM_STRUCTURE.md`
+- `docs/admin/STAGE13_ADMIN_CURRICULUM_UI.md`
+- `docs/admin/STAGE13_CONTENT_MEDIA_OCR_OPERATIONS.md`
+- `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md`
+- `docs/media/MEDIA_PIPELINE_ARCHITECTURE.md`
+- `database/migrations/0008_content_source_import.sql`
+- `database/migrations/0009_media_pipeline.sql`
+- `database/migrations/0011_ocr_foundation.sql`
+- `database/migrations/0017_content_ingestion_publication.sql`
 
-Stage13D separates processing from publication: ready media is not Lesson content until explicitly Draft-linked, reviewed and Published.
+Canonical source evidence remains Stage9 `alwaslh-go`; source paths/names are provenance, not curriculum authority.
 
-## 7. Auth / Access / Student activation
+## 9. Auth / Access
 
-Implementation lives under `apps/api/src/auth`, `activation`, `access`, associated migrations/tests and `apps/student-web`.
+Current verified principles:
 
-Stable verified principles:
-
-- server sessions + role isolation;
+- server session/role isolation;
 - Full Code 6 digits / Class Code 7 digits;
-- non-consuming verify → activation ticket → atomic completion;
+- non-consuming activation verify → atomic completion;
 - Student password + registered P-256 device challenge;
-- Admin temporary-password recovery + revocation + forced password change;
+- Admin recovery + revocation + forced password change;
 - explicit device rebind/reset.
 
-Production session/CORS behavior must also be verified against Render frontend origins after first deploy.
+## 10. OCR / AI
 
-## 8. OCR / AI
+Key docs:
 
-| File | Purpose |
-|---|---|
-| `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` | provider/model-neutral strategy and benchmark requirement |
-| `docs/ai/STAGE11_GENERATION_CONTRACTS.md` | typed modes/Prompt Registry/validators/golden data |
-| `docs/ai/STAGE12_JOB_LIFECYCLE.md` | durable job/unit/attempt lifecycle and controls |
-| `docs/ai/STAGE12_WORKER_RUNTIME.md` | bounded dedicated worker runtime and explicit missing production bootstrap |
-| `database/migrations/0011_ocr_foundation.sql` + OCR code/tests | canonical OCR lifecycle/review/search |
+- `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`
+- `docs/ai/STAGE11_GENERATION_CONTRACTS.md`
+- `docs/ai/STAGE12_JOB_LIFECYCLE.md`
+- `docs/ai/STAGE12_WORKER_RUNTIME.md`
+- `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md`
+- `docs/admin/STAGE13E_AI_OPERATIONS_FRONTEND_PREP.md`
 
-Live provider credentials/routes/benchmark/bootstrap remain `NOT YET VERIFIED`. Do not create a fake production worker to satisfy deployment.
+Live provider benchmark/routes/credentials/bootstrap remain `NOT YET VERIFIED`. Never fake provider readiness or move the background worker into Fastify.
 
-Current engineering stage is **Stage13E Admin AI Operations / Review**. Dynamic candidate state is in `PROJECT_INTEGRATION_CONTINUITY.md` + Boards #13–#16. Stage13E remains outside `main` until verified.
+## 11. Current verified baseline
 
-## 9. UX / Brand / Offline
-
-- `packages/brand/` — canonical brand primitives.
-- `docs/ux/` — UX architecture/contracts.
-- `OFFLINE_MODE.md` + `OFFLINE_MODE_README.md` — legacy/reference + rebuild offline requirements.
-- `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md` — historical development/preview policy; current hosting decisions are superseded by `CURRENT_PRODUCT_OVERRIDES.md` + Render deployment docs.
-
-## 10. Current verified baseline
-
-Latest fully verified pre-Render executable head:
+Latest fully executable green application baseline:
 
 `4eca7de8877ac9e2289b9c7990c912d33c256935`
 
@@ -175,51 +187,53 @@ Same-head SUCCESS:
 - Stage9 `34177369756`
 - Full Rebuild `34177369768`
 
-Docs/Render-config cutover commits do not replace this application verification baseline. First Render apply creates a separate hosted-runtime evidence layer.
+Do not replace this baseline with docs-only/unexecuted heads.
 
-## 11. Current implementation sequence
+## 12. Current implementation sequence
 
 ```text
 VERIFIED through Stage13D
-→ Render production bootstrap + hosted verification
-→ finish Stage13E candidate verification/integration
-→ merge Stage13E to main → Render auto-deploy → hosted smoke
-→ Stage13F Question Bank
-→ Stage13G remaining Admin
-→ Stage14 Student product
+→ Stage13E combined verification + closure
+→ Stage13F Question Bank / Quiz Builder / Publish
+→ Stage13G Remaining Admin
+→ Stage14 Student Product
 → Stage15 Assessment
 → Stage16 Offline/PWA
-→ Stage17 personal data
-→ Stage18 notifications
-→ Stage19 progress/statistics
-→ Stage20 reporting/export
-→ later hardening/release/operations
+→ Stage17 Personal Data
+→ Stage18 Notifications
+→ Stage19 Progress/Statistics
+→ Stage20 Import/Export/Reporting
+→ Stage21–25 hardening/data
+→ VPS available + deployment reopened
+→ Stage26 Staging
+→ Stage27 Release Gate
+→ Stage28 Production Cutover
+→ Stage29 Monitoring/Operations
 ```
 
-Render bootstrap does not make Stage13E complete; Stage13E candidate branches stay isolated until gates pass.
+Exact current task is always the first unfinished item in `PROJECT_EXECUTION_QUEUE.md`.
 
-## 12. Superseded / historical warnings
+## 13. Current Stage13E snapshot
 
-- Old root Supabase frontend/backend architecture is legacy reference, not runtime target.
-- old Supabase database is not current production authority.
-- `TODO.md` is historical only.
-- PED-051 and former deployment-deferral wording are historical. **Current override is Render-primary production.**
-- Vercel serverless preview path was removed from the current production branch.
-- External old provider projects/hooks may remain until provider-side disconnection after Render goes live; repository retirement does not delete external data.
+Combined branch:
 
-## 13. Documentation maintenance rule
+`integration/stage13e-ai-operations @ 807f733838e2fab2620652025b255c3bc404fec1`
+
+Latest combined Actions run `34193380473`, attempt 2, did not receive a hosted runner (`steps=[]`), so Stage13E remains `NOT YET VERIFIED`. This is not code-failure evidence.
+
+See `PROJECT_EXECUTION_QUEUE.md` and `PROJECT_INTEGRATION_CONTINUITY.md` for exact next action.
+
+## 14. Documentation maintenance
 
 After every meaningful batch:
 
-1. record exact Git HEAD + GitHub run IDs and, when deployed, Render resource/deploy IDs;
-2. update `PROJECT_STATUS.md`;
-3. update `PROJECT_ENGINEERING_LOG.md` findings/ADs/evidence;
-4. update `PROJECT_HANDOFF.md` when resume context changes;
-5. Integration updates `PROJECT_INTEGRATION_CONTINUITY.md` immediately after material report/decision/HEAD/CI/Render result;
-6. update specialized module/deployment doc;
-7. update Legacy Coverage/parity evidence when capability state changes;
-8. update Roadmap when stage status/order changes;
+1. update `PROJECT_EXECUTION_QUEUE.md`;
+2. update `PROJECT_INTEGRATION_CONTINUITY.md`;
+3. update `PROJECT_STATUS.md` when state changes;
+4. record findings/ADs/tests in `PROJECT_ENGINEERING_LOG.md`;
+5. update specialized stage docs;
+6. add `EXECUTION REPORT` to Issue #16;
+7. update Handoff/Index/Roadmap/Legacy Coverage when their truth changes;
+8. record exact HEAD + executable run IDs;
 9. never mark PASS from prose/build alone;
-10. leave unverified items explicitly `NOT YET VERIFIED`.
-
-This convention exists so a replacement conversation can continue from the repository alone.
+10. never leave continuation-critical information only in chat.
