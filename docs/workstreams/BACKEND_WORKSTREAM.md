@@ -182,17 +182,56 @@ NOT YET VERIFIED:
 
 Build وحده ليس PASS.
 
-## 11. Report location
+## 11. Root-cause requirement
+
+أي bug/failure مهم يجب أن يدوَّن كالتالي قبل `Ready for integration`:
+
+```md
+Symptom:
+Root cause:
+Affected invariant/contract:
+Blast radius:
+Fix location and why:
+Regression test:
+```
+
+ممنوع تمرير workaround يخفي المشكلة أو يضع exception خاصًا دائمًا بدل إصلاح authority الصحيحة. إذا كان الخطأ في harness، أثبت صحة product behavior ثم أصلح harness دون إضعاف الاختبار.
+
+## 12. Mandatory resumable handoff
+
+بعد كل batch ذات معنى، يجب أن يستطيع Backend engineer/chat جديد الاستمرار من GitHub فقط. لذلك حدّث هذا الملف وIssue `#14` بالمعلومات التالية حتى لو كانت المحادثة ستنتهي فجأة:
+
+```md
+Current stage/feature:
+Branch:
+Base HEAD:
+Latest commits:
+What was inspected:
+What was implemented:
+Contracts/schema/endpoints changed:
+Tests and exact results:
+Failures + root causes + fixes:
+Open issues/blockers:
+Cross-team dependencies/decisions:
+NOT YET VERIFIED:
+Ready for integration: YES/NO
+Exact next action:
+```
+
+لا تضع معلومة لازمة للاستمرار في chat فقط.
+
+## 13. Report location
 
 بعد كل batch:
 
 1. حدّث قسم Current Work أدناه داخل branch.
 2. ضع تقرير التنفيذ في Issue `#14`.
 3. ضع cross-team blocker/decision في Issue `#13`.
+4. حدّث specialized backend/module doc إذا تغير contract أو lifecycle مهم.
 
 Integration Lead هو من يحدث central status/log/handoff بعد القبول.
 
-## 12. Current Work
+## 14. Current Work
 
 **Current stage:** Stage13E — Admin AI Operations / Review.
 
