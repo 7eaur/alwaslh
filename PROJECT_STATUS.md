@@ -1,22 +1,18 @@
 # PROJECT STATUS — الوسيلة الذكية
 
-> الحالة التنفيذية المختصرة. Code/migrations + executable verification + actual hosted-runtime evidence تتقدم على prose. اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, و`PROJECT_INTEGRATION_CONTINUITY.md` للتفاصيل.
+> الحالة التنفيذية المختصرة. Code/migrations + executable verification تتقدم على prose. اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, و`PROJECT_INTEGRATION_CONTINUITY.md` للتفاصيل.
 
-آخر تحديث: 2026-09-08 — Stage13E combined candidate assembled; executable runner still blocked.
+آخر تحديث: 2026-09-08 — hosting/deployment fully deferred until VPS; Stage13E combined candidate remains current work.
 
 ## Current Position
 
 - Repository: `7eaur/alwaslh`
-- Development delivery branch: **`main`**
-- Current `main` application/hosting base before this docs update: `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`
-- Legacy pre-rebuild `main`: `archive/legacy-main-2026-09-08` → `5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`
-- Render: **TEMPORARY FREE DEVELOPMENT / TEST HOSTING ONLY**
-- Expected final production hosting: **VPS or Railway; deferred until requirements stabilize**
-- Old Vercel serverless path: **RETIRED / Git auto-deploy guarded off**
-- Old Supabase resources: historical/rollback only; not final production authority
-- Latest fully verified application baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`
-- Current product work: **Stage13E Admin AI Operations / Review — COMBINED INTEGRATION CANDIDATE / NOT YET VERIFIED / OUTSIDE `main`**
-- GitHub Actions: hosted-runner allocation blocker remains observed (`runner_id=0`, `steps=[]`); no test weakening permitted.
+- Development baseline: **`main`** = latest Integration-approved development state.
+- Hosting/deployment: **FULLY DEFERRED UNTIL VPS IS AVAILABLE**. Not a current task, blocker or Stage gate.
+- Legacy pre-rebuild archive: `archive/legacy-main-2026-09-08` → `5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
+- Latest fully verified application baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
+- Current product work: **Stage13E Admin AI Operations / Review — COMBINED INTEGRATION CANDIDATE / NOT YET VERIFIED / OUTSIDE `main`**.
+- GitHub Actions: hosted-runner allocation blocker has repeatedly produced `runner_id=0`, `steps=[]`; this is verification infrastructure evidence, not product-failure evidence.
 
 ## Product / Architecture
 
@@ -33,27 +29,24 @@ Stable boundaries:
 - exact AI modes never fabricate unknown answers.
 - AI worker lifecycle remains separate from Fastify HTTP.
 - no test weakening, auth bypass, fake API, duplicate lifecycle or wrong-layer workaround.
+- architecture stays portable naturally; no hosting-provider implementation work now.
 
-## Temporary Render Development Hosting
+## Current Definition of Done
 
-Canonical: `render.yaml` + `docs/deployment/RENDER_DEVELOPMENT.md`.
+Until Product Owner reopens deployment after VPS availability, Stage closure uses only executable engineering evidence appropriate to the Stage:
 
-```text
-Student Vite Static Site ─┐
-                          ├── Docker Fastify API ── Render Free PostgreSQL
-Admin Vite Static Site ───┘
-```
+1. code/contracts reviewed;
+2. lint + strict typecheck;
+3. unit tests;
+4. integration tests;
+5. clean PostgreSQL migrations and DB contract verification where relevant;
+6. build;
+7. browser/Chromium E2E and responsive/a11y regressions where relevant;
+8. security/performance/legacy regression checks;
+9. same-head Integration review;
+10. central/specialized docs + Legacy Coverage/roadmap synchronization.
 
-Declared free resources:
-
-- `alwaslh-dev-student-7eaur`
-- `alwaslh-dev-admin-7eaur`
-- `alwaslh-dev-api-7eaur`
-- `alwaslh-dev-postgres-7eaur`
-
-API remains Dockerized because PDF processing requires Poppler. Free Render media filesystem is ephemeral; media durability across restart/redeploy remains `NOT YET VERIFIED` by design. Final durable storage/production topology is intentionally deferred.
-
-Blueprint Apply/runtime verification is still pending according to current repository evidence; do not claim hosted PASS until actual Render resources/deploys/logs are inspected.
+No deploy or hosted smoke is required.
 
 ## Fully Verified Application Baseline
 
@@ -87,8 +80,7 @@ Do not replace this baseline until a newer same-head executable matrix actually 
 | Stage13D Upload/History/Publication Linking | VERIFIED incl. Chromium |
 | Stage13E Admin AI Operations / Review | **COMBINED CANDIDATE / NOT YET VERIFIED / OUTSIDE `main`** |
 | Stage13F+ | REQUIRED / later |
-| Render free development runtime | CONFIGURED / APPLY + runtime verification pending |
-| Final VPS/Railway production | DEFERRED until product/operational requirements stabilize |
+| Hosting / deployment | **DEFERRED UNTIL VPS / OUTSIDE CURRENT ROADMAP EXECUTION** |
 
 ## Stage13E Candidate State
 
@@ -96,7 +88,7 @@ Backend:
 
 - branch `backend/stage13e-ai-operations`
 - HEAD `348c02646d0ff873fd305beff16f41c46d9c0285`
-- structurally accepted Integration candidate; executable same-head gates blocked before checkout.
+- structurally accepted Integration candidate; standalone executable same-head gates were blocked before checkout.
 
 Frontend:
 
@@ -104,26 +96,26 @@ Frontend:
 - Product/Test HEAD `7bf2f8c32907032551aace9f3aa27681040c4b0f`
 - documented branch HEAD `1eb141e950e96c9f53ffd103a386d59166113c16`
 - REPORT #15 `5579577424`
-- Integration Review #15 `5580147549`: bounded real-browser session-expiry + stale-review `409` preparation **ACCEPTED AS INTEGRATION CANDIDATE**.
+- Integration Review #15 `5580147549`: real-browser session-expiry + stale-review `409` preparation accepted as Integration candidate.
 
 Combined Integration:
 
 - branch `integration/stage13e-ai-operations`
-- based on current `main @ 1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`
+- assembled from `main @ 1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`
 - Backend selective commit `227f4c9dba99e7b8c93d25caebe86e38108d4a5c`
 - Frontend selective commit `a60274fedf55fb45b6684743da24b24004339917`
 - real fixture seed `4ba77703866762c471257bbb914590b817ecc82e`
 - combined workflow HEAD `807f733838e2fab2620652025b255c3bc404fec1`
 - Integration Report #16 `5580151268`
 
-The combined branch is exactly 4 commits ahead of that `main` base and contains only Stage13E API/Admin/tests/migration/docs/workflows plus Integration fixture/workflow. Current Render/Docker/Vercel guard configuration is not modified by the Stage13E diff.
+The combined candidate contains only Stage13E API/Admin/tests/migration/specialized docs/workflows + Integration fixture/workflow. No unrelated Student product change is included.
 
 ## Stage13E Combined Browser Contract
 
-Real fixture variables:
+Fixture variables:
 
-- `STAGE13E_E2E_JOB_TYPE=stage13e_e2e_happy` — non-terminal job with an open valid review output plus a queued unit; enables real pause/resume + approval.
-- `STAGE13E_E2E_RACE_JOB_TYPE=stage13e_e2e_race` — completed execution with an open valid review output; prevents non-terminal polling from erasing stale UI before a real out-of-band review mutation.
+- `STAGE13E_E2E_JOB_TYPE=stage13e_e2e_happy`
+- `STAGE13E_E2E_RACE_JOB_TYPE=stage13e_e2e_race`
 
 Combined Chromium covers:
 
@@ -134,45 +126,39 @@ Combined Chromium covers:
 - real stale-action `409` canonical refresh;
 - 390px overflow regression.
 
-No mock API, route interception, fake 401/409, test-only Backend endpoint, cookie forging or sleep-based race is introduced.
+No mock API, route interception, fake 401/409, test-only Backend endpoint, cookie forging or sleep-based race.
 
 ## Latest Stage13E Executable Attempt
 
-Combined run: `34193380473`
+Initial combined run:
 
-Job: `101955846938`
+- run `34193380473`
+- job `101955846938`
+- HEAD `807f733838e2fab2620652025b255c3bc404fec1`
+- result ended before checkout: `runner_id=0`, `runner_name=""`, `steps=[]`.
 
-HEAD: `807f733838e2fab2620652025b255c3bc404fec1`
+A rerun of failed jobs was requested on 2026-09-08 after the Product Owner removed hosting from the roadmap. Its executed result must be inspected before changing Stage status.
 
-Observed result:
-
-- `conclusion=failure`
-- `runner_id=0`
-- `runner_name=""`
-- `steps=[]`
-- no checkout and no executable product/test step.
-
-Interpretation: repository-wide hosted-runner allocation blocker, **not evidence of Stage13E code failure**. Do not alter product behavior or weaken tests because of this conclusion.
+Interpretation rule: a workflow conclusion with no runner/steps is not application failure. Any future executed failing step must be treated as a real defect until root cause proves otherwise.
 
 ## Immediate Next Work
 
-1. Keep Stage13E outside `main`.
-2. When GitHub runner allocation works, rerun the unchanged combined gate on `integration/stage13e-ai-operations`.
-3. Review actual API/Admin/PostgreSQL/Chromium results and fix only executed defects at their owning layer.
-4. If same-head combined gate passes, run required wider regressions, then Integration may promote Stage13E to `main` and close docs/Legacy Coverage.
-5. Independently, apply/verify the free Render development Blueprint when the Product Owner performs the pending Dashboard step; hosted development evidence does not substitute for Stage PASS.
-6. Stage13F must not start until Stage13E closure.
+1. Inspect the rerun of Stage13E combined gate on `integration/stage13e-ai-operations`.
+2. If executable steps run and fail, fix root cause in the owning layer and add regression coverage.
+3. If combined gate passes, run required wider same-head regressions.
+4. Promote Stage13E to `main` only after executable PASS.
+5. Synchronize `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, specialized docs, Legacy Coverage and roadmap.
+6. Start Stage13F only after Stage13E closure.
+7. Do **not** perform any hosting/deployment work until an explicit future VPS command.
 
 ## High-Priority Open Boundaries
 
+- Stage13E same-head executable verification.
 - `AI-011-005` P2 — `direct` AI question persistence for Stage13F unresolved.
 - `AI-012-019` P2 — live AI provider benchmark/config/routes/bootstrap unverified.
-- Stage13E same-head executable verification blocked by hosted runner allocation.
-- production AI worker absent by design.
-- Render development environment not yet runtime-verified.
-- Render Free media durability intentionally unavailable.
-- final VPS/Railway production topology and durable media storage deferred.
+- live-provider/production AI worker bootstrap absent by design; do not couple it to Fastify.
 - Student full learning product / Offline/PWA / later stages remain incomplete.
+- VPS deployment architecture is intentionally future work and not a current blocker.
 
 ## Documentation Startup Path
 
