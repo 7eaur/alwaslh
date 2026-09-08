@@ -620,33 +620,36 @@ export class AdminAiOperationsService {
   }
 
   async outputDetail(outputId: string, reviewLimit = 100, reviewOffset = 0): Promise<AdminAiOutputDetail> {
-    const rows = await this.database.query<OutputRow>(
-      `select o.id, o.job_unit_id, o.validation_status, o.raw_response, o.normalized_output,
-              o.validation_errors, o.semantic_warnings, o.reviewed_by_profile_id, o.reviewed_at,
-              o.created_at, o.updated_at, u.input_payload, u.unit_key, u.status as unit_status, u.job_id
-       from ai_outputs o join ai_job_units u on u.id = o.job_unit_id where o.id = $1`,
-      [outputId],
-    );
-    const output = rows[0];
-    if (!output) throw new AppError("NOT_FOUND", "مخرج الذكاء الاصطناعي غير موجود", 404);
+    const snapshot = await this.database.transaction(async (tx) => {
+      await tx.query("set transaction isolation level repeatable read");
+      const rows = await tx.query<OutputRow>(
+        `select o.id, o.job_unit_id, o.validation_status, o.raw_response, o.normalized_output,
+                o.validation_errors, o.semantic_warnings, o.reviewed_by_profile_id, o.reviewed_at,
+                o.created_at, o.updated_at, u.input_payload, u.unit_key, u.status as unit_status, u.job_id
+         from ai_outputs o join ai_job_units u on u.id = o.job_unit_id where o.id = $1`,
+        [outputId],
+      );
+      const output = rows[0];
+      if (!output) throw new AppError("NOT_FOUND", "مخرج الذكاء الاصطناعي غير موجود", 404);
 
-    const [events, totals, latestRows] = await Promise.all([
-      this.database.query<ReviewEventRow>(
+      const events = await tx.query<ReviewEventRow>(
         `${REVIEW_EVENT_SELECT}
          where e.ai_output_id = $1 order by e.revision desc limit $2 offset $3`,
         [outputId, reviewLimit, reviewOffset],
-      ),
-      this.database.query<{ count: string }>(
+      );
+      const totals = await tx.query<{ count: string }>(
         "select count(*) from ai_output_review_events where ai_output_id = $1",
         [outputId],
-      ),
-      this.database.query<ReviewEventRow>(
+      );
+      const latestRows = await tx.query<ReviewEventRow>(
         `${REVIEW_EVENT_SELECT}
          where e.ai_output_id = $1 order by e.revision desc limit 1`,
         [outputId],
-      ),
-    ]);
+      );
+      return { output, events, totals, latestRows };
+    });
 
+    const { output, events, totals, latestRows } = snapshot;
     const normalized =
       output.normalized_output === null ? null : aiGenerationOutputSchema.safeParse(output.normalized_output);
     if (normalized && !normalized.success) {
