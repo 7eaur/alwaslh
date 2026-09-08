@@ -12,6 +12,12 @@ export type AiAnswerStatus = "known" | "unknown" | "review_required";
 export type AiJobAction = "pause" | "resume" | "cancel" | "retry";
 export type AiReviewAction = "edit" | "approve" | "reject";
 
+export interface AiPaginationView {
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export interface AiJobProgressView {
   jobId: string;
   status: AiJobLifecycleStatus;
@@ -134,6 +140,7 @@ export interface AiUnitView {
   lastErrorCode: string | null;
   sourceProvenance: readonly AiSourceProvenanceView[];
   attempts: readonly AiAttemptView[];
+  attemptPagination: AiPaginationView | null;
   output: AiReviewOutputView | null;
 }
 
@@ -149,6 +156,7 @@ export interface AiJobSummaryView {
 export interface AiJobDetailView extends AiJobSummaryView {
   allowedActions: readonly AiJobAction[];
   units: readonly AiUnitView[];
+  unitPagination: AiPaginationView;
 }
 
 export interface AiOperationsFeedback {
@@ -160,6 +168,7 @@ export interface AiOperationsWorkspaceModel {
   state: "loading" | "error" | "empty" | "ready";
   errorMessage: string | null;
   jobs: readonly AiJobSummaryView[];
+  jobPagination: AiPaginationView;
   selectedJobId: string | null;
   selectedJobState: "idle" | "loading" | "error" | "ready";
   selectedJobError: string | null;
@@ -255,6 +264,23 @@ export function actionIsAllowed<TAction extends string>(actions: readonly TActio
 
 export function describeProgress(progress: AiJobProgressView): string {
   return `${progress.progressPercent}% · ${progress.settledUnits} من ${progress.totalUnits} وحدات مستقرة · ${progress.remainingUnits} متبقية`;
+}
+
+export function paginationRangeLabel(pagination: AiPaginationView): string {
+  if (pagination.total === 0) return "0 من 0";
+  const start = Math.min(pagination.total, pagination.offset + 1);
+  const end = Math.min(pagination.total, pagination.offset + pagination.limit);
+  return `${start}–${end} من ${pagination.total}`;
+}
+
+export function previousPageOffset(pagination: AiPaginationView): number | null {
+  if (pagination.offset <= 0) return null;
+  return Math.max(0, pagination.offset - pagination.limit);
+}
+
+export function nextPageOffset(pagination: AiPaginationView): number | null {
+  const next = pagination.offset + pagination.limit;
+  return next < pagination.total ? next : null;
 }
 
 export function publicOperationalErrorLabel(code: string): string {
