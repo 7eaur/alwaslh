@@ -133,6 +133,7 @@ export interface AdminAiOutputDetail {
   reviewedAt: Date | null;
   sourceProvenance: AdminAiSourceProvenance[];
   reviewHistory: AdminAiOutputReviewEvent[];
+  reviewPagination: { total: number; limit: number; offset: number };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -387,6 +388,23 @@ function mapAttempt(row: AttemptRow): AdminAiAttemptView {
   };
 }
 
+function mapReviewEvent(row: ReviewEventRow): AdminAiOutputReviewEvent {
+  const reviewed = row.reviewed_output === null ? null : aiGenerationOutputSchema.safeParse(row.reviewed_output);
+  if (reviewed && !reviewed.success) {
+    throw new AppError("INTERNAL_ERROR", "سجل المراجعة لا يطابق عقد الذكاء الاصطناعي", 500);
+  }
+  return {
+    id: row.id,
+    revision: row.revision,
+    action: row.action,
+    actorProfileId: row.actor_profile_id,
+    actorDisplayName: row.actor_display_name,
+    reviewedOutput: reviewed?.data ?? null,
+    note: row.note,
+    createdAt: row.created_at,
+  };
+}
+
 function latestAttempt(row: UnitRow): AdminAiAttemptView | null {
   if (
     !row.attempt_id ||
@@ -500,6 +518,12 @@ const UNIT_SELECT = `
     where a.job_unit_id = u.id order by a.attempt_number desc limit 1
   ) attempt on true`;
 
+const REVIEW_EVENT_SELECT = `
+  select e.id, e.revision, e.action, e.actor_profile_id,
+         p.display_name as actor_display_name, e.reviewed_output, e.note, e.created_at
+  from ai_output_review_events e
+  left join profiles p on p.id = e.actor_profile_id`;
+
 export class AdminAiOperationsService {
   private readonly lifecycle = new AiJobLifecycleRepository();
   private readonly execution = new AiExecutionRepository();
@@ -595,7 +619,7 @@ export class AdminAiOperationsService {
     };
   }
 
-  async outputDetail(outputId: string): Promise<AdminAiOutputDetail> {
+  async outputDetail(outputId: string, reviewLimit = 100, reviewOffset = 0): Promise<AdminAiOutputDetail> {
     const rows = await this.database.query<OutputRow>(
       `select o.id, o.job_unit_id, o.validation_status, o.raw_response, o.normalized_output,
               o.validation_errors, o.semantic_warnings, o.reviewed_by_profile_id, o.reviewed_at,
@@ -606,38 +630,30 @@ export class AdminAiOperationsService {
     const output = rows[0];
     if (!output) throw new AppError("NOT_FOUND", "مخرج الذكاء الاصطناعي غير موجود", 404);
 
-    const events = await this.database.query<ReviewEventRow>(
-      `select e.id, e.revision, e.action, e.actor_profile_id,
-              p.display_name as actor_display_name, e.reviewed_output, e.note, e.created_at
-       from ai_output_review_events e
-       left join profiles p on p.id = e.actor_profile_id
-       where e.ai_output_id = $1 order by e.revision desc limit 100`,
-      [outputId],
-    );
+    const [events, totals, latestRows] = await Promise.all([
+      this.database.query<ReviewEventRow>(
+        `${REVIEW_EVENT_SELECT}
+         where e.ai_output_id = $1 order by e.revision desc limit $2 offset $3`,
+        [outputId, reviewLimit, reviewOffset],
+      ),
+      this.database.query<{ count: string }>(
+        "select count(*) from ai_output_review_events where ai_output_id = $1",
+        [outputId],
+      ),
+      this.database.query<ReviewEventRow>(
+        `${REVIEW_EVENT_SELECT}
+         where e.ai_output_id = $1 order by e.revision desc limit 1`,
+        [outputId],
+      ),
+    ]);
 
     const normalized =
       output.normalized_output === null ? null : aiGenerationOutputSchema.safeParse(output.normalized_output);
     if (normalized && !normalized.success) {
       throw new AppError("INTERNAL_ERROR", "المخرج المخزن لا يطابق عقد الذكاء الاصطناعي", 500);
     }
-    const history = events.map((event): AdminAiOutputReviewEvent => {
-      const reviewed =
-        event.reviewed_output === null ? null : aiGenerationOutputSchema.safeParse(event.reviewed_output);
-      if (reviewed && !reviewed.success) {
-        throw new AppError("INTERNAL_ERROR", "سجل المراجعة لا يطابق عقد الذكاء الاصطناعي", 500);
-      }
-      return {
-        id: event.id,
-        revision: event.revision,
-        action: event.action,
-        actorProfileId: event.actor_profile_id,
-        actorDisplayName: event.actor_display_name,
-        reviewedOutput: reviewed?.data ?? null,
-        note: event.note,
-        createdAt: event.created_at,
-      };
-    });
-    const latest = history[0] ?? null;
+    const history = events.map(mapReviewEvent);
+    const latest = latestRows[0] ? mapReviewEvent(latestRows[0]) : null;
     const source = sourceInfo(output.input_payload);
     const currentReviewCandidate = latest?.action === "edit" ? latest.reviewedOutput : normalized?.data ?? null;
     let effectiveReviewedOutput: AiGenerationOutput | null = normalized?.data ?? null;
@@ -667,6 +683,11 @@ export class AdminAiOperationsService {
       reviewedAt: output.reviewed_at,
       sourceProvenance: source.sources,
       reviewHistory: history,
+      reviewPagination: {
+        total: Number(totals[0]?.count ?? 0),
+        limit: reviewLimit,
+        offset: reviewOffset,
+      },
       createdAt: output.created_at,
       updatedAt: output.updated_at,
     };
