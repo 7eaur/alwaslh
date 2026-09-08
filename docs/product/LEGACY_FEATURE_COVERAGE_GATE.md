@@ -25,10 +25,11 @@ A capability may move to a better screen or share infrastructure, but its useful
 
 - `VERIFIED` — implementation exists and executable acceptance evidence passed.
 - `FOUNDATION VERIFIED` — lower-level infrastructure exists but legacy user outcome is not yet closed.
+- `CANDIDATE / EXECUTION PENDING` — implementation and static/integration design evidence exist, but required executable acceptance has not run successfully yet.
 - `NOT YET VERIFIED` — no complete acceptance evidence for that capability.
 - `REMOVE APPROVED` — only with explicit Product Owner evidence.
 
-Never count a backend foundation as completion of a later UI/business flow automatically.
+Never count a backend foundation or an unexecuted candidate as completion of a later UI/business flow automatically.
 
 ## Current exact verified executable baseline
 
@@ -126,31 +127,77 @@ Important evidence:
 
 `CONTENT-013-002` is closed: media→Lesson publication linking is now explicit and executable evidence proves `media ready != published`.
 
-## What remains NOT YET VERIFIED after Stage13D
+## Stage13E candidate coverage — EXECUTION PENDING, NOT VERIFIED
+
+Current candidate:
+
+`integration/stage13e-ai-operations @ c48d1e597497e6054340f71235c78937082b9371`
+
+Latest runtime/test HEAD:
+
+`d60218b518fb0fe453c21386e77cd35a2228ad07`
+
+The candidate reuses verified Stage12 authority and currently implements:
+
+```text
+Stage12 durable jobs/units/attempts/outputs
+→ Admin status/progress/filter/detail
+→ pause/resume/cancel/retry from server authority
+→ provider/model/project/usage observability without secrets
+→ source/page/checksum provenance
+→ output inspection + edit/reject/approve
+→ bounded Jobs/Units/Attempts/Review History navigation
+→ canonical latest review independent from historical page
+→ real-browser pagination/session-expiry/stale-409/responsive contract
+```
+
+It also contains eight audit fixes that are **fixed in candidate but not executable-verified**: four P1 (`AI-013E-DB-001`, `AI-013E-REVIEW-002`, `AI-013E-OPS-003`, `AI-013E-OPS-004`) and four P2 (`AI-013E-OPS-005`, `AI-013E-OPS-006`, `AI-013E-PERF-007`, `AI-013E-API-008`).
+
+Latest combined attempt `34283442253`, attempt `2`, job `102256556365` ended before checkout with `runner_id=0`, `steps=[]`. Therefore none of the candidate mappings below may be promoted to VERIFIED yet.
+
+### Legacy rows targeted by the Stage13E candidate
+
+| Capability | Current evidence state |
+|---|---|
+| `LES-A-035` | **CANDIDATE / EXECUTION PENDING** — durable jobs remain visible through authenticated Admin AI Operations while navigation/polling is independent of worker ownership |
+| `LES-A-036` | **CANDIDATE / EXECUTION PENDING** — Admin cancel action delegates to Stage12 cancellation authority |
+| `LES-A-037` | **CANDIDATE / EXECUTION PENDING** — failed-job retry delegates to Stage12 bounded retry authority |
+| `AIRULE-025` | **CANDIDATE / EXECUTION PENDING** — generated output supports Stage11-validated human edit before approval/rejection |
+| `AI-OPS-012` | **CANDIDATE / EXECUTION PENDING** — cancellation is exposed from Admin without browser-owned task lifecycle |
+| `AI-OPS-013` | **CANDIDATE / EXECUTION PENDING** — retry is exposed with server-derived action availability |
+| `AI-OPS-014` | **CANDIDATE / EXECUTION PENDING** — progress/status is server-derived and snapshot-consistent |
+| `AI-OPS-015` | **CANDIDATE / EXECUTION PENDING** — safe model/project/attempt/latency/token/cost telemetry where durable Stage12 data exists; secret/internal provider fields remain excluded |
+| `AI-OPS-017` | **CANDIDATE / EXECUTION PENDING** — Admin AI Operations workspace covers jobs, units, attempts, outputs, controls and review without a second queue |
+
+These rows become VERIFIED only after Stage13E combined gate plus required wider regressions execute green on the accepted same head.
+
+## Remaining Admin lesson/AI rows not closed by Stage13E candidate alone
 
 | Capability | Reason / next evidence needed |
 |---|---|
 | `LES-A-004` | Admin lesson search itself is not yet a verified lesson-management flow |
 | `LES-A-005` | no published Lesson preview contract yet |
 | `LES-A-008/009` | dependency-aware removal/bulk lesson selection not complete |
-| `LES-A-016..019` | page-detection/review/batch-save Admin flow not yet built; Stage13E is current next boundary |
-| `LES-A-020..028` | Stage11/12 AI backend foundations VERIFIED; Admin authoring/review user flows still NOT YET VERIFIED |
-| `LES-A-029..033` | generated/manual content editors not yet verified |
-| `LES-A-034..037` | Stage12 queue/retry/cancel/pause foundations VERIFIED; Admin AI Operations UX still not verified |
-| `LES-A-038/039` | export/history UI not verified |
+| `LES-A-016..019` | candidate can inspect/review generic AI outputs, but the complete page-detection → edit metadata → transactional batch-save lesson authoring flow is not yet proven |
+| `LES-A-020..028` | Stage11/12 generation foundations are VERIFIED and Stage13E can inspect/review outputs, but complete Admin generation authoring flows are not closed by operations/review alone |
+| `LES-A-029..033` | generic generated-output edit exists in candidate, but full summary/question/manual editor/delete product flows remain later coverage |
+| `LES-A-034` | bulk generation trigger across selected lessons is not implemented by Stage13E Operations candidate |
+| `LES-A-038/039` | export/history product UI is not verified |
 
-This distinction is required: **verified infrastructure ≠ verified legacy user capability**.
+This distinction is required: **verified infrastructure ≠ candidate implementation ≠ verified legacy user capability**.
 
 ## AI capability evidence
 
-Stage11/12 provide strong foundations for `AIRULE-*` and `AI-OPS-*`: provider-neutral contracts, Prompt Registry, exact counts/types, answer/index validation, source/page provenance, exact-mode uncertainty, duplicate checks, durable jobs, retries, cancellation, progress, pause/resume, capacity/cooldown/budget controls and dedicated worker runtime.
+Stage11/12 provide strong VERIFIED foundations for `AIRULE-*` and `AI-OPS-*`: provider-neutral contracts, Prompt Registry, exact counts/types, answer/index validation, source/page provenance, exact-mode uncertainty, duplicate checks, durable jobs, retries, cancellation, progress, pause/resume, capacity/cooldown/budget controls and dedicated worker runtime.
+
+Stage13E adds the current **candidate** for Admin operations/review over that authority, but executable acceptance is still pending.
 
 Not yet closed as product capabilities:
 
-- live provider/model benchmark and production route selection;
-- Admin AI Operations dashboard/review flow (Stage13E current next);
-- Admin generated-content editing/review/publish UI;
-- `direct` Question Bank persistence;
+- live provider/model benchmark and authorized route/bootstrap selection;
+- Stage13E candidate mappings until executable combined + wider evidence passes;
+- full Admin generated-content authoring/editor/delete/publish flows beyond the operations/review boundary;
+- `direct` Question Bank persistence and Question Bank publication authority (Stage13F);
 - actual production provider credentials/billing behavior.
 
 ## Student coverage status
@@ -161,24 +208,21 @@ Most learning-product rows remain later-stage work: entitlement-filtered curricu
 
 Do not mark these complete from the old root frontend or legacy TODO entries.
 
-## Next coverage batch — Stage13E
-
-Current target is Admin AI Operations / Review over the **existing Stage12 authority**.
+## Current coverage gate — Stage13E closure
 
 Required acceptance direction:
 
 ```text
-Stage12 durable jobs/units/attempts/outputs
-→ Admin status/progress/filters/detail
-→ retry/cancel/pause/resume using server authority
-→ provider/model/project observability without secrets
-→ generated output + source/page provenance review
-→ edit/reject/approve
-→ no raw provider output auto-published
-→ PostgreSQL/API/unit/integration/Chromium evidence
+candidate implementation
+→ API/Admin lint + strict typecheck + unit + build
+→ clean PostgreSQL migration/constraint/integration evidence
+→ Stage12/auth regressions
+→ real Admin Chromium including controls/review/pagination/session/409/390px
+→ wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild matrix
+→ only then mark mapped legacy rows VERIFIED
 ```
 
-Only rows actually proven are updated to VERIFIED. Live provider routing remains blocked until benchmark authorization/configuration exists.
+The current blocker is `CI-001`: GitHub hosted jobs terminate before checkout. This is not executable product-failure evidence and does not permit marking candidate rows VERIFIED. Hosting/VPS is unrelated and intentionally outside current development gates.
 
 ## Final release gate
 
