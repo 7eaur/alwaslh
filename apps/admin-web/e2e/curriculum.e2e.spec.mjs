@@ -117,11 +117,14 @@ test("admin reviews source media and pending OCR through the operations workspac
     has: page.getByText("كتاب تشغيل الوسائط التجريبي", { exact: true }),
   });
   await documentCard.getByRole("button", { name: "فتح التفاصيل" }).click();
-  await expect(page.getByText("001.jpg", { exact: true })).toBeVisible();
-  await expect(page.getByText("4 نسخ معالجة", { exact: true })).toBeVisible();
-  await expect(page.getByText("جاهز", { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: /بانتظار المراجعة/ }).click();
+  const assetRow = page.locator("article.asset-row").filter({
+    has: page.getByText("001.jpg", { exact: true }),
+  });
+  await expect(assetRow.getByText("4 نسخ معالجة", { exact: true })).toBeVisible();
+  await expect(assetRow.locator(".status-badge.media-ready")).toHaveText("جاهز");
+
+  await assetRow.getByRole("button", { name: /بانتظار المراجعة/ }).click();
   await expect(page.getByRole("heading", { name: "001.jpg" })).toBeVisible();
   await expect(page.getByText("نص خام يحتاج المراجعة", { exact: true })).toBeVisible();
 
