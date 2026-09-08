@@ -117,6 +117,8 @@ Priority:
 3. يضع `REPORT` في Board الخاصة به مع commits/tests/blockers/NOT YET VERIFIED.
 4. يرفع أي cross-team ambiguity إلى Team Room بدل التخمين.
 
+**وعند نهاية كل Stage/sub-stage يجب رفع Closure Report حتى لو لم توجد مشكلة.** التقرير يثبت ما اكتمل، ما تغير معماريًا، نتائج الاختبارات، ما بقي، والـExact next action. لا تبدأ المرحلة التالية رسميًا قبل أن يصبح هذا التقرير والـhandoff قابلين للاستئناف.
+
 لا يُعتبر كلام chat تقريرًا رسميًا.
 
 ## 6. Branch strategy
@@ -192,7 +194,86 @@ AI output يحتاج contract/review/publish authority المناسب قبل أ�
 - legacy capability affected;
 - documentation/evidence.
 
-## 10. Integration Gate
+## 10. Root-Cause Gate — ممنوع الترقيع
+
+عند ظهور bug أو CI/E2E failure أو data inconsistency أو UX defect، لا يكفي جعل الاختبار أخضر. قبل الإصلاح يجب تحديد:
+
+1. **Symptom** — ماذا فشل فعلًا؟
+2. **Root cause** — لماذا حدث؟ وأي invariant/contract مكسور؟
+3. **Blast radius** — ما callers/data/flows المتأثرة؟
+4. **Correct fix location** — DB/API/domain/frontend/test harness؟
+5. **Regression protection** — ما الاختبار الذي يمنع رجوع المشكلة؟
+
+ممنوع كحل نهائي:
+
+- catch يخفي error;
+- weakening assertion فقط ليصبح CI أخضر;
+- authorization bypass أو hard-coded special case;
+- duplicated state/pipeline لتجنب إصلاح authority الحالية;
+- client workaround دائم لمشكلة server contract;
+- migration/data mutation بلا فهم callers/integrity;
+- sleeps/timeouts عشوائية لإخفاء race;
+- إعادة تصميم واسعة بلا evidence إذا كان إصلاح جذري محدود يكفي.
+
+إذا كان العطل في test harness فعلًا، يجب إثبات أن product behavior صحيح ثم إصلاح harness مع الحفاظ على قوة assertion.
+
+كل `REPORT` لمشكلة مهمة يذكر `Root cause`, `Fix`, و`Regression test`.
+
+## 11. Continuity Gate — أي محادثة يجب أن تكون قابلة للاستبدال
+
+لا يجوز أن توجد معلومة لازمة للاستمرار فقط داخل chat. قبل إنهاء أي batch أو قبل إعلان `Ready for integration` يجب أن يستطيع مهندس/محادثة جديدة الاستمرار باستخدام GitHub فقط.
+
+الحد الأدنى الإلزامي في workstream doc + Board report:
+
+```md
+Current stage/feature:
+Branch:
+Base HEAD:
+Latest commits:
+Project/module understanding changed:
+Architecture/contracts changed:
+Files/schema/endpoints/components changed:
+Tests and exact results:
+Failures found + root causes + fixes:
+Open issues/blockers:
+Cross-team dependencies/decisions:
+NOT YET VERIFIED:
+Ready for integration: YES/NO
+Exact next action:
+```
+
+إذا كان هناك قرار مشترك، يجب أن يظهر في Team Room `#13` أو specialized/central doc، وليس في chat فقط.
+
+المحادثة الجديدة لا تعيد العمل من الصفر: تقرأ `DOCUMENTATION_INDEX.md` → workstream doc → Board → Team Room → commits/code الفعلي، ثم تكمل من `Exact next action`.
+
+## 12. Stage Closure Gate — التحديث بعد كل مرحلة
+
+عند اكتمال مرحلة أو sub-stage قابلة للدمج:
+
+### Backend/Frontend قبل التسليم
+
+- workstream doc محدث حتى آخر commit;
+- Board `REPORT`/Closure Report كامل;
+- specialized module/contract doc محدث إذا تغير عقد أو سلوك مهم;
+- tests/results و`NOT YET VERIFIED` واضحة;
+- لا توجد معرفة لازمة للاستمرار موجودة فقط في chat.
+
+### Integration بعد القبول
+
+يحدّث حسب الحاجة وبنفس الـevidence:
+
+- `PROJECT_STATUS.md`;
+- `PROJECT_ENGINEERING_LOG.md`;
+- `PROJECT_HANDOFF.md`;
+- `DOCUMENTATION_INDEX.md`;
+- specialized module doc;
+- `LEGACY_FEATURE_COVERAGE_GATE.md`;
+- `MASTER_REBUILD_ROADMAP.md` عند تغير المرحلة/الترتيب;
+- exact executable HEAD + GitHub Actions run IDs.
+
+لا تبدأ المرحلة التالية رسميًا قبل أن يكون handoff السابق متسقًا، إلا إذا كان العمل المتوازي محددًا صراحة ولا يعتمد على closure غير منتهية.
+
+## 13. Integration Gate
 
 `Backend Ready` + `Frontend Ready` لا يساوي Stage VERIFIED.
 
@@ -204,11 +285,12 @@ Stage تصبح VERIFIED فقط بعد:
 4. required CI green على نفس HEAD;
 5. Legacy Coverage updated;
 6. central docs synchronized;
-7. remaining work marked `NOT YET VERIFIED`.
+7. remaining work marked `NOT YET VERIFIED`;
+8. Continuity Gate مكتمل ويمكن لمحادثة جديدة استلام المشروع بلا chat memory.
 
 Integration Lead قد يعيد العمل إلى أي فريق إذا وجد root issue، حتى لو tests المحلية خضراء.
 
-## 11. Documentation ownership
+## 14. Documentation ownership
 
 ### Integration Lead فقط يحدث عادةً
 
@@ -227,13 +309,13 @@ Integration Lead قد يعيد العمل إلى أي فريق إذا وجد roo
 
 الهدف منع conflicts وتعدد مصادر الحقيقة.
 
-## 12. Team communication rule
+## 15. Team communication rule
 
 لا يوجد تبادل تلقائي بين المحادثات ولا عمل في الخلفية. عندما تُستأنف محادثة Backend أو Frontend يجب أن تقرأ GitHub لتعرف آخر الأوامر/القرارات، ثم تعمل وتكتب النتيجة في GitHub. المحادثة الرئيسية تقرأ هذه التقارير عند الإشراف والدمج.
 
 GitHub هو "مجموعة الفريق" وذاكرته المشتركة.
 
-## 13. Release policy
+## 16. Release policy
 
 حاليًا deployment = `DEFERRED BY PRODUCT OWNER`.
 

@@ -31,6 +31,8 @@
 
 كل workstream يستخدم branch قصيرة من أحدث Integration-approved HEAD، يراجع نفسه، ثم يرفع `REPORT` في Board الخاصة به. Integration Lead وحده يقرر القبول/الدمج وStage PASS بعد same-head cross-boundary verification. Backend/Frontend لا يعلنان Stage VERIFIED منفردين.
 
+**Continuity/quality gates إلزامية:** بعد كل batch/Stage يجب أن توجد commits + tests + workstream report + exact next action بحيث تستطيع محادثة جديدة الاستمرار من GitHub فقط. أي bug/failure مهم يحتاج Root Cause + blast radius + correct fix location + regression test؛ ممنوع test weakening/security bypass/hidden catch/duplicate authority/random timeout كحل نهائي. نهاية كل Stage تحتاج Closure Report ثم مزامنة central docs بعد قبول Integration.
+
 ## Fully Verified Same-Head Matrix
 
 Exact executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
