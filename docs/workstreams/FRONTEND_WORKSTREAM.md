@@ -180,17 +180,58 @@ Commits منطقية مثل:
 
 لا تعتبر screenshot أو Build وحده proof للـproduct flow.
 
-## 13. Report location
+## 13. Root-cause requirement
+
+أي bug/failure مهم يجب أن يدوَّن قبل `Ready for integration`:
+
+```md
+Symptom:
+Root cause:
+Affected user flow/contract:
+Blast radius:
+Correct fix location and why:
+Regression test:
+```
+
+ممنوع إخفاء المشكلة بزيادة timeout عشوائية أو selector هش أو local workaround دائم لمشكلة server contract. إذا كان الخطأ في E2E harness، أثبت أن المنتج صحيح ثم أصلح harness مع الحفاظ على قوة السيناريو.
+
+## 14. Mandatory resumable handoff
+
+بعد كل batch ذات معنى، يجب أن يستطيع Frontend engineer/chat جديد الاستمرار من GitHub فقط. لذلك حدّث هذا الملف وIssue `#15` بالمعلومات التالية:
+
+```md
+Current stage/feature:
+Branch:
+Base HEAD:
+Latest commits:
+What was inspected:
+What was implemented:
+API contracts consumed:
+Components/routes/states changed:
+UX/a11y/responsive behavior:
+Tests and exact results:
+Failures + root causes + fixes:
+Open issues/blockers:
+Backend/cross-team dependencies:
+NOT YET VERIFIED:
+Ready for integration: YES/NO
+Exact next action:
+```
+
+لا تترك قرار UX/contract أو سبب مشكلة ضروريًا للاستمرار داخل chat فقط.
+
+## 15. Report location
 
 بعد كل batch:
 
 1. حدّث Current Work أدناه داخل branch.
 2. ضع `REPORT` في Issue `#15`.
 3. ضع cross-team blocker/contract question في Issue `#13`.
+4. حدّث specialized frontend/module doc إذا تغير flow أو state contract مهم.
 
 Integration Lead هو من يحدث central status/log/handoff بعد القبول.
 
-## 14. Current Work
+## 16. Current Work
 
 **Current stage:** Stage13E — Admin AI Operations / Review.
 
