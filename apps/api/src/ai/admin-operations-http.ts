@@ -16,26 +16,28 @@ const JobStatusSchema = z.enum([
   "paused",
 ]);
 
+const PaginationOffsetSchema = z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+
 const JobListQuerySchema = z.object({
   status: JobStatusSchema.optional(),
   jobType: z.string().trim().min(1).max(160).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(30),
-  offset: z.coerce.number().int().min(0).default(0),
+  offset: PaginationOffsetSchema.default(0),
 });
 
 const JobDetailQuerySchema = z.object({
   unitLimit: z.coerce.number().int().min(1).max(100).default(50),
-  unitOffset: z.coerce.number().int().min(0).default(0),
+  unitOffset: PaginationOffsetSchema.default(0),
 });
 
 const UnitDetailQuerySchema = z.object({
   attemptLimit: z.coerce.number().int().min(1).max(100).default(50),
-  attemptOffset: z.coerce.number().int().min(0).default(0),
+  attemptOffset: PaginationOffsetSchema.default(0),
 });
 
 const OutputDetailQuerySchema = z.object({
   reviewLimit: z.coerce.number().int().min(1).max(100).default(100),
-  reviewOffset: z.coerce.number().int().min(0).default(0),
+  reviewOffset: PaginationOffsetSchema.default(0),
 });
 
 const JobParamsSchema = z.object({ jobId: z.string().uuid() });
