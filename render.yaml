@@ -1,0 +1,100 @@
+databases:
+  - name: alwaslh-prod-postgres-7eaur
+    databaseName: alwaslh
+    user: alwaslh_app
+    plan: basic-256mb
+    region: frankfurt
+    postgresMajorVersion: "16"
+    diskSizeGB: 1
+    ipAllowList: []
+
+services:
+  - type: web
+    name: alwaslh-prod-api-7eaur
+    runtime: node
+    plan: starter
+    region: frankfurt
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install --include=dev --no-audit --no-fund --prefix apps/api && npm run build --prefix apps/api
+    startCommand: npm run db:migrate --prefix apps/api && npm start --prefix apps/api
+    healthCheckPath: /ready
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_URL
+        fromDatabase:
+          name: alwaslh-prod-postgres-7eaur
+          property: connectionString
+      - key: DATABASE_SSL
+        value: disable
+      - key: DATABASE_POOL_MAX
+        value: "10"
+      - key: SESSION_COOKIE_NAME
+        value: alwaslh_session
+      - key: SESSION_TTL_HOURS
+        value: "168"
+      - key: SESSION_COOKIE_SAME_SITE
+        value: lax
+      - key: ALLOWED_ORIGINS
+        value: https://alwaslh-prod-student-7eaur.onrender.com,https://alwaslh-prod-admin-7eaur.onrender.com
+      - key: MEDIA_STORAGE_ROOT
+        value: /opt/render/project/src/runtime-data/media
+    disk:
+      name: alwaslh-prod-media-7eaur
+      mountPath: /opt/render/project/src/runtime-data/media
+      sizeGB: 1
+
+  - type: web
+    name: alwaslh-prod-student-7eaur
+    runtime: static
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install --include=dev --no-audit --no-fund --prefix apps/student-web && npm run build --prefix apps/student-web
+    staticPublishPath: apps/student-web/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://alwaslh-prod-api-7eaur.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: same-origin
+
+  - type: web
+    name: alwaslh-prod-admin-7eaur
+    runtime: static
+    branch: main
+    autoDeploy: true
+    buildCommand: npm install --include=dev --no-audit --no-fund --prefix apps/admin-web && npm run build --prefix apps/admin-web
+    staticPublishPath: apps/admin-web/dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://alwaslh-prod-api-7eaur.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: same-origin
