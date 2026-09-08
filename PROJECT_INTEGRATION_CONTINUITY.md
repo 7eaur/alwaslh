@@ -4,7 +4,7 @@
 >
 > **Authority:** current code + PostgreSQL migrations + executable evidence أعلى من هذا الملف. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-09 — Single Owner; Stage13E candidate has four P1 root fixes plus three P2 hardenings, including bounded Job-list aggregation; executable runner still unavailable before checkout.**
+Last synchronized: **2026-09-09 — Single Owner; Stage13E candidate has four P1 root fixes plus four P2 hardenings, including safe HTTP pagination offsets; executable runner still unavailable before checkout.**
 
 ## 1. Resume procedure
 
@@ -42,6 +42,7 @@ Stable rules include:
 - historical-page selection never defines current authority.
 - every Stage13E Admin AI response assembled from multiple PostgreSQL queries uses one short `REPEATABLE READ` snapshot.
 - bounded HTTP pagination must also bound expensive DB aggregation where the query can enforce that directly; query-shape root causes are fixed before speculative indexing.
+- pagination offsets accepted by HTTP must be safely representable end-to-end; unsafe integer values fail as `400 BAD_REQUEST` before service/DB execution.
 
 ## 4. Verified application baseline
 
@@ -55,17 +56,17 @@ Verified through Stage13D. Same-head runs remain recorded in `PROJECT_STATUS.md`
 
 - Stage13E runtime is **not** in `main`.
 - active candidate: `integration/stage13e-ai-operations`.
-- current candidate/docs HEAD: `e9793a5222758a7d17aad08f91993cb7431631b7`.
-- latest runtime/test HEAD below docs: `6efce1510231de5d569c4b96dbdffa3d4d488b31`.
+- current candidate/docs HEAD: `c48d1e597497e6054340f71235c78937082b9371`.
+- latest runtime/test HEAD below docs: `d60218b518fb0fe453c21386e77cd35a2228ad07`.
 - legacy archive: `archive/legacy-main-2026-09-08 @ 5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
 
 Historical source branches are evidence only: Backend `348c02646d0ff873fd305beff16f41c46d9c0285`; Frontend `1eb141e950e96c9f53ffd103a386d59166113c16`; Product/Test `7bf2f8c32907032551aace9f3aa27681040c4b0f`.
 
-Administrative note: an accidental temporary file `tmp-ignore` was created on `main` in `5916ac42f1d6ed216e0efe336b20a8f030d1f45e` while changing GitHub write method, then removed immediately in `52fa960155964903290a78657029b3cb950bd6ee`. The resulting tree returned to the intended state; no runtime/product file or behavior was affected.
+Administrative note: an accidental temporary file `tmp-ignore` was created on `main` in `5916ac42f1d6ed216e0efe336b20a8f030d1f45e` while changing GitHub write method, then removed immediately in `52fa960155964903290a78657029b3cb950bd6ee`. No runtime/product effect.
 
 ## 6. Stage13E candidate scope
 
-Candidate provides Admin Jobs/Units/Attempts/Outputs read models, server-derived progress/actions, Stage12 pause/resume/cancel/retry reuse, safe provider/model/project telemetry, provenance, append-only Stage11-validated edit/approve/reject review, stable-unit review boundary, authenticated Admin UI, canonical refresh after 409, bounded Jobs/Units/Attempts/Review History pagination, snapshot-consistent read models, bounded Job-list aggregation, and real browser fixtures. It does **not** publish to Stage13F Question Bank.
+Candidate provides Admin Jobs/Units/Attempts/Outputs read models, server-derived progress/actions, Stage12 pause/resume/cancel/retry reuse, safe provider/model/project telemetry, provenance, append-only Stage11-validated edit/approve/reject review, stable-unit review boundary, authenticated Admin UI, canonical refresh after 409, bounded Jobs/Units/Attempts/Review History pagination, snapshot-consistent read models, bounded Job-list aggregation, safe pagination input bounds and real browser fixtures. It does **not** publish to Stage13F Question Bank.
 
 ## 7. Stage13E audit findings
 
@@ -82,28 +83,26 @@ Fixed end-to-end bounded pagination with real fixtures proving later Jobs page, 
 Original Output Detail exposed only latest 100 review events and derived current authority from `history[0]`. Fixed with bounded `reviewLimit/reviewOffset`, `reviewPagination`, independent canonical-latest query, independent Frontend review offset and real >100 Chromium fixture. Historical pages are audit evidence only; current state/actions/effective output come only from latest durable revision. `FIXED IN CANDIDATE / EXECUTION PENDING`.
 
 ### AI-013E-OPS-005 — P2 Output Detail snapshot consistency
-
-Original output/page/count/latest reads were separate default snapshots. Fix `9d59f84fb516db5cfaf89382f548c3eea595e365` moves them into one short `REPEATABLE READ` transaction. Regression: `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`.
-
-Status: `FIXED IN CANDIDATE / EXECUTION PENDING`.
+Output/page/count/latest reads moved into one short `REPEATABLE READ` transaction at `9d59f84f...`. `FIXED IN CANDIDATE / EXECUTION PENDING`.
 
 ### AI-013E-OPS-006 — P2 Admin multi-query read-model consistency
-
-List Jobs, Job Detail and Unit Detail also had multi-query response parts from different committed moments. Fix lineage `6a146c26...` → `f5c5dddf...` → `10f32c72...` generalizes `readSnapshot()` to all multi-query Admin AI reads and proves Stage12 `allowedActions` stays inside the same Job Detail snapshot.
-
-Status: `FIXED IN CANDIDATE / EXECUTION PENDING`.
+List Jobs, Job Detail and Unit Detail use shared `readSnapshot()`; Stage12 `allowedActions` stays in the same Job Detail snapshot. Fix lineage `6a146c26...` → `f5c5dddf...` → `10f32c72...`. `FIXED IN CANDIDATE / EXECUTION PENDING`.
 
 ### AI-013E-PERF-007 — P2 Admin Job-list bounded aggregation
 
-**Original defect:** `listJobs()` performed `ai_jobs LEFT JOIN ai_job_units`, grouped all matching durable Jobs/Units, sorted, then applied `LIMIT/OFFSET`. A bounded 30-row HTTP page could therefore aggregate Unit history for the full matching Job history.
+`listJobs()` previously aggregated Unit history across all matching Jobs before page bounding. Fix `8501d2e0...` pages/filter/orders Jobs first, then aggregates only selected Jobs. Regression `6efce151...` proves page-before-aggregation and rejects the former global join shape. `FIXED IN CANDIDATE / EXECUTION PENDING`.
 
-**Root fix:** `8501d2e0317c0e1e4eb83b72c997e321ee79fe81` filters/orders/pages `ai_jobs` first in a `page` CTE. Unit status counts are then computed only for Jobs in that page through a correlated `LATERAL` aggregate. The existing total count stays in the same repeatable-read snapshot. Job ordering and zero-Unit semantics are preserved.
+### AI-013E-API-008 — P2 Safe pagination input boundary
 
-**Why no new index:** query shape was the proven root cause. Existing Job→Unit indexes can serve `u.job_id = p.id`; additional indexes require executable plan/benchmark evidence rather than speculation.
+**Original defect:** `offset`, `unitOffset`, `attemptOffset`, and `reviewOffset` were only checked as non-negative JavaScript integers. Integer-looking values beyond `Number.MAX_SAFE_INTEGER` could reach PostgreSQL pagination and surface as a DB/representation failure instead of `400` client validation.
 
-**Regression:** `6efce1510231de5d569c4b96dbdffa3d4d488b31` adds `apps/api/tests/ai-admin-job-list-query-shape.test.ts`, which rejects a global Job→Unit join, requires the page `LIMIT/OFFSET` before Unit aggregation, and preserves parameters/count/snapshot behavior.
+**Root fix:** commit `887f772df927c8d24df0003b76b9cb7ea0313e15` introduces one shared `PaginationOffsetSchema` with `0..Number.MAX_SAFE_INTEGER` and uses it for all four Stage13E offsets.
 
-**Specialized doc:** `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`.
+**Regression:** final commit `d60218b518fb0fe453c21386e77cd35a2228ad07` adds `apps/api/tests/ai-admin-pagination-bounds.test.ts`. It uses real Fastify routing/error mapping with Admin/service stubs to prove all four unsafe offsets return `400 BAD_REQUEST` before any service call, while `Number.MAX_SAFE_INTEGER` remains valid. This file is included automatically by existing API `tests/*.test.ts` unit gate.
+
+**Workflow safety note:** an initial PostgreSQL integration regression (`7e337799...`) was removed (`6b04c9f5...`) after the tool safety layer rejected rewriting the existing workflow because the file itself contains a fixed browser-test credential. No gate was weakened or skipped; the final unit regression exercises the exact HTTP boundary and requires no workflow modification.
+
+**Specialized doc:** `docs/ai/STAGE13E_ADMIN_AI_HTTP_VALIDATION.md`.
 
 Status: `FIXED IN CANDIDATE / EXECUTION PENDING`.
 
@@ -117,28 +116,18 @@ Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Latest runtime/test-head run:
 
-- `34281631521` on `6efce1510231de5d569c4b96dbdffa3d4d488b31`;
-- job `102247518121`;
+- `34283353562` on `d60218b518fb0fe453c21386e77cd35a2228ad07`;
+- job `102253102885`;
 - `steps=[]`; no checkout or repository command executed.
 
-Latest candidate/docs-head run:
-
-- `34281764765` on `e9793a5222758a7d17aad08f91993cb7431631b7`;
-- attempt `2`;
-- job `102250318378`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`;
-- completed before checkout; no repository command executed.
-
-The workflow explicitly runs `npm test --prefix apps/api`, and API `test:unit` is `node --import tsx --test tests/*.test.ts`, so the new `ai-admin-job-list-query-shape.test.ts` is inside the unchanged executable gate rather than orphaned test code.
+The existing workflow already runs `npm test --prefix apps/api`, whose unit command is `node --import tsx --test tests/*.test.ts`, so `ai-admin-pagination-bounds.test.ts` is inside the executable gate without modifying workflow secrets/fixtures.
 
 No executed product/test failure exists on the current candidate. `CI-001` remains P1 external hosted-runner allocation; exact external/account cause is `NOT YET VERIFIED`.
-
-Local fallback check on 2026-09-09 found no repository checkout in the execution container and no DNS access to private GitHub, so no local PASS is claimed.
 
 ## 9. Exact next action
 
 1. Keep Stage13E outside `main`.
-2. Retain all four P1 fixes plus OPS-005/OPS-006/PERF-007 P2 hardenings and regressions.
+2. Retain all four P1 fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions.
 3. Execute unchanged Combined Gate when a real runner is allocated.
 4. Any command that actually executes and fails → root-cause fix + regression.
 5. Combined PASS → wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild matrix.
@@ -156,6 +145,7 @@ Local fallback check on 2026-09-09 found no repository checkout in the execution
 - `AI-013E-OPS-005` P2 — fixed, execution pending.
 - `AI-013E-OPS-006` P2 — fixed, execution pending.
 - `AI-013E-PERF-007` P2 — fixed, execution pending.
+- `AI-013E-API-008` P2 — fixed, execution pending.
 - `AI-011-005` P2 — Stage13F direct-question persistence.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
 - remaining later Admin/Student/product stages incomplete.
