@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import sharp from "sharp";
 import { buildApp } from "../../src/app.js";
 import { AuthService } from "../../src/auth/service.js";
 import { loadConfig } from "../../src/config.js";
@@ -12,12 +14,8 @@ const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error("DATABASE_URL is required for content ingestion integration tests");
 
 const origin = "http://localhost:5173";
-const imageFixture = Buffer.from(
-  "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/2wBDAQMEBAUEBQkFBQkUDQsNFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBT/wAARCACgAHgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vLz9PX29/j5+v/aAAwDAQACEQMRAD8A9/ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAqvfXtvpun3N/dyeXbW0TTSvtJ2ooJY4HJ4B6VYrI8VWVxqXhDW7G0j8y5ubCeGJMgbnaNgoyeByR1oAjfxbo6FVeS7WVpREsBsZ/NLFXcfu9m7BWNznGPlPPFK3irSB9nCzXEr3AkKRw2c0jjyyqvuVUJQqXUEMAcmsvUdCubLVNL1WBb7WLqK9DXLM8KyeStvcIoA/dpgPN9fmPWq1t4d1efxSurNLcaYtwt3JJ5DQu0Rb7IkcbblYEssDMdoIB4z6gHSX2v6fp0ltFcG5824ieaOOK0llbYm3cSEUlcb164605Ne0uS9gtEvI2muLb7XFgEq0X97djHPbnJAJHQ1n6to97f+JtMuYLy5tIIbG6iluLcx7tzvblVw6t1COcgcbeozzzeseB7+6sLsWEk1sU2WNla7oyi2oiMG4sRuyFlmcDcO3GaAOrTxbor211cfa3WK2tmu5Gkt5EzCoyZEBUb191z1HqKtRazZS2dxdsbiCC3UvK9zaywYAGScOoJGB2rkdXsvEms22pRf2VJBFPoN3arDJJbkC5YIEWNl+YI3zcsccDIXAzv2smpR6NfNNYane3CqWit79rRWmOOFBiO0DPdvXvQBqafqdpqkMkto7kRyGORZImjdGABwysAwOCDyOhB71brF8MW1xb6dNJe208N/czma6M3l5kkKqMqEZgFACqATnCDPqdqgAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD//Z",
-  "base64",
-);
 const pdfFixture = Buffer.from(
-  "JVBERi0xLjQKJSBjcmVhdGVkIGJ5IFBpbGxvdyBQREYgZHJpdmVyCjcgMCBvYmo8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgOCAwIFIKPj5lbmRvYmoKOCAwIG9iajw8Ci9UeXBlIC9QYWdlcwovQ291bnQgMgovS2lkcyBbIDIgMCBSIDUgMCBSIF0KPj5lbmRvYmoKMSAwIG9iajw8Ci9UeXBlIC9YT2JqZWN0Ci9TdWJ0eXBlIC9JbWFnZQovV2lkdGggMjAwCi9IZWlnaHQgMjYwCi9GaWx0ZXIgL0RDVERlY29kZQovQml0c1BlckNvbXBvbmVudCA4Ci9Db2xvclNwYWNlIC9EZXZpY2VSR0IKL0xlbmd0aCAyMDAzCj4+c3RyZWFtCv/Y/+AAEEpGSUYAAQEAAAEAAQAA/9sAQwAIBgYHBgUIBwcHCQkICgwUDQwLCwwZEhMPFB0aHx4dGhwcICQuJyAiLCMcHCg3KSwwMTQ0NB8nOT04MjwuMzQy/9sAQwEJCQkMCwwYDQ0YMiEcITIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy/8AAEQgBBADIAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/aAAwDAQACEQMRAD8A9/ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKr317b6bp9zf3cnl21tE00r7SdqKCWOByeAelWKyPFVlcal4Q1uxtI/MubmwnhiTIG52jYKMngckdaAI38W6OhVXku1laURLAbGfzSxV3H7vZuwVjc5xj5TzxSt4q0gfZws1xK9wJCkcNnNI48sqr7lVCUKl1BDAHJrL1HQrmy1TS9VgW+1i6ivQ1yzPCsnkrb3CKAP3aYDzfX5j1qtbeHdXn8UrqzS3GmLcLdySeQ0LtEW+yJHG25WBLLAzHaCAeM+oB0l9r+n6dJbRXBufNuInmjjitJZW2Jt3EhFJXG9euOtOTXtLkvYLRLyNpri2+1xYBKtF/e3Yxz25yQCR0NZ+raPe3/ibTLmC8ubSCGxuopbi3Me7c725VcOrdQjnIHG3qM883rHge/urC7FhJNbFNljZWu6MotqIjBuLEbshZZnA3DtxmgDq08W6K9tdXH2t1itrZruRpLeRMwqMmRAVG9fdc9R6irlZPhyyuLDTJobmPy5Gv7yYDcDlJLmV0PHqrKfx55rWoAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP//ZCmVuZHN0cmVhbQplbmRvYmoKMiAwIG9iajw8Ci9SZXNvdXJjZXMgPDwKL1Byb2NTZXQgWyAvUERGIC9JbWFnZUMgXQovWE9iamVjdCA8PAovaW1hZ2UgMSAwIFIKPj4KPj4KL01lZGlhQm94IFsgMCAwIDE0NC4wIDE4Ny4yIF0KL0NvbnRlbnRzIDMgMCBSCi9UeXBlIC9QYWdlCi9QYXJlbnQgOCAwIFIKPj5lbmRvYmoKMyAwIG9iajw8Ci9MZW5ndGggNDcKPj5zdHJlYW0KcSAxNDQuMDAwMDAwIDAgMCAxODcuMjAwMDAwIDAgMCBjbSAvaW1hZ2UgRG8gUQoKZW5kc3RyZWFtCmVuZG9iago0IDAgb2JqPDwKL1R5cGUgL1hPYmplY3QKL1N1YnR5cGUgL0ltYWdlCi9XaWR0aCAyMDAKL0hlaWdodCAyNjAKL0ZpbHRlciAvRENURGVjb2RlCi9CaXRzUGVyQ29tcG9uZW50IDgKL0NvbG9yU3BhY2UgL0RldmljZVJHQgovTGVuZ3RoIDIwMTgKPj5zdHJlYW0K/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAEEAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vLz9PX29/j5+v/aAAwDAQACEQMRAD8A9/ooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAqvfXtvpun3N/dyeXbW0TTSvtJ2ooJY4HJ4B6VYrI8VWVxqXhDW7G0j8y5ubCeGJMgbnaNgoyeByR1oAjfxbo6FVeS7WVpREsBsZ/NLFXcfu9m7BWNznGPlPPFK3irSB9nCzXEr3AkKRw2c0jjyyqvuVUJQqXUEMAcmsvUdCubLVNL1WBb7WLqK9DXLM8KyeStvcIoA/dpgPN9fmPWq1t4d1efxSurNLcaYtwt3JJ5DQu0Rb7IkcbblYEssDMdoIB4z6gHSX2v6fp0ltFcG5824ieaOOK0llbYm3cSEUlcb164605Ne0uS9gtEvI2muLb7XFgEq0X97djHPbnJAJHQ1n6to97f+JtMuYLy5tIIbG6iluLcx7tzvblVw6t1COcgcbeozzzeseB7+6sLsWEk1sU2WNla7oyi2oiMG4sRuyFlmcDcO3GaAOrTxbor211cfa3WK2tmu5Gkt5EzCoyZEBUb191z1HqKtRazZS2dxdsbiCC3UvK9zaywYAGScOoJGB2rkdXsvEms22pRf2VJBFPoN3arDJJbkC5YIEWNl+YI3zcsccDIXAzv2smpR6NfNNYane3CqWit79rRWmOOFBiO0DPdvXvQBqafqdpqkMkto7kRyGORZImjdGABwysAwOCDyOhB71brF8MW1xb6dNJe208N/czma6M3l5kkKqMqEZgFACqATnCDPqdqgAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP//ZKZW5kc3RyZWFtCmVuZG9iago1IDAgb2JqPDwKL1Jlc291cmNlcyA8PAovUHJvY1NldCBbIC9QREYgL0ltYWdlQyBdCi9YT2JqZWN0IDw8Ci9pbWFnZSA0IDAgUgo+Pgo+PgovTWVkaWFCb3ggWyAwIDAgMTQ0LjAgMTg3LjIgXQovQ29udGVudHMgNiAwIFIKL1R5cGUgL1BhZ2UKL1BhcmVudCA4IDAgUgo+PmVuZG9iago2IDAgb2JqPDwKL0xlbmd0aCA0Nwo+PnN0cmVhbQpxIDE0NC4wMDAwMDAgMCAwIDE4Ny4yMDAwMDAgMCAwIGNtIC9pbWFnZSBEbyBRCgplbmRzdHJlYW0KZW5kb2JqCjkgMCBvYmo8PAovQ3JlYXRpb25EYXRlIChEOjIwMjYwOTA4MDA1NzQzWikKL01vZERhdGUgKEQ6MjAyNjA5MDgwMDU3NDNaKQo+PmVuZG9iagp4cmVmCjAgMTAKMDAwMDAwMDAwMCA2NTUzNiBmIAowMDAwMDAwMTUwIDAwMDAwIG4gCjAwMDAwMDIzMTkgMDAwMDAgbiAKMDAwMDAwMjQ4MSAwMDAwMCBuIAowMDAwMDAyNTc2IDAwMDAwIG4gCjAwMDAwMDQ3NjAgMDAwMDAgbiAKMDAwMDAwNDkyMiAwMDAwMCBuIAowMDAwMDAwMDQwIDAwMDAwIG4gCjAwMDAwMDAwODcgMDAwMDAgbiAKMDAwMDAwNTAxNyAwMDAwMCBuIAp0cmFpbGVyCjw8Ci9Sb290IDcgMCBSCi9TaXplIDEwCi9JbmZvIDkgMCBSCj4+CnN0YXJ0eHJlZgo1MDk5CiUlRU9G",
+  "JVBERi0xLjMKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhIC9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nIC9OYW1lIC9GMSAvU3VidHlwZSAvVHlwZTEgL1R5cGUgL0ZvbnQKPj4KZW5kb2JqCjMgMCBvYmoKPDwKL0NvbnRlbnRzIDggMCBSIC9NZWRpYUJveCBbIDAgMCAyMDAgMjYwIF0gL1BhcmVudCA3IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago0IDAgb2JqCjw8Ci9Db250ZW50cyA5IDAgUiAvTWVkaWFCb3ggWyAwIDAgMjAwIDI2MCBdIC9QYXJlbnQgNyAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKNSAwIG9iago8PAovUGFnZU1vZGUgL1VzZU5vbmUgL1BhZ2VzIDcgMCBSIC9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iago2IDAgb2JqCjw8Ci9BdXRob3IgKGFub255bW91cykgL0NyZWF0aW9uRGF0ZSAoRDoyMDI2MDkwODAxMDk0MCswMCcwMCcpIC9DcmVhdG9yIChhbm9ueW1vdXMpIC9LZXl3b3JkcyAoKSAvTW9kRGF0ZSAoRDoyMDI2MDkwODAxMDk0MCswMCcwMCcpIC9Qcm9kdWNlciAoUmVwb3J0TGFiIFBERiBMaWJyYXJ5IC0gXChvcGVuc291cmNlXCkpIAogIC9TdWJqZWN0ICh1bnNwZWNpZmllZCkgL1RpdGxlICh1bnRpdGxlZCkgL1RyYXBwZWQgL0ZhbHNlCj4+CmVuZG9iago3IDAgb2JqCjw8Ci9Db3VudCAyIC9LaWRzIFsgMyAwIFIgNCAwIFIgXSAvVHlwZSAvUGFnZXMKPj4KZW5kb2JqCjggMCBvYmoKPDwKL0xlbmd0aCA4MQo+PgpzdHJlYW0KMSAwIDAgMSAwIDAgY20gIEJUIC9GMSAxMiBUZiAxNC40IFRMIEVUCkJUIDEgMCAwIDEgMjAgMjAwIFRtIChQYWdlIDEpIFRqIFQqIEVUCiAKZW5kc3RyZWFtCmVuZG9iago5IDAgb2JqCjw8Ci9MZW5ndGggODEKPj4Kc3RyZWFtCjEgMCAwIDEgMCAwIGNtICBCVCAvRjEgMTIgVGYgMTQuNCBUTCBFVApCVCAxIDAgMCAxIDIwIDIwMCBUbSAoUGFnZSAyKSBUaiBUKiBFVAogCmVuZHN0cmVhbQplbmRvYmoKeHJlZgowIDEwCjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDA2MSAwMDAwMCBuIAowMDAwMDAwMDkyIDAwMDAwIG4gCjAwMDAwMDAxOTkgMDAwMDAgbiAKMDAwMDAwMDM5MiAwMDAwMCBuIAowMDAwMDAwNTg1IDAwMDAwIG4gCjAwMDAwMDA2NTMgMDAwMDAgbiAKMDAwMDAwMDkxNCAwMDAwMCBuIAowMDAwMDAwOTc5IDAwMDAwIG4gCjAwMDAwMDExMDkgMDAwMDAgbiAKdHJhaWxlcgo8PAovSUQgCls8NGM0YTRlZTNiYmI2NmM5NTcxZGUzMGJlNWI4ZjM0MmE+PDRjNGE0ZWUzYmJiNjZjOTU3MWRlMzBiZTViOGYzNDJhPl0KJSBSZXBvcnRMYWIgZ2VuZXJhdGVkIFBERiBkb2N1bWVudCAtLSBkaWdlc3QgKG9wZW5zb3VyY2UpCgovSW5mbyA2IDAgUgovUm9vdCA1IDAgUgovU2l6ZSAxMAo+PgpzdGFydHhyZWYKMTIzOQolJUVPRgo=",
   "base64",
 );
 
@@ -40,6 +38,11 @@ test("Admin mixed ingestion preserves order, keeps ready media unpublished, then
   });
   const db = createDatabase(databaseUrl);
   const auth = new AuthService(db, config.SESSION_TTL_HOURS);
+  const imageFixture = await sharp({
+    create: { width: 200, height: 260, channels: 3, background: { r: 245, g: 245, b: 245 } },
+  })
+    .jpeg({ quality: 85 })
+    .toBuffer();
 
   const adminRows = await db.query<{ id: string }>(
     "insert into profiles (role, display_name) values ('admin', 'مدير رفع المحتوى') returning id",
@@ -84,19 +87,25 @@ test("Admin mixed ingestion preserves order, keeps ready media unpublished, then
     assert.equal(login.statusCode, 200);
     const cookie = cookieFrom(login);
 
+    const unauthenticated = await app.inject({ method: "GET", url: "/v1/admin/content-ingestions" });
+    assert.equal(unauthenticated.statusCode, 401);
+
     const studentRows = await db.query<{ id: string }>(
       "insert into profiles (role, display_name) values ('student', 'طالب غير مخول') returning id",
     );
     const studentId = studentRows[0]?.id;
     assert.ok(studentId);
     await auth.createCredential(studentId, `stage13d-student-${studentId}`, "Stage13dStudentPass123!");
-    const studentLogin = await app.inject({
-      method: "POST",
-      url: "/v1/auth/login",
-      headers: { origin },
-      payload: { identifier: `stage13d-student-${studentId}`, password: "Stage13dStudentPass123!" },
-    });
-    const studentCookie = cookieFrom(studentLogin);
+    const deviceRows = await db.query<{ id: string }>(
+      `insert into student_devices (profile_id, public_key_spki, public_key_sha256, label)
+       values ($1, $2, $3, 'Stage13D integration device')
+       returning id`,
+      [studentId, `integration-device-${"x".repeat(96)}`, "d".repeat(64)],
+    );
+    const deviceId = deviceRows[0]?.id;
+    assert.ok(deviceId);
+    const studentSession = await auth.createStudentSession(studentId, deviceId, "stage13d-integration");
+    const studentCookie = `${config.SESSION_COOKIE_NAME}=${encodeURIComponent(studentSession.token)}`;
     const forbidden = await app.inject({
       method: "GET",
       url: "/v1/admin/content-ingestions",
@@ -110,7 +119,7 @@ test("Admin mixed ingestion preserves order, keeps ready media unpublished, then
       headers: { origin, cookie },
       payload: {
         lessonId,
-        clientRequestId: crypto.randomUUID(),
+        clientRequestId: randomUUID(),
         items: [
           { filename: "01-cover.jpg", mimeType: "image/jpeg", byteSize: imageFixture.byteLength },
           { filename: "02-chapter.pdf", mimeType: "application/pdf", byteSize: pdfFixture.byteLength },
@@ -122,6 +131,7 @@ test("Admin mixed ingestion preserves order, keeps ready media unpublished, then
     let task = createResponse.json().task as {
       id: string;
       status: string;
+      archivedAt: string | null;
       items: Array<{ id: string; position: number; status: string }>;
       media: Array<{ sourcePosition: number; sourcePageNumber: number | null }>;
       lessonAssets: Array<{ publicationStatus: string; position: number }>;
@@ -215,12 +225,8 @@ test("Admin mixed ingestion preserves order, keeps ready media unpublished, then
     assert.ok(publishedLesson[0]?.published_at);
     assert.equal(publishedLesson[0]?.content_revision, "2");
 
-    const orderedLinks = await db.query<{
-      source_position: number;
-      asset_position: number;
-      media_asset_id: string;
-    }>(
-      `select cim.source_position, la.position as asset_position, la.media_asset_id
+    const orderedLinks = await db.query<{ source_position: number; asset_position: number }>(
+      `select cim.source_position, la.position as asset_position
          from content_ingestion_media cim
          join lesson_assets la on la.media_asset_id = cim.media_asset_id
         where cim.task_id = $1
@@ -243,7 +249,8 @@ test("Admin mixed ingestion preserves order, keeps ready media unpublished, then
       headers: { origin, cookie },
     });
     assert.equal(archive.statusCode, 200, archive.body);
-    assert.ok(archive.json().task.archivedAt);
+    task = archive.json().task;
+    assert.ok(task.archivedAt);
     const retained = await db.query<{ count: string }>(
       "select count(*)::text as count from lesson_assets where ingestion_task_id = $1",
       [task.id],
