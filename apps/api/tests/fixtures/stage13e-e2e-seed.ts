@@ -87,8 +87,9 @@ async function insertQueuedUnits(
     `insert into ai_job_units (
        job_id, unit_key, position, status, input_payload, attempt_count, max_attempts
      )
-     select $1, $2 || '-' || position::text, position, 'queued'::ai_unit_status, $3::jsonb, 0, 4
-     from generate_series($4, $5) as position`,
+     select $1, $2 || '-' || series.position::text, series.position,
+            'queued'::ai_unit_status, $3::jsonb, 0, 4
+     from generate_series($4::integer, $5::integer) as series(position)`,
     [jobId, unitKeyPrefix, JSON.stringify(request), firstPosition, lastPosition],
   );
 }
@@ -117,11 +118,11 @@ async function insertAttemptHistory(tx: QueryExecutor, unitId: string, count: nu
        retryable, input_tokens, output_tokens, latency_ms, estimated_cost_usd_micros,
        provider_metadata, started_at, completed_at
      )
-     select $1, attempt_number, 'fixture-provider', 'fixture-project',
-            'fixture-model', 'fixture-route-' || attempt_number::text, 'fixture-benchmark',
+     select $1, series.attempt_number, 'fixture-provider', 'fixture-project',
+            'fixture-model', 'fixture-route-' || series.attempt_number::text, 'fixture-benchmark',
             'completed'::ai_execution_attempt_status, 'valid'::ai_output_validation_status,
             false, 10, 5, 100, 10, '{}'::jsonb, now() - interval '1 second', now()
-     from generate_series(1, $2) as attempt_number`,
+     from generate_series(1, $2::integer) as series(attempt_number)`,
     [unitId, count],
   );
   await tx.query(
