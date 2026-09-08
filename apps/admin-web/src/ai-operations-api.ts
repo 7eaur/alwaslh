@@ -168,6 +168,7 @@ export interface AiOutputDetailApi {
   reviewedAt: string | null;
   sourceProvenance: AiSourceProvenanceApi[];
   reviewHistory: AiReviewEventApi[];
+  reviewPagination: { total: number; limit: number; offset: number };
   createdAt: string;
   updatedAt: string;
 }
@@ -233,8 +234,11 @@ export function fetchAiUnitDetail(unitId: string, attemptLimit = 50, attemptOffs
   return adminApiRequest<AiUnitDetailResponse>(withQuery(`/v1/admin/ai/units/${unitId}`, { attemptLimit, attemptOffset }));
 }
 
-export function fetchAiOutputDetail(outputId: string): Promise<AiOutputDetailApi> {
-  return adminApiRequest<AiOutputDetailResponse>(`/v1/admin/ai/outputs/${outputId}`).then((result) => result.output);
+export function fetchAiOutputDetail(outputId: string, reviewLimit = 50, reviewOffset = 0): Promise<AiOutputDetailApi> {
+  return adminApiRequest<AiOutputDetailResponse>(withQuery(`/v1/admin/ai/outputs/${outputId}`, {
+    reviewLimit,
+    reviewOffset,
+  })).then((result) => result.output);
 }
 
 export function mutateAiJob(jobId: string, action: AiJobAction): Promise<AiJobProgressApi> {
