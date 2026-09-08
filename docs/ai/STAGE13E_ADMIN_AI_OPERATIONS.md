@@ -6,10 +6,11 @@ This document is the Frontend-facing contract for Stage13E. It builds on the exi
 
 ## 1. Authority boundaries
 
-- PostgreSQL + Backend remain canonical for jobs, units, attempts, outputs, progress, pause/resume/cancel/retry and review history.
+- PostgreSQL + Backend remain canonical for jobs, units, attempts, outputs, progress, pause/resume/cancel/retry, action availability and review history.
 - All routes in this document are Admin-only and require a valid authenticated Admin session.
 - Unsafe `/v1/*` requests continue to use the existing origin/CORS protection.
-- The browser must not infer or persist canonical lifecycle state independently.
+- The browser must not infer or persist canonical lifecycle/review state or action availability independently.
+- Mutation endpoints remain authoritative even when a read model advertised an action moments earlier; a `409` requires refreshing canonical state.
 - Stage13E review does not publish to Stage13F Question Bank and does not modify raw provider output in place.
 - Admin edits/approvals remain subject to the same Stage11 semantic validation authority as provider-produced output. Human-review-only (`review_required`) findings may be accepted by Admin; semantic `invalid` findings may not.
 
@@ -88,7 +89,7 @@ Admin only.
 }
 ```
 
-Ordering is newest job first (`created_at DESC`, then id).
+Ordering is newest job first (`created_at DESC`, then id). `allowedActions` is intentionally a Job Detail field, not duplicated across the list payload.
 
 ## 4. Job detail + units
 
@@ -109,7 +110,9 @@ Ordering is newest job first (`created_at DESC`, then id).
 
 ```ts
 {
-  job: JobListItem;
+  job: JobListItem & {
+    allowedActions: Array<"pause" | "resume" | "cancel" | "retry">;
+  };
   units: Array<{
     id: string;
     jobId: string;
@@ -141,6 +144,15 @@ Ordering is newest job first (`created_at DESC`, then id).
 ```
 
 Unit ordering is deterministic by `position`, then id.
+
+`allowedActions` is server-derived from the same `AiJobLifecycleRepository` authority used by mutations:
+
+- non-terminal + not paused: `pause`, `cancel`;
+- non-terminal + paused: `resume`, `cancel`;
+- failed: `retry` only when there is at least one failed unit, no cancellation request exists, and no failed unit has reached the hard attempt ceiling (`attemptCount >= 20`);
+- completed/cancelled, exhausted failed jobs, failed jobs with no failed units, or cancellation-requested failed jobs: no actions.
+
+The array is advisory current-state authority, not a reservation. A concurrent worker/Admin mutation can make an advertised action invalid before use; mutation endpoints remain authoritative and may return `409`.
 
 ## 5. Unit detail + attempts
 
@@ -242,6 +254,7 @@ The browser must display/use these values as provenance only; it does not rewrit
     semanticWarnings: unknown;
     hasRawResponse: boolean;
     reviewStatus: "pending" | "edited" | "approved" | "rejected";
+    allowedReviewActions: Array<"edit" | "approve" | "reject">;
     effectiveReviewedOutput: AiGenerationOutput | null;
     reviewedByProfileId: string | null;
     reviewedAt: string | null;
@@ -261,6 +274,14 @@ The browser must display/use these values as provenance only; it does not rewrit
 - latest action `edit`: edited review draft;
 - latest action `approve`: approved reviewed output;
 - latest action `reject`: `null`.
+
+`allowedReviewActions` is also server-derived:
+
+- after terminal `approve` or `reject`: `[]`;
+- while review is open: `edit` and `reject` are available;
+- `approve` is advertised only when the current candidate (latest edit, otherwise normalized output) passes the same Stage11 semantic authority used by the approve mutation (`valid` or `review_required`, never `invalid`).
+
+The mutation remains authoritative; callers must refresh after any `409` rather than deriving a new review state locally.
 
 ## 8. Job controls
 
@@ -293,6 +314,7 @@ All control endpoints are Admin-only unsafe requests and return:
 
 - Allowed only while the job is non-terminal.
 - Uses the existing Stage12 cancellation authority, including unit/attempt cleanup semantics.
+- Cancellation clears `ai_jobs.paused_at` in the owning cancellation transaction, so a terminal cancelled job cannot retain a stale pause gate.
 - `completed | failed | cancelled` -> `409 CONFLICT`.
 - Cancellation is terminal; it is not reopened by retry.
 
@@ -317,13 +339,32 @@ All control endpoints are Admin-only unsafe requests and return:
 
 ### Body
 
+The HTTP body is a strict discriminated union:
+
 ```ts
-{
-  action: "edit" | "approve" | "reject";
-  editedOutput?: AiGenerationOutput;
-  note?: string; // trimmed, max 4000 chars
-}
+type ReviewRequest =
+  | {
+      action: "edit";
+      editedOutput: AiGenerationOutput;
+      note?: string; // trimmed, max 4000 chars
+    }
+  | {
+      action: "approve";
+      note?: string; // trimmed, max 4000 chars
+    }
+  | {
+      action: "reject";
+      note: string; // trimmed, non-empty, max 4000 chars
+    };
 ```
+
+Contract implications:
+
+- `approve` with `editedOutput` -> `400 BAD_REQUEST`;
+- `edit` without a non-`undefined` `editedOutput` -> `400 BAD_REQUEST`;
+- `reject` with missing or blank-after-trim `note` -> `400 BAD_REQUEST`;
+- unknown extra fields are rejected with `400 BAD_REQUEST` for every variant;
+- rejected request bodies do not create review events.
 
 ### Shared semantic guard
 
@@ -353,7 +394,7 @@ The review mutation locks the owning `ai_outputs` row, reads the canonical `ai_j
 
 ### Reject
 
-- A non-empty `note` is required; missing reason -> `400`.
+- A non-empty `note` is required; missing/blank reason -> `400`.
 - Creates a terminal `reject` review event with no reviewed output payload.
 - `effectiveReviewedOutput` becomes `null`.
 
@@ -376,7 +417,7 @@ All errors use the existing public envelope:
 
 Expected Stage13E HTTP classes:
 
-- `400 BAD_REQUEST`: invalid UUID/query/body, pagination outside bounds, missing edit payload, missing reject reason, invalid edited output shape/kind, or semantically invalid Admin edit.
+- `400 BAD_REQUEST`: invalid UUID/query/body, pagination outside bounds, ambiguous/extra review fields, missing edit payload, missing/blank reject reason, invalid edited output shape/kind, or semantically invalid Admin edit.
 - `401 UNAUTHORIZED`: no valid session.
 - `403 FORBIDDEN`: authenticated non-Admin caller or origin policy rejection.
 - `404 NOT_FOUND`: unknown job/unit/output.
@@ -408,6 +449,7 @@ No Stage12 lifecycle table is duplicated.
 - Output detail returns normalized/reviewed educational data but never raw provider response.
 - Provider/network calls are not introduced in Admin DB transactions.
 - Review mutation is a short DB transaction and locks only the reviewed `ai_outputs` row while deriving and validating the candidate.
+- Action availability is derived from durable server state; no presentation strings or browser authority are persisted.
 
 ## 13. Verification state
 
@@ -420,16 +462,19 @@ Implemented test/workflow coverage includes intended checks for:
 - edit/approve/reject persistence;
 - review race serialization;
 - semantic Admin review guard: valid edit accepted, Stage11 `invalid` edit rejected, `review_required` candidate approvable by Admin, invalid approval rejected;
+- exact strict review-body matrix (`approve + editedOutput`, missing edit output, missing/blank reject reason, unknown fields) with no review-event side effects;
+- server-derived job action availability, including paused/resumed/cancelled state and retry exclusion for attempt ceiling/cancellation/no failed units;
+- server-derived output review actions and empty actions after terminal approve/reject;
 - failed-job retry history + one-attempt extension + hard ceiling;
-- pause/resume/cancel behavior;
+- pause/resume/cancel behavior including `pause -> cancel` clearing `paused_at`;
 - Stage12 durable execution/capacity/control/lifecycle regressions;
 - auth security regression;
 - clean migrations/schema assertions;
 - lint/typecheck/unit/build.
 
-Current blocker: the initial Stage13E CI run `34184515829` allocated a runner and exposed Biome formatting/import hygiene; that source issue was fixed in `0b617538c84c4722c289ddbf6186d12c5ab6c27b` without weakening CI. Subsequent runs/attempts repeatedly fail before any hosted runner is provisioned. Evidence includes `runner_id=0`, empty runner name and `steps=[]`, including run `34185062185` attempts 1/2/3, run `34185372543` on `99072af...`, and run `34185691717` on semantic-regression head `3e00f616...`.
+Current blocker: the initial Stage13E CI run `34184515829` allocated a runner and exposed Biome formatting/import hygiene; that source issue was fixed in `0b617538c84c4722c289ddbf6186d12c5ab6c27b` without weakening CI. Subsequent runs/attempts repeatedly failed before any hosted runner was provisioned. Integration Review confirmed run `34186560937` on `27da24b8...` was also infrastructure-blocked before checkout (`runner_id=0`, empty runner name, `steps=[]`).
 
-Therefore current-head lint/typecheck/unit/build, clean migration, Stage13E integration and Stage12/auth regression execution remain **NOT YET VERIFIED** and Stage13E is **not yet Ready for integration**.
+The new action-authority/strict-body regression is wired into the unchanged Stage13E full workflow; its execution result on the latest head must still be established. Therefore latest-head lint/typecheck/unit/build, clean migration, Stage13E integration and Stage12/auth regression execution remain **NOT YET VERIFIED** until a runner actually executes the workflow, and Stage13E is **not yet Ready for integration**.
 
 ## 14. Explicit non-goals / still open
 
