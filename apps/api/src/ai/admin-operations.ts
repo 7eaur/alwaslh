@@ -8,6 +8,7 @@ import {
   type AiJobLifecycleStatus,
   type AiJobProgress,
 } from "./job-lifecycle.js";
+import { validateAdminApprovalOutput, validateAdminEditedOutput } from "./review-validation.js";
 
 export type AiOutputReviewAction = "edit" | "approve" | "reject";
 export type AiOutputReviewStatus = "pending" | "edited" | "approved" | "rejected";
@@ -684,8 +685,12 @@ export class AdminAiOperationsService {
     }
 
     await this.database.transaction(async (tx) => {
-      const outputs = await tx.query<{ id: string; normalized_output: unknown }>(
-        "select id, normalized_output from ai_outputs where id = $1 for update",
+      const outputs = await tx.query<{ id: string; normalized_output: unknown; input_payload: unknown }>(
+        `select o.id, o.normalized_output, u.input_payload
+         from ai_outputs o
+         join ai_job_units u on u.id = o.job_unit_id
+         where o.id = $1
+         for update of o`,
         [outputId],
       );
       const output = outputs[0];
@@ -706,8 +711,7 @@ export class AdminAiOperationsService {
       }
 
       const normalized = aiGenerationOutputSchema.safeParse(output.normalized_output);
-      const currentDraft =
-        latest?.action === "edit" ? aiGenerationOutputSchema.safeParse(latest.reviewed_output) : normalized;
+      const currentDraft = latest?.action === "edit" ? latest.reviewed_output : output.normalized_output;
       let reviewedOutput: AiGenerationOutput | null = null;
 
       if (input.action === "edit") {
@@ -717,10 +721,9 @@ export class AdminAiOperationsService {
         if (normalized.success && edited.data.kind !== normalized.data.kind) {
           throw new AppError("BAD_REQUEST", "لا يمكن تغيير نوع مخرج الذكاء الاصطناعي أثناء المراجعة", 400);
         }
-        reviewedOutput = edited.data;
+        reviewedOutput = validateAdminEditedOutput(output.input_payload, edited.data);
       } else if (input.action === "approve") {
-        if (!currentDraft.success) throw new AppError("CONFLICT", "يجب تصحيح المخرج قبل اعتماده", 409);
-        reviewedOutput = currentDraft.data;
+        reviewedOutput = validateAdminApprovalOutput(output.input_payload, currentDraft);
       }
 
       await tx.query(
