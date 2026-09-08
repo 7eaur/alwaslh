@@ -6,6 +6,7 @@ test.skip(!enabled, "Stage13D browser fixture is only available in the dedicated
 const adminIdentifier = "stage13d-admin-ui";
 const adminPassword = "Stage13dAdminUiPass123!";
 const lessonTitle = "درس الرفع المختلط التجريبي";
+const lessonOption = "الصف التجريبي للرفع · المادة التجريبية للرفع · درس الرفع المختلط التجريبي";
 
 function buildPdf() {
   const objects = [
@@ -17,7 +18,6 @@ function buildPdf() {
   ];
   const stream = "BT /F1 18 Tf 24 90 Td (Stage13D mixed PDF) Tj ET";
   objects[3] = `<< /Length ${Buffer.byteLength(stream)} >>\nstream\n${stream}\nendstream`;
-
   let output = "%PDF-1.4\n";
   const offsets = [0];
   for (let index = 0; index < objects.length; index += 1) {
@@ -25,8 +25,7 @@ function buildPdf() {
     output += `${index + 1} 0 obj\n${objects[index]}\nendobj\n`;
   }
   const xrefOffset = Buffer.byteLength(output);
-  output += `xref\n0 ${objects.length + 1}\n`;
-  output += "0000000000 65535 f \n";
+  output += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
   for (let index = 1; index < offsets.length; index += 1) {
     output += `${String(offsets[index]).padStart(10, "0")} 00000 n \n`;
   }
@@ -34,10 +33,11 @@ function buildPdf() {
   return Buffer.from(output);
 }
 
-const png = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFElEQVR4nGP8z8DAwMDAxMDAwAAABQABJzQnCgAAAABJRU5ErkJggg==",
-  "base64",
-);
+const png = Buffer.from([
+  137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 2, 0, 0, 0, 2, 8, 2, 0,
+  0, 0, 253, 212, 154, 115, 0, 0, 0, 20, 73, 68, 65, 84, 120, 156, 99, 252, 207, 192, 192, 192, 192,
+  192, 196, 192, 192, 192, 0, 0, 5, 0, 1, 39, 52, 39, 10, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+]);
 
 async function login(page) {
   await page.goto("/");
@@ -56,60 +56,48 @@ async function openIngestion(page) {
 test("admin preserves mixed file order, processes, reviews, publishes and keeps durable history", async ({ page }) => {
   await login(page);
   await openIngestion(page);
-
-  await page.getByLabel("الدرس").selectOption({ label: new RegExp(lessonTitle) });
+  await page.getByLabel("الدرس").selectOption({ label: lessonOption });
   await page.locator('input[type="file"]').setInputFiles([
     { name: "01-cover.png", mimeType: "image/png", buffer: png },
     { name: "02-pages.pdf", mimeType: "application/pdf", buffer: buildPdf() },
     { name: "03-summary.png", mimeType: "image/png", buffer: png },
   ]);
-
   await expect(page.locator(".selected-file-list strong")).toHaveText([
     "01-cover.png",
     "02-pages.pdf",
     "03-summary.png",
   ]);
-
   await page.getByRole("button", { name: "إنشاء المهمة ورفع الملفات" }).click();
   await expect(page.getByText("اكتمل رفع الملفات بالترتيب المحدد. ابدأ المعالجة عندما تكون جاهزًا.")).toBeVisible();
   await expect(page.locator(".task-detail .ingestion-status")).toHaveText("جاهز للمعالجة");
-
   await expect(page.locator(".task-item-list strong")).toHaveText([
     "01-cover.png",
     "02-pages.pdf",
     "03-summary.png",
   ]);
-
   await page.getByRole("button", { name: "بدء المعالجة" }).click();
   await expect(page.locator(".task-detail .ingestion-status")).toHaveText("اكتملت المعالجة", { timeout: 30_000 });
   await expect(page.locator(".task-metric").filter({ hasText: "الوسائط الناتجة" })).toContainText("3");
-
   await page.getByRole("button", { name: "ربط بالدرس كمسودة" }).click();
   await expect(page.locator(".publication-status")).toHaveText("مسودة");
   await expect(page.getByText("تم ربط الوسائط بالدرس كمسودة. لم يتم نشر أي شيء بعد.")).toBeVisible();
-
   await page.getByRole("button", { name: "إرسال للمراجعة" }).click();
   await expect(page.locator(".publication-status")).toHaveText("قيد المراجعة");
-
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("button", { name: "نشر المحتوى للطلاب" }).click();
   await expect(page.locator(".publication-status")).toHaveText("منشور");
   await expect(page.getByText("تم نشر محتوى المهمة للطلاب بقرار صريح.")).toBeVisible();
-
   await page.reload();
   await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
   await openIngestion(page);
-
   const historyTask = page.locator(".history-task").filter({ hasText: lessonTitle }).first();
   await expect(historyTask).toBeVisible();
   await historyTask.click();
   await expect(page.locator(".publication-status")).toHaveText("منشور");
-
   await page.getByRole("button", { name: "أرشفة المهمة" }).click();
   await expect(page.getByText("تمت أرشفة المهمة مع الاحتفاظ بتاريخها.")).toBeVisible();
   await page.getByLabel("إظهار المؤرشف").check();
-  const archivedTask = page.locator(".history-task").filter({ hasText: lessonTitle }).first();
-  await expect(archivedTask).toContainText("مؤرشفة");
+  await expect(page.locator(".history-task").filter({ hasText: lessonTitle }).first()).toContainText("مؤرشفة");
 });
 
 test("content ingestion workspace remains usable at a narrow viewport", async ({ page }) => {
@@ -117,7 +105,6 @@ test("content ingestion workspace remains usable at a narrow viewport", async ({
   await login(page);
   await openIngestion(page);
   await expect(page.getByRole("heading", { name: "مهمة رفع جديدة" })).toBeVisible();
-
   const dimensions = await page.evaluate(() => ({
     viewport: window.innerWidth,
     documentWidth: document.documentElement.scrollWidth,
