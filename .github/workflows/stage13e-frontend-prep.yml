@@ -1,0 +1,39 @@
+name: Stage 13E Frontend Preparation Verification
+
+on:
+  push:
+    branches:
+      - frontend/stage13e-ai-operations
+    paths:
+      - apps/admin-web/**
+      - .github/workflows/stage13e-frontend-prep.yml
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage13e-frontend-prep-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admin-web-quality:
+    name: Stage 13E · Admin Web quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Admin dependencies
+        run: npm install --prefix apps/admin-web --ignore-scripts --no-audit --no-fund
+      - name: Lint Admin Web
+        run: npm run lint --prefix apps/admin-web
+      - name: Typecheck Admin Web
+        run: npm run typecheck --prefix apps/admin-web
+      - name: Unit test Admin Web
+        run: npm test --prefix apps/admin-web
+      - name: Build Admin Web
+        run: npm run build --prefix apps/admin-web
