@@ -120,33 +120,23 @@ Frontend previously exposed only first **30 Jobs / 50 Units / 50 Attempts**. End
 - Backend regression seeds **105** revisions and proves revision 105 still controls authority while viewing revisions 5..1.
 - Real E2E fixture seeds **101** edit revisions. Chromium contract navigates all pages, reaches revision 1, approves while oldest page is displayed, then proves revision 102/current state and reload durability.
 
-Architecture rule: paginated historical data is navigable evidence only; it never becomes canonical current lifecycle/review authority.
-
 ### AI-013E-OPS-005 — P2 Output Detail snapshot consistency
 
-- Output row, requested audit page, total count and canonical latest revision were separate top-level reads under PostgreSQL `READ COMMITTED`.
-- A concurrent review could produce a mixed response without corrupting durable data.
-- Fix `9d59f84fb516db5cfaf89382f548c3eea595e365`: all reads execute inside one short `REPEATABLE READ` snapshot; no write locks/provider calls.
-- Regression: `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`.
+Fix `9d59f84fb516db5cfaf89382f548c3eea595e365` moves output/history/count/latest reads into one short `REPEATABLE READ` snapshot. Regression: `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`.
 
 ### AI-013E-OPS-006 — P2 Admin multi-query read-model consistency
 
-- List Jobs page/total, Job Detail progress/units/allowed actions, and Unit Detail latest-attempt/page/total were assembled by separate top-level reads.
-- Concurrent worker/lifecycle commits could make a single Admin response internally contradictory even though durable rows remain correct.
-- Fix `6a146c26b771a991530f12b1c1c12b6e3b43263b`: private `readSnapshot()` owns short `REPEATABLE READ` transactions for List Jobs, Job Detail, Unit Detail and Output Detail.
-- Mutations retain their existing write transactions; read snapshots introduce no write lock and no provider/network call.
-- Regression `apps/api/tests/ai-admin-read-snapshots.test.ts` proves List/Job/Unit reads stay inside snapshots and explicitly exercises Stage12 `getAllowedActions` in the same Job Detail snapshot. Test precision hardened at `10f32c72a684a8243a789a3561426a68dad1bcea`.
+Fix lineage `6a146c26...` → `f5c5dddf...` → `10f32c72...` generalizes one `readSnapshot()` policy to List Jobs, Job Detail, Unit Detail and Output Detail. Stage12 `allowedActions` is read inside the same Job Detail snapshot. Mutations keep existing write transactions.
 
 ### AI-013E-PERF-007 — P2 bounded Job-list aggregation
 
 - `listJobs()` originally performed `ai_jobs LEFT JOIN ai_job_units`, grouped all matching durable history, and only then applied `LIMIT/OFFSET`.
-- A 30-row page could therefore aggregate Unit history for every matching Job before discarding all but 30 rows.
-- Fix `8501d2e0317c0e1e4eb83b72c997e321ee79fe81`: filter/order/page `ai_jobs` first, then compute Unit status counts only for Jobs in that page with correlated `LATERAL` aggregation.
+- Fix `8501d2e0317c0e1e4eb83b72c997e321ee79fe81` pages `ai_jobs` first, then computes Unit status counts only for selected Jobs via correlated `LATERAL` aggregation.
 - No speculative index/denormalized counter was added; query shape was the root cause.
-- Regression `6efce1510231de5d569c4b96dbdffa3d4d488b31`: `apps/api/tests/ai-admin-job-list-query-shape.test.ts` requires `LIMIT/OFFSET` before Unit aggregation and rejects the former global-join shape.
+- Regression `6efce1510231de5d569c4b96dbdffa3d4d488b31`: `apps/api/tests/ai-admin-job-list-query-shape.test.ts` requires page-before-aggregation and rejects the former global-join shape.
 - Specialized detail: `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`.
 
-All P2 findings are **FIXED IN CANDIDATE / EXECUTION PENDING**.
+All four P1 and three P2 findings are **FIXED IN CANDIDATE / EXECUTION PENDING**.
 
 ## Stage13E Browser Contract
 
@@ -156,17 +146,7 @@ Real fixtures provide:
 - Race Job: terminal execution + open output for deterministic real stale-review `409`.
 - Pagination Marker Job: deliberately old job plus 30 newer fillers, forcing later Jobs page.
 
-Chromium suite contract covers:
-
-1. complete Jobs/Units/Attempts pagination;
-2. complete Review History >100 pagination;
-3. latest-review authority while viewing oldest audit page;
-4. pause/resume + approve + reload durability;
-5. real session expiry;
-6. real stale-review `409` canonical refresh;
-7. 390px horizontal-overflow regression.
-
-No mock API, route interception, fake 401/409, test-only endpoint, cookie forgery, or sleep-based race.
+Chromium suite contract covers complete Jobs/Units/Attempts/Review History pagination, current-authority isolation, pause/resume + approve + reload, real session expiry, stale-review `409`, and 390px overflow. No mock API/fake errors/test-only endpoint/sleep race.
 
 ## Latest Executable Attempts
 
@@ -177,14 +157,16 @@ Latest **runtime/test-head** attempt:
 - run `34281631521`;
 - head `6efce1510231de5d569c4b96dbdffa3d4d488b31`;
 - job `102247518121`;
-- conclusion `failure`, but `steps=[]` and no checkout/repository command executed.
+- `steps=[]`; no checkout/repository command executed.
 
-Latest candidate/docs-head run:
+Latest **candidate/docs-head** attempt:
 
 - run `34281764765`;
 - head `e9793a5222758a7d17aad08f91993cb7431631b7`;
-- job `102247948380`;
-- conclusion `failure`, but `steps=[]` and no repository command executed.
+- attempt `2`;
+- job `102250318378`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- completed before checkout; no repository command executed.
 
 Interpretation: **current executable blocker is GitHub hosted-runner allocation, not an executed product/test failure.** External account/platform root cause remains `NOT YET VERIFIED` with available permissions.
 
