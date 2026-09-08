@@ -1,23 +1,28 @@
+previews:
+  generation: off
+
 databases:
   - name: alwaslh-prod-postgres-7eaur
     databaseName: alwaslh
     user: alwaslh_app
-    plan: basic-256mb
+    plan: 0.1c-256mb
     region: frankfurt
     postgresMajorVersion: "16"
     diskSizeGB: 1
+    storageAutoscalingEnabled: false
     ipAllowList: []
 
 services:
   - type: web
     name: alwaslh-prod-api-7eaur
-    runtime: node
-    plan: starter
+    runtime: docker
+    plan: 0.5c-512mb
     region: frankfurt
     branch: main
     autoDeploy: true
-    buildCommand: npm install --include=dev --no-audit --no-fund --prefix apps/api && npm run build --prefix apps/api
-    startCommand: npm run db:migrate --prefix apps/api && npm start --prefix apps/api
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerCommand: node apps/api/dist/server.js
+    preDeployCommand: node apps/api/dist/migrate.js
     healthCheckPath: /ready
     envVars:
       - key: NODE_ENV
@@ -43,10 +48,10 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://alwaslh-prod-student-7eaur.onrender.com,https://alwaslh-prod-admin-7eaur.onrender.com
       - key: MEDIA_STORAGE_ROOT
-        value: /opt/render/project/src/runtime-data/media
+        value: /app/runtime-data/media
     disk:
       name: alwaslh-prod-media-7eaur
-      mountPath: /opt/render/project/src/runtime-data/media
+      mountPath: /app/runtime-data/media
       sizeGB: 1
 
   - type: web

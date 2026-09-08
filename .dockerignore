@@ -1,0 +1,11 @@
+.git
+.github
+**/node_modules
+**/dist
+**/.vite
+**/coverage
+runtime-data
+.media-storage
+.env
+.env.*
+!.env.example
