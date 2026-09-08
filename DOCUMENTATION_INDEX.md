@@ -165,6 +165,7 @@ Key docs:
 - `docs/ai/STAGE12_JOB_LIFECYCLE.md`
 - `docs/ai/STAGE12_WORKER_RUNTIME.md`
 - `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md`
+- `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`
 - `docs/admin/STAGE13E_AI_OPERATIONS_FRONTEND_PREP.md`
 
 Live provider benchmark/routes/credentials/bootstrap remain `NOT YET VERIFIED`. Never fake provider readiness or move the background worker into Fastify.
@@ -217,11 +218,15 @@ Exact current task is always the first unfinished item in `PROJECT_EXECUTION_QUE
 
 Combined branch:
 
-`integration/stage13e-ai-operations @ 807f733838e2fab2620652025b255c3bc404fec1`
+`integration/stage13e-ai-operations @ e9793a5222758a7d17aad08f91993cb7431631b7`
 
-Latest combined Actions run `34193380473`, attempt 2, did not receive a hosted runner (`steps=[]`), so Stage13E remains `NOT YET VERIFIED`. This is not code-failure evidence.
+Latest runtime/test HEAD below docs:
 
-See `PROJECT_EXECUTION_QUEUE.md` and `PROJECT_INTEGRATION_CONTINUITY.md` for exact next action.
+`6efce1510231de5d569c4b96dbdffa3d4d488b31`
+
+Latest runtime/test run `34281631521` / job `102247518121` and docs-head run `34281764765` / job `102247948380` both terminated before repository execution (`steps=[]`). Stage13E therefore remains `NOT YET VERIFIED`; these are not code-failure evidence.
+
+Current static audit additionally fixed `AI-013E-PERF-007`: List Jobs now pages Jobs before Unit aggregation. See `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`, Queue and Continuity.
 
 ## 14. Documentation maintenance
 
