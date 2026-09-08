@@ -30,6 +30,7 @@ Governance:
 - Current Product Owner overrides في `docs/product/CURRENT_PRODUCT_OVERRIDES.md`؛
 - root-cause/no-patching mandatory؛
 - repository docs هي ذاكرة المشروع، لا chat memory؛
+- permanent Backend / Frontend / Integration workstreams coordinate through GitHub Boards + Team Room؛
 - old DB خارج scope الحالي؛
 - deployment `DEFERRED BY PRODUCT OWNER`.
 
@@ -255,6 +256,26 @@ Specialized contract: `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md`.
 
 Legacy capabilities `LES-A-010..015` are closed by this executable evidence.
 
+### Permanent multi-workstream team governance — ACTIVE
+
+A docs/governance batch introduced a permanent three-workstream operating model so future stages can proceed in parallel without relying on chat memory or long-lived diverging branches.
+
+Repository guides:
+
+- `docs/workstreams/TEAM_OPERATING_MODEL.md`;
+- `docs/workstreams/BACKEND_WORKSTREAM.md`;
+- `docs/workstreams/FRONTEND_WORKSTREAM.md`;
+- `docs/workstreams/INTEGRATION_WORKSTREAM.md`.
+
+GitHub coordination:
+
+- Issue `#13` Team Room for cross-team contracts/blockers/decisions;
+- Issue `#14` Backend/Platform Command Board;
+- Issue `#15` Frontend/Product Command Board;
+- Issue `#16` Integration/Architecture/QA/Release Board.
+
+Rules: latest Board `COMMAND` defines scope; each workstream self-reviews and posts a `REPORT`; branches are short-lived from the latest Integration-approved HEAD; Backend/Frontend readiness never equals Stage PASS; Integration alone accepts/merges and closes a Stage after same-head cross-boundary evidence. This governance change makes **no new runtime feature claim**.
+
 ## 6. Architecture Decisions
 
 Historical ADs remain embodied in the earlier stages and repository history. Current active decisions include:
@@ -272,6 +293,8 @@ Historical ADs remain embodied in the earlier stages and repository history. Cur
 - **AD-124** — ready/completed media can only become Lesson content through explicit link as Draft followed by Review and Published transitions.
 - **AD-125** — processing claims use durable lease authority and idempotent media keys so retries do not create duplicate canonical media.
 - **AD-126** — task archive is non-destructive; linked content/media provenance remains valid.
+- **AD-127** — project execution uses persistent Backend, Frontend and Integration workstreams coordinated through repository docs + GitHub Command Boards/Team Room; chat memory is never the coordination authority.
+- **AD-128** — workstreams use short-lived feature branches from the latest Integration-approved HEAD; only Integration may declare Stage VERIFIED after same-head cross-boundary evidence.
 
 Provider-neutral AI decisions remain: no fabricated exact answers, no client/provider credentials, durable Stage12 jobs, lease-protected writes, DB-coordinated capacity/controls and live routing only after authorized benchmark evidence.
 
@@ -296,6 +319,7 @@ Provider-neutral AI decisions remain: no fabricated exact answers, no client/pro
 | PREVIEW-010-002 | P2 | Hosted runtime | hosted pipeline/runtime unproven | no production claim | verify after owner re-enables deployment | NOT YET VERIFIED |
 | REPO-001 | P3 | Git hygiene | `tmp-unused-do-not-use` branch remains | repository noise only | remove when safe | OPEN HOUSEKEEPING |
 | DOC-001 | P2 | Continuity | chat-memory/stale docs risk | repeated or contradictory work | source-of-truth docs/index | CONTROLLED |
+| DOC-003 | P2 | Team coordination | parallel chats could diverge in contracts/branches and lose handoffs | merge debt/architecture drift/duplicated work | permanent workstream docs + Boards #14/#15/#16 + Team Room #13 + Integration-only Stage PASS | CONTROLLED |
 
 ## 8. Latest Verification
 
@@ -315,7 +339,7 @@ Same-head matrix:
 - Stage9 Content Import `34177369756` — SUCCESS.
 - Full Rebuild `34177369768` — SUCCESS; includes Student activation/returning-login/recovery Chromium.
 
-Documentation closure commits after this executable head are documentation descendants and do not replace `4eca7de…` as the runtime evidence checkpoint.
+Documentation/team-governance commits after this executable head are documentation descendants and do not replace `4eca7de…` as the runtime evidence checkpoint.
 
 ## 9. Known Issues / Remaining Risk
 
@@ -333,7 +357,7 @@ Documentation closure commits after this executable head are documentation desce
 
 ## 10. Remaining Work — Ordered
 
-1. **Stage13E Admin AI Operations / Review** — expose/operate verified Stage12 durable jobs, progress, retry/cancel/pause/resume, output review and provenance without browser-owned queue state.
+1. **Stage13E Admin AI Operations / Review** — Backend command tracked in #14, Frontend command tracked in #15, Integration acceptance in #16; expose/operate verified Stage12 durable jobs, progress, retry/cancel/pause/resume, output review and provenance without browser-owned queue state.
 2. **Stage13F Question Bank / Quiz Builder / Publish** — resolve `direct`, CRUD/review/version/source/export/publish.
 3. **Stage13G Remaining Admin** — students/codes/recovery/device reset/notifications/import-export/reports/settings/security/audit.
 4. **Stage14 Student Product/Reader** — entitlement-filtered curriculum and Reader/Text/Search/TTS.
@@ -349,8 +373,9 @@ Canonical startup order is defined in `DOCUMENTATION_INDEX.md`.
 
 After every meaningful change:
 
-- update `PROJECT_STATUS.md`;
-- update this Engineering Log with stage changes/ADs/findings/evidence;
+- workstream chat updates its role file + Board `REPORT`;
+- Integration Lead updates `PROJECT_STATUS.md`;
+- Integration Lead updates this Engineering Log with stage changes/ADs/findings/evidence;
 - update `PROJECT_HANDOFF.md` if continuation context changed;
 - update current specialized doc;
 - update Legacy Coverage evidence and parity notes where relevant;
