@@ -19,6 +19,18 @@
 
 الوسيلة الذكية منصة تعليمية عربية بسطحين مستقلين: Student Web/PWA للطالب، وAdmin Web للـSuper Admin، مع Backend API خاص فوق PostgreSQL. الإدارة تبني وتراجع المنهج والمحتوى والوسائط وOCR/AI وبنك الأسئلة، والطالب يستهلك محتوى منشورًا ومصرحًا له به ويقرأ ويتدرب ويختبر ويحفظ ملاحظاته ويتابع تقدمه Offline/Online. الـrebuild يحافظ على كل نتيجة قديمة ذات قيمة لكنه يستبدل التنفيذ غير الآمن أو المعقد بمعمارية أبسط وأقوى.
 
+## Permanent Team Operating Model
+
+المشروع يعمل الآن بثلاثة workstreams دائمة تتشارك GitHub كذاكرة/قناة أوامر وتقارير، وليس chat memory:
+
+- **Backend / Platform** — Command Board Issue `#14`; persistent guide `docs/workstreams/BACKEND_WORKSTREAM.md`.
+- **Frontend / Product** — Command Board Issue `#15`; persistent guide `docs/workstreams/FRONTEND_WORKSTREAM.md`.
+- **Integration / Architecture / QA / Release** — Board Issue `#16`; persistent guide `docs/workstreams/INTEGRATION_WORKSTREAM.md`.
+- **Team Room** — Issue `#13` للعقود/blockers/القرارات المشتركة.
+- Team-wide rules: `docs/workstreams/TEAM_OPERATING_MODEL.md`.
+
+كل workstream يستخدم branch قصيرة من أحدث Integration-approved HEAD، يراجع نفسه، ثم يرفع `REPORT` في Board الخاصة به. Integration Lead وحده يقرر القبول/الدمج وStage PASS بعد same-head cross-boundary verification. Backend/Frontend لا يعلنان Stage VERIFIED منفردين.
+
 ## Fully Verified Same-Head Matrix
 
 Exact executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
@@ -100,6 +112,8 @@ Legacy coverage `LES-A-010..015` is now VERIFIED. `LES-A-016+` remains NOT YET V
 
 ## Current Next Work — Stage13E
 
+Backend command is tracked in Issue `#14`; Frontend command is tracked in Issue `#15`. Integration/acceptance is tracked in Issue `#16`.
+
 Implement only after discovery of the actual Stage12 callers/contracts:
 
 1. Reuse `ai_jobs / ai_job_units / attempts / outputs`; do not create a second queue.
@@ -151,6 +165,6 @@ Do not sync/deploy to Vercel/Supabase or re-enable auto-deployment until a new e
 
 Canonical startup path:
 
-`README.md → DOCUMENTATION_INDEX.md → PROJECT_HANDOFF.md → PROJECT_STATUS.md → PROJECT_ENGINEERING_LOG.md → CURRENT_PRODUCT_OVERRIDES → Product Decisions → Parity/Coverage → Roadmap → specialized docs`.
+`README.md → DOCUMENTATION_INDEX.md → PROJECT_HANDOFF.md → PROJECT_STATUS.md → PROJECT_ENGINEERING_LOG.md → TEAM_OPERATING_MODEL/workstream board → CURRENT_PRODUCT_OVERRIDES → Product Decisions → Parity/Coverage → Roadmap → specialized docs`.
 
 `TODO.md`, root legacy code, legacy PRD/audits are historical references and must not override current executable evidence.
