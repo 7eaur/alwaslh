@@ -16,6 +16,7 @@ Current combined branch is documented in `PROJECT_EXECUTION_QUEUE.md` and `PROJE
 - `review_required` may be accepted by the human Admin review authority; semantic `invalid` may not.
 - Human review mutation is available only for **execution-stable unit outputs**: `completed | review_required`.
 - Outputs attached to `queued | running | retrying | failed | cancelled` units remain observable for diagnosis/provenance but are **inspection-only** and expose no review mutation authority.
+- Paginated history is presentation/audit navigation only. The currently opened history page never defines current review state or action authority.
 
 ## 2. Job lifecycle / progress
 
@@ -30,7 +31,7 @@ Server-derived progress contains:
 ```ts
 {
   totalUnits: number;
-  acceptedUnits: number;       // completed + review_required
+  acceptedUnits: number;
   completedUnits: number;
   reviewRequiredUnits: number;
   failedUnits: number;
@@ -40,7 +41,7 @@ Server-derived progress contains:
   retryingUnits: number;
   settledUnits: number;
   remainingUnits: number;
-  progressPercent: number;     // 0..100
+  progressPercent: number;
 }
 ```
 
@@ -50,29 +51,18 @@ Frontend refreshes from server after mutations. Bounded polling is presentation 
 
 `GET /v1/admin/ai/jobs`
 
-Admin only.
-
 Query:
 
 ```ts
 {
   status?: "queued" | "running" | "retrying" | "completed" | "failed" | "cancelled" | "paused";
-  jobType?: string; // trimmed 1..160
+  jobType?: string;
   limit?: number;   // default 30, 1..100
   offset?: number;  // default 0
 }
 ```
 
-Response:
-
-```ts
-{
-  jobs: JobListItem[];
-  pagination: { total: number; limit: number; offset: number };
-}
-```
-
-Jobs are ordered `created_at DESC, id DESC`. `allowedActions` is intentionally a detail field.
+Response includes `pagination: { total, limit, offset }`. Jobs are ordered `created_at DESC, id DESC`.
 
 ## 4. Job detail / server action authority
 
@@ -80,26 +70,16 @@ Jobs are ordered `created_at DESC, id DESC`. `allowedActions` is intentionally a
 
 Query: `unitLimit` default 50/max 100, `unitOffset` default 0.
 
-Response:
+Response includes units plus `pagination: { total, limit, offset }` and server-derived `allowedActions`.
 
-```ts
-{
-  job: JobListItem & {
-    allowedActions: Array<"pause" | "resume" | "cancel" | "retry">;
-  };
-  units: UnitView[];
-  pagination: { total: number; limit: number; offset: number };
-}
-```
-
-Server rules:
+Rules:
 
 - non-terminal, unpaused → `pause`, `cancel`;
 - non-terminal, paused → `resume`, `cancel`;
 - failed → `retry` only if at least one failed unit exists, no cancellation request exists and no failed unit reached `attemptCount >= 20`;
 - completed/cancelled/exhausted failed/no-failed-unit/cancellation-requested failed → no actions.
 
-The array is current-state advice, not a reservation; concurrent state change may still make the mutation return `409`.
+The array is current-state advice, not a reservation; concurrent state change may still make mutation return `409`.
 
 ## 5. Unit detail / attempts
 
@@ -117,9 +97,7 @@ Response:
 }
 ```
 
-Attempts newest first.
-
-Operational fields include provider key, project alias, model, route, benchmark, validation status, retryability, token counts, latency, cost micros and safe error code.
+Attempts are newest first. Admin-visible telemetry is bounded to safe operational identifiers and metrics.
 
 ### Secret boundary
 
@@ -145,13 +123,22 @@ Unit/output detail derives source provenance from canonical Stage11 request payl
 }
 ```
 
-Browser displays provenance but never rewrites the canonical source association.
+Browser displays provenance but never rewrites canonical source association.
 
 ## 7. Output detail / review action authority
 
 `GET /v1/admin/ai/outputs/:outputId`
 
-Important fields:
+Query:
+
+```ts
+{
+  reviewLimit?: number;  // default Backend 100, max 100; Admin UI uses 50
+  reviewOffset?: number; // default 0
+}
+```
+
+Important response fields:
 
 ```ts
 {
@@ -170,11 +157,22 @@ Important fields:
   reviewedByProfileId: string | null;
   reviewedAt: string | null;
   sourceProvenance: SourceProvenance[];
-  reviewHistory: ReviewEvent[]; // newest first, max 100
+  reviewHistory: ReviewEvent[]; // requested page, newest first
+  reviewPagination: { total: number; limit: number; offset: number };
 }
 ```
 
 `raw_response` is never returned; only `hasRawResponse`.
+
+### Canonical-latest versus paginated history
+
+The service performs separate reads for:
+
+1. requested review-history page;
+2. total review-event count;
+3. canonical latest review revision.
+
+`reviewStatus`, `allowedReviewActions`, and `effectiveReviewedOutput` are derived only from the canonical latest revision. Therefore opening page 3 of the audit history cannot make revision 1 appear to be the current review or re-enable actions after a later terminal approve/reject.
 
 Effective reviewed output:
 
@@ -185,56 +183,28 @@ Effective reviewed output:
 
 Review actions:
 
-- unit status outside `completed | review_required` → `[]` even if an `ai_outputs` row exists;
+- unit status outside `completed | review_required` → `[]`;
 - terminal approve/reject → `[]`;
 - open stable review → edit + reject;
-- approve only when current candidate passes Stage11 semantic authority (`valid` or `review_required`, never `invalid`).
-
-This stable-unit gate prevents an Admin review revision from being attached to an output row that Stage12 may still replace during retry/re-execution.
+- approve only when current candidate passes Stage11 semantic authority.
 
 ## 8. Job controls
 
 All are Admin-only unsafe requests and return `{ progress: AiJobProgress }`.
 
 ### Pause
-
 `POST /v1/admin/ai/jobs/:jobId/pause`
 
-- non-terminal only;
-- repeated pause is safe;
-- gates future claims without stealing an active Stage12 lease;
-- terminal → `409`.
-
 ### Resume
-
 `POST /v1/admin/ai/jobs/:jobId/resume`
 
-- non-terminal only;
-- repeated resume is safe;
-- terminal → `409`.
-
 ### Cancel
-
 `POST /v1/admin/ai/jobs/:jobId/cancel`
 
-- non-terminal only;
-- reuses Stage12 cancellation authority;
-- atomically clears `paused_at`;
-- cancellation is terminal and cannot be reopened by retry;
-- terminal → `409`.
-
 ### Retry
-
 `POST /v1/admin/ai/jobs/:jobId/retry`
 
-- only underlying `failed` job;
-- no cancellation request;
-- at least one failed unit;
-- any failed unit at `attemptCount >= 20` rejects retry with `409` and no mutation;
-- each failed unit gets exactly one new allowed attempt: `maxAttempts = attemptCount + 1`;
-- historical attempts remain intact;
-- lease/resume/error fields clear for the new retry;
-- job returns to existing durable Stage12 `retrying` state.
+Retry remains Stage12 authority, preserves historical attempts, and cannot exceed the hard attempt ceiling.
 
 ## 9. Review mutation
 
@@ -251,59 +221,15 @@ type ReviewRequest =
 
 Rules:
 
-- output's owning unit must currently be `completed` or `review_required`; otherwise → `409` and no review event;
-- approve + `editedOutput` → `400`;
-- edit without `editedOutput` → `400`;
-- reject missing/blank-after-trim note → `400`;
-- unknown fields → `400`;
-- rejected request bodies create no review event.
+- owning unit must be `completed` or `review_required`; otherwise `409` and no review event;
+- edit requires `editedOutput`;
+- reject requires nonblank reason;
+- unknown fields are rejected;
+- Admin edits/approvals are validated by Stage11 semantic authority.
 
-### Shared semantic + execution-stability guard
+Review transaction locks owning output + unit, verifies execution stability, selects normalized/latest-edited candidate, validates it, and appends a new review revision only if allowed.
 
-Review transaction:
-
-1. locks the owning `ai_outputs` **and** `ai_job_units` rows together;
-2. verifies unit status is execution-stable (`completed | review_required`);
-3. reads canonical `ai_job_units.input_payload`;
-4. chooses normalized/latest-edited candidate;
-5. executes Stage11 `validateAiGenerationOutput` inside the same transaction;
-6. writes append-only review revision only if allowed.
-
-This prevents schema-valid human edits from bypassing provenance, requested count, answer shape, notation, duplicate, exact-source and other Stage11 rules, and prevents a human approval/rejection from surviving as authority over an output that a retry could replace.
-
-### Edit
-
-- output must belong to an execution-stable unit;
-- output must match Stage11 schema;
-- cannot change output `kind` when stored normalized output is schema-valid;
-- semantic `invalid` → `400`, no revision;
-- `valid` or `review_required` → append edit revision;
-- raw/normalized provider output remains untouched.
-
-### Approve
-
-- output must belong to an execution-stable unit;
-- uses latest edit, otherwise normalized output;
-- candidate revalidated inside locked transaction;
-- schema/semantic invalid → `409`, no terminal revision;
-- `valid` and `review_required` are approvable by Admin;
-- creates terminal approve event;
-- does **not** publish to Question Bank.
-
-### Reject
-
-- output must belong to an execution-stable unit;
-- non-empty reason required;
-- creates terminal reject event with no reviewed output;
-- `effectiveReviewedOutput = null`.
-
-### Concurrency / audit
-
-- owning output and unit rows are locked before execution-state/revision decision;
-- `(ai_output_id, revision)` is unique;
-- after approve/reject all later review mutations return `409`;
-- concurrent terminal requests serialize and at most one succeeds;
-- actor/revision/action/output/note/timestamp are durable.
+After approve/reject, every later review mutation returns `409`. Concurrent terminal requests serialize and at most one succeeds.
 
 ## 10. Error contract
 
@@ -315,107 +241,81 @@ Existing envelope:
 
 Expected classes:
 
-- `400 BAD_REQUEST`: invalid params/query/body, strict-union violation, missing edit output/reject reason, invalid edited shape/kind or semantic edit failure;
+- `400 BAD_REQUEST`: invalid params/query/body, including review pagination >100;
 - `401 UNAUTHORIZED`: no valid session;
 - `403 FORBIDDEN`: non-Admin or origin-policy failure;
 - `404 NOT_FOUND`: unknown resource;
-- `409 CONFLICT`: stale/illegal lifecycle action, retry ceiling/no failed unit, output unit not execution-stable, invalid approval candidate or finished review;
+- `409 CONFLICT`: stale/illegal lifecycle/review action;
 - `500 INTERNAL_ERROR`: durable data violates stored contract/invariant.
 
-Frontend must refresh canonical state on `409`, not invent an optimistic replacement state.
+Frontend refreshes canonical state on `409`; it never invents an optimistic replacement state.
 
 ## 11. PostgreSQL authority
 
-Migration: `database/migrations/0018_ai_admin_review.sql`.
+Migration `0018_ai_admin_review.sql` adds append-only `ai_output_review_events`, unique `(ai_output_id, revision)`, payload/note constraints, durable nonblank reject reason, actor/time audit, and safe foreign keys.
 
-Adds:
+The unique `(ai_output_id, revision)` btree serves canonical latest-revision lookup with a backward scan and bounded history pages.
 
-- enum `ai_output_review_action ('edit','approve','reject')`;
-- append-only `ai_output_review_events`;
-- FK to `ai_outputs` and actor `profiles`;
-- unique `(ai_output_id, revision)`;
-- payload-shape constraint;
-- note length `<= 4000`;
-- **durable reject-reason constraint**: reject requires non-null, nonblank `note` at the database boundary;
-- actor/time audit index.
+### AI-013E-DB-001 — P1 Data/Audit integrity
 
-The unique `(ai_output_id, revision)` btree also serves latest-revision lookup with a backward scan. A separate duplicate latest-output index was removed during static audit.
+Reject reason existed only in caller validation. Fixed by PostgreSQL `ai_output_review_events_reject_note_required` plus direct DB regression. Execution remains pending because hosted runner still does not reach checkout.
 
-### Static audit finding — AI-013E-DB-001
+### AI-013E-REVIEW-002 — P1 Data/Review integrity
 
-**Severity:** P1 Data/Audit integrity.
+Human review was not bound to execution-stable unit state even though Stage12 can replace output during retry. Fixed by stable-unit gating and output+unit row locks. Failed/retrying outputs remain inspectable but not review-mutable.
 
-**Symptom:** HTTP/service rejected missing or blank reject reasons, but the original migration allowed a direct/future DB writer to persist `action='reject'` with `note IS NULL` or whitespace.
+### AI-013E-OPS-003 — P1 Durable operational history
 
-**Root cause:** a durable business/audit invariant existed only at caller validation, not at PostgreSQL authority.
+Frontend originally exposed only first 30 Jobs / 50 Units / 50 Attempts although Backend already paginated them. Fixed with independent bounded server pagination, controller offsets and real Chromium fixtures (51 Units / 51 Attempts / second Jobs page).
 
-**Blast radius:** any future writer bypassing the current HTTP service could create an incomplete terminal rejection audit event.
+### AI-013E-OPS-004 — P1 Review audit completeness / authority isolation
 
-**Fix location:** PostgreSQL migration `0018`, because reject-reason presence is a durable row invariant independent of transport.
+**Symptom:** output detail returned only the newest 100 append-only review events with no `total` or `offset`; older audit revisions were unreachable in Admin.
 
-**Fix:** `ai_output_review_events_reject_note_required` check constraint; redundant latest-output index removed.
+**Root cause:** review history was treated as a bounded display list rather than durable navigable audit authority. The original implementation also derived current review state from `history[0]`, so a naive offset addition would make current authority depend on the historical page being viewed.
 
-**Regression:** `ai-admin-action-authority.integration.test.ts` directly attempts NULL and blank reject inserts and expects the DB constraint to reject both, while existing HTTP 400 coverage remains.
+**Impact:** long-lived outputs could hide old human decisions. A naive pagination patch could incorrectly re-enable review actions or show stale reviewed content while browsing an old page.
 
-**Execution state:** code/migration/test changes exist on the combined branch but remain `NOT YET VERIFIED` because current GitHub hosted jobs terminate before checkout.
+**Correct fix:** bounded `reviewLimit/reviewOffset` + `reviewPagination`, while canonical latest review is queried independently and exclusively drives `reviewStatus`, `allowedReviewActions`, and `effectiveReviewedOutput`.
 
-### Static audit finding — AI-013E-REVIEW-002
+**Backend regression:** seeds 105 review revisions, requests offset 100 (revisions 5..1), and proves current state still comes from revision 105 (`approved`, no actions, latest reviewed output).
 
-**Severity:** P1 Data/Review integrity.
+**Frontend/Chromium regression:** real fixture seeds 101 edit revisions, navigates all three history pages, confirms revision 1 is reachable, confirms approve authority still comes from latest revision while the oldest page is displayed, then approves and proves history grows to 102 and survives reload.
 
-**Symptom:** Stage12 persists `ai_outputs` with `ON CONFLICT (job_unit_id) DO UPDATE` during retry/re-execution, while Stage13E review events are append-only and remain attached to the same output row. The original Stage13E service allowed review actions solely from review/semantic state and did not gate them on `ai_job_units.status`.
-
-**Root cause:** human review authority was not explicitly bound to an execution-stable output lifecycle boundary.
-
-**Blast radius:** an Admin could review a `failed`/`retrying` output, then Stage12 could replace that row's normalized/raw output during retry while the prior approve/reject event remained, making a stale human decision appear to govern different generated content.
-
-**Fix location:** Stage13E Backend review authority, not Frontend and not Stage12 retry semantics.
-
-**Fix:** only unit statuses `completed | review_required` expose review actions; `reviewOutput()` locks `ai_outputs` and `ai_job_units` together and returns `409` for any other status before writing an event. Non-stable outputs remain inspection-only.
-
-**Regression:** action-authority integration test creates real `failed` and `retrying` units with output rows, requires `allowedReviewActions=[]`, requires approve/reject mutations to return `409`, and proves no review event is written.
-
-**Execution state:** implementation/test commits `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` and `6494a0ee232cf646eae693054b129db752aee40e` remain `NOT YET VERIFIED` because run `34199202570`, job `101973855894`, terminated before checkout with `steps=null`.
+**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`. Latest run `34275316004`, job `102226771007`, ended before checkout with `runner_id=0`, `steps=[]`.
 
 ## 12. Security / performance
 
-- pagination bounded to 100;
-- list/detail avoid raw provider payloads;
-- credentials/provider metadata/internal error text are excluded;
-- provider/network calls are not introduced in Admin transactions;
-- review transaction is short and row-scoped to one output + owning unit;
-- action availability is server-derived;
-- non-stable outputs are read-only to avoid stale human authority over retryable content;
-- no second lifecycle/queue;
-- no duplicate latest-review index beyond the unique revision index.
+- Jobs/Units/Attempts/Review History use bounded server pagination; max page size 100.
+- canonical latest review query is independent and bounded to one row.
+- list/detail avoid raw provider payloads and credentials/internal errors.
+- provider/network calls are not introduced in Admin transactions.
+- review transaction remains short and row-scoped.
+- action availability remains server-derived.
+- no second lifecycle/queue and no duplicate latest-review index.
 
 ## 13. Verification contract
 
-Combined Stage13E workflow is expected to execute:
+Combined Stage13E workflow must execute:
 
 1. API lint/typecheck/unit/build;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB contract;
-4. Admin authorization/secret/provenance/review/action/retry/race integration tests, including non-stable output review denial;
+4. Admin authorization/secret/provenance/review/action/retry/concurrency/stable-review/review-history pagination regressions;
 5. Stage12 execution/capacity/control/lifecycle regressions;
 6. auth regression;
 7. fresh DB reset;
 8. real Admin bootstrap + deterministic Stage13E fixtures;
-9. real Chromium happy path, pause/resume, approve/reload, session expiry, stale-review 409 and 390px.
+9. fixture invariants including 51 Units, 51 Attempts, 101 review revisions and second Jobs page;
+10. real Chromium Jobs/Units/Attempts/Review History pagination, pause/resume, approve/reload, session expiry, stale-review 409 and 390px.
 
-Latest executable candidate code/test HEAD before this documentation commit:
+Current runtime/test candidate HEAD before this documentation commit:
 
-`6494a0ee232cf646eae693054b129db752aee40e`
+`6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b`
 
-Latest run:
+Latest run: `34275316004`; job: `102226771007`.
 
-`34199202570`
-
-Job:
-
-`101973855894`
-
-Observed: job ended before checkout with no executable steps (`steps=null`). Therefore the latest code/migration/test state remains **NOT YET VERIFIED** and Stage13E is not closed.
+Observed: no runner allocated (`runner_id=0`) and no executable steps (`steps=[]`). Therefore Stage13E remains **NOT YET VERIFIED** and stays outside `main`.
 
 ## 14. Non-goals / open work
 
