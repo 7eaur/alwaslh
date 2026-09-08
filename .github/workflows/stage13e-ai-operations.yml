@@ -1,0 +1,78 @@
+name: Stage 13E Admin AI Operations Verification
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - backend/stage13e-ai-operations
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage13e-ai-operations-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stage13e-ai-operations:
+    name: Stage 13E · Admin AI operations and review authority
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_stage13e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_stage13e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_stage13e
+      LOG_LEVEL: silent
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y postgresql-client >/dev/null
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Lint, typecheck, unit test and build
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+          npm run build --prefix apps/api
+      - name: Apply all migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify Stage13E PostgreSQL contracts
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname='ai_output_review_events' and relkind='r'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_type where typname='ai_output_review_action')" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ai_output_review_events_output_revision_unique','ai_output_review_events_payload_shape','ai_output_review_events_note_length')")" = "3"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_ai_output_review_events_output_latest','idx_ai_output_review_events_actor_created')")" = "2"
+      - name: Run Stage13E authorization, observability, review race and control tests
+        run: node --test --import tsx tests/integration/ai-admin-operations.integration.test.ts
+        working-directory: apps/api
+      - name: Re-run Stage12 durable execution regressions
+        run: |
+          node --test --import tsx tests/integration/ai-execution.integration.test.ts
+          node --test --import tsx tests/integration/ai-capacity.integration.test.ts
+          node --test --import tsx tests/integration/ai-control.integration.test.ts
+          node --test --import tsx tests/integration/ai-job-lifecycle.integration.test.ts
+        working-directory: apps/api
+      - name: Re-run auth security regression
+        run: node --test --import tsx tests/integration/auth.integration.test.ts
+        working-directory: apps/api
