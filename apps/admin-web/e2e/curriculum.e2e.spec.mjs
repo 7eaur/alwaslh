@@ -126,7 +126,7 @@ test("admin reviews source media and pending OCR through the operations workspac
 
   await assetRow.getByRole("button", { name: /بانتظار المراجعة/ }).click();
   await expect(page.getByRole("heading", { name: "001.jpg" })).toBeVisible();
-  await expect(page.getByText("نص خام يحتاج المراجعة", { exact: true })).toBeVisible();
+  await expect(page.locator("pre.ocr-source-text")).toHaveText("نص خام يحتاج المراجعة");
 
   const reviewedText = page.getByLabel("النص بعد المراجعة");
   await reviewedText.fill("نص مصحح ومعتمد من الإدارة");
