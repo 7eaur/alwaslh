@@ -3,6 +3,7 @@ import type { AiGenerationRequest } from "./contracts.js";
 
 export type AiJobExecutionStatus = "queued" | "running" | "retrying" | "completed" | "failed" | "cancelled";
 export type AiJobLifecycleStatus = AiJobExecutionStatus | "paused";
+export type AiJobAllowedAction = "pause" | "resume" | "cancel" | "retry";
 
 export interface AiLifecycleClaimedUnit {
   id: string;
@@ -44,6 +45,11 @@ interface AiJobLifecycleRow {
   status: AiJobExecutionStatus;
   paused_at: Date | null;
   cancel_requested_at: Date | null;
+}
+
+interface AiJobActionAvailabilityRow extends AiJobLifecycleRow {
+  failed_units: number;
+  exhausted_failed_units: number;
 }
 
 const TERMINAL_JOB_STATUSES = new Set<AiJobExecutionStatus>(["completed", "failed", "cancelled"]);
@@ -187,6 +193,37 @@ export class AiJobLifecycleRepository {
       [jobId],
     );
     return this.getProgress(executor, jobId);
+  }
+
+  async getAllowedActions(executor: QueryExecutor, jobId: string): Promise<AiJobAllowedAction[]> {
+    const rows = await executor.query<AiJobActionAvailabilityRow>(
+      `select j.id, j.status, j.paused_at, j.cancel_requested_at,
+              count(*) filter (where u.status = 'failed')::int as failed_units,
+              count(*) filter (where u.status = 'failed' and u.attempt_count >= 20)::int
+                as exhausted_failed_units
+       from ai_jobs j
+       left join ai_job_units u on u.job_id = j.id
+       where j.id = $1
+       group by j.id`,
+      [jobId],
+    );
+    const job = rows[0];
+    if (!job) throw new Error("ai_job_not_found");
+
+    const actions: AiJobAllowedAction[] = [];
+    if (!TERMINAL_JOB_STATUSES.has(job.status)) {
+      actions.push(job.paused_at ? "resume" : "pause");
+      if (!job.cancel_requested_at) actions.push("cancel");
+    }
+    if (
+      job.status === "failed" &&
+      !job.cancel_requested_at &&
+      job.failed_units > 0 &&
+      job.exhausted_failed_units === 0
+    ) {
+      actions.push("retry");
+    }
+    return actions;
   }
 
   async clearPause(executor: QueryExecutor, jobId: string): Promise<void> {
