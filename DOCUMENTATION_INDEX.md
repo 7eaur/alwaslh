@@ -166,6 +166,7 @@ Key docs:
 - `docs/ai/STAGE12_WORKER_RUNTIME.md`
 - `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md`
 - `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`
+- `docs/ai/STAGE13E_ADMIN_AI_HTTP_VALIDATION.md`
 - `docs/admin/STAGE13E_AI_OPERATIONS_FRONTEND_PREP.md`
 
 Live provider benchmark/routes/credentials/bootstrap remain `NOT YET VERIFIED`. Never fake provider readiness or move the background worker into Fastify.
@@ -218,15 +219,20 @@ Exact current task is always the first unfinished item in `PROJECT_EXECUTION_QUE
 
 Combined branch:
 
-`integration/stage13e-ai-operations @ e9793a5222758a7d17aad08f91993cb7431631b7`
+`integration/stage13e-ai-operations @ c48d1e597497e6054340f71235c78937082b9371`
 
 Latest runtime/test HEAD below docs:
 
-`6efce1510231de5d569c4b96dbdffa3d4d488b31`
+`d60218b518fb0fe453c21386e77cd35a2228ad07`
 
-Latest runtime/test run `34281631521` / job `102247518121` and docs-head run `34281764765` / job `102247948380` both terminated before repository execution (`steps=[]`). Stage13E therefore remains `NOT YET VERIFIED`; these are not code-failure evidence.
+Latest runtime/test run `34283353562` / job `102253102885` terminated before repository execution (`steps=[]`). Stage13E therefore remains `NOT YET VERIFIED`; this is not code-failure evidence.
 
-Current static audit additionally fixed `AI-013E-PERF-007`: List Jobs now pages Jobs before Unit aggregation. See `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`, Queue and Continuity.
+Current static audit additionally fixed:
+
+- `AI-013E-PERF-007`: List Jobs pages Jobs before Unit aggregation.
+- `AI-013E-API-008`: all Stage13E offsets are bounded to JavaScript safe integers at HTTP validation; unsafe offsets return `400` before service/DB execution.
+
+See Queue, Continuity and specialized Stage13E docs for exact commits and next action.
 
 ## 14. Documentation maintenance
 
