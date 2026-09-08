@@ -4,7 +4,7 @@
 >
 > **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 root fixes plus four P2 hardenings; final static contract/schema/lifecycle audit found no additional proven defect; Roadmap + Legacy Coverage are closure-ready without overclaiming verification; executable verification remains blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 + four P2 fixes; final static closure audit found no additional proven defect; Roadmap/Legacy Coverage and a zero-overlap selective Promotion Manifest are prepared; executable verification remains blocked before checkout.**
 
 ## 1. Operating mode
 
@@ -203,23 +203,30 @@ Interpretation: this is not product/test failure evidence. External account/plat
 
 ### EXEC-005 — Stage13E wider regression + closure
 
-**Priority: P1 · Status: BLOCKED BY EXEC-004; CLOSURE-READINESS DOCS PREPARED**
+**Priority: P1 · Status: BLOCKED BY EXEC-004; CLOSURE + PROMOTION READINESS PREPARED**
 
 Closure-readiness completed while the executable gate is externally blocked:
 
-- `MASTER_REBUILD_ROADMAP.md` now records Stage13E as `COMBINED CANDIDATE / EXECUTION PENDING`, not “current next”;
-- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` maps candidate coverage to relevant legacy rows as `CANDIDATE / EXECUTION PENDING` without marking any unexecuted row VERIFIED;
+- `MASTER_REBUILD_ROADMAP.md` records Stage13E as `COMBINED CANDIDATE / EXECUTION PENDING`, not “current next”;
+- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` maps candidate coverage to relevant legacy rows as `CANDIDATE / EXECUTION PENDING` without marking unexecuted rows VERIFIED;
+- `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` records the exact 36 Stage13E promotion files and exact-head promotion procedure;
+- promotion-readiness comparison uses merge base `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`: candidate is 53 commits ahead, current audited `main` was 77 commits ahead, and the candidate 36-file set has **zero overlap** with the 19 files changed on `main` since the merge base;
+- therefore do not merge/cherry-pick the stale 53-commit history. After candidate PASS, create a short-lived promotion branch from then-current `main`, overlay only the accepted 36 files, and re-run combined + wider gates on that exact promotion HEAD before `main` promotion;
+- if `main` moves or runtime overlap appears before promotion, regenerate the comparison/manifest and reverify rather than relying on this snapshot;
 - Stage13F remains explicitly blocked by Stage13E closure;
 - deployment remains outside the development gate until VPS.
 
 After combined PASS:
 
-- wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regression matrix;
-- Security/Performance/UX/a11y/Legacy Coverage review;
-- promote accepted Stage13E runtime to `main` while preserving central docs;
-- convert only actually proven candidate legacy rows to VERIFIED;
-- update Status/Continuity/Engineering Log/Handoff/Roadmap/Legacy Coverage;
-- Stage13E Closure `EXECUTION REPORT` in Issue #16.
+1. wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regression matrix on accepted candidate;
+2. re-live-check latest `main` and candidate; regenerate merge-base overlap check;
+3. create `integration/stage13e-promotion` from latest `main`;
+4. overlay only the manifest's exact accepted 36 Stage13E files;
+5. inspect promotion diff for unrelated/central-doc regressions;
+6. run combined Stage13E + wider matrix again on the exact promotion HEAD;
+7. only after exact-head PASS, promote to `main` if `main` has not moved;
+8. convert only actually proven candidate legacy rows to VERIFIED;
+9. update Status/Continuity/Engineering Log/Handoff/Roadmap/Legacy Coverage and add Stage13E Closure Report in Issue #16.
 
 No hosted deployment is required under current policy.
 
