@@ -2,7 +2,7 @@
 
 > Engineering source of truth for product understanding, architecture decisions, audit findings, changes, verification and remaining work. Code/migrations + executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last consolidated: **2026-09-08 — Single Owner mode; hosting deferred until VPS; Stage13E candidate has four P1 root fixes plus two P2 read-snapshot consistency hardenings; executable verification blocked before checkout.**
+Last consolidated: **2026-09-09 — Single Owner mode; hosting deferred until VPS; Stage13E candidate has four P1 root fixes plus three P2 hardenings including bounded Job-list aggregation; executable verification blocked before checkout.**
 
 ## 1. Project Understanding
 
@@ -70,6 +70,7 @@ Stable authority boundaries:
 - Admin durable operational/audit history is fully reachable through bounded server pagination; browser must not silently truncate or load unbounded history.
 - **paginated historical views are evidence only; they never determine canonical current lifecycle/review authority**.
 - **multi-query Stage13E Admin AI read models are assembled from one short PostgreSQL `REPEATABLE READ` snapshot**; page/total, progress/actions, latest-attempt and review authority cannot represent mixed concurrent commits.
+- **bounded Admin pages must bound expensive database aggregation when the owning query can do so directly**; fix query shape before adding speculative indexes or denormalized counters.
 
 ## 3. Stage Ledger
 
@@ -156,6 +157,7 @@ reviewed source
 → append-only edit/approve/reject review
 → bounded audit navigation independent from canonical-latest review authority
 → snapshot-consistent Admin read models
+→ bounded Job page before Unit aggregation
 ```
 
 Stage13E review remains distinct from Stage13F Question Bank publication. Non-stable outputs may be inspected but are not review-mutable.
@@ -213,17 +215,19 @@ Candidate includes:
 - canonical refresh on 409;
 - bounded Jobs/Units/Attempts/Review History pagination;
 - snapshot-consistent multi-query Admin reads;
+- Job-list pagination before Unit aggregation;
 - deterministic real session-expiry/stale-review/pagination browser fixtures;
 - no Stage13F publication.
 
-Audit hardened four P1 boundaries plus two P2 read-model boundaries:
+Audit hardened four P1 boundaries plus three P2 boundaries:
 
 1. reject reason durable at PostgreSQL boundary;
 2. human review bound to execution-stable outputs;
 3. Jobs/Units/Attempts durable history completely reachable;
 4. Review History completely reachable while canonical latest review remains independent of historical page selection;
 5. Output Detail output/history/count/latest/reviewer metadata comes from one repeatable database snapshot;
-6. List Jobs, Job Detail and Unit Detail also assemble their coupled read data under one repeatable snapshot.
+6. List Jobs, Job Detail and Unit Detail also assemble their coupled read data under one repeatable snapshot;
+7. List Jobs bounds expensive Unit aggregation to the already-selected Job page.
 
 ### Git write-method incident — RESOLVED / NO RUNTIME EFFECT
 While switching repository write method after a connector safety rejection, an accidental file `tmp-ignore` was created in `5916ac42f1d6ed216e0efe336b20a8f030d1f45e` and immediately deleted in `52fa960155964903290a78657029b3cb950bd6ee`. The resulting tree returned to the intended documentation tree. No product/runtime behavior, contract, migration or test file was changed by this incident.
@@ -254,6 +258,7 @@ While switching repository write method after a connector safety rejection, an a
 - **AD-141** — **current authority is independent from paginated history views**. Review History pages are audit evidence only; `reviewStatus`, effective reviewed output and allowed actions always derive from the canonical latest durable revision.
 - **AD-142** — **a coupled Admin audit/read model must be snapshot-consistent**. Output Detail reads the output/owning unit, requested review page, total review count and canonical latest review inside one short PostgreSQL `REPEATABLE READ` transaction; mapping occurs after commit, with no write locks or provider/network calls.
 - **AD-143** — **Stage13E multi-query read responses use one shared read-snapshot policy**. `AdminAiOperationsService.readSnapshot()` owns the short `REPEATABLE READ` boundary for List Jobs, Job Detail, Unit Detail and Output Detail. Server-derived action advice must be read in the same snapshot as the progress/unit data it describes; mutation transactions remain separate.
+- **AD-144** — **bounded Admin pagination must bound expensive aggregation when the owning query can enforce it directly**. Stage13E List Jobs pages/filter/orders `ai_jobs` before Unit aggregation. Query-shape root causes are fixed before adding speculative indexes or denormalized counters; further indexing requires executable plan/benchmark evidence.
 
 ## 7. Audit Findings
 
@@ -279,6 +284,7 @@ While switching repository write method after a connector safety rejection, an a
 | AI-013E-OPS-004 | P1 | AI Review Audit | only latest 100 review events exposed; current state tied to `history[0]` | old audit inaccessible; naive paging could redefine authority | paged history + separate canonical-latest query + real browser regression | FIXED IN CANDIDATE / EXECUTION PENDING |
 | AI-013E-OPS-005 | P2 | AI Review Read Model | Output/page/count/latest were separate READ COMMITTED snapshots | concurrent review could yield internally mixed reviewer/time/page/current state | short REPEATABLE READ snapshot + regression | FIXED IN CANDIDATE / EXECUTION PENDING |
 | AI-013E-OPS-006 | P2 | Admin AI Read Models | List/Job/Unit responses combined multiple committed states | progress/action or page/total/latest-attempt could contradict within one response | shared `readSnapshot()` + explicit regressions | FIXED IN CANDIDATE / EXECUTION PENDING |
+| AI-013E-PERF-007 | P2 | Admin AI Performance | Job list aggregated all matching Unit history before pagination | bounded page cost grew with complete durable history | page Jobs first, then correlated Unit counts + query-shape regression | FIXED IN CANDIDATE / EXECUTION PENDING |
 
 ### AI-013E-DB-001 Root Cause Record
 
@@ -370,6 +376,26 @@ While switching repository write method after a connector safety rejection, an a
 
 **Verification:** `NOT YET VERIFIED`. Runtime/test run `34279168308`, job `102239495903`, ended before checkout with `runner_id=0`, `steps=[]`. Candidate/docs run `34279304388`, job `102239938382`, had the same pre-checkout condition.
 
+### AI-013E-PERF-007 Root Cause Record
+
+**Symptom:** `listJobs()` returned a bounded page but its SQL performed the Job→Unit join and status aggregation for all matching Jobs before applying `LIMIT/OFFSET`.
+
+**Root cause:** HTTP pagination bounded result rows, not the expensive aggregation work underneath them.
+
+**Broken invariant:** when an operator asks for a bounded page, expensive per-Job Unit aggregation should be bounded to that selected page when the owning query can enforce it without changing semantics.
+
+**Blast radius:** durable AI history grows indefinitely. A 30-row Admin page could therefore become slower as unrelated historical Jobs/Units accumulate, increasing polling cost and degrading operational UX even though response size remains constant.
+
+**Correct fix location:** Stage13E `listJobs()` query shape. Adding indexes first would mask rather than remove aggregation across discarded Jobs; denormalized counters/materialized views would be unnecessary complexity without plan evidence.
+
+**Fix:** `8501d2e0317c0e1e4eb83b72c997e321ee79fe81` adds a `page` CTE that filters/orders `ai_jobs` and applies `LIMIT/OFFSET` before a correlated `LATERAL` Unit-status aggregate. Total count remains a separate query inside the same repeatable-read snapshot. Ordering and zero-Unit semantics remain unchanged.
+
+**Regression:** `6efce1510231de5d569c4b96dbdffa3d4d488b31` adds `apps/api/tests/ai-admin-job-list-query-shape.test.ts`: no top-level read, page parameters preserved, CTE/LATERAL shape required, former global left-join shape forbidden, and the Unit aggregate must occur after the page limit in SQL structure.
+
+**Index policy:** no new index was added. Existing Job→Unit indexes can support bounded `u.job_id = p.id`; further indexes require executable `EXPLAIN`/benchmark evidence.
+
+**Verification:** `NOT YET VERIFIED`. Runtime/test run `34281631521`, job `102247518121`, ended before checkout with `steps=[]`. Candidate/docs run `34281764765`, job `102247948380`, also ended before repository execution.
+
 ## 8. Stage13E Static / Operational Audit Evidence
 
 Reviewed on combined candidate:
@@ -381,6 +407,7 @@ Reviewed on combined candidate:
 - Stage11 semantic validator;
 - Stage12 controls/output persistence/action authority;
 - Jobs/Units/Attempts/Review History pagination;
+- Job-list SQL page-before-Unit-aggregation performance boundary;
 - Frontend DTO/API/adapter/view-model/controller/workspace;
 - real BrowserContext helper + deterministic PostgreSQL fixtures;
 - migration integrity/indexes;
@@ -396,16 +423,17 @@ Confirmed after fixes:
 - all durable Admin operational/audit history reachable through bounded pages;
 - historical page selection cannot redefine canonical latest review authority;
 - List Jobs/Job Detail/Unit Detail/Output Detail each assemble coupled fields from one repeatable snapshot;
+- List Jobs limits/selects Jobs before calculating Unit status counts;
 - polling/refresh preserve selected pages;
-- no additional proven cross-contract mismatch in inspected surfaces after OPS-006 review.
+- no additional proven cross-contract mismatch in inspected surfaces after PERF-007 review.
 
 Current Stage13E candidate/docs HEAD:
 
-`integration/stage13e-ai-operations @ dd723f2451a0b2edcdaab2e6045a626cae44c15d`.
+`integration/stage13e-ai-operations @ e9793a5222758a7d17aad08f91993cb7431631b7`.
 
 Latest runtime/test HEAD:
 
-`10f32c72a684a8243a789a3561426a68dad1bcea`.
+`6efce1510231de5d569c4b96dbdffa3d4d488b31`.
 
 ## 9. Verification Evidence
 
@@ -415,25 +443,25 @@ Latest fully green executable baseline remains:
 
 Latest Stage13E runtime/test-head run:
 
-- run `34279168308`;
-- head `10f32c72a684a8243a789a3561426a68dad1bcea`;
-- job `102239495903`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- run `34281631521`;
+- head `6efce1510231de5d569c4b96dbdffa3d4d488b31`;
+- job `102247518121`;
+- `steps=[]`;
 - no checkout/lint/typecheck/test/build/PostgreSQL/Chromium command executed.
 
 Latest candidate/docs-head run:
 
-- run `34279304388`;
-- head `dd723f2451a0b2edcdaab2e6045a626cae44c15d`;
-- job `102239938382`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`.
+- run `34281764765`;
+- head `e9793a5222758a7d17aad08f91993cb7431631b7`;
+- job `102247948380`;
+- `steps=[]`; no repository command executed.
 
 These failures do not invalidate Stage13D baseline and do not verify Stage13E. They contain no executed product/test failure evidence.
 
 ## 10. Known Issues / Remaining Risk
 
 - Stage13E still needs executable lint/typecheck/unit/build/PostgreSQL/integration/Chromium evidence.
-- four Stage13E P1 findings plus OPS-005/OPS-006 P2 findings are fixed in candidate but execution pending.
+- four Stage13E P1 findings plus OPS-005/OPS-006/PERF-007 P2 findings are fixed in candidate but execution pending.
 - GitHub runner allocation root cause remains externally unverified.
 - live provider/model benchmark/routes/credentials/bootstrap unverified.
 - Question Bank direct-question persistence unresolved until Stage13F.
@@ -445,7 +473,7 @@ These failures do not invalidate Stage13D baseline and do not verify Stage13E. T
 Canonical task authority: `PROJECT_EXECUTION_QUEUE.md`.
 
 1. keep Stage13E outside `main`.
-2. retain all four Stage13E P1 root fixes plus OPS-005/OPS-006 P2 hardenings/regressions.
+2. retain all four Stage13E P1 root fixes plus OPS-005/OPS-006/PERF-007 P2 hardenings/regressions.
 3. execute same-head Stage13E combined gate when a real runner is allocated.
 4. fix any actually executed failure from root cause.
 5. run wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions after combined PASS.
