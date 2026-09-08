@@ -12,6 +12,7 @@ const adminIdentifier = process.env.STAGE13E_ADMIN_IDENTIFIER ?? "stage13e-admin
 const adminPassword = process.env.STAGE13E_ADMIN_PASSWORD ?? "Stage13eAdminUiPass123!";
 const seededJobType = process.env.STAGE13E_E2E_JOB_TYPE;
 const raceJobType = process.env.STAGE13E_E2E_RACE_JOB_TYPE;
+const paginationJobType = process.env.STAGE13E_E2E_PAGINATION_JOB_TYPE;
 
 function requireFixture() {
   if (!seededJobType) {
@@ -27,6 +28,15 @@ function requireRaceFixture() {
     );
   }
   return raceJobType;
+}
+
+function requirePaginationFixture() {
+  if (!paginationJobType) {
+    throw new Error(
+      "STAGE13E_E2E_PAGINATION_JOB_TYPE is required when STAGE13E_E2E=1; seed the durable history pagination marker",
+    );
+  }
+  return paginationJobType;
 }
 
 async function login(page) {
@@ -53,6 +63,32 @@ async function openJob(page, jobType) {
 async function openSeededJob(page) {
   await openJob(page, requireFixture());
 }
+
+test("Admin AI operations navigate complete durable job, unit and attempt history", async ({ page }) => {
+  await login(page);
+  await openAiWorkspace(page);
+
+  const jobsPagination = page.getByRole("navigation", { name: "صفحات سجل مهام AI" });
+  await expect(jobsPagination).toContainText("1–30 من");
+  await jobsPagination.getByRole("button", { name: "التالي" }).click();
+  await openJob(page, requirePaginationFixture());
+
+  await jobsPagination.getByRole("button", { name: "السابق" }).click();
+  await openSeededJob(page);
+
+  const unitsPagination = page.getByRole("navigation", { name: "صفحات وحدات مهمة AI" });
+  await expect(unitsPagination).toContainText("1–50 من 51");
+  await unitsPagination.getByRole("button", { name: "التالي" }).click();
+  await expect(page.locator(".ai-unit-card").filter({ hasText: "الوحدة 51" })).toBeVisible();
+
+  await unitsPagination.getByRole("button", { name: "السابق" }).click();
+  await page.locator(".ai-unit-card").first().click();
+
+  const attemptsPagination = page.getByRole("navigation", { name: "صفحات محاولات وحدة AI" });
+  await expect(attemptsPagination).toContainText("1–50 من 51");
+  await attemptsPagination.getByRole("button", { name: "التالي" }).click();
+  await expect(page.getByText("المحاولة 1", { exact: true })).toBeVisible();
+});
 
 test("Admin AI operations use server actions, persist review and survive reload", async ({ page }) => {
   await login(page);
