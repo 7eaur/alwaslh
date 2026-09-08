@@ -2,7 +2,7 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable evidence أعلى من prose. للتفاصيل اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, و`PROJECT_EXECUTION_QUEUE.md`.
 
-Last synchronized: **2026-09-09 — Single Owner active; Stage13E has four P1 + four P2 fixes in candidate, final static audit found no additional proven defect, closure + selective-promotion readiness are prepared, executable verification remains blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; Stage13E has four P1 + four P2 fixes in candidate, final static audit found no additional proven defect, closure + selective-promotion readiness are prepared; CI-001 scope is now verified repository-wide while exact external cause remains unverified.**
 
 ## Current Position
 
@@ -141,29 +141,24 @@ Final inspection covered HTTP/body/query validation, UUID/status/note/schema ali
 
 Real fixtures provide 51 Units, 51 Attempts, 101 review edits, a deterministic stale-review race Job and a later-page marker Job. Chromium covers complete pagination, canonical latest authority, pause/resume, approve/reload, session expiry, stale-review 409 and 390px overflow with no fake API/test-only endpoint/sleep race.
 
-## Latest Executable Attempts
+## CI-001 — Repository-wide Actions runner incident
 
-Workflow: `.github/workflows/stage13e-integration.yml`.
+`CI-001` is now **scope VERIFIED repository-wide / exact root cause NOT YET VERIFIED**.
 
-Latest runtime/test-head attempt:
+Evidence:
 
-- run `34283353562`;
-- head `d60218b518fb0fe453c21386e77cd35a2228ad07`;
-- job `102253102885`;
-- conclusion `failure`, but `steps=[]` and no checkout/repository command executed.
+- Last known fully executing green run: Full Rebuild `34177369768` on `4eca7de...`, created `2026-09-08T01:39:16Z`, completed SUCCESS `2026-09-08T01:43:19Z`; its jobs executed real `Set up job`, container initialization, `actions/checkout@v4`, setup/install/test/database/browser steps.
+- Independent Stage10 Media Pipeline run `34191051851` / job `101949023395` later failed before checkout with `steps=null`.
+- Independent Stage11 AI Contract run `34191051835` / job `101949023152` later failed before checkout with `steps=null`.
+- Stage13E candidate/docs run `34283442253` was explicitly re-run again as attempt `3`; new job `102266150322` completed `failure` with `steps=[]`, and its log endpoint has no blob because no job log was produced.
+- GitHub public status reported **no Actions incident for September 8, 2026**, so this is not classified as a known global outage.
+- Repository owner permission is confirmed `admin`, but connected GitHub tooling does not expose account/repository Actions usage, billing, budget, or allocation settings. Those exact account-side causes remain unverified.
+- GitHub documentation confirms private repositories consume plan/account GitHub-hosted runner allowance and can be blocked when available usage/payment policy does not allow additional consumption; this is a diagnostic possibility only, not a finding about this account.
+- Local fallback is independently unavailable: `/mnt/data/alwaslh-stage13e` is empty/not a checkout, and the execution container currently cannot resolve `github.com` or `registry.npmjs.org`; `git ls-remote` fails at DNS.
 
-Latest candidate/docs-head attempt:
+Detailed incident record: `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`.
 
-- run `34283442253`;
-- head `c48d1e597497e6054340f71235c78937082b9371`;
-- attempt `2`;
-- job `102256556365`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`;
-- no checkout/repository command executed.
-
-Local fallback was investigated: `/mnt/data/alwaslh-stage13e` is an empty directory, not a checkout; npm registry access times out and no authenticated private-repository checkout is available. No local PASS is claimed.
-
-Interpretation: **current executable blocker is GitHub hosted-runner allocation, not an executed product/test failure.** Exact external account/platform cause remains `NOT YET VERIFIED` with available permissions.
+Interpretation: **there is no executed Stage13E product/test failure to fix.** Do not alter workflow semantics, weaken gates, or churn runtime code because jobs never acquire a runner.
 
 ## Closure + Promotion Readiness
 
@@ -182,17 +177,18 @@ Do not merge the candidate's stale commit history and do not create the promotio
 ## Immediate Next Work
 
 1. Keep Stage13E outside `main`.
-2. Retain all four P1 fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions.
-3. Re-run the unchanged combined Stage13E gate when a real runner is allocated.
-4. Any executed failure → root-cause fix in owning layer + regression.
-5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regressions on candidate.
-6. Follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`; build/reverify exact promotion HEAD from latest `main`.
-7. Promotion-head PASS → promote to `main`, convert only actually proven candidate legacy rows to VERIFIED, update closure docs and add Stage13E Closure Report to Issue #16.
-8. Only then begin Stage13F.
+2. Preserve all four P1 fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions unchanged.
+3. Resolve/restore GitHub-hosted runner allocation through an administrative channel that can inspect Actions usage/budget/payment/settings; do not guess the exact account-side cause from repository code.
+4. Re-run the **unchanged** combined Stage13E gate only after real runner allocation is available.
+5. A recovery is recognized only when a runner executes setup/checkout. Any command that then fails → root-cause fix in owning layer + regression.
+6. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regressions on candidate.
+7. Follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`; build/reverify exact promotion HEAD from latest `main`.
+8. Promotion-head PASS → promote to `main`, convert only actually proven candidate legacy rows to VERIFIED, update closure docs and add Stage13E Closure Report to Issue #16.
+9. Only then begin Stage13F.
 
 ## Open Boundaries
 
-- `CI-001` P1 — hosted runner terminates before checkout; external cause `NOT YET VERIFIED`.
+- `CI-001` P1 — **repository-wide scope VERIFIED; exact account/platform runner-allocation cause NOT YET VERIFIED**.
 - `AI-013E-DB-001` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-REVIEW-002` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-003` P1 — fixed in candidate; executable verification pending.
