@@ -4,7 +4,7 @@
 >
 > **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has four P1 root fixes plus one P2 snapshot-consistency hardening; executable verification remains blocked before checkout.**
+Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has four P1 root fixes plus two P2 snapshot-consistency hardenings; executable verification remains blocked before checkout.**
 
 ## 1. Operating mode
 
@@ -45,9 +45,9 @@ Current active product stage: **Stage13E — Admin AI Operations / Review**.
 
 Current combined candidate branch: `integration/stage13e-ai-operations`.
 
-Current candidate docs HEAD: `bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`.
+Current candidate docs HEAD: `dd723f2451a0b2edcdaab2e6045a626cae44c15d`.
 
-Latest runtime/test HEAD immediately below docs: `9d59f84fb516db5cfaf89382f548c3eea595e365`.
+Latest runtime/test HEAD immediately below docs: `10f32c72a684a8243a789a3561426a68dad1bcea`.
 
 Historical candidate sources remain evidence only:
 
@@ -91,7 +91,7 @@ Inspected actual Admin AI HTTP/service/lifecycle/review/persistence/frontend/fix
 - complete Jobs/Units/Attempts/Review History is reachable through bounded server pagination;
 - polling/refresh stay on current pages;
 - selected historical review page never becomes current review authority;
-- one Output Detail response reads output/page/count/latest under one repeatable database snapshot;
+- all multi-query Admin AI read models use one short repeatable-read database snapshot;
 - real fixtures use durable tables and real APIs only.
 
 #### AI-013E-DB-001 — P1 Data/Audit Integrity
@@ -118,32 +118,33 @@ Frontend previously exposed only first 30 Jobs / 50 Units / 50 Attempts. Fixed w
 
 **Root fix:** bounded `reviewLimit/reviewOffset`, `reviewPagination`, separate canonical-latest query, independent Frontend review offset, accessible Review History paging, and real >100 browser fixture. Only canonical latest revision drives current authority.
 
-Key runtime/test lineage:
-
-- `d242e0542df4402392780098418cdd015cb11107` — Backend paged history + canonical-latest separation.
-- `f04fe2beeff79dea0353f69fbe5e2774fe5703ea` — bounded HTTP query.
-- `e33d43c19c8b954429036bba24ca0f3c72d0ba15` — 105-revision Backend regression.
-- `9c18826acbc8f2deeb42f70b2e0f651321504f94`, `2c82e8790b066a2ac035f8eee8c172136a0ed28a`, `72711ec8aaefc09fa4e2979008b0be03beb526c3` — Frontend DTO/view-model/adapter contract.
-- `de3a9dc260871ab913bd9d60350479b60de708b9` — independent controller review offset.
-- `bf782c92bd74436831e74391768c53c9cd9cb075` — Review History UI navigation.
-- `d7830d187e89bb16619234609f8480c5bec070cf`, `f64419fa20c930ac0bbd641ba63c229dc9db9605` — transport/adapter regressions.
-- `a1ef3d7a824d1e8c7503ecb3203df3bebe850619` — real fixture with 101 edit revisions.
-- `f95c1a9ee5e800125bdcc665c5a64d0fe10a1fd9` — Chromium complete audit navigation + current-authority isolation.
-- `6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b` — workflow fixture assertions.
-
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
 #### AI-013E-OPS-005 — P2 Output Detail Snapshot Consistency
 
-**Problem:** after OPS-004, output row, audit page, count and canonical latest review were still separate top-level reads under PostgreSQL `READ COMMITTED`.
+**Problem:** output row, audit page, count and canonical latest review were separate top-level reads under PostgreSQL `READ COMMITTED`.
 
-**Impact:** a review commit between those reads could produce one internally mixed HTTP response: new current review state paired with older reviewer/time or page/count metadata. No durable corruption, but audit/read-model correctness is weakened.
+**Impact:** a review commit between those reads could produce one internally mixed HTTP response. No durable corruption, but audit/read-model correctness is weakened.
 
 **Correct fix:** all four reads execute in one short `REPEATABLE READ` transaction; mapping/parsing occurs after commit; no write lock and no provider/network call is introduced.
 
-**Regression:** `apps/api/tests/ai-admin-output-detail-snapshot.test.ts` forbids output-detail reads outside the transaction, asserts repeatable-read is established first, and preserves approved state/actor/time/pagination mapping.
+**Regression:** `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`.
 
 **Commit:** `9d59f84fb516db5cfaf89382f548c3eea595e365`.
+
+**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
+
+#### AI-013E-OPS-006 — P2 Admin Multi-query Read-model Consistency
+
+**Problem:** List Jobs page/total, Job Detail progress/units/allowed-actions, and Unit Detail summary/attempt-page/total were separate top-level reads.
+
+**Impact:** a worker/lifecycle commit between reads could make one response internally contradictory without corrupting durable rows.
+
+**Correct fix:** private `readSnapshot()` is now the single read policy for List Jobs, Job Detail, Unit Detail and Output Detail. It opens one short `REPEATABLE READ` transaction; read snapshots contain no write lock/provider call. Mutation transactions remain unchanged.
+
+**Regression:** `apps/api/tests/ai-admin-read-snapshots.test.ts` forbids top-level queries for List/Job/Unit reads, verifies repeatable-read is first in each transaction, and explicitly exercises Stage12 `getAllowedActions` within the Job Detail snapshot.
+
+**Commits:** `6a146c26b771a991530f12b1c1c12b6e3b43263b`, `f5c5dddfdcb807b87fd18796e8b1154118a51f6e`, `10f32c72a684a8243a789a3561426a68dad1bcea`.
 
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
@@ -159,7 +160,7 @@ Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Expected gate:
 
-1. API lint/typecheck/unit/build, including Output Detail snapshot regression;
+1. API lint/typecheck/unit/build, including Output Detail and List/Job/Unit snapshot regressions;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB constraints;
 4. Stage13E authorization/action/review/concurrency/DB/stable-review/review-history pagination tests;
@@ -172,20 +173,17 @@ Expected gate:
 
 Latest runtime/test-head run:
 
-- run `34277281675`;
-- head `9d59f84fb516db5cfaf89382f548c3eea595e365`;
-- job `102233304479`;
+- run `34279168308`;
+- head `10f32c72a684a8243a789a3561426a68dad1bcea`;
+- job `102239495903`;
 - `runner_id=0`, `runner_name=""`, `steps=[]`;
 - no checkout or repository command executed.
 
-Latest candidate/docs-head run:
+Latest candidate/docs-head run at sync:
 
-- run `34277419491`;
-- head `bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`;
-- job `102233751450`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`.
-
-A prior candidate run `34275641643` was manually re-run unchanged; attempt 2 job `102231252401` again ended before checkout with `runner_id=0`, `steps=[]`.
+- run `34279304388`;
+- head `dd723f2451a0b2edcdaab2e6045a626cae44c15d`;
+- ended before repository execution; read Issue #16/latest Actions for exact job metadata on resume.
 
 Interpretation: this is not product/test failure evidence. External account/platform cause remains `NOT YET VERIFIED`. Do not weaken tests or churn product code because a job never starts.
 
@@ -239,6 +237,7 @@ Follow `MASTER_REBUILD_ROADMAP.md`: Stage14 Student Product → Stage15 Assessme
 - `AI-013E-OPS-003` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-004` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-005` P2 — fixed in candidate; executable verification pending.
+- `AI-013E-OPS-006` P2 — fixed in candidate; executable verification pending.
 - later Admin/Student/assessment/offline/product stages remain incomplete.
 - Hosting/VPS intentionally not a current blocker.
 
