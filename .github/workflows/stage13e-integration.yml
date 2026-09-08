@@ -1,0 +1,138 @@
+name: Stage 13E Combined Integration Verification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - integration/stage13e-ai-operations
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage13e-integration-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stage13e-integration:
+    name: Stage 13E · Backend + Admin real-browser integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_stage13e_integration
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_stage13e_integration"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      HOST: 127.0.0.1
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_stage13e_integration
+      LOG_LEVEL: silent
+      ALLOWED_ORIGINS: http://127.0.0.1:5175
+      MEDIA_STORAGE_ROOT: /tmp/alwaslh-stage13e-integration-media
+      PGPASSWORD: postgres
+      VITE_API_BASE_URL: http://127.0.0.1:3000
+      STAGE13E_E2E: "1"
+      STAGE13E_E2E_API_BASE_URL: http://127.0.0.1:3000
+      STAGE13E_E2E_ADMIN_ORIGIN: http://127.0.0.1:5175
+      STAGE13E_ADMIN_IDENTIFIER: stage13e-admin-ui
+      STAGE13E_ADMIN_PASSWORD: Stage13eAdminUiPass123!
+      STAGE13E_E2E_JOB_TYPE: stage13e_e2e_happy
+      STAGE13E_E2E_RACE_JOB_TYPE: stage13e_e2e_race
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install system runtime dependencies
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y poppler-utils postgresql-client >/dev/null
+          mkdir -p "$MEDIA_STORAGE_ROOT"
+          pdfinfo -v
+          pdftoppm -v
+
+      - name: Install API and Admin dependencies
+        run: |
+          npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+          npm install --prefix apps/admin-web --ignore-scripts --no-audit --no-fund
+
+      - name: Run API and Admin quality gates
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+          npm run build --prefix apps/api
+          npm run lint --prefix apps/admin-web
+          npm run typecheck --prefix apps/admin-web
+          npm test --prefix apps/admin-web
+          npm run build --prefix apps/admin-web
+
+      - name: Apply all migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+
+      - name: Verify Stage13E database contract
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname='ai_output_review_events' and relkind='r'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_type where typname='ai_output_review_action')" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ai_output_review_events_output_revision_unique','ai_output_review_events_payload_shape','ai_output_review_events_note_length')")" = "3"
+
+      - name: Run Stage13E Backend authority regressions
+        working-directory: apps/api
+        run: |
+          node --test --import tsx tests/integration/ai-admin-operations.integration.test.ts
+          node --test --import tsx tests/integration/ai-admin-action-authority.integration.test.ts
+
+      - name: Re-run Stage12 and auth security regressions
+        working-directory: apps/api
+        run: |
+          node --test --import tsx tests/integration/ai-execution.integration.test.ts
+          node --test --import tsx tests/integration/ai-capacity.integration.test.ts
+          node --test --import tsx tests/integration/ai-control.integration.test.ts
+          node --test --import tsx tests/integration/ai-job-lifecycle.integration.test.ts
+          node --test --import tsx tests/integration/auth.integration.test.ts
+
+      - name: Reset PostgreSQL for deterministic browser fixture
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          drop schema public cascade;
+          create schema public;
+          SQL
+          npm run db:migrate --prefix apps/api
+
+      - name: Create explicit Stage13E E2E Super Admin
+        env:
+          ADMIN_BOOTSTRAP_IDENTIFIER: stage13e-admin-ui
+          ADMIN_BOOTSTRAP_PASSWORD: Stage13eAdminUiPass123!
+          ADMIN_BOOTSTRAP_DISPLAY_NAME: مدير اختبار عمليات الذكاء الاصطناعي
+        run: npm run auth:create-admin --prefix apps/api
+
+      - name: Seed real Stage13E browser fixtures
+        working-directory: apps/api
+        run: node --import tsx tests/fixtures/stage13e-e2e-seed.ts
+
+      - name: Verify browser fixture invariants
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type = '$STAGE13E_E2E_JOB_TYPE' and status not in ('completed','failed','cancelled')")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type = '$STAGE13E_E2E_RACE_JOB_TYPE' and status = 'completed')" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_outputs o join ai_job_units u on u.id=o.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_RACE_JOB_TYPE'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_output_review_events e join ai_outputs o on o.id=e.ai_output_id join ai_job_units u on u.id=o.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_RACE_JOB_TYPE'")" = "0"
+
+      - name: Install Chromium
+        run: npx --prefix apps/admin-web playwright install --with-deps chromium
+
+      - name: Run Stage13E real Admin Chromium suite
+        working-directory: apps/admin-web
+        run: npx playwright test e2e/ai-operations.e2e.spec.mjs
