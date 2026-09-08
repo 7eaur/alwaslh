@@ -2,7 +2,7 @@
 
 > **Purpose:** أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-09 — Single Owner active; hosting deferred; Stage13E candidate has four P1 + four P2 fixes, final static closure audit found no additional proven defect, Roadmap/Legacy Coverage are closure-ready, executable verification still blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; hosting deferred; Stage13E candidate has four P1 + four P2 fixes, final static audit found no additional proven defect, closure + zero-overlap selective-promotion readiness are prepared, executable verification still blocked before checkout.**
 
 ## 0. Mandatory startup
 
@@ -157,7 +157,7 @@ This is **not product failure evidence**. `CI-001` remains an external hosted-ru
 
 Local fallback was explicitly checked: `/mnt/data/alwaslh-stage13e` is an empty directory, not a checkout. Node/npm/git exist, but npm registry access times out and no authenticated private-repository checkout is available. No local PASS is claimed.
 
-## 8. Closure-readiness state
+## 8. Closure + promotion readiness
 
 Prepared while EXEC-004 remains externally blocked:
 
@@ -167,16 +167,28 @@ Prepared while EXEC-004 remains externally blocked:
 - full page-detection batch-save authoring, bulk generation trigger, complete generated/manual editor/delete flows, exports and Stage13F Question Bank publication remain not closed;
 - Stage13F remains explicitly blocked until Stage13E combined + wider regression closure.
 
+Promotion readiness is documented in `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`:
+
+- common merge base audited: `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`;
+- candidate changed 36 Stage13E files; audited `main` changed 19 central/workstream/deployment-portability files since the same base;
+- **changed-file intersection = 0**;
+- do not merge/cherry-pick the candidate's stale 53-commit history;
+- after candidate combined + wider PASS, re-check latest heads/overlap, build `integration/stage13e-promotion` from latest `main`, overlay only the manifest's 36 files, then run combined + wider gates again on that exact promotion HEAD before `main` promotion;
+- if `main` moves before final promotion, rebuild/reverify rather than carrying stale assumptions.
+
+Do not create the promotion branch now; without executable candidate evidence it would only create another unverified head and failed runner trigger.
+
 ## 9. Exact next work
 
 1. keep Stage13E outside `main`;
 2. retain all four P1 fixes + OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions;
 3. execute unchanged Combined Gate when a real runner starts;
 4. any executed failure → root-cause fix + regression;
-5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head matrix;
-6. wider PASS → integrate Stage13E runtime to `main`, convert only actually proven candidate legacy rows to VERIFIED, update central/closure docs + Closure Report in Issue #16;
-7. only then begin Stage13F;
-8. hosting remains deferred.
+5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head matrix on candidate;
+6. follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`, assemble/reverify exact promotion HEAD from latest `main`;
+7. promotion-head PASS → integrate to `main`, convert only actually proven candidate legacy rows to VERIFIED, update central/closure docs + Closure Report in Issue #16;
+8. only then begin Stage13F;
+9. hosting remains deferred.
 
 ## 10. Open findings
 
