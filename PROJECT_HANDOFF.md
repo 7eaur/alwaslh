@@ -2,7 +2,7 @@
 
 > **Purpose:** أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-08 — Single Owner mode active; hosting deferred; Stage13E combined candidate hardened by two P1 integrity fixes and awaiting executable verification**.
+Last synchronized: **2026-09-08 — Single Owner active; hosting deferred; Stage13E combined candidate hardened by three P1 root fixes and awaiting executable verification.**
 
 ## 0. Mandatory startup
 
@@ -21,152 +21,73 @@ Before changing code:
 11. read `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md`;
 12. read latest comments in active Issue `#16`;
 13. read current stage specialized docs + actual code/migrations/tests;
-14. live-check `main`, active branch HEADs and GitHub Actions before conclusions.
+14. live-check `main`, active branch HEADs and Actions.
 
-Anything not inspected/executed = `NOT YET VERIFIED`.
+Anything not inspected/executed = `NOT YET VERIFIED`. If repository docs are insufficient to resume, fix documentation before feature work.
 
-Do not ask an earlier chat what happened. If repository files are insufficient, fix the documentation before proceeding.
+## 1. Operating model
 
-## 1. Current operating model
-
-Product Owner retired the permanent multi-chat Backend/Frontend team model.
+Product Owner retired the multi-chat Backend/Frontend team model.
 
 Current model:
 
 - **one replaceable engineering conversation owns the whole product**;
 - Product/Architecture/Backend/Frontend/UX/Security/Performance/QA/Git/Documentation are one responsibility;
 - Issue `#16` is the sole active Project Execution Board;
-- `PROJECT_EXECUTION_QUEUE.md` is the ordered task authority;
-- `PROJECT_INTEGRATION_CONTINUITY.md` is the detailed current memory.
+- `PROJECT_EXECUTION_QUEUE.md` is ordered task authority;
+- `PROJECT_INTEGRATION_CONTINUITY.md` is detailed current memory.
 
-Historical only:
+Historical only: Issues #13/#14/#15 and former Team/Backend/Frontend/Integration workstream files.
 
-- Issue `#13` Team Room — CLOSED;
-- Issue `#14` Backend Board — CLOSED;
-- Issue `#15` Frontend Board — CLOSED;
-- old Team/Backend/Frontend/Integration workstream files are superseded pointers.
-
-Do not recreate separate workstream chats unless Product Owner explicitly asks for them again.
-
-## 2. Hosting / deployment policy
+## 2. Hosting / deployment
 
 **Hosting and deployment are completely deferred until Product Owner provides a VPS and explicitly reopens deployment.**
 
-Therefore:
+No Render/Vercel/Railway/Supabase hosting work, no hosted-runtime acceptance gate, and no cutover work now. Keep normal portability without premature infrastructure abstraction.
 
-- no Render/Vercel/Railway/Supabase hosting work;
-- no hosted-runtime acceptance gate;
-- no provider cutover work;
-- no deployment blocker in current stages;
-- keep application architecture portable but do not build infrastructure abstractions prematurely.
-
-Historical hosting/config files can remain in Git but are not Current Work.
-
-## 3. Repository / Git state
+## 3. Repository / verified state
 
 - Repository: `7eaur/alwaslh`.
-- `main`: current Integration-approved development baseline.
-- Always live-check current `main` HEAD; central docs advance independently from unverified feature branches.
-- Legacy pre-rebuild main preserved at:
-  `archive/legacy-main-2026-09-08 @ 5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
-- Latest fully executable green product baseline:
-  `4eca7de8877ac9e2289b9c7990c912d33c256935`.
+- `main`: Integration-approved development baseline; live-check its HEAD.
+- Legacy archive: `archive/legacy-main-2026-09-08 @ 5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
+- Latest fully executable green product baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 
-Do not rewrite `main` history casually. Use short isolated branches for meaningful product batches and preserve central docs when integrating older divergent branches.
-
-## 4. Product idea
-
-**الوسيلة الذكية** منصة تعليمية عربية تعيد بناء منتج موجود مع الحفاظ على قيمته الأساسية وسيناريوهاته المهمة، لكن بمعمارية أكثر أمانًا ووضوحًا وقابلية للصيانة.
-
-### Student Web/PWA
-
-Target product includes:
-
-- secure activation/login/recovery/device flows;
-- entitlement-filtered curriculum;
-- lesson Reader/media/text/search/TTS;
-- Practice/Tests/Models;
-- Notes/Favorites/Needs Review;
-- progress/private achievements;
-- notifications;
-- offline/PWA.
-
-### Super Admin
-
-Target product includes:
-
-- curriculum/content authoring;
-- image/PDF/mixed ingestion;
-- media/OCR supervision;
-- AI operations/review;
-- Question Bank/Quiz Builder/publication;
-- Student/account/access code/recovery/device operations;
-- notifications/import-export/reports/settings/audit.
-
-### Backend
-
-Fastify + PostgreSQL own:
-
-- Auth/Authorization;
-- Access/Entitlements;
-- Curriculum/business data;
-- media/OCR/AI durable state;
-- review/publication;
-- trusted assessment/scoring/progress/sync authority in later stages.
-
-Legacy is capability/failure evidence, not target architecture.
-
-## 5. Stable architecture / business rules
-
-Do not violate without explicit evidence/decision:
-
-- Browser owns presentation/session UX, not durable canonical business state.
-- Full Code = 6 digits; Class Code = 7 digits.
-- activation verification is non-consuming; finalization is atomic.
-- returning Student = password + registered P-256 device proof.
-- Curriculum = Class → Subject Offering (`subject_class_links`) → optional Section → Lesson.
-- Stage9 source inventory = provenance, never curriculum hierarchy.
-- Stage10 media readiness is processing evidence, not publication.
-- `media ready != published`.
-- Stage13D content publication = explicit Draft → Review → Published.
-- OCR/AI are derived/reviewed layers; raw AI output is never student authority.
-- provider/network calls stay outside long DB transactions.
-- durable workers use PostgreSQL leases/capacity/control.
-- Fastify HTTP remains separate from durable AI worker polling.
-- secrets/credential aliases/raw provider internals/internal error text never enter frontend contract.
-- no duplicate queues/pipelines/state authorities.
-- no patching/test weakening/auth bypass/sleep-based race hiding.
-
-## 6. Verified stage history
-
-Verified:
+Verified through Stage13D:
 
 - Stages 1–10;
 - OCR Foundation;
 - Stage11 Provider-neutral AI Contracts;
-- Stage12 Durable AI Execution / Worker Runtime backend/runtime;
+- Stage12 durable AI backend/runtime;
 - Stage13A Curriculum Backend;
 - Stage13B Admin Curriculum UI;
 - Stage13C Content/Media/OCR Operations;
 - Stage13D Upload/History/Publication Linking incl. Chromium.
 
-Latest fully green same-head baseline:
+Green same-head runs are recorded in `PROJECT_STATUS.md`.
 
-`4eca7de8877ac9e2289b9c7990c912d33c256935`
+## 4. Product / stable architecture
 
-Runs:
+**الوسيلة الذكية** Arabic education platform with Student Web/PWA + Super Admin over Fastify API + PostgreSQL.
 
-- Stage13D Admin `34177369743` SUCCESS;
-- Stage13D Backend `34177369784` SUCCESS;
-- Stage13 Admin `34177369748` SUCCESS;
-- Stage12 `34177369812` SUCCESS;
-- Stage11 `34177369753` SUCCESS;
-- OCR `34177369750` SUCCESS;
-- Stage10 `34177369777` SUCCESS;
-- Stage9 `34177369756` SUCCESS;
-- Full Rebuild `34177369768` SUCCESS incl. Student Chromium.
+Stable rules:
 
-## 7. Current Stage13E — Admin AI Operations / Review
+- Browser owns presentation/session UX, not durable canonical state.
+- Full Code = 6 digits; Class Code = 7 digits.
+- activation verification non-consuming; finalization atomic.
+- returning Student = password + registered P-256 proof.
+- Curriculum = Class → Subject Offering (`subject_class_links`) → optional Section → Lesson.
+- source inventory = provenance, not curriculum hierarchy.
+- `media ready != published`.
+- Stage13D content publication = Draft → Review → Published.
+- raw AI/provider output is never Student/Question Bank authority automatically.
+- provider/network calls stay outside long DB transactions.
+- durable workers use PostgreSQL leases/capacity/control and remain separate from HTTP polling.
+- credentials/raw provider metadata/internal provider errors never Frontend contract.
+- no duplicate queue/pipeline/state authority.
+- Admin durable operational history must be completely reachable through bounded server pagination.
+- no patching/test weakening/auth bypass/fake API/sleep race masking.
+
+## 5. Current Stage13E — Admin AI Operations / Review
 
 Status:
 
@@ -174,178 +95,159 @@ Status:
 
 Active combined branch:
 
-`integration/stage13e-ai-operations`
+`integration/stage13e-ai-operations @ 70f6fe218124498ccb6667e3aefa2e8dd21599a4`
 
-Current branch HEAD at this synchronization:
+Latest runtime/test HEAD beneath that docs commit:
 
-`1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`
+`ae772db53e218037a2b140e9dc08e6528f1a1ac8`
 
-Latest runtime/test candidate beneath that docs commit:
-
-`6494a0ee232cf646eae693054b129db752aee40e`
-
-Assembly/hardening lineage:
-
-- `227f4c9dba99e7b8c93d25caebe86e38108d4a5c` — reviewed Backend candidate overlay;
-- `a60274fedf55fb45b6684743da24b24004339917` — reviewed Frontend candidate overlay;
-- `4ba77703866762c471257bbb914590b817ecc82e` — deterministic real browser/Postgres fixture;
-- `807f733838e2fab2620652025b255c3bc404fec1` — combined integration workflow;
-- `730989b8bde404b229544c473bba02b05c7e75b4` — PostgreSQL reject-reason invariant + redundant-index removal;
-- `6589d6e53de7ca8cd82b424e5c1496186eb701f1` — direct DB reject-reason regression;
-- `bc1bf508897796d0a74d22126094e83180b7ec79` — workflow DB contract update;
-- `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` — bind human review to stable unit state;
-- `6494a0ee232cf646eae693054b129db752aee40e` — failed/retrying output review regression;
-- `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9` — specialized Stage13E contract synchronized.
-
-Historical source branches:
+Historical source branches are evidence only:
 
 - Backend `348c02646d0ff873fd305beff16f41c46d9c0285`;
 - Frontend `1eb141e950e96c9f53ffd103a386d59166113c16`, Product/Test `7bf2f8c32907032551aace9f3aa27681040c4b0f`.
 
-### Backend candidate includes
+Stage13E candidate provides:
 
-- Admin-only job/unit/attempt/output views;
-- server-derived progress/status/action availability;
+- Admin-only Job/Unit/Attempt/Output views;
+- server-derived progress + action availability;
 - Stage12 pause/resume/cancel/retry reuse;
-- bounded retry attempt semantics;
-- provider/model/project observability without secret/raw metadata leakage;
-- page/source/checksum provenance;
-- strict append-only output review audit via `0018_ai_admin_review.sql`;
-- Stage11 semantic validation inside review authority;
-- edit/approve/reject with row locking/concurrency protection;
-- **review mutation only for execution-stable unit output (`completed | review_required`)**;
-- failed/retrying/running/queued/cancelled outputs remain inspection-only;
-- no Question Bank publication (Stage13F boundary).
+- provider/model/project observability without secrets;
+- source/page/checksum provenance;
+- append-only edit/approve/reject review;
+- Stage11 semantic validation;
+- row-lock concurrency protection;
+- authenticated Admin UI + canonical refresh after mutation/409;
+- bounded polling;
+- bounded Jobs/Units/Attempts server pagination;
+- real browser regressions;
+- no Stage13F publication.
 
-### Frontend candidate includes
+## 6. Stage13E P1 root fixes
 
-- real authenticated transport + adapter;
-- AI Operations page/navigation;
-- server-provided job/review action arrays;
-- no raw provider response/internal error text;
-- canonical reload after mutation/409;
-- bounded polling for selected non-terminal job;
-- review/provenance/history UI;
-- real Chromium prep for happy path, pause/resume, approve/reload, session expiry, stale-review 409 and 390px.
+### AI-013E-DB-001 — durable reject reason
 
-## 8. Stage13E integrity findings fixed in candidate
+Original HTTP/service required nonblank reject reason but PostgreSQL did not.
 
-### AI-013E-DB-001 — P1 Data/Audit Integrity
+Fix:
 
-Original Stage13E HTTP/service required nonblank reject reason, but PostgreSQL did not. A future/direct writer could create an incomplete terminal reject audit record.
+- DB check `ai_output_review_events_reject_note_required`;
+- direct NULL/blank insert regressions;
+- redundant latest-review index removed.
 
-Root fix:
+Key commits: `730989b8...`, `6589d6e5...`, workflow `bc1bf508...`.
 
-- DB constraint `ai_output_review_events_reject_note_required`;
-- direct NULL/blank insert regression;
-- redundant latest-review index removed because UNIQUE `(ai_output_id, revision)` already serves backward latest lookup.
+### AI-013E-REVIEW-002 — human review vs retry replacement
 
-Execution remains `NOT YET VERIFIED`.
+Stage12 can update the same `ai_outputs` row during retry. Review events remain append-only, so human review must never attach to replaceable execution output.
 
-### AI-013E-REVIEW-002 — P1 Data/Review Integrity
+Fix:
 
-Stage12 can overwrite the same `ai_outputs` row during retry/re-execution. Original Stage13E review authority did not gate review on owning unit state, while review events remain append-only on the output id. That could leave an old human decision attached to newly replaced AI content.
+- review actions only when owning unit is `completed | review_required`;
+- other output states remain inspection-only;
+- review transaction locks output+unit and rechecks stability before writing;
+- failed/retrying regressions prove `409` + zero audit side effect.
 
-Root fix:
+Key commits: `5c03fa27...`, `6494a0ee...`, contract `1e19ef06...`.
 
-- `allowedReviewActions=[]` unless owning unit is `completed` or `review_required`;
-- `reviewOutput()` locks output + unit rows together;
-- unstable output mutation returns `409` before any audit write;
-- failed/retrying outputs remain visible for diagnosis only;
-- regression proves failed/retrying outputs expose no actions, mutation is denied, and zero review events are created.
+### AI-013E-OPS-003 — durable history inaccessible after first page
 
-Execution remains `NOT YET VERIFIED`.
+Original Frontend discarded Backend pagination and exposed only first 30 Jobs / 50 Units / 50 Attempts, while Stage12 supports plans up to 5,000 units.
 
-## 9. Stage13E executable blocker
+Fix:
 
-Combined workflow:
+- retain `total/limit/offset` through API → adapter → view model → controller → UI;
+- accessible Previous/Next at Jobs/Units/Attempts levels;
+- parent-page changes clear only lower-level selection;
+- refresh/poll current pages rather than reset to page 1;
+- never load unbounded history.
 
-`.github/workflows/stage13e-integration.yml`
+Regression fixture:
+
+- Happy Job = 51 Units;
+- review Unit = 51 durable Attempts;
+- old pagination marker + 30 newer filler Jobs;
+- real Chromium proves Jobs page 2, Unit 51, and Attempt page 2.
+
+Key commits: `92f4d0f8...`, `8b932faa...`, `0974142f...`, `3411c1fd...`, `38272670...`, tests `3ab137c9...` / `27de2d6f...` / `8dd1d712...`, fixtures `66ac7bd3...` / `ae772db5...`, workflow `a9e97e34...`, Chromium `c3420181...`, docs `70f6fe21...`.
+
+All three are **FIXED IN CANDIDATE / EXECUTION PENDING**.
+
+## 7. Current real Chromium contract
+
+Fixture variables:
+
+- `STAGE13E_E2E_JOB_TYPE=stage13e_e2e_happy`;
+- `STAGE13E_E2E_RACE_JOB_TYPE=stage13e_e2e_race`;
+- `STAGE13E_E2E_PAGINATION_JOB_TYPE=stage13e_e2e_pagination_marker`.
+
+Suite covers:
+
+1. complete durable Jobs/Units/Attempts pagination;
+2. pause/resume;
+3. approve + reload durability;
+4. real session expiry through same BrowserContext;
+5. real stale-review `409` + canonical refresh;
+6. 390px no-horizontal-overflow.
+
+No mock API, route interception, fake 401/409, test-only Backend endpoint, manual cookie mutation or sleep-based race.
+
+## 8. Executable blocker
+
+Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Latest runtime/test run:
 
-- run `34199202570`;
-- head `6494a0ee232cf646eae693054b129db752aee40e`;
-- job `101973855894`;
-- ended before checkout with no executable steps (`steps=null`).
+- run `34249182219`;
+- head `ae772db53e218037a2b140e9dc08e6528f1a1ac8`;
+- job `102138902680`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- no checkout or repository command executed.
 
-Latest branch-head docs run:
+This is **not product failure evidence**. Available GitHub permissions do not expose account Billing/Actions administration, so the external root cause remains `NOT YET VERIFIED`. Do not weaken gates or claim PASS.
 
-- run `34199371763`;
-- head `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`;
-- job `101974393620`;
-- same pre-checkout condition.
+## 9. Exact next work
 
-Earlier post-fix runs and `34193380473` attempts 1/2 had the same behavior.
+Read `PROJECT_EXECUTION_QUEUE.md` for canonical order.
 
-Interpretation:
-
-- external GitHub hosted-runner allocation problem;
-- **not product failure evidence**;
-- do not modify product/test behavior to chase it;
-- do not weaken Stage gate;
-- retry same workflow when runner allocation actually works.
-
-## 10. Current Single Owner work
-
-Read `PROJECT_EXECUTION_QUEUE.md` for exact status.
-
-Immediate sequence:
+Current sequence:
 
 1. keep Stage13E outside `main`;
-2. retain both P1 root-cause fixes and regressions;
-3. rerun unchanged combined gate when a GitHub runner actually starts;
-4. any executed failure → investigate and fix root cause in owning layer;
-5. after combined PASS, run wider Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions;
-6. close Stage13E and promote accepted code to `main` while preserving central docs;
-7. then begin Stage13F.
+2. retain the three P1 fixes/regressions;
+3. rerun unchanged combined gate when a real hosted runner starts;
+4. any executed failure → root-cause fix in owning layer + regression;
+5. combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head matrix;
+6. wider PASS → promote Stage13E runtime to `main` while preserving central docs;
+7. update Legacy Coverage/Roadmap/central docs + Stage13E Closure Report in Issue #16;
+8. only then begin Stage13F.
 
-Do not skip Stage13E closure merely to continue roadmap progress.
+## 10. Later roadmap
 
-## 11. Stage13F and later
+- Stage13F — Question Bank / Quiz Builder / Publish; resolves `AI-011-005`.
+- Stage13G — Remaining Admin.
+- Stage14–20 — Student Product → Assessment → Offline/PWA → Personal Data → Notifications → Progress/Statistics → Import/Export.
+- Stage21–25 — Performance → Security → CI/test expansion → Accessibility/device QA → initial content load.
+- Stage26–29 — only when VPS/deployment is explicitly reopened.
 
-After Stage13E closure:
+## 11. Open findings
 
-### Stage13F — Question Bank / Quiz Builder / Publish
+- `CI-001` P1 — hosted runner terminates before checkout; external cause not verified.
+- `AI-013E-DB-001` P1 — fixed in candidate; execution pending.
+- `AI-013E-REVIEW-002` P1 — fixed in candidate; execution pending.
+- `AI-013E-OPS-003` P1 — fixed in candidate; execution pending.
+- `AI-011-005` P2 — direct generated-question persistence; Stage13F.
+- `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
+- later product stages remain incomplete.
 
-Must resolve `AI-011-005` direct question persistence explicitly and provide reviewed Question Bank authority, provenance, editing, quiz versions, regeneration, Draft→Review→Published, ministerial model handling and safe exports.
+## 12. End-of-batch continuity rule
 
-### Stage13G — Remaining Admin
-
-Student/admin operations, access codes, recovery/device operations, notifications, reports/settings/audit and remaining Admin parity.
-
-### Stage14–20
-
-Student Product → Assessment → Offline/PWA → Personal Data → Notifications → Progress/Statistics → Import/Export/Reporting.
-
-### Stage21–25
-
-Performance → Security → test expansion → Accessibility/device QA → initial content load.
-
-### Stage26–29
-
-Only when VPS/deployment is explicitly reopened: Staging → Release Gate → Production Cutover → Monitoring/Operations.
-
-## 12. Open findings
-
-- `CI-001` P1 — hosted runner currently terminates before checkout; external cause not verified.
-- `AI-013E-DB-001` P1 — fixed in candidate; executable verification pending.
-- `AI-013E-REVIEW-002` P1 — fixed in candidate; executable verification pending.
-- `AI-011-005` P2 — direct generated question persistence unresolved; Stage13F owns it.
-- `AI-012-019` P2 — live AI provider benchmark/routes/credentials/bootstrap unverified.
-- Stage13E executable gate pending.
-- later Student/Offline/assessment/admin roadmap incomplete.
-
-## 13. End-of-batch continuity rule
-
-After every meaningful batch the single engineering owner must update:
+After meaningful work update:
 
 1. `PROJECT_EXECUTION_QUEUE.md`;
 2. `PROJECT_INTEGRATION_CONTINUITY.md`;
-3. `PROJECT_STATUS.md` if state changed;
-4. `PROJECT_ENGINEERING_LOG.md` findings/decisions/tests;
+3. `PROJECT_STATUS.md`;
+4. `PROJECT_ENGINEERING_LOG.md`;
 5. specialized stage docs/contracts;
-6. active Issue #16 with an `EXECUTION REPORT`;
+6. Issue #16 `EXECUTION REPORT`;
 7. this Handoff/Index/Roadmap/Legacy Coverage when their truth changes.
 
-Record exact branch/HEAD/run IDs and explicit `NOT YET VERIFIED` items. Never leave continuation-critical information only in chat.
+Record exact branch/HEAD/run IDs and explicit `NOT YET VERIFIED`. Never leave continuation-critical information only in chat.
