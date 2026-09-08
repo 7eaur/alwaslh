@@ -4,7 +4,7 @@
 >
 > **Important:** هذا الملف لا يتقدم على الكود أو PostgreSQL migrations أو executable CI evidence. هو snapshot تشغيلي مفصل يربط Source of Truth مع العمل الجاري بين التقارير. أي ادعاء بلا evidence يبقى `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 07:20 +03:00**.
+Last synchronized: **2026-09-08 — after persistent-continuity bootstrap and repository-wide CI observation**.
 
 ---
 
@@ -155,9 +155,7 @@ Draft PR:
 
 `#12` → base `rebuild/media-pipeline`.
 
-Current planning branch HEAD before this continuity-file commit:
-
-`7f4d8421e134978a5c115897a106095833f7a371`
+Continuity bootstrap advanced the planning branch beyond the prior governance head through docs commits that created/linked this file, the launcher, Integration Workstream, Documentation Index and Project Status. Always live-check the current branch HEAD; do not treat a stored planning docs HEAD as runtime evidence.
 
 PR body is stale and still describes old Stage10→Stage6/8 sequencing. Metadata cleanup is optional and must not be confused with product work.
 
@@ -170,6 +168,30 @@ Do not deploy to Vercel/Supabase or re-enable auto-deploy until explicit new Pro
 Old database work:
 
 **OUT OF CURRENT SCOPE** unless explicitly reopened.
+
+### Repository-wide GitHub Actions infrastructure blocker
+
+Observed planning docs head:
+
+`e9c8b27570512b5e05a03b8fa964429489ebe596`
+
+All nine PR workflow families reported `failure` on that head:
+
+- OCR Foundation `34188318559`;
+- Stage10 Media Pipeline `34188318608`;
+- Stage13D Content Ingestion `34188318590`;
+- Stage12 AI Execution `34188318556`;
+- Stage13D Admin Upload UI `34188318614`;
+- Stage9 Content Import `34188318583`;
+- Stage11 AI Contracts `34188318598`;
+- Stage13 Admin Product `34188318586`;
+- Rebuild Stage Verification `34188318551`.
+
+Inspection of Rebuild run `34188318551` shows its jobs ending with no workflow steps; e.g. Stage5 job `101941035842` has `steps=[]`. This matches the Stage13E Backend symptom where jobs are not being allocated a hosted runner.
+
+**Interpretation:** current repository-wide Actions state is an external runner/allocation blocker, not evidence that docs changes broke nine independent product areas. Do not weaken workflows or mark them PASS. Exact account/billing/quota/platform cause remains `NOT YET VERIFIED` with current connector permissions.
+
+The canonical last fully executable green runtime baseline remains the Stage13D matrix below until hosted runners execute a newer same-head matrix.
 
 ---
 
@@ -409,7 +431,7 @@ Result:
 - `steps=[]`;
 - no repository command executed.
 
-Therefore this is **CI infrastructure allocation evidence, not application PASS/FAIL**.
+This is consistent with the repository-wide runner allocation blocker recorded in section 6.
 
 Backend current-head lint/typecheck/unit/build/clean PostgreSQL/Stage13E integration/Stage12 regressions/auth regression are still `NOT YET VERIFIED` until runner allocation executes them.
 
@@ -504,7 +526,7 @@ Frontend must:
 
 1. finish current binding batch against amended Backend contract;
 2. self-review raw/error/action authority/security boundaries;
-3. run current-head lint/typecheck/unit/build;
+3. run current-head lint/typecheck/unit/build when runner execution is available;
 4. add/confirm transport mapping, secret omission, strict review payload, action-array, `409` refresh regressions;
 5. prepare real Chromium scenarios (jobs/detail/control/review/reload/permission/error/390px);
 6. if cross-branch real Backend is required, mark Chromium `NOT YET VERIFIED` for Integration combined branch rather than fake production transport;
@@ -549,6 +571,7 @@ Reason:
 
 - Backend implementation/contract is structurally ready for final verification but same-head executable gate is blocked before runner allocation.
 - Frontend current WIP has advanced beyond its last Board report and still needs current-head quality evidence/Closure readiness.
+- repository-wide Actions currently exhibit the same no-step runner allocation blocker.
 
 Integration must continue with `PARTIAL/RETURN` semantics; no Stage PASS claim.
 
@@ -563,7 +586,8 @@ When this main conversation resumes/replaces:
 1. Backend #14: check whether a new current-head CI run/Closure Report exists after `348c026...`.
 2. Frontend #15: check for report after `afad78e...` and compare actual branch HEAD if newer.
 3. Team Room #13: inspect any contract/blocker decisions newer than those listed above.
-4. Integration #16: read latest acceptance/return record.
+4. Integration #16: read latest acceptance/return/continuity records.
+5. Re-check GitHub Actions runner allocation before interpreting workflow failures.
 
 ### B. Backend acceptance gate
 
@@ -591,7 +615,7 @@ Review current WIP for:
 - Admin shell consistency;
 - RTL/a11y/390px.
 
-Require current-head lint/typecheck/unit/build and Board REPORT.
+Require current-head lint/typecheck/unit/build and Board REPORT once runner execution is available.
 
 ### D. Integration merge only after both are ready
 
