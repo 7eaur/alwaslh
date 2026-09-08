@@ -33,6 +33,11 @@ const UnitDetailQuerySchema = z.object({
   attemptOffset: z.coerce.number().int().min(0).default(0),
 });
 
+const OutputDetailQuerySchema = z.object({
+  reviewLimit: z.coerce.number().int().min(1).max(100).default(100),
+  reviewOffset: z.coerce.number().int().min(0).default(0),
+});
+
 const JobParamsSchema = z.object({ jobId: z.string().uuid() });
 const UnitParamsSchema = z.object({ unitId: z.string().uuid() });
 const OutputParamsSchema = z.object({ outputId: z.string().uuid() });
@@ -104,7 +109,14 @@ export function registerAdminAiOperationsRoutes(
   app.get("/v1/admin/ai/outputs/:outputId", async (request) => {
     await adminActor(request, config, auth);
     const params = parseBody(OutputParamsSchema, request.params);
-    return { output: await operations.outputDetail(params.outputId) };
+    const query = parseBody(OutputDetailQuerySchema, request.query);
+    return {
+      output: await operations.outputDetail(
+        params.outputId,
+        query.reviewLimit ?? 100,
+        query.reviewOffset ?? 0,
+      ),
+    };
   });
 
   app.post("/v1/admin/ai/jobs/:jobId/pause", async (request) => {
