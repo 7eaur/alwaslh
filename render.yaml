@@ -19,8 +19,7 @@ services:
     branch: main
     autoDeploy: true
     dockerfilePath: ./apps/api/Dockerfile
-    dockerCommand: node apps/api/dist/server.js
-    preDeployCommand: node apps/api/dist/migrate.js
+    dockerCommand: /bin/sh -c "node apps/api/dist/migrate.js && node apps/api/dist/server.js"
     healthCheckPath: /ready
     envVars:
       - key: NODE_ENV
