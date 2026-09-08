@@ -2,7 +2,7 @@
 
 > **Purpose:** أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-09 — Single Owner active; hosting deferred; Stage13E candidate hardened by four P1 root fixes plus four P2 fixes including safe HTTP pagination offsets; executable verification still pending.**
+Last synchronized: **2026-09-09 — Single Owner active; hosting deferred; Stage13E candidate has four P1 + four P2 fixes, final static closure audit found no additional proven defect, Roadmap/Legacy Coverage are closure-ready, executable verification still blocked before checkout.**
 
 ## 0. Mandatory startup
 
@@ -52,11 +52,12 @@ Do not replace verified baseline with docs-only/unexecuted heads.
 - all multi-query Stage13E Admin AI read responses are snapshot-consistent.
 - bounded Admin pages also bound expensive DB aggregation when query shape owns the cost; do not add speculative indexes before fixing query shape.
 - accepted pagination offsets must be safely representable end-to-end; unsafe offsets fail at the HTTP boundary as `400 BAD_REQUEST` before service/DB execution.
+- Stage13E progress uses the Stage12 lifecycle calculation; no parallel progress authority.
 - no patching/test weakening/auth bypass/fake API/sleep-race masking.
 
 ## 4. Current Stage13E — Admin AI Operations / Review
 
-Status: **COMBINED INTEGRATION CANDIDATE / NOT YET VERIFIED / OUTSIDE `main`**.
+Status: **COMBINED INTEGRATION CANDIDATE / EXECUTION PENDING / NOT YET VERIFIED / OUTSIDE `main`**.
 
 Active candidate/docs HEAD:
 
@@ -109,7 +110,22 @@ All four P1 findings and OPS-005/OPS-006/PERF-007/API-008 P2 findings are **FIXE
 
 Administrative continuity note: `tmp-ignore` was accidentally created on `main` while switching GitHub write method (`5916ac42f1d6ed216e0efe336b20a8f030d1f45e`) and immediately removed (`52fa960155964903290a78657029b3cb950bd6ee`). There is no net file/runtime effect.
 
-## 6. Real Chromium / executable contract
+## 6. Final static closure audit
+
+Latest static pass checked:
+
+- HTTP/body/query validation vs PostgreSQL schema;
+- UUID/status/note/pagination representation boundaries;
+- Stage13E progress/status calculation vs Stage12 lifecycle authority;
+- review/mutation canonical refresh behavior;
+- historical-page/current-authority separation;
+- multi-query snapshot consistency;
+- Job-list query shape/index use;
+- regression inclusion in the Combined Gate.
+
+Result: **no additional proven Stage13E defect after API-008**. Do not add speculative fixes merely because CI does not allocate a runner.
+
+## 7. Real Chromium / executable contract
 
 Fixtures:
 
@@ -128,20 +144,41 @@ Latest runtime/test-head attempt:
 - job `102253102885`;
 - `steps=[]`; no checkout or repository command executed.
 
+Latest candidate/docs-head attempt:
+
+- run `34283442253`;
+- head `c48d1e597497e6054340f71235c78937082b9371`;
+- attempt `2`;
+- job `102256556365`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- no checkout or repository command executed.
+
 This is **not product failure evidence**. `CI-001` remains an external hosted-runner-allocation blocker; exact account/platform cause is `NOT YET VERIFIED`. Do not weaken gates and do not claim PASS.
 
-## 7. Exact next work
+Local fallback was explicitly checked: `/mnt/data/alwaslh-stage13e` is an empty directory, not a checkout. Node/npm/git exist, but npm registry access times out and no authenticated private-repository checkout is available. No local PASS is claimed.
+
+## 8. Closure-readiness state
+
+Prepared while EXEC-004 remains externally blocked:
+
+- `MASTER_REBUILD_ROADMAP.md` records Stage13E as `COMBINED CANDIDATE / EXECUTION PENDING`, not “current next”;
+- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` adds `CANDIDATE / EXECUTION PENDING` and maps candidate evidence without marking unexecuted rows VERIFIED;
+- candidate-targeted rows include `LES-A-035/036/037`, `AIRULE-025`, `AI-OPS-012/013/014/015/017`;
+- full page-detection batch-save authoring, bulk generation trigger, complete generated/manual editor/delete flows, exports and Stage13F Question Bank publication remain not closed;
+- Stage13F remains explicitly blocked until Stage13E combined + wider regression closure.
+
+## 9. Exact next work
 
 1. keep Stage13E outside `main`;
 2. retain all four P1 fixes + OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions;
 3. execute unchanged Combined Gate when a real runner starts;
 4. any executed failure → root-cause fix + regression;
 5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head matrix;
-6. wider PASS → integrate Stage13E runtime to `main`, update Legacy Coverage/Roadmap/central docs + Closure Report in Issue #16;
+6. wider PASS → integrate Stage13E runtime to `main`, convert only actually proven candidate legacy rows to VERIFIED, update central/closure docs + Closure Report in Issue #16;
 7. only then begin Stage13F;
 8. hosting remains deferred.
 
-## 8. Open findings
+## 10. Open findings
 
 - `CI-001` P1 — runner terminates before checkout; external cause not verified.
 - `AI-013E-DB-001` P1 — fixed, execution pending.
@@ -155,6 +192,6 @@ This is **not product failure evidence**. `CI-001` remains an external hosted-ru
 - `AI-011-005` P2 — Stage13F.
 - `AI-012-019` P2 — live provider bootstrap unverified.
 
-## 9. End-of-batch continuity rule
+## 11. End-of-batch continuity rule
 
 After meaningful work update: Queue, Continuity, Status, Engineering Log, specialized docs, Issue #16 report, and Handoff/Index/Roadmap/Legacy Coverage when truth changes. Record exact branch/HEAD/run IDs and explicit `NOT YET VERIFIED`. Never leave continuation-critical information only in chat.
