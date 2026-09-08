@@ -70,6 +70,7 @@ Historical files/issues remain evidence only; do not place new commands/reports 
 | `PROJECT_EXECUTION_QUEUE.md` | sole ordered implementation queue |
 | `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | current Product Owner overrides |
 | `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md` | current engineering method/quality gates |
+| `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` | exact Stage13E selective promotion file set + exact-head promotion procedure after executable PASS |
 | `MASTER_REBUILD_ROADMAP.md` | target stage sequence, not runtime evidence |
 | `NEXT_CONVERSATION_PROMPT.md` | compact startup launcher |
 
@@ -168,6 +169,7 @@ Key docs:
 - `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`
 - `docs/ai/STAGE13E_ADMIN_AI_HTTP_VALIDATION.md`
 - `docs/admin/STAGE13E_AI_OPERATIONS_FRONTEND_PREP.md`
+- `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`
 
 Live provider benchmark/routes/credentials/bootstrap remain `NOT YET VERIFIED`. Never fake provider readiness or move the background worker into Fastify.
 
@@ -225,12 +227,14 @@ Latest runtime/test HEAD below docs:
 
 `d60218b518fb0fe453c21386e77cd35a2228ad07`
 
-Latest runtime/test run `34283353562` / job `102253102885` terminated before repository execution (`steps=[]`). Stage13E therefore remains `NOT YET VERIFIED`; this is not code-failure evidence.
+Latest candidate/docs run `34283442253`, attempt `2`, job `102256556365`, and latest runtime/test run `34283353562` / job `102253102885` terminated before repository execution (`steps=[]`). Stage13E therefore remains `NOT YET VERIFIED`; this is not code-failure evidence.
 
 Current static audit additionally fixed:
 
 - `AI-013E-PERF-007`: List Jobs pages Jobs before Unit aggregation.
 - `AI-013E-API-008`: all Stage13E offsets are bounded to JavaScript safe integers at HTTP validation; unsafe offsets return `400` before service/DB execution.
+
+Promotion readiness audit proved the Stage13E candidate and current `main` have **zero changed-file overlap since their common merge base**. `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` defines the exact 36 Stage13E files and requires a fresh exact-head combined + wider regression run on a short-lived promotion branch before `main` promotion.
 
 See Queue, Continuity and specialized Stage13E docs for exact commits and next action.
 
