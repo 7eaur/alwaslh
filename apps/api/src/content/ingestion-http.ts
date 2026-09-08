@@ -4,10 +4,7 @@ import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
-import type {
-  AdminContentIngestionService,
-  ContentIngestionTaskStatus,
-} from "./ingestion-service.js";
+import type { AdminContentIngestionService, ContentIngestionTaskStatus } from "./ingestion-service.js";
 
 const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
