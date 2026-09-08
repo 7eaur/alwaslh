@@ -17,7 +17,7 @@ Current combined branch is documented in `PROJECT_EXECUTION_QUEUE.md` and `PROJE
 - Human review mutation is available only for **execution-stable unit outputs**: `completed | review_required`.
 - Outputs attached to `queued | running | retrying | failed | cancelled` units remain observable for diagnosis/provenance but are **inspection-only** and expose no review mutation authority.
 - Paginated history is presentation/audit navigation only. The currently opened history page never defines current review state or action authority.
-- One Output Detail response is assembled from one short PostgreSQL repeatable-read snapshot so actor/time/output/history/count/latest authority cannot come from mixed committed states.
+- Any Admin AI read model that composes multiple PostgreSQL queries into one response uses one short repeatable-read snapshot. Page/total, progress/actions, unit/latest-attempt/history and canonical review authority therefore cannot come from mixed committed states.
 
 ## 2. Job lifecycle / progress
 
@@ -63,7 +63,7 @@ Query:
 }
 ```
 
-Response includes `pagination: { total, limit, offset }`. Jobs are ordered `created_at DESC, id DESC`.
+Response includes `pagination: { total, limit, offset }`. Jobs are ordered `created_at DESC, id DESC`. The requested page and its total count are read from the same short repeatable-read snapshot.
 
 ## 4. Job detail / server action authority
 
@@ -80,7 +80,7 @@ Rules:
 - failed → `retry` only if at least one failed unit exists, no cancellation request exists and no failed unit reached `attemptCount >= 20`;
 - completed/cancelled/exhausted failed/no-failed-unit/cancellation-requested failed → no actions.
 
-The array is current-state advice, not a reservation; concurrent state change may still make mutation return `409`.
+Job progress, returned Unit page and `allowedActions` are computed from one repeatable-read snapshot. The array is still current-state advice, not a reservation; a later concurrent state change may make mutation return `409`.
 
 ## 5. Unit detail / attempts
 
@@ -98,7 +98,7 @@ Response:
 }
 ```
 
-Attempts are newest first. Admin-visible telemetry is bounded to safe operational identifiers and metrics.
+Unit summary/latest attempt, requested attempt page and attempt total are read from one short repeatable-read snapshot. Attempts are newest first. Admin-visible telemetry is bounded to safe operational identifiers and metrics.
 
 ### Secret boundary
 
@@ -286,7 +286,7 @@ Frontend originally exposed only first 30 Jobs / 50 Units / 50 Attempts although
 
 **Frontend/Chromium regression:** real fixture seeds 101 edit revisions, navigates all three history pages, confirms revision 1 is reachable, confirms approve authority still comes from latest revision while the oldest page is displayed, then approves and proves history grows to 102 and survives reload.
 
-**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`. Runtime/test candidate later advanced to `9d59f84fb516db5cfaf89382f548c3eea595e365`; executable runner remains unavailable before checkout.
+**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`. Runtime/test candidate later advanced; executable runner remains unavailable before checkout.
 
 ### AI-013E-OPS-005 — P2 Review detail snapshot consistency
 
@@ -302,14 +302,31 @@ Frontend originally exposed only first 30 Jobs / 50 Units / 50 Attempts although
 
 **Commit:** `9d59f84fb516db5cfaf89382f548c3eea595e365`.
 
-**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`. Run `34277281675`, job `102233304479`, ended before checkout with `runner_id=0`, `steps=[]`.
+**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`.
+
+### AI-013E-OPS-006 — P2 Admin multi-query read-model consistency
+
+**Symptom:** List Jobs read the page and total in separate top-level queries; Job Detail read progress/units separately from server-derived `allowedActions`; Unit Detail read unit/latest-attempt, attempt page and attempt total separately.
+
+**Root cause:** OPS-005 established a repeatable-read boundary for Output Detail only, while the same multi-query response rule had not been generalized to the other Admin AI read models.
+
+**Impact:** concurrent worker/lifecycle changes could make one HTTP response internally inconsistent: for example progress from one committed state with action buttons from a later state, or an attempt page with a total/latest-attempt from another state. Durable data is not corrupted, but Admin observability and action advice can contradict themselves within one response.
+
+**Correct fix:** one private `readSnapshot()` helper now owns short `REPEATABLE READ` read transactions. List Jobs, Job Detail, Unit Detail and Output Detail all use it. Mutations keep their existing write transactions; no provider/network calls or write locks are introduced into read snapshots.
+
+**Regression:** `tests/ai-admin-read-snapshots.test.ts` fails if List Jobs, Job Detail or Unit Detail issue a top-level database query, verifies that repeatable-read is the first transaction operation for each response, and explicitly exercises Stage12 `getAllowedActions` inside the same Job Detail snapshot. Existing Output Detail snapshot regression remains independent coverage.
+
+**Commits:** `6a146c26b771a991530f12b1c1c12b6e3b43263b`, `f5c5dddfdcb807b87fd18796e8b1154118a51f6e`, `10f32c72a684a8243a789a3561426a68dad1bcea`.
+
+**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`. Run `34279168308`, job `102239495903`, ended before checkout with `runner_id=0`, `steps=[]`.
 
 ## 12. Security / performance
 
 - Jobs/Units/Attempts/Review History use bounded server pagination; max page size 100.
+- all multi-query Admin AI read models use short repeatable-read snapshots; they contain PostgreSQL reads only.
 - canonical latest review query is independent and bounded to one row.
-- Output Detail uses a short repeatable-read snapshot across four local PostgreSQL reads; parsing/mapping occurs after commit.
-- no write lock or provider/network call is introduced by the read snapshot.
+- schema/provenance mapping occurs after the Output Detail read transaction commits.
+- no write lock or provider/network call is introduced by read snapshots.
 - list/detail avoid raw provider payloads and credentials/internal errors.
 - review mutation transaction remains short and row-scoped.
 - action availability remains server-derived.
@@ -319,7 +336,7 @@ Frontend originally exposed only first 30 Jobs / 50 Units / 50 Attempts although
 
 Combined Stage13E workflow must execute:
 
-1. API lint/typecheck/unit/build, including Output Detail snapshot regression;
+1. API lint/typecheck/unit/build, including Output Detail + List/Job/Unit snapshot regressions;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB contract;
 4. Admin authorization/secret/provenance/review/action/retry/concurrency/stable-review/review-history pagination regressions;
@@ -332,9 +349,9 @@ Combined Stage13E workflow must execute:
 
 Current runtime/test candidate HEAD before this documentation commit:
 
-`9d59f84fb516db5cfaf89382f548c3eea595e365`
+`10f32c72a684a8243a789a3561426a68dad1bcea`
 
-Latest run: `34277281675`; job: `102233304479`.
+Latest run: `34279168308`; job: `102239495903`.
 
 Observed: no runner allocated (`runner_id=0`) and no executable steps (`steps=[]`). Therefore Stage13E remains **NOT YET VERIFIED** and stays outside `main`.
 
