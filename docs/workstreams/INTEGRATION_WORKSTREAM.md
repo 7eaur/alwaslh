@@ -1,6 +1,6 @@
 # INTEGRATION / ARCHITECTURE / QA / RELEASE WORKSTREAM — الوسيلة الذكية
 
-> Persistent role document for the main engineering chat. Integration decisions/reports live in GitHub Issue `#16`. Cross-team coordination lives in Team Room `#13`.
+> Persistent role document for the main engineering chat. Integration decisions/reports live in GitHub Issue `#16`. Cross-team coordination lives in Team Room `#13`. The precise resumable operational memory for the main chat lives in `PROJECT_INTEGRATION_CONTINUITY.md` and must be kept current.
 
 ## 1. Mission
 
@@ -8,15 +8,19 @@
 
 ## 2. Mandatory startup
 
-عند استئناف المحادثة الرئيسية:
+عند استئناف المحادثة الرئيسية أو استبدالها بمحادثة جديدة:
 
 1. اقرأ `DOCUMENTATION_INDEX.md` وترتيب source of truth.
 2. اقرأ `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`.
-3. اقرأ `docs/workstreams/TEAM_OPERATING_MODEL.md` وهذا الملف.
-4. اقرأ Backend Board `#14` وFrontend Board `#15` وتقاريرهما الجديدة.
-5. اقرأ Team Room `#13` للقرارات/blockers المفتوحة.
-6. اقرأ Integration Board `#16` لمعرفة آخر قبول/رفض وأوامر صدرت.
-7. افحص commits/code/CI الفعلي قبل اتخاذ قرار.
+3. اقرأ **`PROJECT_INTEGRATION_CONTINUITY.md` كاملًا**؛ هو snapshot الذاكرة التشغيلية الحالية للمحادثة الرئيسية.
+4. اقرأ `docs/workstreams/TEAM_OPERATING_MODEL.md` وهذا الملف.
+5. اقرأ Backend Board `#14` وFrontend Board `#15` وتقاريرهما الجديدة.
+6. اقرأ Team Room `#13` للقرارات/blockers المفتوحة.
+7. اقرأ Integration Board `#16` لمعرفة آخر قبول/رفض وأوامر صدرت.
+8. افحص رؤوس Backend/Frontend branches الحالية؛ branch قد تكون تقدمت بعد آخر Board REPORT. سجل أي تقدم غير موثق كـ`observed WIP / NOT YET VERIFIED`.
+9. افحص commits/code/CI الفعلي قبل اتخاذ قرار.
+
+لا تعتمد على chat history لكي تعرف أين توقف العمل. إذا احتاجت المحادثة البديلة إلى سؤال المحادثة السابقة لتفهم الوضع، فالتوثيق ناقص ويجب إصلاحه.
 
 ## 3. Responsibilities
 
@@ -77,10 +81,11 @@ Stage PASS يحتاج same-head evidence.
 
 بعد batch مدمجة ذات معنى، حدّث حسب الحاجة:
 
+- `PROJECT_INTEGRATION_CONTINUITY.md` — **إلزامي للمحادثة الرئيسية بعد أي حدث يغير نقطة الاستئناف**؛
 - `PROJECT_STATUS.md`;
 - `PROJECT_ENGINEERING_LOG.md`;
 - `PROJECT_HANDOFF.md`;
-- `DOCUMENTATION_INDEX.md`;
+- `DOCUMENTATION_INDEX.md` عند تغير topology/reading path;
 - specialized module doc;
 - `LEGACY_FEATURE_COVERAGE_GATE.md`;
 - roadmap إذا تغير status/order.
@@ -125,6 +130,8 @@ Report when:
 
 الأمر يجب أن يكون محددًا بما يكفي لمنع overlap، لكنه لا يفرض implementation سيئة إذا اكتشف الفريق evidence أفضل. أي انحراف معماري مهم يعود عبر Team Room `#13`.
 
+بعد إصدار `COMMAND` أو Integration Review يغير مسار الفريق، حدّث `PROJECT_INTEGRATION_CONTINUITY.md` بحيث replacement main chat تعرف بالضبط ما أُرسل ولماذا.
+
 ## 6. Accept / Return protocol
 
 بعد تقرير فريق:
@@ -140,6 +147,8 @@ Report when:
 ### PARTIAL
 
 استخدم عندما جزء مستقل جيد وجزء blocked. لا تخلط status حتى لا يظهر Stage كاملة خطأ.
+
+كل قرار `ACCEPT | RETURN | PARTIAL` يجب أن ينعكس فورًا في `PROJECT_INTEGRATION_CONTINUITY.md` إذا غيّر نقطة الاستئناف.
 
 ## 7. Cross-team contract rules
 
@@ -185,13 +194,32 @@ latest approved integration HEAD
 - `NOT YET VERIFIED`;
 - exact next action.
 
-ثم حدّث المركزيات بحيث لا تبقى حالة المشروع موزعة أو متناقضة:
+### Main-chat Continuity Gate
+
+`PROJECT_INTEGRATION_CONTINUITY.md` يجب أن يحتوي دائمًا على:
+
+- المنتج والمعمارية والحدود الثابتة التي يحتاجها replacement Integration chat;
+- verified executable baseline;
+- current Stage ledger;
+- team topology/Boards;
+- current Backend/Frontend branch HEADs;
+- latest formal reports + أي branch WIP أحدث من التقرير;
+- Integration decisions/contract alignments;
+- root causes/fixes المهمة الجارية;
+- CI blockers/results;
+- `NOT YET VERIFIED`;
+- exact next Integration action.
+
+إذا تقدمت branch ولم تُرفع REPORT بعد، سجل التقدم كـ`observed WIP / NOT YET VERIFIED` بدل تجاهله أو اعتباره PASS.
+
+ثم عند closure حدّث المركزيات بحيث لا تبقى حالة المشروع موزعة أو متناقضة:
 
 ```text
+PROJECT_INTEGRATION_CONTINUITY.md
 PROJECT_STATUS.md
 PROJECT_ENGINEERING_LOG.md
 PROJECT_HANDOFF.md
-DOCUMENTATION_INDEX.md
+DOCUMENTATION_INDEX.md when topology changes
 specialized doc
 Legacy Coverage
 Roadmap when status/order changes
@@ -223,6 +251,8 @@ Decision: ACCEPT | RETURN | PARTIAL
 Exact next commands issued:
 ```
 
+بعد نشر التقرير، حدّث `PROJECT_INTEGRATION_CONTINUITY.md` في نفس batch أو مباشرة بعدها.
+
 ## 11. Release responsibility
 
 حاليًا deployment مؤجل بقرار Product Owner.
@@ -250,6 +280,6 @@ Backend/Frontend لا يعلنان production readiness منفردين.
 
 **Current integration stage:** Stage13E — Admin AI Operations / Review.
 
-Backend command موجود في `#14`، Frontend command موجود في `#15`.
+لا تكرر هنا dynamic branch/report details؛ اقرأ `PROJECT_INTEGRATION_CONTINUITY.md` لأنه مصدر الذاكرة التشغيلية الحالي لهذه المحادثة، ثم تحقق من Boards/branches الفعلية قبل العمل.
 
-المحادثة الرئيسية يجب أن تنتظر reports الفعلية، تراجع code/contracts، ثم تدمج وتبني Stage13E same-head evidence. لا تُغلق Stage13E لمجرد أن أحد الفريقين أعلن Ready.
+لا تُغلق Stage13E لمجرد أن أحد الفريقين أعلن Ready. الدمج وsame-head evidence وcentral documentation closure كلها مطلوبة.
