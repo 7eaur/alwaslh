@@ -24,15 +24,18 @@
 3. `PROJECT_HANDOFF.md` — handoff تنفيذي قابل للاستئناف.
 4. `PROJECT_STATUS.md` — المرحلة الحالية وما اكتمل وما بقي.
 5. `PROJECT_ENGINEERING_LOG.md` — التاريخ، القرارات المعمارية، findings، tests/evidence.
-6. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` — قرارات Product Owner الحالية.
-7. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` — Product Decisions الأساسية.
-8. `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
-9. `docs/product/PRODUCT_DECISIONS_BATCH_06.md` — اقرأه تاريخيًا مع تطبيق Current Overrides على PED-051.
-10. `PRODUCT_FEATURE_PARITY_MATRIX.md`.
-11. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
-12. `MASTER_REBUILD_ROADMAP.md`.
-13. الوثائق المتخصصة للمرحلة الحالية والمرحلة التالية.
-14. Legacy audit docs عند تنفيذ Module له سلوك قديم يجب مقارنته.
+6. `docs/workstreams/TEAM_OPERATING_MODEL.md` — طريقة عمل الفريق الدائم والتنسيق عبر GitHub.
+7. ملف workstream الخاص بالمحادثة: `BACKEND_WORKSTREAM.md` أو `FRONTEND_WORKSTREAM.md` أو `INTEGRATION_WORKSTREAM.md`.
+8. GitHub Command Board الخاص بالـworkstream ثم Team Room عند وجود نقاش مشترك.
+9. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` — قرارات Product Owner الحالية.
+10. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` — Product Decisions الأساسية.
+11. `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
+12. `docs/product/PRODUCT_DECISIONS_BATCH_06.md` — اقرأه تاريخيًا مع تطبيق Current Overrides على PED-051.
+13. `PRODUCT_FEATURE_PARITY_MATRIX.md`.
+14. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
+15. `MASTER_REBUILD_ROADMAP.md`.
+16. الوثائق المتخصصة للمرحلة الحالية والمرحلة التالية.
+17. Legacy audit docs عند تنفيذ Module له سلوك قديم يجب مقارنته.
 
 `NEXT_CONVERSATION_PROMPT.md` هو Launcher مختصر فقط؛ يوجّهك إلى هذه القائمة ولا يكرر الحالة.
 
@@ -43,9 +46,22 @@
 | `PROJECT_HANDOFF.md` | أفضل ملف للاستئناف: branch/PR/head، الفكرة، boundaries، verified stages، current next work، known issues |
 | `PROJECT_STATUS.md` | ملخص الحالة الحالية، exact CI، blockers والمتبقي بالترتيب |
 | `PROJECT_ENGINEERING_LOG.md` | سجل زمني تراكمي، Architecture Decisions، Findings P0–P3، Changes، Verification، Known Issues |
+| `docs/workstreams/TEAM_OPERATING_MODEL.md` | نظام الفريق الدائم: ownership، commands/reports، branch/contract/integration rules |
+| `docs/workstreams/BACKEND_WORKSTREAM.md` | مسؤوليات Backend/Platform وطريقة self-review/reporting والعمل الحالي |
+| `docs/workstreams/FRONTEND_WORKSTREAM.md` | مسؤوليات Frontend/Product وUX/a11y/API-integration والعمل الحالي |
+| `docs/workstreams/INTEGRATION_WORKSTREAM.md` | مسؤوليات Architecture/Integration/QA/Release وقواعد القبول والدمج |
 | `MASTER_REBUILD_ROADMAP.md` | الخطة من المراحل الحالية حتى release/cutover؛ لا يحل محل evidence |
 | `NEXT_CONVERSATION_PROMPT.md` | Prompt قصير لمحادثة جديدة؛ ليس Source of Truth بذاته |
 | `TODO.md` | Legacy/Historical only؛ لا تستخدمه كقائمة العمل الحالية |
+
+### GitHub Team Coordination
+
+- Issue `#13` — **TEAM ROOM**: contracts/blockers/architecture decisions المشتركة.
+- Issue `#14` — **Backend / Platform Command Board**: أوامر Backend وتقاريره.
+- Issue `#15` — **Frontend / Product Command Board**: أوامر Frontend وتقاريره.
+- Issue `#16` — **Integration / Architecture / QA / Release Board**: قرارات القبول/الدمج/evidence.
+
+آخر `COMMAND` في Board الفريق هو scope الحالي. بعد كل batch يرفع الفريق `REPORT` في Board الخاصة به ويحدّث ملف workstream. لا يوجد تنسيق رسمي يعتمد على chat memory فقط.
 
 ## 4. فهم المنتج وLegacy parity
 
@@ -181,5 +197,7 @@ After every meaningful batch:
 8. update Roadmap only when stage status/order changes;
 9. never mark PASS from prose or Build alone—use executable evidence;
 10. leave unverified items explicitly `NOT YET VERIFIED`.
+
+Workstream chats additionally update their own workstream file + Command Board report. Integration Lead owns synchronization of central status/log/handoff after accepting work.
 
 This convention exists specifically so a new conversation can continue from the repository without knowing prior chat history.
