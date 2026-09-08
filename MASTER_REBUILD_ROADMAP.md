@@ -4,7 +4,7 @@
 
 Current executable baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 
-Deployment: **`DEFERRED BY PRODUCT OWNER`**.
+Deployment: **FULLY DEFERRED UNTIL VPS / explicit Product Owner reopening**.
 
 ## Core principles
 
@@ -115,23 +115,47 @@ Evidence:
 
 Specialized contract: `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md`.
 
-## Stage13E — Admin AI Operations / Review — CURRENT NEXT
+## Stage13E — Admin AI Operations / Review — COMBINED CANDIDATE / EXECUTION PENDING
 
-Required:
+Current combined branch:
 
-- use verified Stage12 jobs/units/attempts;
-- queued/running/retrying/paused/failed/completed status;
-- progress, retry, cancel, pause/resume;
-- provider/model/project observability without secrets;
-- generated summary/question/page-detection review;
-- edit/reject/approve outputs;
-- source/page provenance visible;
-- no client-owned queue/progress;
-- live provider routing only after benchmark authorization.
+`integration/stage13e-ai-operations @ c48d1e597497e6054340f71235c78937082b9371`
 
-Stage13E remains `NOT YET VERIFIED` until executable evidence passes.
+Latest runtime/test HEAD beneath docs:
 
-## Stage13F — Question Bank / Quiz Builder / Publish — REQUIRED
+`d60218b518fb0fe453c21386e77cd35a2228ad07`
+
+Candidate implements the required Stage13E product boundary while reusing Stage12 authority:
+
+- durable Jobs/Units/Attempts/Outputs observability;
+- queued/running/retrying/paused/failed/completed state and server-derived progress;
+- pause/resume/cancel/retry through Stage12 lifecycle authority;
+- provider/model/project/usage observability without raw secrets/internal provider responses;
+- source/page/checksum provenance;
+- Stage11-validated edit/approve/reject review;
+- review mutations only on execution-stable outputs;
+- complete Jobs/Units/Attempts/Review History through bounded server pagination;
+- canonical latest review authority independent from historical page selection;
+- snapshot-consistent multi-query Admin read models;
+- Job pagination before expensive Unit aggregation;
+- safe pagination input bounds at HTTP validation;
+- deterministic real-browser contract for pagination, session expiry, stale-review `409`, pause/resume, approve/reload and 390px responsive behavior;
+- no Stage13F Question Bank publication and no client-owned queue/progress.
+
+Audit findings currently fixed in candidate:
+
+- P1: `AI-013E-DB-001`, `AI-013E-REVIEW-002`, `AI-013E-OPS-003`, `AI-013E-OPS-004`;
+- P2: `AI-013E-OPS-005`, `AI-013E-OPS-006`, `AI-013E-PERF-007`, `AI-013E-API-008`.
+
+Executable state:
+
+- latest combined run `34283442253`, attempt `2`, job `102256556365`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- no checkout/lint/typecheck/test/build/PostgreSQL/Chromium command executed.
+
+Therefore Stage13E remains **NOT YET VERIFIED**. The only proven closure blocker is `EXEC-004` executable same-head verification; do not treat pre-checkout runner failure as product failure or PASS.
+
+## Stage13F — Question Bank / Quiz Builder / Publish — REQUIRED / BLOCKED BY STAGE13E CLOSURE
 
 - reviewed Question Bank authority;
 - MCQ/T-F/manual/generated editing;
@@ -143,6 +167,8 @@ Stage13E remains `NOT YET VERIFIED` until executable evidence passes.
 - Draft→Review→Published;
 - QA status/history;
 - safe exports/print.
+
+Do not implement Stage13F until Stage13E combined + wider regression closure unless Product Owner explicitly changes stage ordering.
 
 ## Stage13G — Remaining Admin Product — REQUIRED
 
@@ -215,7 +241,7 @@ RTL, keyboard/focus/screen reader, 200% zoom, contrast, reduced motion, touch ta
 Canonical production curriculum/content through final verified pipelines. Old DB migration is not current scope unless explicitly reopened.
 
 # Stage 26 — Staging
-Fresh reproducible production-like environment with real storage/workers/runtime.
+Fresh reproducible production-like environment with real storage/workers/runtime. **Not current work until VPS/deployment is explicitly reopened.**
 
 # Stage 27 — Release Gate
 No unresolved/unaccepted P0/P1; real-host DB/storage/OCR/TTS/AI evidence; backup restore; Auth/device/access races; Admin/Student E2E; Offline/PWA; performance/security/a11y; full Legacy Coverage.
@@ -238,17 +264,18 @@ Auth/access/device reset, DB/backups, media/OCR/TTS/AI jobs, offline sync, Push,
 | Stage13B Admin Curriculum Web | VERIFIED |
 | Stage13C Content/Media/OCR Operations | VERIFIED |
 | Stage13D Upload/History/Publication Linking | **VERIFIED** |
-| Stage13E Admin AI Operations/Review | **CURRENT NEXT / NOT YET VERIFIED** |
-| Stage13F–G | REQUIRED / NOT YET VERIFIED |
+| Stage13E Admin AI Operations/Review | **COMBINED CANDIDATE / EXECUTION PENDING / NOT YET VERIFIED** |
+| Stage13F–G | REQUIRED / BLOCKED BY ORDERED CLOSURE |
 | Stage14–20 | REQUIRED |
-| Stage21–29 | PLANNED release/hardening gates |
-| Hosted deployment | **DEFERRED BY PRODUCT OWNER** |
+| Stage21–25 | PLANNED product/hardening gates |
+| Stage26–29 | FUTURE / deployment track reopens only after VPS |
+| Hosted deployment | **OUT OF CURRENT SCOPE UNTIL VPS** |
 
-Latest executable evidence: `4eca7de8877ac9e2289b9c7990c912d33c256935`, with Stage9/10/OCR/11/12/13/13D and Full Rebuild all SUCCESS.
+Latest fully executable product evidence remains `4eca7de8877ac9e2289b9c7990c912d33c256935`, with Stage9/10/OCR/11/12/13/13D and Full Rebuild all SUCCESS. Stage13E candidate is newer but not executable-verified.
 
 ## Deployment policy
 
-Current stable-batch sequence is:
+Current development sequence is:
 
 ```text
 repository discovery
@@ -259,7 +286,7 @@ repository discovery
 → next isolated batch
 ```
 
-The historical automatic Preview sync cadence is suspended by Product Owner. Do not deploy until explicit re-enable. Hosted surfaces remain `NOT YET VERIFIED`.
+Deployment/hosting are intentionally excluded until Product Owner provides VPS and explicitly reopens that track. Historical Preview/Render/Vercel/Railway work is not a current gate or blocker.
 
 ## Final completion rule
 
