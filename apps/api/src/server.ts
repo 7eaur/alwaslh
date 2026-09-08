@@ -3,7 +3,10 @@ import { loadConfig } from "./config.js";
 import { createDatabase } from "./db.js";
 
 const config = loadConfig();
-const database = createDatabase(config.DATABASE_URL);
+const database = createDatabase(config.DATABASE_URL, {
+  ssl: config.DATABASE_SSL === "require",
+  maxConnections: config.DATABASE_POOL_MAX,
+});
 const app = buildApp({ config, database });
 
 async function shutdown(signal: NodeJS.Signals) {

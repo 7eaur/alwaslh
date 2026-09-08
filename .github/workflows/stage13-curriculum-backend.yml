@@ -1,0 +1,196 @@
+name: Stage 13 Admin Product Verification
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage13-admin-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stage13-admin-backend:
+    name: Stage 13 · Curriculum + content operations backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_stage13
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_stage13"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_stage13
+      LOG_LEVEL: silent
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y postgresql-client >/dev/null
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Lint, typecheck, unit test and build API
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+          npm run build --prefix apps/api
+      - name: Apply all migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify curriculum and processing PostgreSQL contracts
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('curriculum_sections','curriculum_events','content_source_documents','content_source_assets','media_assets','media_variants','ocr_extractions') and relkind='r'")" = "7"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from information_schema.columns where table_name='subject_class_links' and column_name in ('status','updated_at')")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from information_schema.columns where table_name='lessons' and column_name='section_id'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('curriculum_sections_offering_fk','curriculum_sections_scope_id_unique','curriculum_sections_slug_unique','lessons_section_scope_fk','curriculum_events_metadata_object')")" = "5"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_indexes where indexname in ('idx_subject_class_links_class_status_position','idx_curriculum_sections_offering_position','idx_lessons_offering_section_position','idx_curriculum_events_resource_created','idx_curriculum_events_actor_created','idx_media_assets_status_created','idx_ocr_extractions_review_pending')")" = "7"
+      - name: Run Admin curriculum and content operations API tests
+        run: >-
+          node --test --import tsx
+          tests/integration/curriculum.integration.test.ts
+          tests/integration/content-operations.integration.test.ts
+        working-directory: apps/api
+
+  stage13-admin-browser:
+    name: Stage 13 · Admin browser E2E
+    needs: stage13-admin-backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_stage13_admin_ui
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_stage13_admin_ui"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      HOST: 127.0.0.1
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_stage13_admin_ui
+      LOG_LEVEL: silent
+      ALLOWED_ORIGINS: http://127.0.0.1:5175
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y postgresql-client >/dev/null
+      - name: Install API and Admin dependencies
+        run: |
+          npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+          npm install --prefix apps/admin-web --ignore-scripts --no-audit --no-fund
+      - name: Verify API and Admin builds
+        env:
+          VITE_API_BASE_URL: http://127.0.0.1:3000
+        run: |
+          npm run build --prefix apps/api
+          npm run lint --prefix apps/admin-web
+          npm run typecheck --prefix apps/admin-web
+          npm test --prefix apps/admin-web
+          npm run build --prefix apps/admin-web
+      - name: Apply migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+      - name: Create explicit E2E Super Admin
+        env:
+          ADMIN_BOOTSTRAP_IDENTIFIER: stage13-admin-ui
+          ADMIN_BOOTSTRAP_PASSWORD: Stage13AdminUiPass123!
+          ADMIN_BOOTSTRAP_DISPLAY_NAME: مدير اختبار المنهج
+        run: npm run auth:create-admin --prefix apps/api
+      - name: Seed content operations browser fixture
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          with import_run as (
+            insert into content_import_runs (
+              source_repository, source_revision, manifest_sha256,
+              subject_root_count, document_count, asset_count, helper_file_count
+            ) values (
+              '7eaur/alwaslh-go', 'stage13-browser-content', repeat('c', 64), 1, 1, 1, 0
+            ) returning id
+          ), source_document as (
+            insert into content_source_documents (
+              source_repository, source_path, class_slug, class_name, subject_slug, subject_name,
+              kind, title, position, first_seen_import_run_id, last_seen_import_run_id
+            )
+            select '7eaur/alwaslh-go', 'browser/grade-3/physics/book', 'browser-grade-3',
+                   'الصف الثالث التجريبي', 'browser-physics', 'الفيزياء التجريبية',
+                   'textbook', 'كتاب تشغيل الوسائط التجريبي', 0, id, id
+            from import_run
+            returning id, first_seen_import_run_id
+          ), source_asset as (
+            insert into content_source_assets (
+              document_id, source_path, filename, position, mime_type, byte_size,
+              source_git_blob_sha1, checksum_sha256, naming_family, source_number,
+              first_seen_import_run_id, last_seen_import_run_id
+            )
+            select id, 'browser/grade-3/physics/book/001.jpg', '001.jpg', 0,
+                   'image/jpeg', 2048, repeat('d', 40), repeat('c', 64), 'numbered', 1,
+                   first_seen_import_run_id, first_seen_import_run_id
+            from source_document
+            returning id
+          ), media as (
+            insert into media_assets (
+              idempotency_key, content_source_asset_id, source_position, source_filename,
+              source_mime_type, source_page_number, source_checksum_sha256, source_byte_size,
+              status, attempt_count
+            )
+            select 'stage13-browser-media', id, 0, '001.jpg', 'image/jpeg', 1,
+                   repeat('c', 64), 2048, 'ready', 1
+            from source_asset
+            returning id
+          ), variants as (
+            insert into media_variants (
+              media_asset_id, kind, profile_version, storage_key, mime_type,
+              byte_size, width, height, checksum_sha256
+            )
+            select id, 'source'::media_variant_kind, 'source-v1', 'stage13-browser/source.webp', 'image/webp', 1800, 1000, 1400, repeat('c', 64) from media
+            union all
+            select id, 'display'::media_variant_kind, 'display-v1', 'stage13-browser/display.webp', 'image/webp', 900, 800, 1120, repeat('c', 64) from media
+            union all
+            select id, 'thumbnail'::media_variant_kind, 'thumbnail-v1', 'stage13-browser/thumb.webp', 'image/webp', 200, 240, 336, repeat('c', 64) from media
+            union all
+            select id, 'ai'::media_variant_kind, 'ai-v1', 'stage13-browser/ai.webp', 'image/webp', 700, 800, 1120, repeat('c', 64) from media
+            returning id, kind
+          )
+          insert into ocr_extractions (
+            input_media_variant_id, input_checksum_sha256, provider_key, provider_version,
+            profile_key, status, attempt_count, max_attempts, raw_text, normalized_text,
+            mean_confidence, review_status, review_reason, idempotency_key, completed_at
+          )
+          select id, repeat('c', 64), 'browser-fixture', 'v1', 'standard',
+                 'completed', 1, 3, 'نص خام يحتاج المراجعة', 'نص خام يحتاج المراجعة',
+                 44.5, 'pending', 'low_confidence', 'stage13-browser-ocr', now()
+          from variants where kind = 'ai';
+          SQL
+      - name: Install Chromium
+        run: npx --prefix apps/admin-web playwright install --with-deps chromium
+      - name: Run real browser Admin flows
+        run: npm run test:e2e --prefix apps/admin-web

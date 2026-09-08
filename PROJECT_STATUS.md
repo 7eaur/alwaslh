@@ -1,109 +1,174 @@
-# PROJECT STATUS
+# PROJECT STATUS — الوسيلة الذكية
 
-- **Current Phase:** Stage 10 Media Pipeline is **CODE COMPLETE / CLI + PostgreSQL + MEDIA RUNTIME PASS**. Documentation closure CI is running next; after it is green, sync the stable Stage 10 schema/code to the temporary Supabase/Vercel Preview and verify that deployment before beginning Stage 11.
-- **Verification Policy:** every stage requires executable evidence. Official states: `DESIGN PASS` / `CLI PASS` / `RUNTIME PASS` / `RELEASE PASS`; anything not executed remains `NOT YET VERIFIED`.
-- **Continuity Source:** read `PROJECT_HANDOFF.md` first, then this file, `PROJECT_ENGINEERING_LOG.md`, `PRODUCT_FEATURE_PARITY_MATRIX.md`, `MASTER_REBUILD_ROADMAP.md`, stage contracts/DoD, and `docs/engineering/CLI_VERIFICATION_GATES.md`.
-- **Stage 10 branch / PR:** `rebuild/media-pipeline` / PR #11.
-- **Latest Verified Stage 10 Code Baseline:** `f9f58ed4b9cf599d992a08b9c9eb33d3ae1a17c3`.
-- **Stage 10 Dedicated Verification:** run `33302062208` — **SUCCESS**.
-- **Stage 9 Regression on same code head:** run `33302062209` — **SUCCESS**.
-- **Full Regression Verification on same code head:** run `33302062216` — **SUCCESS**, including Chromium E2E.
+> الحالة التنفيذية المختصرة. Code/migrations + executable verification + hosted development evidence تتقدم على prose. اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, و`PROJECT_INTEGRATION_CONTINUITY.md` للتفاصيل.
 
-## Completed
+آخر تحديث: 2026-09-08.
 
-- **Stage 1 Product Contract:** **CLI PASS.** Feature-preservation contract and automated parity checks.
-- **Stage 2 Brand Identity:** **CLI PASS.** Owned teal/open-book identity, canonical assets/tokens/PWA icons and automated brand checks.
-- **Stage 3 UX Architecture:** **CLI PASS.** Admin/Student IA, critical flows/states, responsive/accessibility contracts and wireframes.
-- **Stage 4 PostgreSQL Data Platform:** **CLI/RUNTIME PASS on PostgreSQL 16.** Clean-slate private PostgreSQL behind Backend; migrations and relational integrity verified on clean DBs.
-- **Stage 5 Engineering Foundation:** **CLI/RUNTIME PASS.** API runtime, DB pool/transactions, migration runner, env validation, logging/error envelope, strict TS, tests, production builds and CI.
-- **Stage 6 Auth & Authorization:** **CLI/RUNTIME PASS.** Salted scrypt credentials, opaque sessions, HttpOnly cookies, role isolation, Origin protection, DB lockout, reset-only recovery and explicit Admin bootstrap.
-- **Stage 7 Access Codes & Entitlements:** **CLI/RUNTIME PASS.** Secure 6/7-digit codes, Arabic/Persian normalization, transactional/idempotent redemption, renewal, no-waste behavior, revoke/audit, constraints and race tests.
-- **Stage 8 Student Activation & Account Flow:** **CLI/RUNTIME/BROWSER E2E PASS.** Atomic activation + returning login + recovery + real Chromium integration.
-- **Stage 9 Content Model & deterministic `alwaslh-go` Import:** **CLI/PostgreSQL RUNTIME PASS.** Full pinned inventory, manifest compatibility, deterministic ordering, provenance, repeatable DB import and reconciliation verified.
-- **Stage 10 Media Pipeline:** **CLI/PostgreSQL/MEDIA RUNTIME PASS on code head.** Server-owned media processing, safe storage abstraction, deterministic ordering/keys, Sharp variants, Poppler PDF extraction, Stage 9 provenance, source-byte-bound idempotency, failure/abort cleanup and full PDF runtime verification.
+## Current Position
 
-## Stage 9 verified source/import facts
+- Repository: `7eaur/alwaslh`
+- Integration/development delivery branch: **`main`**
+- Legacy pre-rebuild `main` preserved at: `archive/legacy-main-2026-09-08` → `5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`
+- Render: **TEMPORARY FREE DEVELOPMENT / TEST HOSTING ONLY**
+- Expected final production hosting: **VPS or Railway; final choice deferred until product requirements stabilize**
+- Old Vercel serverless deployment path: **RETIRED / Git auto-deploy guarded off**
+- Old Supabase resources: **historical/rollback resources; not final production authority**
+- Latest fully verified application baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`
+- Current product work: **Stage13E Admin AI Operations / Review — NOT YET VERIFIED and not merged to `main`**
+- GitHub Actions: hosted-runner allocation blocker remains observed; no test weakening permitted.
 
-Pinned source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
+## Product in one paragraph
+
+الوسيلة الذكية منصة تعليمية عربية بسطحين مستقلين: Student Web/PWA للطالب وSuper Admin Web للإدارة، فوق Fastify API وPostgreSQL خاصين. الإدارة تبني وتراجع المنهج والمحتوى والوسائط وOCR/AI ثم تنشر authority موثوقة، والطالب يستهلك فقط المحتوى المصرح والمنشور ويتعلم ويتدرب ويختبر ويحفظ بياناته وفق المراحل. الـlegacy هو capability/failure reference وليس architecture target.
+
+## Development Hosting — Render Free
+
+Canonical doc: `docs/deployment/RENDER_DEVELOPMENT.md`.
+
+Current temporary topology in `render.yaml`:
 
 ```text
-15 subject roots
-48 source documents
-5,552 source images
-4,218 JPG
-1,334 WEBP
-86 recognized helper files
-24 manifest.json files
-0 fatal inventory issues
+Student Vite Static Site ─┐
+                          ├── Docker Fastify API ── Render Free PostgreSQL
+Admin Vite Static Site ───┘
 ```
 
-Canonical inventory SHA-256:
-`7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`
+Resources declared:
 
-## Stage 10 verified media facts
+- `alwaslh-dev-student-7eaur` — Student static site.
+- `alwaslh-dev-admin-7eaur` — Admin static site.
+- `alwaslh-dev-api-7eaur` — Docker Fastify development API.
+- `alwaslh-dev-postgres-7eaur` — temporary Render Free PostgreSQL 16.
 
-- `0009_media_pipeline.sql` introduces `media_assets` and `media_variants` with source checksum/byte identity, processing state, attempt/error evidence and unique variant/storage identities.
-- Imported media can reference `content_source_assets`; Stage 9 inventory is not mutated into Lesson entities.
-- Media idempotency is owned by exact source identity + SHA-256 + byte size; reusing the key for different source data is rejected.
-- Exact ready replay verifies the stored variant byte size/SHA before returning it.
-- `sharp` produces `source`, `display`, `thumbnail`, and `ai` variants with computed dimensions/byte sizes/SHA-256.
-- Storage keys are backend-generated deterministic relative keys; traversal is rejected.
-- Concurrency is bounded to 1..8 and result/page order is independent from worker completion timing.
-- Partial storage failure, metadata failure and abort remove successfully written partial objects and leave observable failed state.
-- Poppler is invoked with argument arrays, temporary directories are scoped/cleaned, page count/order is validated, and malformed PDFs fail before media rows are created.
-- A real two-page PDF was executed end-to-end through extraction → transforms → filesystem storage → PostgreSQL metadata → exact replay; page order remained `1,2` / positions `100,101`.
-- Display output from the real PDF stayed within the tested long-edge quality window `1200..1800` pixels.
+The API remains Dockerized because Stage10 PDF processing requires Poppler (`pdfinfo` / `pdftoppm`). This is portable to future VPS/Railway hosting and avoids provider-specific rewrites.
 
-## Canonical database migrations
+Important free-environment limitation: there is no persistent disk. `MEDIA_STORAGE_ROOT=/app/runtime-data/media` is ephemeral, so upload flows can be tested functionally but media survival across restart/redeploy remains **NOT YET VERIFIED** and must not be treated as production durability.
 
-`0001_core.sql` → `0002_access.sql` → `0003_learning.sql` → `0004_ai_and_sync.sql` → `0005_auth.sql` → `0006_access_contract.sql` → `0007_activation_contract.sql` → `0008_content_source_import.sql` → `0009_media_pipeline.sql`.
+Render Free Postgres is temporary development infrastructure and is not the long-term data authority.
 
-## Current branch / PR stack
+## Delivery Model
 
-- Foundation: `rebuild/foundation` / PR #2.
-- Auth: `rebuild/auth-authorization` / PR #3.
-- Access/Entitlements: `rebuild/access-entitlements` / PR #4.
-- Student Activation UI: `rebuild/student-activation-ui` / PR #5.
-- Student Activation Backend: `rebuild/student-activation-backend` / PR #6.
-- Stage 8 integrated source: `rebuild/student-activation-integration` / PR #7.
-- Stage 9 source of truth: `rebuild/content-import` / PR #8.
-- Parallel Stage 9 source audit: `rebuild/content-source-audit` / PR #9; audit-only evidence.
-- Temporary test deployment: `preview/supabase-vercel` / PR #10.
-- **Stage 10 source of truth:** `rebuild/media-pipeline` / PR #11.
+```text
+short Backend/Frontend branch
+→ workstream REPORT + self-review
+→ Integration review
+→ integration candidate + cross-boundary gates
+→ merge accepted state to main
+→ Render development auto-deploy
+→ hosted smoke/regression observation
+→ central docs/evidence update
+```
 
-## Temporary Preview Environment
+Render development reachability does not equal Stage PASS. Integration still declares `VERIFIED` only after required same-head executable evidence.
 
-- Supabase project `linksoftt` is a temporary PostgreSQL/testing host, not the final platform architecture.
-- Vercel project `alwaslh` exposes Student `/`, Admin `/admin`, API `/api/*` from `preview/supabase-vercel`.
-- Browser access to application tables through Supabase/PostgREST is intentionally blocked; API remains the data boundary.
-- The Preview must be synchronized after each stable stage before the next stage proceeds.
-- Vercel serverless filesystem is not the final durable media volume and Poppler/media upload runtime on Vercel is currently **NOT YET VERIFIED**.
+Final production promotion later will target the approved VPS/Railway environment, not automatically Render.
 
-## Critical defects caught and fixed by gates
+## Permanent Team Operating Model
 
-- Legacy root PostCSS/Tailwind leakage into new apps.
-- Auth strict-TypeScript/scrypt boundary defects.
-- Stage 7 PostgreSQL enum/JSONB/default typing defects, audit atomicity and idempotency ownership weakness.
-- Stage 8 test isolation/discovery defects and production API build/start mismatch.
-- Stage 9 Arabic-key/third-shape manifest omissions, helper baseline drift and Python/JavaScript canonical digest drift.
-- Stage 10 first gate caught formatting and strict optional-property defects before runtime.
-- Stage 10 review caught weak idempotency ownership and changed it to bind the key to exact source bytes/provenance before retry mutation.
-- Stage 10 failure-injection gates prove partial filesystem objects are cleaned on storage failure, metadata failure and abort.
-- Stage 10 final DoD added direct assertions for no temp-file residue and malformed-PDF/no-metadata behavior rather than relying on inference.
+- Backend / Platform — Issue `#14`, `docs/workstreams/BACKEND_WORKSTREAM.md`.
+- Frontend / Product — Issue `#15`, `docs/workstreams/FRONTEND_WORKSTREAM.md`.
+- Integration / Architecture / QA / Release — Issue `#16`, `docs/workstreams/INTEGRATION_WORKSTREAM.md`.
+- Team Room — Issue `#13`.
+- Main operational memory — `PROJECT_INTEGRATION_CONTINUITY.md`.
+- Team rules — `docs/workstreams/TEAM_OPERATING_MODEL.md`.
 
-## NOT YET VERIFIED / remaining release risks
+Continuity and root-cause gates remain mandatory. Every important defect requires symptom, root cause, broken invariant/contract, blast radius, correct owning layer, regression evidence, and remaining `NOT YET VERIFIED`.
 
-- Stage 10 workflows on the final documentation head;
-- Stage 10 schema/code synchronization and deployment verification on the temporary Supabase/Vercel Preview;
-- durable media volume/Poppler behavior on the eventual production host and backup/restore/load drills;
-- Gemini prompt contracts, golden tests, durable AI workers/provider failover;
-- complete Admin product and live Admin media upload boundary;
-- post-auth Student learning product, Practice Engine and trusted scoring;
-- account-scoped Offline Sync/PWA/outbox lifecycle;
-- complete performance/security/accessibility/device/staging/rollback/release gates.
+## Fully Verified Application Baseline
 
-## Next Action
+Exact executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 
-1. Run Stage 10 dedicated + Stage 9 regression + complete rebuild verification on this documentation head.
-2. If green, apply `0009_media_pipeline.sql` and new-table Supabase lockdown to temporary `linksoftt`, mirror stable Stage 10 code into `preview/supabase-vercel`, deploy and verify Vercel health/readiness/build.
-3. Only after Preview sync evidence, begin **Stage 11 — Gemini Prompt/Output Contracts**.
+| Gate | Run | Result |
+|---|---:|---|
+| Stage13D Admin Upload UI | `34177369743` | SUCCESS |
+| Stage13D Content Ingestion | `34177369784` | SUCCESS |
+| Stage13 Admin Product | `34177369748` | SUCCESS |
+| Stage12 AI Execution | `34177369812` | SUCCESS |
+| Stage11 AI Contracts | `34177369753` | SUCCESS |
+| OCR Foundation | `34177369750` | SUCCESS |
+| Stage10 Media Pipeline | `34177369777` | SUCCESS |
+| Stage9 Content Import | `34177369756` | SUCCESS |
+| Full Rebuild | `34177369768` | SUCCESS incl. Student Chromium |
+
+Do not replace this baseline until a newer executable same-head matrix actually runs green. Hosted development evidence is additional observation, not a substitute.
+
+## Stage Ledger
+
+| Stage / Area | State |
+|---|---|
+| Stage1–10 | VERIFIED |
+| OCR Foundation | VERIFIED |
+| Stage11 Provider-neutral AI Contracts | VERIFIED |
+| Stage12 Durable AI Execution / Worker Runtime | VERIFIED backend/runtime; live provider bootstrap still unverified |
+| Stage13A Curriculum Backend | VERIFIED |
+| Stage13B Admin Curriculum UI | VERIFIED incl. Chromium |
+| Stage13C Admin Content/Media/OCR | VERIFIED incl. Chromium |
+| Stage13D Upload/History/Publication Linking | VERIFIED incl. Chromium |
+| Stage13E Admin AI Operations / Review | **IN PROGRESS / NOT YET VERIFIED / OUTSIDE `main`** |
+| Stage13F+ | REQUIRED / later |
+| Render free development runtime | **CONFIGURED / AWAITING BLUEPRINT APPLY + DEVELOPMENT VERIFICATION** |
+| Final VPS/Railway production | **NOT YET DESIGNED / DEFERRED UNTIL PRODUCT MATURITY** |
+
+## Stage13E Current Candidate State
+
+Backend:
+- branch `backend/stage13e-ai-operations`
+- HEAD `348c02646d0ff873fd305beff16f41c46d9c0285`
+- Issue #14 REPORT `5579330147`
+- structurally accepted Integration candidate; executable same-head gates still blocked by hosted runner allocation.
+
+Frontend:
+- branch `frontend/stage13e-ai-operations`
+- HEAD `e42644944ca3fcc7e225a263a6e9699bcb70b9f7`
+- Issue #15 REPORT `5579436581`
+- production-style API binding exists; Integration returned only bounded browser regression preparation for real session-expiry + stale-review `409` conflict.
+
+Neither candidate is in `main` yet.
+
+## Hosting Decisions
+
+- Render is development/test only and should remain near-zero cost.
+- `main` feeds the Render development environment after Integration acceptance.
+- Final production hosting is expected to be VPS or Railway; do not introduce Render-specific architecture coupling.
+- Dockerized API, environment-driven configuration, PostgreSQL via `DATABASE_URL`, and migration tooling must remain portable.
+- free Render media filesystem is intentionally ephemeral; do not add a provider-specific storage rewrite only to make temporary testing durable.
+- durable media architecture will be selected before final production based on real requirements.
+- no fake AI background worker is deployed: Stage12 production provider/bootstrap is not implemented yet.
+
+## Immediate Next Work
+
+1. Apply the free `render.yaml` Blueprint for development/testing only.
+2. Verify free database + API + Student + Admin resources deploy.
+3. Verify migrations, `/health`, `/ready`, logs, DB connectivity and Poppler PDF processing.
+4. Verify session/CORS behavior from both frontends.
+5. Verify Stage13D mixed image/PDF flow functionally; explicitly do not claim media durability across redeploy.
+6. Record exact Render development resource/deploy IDs and observations in central docs.
+7. Continue Stage13E in its existing feature branches; do not merge to `main` until its gates pass.
+8. Revisit VPS/Railway production architecture only when later product stages make capacity/storage/availability requirements concrete.
+
+## High-Priority Open Boundaries
+
+- `AI-011-005` P2 — `direct` AI question persistence for Stage13F unresolved.
+- `AI-012-019` P2 — live AI provider benchmark/config/routes/bootstrap unverified.
+- Stage13E same-head executable verification blocked by GitHub hosted runner allocation.
+- production AI background worker not yet runnable by design.
+- Render development environment not yet applied/runtime-verified.
+- Render Free media durability is intentionally unavailable and remains `NOT YET VERIFIED`.
+- final VPS/Railway production topology and durable media storage are intentionally deferred.
+- Student full learning product / Offline/PWA / later stages remain incomplete.
+
+## Stable Non-Negotiable Boundaries
+
+- Browser does not own PostgreSQL/auth/publish/job state.
+- Full Code = 6 digits; Class Code = 7 digits.
+- Student login requires password + registered P-256 device proof.
+- Curriculum = Class → Subject Offering → optional Section → Lesson.
+- source inventory is provenance, not curriculum authority.
+- `media ready != published`.
+- exact AI modes never fabricate unknown answers.
+- durable AI worker remains separate from Fastify HTTP.
+- no test weakening, auth bypass, hidden catch, duplicate lifecycle or wrong-layer hosting workaround.
+
+## Documentation Startup Path
+
+`README.md → DOCUMENTATION_INDEX.md → PROJECT_HANDOFF.md → PROJECT_STATUS.md → PROJECT_ENGINEERING_LOG.md → PROJECT_INTEGRATION_CONTINUITY.md (Integration) → TEAM_OPERATING_MODEL/workstream → CURRENT_PRODUCT_OVERRIDES → specialized docs`.

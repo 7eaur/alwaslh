@@ -1,302 +1,110 @@
-# الوسيلة الذكية (Alwaseela Smart)
+# الوسيلة الذكية — Alwaseela Smart
 
-تطبيق ويب تعليمي (PWA) لإدارة المحتوى الدراسي وتوزيع الدروس على الطلاب عبر نظام أكواد آمن، مع دعم الذكاء الاصطناعي لتحليل المحتوى وتوليد الأسئلة والاختبارات التفاعلية.
+> **المستودع هو ذاكرة المشروع الرسمية.** لا تعتمد على ذاكرة محادثات سابقة. ابدأ دائمًا من `DOCUMENTATION_INDEX.md` ثم اتبع ترتيب Source of Truth المذكور فيه.
 
----
+## فكرة المنتج
 
-## Architecture
+**الوسيلة الذكية** منصة تعليمية عربية هدفها تحويل المحتوى الدراسي الموثوق إلى تجربة تعلم ومراجعة واختبار منظمة، مع إدارة كاملة للمحتوى والوصول من جهة الإدارة.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Frontend                             │
-│  React + TypeScript + Vite + Tailwind CSS + shadcn/ui       │
-│  PWA with offline caching (IndexedDB + localStorage)        │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-           ┌───────────────┼───────────────┐
-           │               │               │
-           ▼               ▼               ▼
-   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-   │   Supabase   │ │   Supabase   │ │  Cloudflare  │
-   │   PostgreSQL │ │ Edge Functions│ │   Worker     │
-   │   Auth       │ │   (Deno/TS)  │ │  (Proxy)     │
-   │   Storage    │ │               │ │  (Optional)  │
-   │   Realtime   │ │               │ │               │
-   └──────────────┘ └──────────────┘ └──────────────┘
-```
+المنتج يحافظ على مخرجات التطبيق القديم ذات القيمة، لكنه لا يكرر معماريته القديمة. التطبيق القديم ومستنداته مرجع للميزات والسيناريوهات والمشكلات، وليس مواصفة تقنية ملزمة.
 
-### Frontend
+المنتج المستهدف يتكون من:
 
-- **Framework:** React 18 + TypeScript
-- **Build Tool:** Vite
-- **Styling:** Tailwind CSS 3.4 + shadcn/ui
-- **Routing:** React Router v7
-- **State Management:** React Context + Hooks
-- **PWA:** Vite Plugin PWA + Workbox
-- **Storage Offline:** IndexedDB (Dexie) + localStorage
-- **Charts:** Recharts
-- **Forms:** React Hook Form + Zod
-- **Animations:** Framer Motion (motion)
+- **Student Web/PWA** — تفعيل ودخول آمن، صفوف ومواد ودروس، Reader، ملخصات، بحث، TTS، تدريب واختبارات ونماذج، ملاحظات ومفضلة وNeeds Review، تقدم وإشعارات وOffline/PWA.
+- **Admin Web** — Super Admin مستقل لإدارة المنهج والمحتوى والوسائط وOCR والذكاء الاصطناعي وبنك الأسئلة والطلاب والأكواد والاسترداد والإشعارات والاستيراد/التصدير والتقارير والتدقيق.
+- **Backend API** — السلطة الوحيدة للهوية والصلاحيات والبيانات والمنطق التجاري فوق PostgreSQL خاصة، مع Media/OCR/AI workers خلف الخادم.
 
-### Backend
-
-- **Database:** Supabase PostgreSQL
-- **Auth:** Supabase Auth
-- **Serverless Functions:** Supabase Edge Functions (Deno)
-- **Storage:** Supabase Storage
-- **Realtime:** Supabase Realtime subscriptions
-- **Migrations:** 45 SQL migration files في `supabase/migrations/`
-- **Secrets:** `PASSWORD_ENCRYPTION_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `INTEGRATIONS_API_KEY`
-
----
-
-## Project Directory
-
-```
-├── README.md                    # هذا الملف
-├── .env.example                 # قالب متغيرات البيئة
-├── package.json                 # التبعيات ونصوص التشغيل
-├── pnpm-lock.yaml               # قفل إصدارات التبعيات
-├── pnpm-workspace.yaml          # إعدادات مساحة عمل pnpm
-├── index.html                   # نقطة الدخول HTML
-├── vite.config.ts              # إعدادات Vite
-├── vite.config.dev.ts          # إعدادات Vite للتطوير
-├── tailwind.config.js          # إعدادات Tailwind
-├── postcss.config.js           # إعدادات PostCSS
-├── biome.json                  # إعدادات Biome
-├── components.json             # إعدادات shadcn/ui
-├── tsconfig*.json              # إعدادات TypeScript
-├── public/                     # الأصول الثابتة
-├── src/                        # كود الواجهة الأمامية
-│   ├── components/             # المكونات
-│   ├── context/ / contexts/    # Providers
-│   ├── db/                     # API + Supabase client
-│   ├── hooks/                  # Hooks مخصصة
-│   ├── lib/                    # أدوات مساعدة
-│   ├── pages/                  # الصفحات
-│   ├── App.tsx
-│   ├── main.tsx
-│   ├── routes.tsx
-│   └── index.css
-├── supabase/                   # Backend
-│   ├── functions/              # Edge Functions
-│   ├── migrations/             # SQL Migrations
-│   ├── secrets/required.json   # أسماء Secrets المطلوبة
-│   └── config.toml
-├── tasks/                      # سكربتات ومهام إضافية
-│   └── cloudflare-worker/
-├── docs/                       # التوثيق
-│   ├── prd.md
-│   └── SOURCE_INVENTORY.md
-└── .rules/                     # قواعد التحقق من الجودة
-```
-
----
-
-## Requirements
-
-- Node.js 18+ (يفضل 20 LTS)
-- pnpm 8+
-- حساب Supabase (مشروع فعّال)
-
----
-
-## Installation
-
-```bash
-# استنساخ المستودع
-git clone git@github.com:7eaur/alwaslh.git
-cd alwaslh
-
-# تثبيت التبعيات
-pnpm install
-
-# إعداد متغيرات البيئة
-cp .env.example .env
-# عدّل .env بقيم مشروع Supabase الخاص بك
-```
-
----
-
-## Environment Variables
-
-انظر `.env.example` للقالب الكامل.
+## المعمارية الحالية
 
 ```text
-# الواجهة الأمامية
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
-
-# Edge Functions
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-PASSWORD_ENCRYPTION_KEY=your-encryption-key
-INTEGRATIONS_API_KEY=your-integrations-api-key
+Student PWA ─┐
+             ├── apps/api ── private PostgreSQL
+Admin Web ───┘      │
+                    ├── Stage9 source/provenance inventory
+                    ├── Stage10 media pipeline
+                    ├── reviewed OCR
+                    ├── provider-neutral AI contracts
+                    ├── durable AI jobs/workers/controls
+                    └── later TTS / notifications / offline sync
 ```
 
----
+أسطح الـrebuild الحالية:
 
-## Database
-
-### Migrations
-
-مigrations موجودة في `supabase/migrations/`. قم بتطبيقها عبر Supabase CLI أو لوحة التحكم:
-
-```bash
-supabase db reset
-# أو
-supabase migrations up
+```text
+apps/student-web   Student Web/PWA
+apps/admin-web     Super Admin Web
+apps/api           Fastify + TypeScript Backend API
+packages/brand     shared brand/design primitives
+packages/contracts shared contracts where applicable
+database/migrations PostgreSQL source of truth
 ```
 
-### Seeds
+**مهم:** ما زالت بعض ملفات التطبيق القديم موجودة في root (`src/`, `supabase/`, ملفات legacy أخرى) كمرجع تاريخي/Parity evidence. لا تفترض أنها runtime المعتمد للمنتج الجديد. الـrebuild الحالي هو `apps/* + database/migrations/*` والعقود الموثقة.
 
-لا توجد ملفات Seeder منفصلة حالياً. البيانات الأولية تُدخل عبر لوحة الإدارة أو Migrations.
+## الحالة الحالية
 
----
+الفرع التنفيذي/التوثيقي الحالي:
 
-## Workers
+`planning/product-evolution-review` — Draft PR #12.
 
-لا يوجد Workers/Queues منفصلة. العمليات الثقيلة (مثل تحليل الدرس وتوليد الأسئلة) تتم عبر Supabase Edge Functions.
+آخر **executable baseline** متحقق بالكامل:
 
----
+`260cfef1c48d1290611103f8443d222f8cd041b6`
 
-## Docker
+على هذا الرأس نجحت بوابات Stage9 وStage10 وOCR وStage11 وStage12 وStage13 وFull Rebuild، بما فيها Chromium الفعلي للطالب والإدارة.
 
-لا يوجد `Dockerfile` أو `docker-compose.yml` حالياً. التطبيق مصمم ليبنى كـ Static Site ويُستضاف على:
+تم التحقق حتى الآن من:
 
-- Vercel
-- Netlify
-- Cloudflare Pages
-- VPS + Nginx
+- Stages 1–10؛
+- OCR Foundation؛
+- Stage11 provider-neutral AI contracts؛
+- Stage12 durable AI execution + distributed capacity/controls + pause/resume/progress + dedicated worker runtime؛
+- Stage13 Curriculum backend؛
+- Stage13 Admin Curriculum Web؛
+- Stage13 Admin Content / Media / OCR Operations.
 
----
+العمل التالي الموثق يبدأ من **Stage13 Upload / Processing History / Publication Linking** ثم بقية Admin Product وفق `MASTER_REBUILD_ROADMAP.md` وLegacy Coverage Gate.
 
-## Tests
+## قواعد لا يجوز كسرها
 
-لا يوجد دليل `tests/` منفصل. يُنصح بإضافة اختبارات مع:
+1. Correctness > Cleverness، Evidence > Assumptions.
+2. لا ترقيع كحل نهائي؛ أصلح السبب الجذري.
+3. لا تُحذف Feature قديمة ذات قيمة بدون قرار Product Owner صريح.
+4. Browser لا يتصل مباشرة بPostgreSQL ولا يملك auth/progress/publish authority.
+5. Upload/Media مستقل عن OCR/AI/TTS.
+6. OCR/AI/TTS طبقات مشتقة؛ failure فيها لا يفسد الأصل.
+7. Student يستهلك محتوى وأسئلة منشورة ومراجعة فقط.
+8. Stage9 source folders = provenance evidence، وليست Curriculum hierarchy.
+9. Stage10 media/OCR لا يصبح Published Lesson Content تلقائيًا؛ الربط يحتاج عقدًا صريحًا.
+10. AI provider/model-neutral، ولا تُدّعى جودة provider أو production readiness بدون benchmark فعلي.
+11. أي شيء لم يُنفذ ويُختبر = `NOT YET VERIFIED`.
+12. Deployment/Preview حاليًا **`DEFERRED BY PRODUCT OWNER`**؛ لا تعِد تفعيله أو نشره بدون أمر صريح لاحق.
+13. قاعدة البيانات القديمة ليست dependency حالية؛ repository migrations/tests/current PostgreSQL contracts هي السلطة التنفيذية.
 
-```bash
-vitest
-# أو
-jest
-```
+## ابدأ من هنا
 
----
+اقرأ بالترتيب:
 
-## Lint
+1. `DOCUMENTATION_INDEX.md` — خريطة التوثيق وSource of Truth precedence.
+2. `PROJECT_HANDOFF.md` — الاستئناف العملي والمراحل والحدود والرأس الحالي.
+3. `PROJECT_STATUS.md` — الحالة المختصرة والمتبقي.
+4. `PROJECT_ENGINEERING_LOG.md` — السجل الزمني، Architecture Decisions، Findings، CI evidence.
+5. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` — قرارات Product Owner الحالية التي تتقدم على قرارات تشغيلية أقدم.
+6. Product Decisions + parity/coverage + roadmap حسب `DOCUMENTATION_INDEX.md`.
 
-```bash
-npm run lint
-```
+لإطلاق محادثة جديدة استخدم `NEXT_CONVERSATION_PROMPT.md` فقط كبوابة قصيرة؛ لا تعتبره بديلًا عن قراءة المستندات.
 
-يقوم بـ:
+## التحقق والتطوير
 
-- TypeScript type check (`tsgo -p tsconfig.check.json`)
-- Biome linting
-- Tailwind CSS compilation check
-- Build sanity check (`.rules/testBuild.sh`)
+كل Stage لها GitHub Actions executable gate. لا تعتبر Build وحده دليلاً كافيًا؛ اعتمد lint/typecheck/unit/integration/PostgreSQL/browser evidence حسب المجال.
 
-## Typecheck
+بعد كل دفعة مهمة يجب تحديث:
 
-```bash
-npx tsgo -p tsconfig.check.json
-# أو
-npx tsc --noEmit
-```
+- `PROJECT_STATUS.md`؛
+- `PROJECT_ENGINEERING_LOG.md`؛
+- `PROJECT_HANDOFF.md`؛
+- الوثيقة المتخصصة؛
+- Legacy coverage evidence عندما تنفذ capability قديمة؛
+- exact commit/run IDs.
 
-## Build
-
-```bash
-# ملاحظة: package.json لا يحتوي على build script فعّال
-# يمكنك البناء مباشرة عبر:
-npx vite build
-```
-
-## Deployment
-
-### Frontend (Static Hosting)
-
-```bash
-npx vite build
-# ارفع مجلد dist/ على خادمك الثابت
-```
-
-### Backend (Supabase)
-
-```bash
-supabase functions deploy
-supabase db push
-```
-
----
-
-## Documentation
-
-- `docs/prd.md` — متطلبات المنتج
-- `docs/SOURCE_INVENTORY.md` — جرد الملفات والمكونات
-- `OFFLINE_MODE.md` — العمل بدون إنترنت
-- `OFFLINE_MODE_README.md` — دليل إضافي للأوفلاين
-
----
-
-## Security Notes
-
-- لا تُرفع `.env` أو `.deploy_key`.
-- الـ Edge Functions تستخدم `Deno.env.get(...)` لقراءة Secrets.
-- الواجهة الأمامية تستخدم `import.meta.env.VITE_*` فقط.
-- لا توجد بيانات طلاب أو Sessions أو Tokens في Source Code.
-
----
-
-## Development Guidelines
-
-### How to edit code locally?
-
-You can choose [VSCode](https://code.visualstudio.com/Download) or any IDE you prefer. The only requirement is to have Node.js and npm installed.
-
-### Environment Requirements
-
-```
-# Node.js ≥ 20
-# npm ≥ 10
-Example:
-# node -v   # v20.18.3
-# npm -v    # 10.8.2
-```
-
-### Installing Node.js on Windows
-
-```
-# Step 1: Visit the Node.js official website: https://nodejs.org/, click download. The website will automatically suggest a suitable version (32-bit or 64-bit) for your system.
-# Step 2: Run the installer: Double-click the downloaded installer to run it.
-# Step 3: Complete the installation: Follow the installation wizard to complete the process.
-# Step 4: Verify installation: Open Command Prompt (cmd) or your IDE terminal, and type `node -v` and `npm -v` to check if Node.js and npm are installed correctly.
-```
-
-### Installing Node.js on macOS
-
-```
-# Step 1: Using Homebrew (Recommended method): Open Terminal. Type the command `brew install node` and press Enter. If Homebrew is not installed, you need to install it first by running the following command in Terminal:
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-Alternatively, use the official installer: Visit the Node.js official website. Download the macOS .pkg installer. Open the downloaded .pkg file and follow the prompts to complete the installation.
-# Step 2: Verify installation: Open Command Prompt (cmd) or your IDE terminal, and type `node -v` and `npm -v` to check if Node.js and npm are installed correctly.
-```
-
-### After installation, follow these steps:
-
-```
-# Step 1: Download the code package
-# Step 2: Extract the code package
-# Step 3: Open the code package with your IDE and navigate into the code directory
-# Step 4: In the IDE terminal, run the command to install dependencies: npm i
-# Step 5: In the IDE terminal, run the command to start the development server: npm run dev -- --host 127.0.0.1
-# Step 6: if step 5 failed, try this command to start the development server: npx vite --host 127.0.0.1
-```
-
-### How to develop backend services?
-
-Configure environment variables and install relevant dependencies.If you need to use a database, please use the official version of Supabase.
-
-## Learn More
-
-You can also check the help documentation: Download and Building the app（ [https://intl.cloud.baidu.com/en/doc/MIAODA/s/download-and-building-the-app-en](https://intl.cloud.baidu.com/en/doc/MIAODA/s/download-and-building-the-app-en)）to learn more detailed content.
+التفاصيل الكاملة موجودة في `DOCUMENTATION_INDEX.md`.

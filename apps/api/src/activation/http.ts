@@ -6,10 +6,16 @@ import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
 import type { StudentActivationService } from "./service.js";
 
-const ActivateStudentSchema = z.object({
+const VerifyActivationSchema = z.object({
   code: z.string().min(1).max(32),
+});
+
+const CompleteActivationSchema = z.object({
+  activationTicket: z.string().min(32).max(128),
   password: z.string().min(8).max(128),
   idempotencyKey: z.string().min(12).max(120),
+  devicePublicKeySpki: z.string().min(80).max(4096),
+  deviceProof: z.string().min(64).max(256),
 });
 
 export function registerStudentActivationRoutes(
@@ -18,16 +24,24 @@ export function registerStudentActivationRoutes(
   auth: AuthService,
   activation: StudentActivationService,
 ): void {
-  app.post("/v1/student/activate", async (request, reply) => {
-    const input = parseBody(ActivateStudentSchema, request.body);
-    const activationResult = await activation.activate(input.code, input.password, input.idempotencyKey);
+  app.post("/v1/student/activation/verify", async (request) => {
+    const input = parseBody(VerifyActivationSchema, request.body);
+    return activation.verifyCode(input.code);
+  });
 
-    // The account transaction is already committed at this point. Session
-    // creation goes through the normal Auth path so idempotent replays must
-    // still prove the account password before receiving a new session.
-    const session = await auth.login(
-      activationResult.accountIdentifier,
+  app.post("/v1/student/activation/complete", async (request, reply) => {
+    const input = parseBody(CompleteActivationSchema, request.body);
+    const activationResult = await activation.activate(
+      input.activationTicket,
       input.password,
+      input.idempotencyKey,
+      input.devicePublicKeySpki,
+      input.deviceProof,
+    );
+
+    const session = await auth.createStudentSession(
+      activationResult.profile.id,
+      activationResult.deviceId,
       request.headers["user-agent"],
     );
     if (session.profile.id !== activationResult.profile.id || session.profile.role !== "student") {
@@ -39,6 +53,7 @@ export function registerStudentActivationRoutes(
       profile: session.profile,
       entitlement: activationResult.entitlement,
       accountIdentifier: activationResult.accountIdentifier,
+      deviceId: activationResult.deviceId,
       replayed: activationResult.replayed,
     });
   });
