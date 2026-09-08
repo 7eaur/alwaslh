@@ -2,7 +2,7 @@
 
 > **Purpose:** أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-08 — Single Owner mode active; hosting deferred; Stage13E combined candidate under static/executable verification**.
+Last synchronized: **2026-09-08 — Single Owner mode active; hosting deferred; Stage13E combined candidate hardened by two P1 integrity fixes and awaiting executable verification**.
 
 ## 0. Mandatory startup
 
@@ -66,7 +66,7 @@ Historical hosting/config files can remain in Git but are not Current Work.
 
 - Repository: `7eaur/alwaslh`.
 - `main`: current Integration-approved development baseline.
-- Main HEAD at latest Single Owner synchronization will be recorded in `PROJECT_STATUS.md` / Continuity / Queue.
+- Always live-check current `main` HEAD; central docs advance independently from unverified feature branches.
 - Legacy pre-rebuild main preserved at:
   `archive/legacy-main-2026-09-08 @ 5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
 - Latest fully executable green product baseline:
@@ -174,14 +174,28 @@ Status:
 
 Active combined branch:
 
-`integration/stage13e-ai-operations @ 807f733838e2fab2620652025b255c3bc404fec1`
+`integration/stage13e-ai-operations`
 
-Assembly:
+Current branch HEAD at this synchronization:
+
+`1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`
+
+Latest runtime/test candidate beneath that docs commit:
+
+`6494a0ee232cf646eae693054b129db752aee40e`
+
+Assembly/hardening lineage:
 
 - `227f4c9dba99e7b8c93d25caebe86e38108d4a5c` — reviewed Backend candidate overlay;
 - `a60274fedf55fb45b6684743da24b24004339917` — reviewed Frontend candidate overlay;
 - `4ba77703866762c471257bbb914590b817ecc82e` — deterministic real browser/Postgres fixture;
-- `807f733838e2fab2620652025b255c3bc404fec1` — combined integration workflow.
+- `807f733838e2fab2620652025b255c3bc404fec1` — combined integration workflow;
+- `730989b8bde404b229544c473bba02b05c7e75b4` — PostgreSQL reject-reason invariant + redundant-index removal;
+- `6589d6e53de7ca8cd82b424e5c1496186eb701f1` — direct DB reject-reason regression;
+- `bc1bf508897796d0a74d22126094e83180b7ec79` — workflow DB contract update;
+- `5c03fa27f90cd10df06a9e0b7c5e2c0c768e653a` — bind human review to stable unit state;
+- `6494a0ee232cf646eae693054b129db752aee40e` — failed/retrying output review regression;
+- `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9` — specialized Stage13E contract synchronized.
 
 Historical source branches:
 
@@ -199,6 +213,8 @@ Historical source branches:
 - strict append-only output review audit via `0018_ai_admin_review.sql`;
 - Stage11 semantic validation inside review authority;
 - edit/approve/reject with row locking/concurrency protection;
+- **review mutation only for execution-stable unit output (`completed | review_required`)**;
+- failed/retrying/running/queued/cancelled outputs remain inspection-only;
 - no Question Bank publication (Stage13F boundary).
 
 ### Frontend candidate includes
@@ -212,25 +228,55 @@ Historical source branches:
 - review/provenance/history UI;
 - real Chromium prep for happy path, pause/resume, approve/reload, session expiry, stale-review 409 and 390px.
 
-## 8. Stage13E executable blocker
+## 8. Stage13E integrity findings fixed in candidate
+
+### AI-013E-DB-001 — P1 Data/Audit Integrity
+
+Original Stage13E HTTP/service required nonblank reject reason, but PostgreSQL did not. A future/direct writer could create an incomplete terminal reject audit record.
+
+Root fix:
+
+- DB constraint `ai_output_review_events_reject_note_required`;
+- direct NULL/blank insert regression;
+- redundant latest-review index removed because UNIQUE `(ai_output_id, revision)` already serves backward latest lookup.
+
+Execution remains `NOT YET VERIFIED`.
+
+### AI-013E-REVIEW-002 — P1 Data/Review Integrity
+
+Stage12 can overwrite the same `ai_outputs` row during retry/re-execution. Original Stage13E review authority did not gate review on owning unit state, while review events remain append-only on the output id. That could leave an old human decision attached to newly replaced AI content.
+
+Root fix:
+
+- `allowedReviewActions=[]` unless owning unit is `completed` or `review_required`;
+- `reviewOutput()` locks output + unit rows together;
+- unstable output mutation returns `409` before any audit write;
+- failed/retrying outputs remain visible for diagnosis only;
+- regression proves failed/retrying outputs expose no actions, mutation is denied, and zero review events are created.
+
+Execution remains `NOT YET VERIFIED`.
+
+## 9. Stage13E executable blocker
 
 Combined workflow:
 
 `.github/workflows/stage13e-integration.yml`
 
-Run:
+Latest runtime/test run:
 
-`34193380473`
+- run `34199202570`;
+- head `6494a0ee232cf646eae693054b129db752aee40e`;
+- job `101973855894`;
+- ended before checkout with no executable steps (`steps=null`).
 
-Attempt 1 job:
+Latest branch-head docs run:
 
-`101955846938`
+- run `34199371763`;
+- head `1e19ef06807516ce6869a821dfcbf6fa6ba51bf9`;
+- job `101974393620`;
+- same pre-checkout condition.
 
-Attempt 2 job:
-
-`101958463625`
-
-Both ended before checkout with no executable steps (`steps=[]`; no useful logs).
+Earlier post-fix runs and `34193380473` attempts 1/2 had the same behavior.
 
 Interpretation:
 
@@ -240,23 +286,23 @@ Interpretation:
 - do not weaken Stage gate;
 - retry same workflow when runner allocation actually works.
 
-## 9. Current Single Owner work
+## 10. Current Single Owner work
 
 Read `PROJECT_EXECUTION_QUEUE.md` for exact status.
 
-At handoff creation the immediate sequence is:
+Immediate sequence:
 
-1. finish Single Owner documentation synchronization;
-2. finish static audit of Stage13E combined candidate;
-3. fix any statically proven defect with regression coverage;
-4. keep retrying unchanged executable gate only when useful;
-5. after actual combined PASS, run wider regressions;
-6. close Stage13E and promote accepted code to `main`;
+1. keep Stage13E outside `main`;
+2. retain both P1 root-cause fixes and regressions;
+3. rerun unchanged combined gate when a GitHub runner actually starts;
+4. any executed failure → investigate and fix root cause in owning layer;
+5. after combined PASS, run wider Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions;
+6. close Stage13E and promote accepted code to `main` while preserving central docs;
 7. then begin Stage13F.
 
 Do not skip Stage13E closure merely to continue roadmap progress.
 
-## 10. Stage13F and later
+## 11. Stage13F and later
 
 After Stage13E closure:
 
@@ -280,15 +326,17 @@ Performance → Security → test expansion → Accessibility/device QA → init
 
 Only when VPS/deployment is explicitly reopened: Staging → Release Gate → Production Cutover → Monitoring/Operations.
 
-## 11. Open findings
+## 12. Open findings
 
+- `CI-001` P1 — hosted runner currently terminates before checkout; external cause not verified.
+- `AI-013E-DB-001` P1 — fixed in candidate; executable verification pending.
+- `AI-013E-REVIEW-002` P1 — fixed in candidate; executable verification pending.
 - `AI-011-005` P2 — direct generated question persistence unresolved; Stage13F owns it.
 - `AI-012-019` P2 — live AI provider benchmark/routes/credentials/bootstrap unverified.
-- `CI-001` P1 — hosted runner currently terminates before checkout; external cause not verified.
 - Stage13E executable gate pending.
 - later Student/Offline/assessment/admin roadmap incomplete.
 
-## 12. End-of-batch continuity rule
+## 13. End-of-batch continuity rule
 
 After every meaningful batch the single engineering owner must update:
 
