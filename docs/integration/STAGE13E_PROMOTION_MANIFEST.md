@@ -6,21 +6,31 @@
 
 ## Snapshot used for this audit
 
+Initial audit snapshot:
+
 - merge base: `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`
 - audited `main`: `e10de6d7811ad04811e8a841628966a5269b1dfd`
 - Stage13E candidate/docs: `c48d1e597497e6054340f71235c78937082b9371`
 - Stage13E runtime/test beneath docs: `d60218b518fb0fe453c21386e77cd35a2228ad07`
 
-Git comparison at this snapshot:
+Git comparison at the initial snapshot:
 
 - candidate vs merge base: **53 commits ahead**;
-- current `main` vs merge base: **77 commits ahead**;
-- candidate branch vs current `main`: divergent;
+- audited `main` vs merge base: **77 commits ahead**;
+- candidate branch vs `main`: divergent;
 - Stage13E candidate changes: **36 files**;
-- current `main` changes since the same merge base: **19 files**;
+- `main` changes since the same merge base: **19 files**;
 - intersection between those two changed-file sets: **0 files**.
 
-Therefore a historical branch merge/cherry-pick chain is unnecessary and creates avoidable governance/history risk. The safe strategy is the existing AD-136 selective-integration rule: promote the exact accepted Stage13E files onto the latest `main` tree.
+Post-documentation revalidation:
+
+- revalidated `main`: `646b3824e3f7fef05a916e394af56d0af9e02926`;
+- `main` is now **84 commits ahead** of the same merge base;
+- `main` changed-file set is now **20 files** because this promotion manifest itself was added;
+- Stage13E candidate file set remains the same **36 files**;
+- changed-file intersection remains **0 files**.
+
+Therefore a historical branch merge/cherry-pick chain is unnecessary and creates avoidable governance/history risk. The safe strategy is AD-136 + AD-146 selective integration: promote the exact accepted Stage13E files onto the latest `main` tree and re-run exact-head verification.
 
 ## Exact Stage13E promotion file set
 
@@ -93,9 +103,10 @@ The latest central state on `main` is newer than the candidate branch and remain
 - `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
 - `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
 - `docs/workstreams/*`
+- `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`
 - hosting/deployment portability files such as `render.yaml` and `docs/deployment/*`
 
-Those files contain newer Single Owner governance, VPS-deferred policy and closure-readiness state.
+Those files contain newer Single Owner governance, VPS-deferred policy and closure/promotion-readiness state.
 
 ## Promotion procedure after candidate executable PASS
 
