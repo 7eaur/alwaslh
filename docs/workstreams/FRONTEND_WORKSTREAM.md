@@ -249,3 +249,94 @@ Integration Lead هو من يحدث central status/log/handoff بعد القبو
 - consume documented Backend contracts, not invented endpoints.
 
 إذا Backend Board `#14` لم يثبت API بعد، نفّذ discovery/component/state architecture وfixtures التي تمثل contract موثقًا فقط، وسجّل dependency بدل ربط الواجهة بعقد وهمي.
+
+### Stage13E Batch 1 — contract-safe frontend preparation
+
+**Current stage/feature:** Stage13E — Admin AI Operations / Review, preparation batch while Backend API contract is pending.
+
+**Branch:** `frontend/stage13e-ai-operations`.
+
+**Base HEAD:** `dd8b801103b4ef3f16bd0539f08ab8fd6d51b67c`.
+
+**Latest commits:**
+
+- `aec435efb74395809f5265770480005795fa47b5` — `feat(admin): prepare Stage13E AI operations review workspace`;
+- `1ad8921e5de76c291581c2d909d844a824aa23c3` — `ci(admin): verify Stage13E frontend preparation`;
+- `d9d76097c62ce0ff769a796a8308b03071ff3f0c` — `docs(admin): record Stage13E frontend contract boundary`.
+
+**What was inspected:**
+
+- mandatory repository/product/workstream documentation in `DOCUMENTATION_INDEX.md` order;
+- Frontend Board `#15`, Backend Board `#14`, Team Room `#13`;
+- current Admin shell and Stage13C/D workspaces/API/test/CSS patterns;
+- actual Stage11/12 code: generation contracts, validators, lifecycle, execution repository;
+- AI migrations `0004_ai_and_sync.sql` and `0012_ai_execution.sql`;
+- Stage11/12 specialized docs and Stage13C/D Admin docs;
+- Backend workstream branch status and Board comments: no stabilized Stage13E frontend-facing API contract exists at this batch checkpoint.
+
+**What was implemented:**
+
+- `ai-operations-view-model.ts`: frontend-only adapter/view types mirroring verified Stage11/12 statuses, progress, modes, normalized outputs, attempts, validation and provenance;
+- `AiOperationsWorkspace.tsx`: reusable Admin AI operations/review presentation covering jobs → units → attempts → outputs;
+- `ai-operations.css`: RTL-safe responsive data-dense layout, long-ID wrapping, semantic status presentation and narrow-screen collapse;
+- `ai-operations-view-model.test.ts`: regression tests proving browser does not recalculate progress or infer action availability;
+- dedicated Stage13E Admin Web quality workflow for branch evidence;
+- `docs/admin/STAGE13E_AI_OPERATIONS_FRONTEND_PREP.md` documenting the boundary between UI adapter types and the still-missing network/API contract.
+
+**API contracts consumed:**
+
+No new Admin HTTP endpoint was consumed or invented. The batch consumes only already-verified internal/domain facts from Stage11/12. `AiOperationsWorkspace` is not connected to production navigation or transport.
+
+**Components/routes/states changed:**
+
+- new reusable `AiOperationsWorkspace` component only;
+- no `App.tsx` route/navigation activation;
+- prepared loading/error/retry/empty/refresh/mutation-feedback/detail states;
+- job action and review action availability are inputs to the view adapter and are never derived from lifecycle enums in the browser.
+
+**UX/a11y/responsive behavior:**
+
+- explicit server-authority notice;
+- effective lifecycle status displayed separately from underlying execution status;
+- disabled/not-allowed reasons visible as text, not color only;
+- provider/model/project observability excludes credential aliases/secrets;
+- raw AI output is behind diagnostic disclosure and explicitly labeled non-published;
+- normalized summary/question/page-detection/comprehensive/multi-version review renderers;
+- page/media/OCR/checksum provenance slots;
+- semantic buttons/progressbar/status labels, focus inherited from Admin design system;
+- layout collapses at 1180/820/520px with overflow-safe identifiers and stacked mobile actions.
+
+**Tests and exact results:**
+
+- GitHub Actions run `34183979785` was started for `lint + typecheck + unit + build`; its exact final result must be read from GitHub before claiming this batch green.
+- Real Chromium Stage13E flow and 390px real-server verification are not run because the Stage13E Admin API does not exist yet; this is intentional rather than introducing a fake transport.
+
+**Failures + root causes + fixes:**
+
+No product-code failure has been established yet. The cross-team dependency is not treated as a UI workaround.
+
+**Open issues/blockers:**
+
+Team Room `#13` blocker comment `5578649045`: Backend has not published endpoint/request/response/error/authorization/action-availability/review-persistence contracts for Stage13E.
+
+**Backend/cross-team dependencies:**
+
+Backend Board `#14` must publish the stabilized read/control/review contract. Frontend will then inspect implementation + REPORT before transport wiring.
+
+**NOT YET VERIFIED:**
+
+- Stage13E Admin endpoint paths/methods and response envelope;
+- pagination/filter/polling/stale semantics;
+- auth/error/conflict mapping;
+- authoritative pause/resume/cancel/retry exposure in HTTP contract;
+- retry target semantics;
+- edit/reject/approve persistence/concurrency semantics;
+- App/Admin navigation integration;
+- real API integration;
+- real Chromium lifecycle/reload/error/permission flows;
+- 390px browser overflow/accessibility against real Stage13E data;
+- Stage13E integration / Stage PASS.
+
+**Ready for integration:** NO — presentation preparation is meaningful and isolated, but production transport and end-to-end evidence are blocked on Backend contract.
+
+**Exact next action:** re-read Backend Board `#14`; once a stabilized contract REPORT exists, inspect the changed Backend API files, implement a thin authenticated `ai-operations-api.ts` adapter, wire `AiOperationsWorkspace` into Admin shell without recomputing server state, then add real Chromium + 390px tests and report exact results.
