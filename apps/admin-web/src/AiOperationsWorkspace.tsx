@@ -8,6 +8,7 @@ import {
   type AiJobDetailView,
   type AiJobSummaryView,
   type AiOperationsWorkspaceModel,
+  type AiPaginationView,
   type AiQuestionView,
   type AiReviewAction,
   type AiSourceEvidenceView,
@@ -22,6 +23,9 @@ import {
   generationModeLabel,
   jobActionLabel,
   jobStatusLabel,
+  nextPageOffset,
+  paginationRangeLabel,
+  previousPageOffset,
   publicOperationalErrorLabel,
   questionTypeLabel,
   reviewActionLabel,
@@ -36,6 +40,9 @@ interface Props {
   onRefresh: () => void;
   onSelectJob: (jobId: string) => void;
   onSelectUnit: (unitId: string) => void;
+  onJobPageChange: (offset: number) => void;
+  onUnitPageChange: (offset: number) => void;
+  onAttemptPageChange: (unitId: string, offset: number) => void;
   onJobAction: (jobId: string, action: AiJobAction) => void;
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
 }
@@ -54,7 +61,17 @@ function statusClass(status: string): string {
   return "is-neutral";
 }
 
-export function AiOperationsWorkspace({ model, onRefresh, onSelectJob, onSelectUnit, onJobAction, onReviewSubmit }: Props) {
+export function AiOperationsWorkspace({
+  model,
+  onRefresh,
+  onSelectJob,
+  onSelectUnit,
+  onJobPageChange,
+  onUnitPageChange,
+  onAttemptPageChange,
+  onJobAction,
+  onReviewSubmit,
+}: Props) {
   const selectedUnit = model.selectedJob?.units.find((unit) => unit.id === model.selectedUnitId) ?? null;
   const mutationPending = model.feedback?.kind === "busy";
 
@@ -91,12 +108,18 @@ export function AiOperationsWorkspace({ model, onRefresh, onSelectJob, onSelectU
         <div className="ai-ops-layout">
           <section className="ai-jobs-pane" aria-labelledby="ai-jobs-title">
             <div className="ai-pane-heading">
-              <div><p className="section-kicker">المهام</p><h2 id="ai-jobs-title">التشغيل الحالي</h2></div>
-              <span className="count-pill" aria-label={`${model.jobs.length} مهمة معروضة`}>{model.jobs.length}</span>
+              <div><p className="section-kicker">المهام</p><h2 id="ai-jobs-title">سجل التشغيل</h2></div>
+              <span className="count-pill" aria-label={`${model.jobPagination.total} مهمة إجمالًا`}>{model.jobPagination.total}</span>
             </div>
             <div className="ai-job-list">
               {model.jobs.map((job) => <JobCard key={job.id} job={job} selected={job.id === model.selectedJobId} onSelect={() => onSelectJob(job.id)} />)}
             </div>
+            <PaginationControls
+              label="صفحات سجل مهام AI"
+              pagination={model.jobPagination}
+              disabled={mutationPending || model.isRefreshing}
+              onPageChange={onJobPageChange}
+            />
           </section>
 
           <section className="ai-detail-pane" aria-labelledby="ai-job-detail-title">
@@ -111,6 +134,8 @@ export function AiOperationsWorkspace({ model, onRefresh, onSelectJob, onSelectU
                 selectedUnitError={model.selectedUnitError}
                 mutationPending={mutationPending}
                 onSelectUnit={onSelectUnit}
+                onUnitPageChange={onUnitPageChange}
+                onAttemptPageChange={onAttemptPageChange}
                 onJobAction={onJobAction}
                 onReviewSubmit={onReviewSubmit}
               />
@@ -138,13 +163,26 @@ function JobCard({ job, selected, onSelect }: { job: AiJobSummaryView; selected:
   );
 }
 
-function JobDetail({ job, selectedUnit, selectedUnitState, selectedUnitError, mutationPending, onSelectUnit, onJobAction, onReviewSubmit }: {
+function JobDetail({
+  job,
+  selectedUnit,
+  selectedUnitState,
+  selectedUnitError,
+  mutationPending,
+  onSelectUnit,
+  onUnitPageChange,
+  onAttemptPageChange,
+  onJobAction,
+  onReviewSubmit,
+}: {
   job: AiJobDetailView;
   selectedUnit: AiUnitView | null;
   selectedUnitState: AiOperationsWorkspaceModel["selectedUnitState"];
   selectedUnitError: string | null;
   mutationPending: boolean;
   onSelectUnit: (unitId: string) => void;
+  onUnitPageChange: (offset: number) => void;
+  onAttemptPageChange: (unitId: string, offset: number) => void;
   onJobAction: (jobId: string, action: AiJobAction) => void;
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
 }) {
@@ -181,7 +219,7 @@ function JobDetail({ job, selectedUnit, selectedUnitState, selectedUnitError, mu
 
       <div className="ai-units-layout">
         <section className="ai-units-pane" aria-labelledby="ai-units-title">
-          <div className="ai-pane-heading compact"><h3 id="ai-units-title">وحدات المهمة</h3><span className="count-pill">{job.units.length}</span></div>
+          <div className="ai-pane-heading compact"><h3 id="ai-units-title">وحدات المهمة</h3><span className="count-pill">{job.unitPagination.total}</span></div>
           <div className="ai-unit-list">
             {job.units.map((unit) => (
               <button className={`ai-unit-card${selectedUnit?.id === unit.id ? " is-selected" : ""}`} type="button" key={unit.id} aria-pressed={selectedUnit?.id === unit.id} onClick={() => onSelectUnit(unit.id)}>
@@ -190,11 +228,24 @@ function JobDetail({ job, selectedUnit, selectedUnitState, selectedUnitError, mu
               </button>
             ))}
           </div>
+          <PaginationControls
+            label="صفحات وحدات مهمة AI"
+            pagination={job.unitPagination}
+            disabled={mutationPending}
+            onPageChange={onUnitPageChange}
+          />
         </section>
         <section className="ai-unit-detail" aria-live="polite">
           {selectedUnitState === "loading" ? <StatePanel title="جارٍ تحميل تفاصيل الوحدة" body="نحمّل سجل المحاولات والمخرج والمراجعة من الخادم." /> : null}
           {selectedUnitState === "error" ? <StatePanel title="تعذر تحميل الوحدة" body={selectedUnitError ?? "تعذر إكمال الطلب."} /> : null}
-          {selectedUnitState === "ready" && selectedUnit ? <UnitDetail unit={selectedUnit} mutationPending={mutationPending} onReviewSubmit={onReviewSubmit} /> : null}
+          {selectedUnitState === "ready" && selectedUnit ? (
+            <UnitDetail
+              unit={selectedUnit}
+              mutationPending={mutationPending}
+              onAttemptPageChange={onAttemptPageChange}
+              onReviewSubmit={onReviewSubmit}
+            />
+          ) : null}
           {selectedUnitState === "idle" ? <StatePanel title="اختر وحدة" body="تفاصيل المحاولات والمخرجات تُعرض للوحدة المحددة فقط." /> : null}
         </section>
       </div>
@@ -202,7 +253,17 @@ function JobDetail({ job, selectedUnit, selectedUnitState, selectedUnitError, mu
   );
 }
 
-function UnitDetail({ unit, mutationPending, onReviewSubmit }: { unit: AiUnitView; mutationPending: boolean; onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean> }) {
+function UnitDetail({
+  unit,
+  mutationPending,
+  onAttemptPageChange,
+  onReviewSubmit,
+}: {
+  unit: AiUnitView;
+  mutationPending: boolean;
+  onAttemptPageChange: (unitId: string, offset: number) => void;
+  onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
+}) {
   return (
     <div className="ai-unit-detail-body">
       <div className="ai-detail-heading compact">
@@ -213,8 +274,19 @@ function UnitDetail({ unit, mutationPending, onReviewSubmit }: { unit: AiUnitVie
       <SourceProvenance sources={unit.sourceProvenance} />
 
       <section className="ai-subsection" aria-labelledby={`attempts-${unit.id}`}>
-        <div className="ai-pane-heading compact"><h4 id={`attempts-${unit.id}`}>المحاولات</h4><span className="count-pill">{unit.attempts.length}</span></div>
+        <div className="ai-pane-heading compact">
+          <h4 id={`attempts-${unit.id}`}>المحاولات</h4>
+          <span className="count-pill">{unit.attemptPagination?.total ?? unit.attempts.length}</span>
+        </div>
         {unit.attempts.length === 0 ? <p className="empty-inline">لم تبدأ محاولة مزود لهذه الوحدة بعد.</p> : <div className="ai-attempt-list">{unit.attempts.map((attempt) => <AttemptCard key={attempt.id} attempt={attempt} />)}</div>}
+        {unit.attemptPagination ? (
+          <PaginationControls
+            label="صفحات محاولات وحدة AI"
+            pagination={unit.attemptPagination}
+            disabled={mutationPending}
+            onPageChange={(offset) => onAttemptPageChange(unit.id, offset)}
+          />
+        ) : null}
       </section>
 
       <section className="ai-subsection" aria-labelledby={`output-${unit.id}`}>
@@ -360,6 +432,32 @@ function ReviewOutput({ output, mutationPending, onReviewSubmit }: {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function PaginationControls({
+  label,
+  pagination,
+  disabled,
+  onPageChange,
+}: {
+  label: string;
+  pagination: AiPaginationView;
+  disabled: boolean;
+  onPageChange: (offset: number) => void;
+}) {
+  const previous = previousPageOffset(pagination);
+  const next = nextPageOffset(pagination);
+  return (
+    <nav className="ai-pagination" aria-label={label}>
+      <button className="secondary-button small-button" type="button" disabled={disabled || previous === null} onClick={() => previous !== null && onPageChange(previous)}>
+        السابق
+      </button>
+      <span aria-live="polite">{paginationRangeLabel(pagination)}</span>
+      <button className="secondary-button small-button" type="button" disabled={disabled || next === null} onClick={() => next !== null && onPageChange(next)}>
+        التالي
+      </button>
+    </nav>
   );
 }
 
