@@ -237,6 +237,25 @@ test("Stage13E exposes authoritative job/review actions and strict review bodies
     });
     assert.equal(unknownField.statusCode, 400);
 
+    await assert.rejects(
+      db.query(
+        `insert into ai_output_review_events (
+           ai_output_id, revision, action, actor_profile_id, reviewed_output, note
+         ) values ($1, 1, 'reject', $2, null, null)`,
+        [strict.outputId, adminId],
+      ),
+      /ai_output_review_events_reject_note_required/,
+    );
+    await assert.rejects(
+      db.query(
+        `insert into ai_output_review_events (
+           ai_output_id, revision, action, actor_profile_id, reviewed_output, note
+         ) values ($1, 1, 'reject', $2, null, '   ')`,
+        [strict.outputId, adminId],
+      ),
+      /ai_output_review_events_reject_note_required/,
+    );
+
     const strictEvents = await db.query<{ count: string }>(
       "select count(*) from ai_output_review_events where ai_output_id = $1",
       [strict.outputId],
