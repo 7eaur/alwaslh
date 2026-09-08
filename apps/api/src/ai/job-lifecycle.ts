@@ -138,20 +138,14 @@ export class AiJobLifecycleRepository {
   async requestPause(executor: QueryExecutor, jobId: string): Promise<AiJobProgress> {
     const job = await this.lockJob(executor, jobId);
     if (TERMINAL_JOB_STATUSES.has(job.status)) throw new Error(`ai_job_not_pauseable:${job.status}`);
-
-    if (!job.paused_at) {
-      await executor.query("update ai_jobs set paused_at = now() where id = $1", [jobId]);
-    }
+    if (!job.paused_at) await executor.query("update ai_jobs set paused_at = now() where id = $1", [jobId]);
     return this.getProgress(executor, jobId);
   }
 
   async requestResume(executor: QueryExecutor, jobId: string): Promise<AiJobProgress> {
     const job = await this.lockJob(executor, jobId);
     if (TERMINAL_JOB_STATUSES.has(job.status)) throw new Error(`ai_job_not_resumable:${job.status}`);
-
-    if (job.paused_at) {
-      await executor.query("update ai_jobs set paused_at = null where id = $1", [jobId]);
-    }
+    if (job.paused_at) await executor.query("update ai_jobs set paused_at = null where id = $1", [jobId]);
     return this.getProgress(executor, jobId);
   }
 
@@ -188,11 +182,7 @@ export class AiJobLifecycleRepository {
 
     await executor.query(
       `update ai_jobs
-       set status = 'retrying',
-           paused_at = null,
-           completed_at = null,
-           failure_code = null,
-           failure_message = null
+       set status = 'retrying', paused_at = null, completed_at = null
        where id = $1`,
       [jobId],
     );
@@ -200,9 +190,7 @@ export class AiJobLifecycleRepository {
   }
 
   async clearPause(executor: QueryExecutor, jobId: string): Promise<void> {
-    await executor.query("update ai_jobs set paused_at = null where id = $1 and paused_at is not null", [
-      jobId,
-    ]);
+    await executor.query("update ai_jobs set paused_at = null where id = $1 and paused_at is not null", [jobId]);
   }
 
   async getProgress(executor: QueryExecutor, jobId: string): Promise<AiJobProgress> {
@@ -242,8 +230,6 @@ export class AiJobLifecycleRepository {
     const remaining = Math.max(0, row.total - settled);
     const terminal = TERMINAL_JOB_STATUSES.has(row.status);
     const status: AiJobLifecycleStatus = !terminal && row.paused_at ? "paused" : row.status;
-    const progressPercent = row.total === 0 ? 100 : Math.min(100, Math.floor((settled * 100) / row.total));
-
     return {
       jobId: row.id,
       status,
@@ -260,7 +246,7 @@ export class AiJobLifecycleRepository {
       retryingUnits: row.retrying,
       settledUnits: settled,
       remainingUnits: remaining,
-      progressPercent,
+      progressPercent: row.total === 0 ? 100 : Math.min(100, Math.floor((settled * 100) / row.total)),
     };
   }
 

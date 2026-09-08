@@ -33,7 +33,6 @@ export interface AdminAiJobListItem {
   requestedModel: string | null;
   priority: number;
   createdByProfileId: string | null;
-  failureCode: string | null;
   cancelRequestedAt: Date | null;
   pausedAt: Date | null;
   startedAt: Date | null;
@@ -110,7 +109,27 @@ export interface AdminAiOutputReviewEvent {
   createdAt: Date;
 }
 
-interface JobListRow {
+export interface AdminAiOutputDetail {
+  id: string;
+  jobId: string;
+  jobUnitId: string;
+  unitKey: string;
+  validationStatus: string;
+  normalizedOutput: AiGenerationOutput | null;
+  validationErrors: unknown;
+  semanticWarnings: unknown;
+  hasRawResponse: boolean;
+  reviewStatus: AiOutputReviewStatus;
+  effectiveReviewedOutput: AiGenerationOutput | null;
+  reviewedByProfileId: string | null;
+  reviewedAt: Date | null;
+  sourceProvenance: AdminAiSourceProvenance[];
+  reviewHistory: AdminAiOutputReviewEvent[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface JobRow {
   id: string;
   job_type: string;
   status: AiJobExecutionStatus;
@@ -119,7 +138,6 @@ interface JobListRow {
   requested_model: string | null;
   priority: number;
   created_by_profile_id: string | null;
-  failure_code: string | null;
   cancel_requested_at: Date | null;
   paused_at: Date | null;
   started_at: Date | null;
@@ -153,7 +171,7 @@ interface UnitRow {
   created_at: Date;
   updated_at: Date;
   output_id: string | null;
-  validation_status: string | null;
+  output_validation_status: string | null;
   output_updated_at: Date | null;
   latest_review_action: AiOutputReviewAction | null;
   attempt_id: string | null;
@@ -223,7 +241,7 @@ interface ReviewEventRow {
   created_at: Date;
 }
 
-function publicLifecycleError(error: unknown): never {
+function lifecycleError(error: unknown): never {
   if (error instanceof AppError) throw error;
   const message = error instanceof Error ? error.message : "";
   if (message === "ai_job_not_found") {
@@ -247,15 +265,13 @@ function reviewStatus(action: AiOutputReviewAction | null): AiOutputReviewStatus
   return "pending";
 }
 
-function buildProgress(row: JobListRow): AiJobProgress {
+function progressFromRow(row: JobRow): AiJobProgress {
   const accepted = row.completed + row.review_required;
   const settled = accepted + row.failed + row.cancelled;
-  const remaining = Math.max(0, row.total - settled);
   const terminal = row.status === "completed" || row.status === "failed" || row.status === "cancelled";
-  const status: AiJobLifecycleStatus = !terminal && row.paused_at ? "paused" : row.status;
   return {
     jobId: row.id,
-    status,
+    status: !terminal && row.paused_at ? "paused" : row.status,
     executionStatus: row.status,
     pausedAt: row.paused_at,
     totalUnits: row.total,
@@ -268,8 +284,48 @@ function buildProgress(row: JobListRow): AiJobProgress {
     runningUnits: row.running,
     retryingUnits: row.retrying,
     settledUnits: settled,
-    remainingUnits: remaining,
+    remainingUnits: Math.max(0, row.total - settled),
     progressPercent: row.total === 0 ? 100 : Math.min(100, Math.floor((settled * 100) / row.total)),
+  };
+}
+
+function mapJob(row: JobRow): AdminAiJobListItem {
+  const progress = progressFromRow(row);
+  const { jobId: _jobId, status, executionStatus, pausedAt: _pausedAt, ...counts } = progress;
+  return {
+    id: row.id,
+    jobType: row.job_type,
+    status,
+    executionStatus,
+    promptKey: row.prompt_key,
+    promptVersion: row.prompt_version,
+    requestedModel: row.requested_model,
+    priority: row.priority,
+    createdByProfileId: row.created_by_profile_id,
+    cancelRequestedAt: row.cancel_requested_at,
+    pausedAt: row.paused_at,
+    startedAt: row.started_at,
+    completedAt: row.completed_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    progress: counts,
+  };
+}
+
+function sourceInfo(inputPayload: unknown): { mode: string; subjectDomain: string; sources: AdminAiSourceProvenance[] } {
+  const parsed = aiGenerationRequestSchema.safeParse(inputPayload);
+  if (!parsed.success) throw new AppError("INTERNAL_ERROR", "تعذر التحقق من مصدر مهمة الذكاء الاصطناعي", 500);
+  return {
+    mode: parsed.data.mode,
+    subjectDomain: parsed.data.subjectDomain,
+    sources: parsed.data.sourceChunks.map((source) => ({
+      mediaAssetId: source.mediaAssetId,
+      pageNumber: source.pageNumber,
+      inputChecksumSha256: source.inputChecksumSha256,
+      inputKind: source.inputKind,
+      ocrExtractionId: source.ocrExtractionId,
+      contentSourceAssetId: source.contentSourceAssetId ?? null,
+    })),
   };
 }
 
@@ -288,27 +344,19 @@ function mapAttempt(row: AttemptRow): AdminAiAttemptView {
     inputTokens: row.input_tokens,
     outputTokens: row.output_tokens,
     latencyMs: row.latency_ms,
-    estimatedCostUsdMicros:
-      row.estimated_cost_usd_micros === null ? null : Number(row.estimated_cost_usd_micros),
+    estimatedCostUsdMicros: row.estimated_cost_usd_micros === null ? null : Number(row.estimated_cost_usd_micros),
     errorCode: row.error_code,
     startedAt: row.started_at,
     completedAt: row.completed_at,
   };
 }
 
-function mapLatestAttempt(row: UnitRow): AdminAiAttemptView | null {
+function latestAttempt(row: UnitRow): AdminAiAttemptView | null {
   if (
-    !row.attempt_id ||
-    row.attempt_number === null ||
-    !row.attempt_provider_key ||
-    !row.attempt_model_used ||
-    !row.attempt_route_key ||
-    !row.attempt_benchmark_version ||
-    !row.attempt_status ||
-    !row.attempt_started_at
-  ) {
-    return null;
-  }
+    !row.attempt_id || row.attempt_number === null || !row.attempt_provider_key ||
+    !row.attempt_model_used || !row.attempt_route_key || !row.attempt_benchmark_version ||
+    !row.attempt_status || !row.attempt_started_at
+  ) return null;
   return mapAttempt({
     id: row.attempt_id,
     attempt_number: row.attempt_number,
@@ -330,39 +378,16 @@ function mapLatestAttempt(row: UnitRow): AdminAiAttemptView | null {
   });
 }
 
-function sourceProvenance(inputPayload: unknown): {
-  mode: string;
-  subjectDomain: string;
-  sources: AdminAiSourceProvenance[];
-} {
-  const parsed = aiGenerationRequestSchema.safeParse(inputPayload);
-  if (!parsed.success) {
-    throw new AppError("INTERNAL_ERROR", "تعذر التحقق من مصدر مهمة الذكاء الاصطناعي", 500);
-  }
-  return {
-    mode: parsed.data.mode,
-    subjectDomain: parsed.data.subjectDomain,
-    sources: parsed.data.sourceChunks.map((chunk) => ({
-      mediaAssetId: chunk.mediaAssetId,
-      pageNumber: chunk.pageNumber,
-      inputChecksumSha256: chunk.inputChecksumSha256,
-      inputKind: chunk.inputKind,
-      ocrExtractionId: chunk.ocrExtractionId,
-      contentSourceAssetId: chunk.contentSourceAssetId ?? null,
-    })),
-  };
-}
-
 function mapUnit(row: UnitRow): AdminAiUnitView {
-  const provenance = sourceProvenance(row.input_payload);
+  const source = sourceInfo(row.input_payload);
   return {
     id: row.id,
     jobId: row.job_id,
     unitKey: row.unit_key,
     position: row.position,
     status: row.status,
-    mode: provenance.mode,
-    subjectDomain: provenance.subjectDomain,
+    mode: source.mode,
+    subjectDomain: source.subjectDomain,
     attemptCount: row.attempt_count,
     maxAttempts: row.max_attempts,
     nextAttemptAt: row.next_attempt_at,
@@ -372,51 +397,54 @@ function mapUnit(row: UnitRow): AdminAiUnitView {
     completedAt: row.completed_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    sourceProvenance: provenance.sources,
-    latestAttempt: mapLatestAttempt(row),
-    output:
-      row.output_id && row.validation_status && row.output_updated_at
-        ? {
-            id: row.output_id,
-            validationStatus: row.validation_status,
-            reviewStatus: reviewStatus(row.latest_review_action),
-            updatedAt: row.output_updated_at,
-          }
-        : null,
+    sourceProvenance: source.sources,
+    latestAttempt: latestAttempt(row),
+    output: row.output_id && row.output_validation_status && row.output_updated_at ? {
+      id: row.output_id,
+      validationStatus: row.output_validation_status,
+      reviewStatus: reviewStatus(row.latest_review_action),
+      updatedAt: row.output_updated_at,
+    } : null,
   };
 }
+
+const JOB_SELECT = `
+  select j.id, j.job_type, j.status, j.prompt_key, j.prompt_version, j.requested_model,
+         j.priority, j.created_by_profile_id, j.cancel_requested_at, j.paused_at,
+         j.started_at, j.completed_at, j.created_at, j.updated_at,
+         count(u.id)::int as total,
+         count(*) filter (where u.status = 'completed')::int as completed,
+         count(*) filter (where u.status = 'review_required')::int as review_required,
+         count(*) filter (where u.status = 'failed')::int as failed,
+         count(*) filter (where u.status = 'cancelled')::int as cancelled,
+         count(*) filter (where u.status = 'queued')::int as queued,
+         count(*) filter (where u.status = 'running')::int as running,
+         count(*) filter (where u.status = 'retrying')::int as retrying
+  from ai_jobs j
+  left join ai_job_units u on u.job_id = j.id`;
 
 const UNIT_SELECT = `
   select u.id, u.job_id, u.unit_key, u.position, u.status, u.input_payload,
          u.attempt_count, u.max_attempts, u.next_attempt_at, u.lease_expires_at,
          u.last_error_code, u.started_at, u.completed_at, u.created_at, u.updated_at,
-         o.id as output_id, o.validation_status, o.updated_at as output_updated_at,
-         review.action as latest_review_action,
-         attempt.id as attempt_id,
-         attempt.attempt_number,
+         o.id as output_id, o.validation_status as output_validation_status,
+         o.updated_at as output_updated_at, review.action as latest_review_action,
+         attempt.id as attempt_id, attempt.attempt_number,
          attempt.provider_key as attempt_provider_key,
          attempt.provider_project_alias as attempt_provider_project_alias,
-         attempt.model_used as attempt_model_used,
-         attempt.route_key as attempt_route_key,
-         attempt.benchmark_version as attempt_benchmark_version,
-         attempt.status as attempt_status,
-         attempt.validation_status as attempt_validation_status,
-         attempt.retryable as attempt_retryable,
-         attempt.input_tokens as attempt_input_tokens,
-         attempt.output_tokens as attempt_output_tokens,
+         attempt.model_used as attempt_model_used, attempt.route_key as attempt_route_key,
+         attempt.benchmark_version as attempt_benchmark_version, attempt.status as attempt_status,
+         attempt.validation_status as attempt_validation_status, attempt.retryable as attempt_retryable,
+         attempt.input_tokens as attempt_input_tokens, attempt.output_tokens as attempt_output_tokens,
          attempt.latency_ms as attempt_latency_ms,
          attempt.estimated_cost_usd_micros as attempt_estimated_cost_usd_micros,
-         attempt.error_code as attempt_error_code,
-         attempt.started_at as attempt_started_at,
+         attempt.error_code as attempt_error_code, attempt.started_at as attempt_started_at,
          attempt.completed_at as attempt_completed_at
   from ai_job_units u
   left join ai_outputs o on o.job_unit_id = u.id
   left join lateral (
-    select e.action
-    from ai_output_review_events e
-    where e.ai_output_id = o.id
-    order by e.revision desc
-    limit 1
+    select e.action from ai_output_review_events e
+    where e.ai_output_id = o.id order by e.revision desc limit 1
   ) review on true
   left join lateral (
     select a.id, a.attempt_number, a.provider_key, a.provider_project_alias, a.model_used,
@@ -424,9 +452,7 @@ const UNIT_SELECT = `
            a.input_tokens, a.output_tokens, a.latency_ms, a.estimated_cost_usd_micros,
            a.error_code, a.started_at, a.completed_at
     from ai_execution_attempts a
-    where a.job_unit_id = u.id
-    order by a.attempt_number desc
-    limit 1
+    where a.job_unit_id = u.id order by a.attempt_number desc limit 1
   ) attempt on true`;
 
 export class AdminAiOperationsService {
@@ -440,157 +466,53 @@ export class AdminAiOperationsService {
     pagination: { total: number; limit: number; offset: number };
   }> {
     const status = filters.status ?? null;
-    const executionStatus = status === "paused" ? null : status;
-    const pausedOnly = status === "paused";
-    const params: readonly unknown[] = [
-      executionStatus,
-      pausedOnly,
-      filters.jobType?.trim() || null,
-      filters.limit,
-      filters.offset,
-    ];
-    const where = `
-      ($1::text is null or j.status::text = $1)
-      and (
-        not $2::boolean
-        or (j.paused_at is not null and j.status not in ('completed','failed','cancelled'))
-      )
-      and (
-        $2::boolean
-        or $1::text is null
-        or j.status in ('completed','failed','cancelled')
-        or j.paused_at is null
-      )
-      and ($3::text is null or j.job_type = $3)`;
-
-    const rows = await this.database.query<JobListRow>(
-      `select j.id, j.job_type, j.status, j.prompt_key, j.prompt_version, j.requested_model,
-              j.priority, j.created_by_profile_id, j.failure_code, j.cancel_requested_at,
-              j.paused_at, j.started_at, j.completed_at, j.created_at, j.updated_at,
-              count(u.id)::int as total,
-              count(*) filter (where u.status = 'completed')::int as completed,
-              count(*) filter (where u.status = 'review_required')::int as review_required,
-              count(*) filter (where u.status = 'failed')::int as failed,
-              count(*) filter (where u.status = 'cancelled')::int as cancelled,
-              count(*) filter (where u.status = 'queued')::int as queued,
-              count(*) filter (where u.status = 'running')::int as running,
-              count(*) filter (where u.status = 'retrying')::int as retrying
-       from ai_jobs j
-       left join ai_job_units u on u.job_id = j.id
+    const jobType = filters.jobType?.trim() || null;
+    const where = `(
+      $1::text is null
+      or ($1 = 'paused' and j.paused_at is not null and j.status not in ('completed','failed','cancelled'))
+      or ($1 <> 'paused' and j.status::text = $1 and (j.status in ('completed','failed','cancelled') or j.paused_at is null))
+    ) and ($2::text is null or j.job_type = $2)`;
+    const rows = await this.database.query<JobRow>(
+      `${JOB_SELECT}
        where ${where}
        group by j.id
        order by j.created_at desc, j.id desc
-       limit $4 offset $5`,
-      params,
+       limit $3 offset $4`,
+      [status, jobType, filters.limit, filters.offset],
     );
     const totals = await this.database.query<{ count: string }>(
       `select count(*) from ai_jobs j where ${where}`,
-      params.slice(0, 3),
+      [status, jobType],
     );
-
     return {
-      jobs: rows.map((row) => {
-        const progress = buildProgress(row);
-        const { jobId: _jobId, status, executionStatus: execution, pausedAt: _pausedAt, ...counts } =
-          progress;
-        return {
-          id: row.id,
-          jobType: row.job_type,
-          status,
-          executionStatus: execution,
-          promptKey: row.prompt_key,
-          promptVersion: row.prompt_version,
-          requestedModel: row.requested_model,
-          priority: row.priority,
-          createdByProfileId: row.created_by_profile_id,
-          failureCode: row.failure_code,
-          cancelRequestedAt: row.cancel_requested_at,
-          pausedAt: row.paused_at,
-          startedAt: row.started_at,
-          completedAt: row.completed_at,
-          createdAt: row.created_at,
-          updatedAt: row.updated_at,
-          progress: counts,
-        };
-      }),
-      pagination: {
-        total: Number(totals[0]?.count ?? 0),
-        limit: filters.limit,
-        offset: filters.offset,
-      },
+      jobs: rows.map(mapJob),
+      pagination: { total: Number(totals[0]?.count ?? 0), limit: filters.limit, offset: filters.offset },
     };
   }
 
-  async jobDetail(
-    jobId: string,
-    unitLimit: number,
-    unitOffset: number,
-  ): Promise<{
+  async jobDetail(jobId: string, unitLimit: number, unitOffset: number): Promise<{
     job: AdminAiJobListItem;
     units: AdminAiUnitView[];
     pagination: { total: number; limit: number; offset: number };
   }> {
-    const jobRows = await this.database.query<JobListRow>(
-      `select j.id, j.job_type, j.status, j.prompt_key, j.prompt_version, j.requested_model,
-              j.priority, j.created_by_profile_id, j.failure_code, j.cancel_requested_at,
-              j.paused_at, j.started_at, j.completed_at, j.created_at, j.updated_at,
-              count(u.id)::int as total,
-              count(*) filter (where u.status = 'completed')::int as completed,
-              count(*) filter (where u.status = 'review_required')::int as review_required,
-              count(*) filter (where u.status = 'failed')::int as failed,
-              count(*) filter (where u.status = 'cancelled')::int as cancelled,
-              count(*) filter (where u.status = 'queued')::int as queued,
-              count(*) filter (where u.status = 'running')::int as running,
-              count(*) filter (where u.status = 'retrying')::int as retrying
-       from ai_jobs j
-       left join ai_job_units u on u.job_id = j.id
-       where j.id = $1
-       group by j.id`,
+    const jobs = await this.database.query<JobRow>(
+      `${JOB_SELECT} where j.id = $1 group by j.id`,
       [jobId],
     );
-    const row = jobRows[0];
-    if (!row) throw new AppError("NOT_FOUND", "مهمة الذكاء الاصطناعي غير موجودة", 404);
-    const progress = buildProgress(row);
-    const { jobId: _jobId, status, executionStatus, pausedAt: _pausedAt, ...counts } = progress;
-
+    const job = jobs[0];
+    if (!job) throw new AppError("NOT_FOUND", "مهمة الذكاء الاصطناعي غير موجودة", 404);
     const units = await this.database.query<UnitRow>(
-      `${UNIT_SELECT}
-       where u.job_id = $1
-       order by u.position, u.id
-       limit $2 offset $3`,
+      `${UNIT_SELECT} where u.job_id = $1 order by u.position, u.id limit $2 offset $3`,
       [jobId, unitLimit, unitOffset],
     );
-
     return {
-      job: {
-        id: row.id,
-        jobType: row.job_type,
-        status,
-        executionStatus,
-        promptKey: row.prompt_key,
-        promptVersion: row.prompt_version,
-        requestedModel: row.requested_model,
-        priority: row.priority,
-        createdByProfileId: row.created_by_profile_id,
-        failureCode: row.failure_code,
-        cancelRequestedAt: row.cancel_requested_at,
-        pausedAt: row.paused_at,
-        startedAt: row.started_at,
-        completedAt: row.completed_at,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-        progress: counts,
-      },
+      job: mapJob(job),
       units: units.map(mapUnit),
-      pagination: { total: row.total, limit: unitLimit, offset: unitOffset },
+      pagination: { total: job.total, limit: unitLimit, offset: unitOffset },
     };
   }
 
-  async unitDetail(
-    unitId: string,
-    attemptLimit: number,
-    attemptOffset: number,
-  ): Promise<{
+  async unitDetail(unitId: string, attemptLimit: number, attemptOffset: number): Promise<{
     unit: AdminAiUnitView;
     attempts: AdminAiAttemptView[];
     attemptPagination: { total: number; limit: number; offset: number };
@@ -598,7 +520,6 @@ export class AdminAiOperationsService {
     const units = await this.database.query<UnitRow>(`${UNIT_SELECT} where u.id = $1`, [unitId]);
     const unit = units[0];
     if (!unit) throw new AppError("NOT_FOUND", "وحدة الذكاء الاصطناعي غير موجودة", 404);
-
     const [attempts, totals] = await Promise.all([
       this.database.query<AttemptRow>(
         `select id, attempt_number, provider_key, provider_project_alias, model_used,
@@ -606,9 +527,7 @@ export class AdminAiOperationsService {
                 input_tokens, output_tokens, latency_ms, estimated_cost_usd_micros,
                 error_code, started_at, completed_at
          from ai_execution_attempts
-         where job_unit_id = $1
-         order by attempt_number desc
-         limit $2 offset $3`,
+         where job_unit_id = $1 order by attempt_number desc limit $2 offset $3`,
         [unitId, attemptLimit, attemptOffset],
       ),
       this.database.query<{ count: string }>(
@@ -616,44 +535,19 @@ export class AdminAiOperationsService {
         [unitId],
       ),
     ]);
-
     return {
       unit: mapUnit(unit),
       attempts: attempts.map(mapAttempt),
-      attemptPagination: {
-        total: Number(totals[0]?.count ?? 0),
-        limit: attemptLimit,
-        offset: attemptOffset,
-      },
+      attemptPagination: { total: Number(totals[0]?.count ?? 0), limit: attemptLimit, offset: attemptOffset },
     };
   }
 
-  async outputDetail(outputId: string): Promise<{
-    id: string;
-    jobId: string;
-    jobUnitId: string;
-    unitKey: string;
-    validationStatus: string;
-    normalizedOutput: AiGenerationOutput | null;
-    validationErrors: unknown;
-    semanticWarnings: unknown;
-    hasRawResponse: boolean;
-    reviewStatus: AiOutputReviewStatus;
-    effectiveReviewedOutput: AiGenerationOutput | null;
-    reviewedByProfileId: string | null;
-    reviewedAt: Date | null;
-    sourceProvenance: AdminAiSourceProvenance[];
-    reviewHistory: AdminAiOutputReviewEvent[];
-    createdAt: Date;
-    updatedAt: Date;
-  }> {
+  async outputDetail(outputId: string): Promise<AdminAiOutputDetail> {
     const rows = await this.database.query<OutputRow>(
       `select o.id, o.job_unit_id, o.validation_status, o.raw_response, o.normalized_output,
               o.validation_errors, o.semantic_warnings, o.reviewed_by_profile_id, o.reviewed_at,
               o.created_at, o.updated_at, u.input_payload, u.unit_key, u.job_id
-       from ai_outputs o
-       join ai_job_units u on u.id = o.job_unit_id
-       where o.id = $1`,
+       from ai_outputs o join ai_job_units u on u.id = o.job_unit_id where o.id = $1`,
       [outputId],
     );
     const output = rows[0];
@@ -664,23 +558,16 @@ export class AdminAiOperationsService {
               p.display_name as actor_display_name, e.reviewed_output, e.note, e.created_at
        from ai_output_review_events e
        left join profiles p on p.id = e.actor_profile_id
-       where e.ai_output_id = $1
-       order by e.revision desc
-       limit 100`,
+       where e.ai_output_id = $1 order by e.revision desc limit 100`,
       [outputId],
     );
 
-    const normalized =
-      output.normalized_output === null
-        ? null
-        : aiGenerationOutputSchema.safeParse(output.normalized_output);
+    const normalized = output.normalized_output === null ? null : aiGenerationOutputSchema.safeParse(output.normalized_output);
     if (normalized && !normalized.success) {
       throw new AppError("INTERNAL_ERROR", "المخرج المخزن لا يطابق عقد الذكاء الاصطناعي", 500);
     }
-
     const history = events.map((event): AdminAiOutputReviewEvent => {
-      const reviewed =
-        event.reviewed_output === null ? null : aiGenerationOutputSchema.safeParse(event.reviewed_output);
+      const reviewed = event.reviewed_output === null ? null : aiGenerationOutputSchema.safeParse(event.reviewed_output);
       if (reviewed && !reviewed.success) {
         throw new AppError("INTERNAL_ERROR", "سجل المراجعة لا يطابق عقد الذكاء الاصطناعي", 500);
       }
@@ -696,7 +583,10 @@ export class AdminAiOperationsService {
       };
     });
     const latest = history[0] ?? null;
-    const provenance = sourceProvenance(output.input_payload);
+    const source = sourceInfo(output.input_payload);
+    let effectiveReviewedOutput: AiGenerationOutput | null = normalized?.data ?? null;
+    if (latest?.action === "edit" || latest?.action === "approve") effectiveReviewedOutput = latest.reviewedOutput;
+    if (latest?.action === "reject") effectiveReviewedOutput = null;
 
     return {
       id: output.id,
@@ -709,13 +599,10 @@ export class AdminAiOperationsService {
       semanticWarnings: output.semantic_warnings,
       hasRawResponse: output.raw_response !== null,
       reviewStatus: reviewStatus(latest?.action ?? null),
-      effectiveReviewedOutput:
-        latest?.action === "edit" || latest?.action === "approve"
-          ? latest.reviewedOutput
-          : normalized?.data ?? null,
+      effectiveReviewedOutput,
       reviewedByProfileId: output.reviewed_by_profile_id,
       reviewedAt: output.reviewed_at,
-      sourceProvenance: provenance.sources,
+      sourceProvenance: source.sources,
       reviewHistory: history,
       createdAt: output.created_at,
       updatedAt: output.updated_at,
@@ -726,7 +613,7 @@ export class AdminAiOperationsService {
     try {
       return await this.database.transaction((tx) => this.lifecycle.requestPause(tx, jobId));
     } catch (error) {
-      return publicLifecycleError(error);
+      return lifecycleError(error);
     }
   }
 
@@ -734,7 +621,7 @@ export class AdminAiOperationsService {
     try {
       return await this.database.transaction((tx) => this.lifecycle.requestResume(tx, jobId));
     } catch (error) {
-      return publicLifecycleError(error);
+      return lifecycleError(error);
     }
   }
 
@@ -742,14 +629,14 @@ export class AdminAiOperationsService {
     try {
       return await this.database.transaction((tx) => this.lifecycle.requestRetry(tx, jobId));
     } catch (error) {
-      return publicLifecycleError(error);
+      return lifecycleError(error);
     }
   }
 
   async cancelJob(jobId: string): Promise<AiJobProgress> {
     try {
       return await this.database.transaction(async (tx) => {
-        const job = await this.lockAdminControlJob(tx, jobId);
+        const job = await this.lockJob(tx, jobId);
         if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") {
           throw new Error(`ai_job_not_cancelable:${job.status}`);
         }
@@ -761,51 +648,32 @@ export class AdminAiOperationsService {
       if (message.startsWith("ai_job_not_cancelable:")) {
         throw new AppError("CONFLICT", "حالة المهمة الحالية لا تسمح بالإلغاء", 409);
       }
-      return publicLifecycleError(error);
+      return lifecycleError(error);
     }
   }
 
   async reviewOutput(
     actorProfileId: string,
     outputId: string,
-    input: {
-      action: AiOutputReviewAction;
-      editedOutput?: unknown;
-      note?: string;
-    },
-  ): Promise<Awaited<ReturnType<AdminAiOperationsService["outputDetail"]>>> {
+    input: { action: AiOutputReviewAction; editedOutput?: unknown; note?: string },
+  ): Promise<AdminAiOutputDetail> {
     const note = input.note?.trim() || null;
-    if (input.action === "reject" && !note) {
-      throw new AppError("BAD_REQUEST", "سبب الرفض مطلوب", 400);
-    }
+    if (input.action === "reject" && !note) throw new AppError("BAD_REQUEST", "سبب الرفض مطلوب", 400);
     if (input.action === "edit" && input.editedOutput === undefined) {
       throw new AppError("BAD_REQUEST", "المخرج المعدل مطلوب", 400);
     }
 
     await this.database.transaction(async (tx) => {
-      const outputs = await tx.query<{
-        id: string;
-        normalized_output: unknown;
-      }>(
-        `select id, normalized_output
-         from ai_outputs
-         where id = $1
-         for update`,
+      const outputs = await tx.query<{ id: string; normalized_output: unknown }>(
+        "select id, normalized_output from ai_outputs where id = $1 for update",
         [outputId],
       );
       const output = outputs[0];
       if (!output) throw new AppError("NOT_FOUND", "مخرج الذكاء الاصطناعي غير موجود", 404);
 
-      const latestRows = await tx.query<{
-        revision: number;
-        action: AiOutputReviewAction;
-        reviewed_output: unknown;
-      }>(
-        `select revision, action, reviewed_output
-         from ai_output_review_events
-         where ai_output_id = $1
-         order by revision desc
-         limit 1`,
+      const latestRows = await tx.query<{ revision: number; action: AiOutputReviewAction; reviewed_output: unknown }>(
+        `select revision, action, reviewed_output from ai_output_review_events
+         where ai_output_id = $1 order by revision desc limit 1`,
         [outputId],
       );
       const latest = latestRows[0] ?? null;
@@ -814,36 +682,30 @@ export class AdminAiOperationsService {
       }
 
       const normalized = aiGenerationOutputSchema.safeParse(output.normalized_output);
-      const currentDraft =
-        latest?.action === "edit"
-          ? aiGenerationOutputSchema.safeParse(latest.reviewed_output)
-          : normalized;
-
+      const currentDraft = latest?.action === "edit"
+        ? aiGenerationOutputSchema.safeParse(latest.reviewed_output)
+        : normalized;
       let reviewedOutput: AiGenerationOutput | null = null;
+
       if (input.action === "edit") {
         const edited = aiGenerationOutputSchema.safeParse(input.editedOutput);
-        if (!edited.success) {
-          throw new AppError("BAD_REQUEST", "المخرج المعدل لا يطابق عقد الذكاء الاصطناعي", 400);
-        }
+        if (!edited.success) throw new AppError("BAD_REQUEST", "المخرج المعدل لا يطابق عقد الذكاء الاصطناعي", 400);
         if (normalized.success && edited.data.kind !== normalized.data.kind) {
           throw new AppError("BAD_REQUEST", "لا يمكن تغيير نوع مخرج الذكاء الاصطناعي أثناء المراجعة", 400);
         }
         reviewedOutput = edited.data;
       } else if (input.action === "approve") {
-        if (!currentDraft.success) {
-          throw new AppError("CONFLICT", "يجب تصحيح المخرج قبل اعتماده", 409);
-        }
+        if (!currentDraft.success) throw new AppError("CONFLICT", "يجب تصحيح المخرج قبل اعتماده", 409);
         reviewedOutput = currentDraft.data;
       }
 
-      const revision = (latest?.revision ?? 0) + 1;
       await tx.query(
         `insert into ai_output_review_events (
            ai_output_id, revision, action, actor_profile_id, reviewed_output, note
          ) values ($1, $2, $3::ai_output_review_action, $4, $5::jsonb, $6)`,
         [
           outputId,
-          revision,
+          (latest?.revision ?? 0) + 1,
           input.action,
           actorProfileId,
           reviewedOutput === null ? null : JSON.stringify(reviewedOutput),
@@ -851,20 +713,14 @@ export class AdminAiOperationsService {
         ],
       );
       await tx.query(
-        `update ai_outputs
-         set reviewed_by_profile_id = $2, reviewed_at = now()
-         where id = $1`,
+        "update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1",
         [outputId, actorProfileId],
       );
     });
-
     return this.outputDetail(outputId);
   }
 
-  private async lockAdminControlJob(
-    executor: QueryExecutor,
-    jobId: string,
-  ): Promise<{ id: string; status: AiJobExecutionStatus }> {
+  private async lockJob(executor: QueryExecutor, jobId: string): Promise<{ id: string; status: AiJobExecutionStatus }> {
     const rows = await executor.query<{ id: string; status: AiJobExecutionStatus }>(
       "select id, status from ai_jobs where id = $1 for update",
       [jobId],
