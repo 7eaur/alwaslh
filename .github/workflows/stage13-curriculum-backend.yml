@@ -171,13 +171,13 @@ jobs:
               media_asset_id, kind, profile_version, storage_key, mime_type,
               byte_size, width, height, checksum_sha256
             )
-            select id, 'source', 'source-v1', 'stage13-browser/source.webp', 'image/webp', 1800, 1000, 1400, repeat('c', 64) from media
+            select id, 'source'::media_variant_kind, 'source-v1', 'stage13-browser/source.webp', 'image/webp', 1800, 1000, 1400, repeat('c', 64) from media
             union all
-            select id, 'display', 'display-v1', 'stage13-browser/display.webp', 'image/webp', 900, 800, 1120, repeat('c', 64) from media
+            select id, 'display'::media_variant_kind, 'display-v1', 'stage13-browser/display.webp', 'image/webp', 900, 800, 1120, repeat('c', 64) from media
             union all
-            select id, 'thumbnail', 'thumbnail-v1', 'stage13-browser/thumb.webp', 'image/webp', 200, 240, 336, repeat('c', 64) from media
+            select id, 'thumbnail'::media_variant_kind, 'thumbnail-v1', 'stage13-browser/thumb.webp', 'image/webp', 200, 240, 336, repeat('c', 64) from media
             union all
-            select id, 'ai', 'ai-v1', 'stage13-browser/ai.webp', 'image/webp', 700, 800, 1120, repeat('c', 64) from media
+            select id, 'ai'::media_variant_kind, 'ai-v1', 'stage13-browser/ai.webp', 'image/webp', 700, 800, 1120, repeat('c', 64) from media
             returning id, kind
           )
           insert into ocr_extractions (
