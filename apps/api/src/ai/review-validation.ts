@@ -2,6 +2,15 @@ import { AppError } from "../errors.js";
 import type { AiGenerationOutput } from "./contracts.js";
 import { validateAiGenerationOutput } from "./validators.js";
 
+function reviewCandidateValidation(requestInput: unknown, candidateInput: unknown) {
+  return validateAiGenerationOutput(requestInput, candidateInput);
+}
+
+export function isAdminApprovalCandidateAllowed(requestInput: unknown, candidateInput: unknown): boolean {
+  const validation = reviewCandidateValidation(requestInput, candidateInput);
+  return validation.status !== "invalid" && validation.output !== null;
+}
+
 function validateReviewCandidate(
   requestInput: unknown,
   candidateInput: unknown,
@@ -9,7 +18,7 @@ function validateReviewCandidate(
   message: string,
   statusCode: 400 | 409,
 ): AiGenerationOutput {
-  const validation = validateAiGenerationOutput(requestInput, candidateInput);
+  const validation = reviewCandidateValidation(requestInput, candidateInput);
   if (validation.status === "invalid" || !validation.output) {
     throw new AppError(errorCode, message, statusCode);
   }
