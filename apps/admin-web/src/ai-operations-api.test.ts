@@ -4,6 +4,7 @@ import {
   fetchAiJobDetail,
   fetchAiJobs,
   fetchAiOutputDetail,
+  fetchAiUnitDetail,
   isAiConflictError,
   reviewAiOutput,
   type AiGenerationOutputApi,
@@ -38,6 +39,20 @@ describe("Stage13E AI operations API transport", () => {
     expect(url.pathname).toBe("/v1/admin/ai/jobs/job-1");
     expect(url.searchParams.get("unitLimit")).toBe("25");
     expect(url.searchParams.get("unitOffset")).toBe("50");
+  });
+
+  it("uses the documented attempt pagination query", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(response({
+      unit: { id: "unit-1" },
+      attempts: [],
+      attemptPagination: { total: 51, limit: 50, offset: 50 },
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    await fetchAiUnitDetail("unit-1", 50, 50);
+    const url = new URL(fetchMock.mock.calls[0]?.[0] as string, "http://admin.test");
+    expect(url.pathname).toBe("/v1/admin/ai/units/unit-1");
+    expect(url.searchParams.get("attemptLimit")).toBe("50");
+    expect(url.searchParams.get("attemptOffset")).toBe("50");
   });
 
   it("reads only the documented output envelope and never requests a raw-response route", async () => {
