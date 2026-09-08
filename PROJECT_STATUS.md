@@ -2,7 +2,7 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable evidence أعلى من prose. للتفاصيل اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, و`PROJECT_EXECUTION_QUEUE.md`.
 
-Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has four P1 root fixes plus one P2 snapshot-consistency hardening; executable verification still blocked before checkout.**
+Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has four P1 root fixes plus two P2 snapshot-consistency hardenings; executable verification still blocked before checkout.**
 
 ## Current Position
 
@@ -16,8 +16,8 @@ Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has 
 - Legacy pre-rebuild archive: `archive/legacy-main-2026-09-08 @ 5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
 - Latest fully executable green application baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 - Current product work: **Stage13E Admin AI Operations / Review — COMBINED CANDIDATE / NOT YET VERIFIED / OUTSIDE `main`**.
-- Current Stage13E candidate/docs HEAD: `integration/stage13e-ai-operations @ bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`.
-- Latest Stage13E runtime/test HEAD beneath docs: `9d59f84fb516db5cfaf89382f548c3eea595e365`.
+- Current Stage13E candidate/docs HEAD: `integration/stage13e-ai-operations @ dd723f2451a0b2edcdaab2e6045a626cae44c15d`.
+- Latest Stage13E runtime/test HEAD beneath docs: `10f32c72a684a8243a789a3561426a68dad1bcea`.
 
 ## Product / Architecture
 
@@ -39,7 +39,7 @@ Stable boundaries:
 - no test weakening/auth bypass/fake API/sleep-based race hiding.
 - durable Admin operational/audit history must be completely reachable through **bounded server pagination**, never silently truncated or loaded unbounded into browser memory.
 - a historical page is **never canonical current authority**; current review state/actions come from the latest durable revision independently of the page being viewed.
-- one Output Detail response must come from one consistent database snapshot; audit page/count/latest/actor timestamps cannot be mixed across concurrent commits.
+- any multi-query Admin AI read model must assemble one response from one short repeatable-read database snapshot; page/total, progress/actions and latest-history authority cannot mix concurrent committed states.
 
 ## Current Definition of Done
 
@@ -119,19 +119,24 @@ Frontend previously exposed only first **30 Jobs / 50 Units / 50 Attempts**. End
 - Backend regression seeds **105** revisions and proves revision 105 still controls authority while viewing revisions 5..1.
 - Real E2E fixture seeds **101** edit revisions. Chromium contract navigates all pages, reaches revision 1, approves while oldest page is displayed, then proves revision 102/current state and reload durability.
 
-Key lineage: `d242e054...`, `f04fe2be...`, `e33d43c1...`, `9c18826a...`, `2c82e879...`, `72711ec8...`, `de3a9dc2...`, `bf782c92...`, `d7830d18...`, `f64419fa...`, `a1ef3d7a...`, `f95c1a9e...`, `6a9e9df0...`.
-
 Architecture rule: paginated historical data is navigable evidence only; it never becomes canonical current lifecycle/review authority.
 
 ### AI-013E-OPS-005 — P2 Output Detail snapshot consistency
 
-- After OPS-004, output row, requested audit page, total count and canonical latest revision were still separate top-level reads under PostgreSQL `READ COMMITTED`.
-- A concurrent review commit between reads could produce an internally mixed response, e.g. newer `reviewStatus` with older `reviewedByProfileId/reviewedAt` or page/total metadata.
-- No durable corruption occurs, but audit/read-model correctness is weakened.
-- Fix `9d59f84fb516db5cfaf89382f548c3eea595e365`: all four reads execute inside one short `REPEATABLE READ` transaction; mapping/parsing happens after commit; no write locks or provider calls are introduced.
-- Regression `apps/api/tests/ai-admin-output-detail-snapshot.test.ts` rejects any output-detail query outside the snapshot and asserts the isolation command is first while preserving approved state/actor/time/pagination mapping.
+- Output row, requested audit page, total count and canonical latest revision were separate top-level reads under PostgreSQL `READ COMMITTED`.
+- A concurrent review could produce a mixed response without corrupting durable data.
+- Fix `9d59f84fb516db5cfaf89382f548c3eea595e365`: all reads execute inside one short `REPEATABLE READ` snapshot; no write locks/provider calls.
+- Regression: `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`.
 
-Status: **FIXED IN CANDIDATE / EXECUTION PENDING**.
+### AI-013E-OPS-006 — P2 Admin multi-query read-model consistency
+
+- List Jobs page/total, Job Detail progress/units/allowed actions, and Unit Detail latest-attempt/page/total were assembled by separate top-level reads.
+- Concurrent worker/lifecycle commits could make a single Admin response internally contradictory even though durable rows remain correct.
+- Fix `6a146c26b771a991530f12b1c1c12b6e3b43263b`: private `readSnapshot()` owns short `REPEATABLE READ` transactions for List Jobs, Job Detail, Unit Detail and Output Detail.
+- Mutations retain their existing write transactions; read snapshots introduce no write lock and no provider/network call.
+- Regression `apps/api/tests/ai-admin-read-snapshots.test.ts` proves List/Job/Unit reads stay inside snapshots and explicitly exercises Stage12 `getAllowedActions` in the same Job Detail snapshot. Test precision hardened at `10f32c72a684a8243a789a3561426a68dad1bcea`.
+
+Both P2 findings are **FIXED IN CANDIDATE / EXECUTION PENDING**.
 
 ## Stage13E Browser Contract
 
@@ -159,27 +164,24 @@ Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Latest **runtime/test-head** attempt:
 
-- run `34277281675`;
-- head `9d59f84fb516db5cfaf89382f548c3eea595e365`;
-- job `102233304479`;
+- run `34279168308`;
+- head `10f32c72a684a8243a789a3561426a68dad1bcea`;
+- job `102239495903`;
 - conclusion `failure`, but `runner_id=0`, `runner_name=""`, `steps=[]`;
 - no checkout or repository command executed.
 
-Latest **candidate/docs-head** attempt:
+Latest candidate/docs-head run at synchronization:
 
-- run `34277419491`;
-- head `bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`;
-- job `102233751450`;
-- conclusion `failure`, `runner_id=0`, `runner_name=""`, `steps=[]`.
-
-The immediately previous candidate run `34275641643` was explicitly re-run unchanged; attempt 2 job `102231252401` also ended with `runner_id=0`, `steps=[]` before checkout.
+- run `34279304388`;
+- head `dd723f2451a0b2edcdaab2e6045a626cae44c15d`;
+- conclusion `failure` before any repository command; inspect Issue #16/latest Actions for exact current job metadata on resume.
 
 Interpretation: **current executable blocker is GitHub hosted-runner allocation, not an executed product/test failure.** External account/platform root cause remains `NOT YET VERIFIED` with available permissions.
 
 ## Immediate Next Work
 
 1. Keep Stage13E outside `main`.
-2. Retain all four P1 fixes plus OPS-005 P2 snapshot hardening and regressions.
+2. Retain all four P1 fixes plus OPS-005/OPS-006 P2 snapshot hardenings and regressions.
 3. Re-run the unchanged combined Stage13E gate when a real runner is allocated.
 4. Any executed failure → root-cause fix in owning layer + regression.
 5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regressions.
@@ -195,6 +197,7 @@ Interpretation: **current executable blocker is GitHub hosted-runner allocation,
 - `AI-013E-OPS-003` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-004` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-005` P2 — fixed in candidate; executable verification pending.
+- `AI-013E-OPS-006` P2 — fixed in candidate; executable verification pending.
 - `AI-011-005` P2 — direct generated-question persistence; Stage13F.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
 - later Admin/Student/assessment/offline/product stages incomplete.
