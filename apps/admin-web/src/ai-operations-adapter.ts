@@ -163,6 +163,7 @@ export function mapAiOutputDetail(output: AiOutputDetailApi): AiReviewOutputView
       note: event.note,
       createdAt: event.createdAt,
     })),
+    reviewPagination: { ...output.reviewPagination },
     allowedReviewActions: [...output.allowedReviewActions],
   };
 }
