@@ -36,12 +36,29 @@ const UnitDetailQuerySchema = z.object({
 const JobParamsSchema = z.object({ jobId: z.string().uuid() });
 const UnitParamsSchema = z.object({ unitId: z.string().uuid() });
 const OutputParamsSchema = z.object({ outputId: z.string().uuid() });
+const ReviewNoteSchema = z.string().trim().max(4000).optional();
 
-const OutputReviewSchema = z.object({
-  action: z.enum(["edit", "approve", "reject"]),
-  editedOutput: z.unknown().optional(),
-  note: z.string().trim().max(4000).optional(),
-});
+const OutputReviewSchema = z.discriminatedUnion("action", [
+  z
+    .object({
+      action: z.literal("edit"),
+      editedOutput: z.unknown(),
+      note: ReviewNoteSchema,
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("approve"),
+      note: ReviewNoteSchema,
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("reject"),
+      note: z.string().trim().min(1).max(4000),
+    })
+    .strict(),
+]);
 
 async function adminActor(
   request: Parameters<typeof currentProfile>[0],
@@ -118,12 +135,6 @@ export function registerAdminAiOperationsRoutes(
     const actor = await adminActor(request, config, auth);
     const params = parseBody(OutputParamsSchema, request.params);
     const input = parseBody(OutputReviewSchema, request.body);
-    return {
-      output: await operations.reviewOutput(actor.id, params.outputId, {
-        action: input.action,
-        ...(input.editedOutput !== undefined ? { editedOutput: input.editedOutput } : {}),
-        ...(input.note ? { note: input.note } : {}),
-      }),
-    };
+    return { output: await operations.reviewOutput(actor.id, params.outputId, input) };
   });
 }
