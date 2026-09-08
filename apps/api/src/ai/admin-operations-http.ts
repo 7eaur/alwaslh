@@ -42,7 +42,7 @@ const OutputReviewSchema = z.discriminatedUnion("action", [
   z
     .object({
       action: z.literal("edit"),
-      editedOutput: z.unknown(),
+      editedOutput: z.unknown().refine((value) => value !== undefined),
       note: ReviewNoteSchema,
     })
     .strict(),
