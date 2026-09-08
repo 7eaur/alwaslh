@@ -160,10 +160,19 @@ export class AiJobLifecycleRepository {
     if (job.status !== "failed") throw new Error(`ai_job_not_retryable:${job.status}`);
     if (job.cancel_requested_at) throw new Error("ai_job_not_retryable:cancel_requested");
 
+    const exhausted = await executor.query<{ id: string }>(
+      `select id
+       from ai_job_units
+       where job_id = $1 and status = 'failed' and attempt_count >= 20
+       limit 1`,
+      [jobId],
+    );
+    if (exhausted[0]) throw new Error("ai_job_retry_limit_reached");
+
     const retried = await executor.query<{ id: string }>(
       `update ai_job_units
        set status = 'retrying',
-           max_attempts = greatest(max_attempts, attempt_count + 1),
+           max_attempts = attempt_count + 1,
            next_attempt_at = now(),
            lease_token = null,
            lease_expires_at = null,
