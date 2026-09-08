@@ -543,11 +543,34 @@ export class AdminAiOperationsService {
     ) and ($2::text is null or j.job_type = $2)`;
     const snapshot = await this.readSnapshot(async (tx) => {
       const rows = await tx.query<JobRow>(
-        `${JOB_SELECT}
-         where ${where}
-         group by j.id
-         order by j.created_at desc, j.id desc
-         limit $3 offset $4`,
+        `with page as (
+           select j.id, j.job_type, j.status, j.prompt_key, j.prompt_version, j.requested_model,
+                  j.priority, j.created_by_profile_id, j.cancel_requested_at, j.paused_at,
+                  j.started_at, j.completed_at, j.created_at, j.updated_at
+           from ai_jobs j
+           where ${where}
+           order by j.created_at desc, j.id desc
+           limit $3 offset $4
+         )
+         select p.id, p.job_type, p.status, p.prompt_key, p.prompt_version, p.requested_model,
+                p.priority, p.created_by_profile_id, p.cancel_requested_at, p.paused_at,
+                p.started_at, p.completed_at, p.created_at, p.updated_at,
+                counts.total, counts.completed, counts.review_required, counts.failed,
+                counts.cancelled, counts.queued, counts.running, counts.retrying
+         from page p
+         cross join lateral (
+           select count(*)::int as total,
+                  count(*) filter (where u.status = 'completed')::int as completed,
+                  count(*) filter (where u.status = 'review_required')::int as review_required,
+                  count(*) filter (where u.status = 'failed')::int as failed,
+                  count(*) filter (where u.status = 'cancelled')::int as cancelled,
+                  count(*) filter (where u.status = 'queued')::int as queued,
+                  count(*) filter (where u.status = 'running')::int as running,
+                  count(*) filter (where u.status = 'retrying')::int as retrying
+           from ai_job_units u
+           where u.job_id = p.id
+         ) counts
+         order by p.created_at desc, p.id desc`,
         [status, jobType, filters.limit, filters.offset],
       );
       const totals = await tx.query<{ count: string }>(
