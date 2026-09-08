@@ -106,8 +106,6 @@ test("Stage13E multi-query admin read models use repeatable PostgreSQL snapshots
           if (normalized === "set transaction isolation level repeatable read") return asRows<R>([]);
           if (normalized.includes("order by j.created_at desc, j.id desc")) return asRows<R>([]);
           if (normalized.startsWith("select count(*) from ai_jobs j where")) return asRows<R>([{ count: "0" }]);
-          if (normalized.includes("where j.id = $1 group by j.id")) return asRows<R>([jobRow]);
-          if (normalized.includes("where u.job_id = $1 order by u.position, u.id")) return asRows<R>([]);
           if (
             normalized.includes("select j.id, j.status, j.paused_at, j.cancel_requested_at") &&
             normalized.includes("exhausted_failed_units")
@@ -123,6 +121,8 @@ test("Stage13E multi-query admin read models use repeatable PostgreSQL snapshots
               },
             ]);
           }
+          if (normalized.includes("where j.id = $1 group by j.id")) return asRows<R>([jobRow]);
+          if (normalized.includes("where u.job_id = $1 order by u.position, u.id")) return asRows<R>([]);
           if (normalized.includes("from ai_job_units u") && normalized.includes("where u.id = $1")) {
             return asRows<R>([unitRow]);
           }
