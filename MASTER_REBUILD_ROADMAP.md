@@ -2,7 +2,7 @@
 
 > Same product, stronger implementation. Stage state is proven only by executable evidence; this Roadmap defines sequence, not truth by itself.
 
-Current executable baseline: `260cfef1c48d1290611103f8443d222f8cd041b6`.
+Current executable baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 
 Deployment: **`DEFERRED BY PRODUCT OWNER`**.
 
@@ -87,25 +87,37 @@ Stage9 source evidence
 
 Search/filter/status/detail/OCR correction/approve/reject with PostgreSQL + Admin Chromium evidence.
 
-## Stage13D — Upload / Processing History / Publication Linking — CURRENT NEXT
+## Stage13D — Upload / Processing History / Publication Linking — VERIFIED
 
-Required:
+Verified executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
+
+Implemented and verified:
 
 - image upload;
 - PDF upload;
 - mixed PDF/images;
-- preserve original user-selected order;
-- reuse Stage10 processing, never a second pipeline;
-- durable upload/processing task progress;
+- original user-selected order preserved through PDF page extraction;
+- reuse of Stage10 `MediaPipelineService`, never a second media pipeline;
+- durable server-owned upload/processing task progress;
 - task history/archive/error/retry visibility;
-- explicit source/media → curriculum Lesson association;
+- explicit canonical media → curriculum Lesson association;
 - explicit Draft/Review/Published content transition;
 - no automatic publication merely because media is `ready`;
-- dependency-aware update/removal semantics;
+- non-destructive archive/provenance retention;
 - API/PostgreSQL/unit/integration/Chromium evidence;
-- legacy `LES-A-010..015` coverage closure only where proven.
+- legacy `LES-A-010..015` coverage closed as VERIFIED.
 
-## Stage13E — Admin AI Operations / Review — REQUIRED
+Evidence:
+
+- Stage13D Content Ingestion `34177369784` — SUCCESS;
+- Stage13D Admin Upload UI `34177369743` — SUCCESS;
+- same-head regressions Stage13 `34177369748`, Stage12 `34177369812`, Stage11 `34177369753`, OCR `34177369750`, Stage10 `34177369777`, Stage9 `34177369756`, Full Rebuild `34177369768` — all SUCCESS.
+
+Specialized contract: `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md`.
+
+## Stage13E — Admin AI Operations / Review — CURRENT NEXT
+
+Required:
 
 - use verified Stage12 jobs/units/attempts;
 - queued/running/retrying/paused/failed/completed status;
@@ -116,6 +128,8 @@ Required:
 - source/page provenance visible;
 - no client-owned queue/progress;
 - live provider routing only after benchmark authorization.
+
+Stage13E remains `NOT YET VERIFIED` until executable evidence passes.
 
 ## Stage13F — Question Bank / Quiz Builder / Publish — REQUIRED
 
@@ -222,14 +236,15 @@ Auth/access/device reset, DB/backups, media/OCR/TTS/AI jobs, offline sync, Push,
 | Stage12 | VERIFIED backend/runtime |
 | Stage13A Curriculum backend | VERIFIED |
 | Stage13B Admin Curriculum Web | VERIFIED |
-| Stage13C Content/Media/OCR Operations | **VERIFIED** |
-| Stage13D Upload/History/Publication Linking | **CURRENT NEXT** |
-| Stage13E–G | REQUIRED / NOT YET VERIFIED |
+| Stage13C Content/Media/OCR Operations | VERIFIED |
+| Stage13D Upload/History/Publication Linking | **VERIFIED** |
+| Stage13E Admin AI Operations/Review | **CURRENT NEXT / NOT YET VERIFIED** |
+| Stage13F–G | REQUIRED / NOT YET VERIFIED |
 | Stage14–20 | REQUIRED |
 | Stage21–29 | PLANNED release/hardening gates |
 | Hosted deployment | **DEFERRED BY PRODUCT OWNER** |
 
-Latest executable evidence: `260cfef1c48d1290611103f8443d222f8cd041b6`, with Stage9/10/OCR/11/12/13 and Full Rebuild all SUCCESS.
+Latest executable evidence: `4eca7de8877ac9e2289b9c7990c912d33c256935`, with Stage9/10/OCR/11/12/13/13D and Full Rebuild all SUCCESS.
 
 ## Deployment policy
 
