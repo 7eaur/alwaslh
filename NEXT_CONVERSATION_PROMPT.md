@@ -1,30 +1,31 @@
 # NEXT CONVERSATION PROMPT
 
-استخدم النص التالي لبدء محادثة هندسية جديدة. هذا الملف **Launcher فقط**؛ الحالة والتفاصيل موجودة في ملفات التوثيق المشار إليها ولا يجب نسخها هنا كي لا تصبح قديمة.
+هذا Launcher قصير فقط؛ الحالة الفعلية في المستودع.
 
 ```text
-اعمل كالمسؤول الهندسي والتصميمي عن مستودع 7eaur/alwaslh.
+اعمل كالمسؤول الهندسي/التصميمي عن `7eaur/alwaslh` ولا تعتمد على أي ذاكرة Chat سابقة.
 
-استخدم الفرع planning/product-evolution-review وراجع Draft PR #12، ولا تعتمد على أي ذاكرة من محادثات سابقة.
+`main` هو Production source branch وRender هو الاستضافة الأساسية الحالية. لا تنشر feature branch مباشرة.
 
-قبل أي تعديل اقرأ بالترتيب:
+ابدأ بالترتيب:
 1) README.md
 2) DOCUMENTATION_INDEX.md
 3) PROJECT_HANDOFF.md
 4) PROJECT_STATUS.md
 5) PROJECT_ENGINEERING_LOG.md
-6) PROJECT_INTEGRATION_CONTINUITY.md إذا كانت هذه المحادثة هي المحادثة الرئيسية/Integration/Architecture/QA/Release أو ستستبدلها
-ثم اتبع Source of Truth وترتيب Team Operating Model / workstream / Product Decisions / Current Overrides / Parity / Coverage / Roadmap / الوثائق المتخصصة المحدد في DOCUMENTATION_INDEX.md.
+6) PROJECT_INTEGRATION_CONTINUITY.md إذا كنت Integration/Main أو تستبدلها
+7) docs/product/CURRENT_PRODUCT_OVERRIDES.md
+8) docs/workstreams/TEAM_OPERATING_MODEL.md + role workstream
+9) GitHub Issues #13/#14/#15/#16 حسب الدور
+10) render.yaml + docs/deployment/RENDER_PRODUCTION.md إذا كان العمل يتعلق بالنشر/runtime
 
-إذا كنت تستبدل المحادثة الرئيسية، اقرأ أيضًا Issues #13/#14/#15/#16 وافحص رؤوس Backend/Frontend branches الحالية بنفسك؛ قد تكون branches تقدمت بعد آخر REPORT. أي branch تقدم بدون تقرير رسمي يبقى observed WIP / NOT YET VERIFIED حتى مراجعته.
+تحقق live من `main` وfeature branch HEADs وGitHub Actions وRender resources/deploys قبل أي حكم. Code/migrations/executable evidence هي السلطة. أي شيء غير مفحوص أو غير منفذ = NOT YET VERIFIED.
 
-تحقق من HEAD الحالي وGitHub Actions بنفسك قبل إعلان أي PASS. افهم فكرة المنتج، المعمارية، Business Rules، القرارات، المراحل، الـKnown Issues والمتبقي من المستودع نفسه. أي شيء لم تفحصه أو لم ينجح باختبار تنفيذي = NOT YET VERIFIED.
+استمر من Exact Next Action الموثق. أصلح root cause فقط؛ لا test weakening ولا auth bypass ولا duplicate authority ولا fake API/worker ولا ephemeral media storage في production.
 
-أكمل فقط من Current Next Work الموثق. لا ترقيع ولا تعطيل اختبارات أو authorization لتجاوز مشكلة؛ أصلح root cause، حافظ على كل legacy capability ذات القيمة، ولا تغيّر Business Rule بلا دليل وقرار موثق.
+Backend/Frontend يعملان في فروع قصيرة من أحدث Integration-approved main، يحدّثان workstream doc + Board REPORT. Integration فقط تراجع/تدمج إلى main، ثم Render auto-deploy، ثم hosted verification وتحديث central docs.
 
-بعد كل دفعة حدّث PROJECT_STATUS.md وPROJECT_ENGINEERING_LOG.md وPROJECT_HANDOFF.md والوثيقة المتخصصة وLegacy Coverage مع exact commit/run IDs. إذا كنت Integration/Main chat، حدّث أيضًا PROJECT_INTEGRATION_CONTINUITY.md بعد كل REPORT/قرار/HEAD/CI/root-cause/merge/Stage transition مهم، وليس فقط عند نهاية المرحلة.
-
-مهم: Deployment/Preview = DEFERRED BY PRODUCT OWNER. لا تنشر ولا تعِد تفعيل auto-deploy دون أمر صريح جديد. قاعدة البيانات القديمة خارج النطاق الحالي؛ استمر من repository/current PostgreSQL/source-reference evidence.
+Stage13E حاليًا ما زالت في feature branches وليست في main حتى تمر gates المطلوبة.
 ```
 
-إذا تعارض هذا Launcher لاحقًا مع `DOCUMENTATION_INDEX.md` أو `PROJECT_HANDOFF.md` أو `PROJECT_INTEGRATION_CONTINUITY.md`، اتبع الملفات الأحدث/الأعلى في Source of Truth وحدث هذا الملف.
+إذا تعارض هذا Launcher مع الملفات الأحدث، اتبع Source of Truth الأعلى وحدّث هذا الملف.
