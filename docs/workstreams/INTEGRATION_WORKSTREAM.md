@@ -87,7 +87,24 @@ Stage PASS يحتاج same-head evidence.
 
 Backend/Frontend reports لا تحل محل central docs؛ هي inputs للمراجعة.
 
-## 4. Command protocol
+## 4. Root-cause enforcement
+
+أي failure أو defect يصل إلى Integration يجب ألا يُغلق بمجرد نجاح إعادة التشغيل. قبل `ACCEPT` تحقق من:
+
+```md
+Symptom:
+Root cause:
+Broken invariant/contract:
+Blast radius:
+Why this fix location is correct:
+Regression coverage:
+```
+
+ارفض أي حل يعتمد على إخفاء error، إضعاف test، bypass أمني، duplicated authority، sleeps/timeouts عشوائية، أو workaround دائم في طبقة غير مالكة للمشكلة.
+
+إذا كانت المشكلة في harness، يجب أن يثبت الفريق أن runtime/product contract صحيح وأن تعديل harness لا يقلل قوة السيناريو.
+
+## 5. Command protocol
 
 عند إصدار مهمة لأحد الفريقين استخدم Board الخاصة به:
 
@@ -108,7 +125,7 @@ Report when:
 
 الأمر يجب أن يكون محددًا بما يكفي لمنع overlap، لكنه لا يفرض implementation سيئة إذا اكتشف الفريق evidence أفضل. أي انحراف معماري مهم يعود عبر Team Room `#13`.
 
-## 5. Accept / Return protocol
+## 6. Accept / Return protocol
 
 بعد تقرير فريق:
 
@@ -124,7 +141,7 @@ Report when:
 
 استخدم عندما جزء مستقل جيد وجزء blocked. لا تخلط status حتى لا يظهر Stage كاملة خطأ.
 
-## 6. Cross-team contract rules
+## 7. Cross-team contract rules
 
 - Backend يملك server contract implementation.
 - Frontend يملك presentation/interaction implementation.
@@ -132,7 +149,7 @@ Report when:
 - Business Rule غير محسوم يعود إلى product decisions/Team Room، لا يقرر فريقه منفردًا.
 - contract change بعد استهلاك Frontend يحتاج coordination صريح.
 
-## 7. Merge strategy
+## 8. Merge strategy
 
 لا تحافظ على backend/frontend branches طويلة.
 
@@ -153,7 +170,60 @@ latest approved integration HEAD
 
 يمكن Frontend البدء قبل اكتمال Backend في discovery/design/states، لكن لا يثبت fake API كحقيقة.
 
-## 8. Release responsibility
+## 9. Continuity / Stage Closure Gate
+
+قبل إعلان Stage أو sub-stage مقبولة يجب أن يستطيع Integration chat جديد استئناف المشروع من GitHub فقط.
+
+تحقق من أن Backend/Frontend reports وworkstream docs تحتوي:
+
+- branch/base/latest commits;
+- what was inspected/implemented;
+- contracts/schema/components changed;
+- tests/results;
+- failures/root causes/fixes/regression tests;
+- open blockers/dependencies;
+- `NOT YET VERIFIED`;
+- exact next action.
+
+ثم حدّث المركزيات بحيث لا تبقى حالة المشروع موزعة أو متناقضة:
+
+```text
+PROJECT_STATUS.md
+PROJECT_ENGINEERING_LOG.md
+PROJECT_HANDOFF.md
+DOCUMENTATION_INDEX.md
+specialized doc
+Legacy Coverage
+Roadmap when status/order changes
+exact executable HEAD + run IDs
+```
+
+لا تعلن `VERIFIED` إذا كانت central docs قديمة، ولا تجعل محادثة جديدة تحتاج إلى chat history لفهم ما حدث.
+
+## 10. Integration Report
+
+بعد كل acceptance/closure مهم سجل في Board `#16`:
+
+```md
+### INTEGRATION REPORT
+Stage/Feature:
+Backend source commits/PR:
+Frontend source commits/PR:
+Integration HEAD:
+Contract review:
+Architecture review:
+Root-cause review for failures:
+Security review:
+UX/a11y review:
+CI/E2E run IDs:
+Legacy coverage:
+Documentation synchronized:
+Remaining NOT YET VERIFIED:
+Decision: ACCEPT | RETURN | PARTIAL
+Exact next commands issued:
+```
+
+## 11. Release responsibility
 
 حاليًا deployment مؤجل بقرار Product Owner.
 
@@ -168,7 +238,7 @@ latest approved integration HEAD
 
 Backend/Frontend لا يعلنان production readiness منفردين.
 
-## 9. Current team topology
+## 12. Current team topology
 
 - Team Room: Issue `#13`.
 - Backend/Platform Board: Issue `#14`.
@@ -176,7 +246,7 @@ Backend/Frontend لا يعلنان production readiness منفردين.
 - Integration/Release Board: Issue `#16`.
 - Team protocol bootstrap tracker: Issue `#17`.
 
-## 10. Current Work
+## 13. Current Work
 
 **Current integration stage:** Stage13E — Admin AI Operations / Review.
 
