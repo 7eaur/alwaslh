@@ -8,10 +8,13 @@ import { AuthService } from "./auth/service.js";
 import { type AppConfig, allowedOrigins } from "./config.js";
 import { AdminContentOperationsService } from "./content/admin-operations.js";
 import { registerAdminContentOperationsRoutes } from "./content/admin-operations-http.js";
+import { registerAdminContentIngestionRoutes } from "./content/ingestion-http.js";
+import { AdminContentIngestionService } from "./content/ingestion-service.js";
 import { registerCurriculumRoutes } from "./curriculum/http.js";
 import { CurriculumService } from "./curriculum/service.js";
 import type { Database } from "./db.js";
 import { AppError, toPublicError } from "./errors.js";
+import { FileSystemMediaStorage } from "./media/storage.js";
 
 export interface AppDependencies {
   config: AppConfig;
@@ -32,6 +35,8 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const activation = new StudentActivationService(database);
   const curriculum = new CurriculumService(database);
   const contentOperations = new AdminContentOperationsService(database);
+  const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
+  const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
 
   app.addHook("onRequest", async (request, reply) => {
     const origin = request.headers.origin;
@@ -56,6 +61,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAccessRoutes(app, config, auth, access);
   registerCurriculumRoutes(app, config, auth, curriculum);
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
+  registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
 
   app.get("/health", async () => ({
     status: "ok",
