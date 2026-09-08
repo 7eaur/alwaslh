@@ -2,7 +2,7 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable evidence أعلى من prose. للتفاصيل اقرأ `PROJECT_HANDOFF.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, و`PROJECT_EXECUTION_QUEUE.md`.
 
-Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has four P1 root fixes plus two P2 snapshot-consistency hardenings; executable verification still blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 root fixes plus three P2 hardenings, including bounded Job-list aggregation; executable verification still blocked before checkout.**
 
 ## Current Position
 
@@ -16,8 +16,8 @@ Last synchronized: **2026-09-08 — Single Owner active; Stage13E candidate has 
 - Legacy pre-rebuild archive: `archive/legacy-main-2026-09-08 @ 5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
 - Latest fully executable green application baseline: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 - Current product work: **Stage13E Admin AI Operations / Review — COMBINED CANDIDATE / NOT YET VERIFIED / OUTSIDE `main`**.
-- Current Stage13E candidate/docs HEAD: `integration/stage13e-ai-operations @ dd723f2451a0b2edcdaab2e6045a626cae44c15d`.
-- Latest Stage13E runtime/test HEAD beneath docs: `10f32c72a684a8243a789a3561426a68dad1bcea`.
+- Current Stage13E candidate/docs HEAD: `integration/stage13e-ai-operations @ e9793a5222758a7d17aad08f91993cb7431631b7`.
+- Latest Stage13E runtime/test HEAD beneath docs: `6efce1510231de5d569c4b96dbdffa3d4d488b31`.
 
 ## Product / Architecture
 
@@ -40,6 +40,7 @@ Stable boundaries:
 - durable Admin operational/audit history must be completely reachable through **bounded server pagination**, never silently truncated or loaded unbounded into browser memory.
 - a historical page is **never canonical current authority**; current review state/actions come from the latest durable revision independently of the page being viewed.
 - any multi-query Admin AI read model must assemble one response from one short repeatable-read database snapshot; page/total, progress/actions and latest-history authority cannot mix concurrent committed states.
+- bounded Admin pages must also bound expensive database aggregation work when query shape can do so directly; do not add speculative indexes before fixing the owning query shape.
 
 ## Current Definition of Done
 
@@ -136,7 +137,16 @@ Architecture rule: paginated historical data is navigable evidence only; it neve
 - Mutations retain their existing write transactions; read snapshots introduce no write lock and no provider/network call.
 - Regression `apps/api/tests/ai-admin-read-snapshots.test.ts` proves List/Job/Unit reads stay inside snapshots and explicitly exercises Stage12 `getAllowedActions` in the same Job Detail snapshot. Test precision hardened at `10f32c72a684a8243a789a3561426a68dad1bcea`.
 
-Both P2 findings are **FIXED IN CANDIDATE / EXECUTION PENDING**.
+### AI-013E-PERF-007 — P2 bounded Job-list aggregation
+
+- `listJobs()` originally performed `ai_jobs LEFT JOIN ai_job_units`, grouped all matching durable history, and only then applied `LIMIT/OFFSET`.
+- A 30-row page could therefore aggregate Unit history for every matching Job before discarding all but 30 rows.
+- Fix `8501d2e0317c0e1e4eb83b72c997e321ee79fe81`: filter/order/page `ai_jobs` first, then compute Unit status counts only for Jobs in that page with correlated `LATERAL` aggregation.
+- No speculative index/denormalized counter was added; query shape was the root cause.
+- Regression `6efce1510231de5d569c4b96dbdffa3d4d488b31`: `apps/api/tests/ai-admin-job-list-query-shape.test.ts` requires `LIMIT/OFFSET` before Unit aggregation and rejects the former global-join shape.
+- Specialized detail: `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`.
+
+All P2 findings are **FIXED IN CANDIDATE / EXECUTION PENDING**.
 
 ## Stage13E Browser Contract
 
@@ -164,24 +174,24 @@ Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Latest **runtime/test-head** attempt:
 
-- run `34279168308`;
-- head `10f32c72a684a8243a789a3561426a68dad1bcea`;
-- job `102239495903`;
-- conclusion `failure`, but `runner_id=0`, `runner_name=""`, `steps=[]`;
-- no checkout or repository command executed.
+- run `34281631521`;
+- head `6efce1510231de5d569c4b96dbdffa3d4d488b31`;
+- job `102247518121`;
+- conclusion `failure`, but `steps=[]` and no checkout/repository command executed.
 
-Latest candidate/docs-head run at synchronization:
+Latest candidate/docs-head run:
 
-- run `34279304388`;
-- head `dd723f2451a0b2edcdaab2e6045a626cae44c15d`;
-- conclusion `failure` before any repository command; inspect Issue #16/latest Actions for exact current job metadata on resume.
+- run `34281764765`;
+- head `e9793a5222758a7d17aad08f91993cb7431631b7`;
+- job `102247948380`;
+- conclusion `failure`, but `steps=[]` and no repository command executed.
 
 Interpretation: **current executable blocker is GitHub hosted-runner allocation, not an executed product/test failure.** External account/platform root cause remains `NOT YET VERIFIED` with available permissions.
 
 ## Immediate Next Work
 
 1. Keep Stage13E outside `main`.
-2. Retain all four P1 fixes plus OPS-005/OPS-006 P2 snapshot hardenings and regressions.
+2. Retain all four P1 fixes plus OPS-005/OPS-006/PERF-007 P2 hardenings and regressions.
 3. Re-run the unchanged combined Stage13E gate when a real runner is allocated.
 4. Any executed failure → root-cause fix in owning layer + regression.
 5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regressions.
@@ -198,6 +208,7 @@ Interpretation: **current executable blocker is GitHub hosted-runner allocation,
 - `AI-013E-OPS-004` P1 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-005` P2 — fixed in candidate; executable verification pending.
 - `AI-013E-OPS-006` P2 — fixed in candidate; executable verification pending.
+- `AI-013E-PERF-007` P2 — fixed in candidate; executable verification pending.
 - `AI-011-005` P2 — direct generated-question persistence; Stage13F.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
 - later Admin/Student/assessment/offline/product stages incomplete.
