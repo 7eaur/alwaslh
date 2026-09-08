@@ -1,176 +1,145 @@
 # Stage13E — Admin AI Operations / Review Frontend Binding
 
-**Status:** production Frontend binding implemented against the Backend Stage13E contract. Latest-head automated Frontend verification and combined Backend+Frontend Chromium remain **NOT YET VERIFIED** because GitHub hosted jobs are currently failing before checkout (`steps=[]`).
+**Status:** production binding is an Integration Candidate. The bounded browser-regression preparation requested by the latest Integration Review is implemented. Current-head quality gates and real combined Chromium execution remain **NOT YET VERIFIED** because GitHub hosted jobs still fail before checkout.
 
 **Frontend branch:** `frontend/stage13e-ai-operations`
 
-**Backend contract consumed:** `backend/stage13e-ai-operations` @ `348c02646d0ff873fd305beff16f41c46d9c0285`.
+**Latest bounded browser-regression commits:**
+
+- `ab12430acf1fbed6b10577fb2afd66d3286e8b81` — `test(admin): cover Stage13E auth expiry and review conflict`;
+- `7bf2f8c32907032551aace9f3aa27681040c4b0f` — `test(admin): add real Stage13E E2E API helper`.
 
 ## 1. Authority boundary
 
-Frontend is presentation and interaction only. PostgreSQL + Backend remain canonical for:
+Frontend remains presentation/interaction only. Backend + PostgreSQL remain canonical for job state, progress, action eligibility, review eligibility, semantic validation, review concurrency and durable review history.
 
-- job/unit/attempt/output state;
-- `progressPercent` and all progress counts;
-- pause/resume/cancel/retry eligibility;
-- review eligibility;
-- semantic validation and review concurrency;
-- durable review history.
-
-The browser consumes `job.allowedActions` and `output.allowedReviewActions` exactly as returned by the server. It never infers permissions from lifecycle enums. Mutation endpoints remain authoritative; `409 CONFLICT` triggers canonical refresh instead of an optimistic local transition.
+The browser consumes `job.allowedActions` and `output.allowedReviewActions` exactly as returned by the server. A mutation `409 CONFLICT` causes canonical refresh; no optimistic lifecycle/review promotion is performed.
 
 ## 2. Security / data-minimization boundary
 
-The Stage13E Admin UI intentionally does **not** expose or retain:
+The UI does not expose or retain raw provider response, credentials, provider metadata or provider/internal error-message text. Only `hasRawResponse`, safe operational identifiers/codes, normalized/effective reviewed educational output and source provenance are used.
 
-- raw provider response;
-- provider metadata/raw provider metadata;
-- `credential_alias`;
-- provider/internal error-message text.
+The real-browser regression helper follows the same rule: it uses only documented Admin APIs and the already-authenticated browser session. It introduces no mock route, request interception, fake API, test-only product endpoint or browser-owned authority.
 
-Only `hasRawResponse`, safe operational identifiers, `errorCode`/`lastErrorCode`, normalized/reviewed educational output, validation data and source provenance are consumed.
+## 3. Existing production binding
 
-Adapters also drop unexpected runtime `rawResponse` or `errorMessage` fields if they ever appear despite the server contract.
-
-## 3. HTTP contract consumed
-
-Authenticated Admin transport uses the existing shared `adminApiRequest` and these Backend-owned endpoints:
+Authenticated Stage13E transport uses the shared Admin session/origin behavior for:
 
 - `GET /v1/admin/ai/jobs`;
 - `GET /v1/admin/ai/jobs/:jobId`;
 - `GET /v1/admin/ai/units/:unitId`;
 - `GET /v1/admin/ai/outputs/:outputId`;
-- `POST /v1/admin/ai/jobs/:jobId/pause`;
-- `POST /v1/admin/ai/jobs/:jobId/resume`;
-- `POST /v1/admin/ai/jobs/:jobId/cancel`;
-- `POST /v1/admin/ai/jobs/:jobId/retry`;
+- `POST /v1/admin/ai/jobs/:jobId/pause|resume|cancel|retry`;
 - `PATCH /v1/admin/ai/outputs/:outputId/review`.
 
-Important exact read shapes:
+Review bodies remain the strict discriminated union: edit requires `editedOutput`, approve sends no `editedOutput`, reject requires non-empty `note`.
 
-- Job action authority lives at `job.allowedActions` in Job Detail; it is not duplicated in the list payload.
-- Review authority lives at `output.allowedReviewActions`.
-- Raw provider response is never returned; only `hasRawResponse` is returned.
+Stage13E approval is review approval only and does not publish to Stage13F Question Bank.
 
-## 4. Review mutation contract
+## 4. Bounded browser-regression preparation
 
-Frontend emits only the strict Backend discriminated union:
+The existing happy/reload/390px flow is preserved unchanged in intent. Two deterministic real-backend paths were added.
 
-```ts
-type ReviewRequest =
-  | { action: "edit"; editedOutput: AiGenerationOutput; note?: string }
-  | { action: "approve"; note?: string }
-  | { action: "reject"; note: string };
-```
+### 4.1 Real session expiry / auth boundary
 
-Behavior:
+`ai-operations.e2e.spec.mjs` now:
 
-- edit works on the normalized/reviewed educational output only, never raw provider payload;
-- reject requires a non-empty reason in the UI and on the server;
-- approve sends no `editedOutput`;
-- Stage11 semantic validation remains server authority;
-- after success or `409`, Frontend reloads canonical job/unit/output state;
-- Stage13E approval is explicitly presented as **review approval only** and does not publish to Stage13F Question Bank.
+1. authenticates the seeded Admin through the real UI;
+2. opens AI Operations;
+3. invalidates the same real session through `POST /v1/auth/logout` using `page.context().request`, which shares the browser context cookies;
+4. triggers the normal **تحديث الحالة** UI action;
+5. proves the Stage13E request follows existing session-expiry handling back to **دخول المدير** and removes the signed-in Admin navigation.
 
-The transport strips presentation-only `quote: null` values before sending an edited output back into the strict Stage11 schema; meaningful nullable domain fields are preserved.
+No cookie is manually edited and no network response is mocked.
 
-## 5. Runtime architecture
+### 4.2 Real 409 stale-review race
 
-`AiOperationsPage.tsx` owns presentation/request state and maps network DTOs through `ai-operations-adapter.ts` into the workspace view model.
+A separate fixture is required via:
 
-Implemented flow:
+`STAGE13E_E2E_RACE_JOB_TYPE`
 
-1. bounded initial jobs request (`limit=30`);
-2. on-demand selected job detail;
-3. on-demand selected unit attempts + output detail;
-4. server-derived job/review action arrays;
-5. bounded 5-second polling for the selected **non-terminal** job only;
-6. no overlapping poll ticks;
-7. canonical refresh after mutations/conflicts;
-8. existing Admin session-expiry behavior reused.
+Integration must seed that job so it is:
 
-No new state/caching library and no browser-owned durable lifecycle were introduced.
+- a real Admin AI job visible in the first bounded job/detail page;
+- terminal at the execution layer (`completed | failed | cancelled`) so background polling cannot erase the stale UI state during the race;
+- contains an open output whose server `allowedReviewActions` includes `approve`.
 
-## 6. UX / accessibility / responsive behavior
+The test then:
 
-The Admin shell now has an active **عمليات AI والمراجعة** destination.
+1. authenticates normally;
+2. resolves the exact output through real Stage13E reads using the same browser session;
+3. opens the matching unit/output in the UI and confirms the server-advertised approve button is present;
+4. completes a terminal `reject` out-of-band through the real `PATCH .../review` endpoint using the same browser context;
+5. submits the now-stale UI approve action;
+6. proves the browser receives the real `409`, shows the existing safe conflict feedback, refreshes canonical state, renders **مرفوض**, and exposes no remaining approve/reject actions.
 
-The workspace includes:
+The helper fails immediately with a fixture-contract message if the race job is missing, non-terminal or lacks an open approvable output. It does not use sleeps/timeouts to manufacture the race.
 
-- loading/error/retry/empty states;
-- job/unit/detail loading states;
-- mutation pending/success/conflict feedback;
-- authoritative progress and effective/underlying status;
-- jobs → units → attempts → output review hierarchy;
-- provider/model/project/route/benchmark/token/cost/latency/error-code observability without secrets;
-- validation issues and semantic warnings;
-- page/media/checksum/OCR/source-asset provenance;
-- normalized output rendering for all Stage11 output kinds;
-- edit/approve/reject UI driven only by server action arrays;
-- append-only review-history presentation;
-- semantic buttons/progressbar/labels, visible text status, long-ID wrapping and RTL logical CSS;
-- responsive collapse at desktop/tablet/mobile breakpoints.
+## 5. Real E2E helper contract
 
-A dedicated 390×844 Chromium assertion is prepared for the combined real-server fixture.
+New file: `apps/admin-web/e2e/stage13e-real-api.mjs`.
 
-## 7. Regression coverage added
+It uses `page.context().request`, which shares the BrowserContext cookie jar, against the real API base. Defaults:
 
-Unit/transport/adapter tests cover:
+- `STAGE13E_E2E_API_BASE_URL=http://127.0.0.1:3000`;
+- `STAGE13E_E2E_ADMIN_ORIGIN=http://127.0.0.1:5175`.
 
-- using server `progressPercent` without browser recalculation;
-- keeping `paused` separate from underlying `executionStatus`;
-- action availability consumed only from server arrays;
-- no raw provider output in the view model;
-- no provider/internal error-message text in the view model;
-- unexpected runtime raw/error fields are discarded;
-- strict edit/approve/reject HTTP payload shapes;
-- presentation-only `quote:null` is not sent into the strict Stage11 schema;
-- `409` remains an explicit canonical-refresh signal;
-- authenticated query paths/pagination parameters.
+Unsafe requests send the real Admin origin and JSON content type. Non-2xx or non-JSON contract failures are surfaced as hard test failures with bounded response text.
 
-Prepared Chromium spec `apps/admin-web/e2e/ai-operations.e2e.spec.mjs` covers on a combined Stage13E fixture:
+No Backend/product contract was changed for this regression batch.
 
-- Admin login;
-- opening AI Operations;
-- server-advertised pause/resume;
-- unit/output review approval;
-- terminal review actions disappearing;
-- reload durability;
-- 390px horizontal-overflow check.
+## 6. Chromium scenarios now prepared
 
-When `STAGE13E_E2E=1`, a missing fixture causes a hard failure instead of a silent skip.
+With `STAGE13E_E2E=1`, the suite prepares four real-browser scenarios:
 
-## 8. Verification / blocker record
+1. login → AI workspace → pause/resume → approve → reload durability;
+2. real session invalidation → Stage13E refresh → signed-out/login state;
+3. real out-of-band terminal review → stale UI approve → `409` canonical refresh/no actions;
+4. 390×844 no-horizontal-overflow assertion.
 
-Batch1 preparation was previously green on GitHub Actions run `34184228250` (lint, typecheck, 19/19 unit tests, build), but that evidence predates production binding.
+Required fixture environment:
 
-All product-binding runs currently fail before repository checkout:
+- `STAGE13E_E2E_JOB_TYPE` — existing happy/390px fixture;
+- `STAGE13E_E2E_RACE_JOB_TYPE` — separate terminal/open-review race fixture;
+- optional Admin/API/origin overrides documented above.
 
-- run `34187450894` @ `79330380...`;
-- run `34187905811` @ `afad78e...`;
-- run `34188105821` @ `15827725...`;
-- run `34188173087` @ `f649a9a...`.
+Missing required fixture variables are hard failures when Stage13E E2E is enabled, not silent skips.
 
-Observed jobs have `steps=[]` / no executable steps. Re-running the first binding job produced the same result. No repository command executed, so this is **not** application PASS/FAIL evidence.
+## 7. Verification evidence
 
-Root-cause record:
+Latest browser-regression product HEAD: `7bf2f8c32907032551aace9f3aa27681040c4b0f`.
 
-- **Symptom:** workflow concludes failure immediately without checkout/lint/typecheck/tests/build.
-- **Root cause:** GitHub hosted runner provisioning did not allocate an executable runner/job; the same infrastructure condition is affecting Backend Stage13E.
-- **Affected invariant:** current-head verification evidence only.
-- **Blast radius:** latest Frontend lint/typecheck/unit/build and combined Chromium cannot be claimed.
-- **Correct fix location:** runner infrastructure / future rerun, not product code or test weakening.
-- **Regression protection:** unchanged quality gates and strict E2E fixture requirements remain enabled.
+GitHub Actions run `34189236669` on that HEAD concluded failure before checkout. Job `101943693820` has no executable steps (`steps=null`). Therefore no repository lint/typecheck/unit/build command ran on this HEAD, and the workflow conclusion is not product-code PASS/FAIL evidence.
+
+The same hosted-runner provisioning condition existed before this bounded batch. No test was weakened or skipped to work around it.
+
+A local syntax-only `node --check` of the new real-API helper passed; this is not a substitute for repository quality gates or Chromium execution.
+
+## 8. Root-cause record
+
+**Symptom:** current Frontend workflow finishes failure immediately without checkout or repository commands.
+
+**Root cause:** hosted runner provisioning has not allocated an executable runner; latest job exposes no steps.
+
+**Affected flow/contract:** verification evidence only. No Stage13E runtime defect is established by this failure.
+
+**Blast radius:** current-head lint/typecheck/unit/build and combined real Chromium remain unverified.
+
+**Correct fix location:** hosted-runner infrastructure / unchanged workflow rerun. Product behavior, test assertions, timeouts and fixture strictness must not be weakened.
+
+**Regression protection:** the new auth-expiry and 409 race tests use real session/API state and hard fixture preconditions, preserving the exact production boundary Integration requested.
 
 ## 9. NOT YET VERIFIED
 
-- current-head Frontend lint/typecheck/unit/build after production binding;
-- real combined Backend+Frontend Stage13E Chromium flow;
-- real browser `409` race/conflict refresh;
-- real permission/error paths;
-- 390px assertion against the combined server fixture;
-- same-head cross-boundary Stage13E integration / Stage PASS.
+- latest-head Frontend lint/typecheck/unit/build;
+- real execution of all four Stage13E Chromium scenarios on a seeded combined Backend+Frontend head;
+- actual session-expiry browser result;
+- actual 409 stale-review browser result;
+- actual 390px result;
+- same-head Stage13E Integration / Stage PASS.
+
+**Ready for integration:** **NO** until executable quality gates run green.
 
 ## 10. Exact next action
 
-When a GitHub runner executes jobs again, run the unchanged Frontend quality workflow on the latest product head. Then Integration must combine latest accepted Backend and Frontend Stage13E heads, seed the explicit AI fixture, run the prepared Chromium flow + 390px assertion and review same-head evidence before any Stage13E acceptance.
+Integration should seed both Stage13E fixtures, set `STAGE13E_E2E=1`, run the unchanged combined Chromium suite and same-head quality gates when runner allocation works, then issue the next Integration Review. Frontend should change product/test code only if that real execution exposes a reproducible defect.
