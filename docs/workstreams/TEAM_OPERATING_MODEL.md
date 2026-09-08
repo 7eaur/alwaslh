@@ -117,6 +117,8 @@ Priority:
 3. يضع `REPORT` في Board الخاصة به مع commits/tests/blockers/NOT YET VERIFIED.
 4. يرفع أي cross-team ambiguity إلى Team Room بدل التخمين.
 
+**وعند نهاية كل Stage/sub-stage يجب رفع Closure Report حتى لو لم توجد مشكلة.** التقرير يثبت ما اكتمل، ما تغير معماريًا، نتائج الاختبارات، ما بقي، والـExact next action. لا تبدأ المرحلة التالية رسميًا قبل أن يصبح هذا التقرير والـhandoff قابلين للاستئناف.
+
 لا يُعتبر كلام chat تقريرًا رسميًا.
 
 ## 6. Branch strategy
@@ -251,7 +253,7 @@ Exact next action:
 ### Backend/Frontend قبل التسليم
 
 - workstream doc محدث حتى آخر commit;
-- Board `REPORT` كامل;
+- Board `REPORT`/Closure Report كامل;
 - specialized module/contract doc محدث إذا تغير عقد أو سلوك مهم;
 - tests/results و`NOT YET VERIFIED` واضحة;
 - لا توجد معرفة لازمة للاستمرار موجودة فقط في chat.
