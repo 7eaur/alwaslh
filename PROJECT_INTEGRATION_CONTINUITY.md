@@ -4,7 +4,7 @@
 >
 > **Authority:** current code/migrations + executable GitHub evidence تتقدم على هذا الملف. أي شيء غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 — Product Owner removed hosting/deployment from current roadmap until VPS is available; Stage13E remains the active integration target**.
+Last synchronized: **2026-09-08 — hosting/deployment fully deferred until VPS; Stage13E combined executable verification still blocked before checkout**.
 
 ## 1. Resume procedure
 
@@ -80,7 +80,7 @@ Operational consequences:
 - no deploy or hosted smoke is required for Stage closure;
 - existing hosting files/docs may remain historically but are not active tasks or blockers;
 - no provider migration/cutover/cleanup should consume current development time;
-- future VPS design starts only after explicit Product Owner command and must preserve the product architecture rather than reshape it around a provider.
+- future VPS design starts only after explicit Product Owner command.
 
 ## 6. Fully verified application baseline
 
@@ -102,42 +102,15 @@ Same-head SUCCESS:
 
 Do not replace this baseline with docs commits or unexecuted Stage13E candidates.
 
-## 7. GitHub Actions blocker
-
-Recent workflows repeatedly terminated before checkout with:
-
-- `runner_id=0`
-- `runner_name=""`
-- `steps=[]`
-
-This is verification-infrastructure evidence, not a product regression. Do not weaken tests or churn code because of those conclusions.
-
-A rerun of the Stage13E combined failed job set was requested on 2026-09-08 after the hosting policy changed. Its latest attempt must be inspected next.
-
-## 8. Stage13E Backend candidate
-
-Branch:
+## 7. Stage13E Backend candidate
 
 `backend/stage13e-ai-operations @ 348c02646d0ff873fd305beff16f41c46d9c0285`
 
-Candidate provides:
-
-- Admin jobs/units/attempts/outputs read models;
-- server-derived progress + `allowedActions`;
-- Stage12 pause/resume/cancel/retry authority;
-- safe provider/model/project observability without credentials/raw internals;
-- source/page/checksum provenance;
-- append-only edit/approve/reject audit via `0018_ai_admin_review.sql`;
-- Stage11 semantic validation for Admin edit/approve;
-- server-derived `allowedReviewActions`;
-- strict discriminated review HTTP body;
-- terminal review race protection.
+Candidate provides Admin jobs/units/attempts/outputs read models, server-derived progress/action authority, Stage12 controls, safe provider/model/project observability, provenance, append-only review audit, Stage11 semantic validation, strict review bodies and terminal review race protection.
 
 Structurally accepted; executable same-head evidence still required.
 
-## 9. Stage13E Frontend candidate
-
-Branch:
+## 8. Stage13E Frontend candidate
 
 `frontend/stage13e-ai-operations @ 1eb141e950e96c9f53ffd103a386d59166113c16`
 
@@ -145,24 +118,13 @@ Product/Test HEAD:
 
 `7bf2f8c32907032551aace9f3aa27681040c4b0f`
 
-REPORT #15:
+REPORT #15: `5579577424`.
 
-`5579577424`
+Integration Review #15: `5580147549` — browser regression preparation accepted as Integration candidate.
 
-Integration Review #15:
+Reviewed behavior includes real API binding, same-BrowserContext session expiry, real stale-review `409`, canonical refresh and 390px regression with no mocks/fake endpoint/sleep race.
 
-`5580147549` — browser regression preparation accepted as Integration candidate.
-
-Reviewed behavior:
-
-- production API binding, no invented endpoint;
-- real same-BrowserContext logout/session-expiry path;
-- real out-of-band review mutation producing stale UI `409`;
-- safe feedback + canonical refresh;
-- 390px overflow assertion;
-- no route interception/mock API/fake 401/409/test-only Backend endpoint/manual cookie mutation/sleep race.
-
-## 10. Stage13E combined Integration branch
+## 9. Stage13E combined Integration branch
 
 Assembly commits:
 
@@ -171,16 +133,9 @@ Assembly commits:
 - `4ba77703866762c471257bbb914590b817ecc82e` — real Stage13E E2E fixture seed;
 - `807f733838e2fab2620652025b255c3bc404fec1` — combined Integration workflow.
 
-Selective integration was chosen because Backend/Frontend branches had older/diverged history. Integration moved only reviewed Stage13E product/test/specialized-doc files onto the then-current `main` lineage instead of importing stale unrelated history.
+Selective integration avoided importing stale/diverged feature history. At assembly the diff contained only Stage13E API/Admin/tests/migration/docs/workflows + Integration fixture/workflow and no unrelated Student product change.
 
-Diff review at assembly:
-
-- exactly 4 commits ahead of base;
-- only Stage13E API/Admin/tests/migration/docs/workflows + Integration fixture/workflow;
-- no unrelated Student product change;
-- `App.tsx` preserves Curriculum, Content Ingestion and Content Operations and adds AI Operations.
-
-## 11. Combined real-browser fixture authority
+## 10. Combined real-browser fixture authority
 
 Fixture:
 
@@ -191,23 +146,11 @@ Environment:
 - `STAGE13E_E2E_JOB_TYPE=stage13e_e2e_happy`
 - `STAGE13E_E2E_RACE_JOB_TYPE=stage13e_e2e_race`
 
-Happy fixture:
+Happy fixture is a non-terminal job with an open valid review output plus a queued unit, enabling real pause/resume + review. Race fixture is execution-terminal with an open valid review output so ordinary polling cannot erase stale UI before the out-of-band mutation.
 
-- non-terminal queued job;
-- one `review_required` unit with valid open output;
-- one additional queued unit;
-- real pause/resume + review remain server-authorized.
+No test-only API endpoint is created.
 
-Race fixture:
-
-- execution-terminal completed job;
-- one `review_required` unit with valid open output;
-- no review event initially;
-- terminal execution prevents normal non-terminal polling from erasing stale UI before the out-of-band review mutation.
-
-No test-only API endpoint. Fixture writes normal durable tables after migrations, matching existing repository E2E practice.
-
-## 12. Combined Stage13E gate
+## 11. Combined Stage13E gate
 
 Workflow:
 
@@ -217,38 +160,48 @@ Expected execution:
 
 1. API lint/typecheck/unit/build;
 2. Admin lint/typecheck/unit/build;
-3. clean PostgreSQL migrations + Stage13E DB contract;
+3. clean PostgreSQL migrations + DB contract;
 4. Stage13E Backend authority/race integration tests;
 5. Stage12 execution/capacity/control/lifecycle regressions;
 6. auth security regression;
 7. fresh DB reset;
 8. real Admin bootstrap;
 9. seed happy + race fixtures;
-10. assert fixture DB invariants;
-11. Chromium happy/reload/session-expiry/stale-409/390px suite.
+10. assert DB fixture invariants;
+11. Chromium happy/reload/session-expiry/stale-409/390px.
 
-Initial run:
+Run `34193380473`, HEAD `807f733838e2fab2620652025b255c3bc404fec1`:
 
-- run `34193380473`
-- job `101955846938`
-- HEAD `807f733838e2fab2620652025b255c3bc404fec1`
-- no checkout/product/test step: `runner_id=0`, `steps=[]`.
+- Attempt 1 job `101955846938`: no runner, `steps=[]`.
+- Attempt 2 job `101958463625`: `run_attempt=2`, `steps=[]`, no job logs generated.
 
-Combined candidate remains `NOT YET VERIFIED` until an executable attempt runs.
+No checkout or product/test step executed in either attempt. Stage13E therefore remains `NOT YET VERIFIED`, with no evidence of an application regression.
 
-Integration Report #16:
+A local execution fallback was checked from the current assistant runtime, but that environment cannot resolve GitHub/network access to the private repository. No local test result is claimed.
 
-`5580151268` — Integration candidate assembled / hold for executable runner.
+Integration Report #16 before attempt 2: `5580151268`.
+
+## 12. Verification blocker interpretation
+
+Current blocker is specifically **GitHub hosted-runner allocation**, not hosting/deployment.
+
+Rules:
+
+- do not weaken tests;
+- do not modify product code because a job never started;
+- keep the combined workflow unchanged until an actual runner executes it;
+- any future step that executes and fails is treated as a real defect until root-cause analysis proves otherwise.
 
 ## 13. Exact next Integration action
 
-1. Inspect the rerun attempt for run `34193380473`.
-2. If steps execute and fail, determine root cause and fix in the owning DB/API/Admin/test-harness layer with regression protection.
-3. If combined gate passes, run the wider required same-head regression matrix.
-4. After green evidence, promote Stage13E runtime to `main` while preserving current central docs.
-5. Update central docs + specialized docs + Legacy Coverage + roadmap and close Stage13E.
-6. Start Stage13F only after closure.
-7. Do not perform hosting/deployment work.
+1. Keep Stage13E outside `main`.
+2. Rerun the unchanged combined workflow when an actual GitHub runner becomes available.
+3. If steps execute and fail, fix root cause in the owning DB/API/Admin/test-harness layer with regression protection.
+4. If the combined gate passes, run wider required same-head regressions.
+5. Promote Stage13E to `main` while preserving current central docs.
+6. Update `PROJECT_ENGINEERING_LOG.md`, central/specialized docs, Legacy Coverage and roadmap; then close Stage13E.
+7. Start Stage13F only after Stage13E closure unless Product Owner explicitly changes that dependency rule.
+8. Do not perform hosting/deployment work.
 
 ## 14. Open risks / NOT YET VERIFIED
 
@@ -258,7 +211,7 @@ Integration Report #16:
 - `AI-012-019` live provider benchmark/routes/bootstrap;
 - live-provider worker bootstrap remains future work and must stay separate from Fastify;
 - later Student learning/offline stages;
-- VPS deployment is future work, not a current project blocker.
+- VPS deployment is future work, not a current blocker.
 
 ## 15. Administrative cleanup note
 
