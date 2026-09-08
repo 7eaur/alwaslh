@@ -163,6 +163,7 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
     maxAttempts: 20,
   });
   const control = await insertJob(db, suffix, "control", "queued", "queued");
+  const pausedCancel = await insertJob(db, suffix, "paused-cancel", "queued", "queued");
   assert.ok(review.outputId && reject.outputId && race.outputId);
 
   const app = buildApp({ config, database: db });
@@ -379,6 +380,27 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
       headers: { cookie: adminCookie, origin },
     });
     assert.equal(secondCancel.statusCode, 409);
+
+    const pausedBeforeCancel = await app.inject({
+      method: "POST",
+      url: `/v1/admin/ai/jobs/${pausedCancel.jobId}/pause`,
+      headers: { cookie: adminCookie, origin },
+    });
+    assert.equal(pausedBeforeCancel.statusCode, 200);
+    assert.equal(pausedBeforeCancel.json().progress.status, "paused");
+    const cancelledWhilePaused = await app.inject({
+      method: "POST",
+      url: `/v1/admin/ai/jobs/${pausedCancel.jobId}/cancel`,
+      headers: { cookie: adminCookie, origin },
+    });
+    assert.equal(cancelledWhilePaused.statusCode, 200);
+    assert.equal(cancelledWhilePaused.json().progress.status, "cancelled");
+    assert.equal(cancelledWhilePaused.json().progress.pausedAt, null);
+    const cancelledPauseState = await db.query<{ status: string; paused_at: Date | null }>(
+      "select status, paused_at from ai_jobs where id = $1",
+      [pausedCancel.jobId],
+    );
+    assert.deepEqual(cancelledPauseState[0], { status: "cancelled", paused_at: null });
   } finally {
     await app.close();
   }
