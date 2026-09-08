@@ -4,190 +4,93 @@
 >
 > **Authority:** current code/migrations + executable GitHub evidence + actual hosted-runtime evidence تتقدم على هذا الملف. أي شيء غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-08 — Render reclassified as free development/test hosting; final production expected on VPS or Railway later**.
+Last synchronized: **2026-09-08 — Stage13E combined candidate assembled; hosted runner still terminates before checkout**.
 
 ## 1. Resume procedure
 
 1. Confirm repository `7eaur/alwaslh`.
-2. Read `DOCUMENTATION_INDEX.md`, `PROJECT_HANDOFF.md`, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, then this file.
+2. Read `DOCUMENTATION_INDEX.md` → `PROJECT_HANDOFF.md` → `PROJECT_STATUS.md` → `PROJECT_ENGINEERING_LOG.md` → this file.
 3. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
 4. Read `docs/workstreams/TEAM_OPERATING_MODEL.md` + relevant workstream file.
 5. Read latest Issues #13/#14/#15/#16.
 6. Hosting work: read `render.yaml` + `docs/deployment/RENDER_DEVELOPMENT.md`.
-7. Live-check branch heads, GitHub Actions and Render resources/deploys/logs/DB.
+7. Live-check `main`, feature/integration branch heads, GitHub Actions, and Render resources before conclusions.
 8. Anything not inspected/executed stays `NOT YET VERIFIED`.
 
 ## 2. Main Integration responsibility
 
-Own architecture coherence, cross-team contracts, QA/security/performance/UX review, integration, release decisions, hosted-development verification, and central docs.
+Integration owns architecture coherence, cross-team contracts, QA/security/performance/UX review, combined branches, release decisions, hosted-development verification and central docs.
 
 Backend/Frontend readiness never equals Stage PASS. Integration alone declares `VERIFIED` after required same-head executable evidence.
 
-Render reachability is development evidence only, not production approval.
-
-## 3. Product / architecture
+## 3. Stable product / architecture
 
 **الوسيلة الذكية** Arabic education platform:
 
-- Student Web/PWA: activation/login, entitled curriculum, Reader, practice/tests, personal learning data, notifications, offline.
-- Admin: curriculum/content, mixed media upload, OCR review, AI operations/review, Question Bank, students/codes/recovery, reports/settings/audit.
+- Student Web/PWA: secure access, entitled curriculum, Reader, practice/tests, personal learning data, notifications/offline.
+- Super Admin: curriculum/content, mixed media ingestion, OCR, AI operations/review, Question Bank, students/codes/recovery/reports/settings/audit.
 - Backend: Fastify + PostgreSQL authority for auth/access/business state/media/OCR/AI/review/publication.
 
 Stable rules:
 
 - Full Code 6 digits; Class Code 7 digits.
-- Student activation verify non-consuming; finalize atomic.
-- returning Student requires password + registered P-256 proof.
+- activation verify non-consuming; finalize atomic.
+- returning Student = password + registered P-256 proof.
 - Curriculum = Class → Subject Offering → optional Section → Lesson.
 - source import = provenance, never curriculum authority.
 - `media ready != published`.
 - browser does not own durable business state.
 - exact AI never fabricates unknown answers.
 - provider calls outside long DB transactions.
-- Fastify HTTP separate from AI worker runtime.
+- Fastify HTTP remains separate from durable AI worker runtime.
 - no secrets/raw provider internals client-side.
 - root-cause only; no test weakening/auth bypass/fake API/duplicate authority.
 
-## 4. Git state
+## 4. Git / delivery state
 
-`main` is the Integration-approved development delivery branch and feeds the temporary Render development environment.
+`main` is Integration-approved development delivery and feeds temporary Render development after accepted merges.
+
+Stage13E is **not in `main`**.
+
+Current Stage13E integration branch:
+
+`integration/stage13e-ai-operations`
+
+It was intentionally created from the then-current production/development base:
+
+`main @ 1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`
+
+Central docs have since advanced on `main`; those docs-only commits do not make the Stage13E candidate stale at the product/runtime layer. Before eventual promotion, rebase/selectively sync latest central docs rather than overwrite them from feature branches.
 
 Legacy old-main archive:
 
-`archive/legacy-main-2026-09-08` @ `5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
+`archive/legacy-main-2026-09-08 @ 5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`.
 
-`planning/product-evolution-review` is synchronized for engineering continuity but is not a hosted deploy source.
+## 5. Temporary Render development direction
 
-Feature branches remain short-lived and must integrate through the main Integration process.
+Repository authority currently classifies Render as **free development/test hosting only**, not final production.
 
-Final production hosting is **not Render-locked**. Current expectation: VPS or Railway after the product and operational requirements stabilize.
-
-## 5. Temporary Render development topology
-
-Workspace:
-
-- ID `tea-daadbd1srm7s73ekrt5g`
-- `My Workspace`
-
-Current root `render.yaml` declares only free development resources:
+Declared topology:
 
 ```text
-Student static site ─┐
-                     ├── Docker Fastify API ── Render Free PostgreSQL
-Admin static site ───┘
+Student static ─┐
+                ├── Docker Fastify API ── Render Free PostgreSQL
+Admin static ───┘
 ```
 
-Names:
+API is Dockerized and includes Poppler because Stage10 PDF processing executes `pdfinfo` / `pdftoppm`.
 
-- `alwaslh-dev-student-7eaur`
-- `alwaslh-dev-admin-7eaur`
-- `alwaslh-dev-api-7eaur`
-- `alwaslh-dev-postgres-7eaur`
+Free media filesystem is ephemeral. Media durability across restart/redeploy remains `NOT YET VERIFIED` by design. Final VPS/Railway production topology and durable media architecture remain deferred until real product/operational requirements stabilize.
 
-Render preview generation is disabled. All temporary hosted development resources use `main`.
+Current repository evidence still says Render Blueprint Apply/runtime verification is pending. Verify actual Render state before changing that claim.
 
-### API runtime
+Vercel old serverless path is retired; root `vercel.json` is only a Git-deployment kill-switch. Historical Supabase Alwaslh resources remain rollback/history only.
 
-API remains Dockerized for portability and because `apps/api/src/media/pdf-processor.ts` executes `pdfinfo` and `pdftoppm`.
-
-`apps/api/Dockerfile`:
-
-- `node:22.22.0-bookworm-slim`;
-- installs `poppler-utils`, `ca-certificates`, `gosu`;
-- compiles API;
-- runtime includes `database/migrations`;
-- runs application non-root through `apps/api/docker-entrypoint.sh`.
-
-This Docker image should remain usable later on VPS/Railway. Do not rewrite the application around a temporary hosting provider.
-
-### Free PostgreSQL
-
-- Render Free PostgreSQL 16.
-- temporary development database only.
-- injected through `DATABASE_URL`.
-- current plan must not be treated as long-term data authority.
-
-Free Web Service does not use paid pre-deploy command. Development startup runs:
-
-`node apps/api/dist/migrate.js && node apps/api/dist/server.js`
-
-Migrator remains idempotent, checksum-protected and advisory-lock guarded.
-
-### Media in free mode
-
-`MEDIA_STORAGE_ROOT=/app/runtime-data/media` remains filesystem-backed.
-
-No persistent disk exists in Free mode. Consequences:
-
-- image/PDF workflows may be tested during an active deployment;
-- uploaded files can disappear after restart/redeploy;
-- hosted free-mode media durability = `NOT YET VERIFIED` by design;
-- never claim Render Free as final storage architecture;
-- do not add provider-specific storage coupling merely to make temporary testing durable.
-
-Durable production media design is deferred until the final VPS/Railway deployment requirements are known.
-
-### AI worker
-
-No hosted production AI worker yet. Stage12 lacks approved live provider routes/credentials/standalone production bootstrap. Never fake a worker or run it inside Fastify.
-
-## 6. Render exact state
-
-Blueprint has been edited for **zero-cost development/test mode** but has not yet been applied in Render Dashboard.
-
-At this point:
-
-- Render development DB: not provisioned.
-- Render development API: not provisioned.
-- Student development site: not provisioned.
-- Admin development site: not provisioned.
-- hosted development runtime: `NOT YET VERIFIED`.
-
-Next hosting action: user applies the free Blueprint. Integration then inspects actual Render resources/deploys/logs/DB.
-
-## 7. Final production direction
-
-Final hosting will be decided later between VPS / Railway or another approved equivalent after product maturity.
-
-Architecture must stay portable:
-
-- Docker Fastify API;
-- PostgreSQL through `DATABASE_URL`;
-- environment-driven CORS/session configuration;
-- migration runner independent of host;
-- frontend static builds separated from backend;
-- media storage authority isolated from browser concerns.
-
-Do not overengineer final availability/storage before real scale and durability requirements exist.
-
-## 8. Vercel retirement state
-
-Connected Vercel project `alwaslh` remains externally GitHub-linked.
-
-Root minimal `vercel.json` is intentionally retained only as a deployment kill-switch:
-
-```json
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "git": { "deploymentEnabled": false }
-}
-```
-
-Old Vercel build/serverless files are removed. Do not delete the kill-switch until provider-side Git unlink is confirmed.
-
-## 9. Supabase state
-
-Connected Supabase project `dhlqqgnxsqawidjmedvq` contains tables matching Alwaslh rebuild history and remains a historical/rollback resource.
-
-Do not build new provider coupling around it just for temporary hosting. Do not delete it without an explicit retention decision.
-
-`jfvnqbutsyrctjwczday` (`himma-lab`) is unrelated and must never be touched for Alwaslh.
-
-## 10. Verified application baseline
+## 6. Fully verified application baseline
 
 Latest fully green application head remains:
 
-`4eca7de8877ac9e2289b9c7990c912d33c256935`.
+`4eca7de8877ac9e2289b9c7990c912d33c256935`
 
 Same-head SUCCESS:
 
@@ -201,84 +104,182 @@ Same-head SUCCESS:
 - Stage9 `34177369756`
 - Full Rebuild `34177369768`
 
-Hosting/config/docs commits do not replace this application verification baseline.
+Do not replace this baseline with docs/hosting commits or unexecuted Stage13E candidates.
 
-## 11. GitHub Actions blocker
+## 7. GitHub Actions blocker
 
-Current independent workflows recently fail before checkout with no runner allocation and `steps=[]`. Treat as external verification-infrastructure evidence, not code regression.
+Current independent workflows repeatedly terminate before checkout with no runner allocation:
 
-Do not weaken gates or churn product code. Rerun unchanged gates when allocation works; fix only real executed failures.
+- `runner_id=0`
+- `runner_name=""`
+- `steps=[]`
 
-## 12. Stage13E Backend candidate
+This is external verification-infrastructure evidence, not a product regression. Do not weaken gates or churn product code because of those conclusions.
 
-Branch `backend/stage13e-ai-operations` @ `348c02646d0ff873fd305beff16f41c46d9c0285`.
+## 8. Stage13E Backend candidate
 
-REPORT #14 `5579330147`.
+Branch:
 
-Structurally accepted candidate includes Admin AI jobs/units/attempts/outputs, server progress/action authority, Stage12 controls, strict append-only review audit, Stage11 semantic validation and security boundaries.
+`backend/stage13e-ai-operations @ 348c02646d0ff873fd305beff16f41c46d9c0285`
 
-Not merged to `main`; same-head executable gate pending runner availability.
+Backend candidate provides:
 
-## 13. Stage13E Frontend candidate
+- Admin jobs/units/attempts/outputs read models;
+- server-derived progress + `allowedActions`;
+- Stage12 pause/resume/cancel/retry authority;
+- provider/model/project observability without credentials/raw provider internals;
+- source/page/checksum provenance;
+- append-only edit/approve/reject audit through `0018_ai_admin_review.sql`;
+- Stage11 semantic validation for Admin edit/approve;
+- server-derived `allowedReviewActions`;
+- strict discriminated review HTTP body;
+- terminal review race protection.
 
-Branch `frontend/stage13e-ai-operations` @ `e42644944ca3fcc7e225a263a6e9699bcb70b9f7`.
+Backend candidate is structurally accepted, but its standalone same-head execution is blocked before checkout.
 
-REPORT #15 `5579436581`.
+## 9. Stage13E Frontend candidate
 
-Real authenticated API binding exists. Integration bounded return still requires real browser regression preparation for:
+Branch:
 
-- session expiry/auth rejection;
-- stale-review `409` conflict/race;
-- no mocks/fake endpoint.
+`frontend/stage13e-ai-operations @ 1eb141e950e96c9f53ffd103a386d59166113c16`
 
-Not merged to `main`.
+Product/Test HEAD:
 
-## 14. Render development verification after Apply
+`7bf2f8c32907032551aace9f3aa27681040c4b0f`
 
-1. list Render services and DB; record IDs;
-2. inspect first deploys/logs;
-3. verify migrations/schema;
-4. verify Docker build + Poppler through real PDF processing;
-5. `/health` 200;
-6. `/ready` 200 with DB;
-7. Student site loads;
-8. Admin site loads;
-9. CORS/session from both origins;
-10. Student activation/login/recovery smoke;
-11. Admin login/curriculum/content smoke;
-12. Stage13D mixed image/PDF functional flow;
-13. explicitly record media survival across restart/redeploy as `NOT YET VERIFIED` in Free mode;
-14. inspect logs for runtime/security defects.
+REPORT #15:
 
-Render development environment can be accepted as useful testing infrastructure without being final production.
+`5579577424`
 
-## 15. Next Integration sequence
+Latest Integration Review #15:
 
-1. User applies free Render Blueprint.
-2. Main chat verifies development resources and records exact IDs/deploys.
-3. Frontend finishes bounded Stage13E browser regression prep.
-4. When GitHub runners return, run unchanged Stage13E gates.
-5. Create Stage13E integration branch from latest `main` and combine accepted Backend/Frontend candidates.
-6. Run same-head API/Admin/Postgres/Chromium/390px/full regressions.
-7. Merge Stage13E only after PASS to `main` → Render development auto-deploy → hosted smoke.
-8. Close Stage13E docs/Legacy Coverage/Roadmap → Stage13F.
-9. Near product completion, design final VPS/Railway production topology from measured requirements and migrate using the same portable Docker/PostgreSQL contracts.
+`5580147549` — **bounded browser regression prep ACCEPTED AS INTEGRATION CANDIDATE**.
 
-## 16. Open risks / NOT YET VERIFIED
+Verified by code review:
 
-- first Render free Blueprint Apply pending;
-- hosted development runtime unverified;
-- free Render filesystem is ephemeral, so hosted media durability unavailable;
-- free Render PostgreSQL is temporary and must not become long-term authority;
-- Vercel external Git link remains but automatic deployment is guarded off;
+- production API binding, no invented endpoint;
+- real same-BrowserContext logout/session-expiry path;
+- real out-of-band review mutation producing stale UI `409`;
+- safe feedback + canonical refresh to rejected state;
+- 390px overflow assertion;
+- no route interception/mock API/fake 401/409/test-only Backend endpoint/manual cookie mutation/sleep race.
+
+Frontend standalone run `34189236669`, job `101943693820`, terminated before checkout with `runner_id=0`, `steps=[]`.
+
+## 10. Stage13E combined Integration branch
+
+Branch:
+
+`integration/stage13e-ai-operations`
+
+Assembly strategy:
+
+Backend/Frontend feature branches predate newer `main` hosting/central-doc changes and had diverged histories. Direct merge was intentionally rejected. Integration overlaid only reviewed Stage13E product/test/specialized-contract files onto current `main` lineage.
+
+Commits:
+
+- `227f4c9dba99e7b8c93d25caebe86e38108d4a5c` — selective Backend candidate;
+- `a60274fedf55fb45b6684743da24b24004339917` — selective Frontend candidate;
+- `4ba77703866762c471257bbb914590b817ecc82e` — real Stage13E E2E fixture seed;
+- `807f733838e2fab2620652025b255c3bc404fec1` — combined integration workflow.
+
+Temporary diff PRs #21/#22 were closed unmerged after file enumeration. They are not delivery PRs.
+
+Final diff review from base `1069aabc...` to `807f7338...`:
+
+- exactly 4 commits ahead, 0 behind at assembly time;
+- only Stage13E API/Admin/tests/migration/docs/workflows + Integration fixture/workflow;
+- no Render/Docker/Vercel retirement config changed;
+- no unrelated Student code changed;
+- `App.tsx` retains Curriculum, Content Ingestion and Content Operations and adds AI Operations.
+
+## 11. Combined real-browser fixture authority
+
+Fixture utility:
+
+`apps/api/tests/fixtures/stage13e-e2e-seed.ts`
+
+Environment contract:
+
+- `STAGE13E_E2E_JOB_TYPE=stage13e_e2e_happy`
+- `STAGE13E_E2E_RACE_JOB_TYPE=stage13e_e2e_race`
+
+Happy fixture:
+
+- non-terminal queued job;
+- one `review_required` unit with valid open output;
+- one additional queued unit;
+- real pause/resume remains server-authorized while review remains available.
+
+Race fixture:
+
+- execution-terminal completed job;
+- one `review_required` unit with valid open output;
+- no review event initially;
+- terminal execution prevents normal 5s non-terminal polling from erasing the stale UI state before out-of-band review mutation.
+
+No test-only API endpoint is created. Fixture writes normal durable tables directly in CI after migrations, matching existing repository E2E fixture practice.
+
+## 12. Combined Stage13E gate
+
+Workflow:
+
+`.github/workflows/stage13e-integration.yml`
+
+Expected execution:
+
+1. API lint/typecheck/unit/build;
+2. Admin lint/typecheck/unit/build;
+3. clean PostgreSQL migrations + Stage13E DB contract;
+4. Stage13E Backend authority/race integration tests;
+5. Stage12 execution/capacity/control/lifecycle regressions;
+6. auth security regression;
+7. fresh DB reset;
+8. real Admin bootstrap;
+9. seed happy + race fixtures;
+10. assert fixture DB invariants;
+11. Chromium Stage13E happy/reload/session-expiry/stale-409/390px suite.
+
+Latest attempted run:
+
+- run `34193380473`
+- job `101955846938`
+- HEAD `807f733838e2fab2620652025b255c3bc404fec1`
+- `conclusion=failure`
+- `runner_id=0`
+- `steps=[]`
+
+No checkout/product/test step ran. Combined candidate therefore remains `NOT YET VERIFIED`.
+
+Integration Report #16:
+
+`5580151268` — **INTEGRATION CANDIDATE ASSEMBLED / HOLD FOR EXECUTABLE RUNNER**.
+
+## 13. Exact next Integration action
+
+1. Do not merge Stage13E to `main`.
+2. Do not start Stage13F.
+3. When GitHub runner allocation works, rerun the unchanged combined gate on `integration/stage13e-ai-operations`.
+4. If any step actually executes and fails, fix the root cause in its owning layer and add regression evidence.
+5. After combined PASS, run the required wider same-head regression matrix.
+6. Only then promote Stage13E to `main`, allow Render development deploy, verify hosted smoke, update central docs/Legacy Coverage/Roadmap and close Stage13E.
+7. Independently verify Render free Blueprint after the pending Dashboard Apply; hosted development evidence never substitutes for Stage13E executable PASS.
+
+## 14. Open risks / NOT YET VERIFIED
+
 - GitHub hosted-runner allocation blocker;
-- production AI worker absent by design;
-- final VPS/Railway production topology and durable media storage intentionally deferred;
+- Stage13E combined executable gates;
+- Render free Blueprint Apply/runtime verification;
+- Render Free filesystem media durability unavailable by design;
+- production AI worker/bootstrap absent by design;
+- final VPS/Railway production + durable media design deferred;
 - `AI-011-005` direct Question Bank persistence unresolved;
-- `AI-012-019` live AI provider bootstrap unresolved.
+- `AI-012-019` live AI provider benchmark/routes/bootstrap unresolved.
 
-## 17. Update policy
+## 15. Administrative cleanup note
 
-Update this file after any material Backend/Frontend report, Integration decision, branch/head change, root cause, CI result, Render development deploy outcome, hosting-direction decision, merge, or Stage transition.
+Accidental placeholder Issues #19, #20 and #23 were created by Integration tool-routing mistakes and immediately closed `not_planned`. They contain no project command, implementation state or acceptance decision.
 
-If a branch advances without REPORT, record as observed WIP / `NOT YET VERIFIED`.
+## 16. Update policy
+
+Update this file after any material workstream REPORT, Integration decision, branch/head change, root cause, CI result, Render development outcome, merge or Stage transition. If a branch advances without REPORT, record it as observed WIP / `NOT YET VERIFIED`.
