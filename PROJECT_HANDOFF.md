@@ -11,11 +11,13 @@ Before changing code:
 1. Confirm repository `7eaur/alwaslh`, branch `planning/product-evolution-review`, Draft PR #12.
 2. Read `README.md` and `DOCUMENTATION_INDEX.md`.
 3. Read this file, then `PROJECT_STATUS.md` and `PROJECT_ENGINEERING_LOG.md`.
-4. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` before interpreting older Product Decisions.
-5. Read Product Decisions, parity/coverage, Roadmap and specialized current-stage docs listed in the Index.
-6. Inspect actual code/callers/migrations/tests for the area to modify. File/folder names alone are not evidence.
-7. Check GitHub Actions for the exact HEAD; never infer PASS from chat prose.
-8. Anything not inspected/tested = `NOT YET VERIFIED`.
+4. Read `docs/workstreams/TEAM_OPERATING_MODEL.md` and the role-specific workstream file.
+5. Read the latest command/report in the role's GitHub Board: Backend `#14`, Frontend `#15`, Integration `#16`; inspect Team Room `#13` for cross-team decisions/blockers.
+6. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` before interpreting older Product Decisions.
+7. Read Product Decisions, parity/coverage, Roadmap and specialized current-stage docs listed in the Index.
+8. Inspect actual code/callers/migrations/tests for the area to modify. File/folder names alone are not evidence.
+9. Check GitHub Actions for the exact HEAD; never infer PASS from chat prose.
+10. Anything not inspected/tested = `NOT YET VERIFIED`.
 
 ## 1. Repository / Git state
 
@@ -24,7 +26,7 @@ Before changing code:
 - Draft PR: #12
 - PR base: `rebuild/media-pipeline`
 - Latest fully verified executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`
-- Current documentation closure is a docs-only descendant of that executable head.
+- Current documentation/team-operating-model closure is a docs-only descendant of that executable head.
 - Do not force-update refs or rewrite prior history.
 
 ## 2. Product idea
@@ -43,7 +45,40 @@ Target outcomes: curriculum/content authoring; image/PDF/mixed ingestion; media/
 
 Authoritative boundary for Auth/Authorization/Entitlements, curriculum/business data, PostgreSQL mutations, Media/OCR/AI execution/review, and trusted publish/assessment/progress state. Browser never owns those authorities or talks directly to PostgreSQL as the application data path.
 
-## 3. Legacy preservation rule
+## 3. Permanent engineering team topology
+
+المشروع يعمل بثلاثة workstreams دائمة. المحادثات تستمر عبر المراحل، لكن branches قصيرة لكل feature/stage.
+
+### Backend / Platform
+
+- Guide: `docs/workstreams/BACKEND_WORKSTREAM.md`
+- Command/report Board: GitHub Issue `#14`
+- Owns API/PostgreSQL/server authority/workers/security/backend tests.
+
+### Frontend / Product
+
+- Guide: `docs/workstreams/FRONTEND_WORKSTREAM.md`
+- Command/report Board: GitHub Issue `#15`
+- Owns Admin/Student UX, API integration, responsive/a11y/PWA/frontend tests.
+
+### Integration / Architecture / QA / Release
+
+- Guide: `docs/workstreams/INTEGRATION_WORKSTREAM.md`
+- Integration Board: GitHub Issue `#16`
+- Owns architecture coherence, review, merge, same-head verification, central docs and release readiness.
+
+### Shared Team Room
+
+- GitHub Issue `#13`
+- Use for cross-team contract questions, blockers, architecture proposals and decisions.
+
+Rules for all teams live in `docs/workstreams/TEAM_OPERATING_MODEL.md`.
+
+**Critical protocol:** latest `COMMAND` in a workstream Board defines current scope. Each team self-reviews then posts a `REPORT` with branch/commits/tests/blockers/`NOT YET VERIFIED`. Backend/Frontend `Ready` never means Stage VERIFIED; only Integration accepts and closes a Stage after cross-boundary same-head evidence.
+
+No conversation works in the background or receives messages automatically. On resume it must read GitHub and continue from the recorded command/decision.
+
+## 4. Legacy preservation rule
 
 The legacy product is a **feature/scenario/failure reference**, not target architecture.
 
@@ -56,7 +91,7 @@ Hard gates:
 
 Every valuable legacy capability must end as `KEEP | IMPROVE | REFACTOR | REBUILD | REMOVE(owner-approved)` with implementation + acceptance evidence. Never silently drop a legacy result because the old code was poor.
 
-## 4. Current Product Owner overrides
+## 5. Current Product Owner overrides
 
 Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
 
@@ -65,7 +100,7 @@ Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
 3. **Repository documentation is official memory.** New chats read docs, not chat memory.
 4. **Root-cause only.** No test/security/business-rule weakening for green CI.
 
-## 5. Stable architecture / boundaries
+## 6. Stable architecture / boundaries
 
 ```text
 Student PWA ─┐
@@ -100,7 +135,7 @@ Stable rules:
 - Fastify remains HTTP-only; dedicated bounded AI worker runtime is separate.
 - Student ultimately consumes Published Admin-reviewed authority, not raw provider output.
 
-## 6. Verified stage history
+## 7. Verified stage history
 
 - Stages1–10: VERIFIED.
 - OCR Foundation: VERIFIED.
@@ -148,7 +183,7 @@ Specialized doc: `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md`.
 
 Legacy `LES-A-010..015` is now VERIFIED. `LES-A-016+` remains NOT YET VERIFIED until later evidence.
 
-## 7. Latest exact verification matrix
+## 8. Latest exact verification matrix
 
 Executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 
@@ -162,7 +197,9 @@ Executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
 - Stage9 Content Import `34177369756` — SUCCESS.
 - Full Rebuild `34177369768` — SUCCESS; includes Student Chromium activation/returning-login/recovery.
 
-## 8. Current next work — Stage13E Admin AI Operations / Review
+## 9. Current next work — Stage13E Admin AI Operations / Review
+
+Backend receives its current command from Issue `#14`. Frontend receives its current command from Issue `#15`. Integration tracks acceptance in Issue `#16` and shared contract questions in Issue `#13`.
 
 **Do not jump to Question Bank/Stage13F yet.** First inspect the actual Stage12 repositories/services/routes and current Admin patterns, then close Admin AI operations over existing authorities.
 
@@ -177,9 +214,9 @@ Required sequence from Roadmap:
 7. Live provider routing remains disabled/unverified until benchmark authorization/config exists.
 8. Add API/PostgreSQL/unit/integration/Chromium evidence.
 9. Only newly proven legacy rows move to VERIFIED; everything else stays NOT YET VERIFIED.
-10. Update Status/Engineering Log/Handoff/specialized doc/Legacy Coverage after the isolated batch.
+10. Integration Lead synchronizes Status/Engineering Log/Handoff/specialized doc/Legacy Coverage after accepting the batch.
 
-## 9. Remaining major work after Stage13E
+## 10. Remaining major work after Stage13E
 
 - Stage13F Question Bank/Quiz Builder/review/publish/export; resolve `direct` persistence first.
 - Stage13G Students/Codes/Recovery/Device Rebind/Notifications/Import-Export/Reports/Settings/Audit.
@@ -192,7 +229,7 @@ Required sequence from Roadmap:
 - Stage20 Import/Export/Reporting.
 - Stages21–29 performance/security/tests/a11y/data/staging/release/cutover/monitoring.
 
-## 10. Open findings / risks to carry forward
+## 11. Open findings / risks to carry forward
 
 - `CONTENT-013-002` P1 — **CLOSED / VERIFIED by Stage13D**; explicit media→Lesson Draft/Review/Published contract now exists.
 - `AI-011-005` P2 — `direct` AI question persistence unresolved.
@@ -206,7 +243,7 @@ Required sequence from Roadmap:
 
 All other findings live in `PROJECT_ENGINEERING_LOG.md`.
 
-## 11. What NOT to do
+## 12. What NOT to do
 
 - Do not use old root Supabase architecture as current target.
 - Do not re-open old DB work unless Product Owner explicitly asks.
@@ -219,6 +256,6 @@ All other findings live in `PROJECT_ENGINEERING_LOG.md`.
 - Do not weaken tests/authorization/business rules to pass CI.
 - Do not call a stage VERIFIED without exact executable evidence.
 
-## 12. Documentation rule before ending any future session
+## 13. Documentation rule before ending any future session
 
-Update at minimum `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, current specialized doc, Legacy Coverage, Roadmap when phase/state changes, and exact commit/run IDs. Keep `NEXT_CONVERSATION_PROMPT.md` short; actual state belongs in repository docs.
+Workstream chats update their own role file + Board report. Integration Lead updates central `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, current specialized doc, Legacy Coverage and Roadmap when phase/state changes. Record exact commit/run IDs. Keep `NEXT_CONVERSATION_PROMPT.md` short; actual state belongs in repository docs.
