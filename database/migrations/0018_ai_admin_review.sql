@@ -19,12 +19,14 @@ CREATE TABLE ai_output_review_events (
   ),
   CONSTRAINT ai_output_review_events_note_length CHECK (
     note IS NULL OR length(note) <= 4000
+  ),
+  CONSTRAINT ai_output_review_events_reject_note_required CHECK (
+    action <> 'reject' OR (note IS NOT NULL AND length(btrim(note)) > 0)
   )
 );
 
-CREATE INDEX idx_ai_output_review_events_output_latest
-  ON ai_output_review_events(ai_output_id, revision DESC);
-
+-- The UNIQUE (ai_output_id, revision) btree already serves
+-- latest-revision lookups with a backward index scan; do not duplicate it.
 CREATE INDEX idx_ai_output_review_events_actor_created
   ON ai_output_review_events(actor_profile_id, created_at DESC);
 
