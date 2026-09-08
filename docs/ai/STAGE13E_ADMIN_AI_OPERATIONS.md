@@ -17,6 +17,7 @@ Current combined branch is documented in `PROJECT_EXECUTION_QUEUE.md` and `PROJE
 - Human review mutation is available only for **execution-stable unit outputs**: `completed | review_required`.
 - Outputs attached to `queued | running | retrying | failed | cancelled` units remain observable for diagnosis/provenance but are **inspection-only** and expose no review mutation authority.
 - Paginated history is presentation/audit navigation only. The currently opened history page never defines current review state or action authority.
+- One Output Detail response is assembled from one short PostgreSQL repeatable-read snapshot so actor/time/output/history/count/latest authority cannot come from mixed committed states.
 
 ## 2. Job lifecycle / progress
 
@@ -166,13 +167,16 @@ Important response fields:
 
 ### Canonical-latest versus paginated history
 
-The service performs separate reads for:
+Within one short `REPEATABLE READ` transaction, the service reads:
 
-1. requested review-history page;
-2. total review-event count;
-3. canonical latest review revision.
+1. output + owning unit state;
+2. requested review-history page;
+3. total review-event count;
+4. canonical latest review revision.
 
-`reviewStatus`, `allowedReviewActions`, and `effectiveReviewedOutput` are derived only from the canonical latest revision. Therefore opening page 3 of the audit history cannot make revision 1 appear to be the current review or re-enable actions after a later terminal approve/reject.
+The transaction is closed before schema/provenance mapping. No write lock is introduced and no provider/network call occurs inside it.
+
+`reviewStatus`, `allowedReviewActions`, and `effectiveReviewedOutput` are derived only from the canonical latest revision. Therefore opening page 3 of the audit history cannot make revision 1 appear to be the current review or re-enable actions after a later terminal approve/reject. The repeatable-read snapshot additionally guarantees that `reviewedByProfileId/reviewedAt`, page/count and canonical latest revision come from one committed database snapshot.
 
 Effective reviewed output:
 
@@ -282,15 +286,32 @@ Frontend originally exposed only first 30 Jobs / 50 Units / 50 Attempts although
 
 **Frontend/Chromium regression:** real fixture seeds 101 edit revisions, navigates all three history pages, confirms revision 1 is reachable, confirms approve authority still comes from latest revision while the oldest page is displayed, then approves and proves history grows to 102 and survives reload.
 
-**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`. Latest run `34275316004`, job `102226771007`, ended before checkout with `runner_id=0`, `steps=[]`.
+**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`. Runtime/test candidate later advanced to `9d59f84fb516db5cfaf89382f548c3eea595e365`; executable runner remains unavailable before checkout.
+
+### AI-013E-OPS-005 — P2 Review detail snapshot consistency
+
+**Symptom:** after OPS-004, output row, audit page, count and canonical latest revision were still read by separate top-level queries under PostgreSQL `READ COMMITTED`.
+
+**Root cause:** current authority was separated correctly from the selected page, but the complete Output Detail response did not yet have a single read-snapshot boundary.
+
+**Impact:** if another Admin review committed between those reads, one HTTP response could combine a new `reviewStatus` with older `reviewedByProfileId/reviewedAt`, page or total metadata. No durable corruption occurs, but the audit/read model can become internally inconsistent.
+
+**Correct fix:** execute the four database reads inside one short `REPEATABLE READ` transaction, then close the transaction before JSON/schema/provenance mapping. No write locks or provider calls are added.
+
+**Regression:** `tests/ai-admin-output-detail-snapshot.test.ts` fails any future output-detail read that escapes the transaction and asserts the isolation command is the first transaction operation, while preserving canonical approved state, actor/time and pagination mapping.
+
+**Commit:** `9d59f84fb516db5cfaf89382f548c3eea595e365`.
+
+**Execution state:** FIXED IN CANDIDATE / `NOT YET VERIFIED`. Run `34277281675`, job `102233304479`, ended before checkout with `runner_id=0`, `steps=[]`.
 
 ## 12. Security / performance
 
 - Jobs/Units/Attempts/Review History use bounded server pagination; max page size 100.
 - canonical latest review query is independent and bounded to one row.
+- Output Detail uses a short repeatable-read snapshot across four local PostgreSQL reads; parsing/mapping occurs after commit.
+- no write lock or provider/network call is introduced by the read snapshot.
 - list/detail avoid raw provider payloads and credentials/internal errors.
-- provider/network calls are not introduced in Admin transactions.
-- review transaction remains short and row-scoped.
+- review mutation transaction remains short and row-scoped.
 - action availability remains server-derived.
 - no second lifecycle/queue and no duplicate latest-review index.
 
@@ -298,7 +319,7 @@ Frontend originally exposed only first 30 Jobs / 50 Units / 50 Attempts although
 
 Combined Stage13E workflow must execute:
 
-1. API lint/typecheck/unit/build;
+1. API lint/typecheck/unit/build, including Output Detail snapshot regression;
 2. Admin lint/typecheck/unit/build;
 3. clean PostgreSQL migrations + Stage13E DB contract;
 4. Admin authorization/secret/provenance/review/action/retry/concurrency/stable-review/review-history pagination regressions;
@@ -311,9 +332,9 @@ Combined Stage13E workflow must execute:
 
 Current runtime/test candidate HEAD before this documentation commit:
 
-`6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b`
+`9d59f84fb516db5cfaf89382f548c3eea595e365`
 
-Latest run: `34275316004`; job: `102226771007`.
+Latest run: `34277281675`; job: `102233304479`.
 
 Observed: no runner allocated (`runner_id=0`) and no executable steps (`steps=[]`). Therefore Stage13E remains **NOT YET VERIFIED** and stays outside `main`.
 
