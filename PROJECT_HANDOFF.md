@@ -1,261 +1,242 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> **Purpose:** a new engineer/chat should be able to resume the project from this file + `DOCUMENTATION_INDEX.md` without prior conversation memory.
+> **Purpose:** a replacement engineer/chat must be able to resume from GitHub without prior conversation memory.
 
-Last synchronized: 2026-09-08.
+Last synchronized: 2026-09-08 — Render production cutover.
 
 ## 0. Mandatory startup procedure
 
 Before changing code:
 
-1. Confirm repository `7eaur/alwaslh`, branch `planning/product-evolution-review`, Draft PR #12.
-2. Read `README.md` and `DOCUMENTATION_INDEX.md`.
-3. Read this file, then `PROJECT_STATUS.md` and `PROJECT_ENGINEERING_LOG.md`.
-4. Read `docs/workstreams/TEAM_OPERATING_MODEL.md` and the role-specific workstream file.
-5. Read the latest command/report in the role's GitHub Board: Backend `#14`, Frontend `#15`, Integration `#16`; inspect Team Room `#13` for cross-team decisions/blockers.
-6. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` before interpreting older Product Decisions.
-7. Read Product Decisions, parity/coverage, Roadmap and specialized current-stage docs listed in the Index.
-8. Inspect actual code/callers/migrations/tests for the area to modify. File/folder names alone are not evidence.
-9. Check GitHub Actions for the exact HEAD; never infer PASS from chat prose.
-10. Anything not inspected/tested = `NOT YET VERIFIED`.
+1. Confirm repo `7eaur/alwaslh`.
+2. Treat **`main` as the production source branch**.
+3. Read `README.md` and `DOCUMENTATION_INDEX.md`.
+4. Read this file, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, and for Integration/Main also `PROJECT_INTEGRATION_CONTINUITY.md`.
+5. Read `docs/workstreams/TEAM_OPERATING_MODEL.md` and the role-specific workstream file.
+6. Read latest GitHub commands/reports: Team Room `#13`, Backend `#14`, Frontend `#15`, Integration `#16`.
+7. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` before older Product Decisions.
+8. For hosting/release work read `docs/deployment/RENDER_PRODUCTION.md` and root `render.yaml`.
+9. Inspect actual code/callers/migrations/tests before changing an area.
+10. Live-check branch HEADs, GitHub Actions and Render deploy state; prose is not executable evidence.
+11. Anything not inspected/tested = `NOT YET VERIFIED`.
 
-## 1. Repository / Git state
+## 1. Repository / Git / Production state
 
 - Repo: `7eaur/alwaslh`
-- Working branch: `planning/product-evolution-review`
-- Draft PR: #12
-- PR base: `rebuild/media-pipeline`
-- Latest fully verified executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`
-- Current documentation/team-operating-model closure is a docs-only descendant of that executable head.
-- Do not force-update refs or rewrite prior history.
+- Production branch: **`main`**
+- Render cutover source commit: `febd8ca2fe047a0b3a961bf73060289ed35e79c6`
+- Old legacy `main` preserved at `archive/legacy-main-2026-09-08` → `5d16c9ae5e4aa84a13c128da34b0e62f4ae28c06`
+- `planning/product-evolution-review` remains historical/integration context during transition but is no longer the production deploy source.
+- Draft PR #12 remains historical/current-development context and its body may be stale.
+- Latest fully verified executable pre-hosting head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
+- Do not rewrite history casually. The force move of `main` during cutover was explicitly Product Owner-authorized and protected by the archive branch.
 
 ## 2. Product idea
 
-**الوسيلة الذكية** is an Arabic educational platform. Its business outcome is not “show PDFs”; it manages trustworthy curriculum/content, controlled student access, learning/practice and review.
+**الوسيلة الذكية** is an Arabic education platform managing trustworthy curriculum/content, controlled student access, learning/practice and review.
 
 ### Student Web/PWA — `apps/student-web`
 
-Target outcomes: secure Full-Code activation and returning login; entitlement-filtered curriculum; mobile-first Reader/media/text/search/TTS; Practice/Tests/Models; Notes/Favorites/Needs Review; progress/private achievements; notifications; explicit offline/PWA lifecycle.
+Secure Full-Code activation and returning device-bound login; entitlement-filtered curriculum; Reader/media/text/search/TTS; Practice/Tests/Models; Notes/Favorites/Needs Review; progress/private achievements; notifications; explicit Offline/PWA lifecycle.
 
 ### Admin Web — `apps/admin-web`
 
-Target outcomes: curriculum/content authoring; image/PDF/mixed ingestion; media/OCR review; AI operations/review; Question Bank/Quiz Builder/publish; students/codes/recovery/device reset; notifications/import-export/reports/settings/audit.
+Curriculum/content authoring; image/PDF/mixed ingestion; media/OCR review; AI operations/review; Question Bank/Quiz Builder/publish; students/codes/recovery/device reset; notifications/import-export/reports/settings/audit.
 
 ### Backend API — `apps/api`
 
-Authoritative boundary for Auth/Authorization/Entitlements, curriculum/business data, PostgreSQL mutations, Media/OCR/AI execution/review, and trusted publish/assessment/progress state. Browser never owns those authorities or talks directly to PostgreSQL as the application data path.
+Authority for Auth/Authorization/Entitlements, curriculum/business data, PostgreSQL mutations, media/OCR/AI state/review, and trusted publication/assessment/progress. Browser never owns those authorities.
 
 ## 3. Permanent engineering team topology
 
-المشروع يعمل بثلاثة workstreams دائمة. المحادثات تستمر عبر المراحل، لكن branches قصيرة لكل feature/stage.
-
 ### Backend / Platform
-
 - Guide: `docs/workstreams/BACKEND_WORKSTREAM.md`
-- Command/report Board: GitHub Issue `#14`
+- Board: Issue `#14`
 - Owns API/PostgreSQL/server authority/workers/security/backend tests.
 
 ### Frontend / Product
-
 - Guide: `docs/workstreams/FRONTEND_WORKSTREAM.md`
-- Command/report Board: GitHub Issue `#15`
+- Board: Issue `#15`
 - Owns Admin/Student UX, API integration, responsive/a11y/PWA/frontend tests.
 
 ### Integration / Architecture / QA / Release
-
 - Guide: `docs/workstreams/INTEGRATION_WORKSTREAM.md`
-- Integration Board: GitHub Issue `#16`
-- Owns architecture coherence, review, merge, same-head verification, central docs and release readiness.
+- Board: Issue `#16`
+- Owns architecture coherence, review, integration, same-head gates, central docs and Render production release verification.
 
 ### Shared Team Room
+- Issue `#13`
+- Cross-team contracts, blockers and architecture decisions.
 
-- GitHub Issue `#13`
-- Use for cross-team contract questions, blockers, architecture proposals and decisions.
+Chats are replaceable. Repository docs + Boards + code/evidence are the memory.
 
-Rules for all teams live in `docs/workstreams/TEAM_OPERATING_MODEL.md`.
+## 4. Delivery / branching model after Render cutover
 
-**Critical protocol:** latest `COMMAND` in a workstream Board defines current scope. Each team self-reviews then posts a `REPORT` with branch/commits/tests/blockers/`NOT YET VERIFIED`. Backend/Frontend `Ready` never means Stage VERIFIED; only Integration accepts and closes a Stage after cross-boundary same-head evidence.
+```text
+latest Integration-approved main
+→ short Backend or Frontend branch
+→ implementation + tests + REPORT
+→ Integration review
+→ integration candidate / cross-boundary verification
+→ merge accepted changes to main
+→ Render auto-deploy from main
+→ hosted verification
+```
 
-No conversation works in the background or receives messages automatically. On resume it must read GitHub and continue from the recorded command/decision.
+Rules:
 
-## 4. Legacy preservation rule
-
-The legacy product is a **feature/scenario/failure reference**, not target architecture.
-
-Hard gates:
-
-- `PRODUCT_FEATURE_PARITY_MATRIX.md`
-- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
-- `PROJECT_DEEP_AUDIT.md`
-- `PROJECT_FULL_AUDIT_CATALOG.md`
-
-Every valuable legacy capability must end as `KEEP | IMPROVE | REFACTOR | REBUILD | REMOVE(owner-approved)` with implementation + acceptance evidence. Never silently drop a legacy result because the old code was poor.
+- Backend/Frontend do not deploy feature branches as production.
+- `main` must remain production-quality.
+- An unverified stage does not enter `main` just because Render can auto-deploy it.
+- Root cause, not patching.
+- End of each Stage requires Closure Report + Integration acceptance + central-doc sync.
 
 ## 5. Current Product Owner overrides
 
 Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
 
-1. **Deployment/Preview is deferred.** Do not deploy/sync/re-enable auto-deploy without explicit new Product Owner command.
-2. **Old database is outside current scope.** Repository/current PostgreSQL/source-reference evidence is sufficient for current work.
-3. **Repository documentation is official memory.** New chats read docs, not chat memory.
-4. **Root-cause only.** No test/security/business-rule weakening for green CI.
+Current operational facts:
 
-## 6. Stable architecture / boundaries
+1. **Render is the primary production hosting platform and deployment is re-enabled.**
+2. **`main` is production source.**
+3. **Old Supabase database is not production authority and legacy data migration remains out of current scope.**
+4. **Repository documentation is official memory.**
+5. **No patching/test/security weakening.**
+6. **Stage13E stays outside `main` until its gates pass.**
+
+## 6. Stable architecture / business boundaries
 
 ```text
-Student PWA ─┐
-             ├── Fastify API ── private PostgreSQL
-Admin Web ───┘       │
-                     ├── Auth / Access / Curriculum
-                     ├── Stage9 source/provenance
-                     ├── Stage10 media
-                     ├── OCR derived/reviewed text
-                     ├── Stage11 AI contracts/validation
-                     ├── Stage12 durable AI execution/worker
-                     └── Stage13 reviewed Admin publication/operations
+Student Static/PWA ─┐
+                    ├── Fastify API ── Render Managed PostgreSQL
+Admin Static ───────┘       │
+                            ├── Auth / Access / Curriculum
+                            ├── Source / Media / OCR
+                            ├── AI contracts/execution/review
+                            └── Persistent media disk on API
 ```
 
 Stable rules:
 
-- Full Code exactly 6 digits; Class Code exactly 7 digits.
-- Student activation verify is non-consuming; final activation is atomic.
-- Student returning session requires password + registered ECDSA P-256 device proof.
-- Admin login/recovery is separate; temporary-password recovery revokes sessions, forces replacement and supports explicit device rebind.
-- Curriculum authority is `Class → Subject Offering(subject_class_links) → optional curriculum_sections → Lesson`.
-- Stage9 `alwaslh-go` source import is provenance evidence, not curriculum hierarchy.
-- Source folders never silently become Business Rules.
-- Stage10 media variants are processing evidence, not automatically Published Lesson content.
-- Stage13D makes this explicit: `media ready != published`; only explicit Link→Draft→Review→Published changes Lesson content authority.
-- Upload/media success is independent from OCR/AI/TTS.
-- OCR is durable derived state over media/checksum; reviewed OCR is preferred downstream evidence.
-- AI contracts are provider/model-neutral; Prompt Registry/versioning/validation remain separate from provider selection.
-- Exact/extraction AI modes never fabricate unknown answers.
-- AI provider calls occur outside long DB transactions; lease/attempt/output writes are stale-worker protected.
-- distributed capacity/cooldown/kill/budget controls are DB-coordinated.
-- Fastify remains HTTP-only; dedicated bounded AI worker runtime is separate.
-- Student ultimately consumes Published Admin-reviewed authority, not raw provider output.
+- Full Code = 6 digits; Class Code = 7 digits.
+- activation verification non-consuming; final activation atomic.
+- returning Student requires password + registered ECDSA P-256 proof.
+- Admin auth/recovery separate and secure.
+- Curriculum: Class → Subject Offering → optional Section → Lesson.
+- Source import is provenance, not curriculum authority.
+- `media ready != published`.
+- Upload/media success independent from OCR/AI/TTS.
+- AI contracts provider-neutral and exact modes never fabricate unknown answers.
+- provider calls outside long DB transactions; lease-protected writes.
+- Fastify HTTP separate from AI worker runtime.
+- raw provider output/internal credentials never client authority.
+- Student ultimately consumes reviewed/published authority.
 
-## 7. Verified stage history
+## 7. Render production architecture
 
-- Stages1–10: VERIFIED.
-- OCR Foundation: VERIFIED.
-- Stage11 provider-neutral AI contracts: VERIFIED.
-- Stage12 durable AI execution/runtime: VERIFIED backend/runtime; live production provider routing remains unverified.
-- Stage13A Curriculum Structure backend: VERIFIED.
-- Stage13B Admin Curriculum Web: VERIFIED incl. Chromium.
-- Stage13C Content/Media/OCR Operations: VERIFIED incl. Chromium.
-- **Stage13D Upload/Processing History/Publication Linking: VERIFIED incl. Chromium.**
+Canonical: `render.yaml` + `docs/deployment/RENDER_PRODUCTION.md`.
 
-Canonical Stage9 source remains `7eaur/alwaslh-go` pinned at `f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`; verified inventory: 15 roots / 48 documents / 5,552 images / 4,218 JPG / 1,334 WEBP / 86 helpers / 24 manifests / digest `7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`.
+Declared resources:
 
-### Stage13D closure
+- `alwaslh-prod-student-7eaur` — Student static site.
+- `alwaslh-prod-admin-7eaur` — Admin static site.
+- `alwaslh-prod-api-7eaur` — Fastify Node service, `starter` plan.
+- `alwaslh-prod-postgres-7eaur` — PostgreSQL 16, `basic-256mb`.
+- `alwaslh-prod-media-7eaur` — 1 GB persistent disk mounted at `/opt/render/project/src/runtime-data/media`.
 
-Executable closure: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
+Region: Frankfurt for API/DB locality.
 
-Implementation authority:
+Why the disk is mandatory: current Stage13D media authority uses `FileSystemMediaStorage`. Render service filesystem is ephemeral without a persistent disk; production uploads must survive deploys/restarts.
 
-- `database/migrations/0017_content_ingestion_publication.sql`;
-- `apps/api/src/content/ingestion-service.ts`;
-- `apps/api/src/content/ingestion-http.ts`;
-- existing Stage10 `MediaPipelineService` and MediaStorage;
-- `apps/admin-web/src/content-ingestion-api.ts`;
-- `apps/admin-web/src/ContentIngestionWorkspace.tsx`;
-- `apps/admin-web/src/content-ingestion.css`;
-- dedicated backend and Admin Chromium workflows.
+This makes API intentionally single-instance for now. Do not pretend the disk is shared. Future horizontal scaling requires a real shared/object-storage adapter architecture decision.
 
-Verified flow:
+No Render AI worker is declared yet because Stage12 explicitly lacks production `worker.ts` bootstrap/live provider routes/credentials. Do not put the worker loop inside Fastify as a hosting shortcut.
 
-```text
-Admin Lesson + ordered image/PDF/mixed input
-→ durable server task/items
-→ Stage10 processing
-→ authoritative progress/errors/retry/history
-→ media Ready but unpublished
-→ explicit Link creates Draft lesson_assets
-→ Review
-→ explicit Publish
-→ history survives reload/archive
-```
+## 8. Old hosting retirement
 
-Backend integration proves image → 2-page PDF → image source positions `[0,1,2,3]`. Admin Chromium proves real mixed upload, processing, Draft link, Review, Publish, reload/history, archive and 390px responsive UX.
+Repository-side Vercel path was retired at cutover:
 
-Specialized doc: `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md`.
+- `vercel.json` removed;
+- `scripts/build-vercel-preview.mjs` removed;
+- `api/[...path].js` removed.
 
-Legacy `LES-A-010..015` is now VERIFIED. `LES-A-016+` remains NOT YET VERIFIED until later evidence.
+Legacy Supabase/Cloudflare material may remain only as historical/audit/reference evidence unless independently proven unused and removed through a normal cleanup batch.
 
-## 8. Latest exact verification matrix
+External provider-dashboard projects/hooks are not automatically deleted by repository changes. Disconnect them only after Render is confirmed live; do not delete legacy data as part of deployment cutover.
 
-Executable head: `4eca7de8877ac9e2289b9c7990c912d33c256935`.
+## 9. Verified stage history
 
-- Stage13D Admin Upload UI `34177369743` — SUCCESS; real mixed upload/publication Chromium + narrow viewport.
-- Stage13D Content Ingestion `34177369784` — SUCCESS; clean PostgreSQL + ordering/link/publication/archive integration.
-- Stage13 Admin Product `34177369748` — SUCCESS; backend + existing Admin Chromium.
-- Stage12 AI Execution `34177369812` — SUCCESS.
-- Stage11 AI Contracts `34177369753` — SUCCESS.
-- OCR Foundation `34177369750` — SUCCESS.
-- Stage10 Media Pipeline `34177369777` — SUCCESS.
-- Stage9 Content Import `34177369756` — SUCCESS.
-- Full Rebuild `34177369768` — SUCCESS; includes Student Chromium activation/returning-login/recovery.
+VERIFIED:
+- Stages1–10
+- OCR Foundation
+- Stage11 AI Contracts
+- Stage12 durable AI execution/runtime backend
+- Stage13A Curriculum backend
+- Stage13B Admin Curriculum UI incl. Chromium
+- Stage13C Content/Media/OCR Operations incl. Chromium
+- Stage13D Upload/Processing History/Publication Linking incl. Chromium
 
-## 9. Current next work — Stage13E Admin AI Operations / Review
+Latest fully verified executable head remains `4eca7de8877ac9e2289b9c7990c912d33c256935` with the known same-head 9-workflow SUCCESS matrix recorded in `PROJECT_STATUS.md`.
 
-Backend receives its current command from Issue `#14`. Frontend receives its current command from Issue `#15`. Integration tracks acceptance in Issue `#16` and shared contract questions in Issue `#13`.
+## 10. Current work — Stage13E
 
-**Do not jump to Question Bank/Stage13F yet.** First inspect the actual Stage12 repositories/services/routes and current Admin patterns, then close Admin AI operations over existing authorities.
+Do not confuse Render cutover with Stage13E completion.
 
-Required sequence from Roadmap:
+Backend candidate:
+- branch `backend/stage13e-ai-operations`
+- HEAD `348c02646d0ff873fd305beff16f41c46d9c0285`
+- REPORT #14 `5579330147`
+- structurally accepted candidate; current-head executable gates still blocked by hosted runner allocation.
 
-1. Reuse verified `ai_jobs / ai_job_units / attempts / outputs`; no second queue/lifecycle.
-2. Expose queued/running/retrying/paused/failed/completed and server-derived progress.
-3. Wire retry/cancel/pause/resume to current Stage12 authority.
-4. Show provider/model/project observability without credentials/secrets.
-5. Review generated summary/question/page-detection outputs with source/page provenance visible.
-6. Support edit/reject/approve review outcomes; raw provider output is never auto-published.
-7. Live provider routing remains disabled/unverified until benchmark authorization/config exists.
-8. Add API/PostgreSQL/unit/integration/Chromium evidence.
-9. Only newly proven legacy rows move to VERIFIED; everything else stays NOT YET VERIFIED.
-10. Integration Lead synchronizes Status/Engineering Log/Handoff/specialized doc/Legacy Coverage after accepting the batch.
+Frontend candidate:
+- branch `frontend/stage13e-ai-operations`
+- HEAD `e42644944ca3fcc7e225a263a6e9699bcb70b9f7`
+- REPORT #15 `5579436581`
+- real production binding implemented; Integration requested only bounded real-browser session-expiry and stale-review `409` regression preparation.
 
-## 10. Remaining major work after Stage13E
+Neither branch is in `main`.
 
-- Stage13F Question Bank/Quiz Builder/review/publish/export; resolve `direct` persistence first.
-- Stage13G Students/Codes/Recovery/Device Rebind/Notifications/Import-Export/Reports/Settings/Audit.
-- Stage14 Student full product/Reader.
-- Stage15 Assessment/Practice/Test/Models.
-- Stage16 final Offline/PWA.
-- Stage17 Notes/Favorites/Needs Review.
-- Stage18 Notifications/Push.
-- Stage19 Progress/Statistics/private achievements.
-- Stage20 Import/Export/Reporting.
-- Stages21–29 performance/security/tests/a11y/data/staging/release/cutover/monitoring.
+## 11. Render first-deploy verification gate
 
-## 11. Open findings / risks to carry forward
+After Blueprint apply, Integration must verify:
 
-- `CONTENT-013-002` P1 — **CLOSED / VERIFIED by Stage13D**; explicit media→Lesson Draft/Review/Published contract now exists.
-- `AI-011-005` P2 — `direct` AI question persistence unresolved.
+1. database healthy;
+2. migrations applied;
+3. API deploy live;
+4. `/health` 200;
+5. `/ready` 200 and DB connectivity;
+6. Student static site live;
+7. Admin static site live;
+8. production CORS/session behavior from both origins;
+9. Student activation/login/recovery smoke;
+10. Admin login/curriculum/content smoke;
+11. Stage13D media upload survives API restart/redeploy;
+12. no startup/runtime errors or secret/raw-provider leakage.
+
+Until then, Render hosting is configured but hosted runtime is `NOT YET VERIFIED`.
+
+## 12. Known risks/open work
+
+- `AI-011-005` P2 — `direct` persistence into Stage13F Question Bank unresolved.
 - `AI-012-019` P2 — live provider benchmark/config/routes/bootstrap unverified.
-- `LES-A-016..019` page-detection review/save Admin flow NOT YET VERIFIED.
-- `LES-A-020..037` Admin AI authoring/operations user flows NOT YET VERIFIED despite Stage11/12 backend foundations.
-- TTS runtime/quality unverified.
-- hosted runtime unverified due deployment deferral.
-- final Offline/PWA and Student learning product incomplete.
-- `tmp-unused-do-not-use` branch P3 housekeeping.
+- GitHub hosted-runner allocation currently prevents new executable CI evidence.
+- production AI worker not yet deployable by design.
+- API single-instance while media uses Render disk.
+- full Student learning product, Offline/PWA and later stages incomplete.
 
-All other findings live in `PROJECT_ENGINEERING_LOG.md`.
+## 13. What NOT to do
 
-## 12. What NOT to do
+- Do not restore old root Supabase architecture as target.
+- Do not migrate old DB without explicit Product Owner decision.
+- Do not deploy feature branches as production.
+- Do not create duplicate media/OCR/AI lifecycles.
+- Do not use ephemeral media storage in production.
+- Do not broaden credentialed CORS to `*`.
+- Do not expose provider credentials/raw internals.
+- Do not run a fake AI worker.
+- Do not weaken tests/auth/business rules to obtain green status.
+- Do not call hosted runtime or Stage13E VERIFIED without actual evidence.
 
-- Do not use old root Supabase architecture as current target.
-- Do not re-open old DB work unless Product Owner explicitly asks.
-- Do not deploy/re-enable Preview automation.
-- Do not create a second Subject Offering/media/OCR/AI lifecycle.
-- Do not create a generic recursive curriculum tree.
-- Do not make source filenames/folders curriculum authority.
-- Do not expose provider credentials/secrets/client-side.
-- Do not let browser own job progress or publish authority.
-- Do not weaken tests/authorization/business rules to pass CI.
-- Do not call a stage VERIFIED without exact executable evidence.
+## 14. Before ending any future session
 
-## 13. Documentation rule before ending any future session
-
-Workstream chats update their own role file + Board report. Integration Lead updates central `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, current specialized doc, Legacy Coverage and Roadmap when phase/state changes. Record exact commit/run IDs. Keep `NEXT_CONVERSATION_PROMPT.md` short; actual state belongs in repository docs.
+Workstream chats update their workstream file + Board REPORT. Integration updates `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, specialized docs and Render deployment evidence when relevant. Record exact Git commit, Render resource/deploy IDs and verification results.
