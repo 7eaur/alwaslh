@@ -555,8 +555,8 @@ export class AdminContentIngestionService {
         const total = Number(count?.total ?? 0);
         await tx.query(
           `update content_ingestion_tasks
-              set uploaded_count = $2,
-                  status = case when $2 = $3 then 'ready'::content_ingestion_task_status
+              set uploaded_count = $2::integer,
+                  status = case when $2::integer = $3::integer then 'ready'::content_ingestion_task_status
                                 else 'uploading'::content_ingestion_task_status end
             where id = $1 and status in ('uploading', 'ready')`,
           [taskId, uploaded, total],
