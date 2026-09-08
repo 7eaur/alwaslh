@@ -235,6 +235,7 @@ interface OutputRow {
   updated_at: Date;
   input_payload: unknown;
   unit_key: string;
+  unit_status: string;
   job_id: string;
 }
 
@@ -247,6 +248,12 @@ interface ReviewEventRow {
   reviewed_output: unknown;
   note: string | null;
   created_at: Date;
+}
+
+const REVIEWABLE_UNIT_STATUSES = new Set(["completed", "review_required"]);
+
+function isReviewableUnitStatus(status: string): boolean {
+  return REVIEWABLE_UNIT_STATUSES.has(status);
 }
 
 function lifecycleError(error: unknown): never {
@@ -274,10 +281,12 @@ function reviewStatus(action: AiOutputReviewAction | null): AiOutputReviewStatus
 }
 
 function allowedReviewActions(
+  unitStatus: string,
   latestAction: AiOutputReviewAction | null,
   requestInput: unknown,
   candidateInput: unknown,
 ): AiOutputAllowedReviewAction[] {
+  if (!isReviewableUnitStatus(unitStatus)) return [];
   if (latestAction === "approve" || latestAction === "reject") return [];
   const actions: AiOutputAllowedReviewAction[] = ["edit"];
   if (isAdminApprovalCandidateAllowed(requestInput, candidateInput)) actions.push("approve");
@@ -590,7 +599,7 @@ export class AdminAiOperationsService {
     const rows = await this.database.query<OutputRow>(
       `select o.id, o.job_unit_id, o.validation_status, o.raw_response, o.normalized_output,
               o.validation_errors, o.semantic_warnings, o.reviewed_by_profile_id, o.reviewed_at,
-              o.created_at, o.updated_at, u.input_payload, u.unit_key, u.job_id
+              o.created_at, o.updated_at, u.input_payload, u.unit_key, u.status as unit_status, u.job_id
        from ai_outputs o join ai_job_units u on u.id = o.job_unit_id where o.id = $1`,
       [outputId],
     );
@@ -648,6 +657,7 @@ export class AdminAiOperationsService {
       hasRawResponse: output.raw_response !== null,
       reviewStatus: reviewStatus(latest?.action ?? null),
       allowedReviewActions: allowedReviewActions(
+        output.unit_status,
         latest?.action ?? null,
         output.input_payload,
         currentReviewCandidate,
@@ -717,16 +727,28 @@ export class AdminAiOperationsService {
     }
 
     await this.database.transaction(async (tx) => {
-      const outputs = await tx.query<{ id: string; normalized_output: unknown; input_payload: unknown }>(
-        `select o.id, o.normalized_output, u.input_payload
+      const outputs = await tx.query<{
+        id: string;
+        normalized_output: unknown;
+        input_payload: unknown;
+        unit_status: string;
+      }>(
+        `select o.id, o.normalized_output, u.input_payload, u.status as unit_status
          from ai_outputs o
          join ai_job_units u on u.id = o.job_unit_id
          where o.id = $1
-         for update of o`,
+         for update of o, u`,
         [outputId],
       );
       const output = outputs[0];
       if (!output) throw new AppError("NOT_FOUND", "مخرج الذكاء الاصطناعي غير موجود", 404);
+      if (!isReviewableUnitStatus(output.unit_status)) {
+        throw new AppError(
+          "CONFLICT",
+          "حالة وحدة الذكاء الاصطناعي الحالية لا تسمح بالمراجعة قبل استقرار التنفيذ",
+          409,
+        );
+      }
 
       const latestRows = await tx.query<{
         revision: number;
