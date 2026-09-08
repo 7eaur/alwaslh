@@ -2,189 +2,166 @@
 
 **Status:** combined Integration Candidate on `integration/stage13e-ai-operations`. Product/runtime code remains outside `main` and **NOT YET VERIFIED** because GitHub hosted jobs still terminate before checkout.
 
-This document now reflects Single Owner integration work. Historical Frontend source commits remain evidence, but current authority is the combined branch + `PROJECT_EXECUTION_QUEUE.md` + Issue #16.
+Current authority is the combined branch + `PROJECT_EXECUTION_QUEUE.md` + Issue #16. Historical Frontend source commits remain evidence only.
 
 ## 1. Authority boundary
 
 Frontend remains presentation/interaction only. Backend + PostgreSQL remain canonical for:
 
 - job/unit/attempt/output state;
-- progress;
-- lifecycle action eligibility;
-- review eligibility;
-- semantic validation;
-- review concurrency/history;
-- pagination totals/offsets.
+- progress and lifecycle actions;
+- review eligibility/current review state;
+- semantic validation and concurrency;
+- pagination totals/offsets and append-only review history.
 
-The browser consumes `job.allowedActions` and `output.allowedReviewActions` exactly as returned by the server. A mutation `409 CONFLICT` causes canonical refresh; no optimistic lifecycle/review promotion exists.
+The browser consumes `job.allowedActions` and `output.allowedReviewActions` exactly as returned by the server. `409 CONFLICT` triggers canonical refresh. No optimistic lifecycle/review promotion exists.
 
-Stage13E approval is review approval only and does not publish to Stage13F Question Bank.
+**Important:** a paginated historical review page is never review authority. Current review status/output/actions always come from the Backend's independently resolved latest revision.
+
+Stage13E approval is review approval only; it does not publish to Stage13F Question Bank.
 
 ## 2. Security / data minimization
 
-The UI does not expose or retain:
+The UI does not expose or retain raw provider response, credential aliases, provider metadata, or provider/internal error-message text. Only safe operational identifiers/codes, normalized/effective reviewed educational output, `hasRawResponse`, and provenance are used.
 
-- raw provider response;
-- credentials / credential aliases;
-- raw provider metadata;
-- provider/internal error-message text.
-
-Only `hasRawResponse`, safe operational identifiers/codes, normalized/effective reviewed educational output and source provenance are used.
-
-The browser helper uses the real authenticated BrowserContext/session and documented Admin APIs only. There is no route interception, fake API, test-only Backend endpoint, cookie forgery or sleep-based race.
+Browser regressions use the real authenticated BrowserContext and documented Admin APIs only. No request interception, fake API, test-only Backend endpoint, cookie forgery, or sleep-based race.
 
 ## 3. Production binding
 
-Authenticated Stage13E transport uses:
+Authenticated Stage13E transport:
 
-- `GET /v1/admin/ai/jobs`;
-- `GET /v1/admin/ai/jobs/:jobId`;
-- `GET /v1/admin/ai/units/:unitId`;
-- `GET /v1/admin/ai/outputs/:outputId`;
+- `GET /v1/admin/ai/jobs` — `limit/offset`;
+- `GET /v1/admin/ai/jobs/:jobId` — `unitLimit/unitOffset`;
+- `GET /v1/admin/ai/units/:unitId` — `attemptLimit/attemptOffset`;
+- `GET /v1/admin/ai/outputs/:outputId` — `reviewLimit/reviewOffset`;
 - `POST /v1/admin/ai/jobs/:jobId/pause|resume|cancel|retry`;
 - `PATCH /v1/admin/ai/outputs/:outputId/review`.
 
-Pagination parameters are server-owned and bounded:
+All server page sizes are bounded to 100. Admin UI uses 30 Jobs, 50 Units, 50 Attempts, and 50 Review Events per page.
 
-- Jobs: `limit/offset`;
-- Units: `unitLimit/unitOffset`;
-- Attempts: `attemptLimit/attemptOffset`.
+Review mutation bodies remain strict: edit requires `editedOutput`; approve sends no edited output; reject requires nonblank note.
 
-Review bodies remain strict discriminated union:
+## 4. Real auth and conflict regressions
 
-- edit requires `editedOutput`;
-- approve sends no `editedOutput`;
-- reject requires non-empty `note`.
+### Session expiry
 
-## 4. Real session-expiry regression
+Real UI login → AI Operations → same BrowserContext `POST /v1/auth/logout` → UI refresh → returns to **دخول المدير** and removes signed-in navigation.
 
-`ai-operations.e2e.spec.mjs`:
+### Stale-review 409
 
-1. signs in through the real UI;
-2. opens AI Operations;
-3. invalidates the same session through `POST /v1/auth/logout` using `page.context().request`;
-4. triggers **تحديث الحالة**;
-5. proves the UI returns to **دخول المدير** and authenticated navigation disappears.
+A separate terminal/open-review fixture is mutated out-of-band with a real reject. The stale UI approve then receives real `409`, refreshes to **مرفوض**, and exposes no further review actions.
 
-## 5. Real stale-review 409 regression
+## 5. AI-013E-OPS-003 — complete Jobs / Units / Attempts history
 
-`STAGE13E_E2E_RACE_JOB_TYPE` identifies a terminal execution job with an open approvable output.
+### Root defect
 
-The test:
+Backend already returned pagination metadata, but Frontend exposed only first 30 Jobs / 50 Units / 50 Attempts. Durable operational records beyond those first pages were unreachable.
 
-1. resolves that output through real Stage13E reads;
-2. opens it in the UI;
-3. completes a terminal reject out-of-band through the real API using the same BrowserContext;
-4. submits the now-stale UI approve;
-5. proves real `409`, safe conflict feedback, canonical refresh to **مرفوض**, and no remaining review actions.
+### Fix
 
-## 6. Durable-history pagination hardening — AI-013E-OPS-003
+Frontend preserves independent server offsets and renders accessible Previous/Next controls. Changing a parent page clears only lower-level selection; polling/refresh remain on currently opened pages; no unbounded history is loaded.
+
+Real fixture proves:
+
+- second Jobs page contains a deliberately old marker;
+- Happy Job has 51 Units, exposing Unit 51 on page two;
+- review Unit has 51 Attempts, exposing Attempt 1 on page two.
+
+## 6. AI-013E-OPS-004 — complete Review History without historical-page authority
 
 ### Symptom
 
-Backend already returned pagination metadata, but the Stage13E UI hard-coded and discarded it:
-
-- first 30 jobs only;
-- first 50 units only;
-- first 50 attempts only.
-
-Stage12 supports up to 5,000 units in one plan and durable attempt history can exceed one page. Therefore valid jobs/units/attempts could exist in PostgreSQL yet be unreachable from Admin UI.
+`GET /v1/admin/ai/outputs/:outputId` originally returned only the newest 100 review events and Frontend displayed them as the entire append-only audit. There was no total/offset navigation.
 
 ### Root cause
 
-Transport supported bounded server pagination, but Frontend view models/controller did not preserve `total/limit/offset`, and Workspace rendered no navigation controls.
+Review history was modeled as a bounded display array instead of durable paginated audit state. Also, Backend originally derived `reviewStatus`, effective output, and allowed actions from `history[0]`; simply adding `offset` would make an old page incorrectly define current authority.
 
-### Correct fix
+### Root fix
 
-Server-side pagination is retained as canonical. Frontend now:
+Backend now returns:
 
-- preserves Jobs pagination metadata;
-- preserves per-Job Unit pagination metadata;
-- preserves per-Unit Attempt pagination metadata;
-- renders Previous/Next controls with accessible navigation labels;
-- clears only lower-level selection when a parent page changes;
-- keeps polling/refresh on the currently selected server pages;
-- never loads unbounded history into browser memory.
+```ts
+reviewHistory: ReviewEvent[];
+reviewPagination: { total: number; limit: number; offset: number };
+```
 
-Main implementation lineage:
+and independently resolves the canonical latest review revision. The selected audit page never drives current status/output/actions.
 
-- `92f4d0f8d78697a717efc486420db336534bcc69` — pagination view contract/helpers;
-- `8b932faa2d1989e5144e5ea29f84273511347736` — preserve API pagination in adapter;
-- `0974142fd71c8cfd5c847c699f10e5ab9de51f7b` — controller/page-offset authority;
-- `3411c1fdceae76fadb8ad3fad190b9fbe21f29d9` — Jobs/Units/Attempts navigation UI;
-- `382726705724a2130381e7be9ec56bf54c4fc6dc` — responsive pagination layout;
-- `3ab137c96bacaacd23191afc152c013ce46fec6d` — pagination boundary unit tests;
-- `27de2d6f550508ac88eeacb355e3b6a0d9eff994` — adapter pagination regression;
-- `8dd1d712f1bd644c332ea26c4cf3b3c989425fd1` — attempt pagination transport regression.
+Frontend now:
 
-### Real-browser fixture
+- preserves `reviewPagination` through API → adapter → view model;
+- maintains `reviewOffsetRef` independently from Job/Unit/Attempt offsets;
+- renders accessible `صفحات سجل مراجعة مخرج AI` navigation;
+- preserves both Attempt and Review pages during background polling, refresh, and 409 canonical reload;
+- resets review page only when changing the selected Unit;
+- shows total review event count rather than current-page length;
+- displays revision number with each audit event.
 
-The combined fixture now seeds:
+Implementation/test lineage for this root fix:
 
-- Happy Job with **51 units**;
-- its review unit with **51 durable attempt records**;
-- one deliberately old Pagination Marker Job;
-- 30 newer filler jobs so the marker is guaranteed onto the second Jobs page;
-- existing Race fixture unchanged in purpose.
+- `d242e0542df4402392780098418cdd015cb11107` — Backend paged history + canonical-latest separation;
+- `f04fe2beeff79dea0353f69fbe5e2774fe5703ea` — bounded HTTP `reviewLimit/reviewOffset`;
+- `e33d43c19c8b954429036bba24ca0f3c72d0ba15` — 105-revision Backend regression proving old page cannot redefine authority;
+- `9c18826acbc8f2deeb42f70b2e0f651321504f94` — Frontend transport contract;
+- `2c82e8790b066a2ac035f8eee8c172136a0ed28a` — view model pagination;
+- `72711ec8aaefc09fa4e2979008b0be03beb526c3` — adapter preservation;
+- `de3a9dc260871ab913bd9d60350479b60de708b9` — independent controller review offset;
+- `bf782c92bd74436831e74391768c53c9cd9cb075` — Review History navigation UI;
+- `d7830d187e89bb16619234609f8480c5bec070cf` — transport regression;
+- `f64419fa20c930ac0bbd641ba63c229dc9db9605` — adapter regression;
+- `a1ef3d7a824d1e8c7503ecb3203df3bebe850619` — real fixture with 101 review edits;
+- `f95c1a9ee5e800125bdcc665c5a64d0fe10a1fd9` — real Chromium audit navigation/current-authority regression;
+- `6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b` — workflow fixture invariants.
 
-Fixture/workflow/browser commits:
+### Real Chromium contract
 
-- `66ac7bd31763c8313299a8179f7afe327b88ea55` — real pagination fixture;
-- `a9e97e3470396edadab13e21ca76b3c71a68965f` — workflow fixture invariants;
-- `c3420181380e0af4cff835504044b5b0c1df679f` — real Chromium Jobs/Units/Attempts navigation;
-- `ae772db53e218037a2b140e9dc08e6528f1a1ac8` — explicit SQL casts/column aliases for deterministic fixture parsing.
+Happy fixture contains 101 append-only edit revisions. Browser proves:
 
-The browser regression proves:
+1. review pages `1–50`, `51–100`, and `101–101` are reachable;
+2. revision 1 note is visible on the oldest page;
+3. while the oldest page is displayed, **اعتماد بعد المراجعة** remains governed by the canonical latest revision and stays valid;
+4. approving adds revision 102, removes further actions, and current old-page range becomes `101–102 من 102`;
+5. reload restores canonical approved state and first review page.
 
-1. second Jobs page is reachable and contains the old marker;
-2. Happy Job Unit page 2 exposes Unit 51;
-3. selected review Unit Attempt page 2 exposes Attempt 1;
-4. existing happy/review/session-expiry/409/390px flows remain in the same suite.
+## 7. Current real Chromium suite
 
-## 7. Current Chromium scenarios
+With `STAGE13E_E2E=1`:
 
-With `STAGE13E_E2E=1` the combined suite now covers:
+1. Jobs/Units/Attempts complete pagination;
+2. Review History >100 complete pagination + latest-authority isolation;
+3. pause/resume + approve + reload durability;
+4. real session expiry;
+5. real stale-review `409` canonical refresh;
+6. 390×844 horizontal-overflow guard.
 
-1. complete durable Jobs/Units/Attempts pagination;
-2. login → pause/resume → approve → reload durability;
-3. real session invalidation → signed-out state;
-4. real stale-review `409` → canonical refresh/no actions;
-5. 390×844 no-horizontal-overflow.
-
-Required fixture environment:
-
-- `STAGE13E_E2E_JOB_TYPE`;
-- `STAGE13E_E2E_RACE_JOB_TYPE`;
-- `STAGE13E_E2E_PAGINATION_JOB_TYPE`;
-- Admin/API/origin variables from the combined workflow.
-
-Missing required variables are hard failures, not silent skips.
+Required variables are explicit in the combined workflow and missing fixtures fail hard.
 
 ## 8. Verification evidence
 
-Latest pagination fixture/runtime HEAD at this documentation update:
+Current runtime/test candidate HEAD before this documentation commit:
 
-`ae772db53e218037a2b140e9dc08e6528f1a1ac8`
+`6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b`
 
 Latest run:
 
-- run `34249182219`;
-- job `102138902680`;
+- run `34275316004`;
+- job `102226771007`;
 - `runner_id=0`;
 - `runner_name=""`;
 - `steps=[]`;
-- no checkout, lint, typecheck, unit, build, PostgreSQL or Chromium command executed.
+- no checkout/lint/typecheck/unit/build/PostgreSQL/Chromium command executed.
 
-Therefore this batch is **FIXED IN CANDIDATE / EXECUTION PENDING**, not PASS.
+Therefore OPS-003 and OPS-004 are **FIXED IN CANDIDATE / EXECUTION PENDING**, not executable PASS.
 
 ## 9. NOT YET VERIFIED
 
-- current-head Admin lint/typecheck/unit/build;
-- pagination fixture insertion on clean PostgreSQL;
-- real Jobs/Units/Attempts Chromium navigation;
-- existing happy/session-expiry/stale-409/390px paths on the latest head;
+- current-head Admin/API lint/typecheck/unit/build;
+- 101-review fixture insertion on clean PostgreSQL;
+- real Review History >100 Chromium navigation and latest-authority isolation;
+- existing Jobs/Units/Attempts, session-expiry, stale-409, pause/resume, approval/reload and 390px flows on current head;
 - same-head Stage13E Integration PASS.
 
 ## 10. Exact next action
 
-Keep Stage13E outside `main`. Re-run the unchanged combined gate when a real runner is allocated. Any executed failure must be fixed in its owning layer with regression coverage. Combined PASS then triggers the wider regression matrix and Stage13E closure before Stage13F begins.
+Keep Stage13E outside `main`. Re-run the unchanged combined gate when GitHub allocates a real runner. Any executed failure must be root-caused in its owning layer with regression coverage. Only combined PASS + wider same-head regressions may close Stage13E and unblock Stage13F.
