@@ -30,6 +30,9 @@ interface Props {
 }
 
 const POLL_INTERVAL_MS = 5_000;
+const JOB_PAGE_SIZE = 30;
+const UNIT_PAGE_SIZE = 50;
+const ATTEMPT_PAGE_SIZE = 50;
 const TERMINAL_EXECUTION_STATUSES = new Set(["completed", "failed", "cancelled"]);
 
 function messageFor(error: unknown): string {
@@ -41,6 +44,7 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
   const [state, setState] = useState<AiOperationsWorkspaceModel["state"]>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [jobs, setJobs] = useState<AiJobSummaryView[]>([]);
+  const [jobPagination, setJobPagination] = useState({ total: 0, limit: JOB_PAGE_SIZE, offset: 0 });
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [selectedJobState, setSelectedJobState] = useState<AiOperationsWorkspaceModel["selectedJobState"]>("idle");
   const [selectedJobError, setSelectedJobError] = useState<string | null>(null);
@@ -53,6 +57,9 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
 
   const selectedJobIdRef = useRef<string | null>(null);
   const selectedUnitIdRef = useRef<string | null>(null);
+  const jobOffsetRef = useRef(0);
+  const unitOffsetRef = useRef(0);
+  const attemptOffsetRef = useRef(0);
   const listSequence = useRef(0);
   const jobSequence = useRef(0);
   const unitSequence = useRef(0);
@@ -65,18 +72,38 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
     return messageFor(error);
   }, [onSessionExpired]);
 
-  const loadJobs = useCallback(async (background = false) => {
+  const clearSelectedUnit = useCallback(() => {
+    selectedUnitIdRef.current = null;
+    attemptOffsetRef.current = 0;
+    setSelectedUnitId(null);
+    setSelectedUnitState("idle");
+    setSelectedUnitError(null);
+  }, []);
+
+  const clearSelectedJob = useCallback(() => {
+    selectedJobIdRef.current = null;
+    unitOffsetRef.current = 0;
+    setSelectedJobId(null);
+    setSelectedJob(null);
+    setSelectedJobState("idle");
+    setSelectedJobError(null);
+    clearSelectedUnit();
+  }, [clearSelectedUnit]);
+
+  const loadJobs = useCallback(async (background = false, requestedOffset = jobOffsetRef.current) => {
     const sequence = ++listSequence.current;
     if (!background) {
       setState("loading");
       setErrorMessage(null);
     }
     try {
-      const result = await fetchAiJobs({ limit: 30, offset: 0 });
+      const result = await fetchAiJobs({ limit: JOB_PAGE_SIZE, offset: requestedOffset });
       if (sequence !== listSequence.current) return;
       const mapped = result.jobs.map(mapAiJobSummary);
+      jobOffsetRef.current = result.pagination.offset;
+      setJobPagination({ ...result.pagination });
       setJobs(mapped);
-      setState(mapped.length === 0 ? "empty" : "ready");
+      setState(result.pagination.total === 0 ? "empty" : "ready");
       setErrorMessage(null);
     } catch (error) {
       if (sequence !== listSequence.current) return;
@@ -87,21 +114,24 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
     }
   }, [handleError]);
 
-  const loadJob = useCallback(async (jobId: string, background = false) => {
+  const loadJob = useCallback(async (
+    jobId: string,
+    background = false,
+    requestedUnitOffset = background ? unitOffsetRef.current : 0,
+  ) => {
     const sequence = ++jobSequence.current;
     if (!background) {
       selectedJobIdRef.current = jobId;
-      selectedUnitIdRef.current = null;
+      unitOffsetRef.current = requestedUnitOffset;
       setSelectedJobId(jobId);
-      setSelectedUnitId(null);
-      setSelectedUnitState("idle");
-      setSelectedUnitError(null);
+      clearSelectedUnit();
       setSelectedJobState("loading");
       setSelectedJobError(null);
     }
     try {
-      const result = await fetchAiJobDetail(jobId);
+      const result = await fetchAiJobDetail(jobId, UNIT_PAGE_SIZE, requestedUnitOffset);
       if (sequence !== jobSequence.current || selectedJobIdRef.current !== jobId) return;
+      unitOffsetRef.current = result.pagination.offset;
       const mapped = mapAiJobDetail(result);
       setSelectedJob((current) => {
         const detailedUnit = current?.units.find((unit) => unit.id === selectedUnitIdRef.current) ?? null;
@@ -111,6 +141,7 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
           units: mapped.units.map((unit) => unit.id === detailedUnit.id ? {
             ...unit,
             attempts: detailedUnit.attempts,
+            attemptPagination: detailedUnit.attemptPagination,
             output: detailedUnit.output,
           } : unit),
         };
@@ -132,24 +163,30 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
       if (!background) setSelectedJobState("error");
       setSelectedJobError(message);
     }
-  }, [handleError]);
+  }, [clearSelectedUnit, handleError]);
 
-  const loadUnit = useCallback(async (unitId: string, background = false) => {
+  const loadUnit = useCallback(async (
+    unitId: string,
+    background = false,
+    requestedAttemptOffset = background ? attemptOffsetRef.current : 0,
+  ) => {
     const sequence = ++unitSequence.current;
     if (!background) {
       selectedUnitIdRef.current = unitId;
+      attemptOffsetRef.current = requestedAttemptOffset;
       setSelectedUnitId(unitId);
       setSelectedUnitState("loading");
       setSelectedUnitError(null);
     }
     try {
-      const detail = await fetchAiUnitDetail(unitId);
+      const detail = await fetchAiUnitDetail(unitId, ATTEMPT_PAGE_SIZE, requestedAttemptOffset);
       let output = null;
       if (detail.unit.output?.id) {
         output = mapAiOutputDetail(await fetchAiOutputDetail(detail.unit.output.id));
       }
       if (sequence !== unitSequence.current || selectedUnitIdRef.current !== unitId) return;
-      const enriched = enrichAiUnit(detail.unit, detail.attempts, output);
+      attemptOffsetRef.current = detail.attemptPagination.offset;
+      const enriched = enrichAiUnit(detail.unit, detail.attempts, output, detail.attemptPagination);
       setSelectedJob((current) => current ? {
         ...current,
         units: current.units.map((unit) => unit.id === unitId ? enriched : unit),
@@ -165,19 +202,38 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
     }
   }, [handleError]);
 
+  const changeJobPage = useCallback((offset: number) => {
+    jobOffsetRef.current = offset;
+    clearSelectedJob();
+    void loadJobs(false, offset);
+  }, [clearSelectedJob, loadJobs]);
+
+  const changeUnitPage = useCallback((offset: number) => {
+    const jobId = selectedJobIdRef.current;
+    if (!jobId) return;
+    unitOffsetRef.current = offset;
+    clearSelectedUnit();
+    void loadJob(jobId, false, offset);
+  }, [clearSelectedUnit, loadJob]);
+
+  const changeAttemptPage = useCallback((unitId: string, offset: number) => {
+    attemptOffsetRef.current = offset;
+    void loadUnit(unitId, false, offset);
+  }, [loadUnit]);
+
   const refreshCanonical = useCallback(async (jobId: string | null, unitId: string | null) => {
     setIsRefreshing(true);
     try {
-      await loadJobs(true);
-      if (jobId) await loadJob(jobId, true);
-      if (unitId) await loadUnit(unitId, true);
+      await loadJobs(true, jobOffsetRef.current);
+      if (jobId) await loadJob(jobId, true, unitOffsetRef.current);
+      if (unitId) await loadUnit(unitId, true, attemptOffsetRef.current);
     } finally {
       setIsRefreshing(false);
     }
   }, [loadJob, loadJobs, loadUnit]);
 
   useEffect(() => {
-    void loadJobs();
+    void loadJobs(false, 0);
   }, [loadJobs]);
 
   useEffect(() => {
@@ -191,8 +247,8 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
       const unitId = selectedUnitIdRef.current;
       void (async () => {
         try {
-          await loadJob(jobId, true);
-          if (unitId) await loadUnit(unitId, true);
+          await loadJob(jobId, true, unitOffsetRef.current);
+          if (unitId) await loadUnit(unitId, true, attemptOffsetRef.current);
         } finally {
           inFlight = false;
         }
@@ -250,6 +306,7 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
     state,
     errorMessage,
     jobs,
+    jobPagination,
     selectedJobId,
     selectedJobState,
     selectedJobError,
@@ -263,6 +320,7 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
     errorMessage,
     feedback,
     isRefreshing,
+    jobPagination,
     jobs,
     selectedJob,
     selectedJobError,
@@ -280,6 +338,9 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
       onRefresh={() => void refreshCanonical(selectedJobIdRef.current, selectedUnitIdRef.current)}
       onSelectJob={(jobId) => void loadJob(jobId)}
       onSelectUnit={(unitId) => void loadUnit(unitId)}
+      onJobPageChange={changeJobPage}
+      onUnitPageChange={changeUnitPage}
+      onAttemptPageChange={changeAttemptPage}
       onJobAction={(jobId, action) => void runJobAction(jobId, action)}
       onReviewSubmit={submitReview}
     />
