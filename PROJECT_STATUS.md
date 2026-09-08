@@ -1,142 +1,144 @@
-# PROJECT STATUS
+# PROJECT STATUS — الوسيلة الذكية
 
-- **Current Phase:** Stage13 Super Admin Product — Admin Curriculum Web **VERIFIED**; next isolated batch is **Content / Media / OCR Operations**.
-- **Planning branch / PR:** `planning/product-evolution-review` / draft PR #12.
-- **Latest fully verified executable baseline:** `d3e621e6f60cc56ee3838b7df36a86ebafa37524`.
-- **Deployment:** `DEFERRED BY PRODUCT OWNER`. Hosted Student/Admin/API/media/OCR/AI worker runtime remains `NOT YET VERIFIED`.
-- **Old database:** intentionally out of current scope per Product Owner; repository migrations, tests and current PostgreSQL contracts are authoritative for ongoing development.
+> الحالة التنفيذية المختصرة. Repository code/migrations + GitHub Actions هي evidence الأعلى. اقرأ `PROJECT_HANDOFF.md` و`PROJECT_ENGINEERING_LOG.md` للتفاصيل.
 
-## Latest fully verified same-head matrix
+آخر تحديث: 2026-09-08.
 
-Exact executable head: `d3e621e6f60cc56ee3838b7df36a86ebafa37524`.
+## Current Position
 
-- Stage13 Curriculum Verification `34168788666` — SUCCESS, including Admin Chromium E2E.
-- Stage12 AI Execution `34168788667` — SUCCESS.
-- Stage11 AI Contracts `34168788661` — SUCCESS.
-- OCR Foundation `34168788704` — SUCCESS.
-- Stage10 Media Pipeline `34168788646` — SUCCESS.
-- Stage9 Content Import `34168788663` — SUCCESS.
-- Full Rebuild `34168788747` — SUCCESS, including existing Student Chromium activation/login/recovery coverage.
+- Repository: `7eaur/alwaslh`
+- Branch: `planning/product-evolution-review`
+- Draft PR: #12, base `rebuild/media-pipeline`
+- Latest fully verified **executable head**: `260cfef1c48d1290611103f8443d222f8cd041b6`
+- Current documentation closure: docs-only descendant of that executable head.
+- Deployment: **`DEFERRED BY PRODUCT OWNER`**
+- Old database migration/access: **OUT OF CURRENT SCOPE**
 
-## Stage13 Admin Curriculum Web — VERIFIED
+## Product in one paragraph
 
-Verified browser architecture:
+الوسيلة الذكية منصة تعليمية عربية بسطحين مستقلين: Student Web/PWA للطالب، وAdmin Web للـSuper Admin، مع Backend API خاص فوق PostgreSQL. الإدارة تبني وتراجع المنهج والمحتوى والوسائط وOCR/AI وبنك الأسئلة، والطالب يستهلك محتوى منشورًا ومصرحًا له به ويقرأ ويتدرب ويختبر ويحفظ ملاحظاته ويتابع تقدمه Offline/Online. الـrebuild يحافظ على كل نتيجة قديمة ذات قيمة لكنه يستبدل التنفيذ غير الآمن أو المعقد بمعمارية أبسط وأقوى.
+
+## Fully Verified Same-Head Matrix
+
+Exact executable head: `260cfef1c48d1290611103f8443d222f8cd041b6`.
+
+| Gate | Run | Result |
+|---|---:|---|
+| Stage13 Admin Product | `34173006035` | SUCCESS — backend + Admin Chromium |
+| Stage12 AI Execution | `34173006025` | SUCCESS |
+| Stage11 AI Contracts | `34173006065` | SUCCESS |
+| OCR Foundation | `34173006050` | SUCCESS |
+| Stage10 Media Pipeline | `34173006043` | SUCCESS |
+| Stage9 Content Import | `34173006055` | SUCCESS |
+| Full Rebuild | `34173006036` | SUCCESS — includes Student Chromium |
+
+Do not replace this evidence with a newer commit unless the required gates for that commit actually pass.
+
+## Stage Ledger
+
+| Stage / Area | State |
+|---|---|
+| Stage1 Product Inventory/Contract | VERIFIED |
+| Stage2 Brand | VERIFIED |
+| Stage3 UX Architecture baseline | VERIFIED |
+| Stage4 PostgreSQL Platform | VERIFIED |
+| Stage5 Engineering Foundation | VERIFIED |
+| Stage6 Auth & Authorization | VERIFIED |
+| Stage7 Access Codes & Entitlements | VERIFIED |
+| Stage8 Student Activation / Returning Login / Recovery / Device | VERIFIED incl. Chromium |
+| Stage9 Canonical Source Import | VERIFIED |
+| Stage10 Media Pipeline | VERIFIED |
+| OCR Foundation | VERIFIED |
+| Stage11 Provider-neutral AI Contracts | VERIFIED |
+| Stage12 Durable AI Execution / Capacity / Controls / Pause / Worker Runtime | VERIFIED backend/runtime |
+| Stage13A Curriculum Structure backend | VERIFIED |
+| Stage13B Admin Curriculum Web | VERIFIED incl. Chromium |
+| Stage13C Admin Content / Media / OCR Operations | **VERIFIED incl. Chromium** |
+| Stage13D Upload / Processing History / Publication Linking | **NEXT / NOT YET VERIFIED** |
+| Stage13E Admin AI Operations / Review | REQUIRED / NOT YET VERIFIED |
+| Stage13F Question Bank / Review / Publish | REQUIRED / NOT YET VERIFIED |
+| Stage13G Remaining Admin modules | REQUIRED / NOT YET VERIFIED |
+| Stage14+ Student and later product stages | REQUIRED / NOT YET VERIFIED according to Roadmap |
+| Hosted deployment | DEFERRED / NOT YET VERIFIED |
+
+## What Stage13C now provides
+
+Backend/Admin UI now uses one authority chain:
 
 ```text
-Admin Web
-→ GET /v1/admin/me
-→ POST /v1/auth/login when signed out
-→ HttpOnly server session
-→ GET /v1/admin/curriculum
-→ Admin-only curriculum mutations
-→ authoritative server snapshot refresh
+Stage9 content_source_documents/assets
+→ Stage10 media_assets/media_variants
+→ OCR extraction/review
+→ Admin operations read/review workspace
 ```
 
 Verified behavior:
 
-- separate Admin login and automatic session restoration;
-- server-backed logout;
-- real curriculum counts, no fake dashboard metrics;
-- create Class / Subject / Subject Offering / optional Section / Lesson;
-- sectioned and unsectioned lessons;
-- rename Class/Subject/Section/Lesson;
-- explicit ordering and `active | inactive | archived` state;
-- move Lesson between Sections or detach to Offering root;
-- loading, empty, network-error and mutation-feedback states;
-- RTL responsive layout and 390px horizontal-overflow check;
-- no destructive DELETE UI.
+- Admin-only source document list/search/filter/pagination;
+- real processing summary counts;
+- ordered source assets;
+- media status, errors and deterministic variants;
+- OCR metadata separated from raw-detail payload;
+- OCR detail with source provenance;
+- approve/reject/correct pending OCR;
+- empty OCR cannot be approved until corrected;
+- repeated/conflicting review rejected;
+- Admin workspace has loading/error/empty/status/detail/review UX;
+- browser test proves opening source media and approving corrected OCR;
+- pending-review metric refreshes to zero after approval.
 
-Chromium verified:
+This **does not** mean media has been published into a Lesson. `lesson_assets` publication/linking is an explicit next contract.
 
-```text
-login
-→ create Class
-→ create Subject
-→ link Offering
-→ create Section
-→ create Lesson
-→ move/detach Lesson
-→ rename Lesson
-→ change status
-→ reload + restore server session
-→ logout
-```
+## Current Next Work — Stage13D
 
-## CI hardening during closure
+Implement in this order, after repository discovery of actual callers/contracts:
 
-The final closure did not weaken product assertions. Test-harness issues were corrected at their source:
+1. Define Admin upload ingestion contract for image/PDF/mixed input without bypassing Stage10.
+2. Preserve user-chosen order across mixed PDF/image sources.
+3. Define durable upload/processing task progress/history rather than browser-owned progress.
+4. Define source/media → curriculum Lesson linking/publication contract explicitly.
+5. Prevent processing evidence from becoming Published lesson content without review/state transition.
+6. Add Backend/PostgreSQL/unit/integration/Chromium evidence.
+7. Update Legacy Coverage for `LES-A-010..015` only for capabilities actually proven.
+8. Update Status/Log/Handoff/specialized docs before moving to Stage13E.
 
-1. fresh `Response` per mocked fetch instead of reusing a consumed body;
-2. API-client tests assert URL path rather than assuming relative URLs when `VITE_API_BASE_URL` is configured;
-3. Playwright selectors were scoped to real interactive controls instead of regex/fuzzy label matches;
-4. duplicate visible/accessibility text assertions were scoped to the intended UI element;
-5. Stage12 distributed-capacity race now uses two independent jobs, so job-row locking cannot short-circuit the capacity gate before the race is exercised.
+## High-Priority Open Boundaries
 
-## Stable architecture boundaries
+- `CONTENT-013-002` P1 — Stage10 media is not yet linked/published into `lesson_assets` by an explicit contract.
+- `AI-011-005` P2 — AI `direct` question output exists but current Question Bank DB does not safely persist that type.
+- `AI-012-019` P2 — live provider/model benchmark, credentials, production routes/bootstrap remain NOT YET VERIFIED.
+- Upload task progress/history is not yet implemented as a verified Admin contract.
+- Draft → Review → Published content workflow is not complete end-to-end.
+- Student entitlement-filtered curriculum/read APIs and full Student product remain later work.
+- TTS production implementation/quality/runtime is not verified.
+- Offline/PWA final product stages remain later work.
+- `tmp-unused-do-not-use` branch is P3 repository housekeeping only.
 
-- `subject_class_links` remains the only Subject Offering authority.
-- `curriculum_sections` remains one optional layer only.
-- Stage9 source inventory remains provenance/evidence, not curriculum authority.
-- Stage10 `media_assets/media_variants` remain derived media authority.
-- only completed OCR with `not_required | approved` review state is approved downstream text evidence.
-- `lesson_assets` exists but is **not currently linked automatically** to Stage10 `media_assets`; therefore source/media/OCR operations must not be presented as published lesson content yet.
-- browser must not run OCR/AI workers or mutate PostgreSQL directly.
-- Stage12 `ai_jobs / ai_job_units / ai_outputs` remains the single AI execution authority.
-- Question Bank still persists only `multiple_choice | true_false`; AI `direct` remains reviewable output only.
+## Stable Non-Negotiable Boundaries
 
-## Current isolated batch — Content / Media / OCR Operations
+- Browser does not directly own PostgreSQL/auth/publish state.
+- Full Code = 6 digits; Class Code = 7 digits.
+- Student login requires password + registered P-256 device challenge; Admin recovery/rebind rules remain intact.
+- Curriculum = Class → Subject Offering → optional Section → Lesson.
+- Stage9 source inventory is provenance evidence, not curriculum authority.
+- Upload/media success is independent from OCR/AI/TTS.
+- Reviewed source/page/checksum provenance is required for source-sensitive AI.
+- Exact AI modes never invent unknown answers.
+- Durable AI worker/runtime remains separate from Fastify HTTP.
+- No test weakening, authorization bypass, hidden catch, duplicate lifecycle or production hard-code as a “fix”.
 
-Repository discovery is complete enough to start the batch:
+## Deployment / Runtime
 
-- Stage9 already stores ordered source documents/assets and provenance.
-- Stage10 already stores media processing status plus `source/display/thumbnail/ai` variants.
-- OCR already stores durable extraction, retry, confidence and review state.
-- `apps/api/src/app.ts` currently exposes no Admin HTTP surface for media/OCR operations.
-- `apps/admin-web` currently marks “الوسائط وOCR” as a later module.
+Current Product Owner decision overrides the older preview cadence:
 
-The next implementation will add a thin Admin operations/read-review layer over the existing authorities, not a second media/OCR pipeline. Upload task history and lesson publication/linking remain separate contracts unless implemented and verified in the same future batch.
+`DEFERRED BY PRODUCT OWNER`
 
-## Legacy coverage state
+Do not sync/deploy to Vercel/Supabase or re-enable auto-deployment until a new explicit instruction. Hosted Student/Admin/API/media/OCR/AI behavior remains `NOT YET VERIFIED`.
 
-Verified implementation evidence from the Admin Curriculum batch now covers the implemented subset of:
+## Documentation Health
 
-- `PUB-002` separate Admin login;
-- `ADMIN-007` Admin navigation foundation;
-- `ADMIN-008` responsive Admin shell;
-- `CLASS-A-001..003`, `CLASS-A-005..007`, `CLASS-A-010` where represented by current hierarchy operations;
-- `LES-A-001..003`, `LES-A-006..007` for current hierarchy/list/filter/edit/order behavior.
+Canonical startup path:
 
-Still open: server search/pagination, preview, destructive dependency-aware delete semantics, bulk lesson operations, uploads, media processing/progress/history, OCR operations UI, AI authoring/review, Question Bank publish, students/codes, notifications, imports/exports/reports/settings/audit.
+`README.md → DOCUMENTATION_INDEX.md → PROJECT_HANDOFF.md → PROJECT_STATUS.md → PROJECT_ENGINEERING_LOG.md → CURRENT_PRODUCT_OVERRIDES → Product Decisions → Parity/Coverage → Roadmap → specialized docs`.
 
-## Still intentionally NOT YET VERIFIED
-
-- authorized live AI provider adapters/credentials;
-- live provider/model benchmark and production route/model defaults;
-- production live-provider worker bootstrap;
-- hosted worker/runtime behavior;
-- hosted Admin/Student/API runtime while deployment is deferred;
-- Draft → Review → Published content workflow;
-- Stage10 media → `lesson_assets` publication/linking contract;
-- TTS implementation/runtime.
-
-## Next ordered work
-
-1. Build Stage13 Admin Content/Media/OCR read-model and Admin-only HTTP contracts over existing Stage9/10/OCR tables.
-2. Add OCR pending/detail/review operations without browser-owned worker execution or duplicate SQL lifecycle.
-3. Activate the Admin “الوسائط وOCR” workspace with search/filter/status/detail/review UX plus loading/error/empty/responsive/a11y states.
-4. Add PostgreSQL/API/unit/Chromium verification and update parity evidence.
-5. Define upload/progress/history and media→lesson publication/linking explicitly before implementing those flows.
-6. Continue Stage13 AI Operations using the existing Stage12 queue/runtime only.
-7. Resolve `direct` Question Bank persistence before publish flows depend on it.
-8. Continue students/codes/recovery/device-rebind, notifications, import-export, reports, settings and audit.
-9. Keep deployment disabled until explicit Product Owner re-enable instruction.
-
-## Repository housekeeping
-
-`tmp-unused-do-not-use` remains P3 repository noise only; it has no unique code and is not used by PR #12.
-
-## Last build/test
-
-**Last fully green executable head:** `d3e621e6f60cc56ee3838b7df36a86ebafa37524`.
-
-**Deployment:** `DEFERRED BY PRODUCT OWNER`.
+`TODO.md`, root legacy code, legacy PRD/audits are historical references and must not override current executable evidence.

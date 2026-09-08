@@ -1,147 +1,132 @@
-# DEVELOPMENT RUNTIME & PREVIEW POLICY — الوسيلة الذكية
+# DEVELOPMENT RUNTIME & DEPLOYMENT POLICY — الوسيلة الذكية
 
-> هذه الوثيقة تحدد شكل المنتج أثناء التطوير وطريقة النشر المؤقت للإشراف والتجربة. لا تغيّر معمارية الإنتاج النهائية.
+> Current operational policy. Historical Preview decisions remain in Product Decision files, but the current Product Owner override controls deployment behavior.
+
+Last updated: 2026-09-08.
 
 ## 1. Runtime surfaces
 
-المنتج يتكون من ثلاث وحدات تشغيلية واضحة:
+The rebuilt product has three explicit surfaces:
 
 ```text
-Student PWA        apps/student-web
+Student Web/PWA    apps/student-web
 Admin Web          apps/admin-web
 Backend API        apps/api
 ```
 
-### Student PWA
+### Student Web/PWA
 
-- تطبيق الطالب فقط.
-- Web/PWA قابل للتثبيت على الهاتف/الجهاز.
-- Mobile-first وRTL وOffline-first حسب العقود المعتمدة.
-- يعمل أيضًا داخل Browser بدون تثبيت.
-- يمتلك Manifest/Service Worker/install/update/offline lifecycle خاصًا به.
-- لا يحتوي Admin navigation أو Admin code paths كجزء من تجربة الطالب.
+- Student only;
+- browser + installable PWA target;
+- mobile-first, RTL, offline-first according to later verified contracts;
+- does not contain Admin navigation/privileged code paths;
+- owns local UX/private offline storage only, not server authority.
 
 ### Admin Web
 
-- تطبيق إدارة مستقل للـSuper Admin.
-- لا يُقدَّم كجزء من Student PWA.
-- يمكن أن يكون أكثر كثافة من Student، لكن يستخدم نفس Brand/Design System/shared primitives بدل تكرار styles/components.
-- Upload/OCR/AI/Question Bank/Publishing/Students/Codes/Import-Export وغيرها تبقى Admin concerns.
+- Super Admin only;
+- independent from Student app;
+- manages curriculum/content/media/OCR/AI/Question Bank/accounts/codes/operations as stages are implemented;
+- uses Backend API, never direct PostgreSQL application access.
 
-### Backend API
+### Backend API / workers
 
-- الجسر الوحيد للتعامل مع PostgreSQL الخاصة.
-- Auth/Authorization/Entitlements/assessment authority server-owned.
-- Browser لا يتصل مباشرة بPostgreSQL.
-- OCR/AI/TTS/background execution تبقى خلف Backend/worker boundaries.
+- Fastify API is authoritative HTTP boundary;
+- private PostgreSQL owns canonical business state;
+- Auth/Authorization/Entitlements/assessment/publish decisions are server-owned;
+- Media/OCR/AI/TTS/background work stays behind backend/worker boundaries;
+- dedicated worker polling is separate from Fastify when required.
 
-## 2. PWA contract للطالب
+## 2. Current deployment decision
 
-Student يجب أن يحافظ على نتيجة التطبيق القديم: **تطبيق ويب يمكن تثبيته**، لكن بتنفيذ حديث صحيح:
+**`DEFERRED BY PRODUCT OWNER`**.
 
-- installability verified عبر manifest/service worker criteria؛
-- owned icons/brand assets؛
-- HTTPS في البيئة المنشورة؛
-- cache scopes واضحة؛
-- account/device-scoped private data؛
-- downloads explicit/bounded؛
-- delta sync + outbox؛
-- signed offline authorization lease max 14 days capped by entitlement expiry؛
-- Push Notifications عندما تكون المنصة داعمة وبعد موافقة المستخدم؛
-- update strategy لا تمسح private data عشوائيًا؛
-- accessibility لا تُضحّى بها لتقليد Native UI.
+Until Product Owner explicitly changes this decision:
 
-## 3. Temporary development preview
+- do not deploy Student/Admin/API;
+- do not sync to Vercel/Supabase Preview;
+- do not re-enable Git auto-deployment;
+- do not treat a previously deployed Preview as current product evidence;
+- hosted runtime is `NOT YET VERIFIED`;
+- continue development through repository CI, PostgreSQL integration and Chromium E2E.
 
-الغرض من Preview هو أن يستطيع Product Owner مشاهدة وتجربة ما تم أثناء التطوير بدل انتظار Production cutover.
+This current instruction operationally pauses the historical PED-051 “stable batch → live Preview” cadence.
 
-### البيئة الحالية
+## 3. Current stable-batch gate
 
-- GitHub repository: `7eaur/alwaslh`.
-- Preview integration branch: `preview/supabase-vercel`.
-- Temporary database/testing host: Supabase project `linksoftt`.
-- Temporary web/runtime host: Vercel project `alwaslh`, team `wasl15`.
-- هذه البيئة مؤقتة ولا تلزمنا باستخدام Supabase/Vercel في Production النهائي.
-
-### Sync rule
-
-بعد اكتمال دفعة قابلة للاختبار:
+During deployment deferral:
 
 ```text
-feature/rebuild branch
-→ CLI/CI gate PASS
-→ integrate into preview/supabase-vercel
-→ apply required Preview migrations/config safely
-→ deploy
-→ verify build + health/readiness + relevant user flow
-→ record evidence
+repository discovery
+→ implementation
+→ lint/typecheck/unit
+→ PostgreSQL/integration
+→ browser E2E where relevant
+→ same-head regression matrix
+→ documentation closure
+→ next isolated batch
 ```
 
-لا نضع تغييرات غير مستقرة في Preview لمجرد العرض.
+No stage is considered PASS because it builds locally or because an old hosted URL exists.
 
-## 4. Preview verification levels
+## 4. When deployment is explicitly re-enabled
 
-حسب طبيعة التغيير، نتحقق من:
+Only after a new Product Owner instruction, reintroduce a deployment gate similar to:
 
-- deployment/build status؛
-- `/api/health`؛
-- readiness/DB connectivity عندما يمكن الوصول إليها؛
-- Student route/PWA shell؛
-- Admin route؛
-- auth/session flow؛
-- feature-specific smoke/E2E؛
-- runtime logs عند الخطأ؛
-- browser behavior عندما تتعلق الميزة بالCookie/PWA/Offline/Media.
+```text
+verified executable head
+→ choose/confirm environment
+→ apply safe migrations/config
+→ deploy Backend/workers/storage
+→ deploy Admin/Student
+→ health/readiness
+→ feature-specific smoke/E2E
+→ logs/observability
+→ record exact runtime evidence
+```
 
-عدم القدرة على اختبار بند بسبب قيود منصة Preview = `NOT YET VERIFIED` مع سبب واضح.
+Do not assume previous temporary Supabase/Vercel projects are still the correct hosts; verify current environment and credentials first.
 
-## 5. Temporary platform constraints
+## 5. Hosted verification requirements
 
-### Supabase
+Depending on the feature, hosted verification may require deployment/build status, API `/health` and `/ready`, real DB connectivity, Admin and Student route loading, auth/session/cookie behavior, media durable storage, PDF/Poppler worker suitability, OCR provider/runtime, AI worker/provider connectivity, PWA/Service Worker/HTTPS behavior, offline/download behavior, and browser logs/errors.
 
-- temporary PostgreSQL/testing host فقط.
-- Browser direct access غير معتمد؛ API هو application data path.
-- Preview RLS/revokes تستخدم لمنع direct anon/authenticated table access.
-- final production remains private PostgreSQL behind Backend.
+Anything impossible to verify in the chosen host remains `NOT YET VERIFIED`; do not fake a production behavior to satisfy Preview.
 
-### Vercel
+## 6. Temporary-platform principle
 
-- temporary deployment/runtime layer.
-- serverless filesystem ليس durable media volume نهائيًا.
-- Poppler/media-worker suitability على Vercel يجب اختبارها صراحة؛ لا تُفترض.
-- أي Vercel-specific wrapper/config يبقى integration concern، لا domain architecture.
+Any future Preview provider is an integration environment, not domain architecture.
 
-## 6. Secrets
+- Provider-specific wrappers must not leak into business rules.
+- Serverless ephemeral filesystem must never be treated as durable media storage without evidence.
+- Database direct anon/auth access is not the application path; API remains authority.
+- Worker/storage/provider limitations must be measured explicitly.
 
-- لا API keys/passwords/DB URLs في Git.
-- لا secrets داخل Student/Admin bundles.
-- environment secrets تُدار في hosting/provider settings.
-- documentation تسجل أسماء المتغيرات والعقود فقط، لا القيم الحساسة.
+## 7. Secrets
 
-## 7. No-patching rule في Preview
+- no API keys/passwords/DB URLs/service-role tokens in Git;
+- no provider credentials in Student/Admin bundles;
+- environment secrets stay in approved hosting/provider secret stores;
+- docs record variable names/contracts only, not values;
+- secrets pasted into chat should not be copied into source or documentation.
 
-يجوز workaround مؤقت للـPreview فقط إذا:
+## 8. No-patching policy
 
-1. المشكلة خاصة بالبيئة المؤقتة وليست domain defect؛
-2. موثقة كKnown Issue؛
-3. impact معروف؛
-4. لها removal/exit path؛
-5. لا تغيّر Business Rule أو security boundary؛
-6. لا تصبح أساسًا يُبنى فوقه المنتج النهائي.
+A temporary hosting workaround is acceptable only when all are true:
 
-إذا كان الخطأ في architecture/domain/contract، يُصلح جذريًا في المصدر ثم يعاد deployment.
+1. defect is environment-specific, not domain correctness;
+2. Known Issue is documented;
+3. impact is bounded;
+4. removal/exit path exists;
+5. no authorization/validation/business rule is weakened;
+6. it does not become the production architecture accidentally.
 
-## 8. Documentation after every preview sync
+If architecture/domain/contract is wrong, fix source root cause and rerun gates.
 
-حدّث:
+## 9. Documentation after future deployment
 
-- `PROJECT_STATUS.md`؛
-- `PROJECT_ENGINEERING_LOG.md`؛
-- `PROJECT_HANDOFF.md` إذا تغير branch/deployment/runtime state؛
-- `docs/preview/SUPABASE_VERCEL_PREVIEW.md`؛
-- exact commit/deployment/CI evidence؛
-- Known Issues و`NOT YET VERIFIED`.
+If deployment is re-enabled, update `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, the environment/runbook doc under `docs/preview/`, exact executable commit + deployment identifier + runtime evidence, and Known Issues/remaining `NOT YET VERIFIED` items.
 
-## 9. Final production
+## 10. Production target
 
-عند الوصول لمراحل Staging/Release/Cutover، ننقل إلى الاستضافة الحقيقية المختارة وننفذ PostgreSQL/storage/workers/proxy/backups/monitoring وفق Production architecture. الانتقال النهائي يجب ألا يتطلب إعادة كتابة Business Logic لأن Preview adapters/configs لا تتسرب إلى domain.
+Final production hosting remains a future Stage26–29 decision/execution concern. The architecture is intentionally designed so changing temporary hosts should not require rewriting business logic.

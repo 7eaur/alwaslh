@@ -1,200 +1,177 @@
 # DOCUMENTATION INDEX — الوسيلة الذكية
 
-> خريطة التوثيق الرسمية للمشروع. الحالة التنفيذية تؤخذ من `PROJECT_HANDOFF.md` و`PROJECT_STATUS.md` و`PROJECT_ENGINEERING_LOG.md`; أي شيء غير منفذ/مختبر يوسم `NOT YET VERIFIED`.
+> هذه هي خريطة ذاكرة المشروع الرسمية. أي محادثة/مهندس جديد يجب أن يبدأ هنا ولا يعتمد على chat memory.
 
-## 1. ابدأ من هنا دائمًا
+## 1. Source of Truth precedence
 
-اقرأ بالترتيب:
+عند وجود اختلاف بين ملفين، استخدم الترتيب التالي:
 
-1. `PROJECT_HANDOFF.md` — السياق التنفيذي والحدود المعمارية وآخر exact head/CI evidence.
-2. `PROJECT_STATUS.md` — المرحلة الحالية وما اكتمل وما بقي.
-3. `PROJECT_ENGINEERING_LOG.md` — التاريخ الهندسي، Architecture Decisions، Audit Findings، Tests/Known Issues.
-4. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` + Product Decisions Batches 05–06.
-5. `MASTER_REBUILD_ROADMAP.md` — الخطة التنفيذية والمراحل القادمة.
-6. `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md` — runtime policy؛ قرار Product Owner الحالي بتأجيل النشر أعلى سلطة.
-7. `NEXT_CONVERSATION_PROMPT.md` — مساعد للاستئناف فقط.
+1. **الكود الحالي + PostgreSQL migrations + GitHub Actions executable evidence**.
+2. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` للقرارات الحالية الصريحة التي تتقدم على سياسات أقدم.
+3. `PROJECT_HANDOFF.md` + `PROJECT_STATUS.md` + `PROJECT_ENGINEERING_LOG.md` للحالة التنفيذية الحالية والسجل.
+4. Product Decisions (`PRODUCT_EVOLUTION_REVIEW` ثم Batches 05/06) للـBusiness/Product rules.
+5. الوثائق المتخصصة لكل Stage/Module.
+6. `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` لضمان عدم ضياع Legacy capabilities.
+7. `MASTER_REBUILD_ROADMAP.md` للترتيب المستهدف.
+8. Legacy audits/PRD/TODO/root legacy code كأدلة تاريخية فقط.
 
-## 2. Legacy coverage — hard gate
+إذا لم يوجد executable evidence لادعاء ما، حالته `NOT YET VERIFIED` حتى لو كانت الوثيقة تصفه كهدف.
 
-راجع دائمًا:
+## 2. ترتيب القراءة الإلزامي لمحادثة جديدة
 
-- `PRODUCT_FEATURE_PARITY_MATRIX.md`;
-- `PROJECT_DEEP_AUDIT.md`;
-- `PROJECT_FULL_AUDIT_CATALOG.md`;
-- `PROJECT_REBUILD_BLUEPRINT.md`;
-- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`;
-- `OFFLINE_MODE.md` و`OFFLINE_MODE_README.md`.
+1. `README.md` — تعريف المنتج والمعمارية الحالية.
+2. `DOCUMENTATION_INDEX.md` — هذا الملف.
+3. `PROJECT_HANDOFF.md` — handoff تنفيذي قابل للاستئناف.
+4. `PROJECT_STATUS.md` — المرحلة الحالية وما اكتمل وما بقي.
+5. `PROJECT_ENGINEERING_LOG.md` — التاريخ، القرارات المعمارية، findings، tests/evidence.
+6. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` — قرارات Product Owner الحالية.
+7. `docs/product/PRODUCT_EVOLUTION_REVIEW.md` — Product Decisions الأساسية.
+8. `docs/product/PRODUCT_DECISIONS_BATCH_05.md`.
+9. `docs/product/PRODUCT_DECISIONS_BATCH_06.md` — اقرأه تاريخيًا مع تطبيق Current Overrides على PED-051.
+10. `PRODUCT_FEATURE_PARITY_MATRIX.md`.
+11. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
+12. `MASTER_REBUILD_ROADMAP.md`.
+13. الوثائق المتخصصة للمرحلة الحالية والمرحلة التالية.
+14. Legacy audit docs عند تنفيذ Module له سلوك قديم يجب مقارنته.
 
-قاعدة التغطية:
+`NEXT_CONVERSATION_PROMPT.md` هو Launcher مختصر فقط؛ يوجّهك إلى هذه القائمة ولا يكرر الحالة.
 
-```text
-Legacy capability
-→ KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE(owner-approved only)
-→ target module/flow
-→ implementation evidence
-→ test/acceptance evidence
-```
+## 3. ملفات الحالة والحوكمة
 
-لا تُغلق Stage13/14 feature parity قبل اكتمال هذا الربط.
+| File | Authority / Purpose |
+|---|---|
+| `PROJECT_HANDOFF.md` | أفضل ملف للاستئناف: branch/PR/head، الفكرة، boundaries، verified stages، current next work، known issues |
+| `PROJECT_STATUS.md` | ملخص الحالة الحالية، exact CI، blockers والمتبقي بالترتيب |
+| `PROJECT_ENGINEERING_LOG.md` | سجل زمني تراكمي، Architecture Decisions، Findings P0–P3، Changes، Verification، Known Issues |
+| `MASTER_REBUILD_ROADMAP.md` | الخطة من المراحل الحالية حتى release/cutover؛ لا يحل محل evidence |
+| `NEXT_CONVERSATION_PROMPT.md` | Prompt قصير لمحادثة جديدة؛ ليس Source of Truth بذاته |
+| `TODO.md` | Legacy/Historical only؛ لا تستخدمه كقائمة العمل الحالية |
 
-## 3. Current verified executable baseline
+## 4. فهم المنتج وLegacy parity
 
-Exact executable head:
+| File | Purpose |
+|---|---|
+| `PRODUCT_FEATURE_PARITY_MATRIX.md` | inventory الإلزامي لكل capability/scenario قديم ذي قيمة |
+| `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` | يربط legacy capability → disposition → implementation → test evidence |
+| `docs/product/PRODUCT_EVOLUTION_REVIEW.md` | القرارات المنتجية الأساسية PED-* |
+| `docs/product/PRODUCT_DECISIONS_BATCH_05.md` | Notes/Needs Review/AI multi-provider/root-cause/design governance وغيرها |
+| `docs/product/PRODUCT_DECISIONS_BATCH_06.md` | Student/Admin split/PWA/documentation governance وسياسة Preview التاريخية |
+| `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | override حالي صريح: deployment deferred، old DB خارج scope، repo docs هي الذاكرة الرسمية |
+| `PROJECT_DEEP_AUDIT.md` | Deep audit للتطبيق القديم؛ historical evidence |
+| `PROJECT_FULL_AUDIT_CATALOG.md` | Catalog موسع للأدلة والمشكلات القديمة |
+| `PROJECT_REBUILD_BLUEPRINT.md` | blueprint/synthesis تاريخي؛ لا يتقدم على القرارات الأحدث |
+| `docs/prd.md` | PRD legacy/reference؛ ليس وصف runtime الحالي |
+| `docs/SOURCE_INVENTORY.md` | inventory تاريخي للمستودع القديم |
 
-`d3e621e6f60cc56ee3838b7df36a86ebafa37524`
+## 5. Data / Curriculum / Content
 
-Same-head evidence:
+| File | Purpose / Current State |
+|---|---|
+| `DATABASE_PLATFORM_ARCHITECTURE.md` | PostgreSQL platform authority/constraints |
+| `docs/curriculum/CURRICULUM_STRUCTURE.md` | Stage13 Curriculum contract: Class → Offering → optional Section → Lesson |
+| `docs/admin/STAGE13_ADMIN_CURRICULUM_UI.md` | Admin curriculum Web behavior + E2E evidence |
+| `docs/admin/STAGE13_CONTENT_MEDIA_OCR_OPERATIONS.md` | **Stage13C verified** operations/read-review contract over Stage9→10→OCR |
+| `docs/media/MEDIA_PIPELINE_ARCHITECTURE.md` | Stage10 media architecture |
+| `docs/media/MEDIA_STAGE_DOD.md` | media definition of done/evidence |
+| `database/migrations/0008_content_source_import.sql` | Stage9 source/provenance schema |
+| `database/migrations/0009_media_pipeline.sql` | Stage10 media schema |
+| `database/migrations/0011_ocr_foundation.sql` | OCR durable schema |
 
-- Stage13 Curriculum Verification `34168788666` — SUCCESS including Admin Chromium;
-- Stage12 AI Execution `34168788667` — SUCCESS;
-- Stage11 AI Contracts `34168788661` — SUCCESS;
-- OCR Foundation `34168788704` — SUCCESS;
-- Stage10 Media `34168788646` — SUCCESS;
-- Stage9 Content Import `34168788663` — SUCCESS;
-- Full Rebuild `34168788747` — SUCCESS including Student Chromium.
+Stage9 source import details and inventory evidence are also preserved in `PROJECT_ENGINEERING_LOG.md`, Stage9 CI, import tests/reports under the repository, and the canonical source repository `7eaur/alwaslh-go`.
 
-## 4. Auth / Access / Activation — VERIFIED
+Canonical content source inventory remains `7eaur/alwaslh-go` pinned by Stage9 evidence. Source folder names are provenance/facets, not curriculum business hierarchy.
 
-Stage6–8 verified scope includes two-step Full Code activation, mandatory password lifecycle, P-256 registered-device challenge, device-bound sessions, temporary-password recovery, Admin reset/rebind and transactional Full/Class Code entitlement rules.
+## 6. Auth / Access / Student activation
 
-Exact historical heads/tests live in `PROJECT_ENGINEERING_LOG.md`.
+Relevant implementation lives under `apps/api/src/auth`, `activation`, `access` plus migrations and integration tests.
 
-## 5. Content source / import — Stage9 VERIFIED
+Read specialized API/access docs under `docs/api/` when modifying those contracts. Stable verified principles:
 
-Canonical `alwaslh-go` revision:
+- server sessions + role isolation;
+- Full Code 6 digits / Class Code 7 digits;
+- non-consuming activation verify → activation ticket → atomic finalization;
+- Student password + registered P-256 device challenge;
+- Admin temporary-password recovery + session revoke + forced password change;
+- explicit device rebind/reset.
 
-`f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
+Do not weaken these boundaries during later UI work.
 
-Verified inventory:
+## 7. OCR / AI
 
-- 15 subject roots;
-- 48 source documents;
-- 5,552 images;
-- 4,218 JPG;
-- 1,334 WEBP;
-- 86 recognized helpers;
-- 24 manifests;
-- 0 fatal inventory issues;
-- canonical SHA-256 `7b6c6e1e79d90cf68a72bc473c12ce23bf39c462708dcd10bc313fd535fbe729`.
+| File | Purpose |
+|---|---|
+| `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md` | provider/model-neutral strategy, benchmark requirement |
+| `docs/ai/STAGE11_GENERATION_CONTRACTS.md` | typed modes, Prompt Registry, validators, golden dataset |
+| `docs/ai/STAGE12_JOB_LIFECYCLE.md` | durable job/unit/attempt lifecycle, pause/resume/progress |
+| `docs/ai/STAGE12_WORKER_RUNTIME.md` | dedicated bounded worker process/graceful drain |
+| `database/migrations/0011_ocr_foundation.sql` + OCR code/tests | canonical OCR lifecycle/review/search evidence |
 
-Stage9 is provenance/evidence, not curriculum hierarchy authority.
+Important open boundary: live provider adapters/credentials/benchmark/production AI routing remain `NOT YET VERIFIED`; do not claim a provider is production-ready without measured evidence.
 
-## 6. Curriculum Structure — Stage13 backend VERIFIED
+## 8. UX / Brand / Offline
 
-Canonical doc: `docs/curriculum/CURRICULUM_STRUCTURE.md`.
+- `packages/brand/` — canonical brand tokens/primitives.
+- `docs/ux/` — UX architecture/contracts from earlier stages.
+- `OFFLINE_MODE.md` + `OFFLINE_MODE_README.md` — Offline legacy/reference and rebuild requirements.
+- `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md` — current runtime/deployment policy; deployment currently deferred.
 
-```text
-Class / Grade
-→ Subject Offering (`subject_class_links`)
-→ Unit / Section (optional)
-→ Lesson
-→ Content / pages / resources
-```
+## 9. Current verified baseline
 
-Do not create parallel Subject Offering authority or recursive Generic Tree without a new product decision. Lesson/section offering scope is PostgreSQL-enforced.
+Executable head:
 
-## 7. Admin Curriculum Web — Stage13 VERIFIED
+`260cfef1c48d1290611103f8443d222f8cd041b6`
 
-Canonical doc: `docs/admin/STAGE13_ADMIN_CURRICULUM_UI.md`.
+Same-head SUCCESS evidence:
 
-Verified scope:
+- Stage13 Admin Product `34173006035` — Backend + Admin Chromium;
+- Stage12 AI Execution `34173006025`;
+- Stage11 AI Contracts `34173006065`;
+- OCR Foundation `34173006050`;
+- Stage10 Media Pipeline `34173006043`;
+- Stage9 Content Import `34173006055`;
+- Full Rebuild `34173006036` — includes Student Chromium.
 
-- separate Admin login/session restore/logout;
-- real server-backed curriculum counts;
-- Class/Subject/Offering/Section/Lesson create/edit/status/order;
-- sectioned/unsectioned Lesson movement;
-- loading/error/empty/mutation states;
-- RTL responsive UI;
-- fresh-PostgreSQL Chromium flow and 390px overflow check.
+Stage13C Admin Content/Media/OCR is therefore **VERIFIED**. Next work begins at Stage13D Upload / Processing History / explicit media→Lesson publication linking.
 
-This verified subset does not imply completion of all Admin parity rows.
-
-## 8. Media Pipeline — Stage10 VERIFIED
-
-Relevant docs:
-
-- `docs/media/MEDIA_PIPELINE_ARCHITECTURE.md`;
-- `docs/media/MEDIA_STAGE_DOD.md`;
-- `database/migrations/0009_media_pipeline.sql`.
-
-Stage10 provides deterministic source/display/thumbnail/ai variants, ordering/checksum/provenance and storage abstraction. `lesson_assets` publication/linking is a separate unresolved contract.
-
-## 9. OCR / AI / TTS
-
-### OCR — VERIFIED backend foundation
-
-Durable lease/retry, checksum/media guards, raw + normalized text, review gates, approved-only downstream search and real Tesseract wiring are verified.
-
-### AI — Stage11 + Stage12 backend lifecycle/runtime VERIFIED
-
-Canonical docs:
-
-- `docs/ai/AI_PROVIDER_MODEL_STRATEGY.md`;
-- `docs/ai/STAGE12_JOB_LIFECYCLE.md`;
-- `docs/ai/STAGE12_WORKER_RUNTIME.md`.
-
-Still `NOT YET VERIFIED`: authorized live provider adapters/credentials, live benchmark, production routes/models, production provider worker bootstrap, current billing reconciliation and hosted worker runtime.
-
-### TTS — NOT YET VERIFIED
-
-Target remains approved text → cached/versioned audio. No generation per Play.
-
-## 10. Current Stage13 focus — Content / Media / OCR Operations
-
-Next architecture:
+## 10. Current implementation sequence
 
 ```text
-Stage9 source document/assets
-→ Admin operations read model
-→ Stage10 media/variant state
-→ OCR extraction/review state
-→ Admin extraction detail/review
+VERIFIED through Stage13C
+→ Stage13D Upload / Processing History / Publication Linking
+→ Stage13E Admin AI Operations / Review
+→ Stage13F Question Bank / Review / Publish
+→ Stage13G Students / Codes / Recovery / Notifications / Import-Export / Reports / Settings / Audit
+→ Stage14 Student Web/PWA product
+→ Stage15 Assessment
+→ Stage16 Offline/PWA
+→ Stage17 Personal Learning Data
+→ Stage18 Notifications
+→ Stage19 Progress/Statistics
+→ Stage20 Import/Export/Reporting
+→ Stages21–29 hardening/release/cutover/operations
 ```
 
-Rules:
+See `MASTER_REBUILD_ROADMAP.md` for details.
 
-- no browser-direct DB or worker execution;
-- no second OCR/media queue;
-- source class/subject labels are source facets, not curriculum authority;
-- media/OCR state is not published lesson content until a verified media→`lesson_assets` contract exists;
-- upload/progress/history is a separate explicit workflow if/when implemented.
+## 11. Superseded / historical warnings
 
-A specialized Stage13 Content/Media/OCR document must be created with the implementation batch.
+- Old root Supabase frontend/backend architecture is **legacy reference**, not rebuild runtime.
+- `TODO.md` is historical and must never determine current work.
+- PED-051 Preview cadence is historical policy; a later Product Owner instruction currently sets deployment to `DEFERRED BY PRODUCT OWNER`. See `CURRENT_PRODUCT_OVERRIDES.md`.
+- The old database is not required for current development/import decisions unless Product Owner explicitly reopens that work.
 
-## 11. Student product target
-
-`apps/student-web` remains installable Web/PWA and browser-usable. Stage6/8 auth/device foundation is verified; curriculum/Reader/practice/personal-data/offline work continues in later stages.
-
-## 12. Admin product target — Stage13 ACTIVE
-
-```text
-Auth/Shell                       VERIFIED
-→ Curriculum hierarchy          VERIFIED
-→ Content / Media / OCR          CURRENT
-→ AI Jobs/Generation             NEXT
-→ Question Bank/Review/Publish
-→ Students/Codes/Recovery/Device Rebind
-→ Notifications
-→ Import/Export/Reports
-→ Settings/Audit
-```
-
-## 13. Deployment / Preview status
-
-**Current decision:** deployment is `DEFERRED BY PRODUCT OWNER`.
-
-Therefore do not auto-sync/deploy, do not re-enable Git auto-deployment, and keep hosted behavior `NOT YET VERIFIED` until explicitly re-enabled and tested.
-
-## 14. Documentation governance
+## 12. Documentation maintenance rule
 
 After every meaningful batch:
 
-- update `PROJECT_STATUS.md`;
-- update `PROJECT_ENGINEERING_LOG.md`;
-- update `PROJECT_HANDOFF.md` when architecture/branch/CI/runtime changes;
-- update specialized docs and this index when status changes;
-- update parity/coverage evidence;
-- record exact commit/run evidence;
-- use `NOT YET VERIFIED` for unexecuted work.
+1. record exact executable HEAD and GitHub Actions run IDs;
+2. update `PROJECT_STATUS.md`;
+3. append/update `PROJECT_ENGINEERING_LOG.md` with changes, ADs, findings and evidence;
+4. update `PROJECT_HANDOFF.md` when current stage/boundary/branch/CI changes;
+5. update the specialized module doc;
+6. update Legacy Coverage evidence for newly implemented legacy capabilities;
+7. update Roadmap only when stage status/order changes;
+8. never mark PASS from prose or Build alone—use executable evidence;
+9. leave unverified items explicitly `NOT YET VERIFIED`.
 
-Stale `PENDING` documentation after exact-head verification is an engineering defect.
+This convention exists specifically so a new conversation can continue from the repository without knowing prior chat history.

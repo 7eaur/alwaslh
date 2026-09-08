@@ -1,309 +1,210 @@
 # MASTER REBUILD ROADMAP — الوسيلة الذكية
 
-> نبني أفضل نسخة من **فكرة الوسيلة الذكية**. التطبيق القديم مرجع شامل للمميزات والسيناريوهات؛ لا تُحذف Feature ذات قيمة بدون قرار صريح من Product Owner.
+> Same product, stronger implementation. Stage state is proven only by executable evidence; this Roadmap defines sequence, not truth by itself.
 
-## القواعد الحاكمة
+Current executable baseline: `260cfef1c48d1290611103f8443d222f8cd041b6`.
 
-1. Correctness > Cleverness، Clarity > Complexity، Evidence > Assumptions.
-2. Browser لا يتصل مباشرة بPostgreSQL.
-3. Auth/Authorization/Entitlements server-owned.
-4. Student PWA وAdmin Web سطحان مستقلان، يشتركان في Backend/Brand/Design System primitives فقط حيث يناسب.
-5. Student يبقى Web/PWA قابلًا للتثبيت ويعمل أيضًا من Browser.
-6. Upload/Media لا يعتمد على OCR/AI/TTS.
-7. OCR/AI/TTS طبقات مشتقة مستقلة.
-8. Student UX بسيط/أنيق/mobile-first مع الحفاظ على عمق الوظائف.
-9. كل نص ظاهر Product-ready وتعليماته سياقية وفي مكانها.
-10. Offline first-class مع account/device-scoped state، delta sync/outbox، و14-day max signed lease.
-11. Student questions تأتي من Published Admin-reviewed Question Bank فقط.
-12. Original ministerial models ≠ simulated models.
-13. AI text-first افتراضيًا مع source/page provenance.
-14. AI provider/model-neutral؛ لا hard lock-in إلى مزود واحد.
-15. Large AI generation = durable chunked jobs + bounded concurrency/backpressure.
-16. Admin product الحالي = Super Admin فقط؛ لا multi-role RBAC بلا حاجة.
-17. Full Code 6 digits / Class Code 7 digits كلاهما Core Feature؛ multiple class entitlements مدعومة.
-18. `PRODUCT_FEATURE_PARITY_MATRIX.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` hard coverage gate قبل إغلاق Student/Admin feature stages.
-19. لا ترقيع كحل نهائي؛ root-cause fixes فقط.
-20. Design System موحد/shared components؛ duplicate style/component audit قبل إغلاق Admin/Student.
-21. كل Stage لها executable DoD؛ unexecuted = `NOT YET VERIFIED`.
-22. Deployment/Preview verification ينفذ فقط عندما يكون النشر مفعّلًا بقرار Product Owner؛ القرار الحالي هو `DEFERRED BY PRODUCT OWNER`.
-23. قاعدة البيانات القديمة ليست dependency حالية للتطوير؛ repository migrations/tests/current PostgreSQL contracts هي السلطة التنفيذية الحالية.
+Deployment: **`DEFERRED BY PRODUCT OWNER`**.
 
-## Target Architecture
+## Core principles
 
-```text
-Student PWA ─┐
-             ├── Backend API ── PostgreSQL (private)
-Admin Web ───┘       │
-                     ├── media/object storage
-                     ├── OCR extraction + text index
-                     ├── cached/versioned TTS audio
-                     ├── durable provider-neutral AI jobs/workers
-                     ├── Web Push / notification delivery
-                     └── account/device-scoped offline sync
-```
+- preserve product/business outcomes and valuable legacy scenarios;
+- do not preserve unsafe/duplicated architecture merely because it worked;
+- root-cause changes, incremental batches, executable evidence;
+- no feature removal without Product Owner approval;
+- no browser-direct database authority;
+- no generic architecture where an explicit simple model is enough;
+- `NOT YET VERIFIED` until tested.
 
-Canonical documentation map: `DOCUMENTATION_INDEX.md`.
-Development runtime policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
+## Stage progression
 
----
+### Stage 1 — Product Contract — VERIFIED
+Inventory and parity contract. Legacy application becomes evidence/coverage source.
 
-# Verified baseline
+### Stage 2 — Brand Identity — VERIFIED
+Canonical product identity/tokens/assets.
 
-## Stage 1 — Product Inventory ✅ VERIFIED
-Legacy feature/user-flow inventory and parity safety net.
+### Stage 3 — UX Architecture — VERIFIED baseline
+Student/Admin separation, flow/navigation/responsive/accessibility contracts.
 
-## Stage 2 — Brand Identity ✅ VERIFIED
-Owned identity, Arabic typography/tokens/accessibility rules.
+### Stage 4 — PostgreSQL Platform — VERIFIED
+Private PostgreSQL, migrations, constraints, transactions, database authority.
 
-## Stage 3 — UX Architecture ✅ VERIFIED BASELINE
-Admin/Student IA and critical states; later Product Decisions supersede weak flows explicitly.
+### Stage 5 — Engineering Foundation — VERIFIED
+API/Admin/Student build/lint/type/test foundation and clean migration runner.
 
-## Stage 4 — PostgreSQL Data Platform ✅ VERIFIED
-Clean PostgreSQL16 data platform and additive migrations.
+### Stage 6 — Auth & Authorization — VERIFIED
+Private server auth/session/role boundaries, Admin bootstrap, password handling.
 
-## Stage 5 — Engineering Foundation ✅ VERIFIED
-API, DB pool/transactions, migrations, config/logging/errors, strict TS/lint/tests/builds/CI.
+### Stage 7 — Access Codes & Entitlements — VERIFIED
+6-digit Full Codes, 7-digit Class Codes, multiple entitlements, transactional redemption/renewal.
 
-## Stage 6 — Auth & Authorization ✅ VERIFIED
-Final verified scope includes server sessions, role isolation, Origin protection, lockout, temporary-password forced replacement and registered-device boundaries.
+### Stage 8 — Student Activation / Login / Recovery / Device — VERIFIED
+Two-step activation, P-256 application-device proof, returning login, recovery, forced change, rebind, Chromium.
 
-## Stage 7 — Access Codes & Entitlements ✅ VERIFIED
-Full Code 6 digits, Class Code 7 digits, crypto-secure generation, transactional/idempotent/race-safe redemption, renewal/no-waste/revoke/audit and multiple class entitlements.
+### Stage 9 — Canonical Source Import — VERIFIED
+Deterministic `alwaslh-go` source inventory/provenance, naming/order/idempotency evidence.
 
-## Stage 8 — Student Activation / Login / Recovery / Device ✅ VERIFIED
+### Stage 10 — Media Pipeline — VERIFIED
+Image/PDF processing foundation, deterministic variants, checksum/provenance/order/storage abstraction.
 
-```text
-Welcome
-├── لدي حساب بالفعل
-│   → identifier + password
-│   → registered-device challenge
-│   → session
-└── تفعيل جديد
-    → 6-digit Full Code verification
-    → one-time activation ticket
-    → mandatory Create Password
-    → atomic account + entitlement + redemption + audit
-    → register P-256 device key
-    → session
-```
+### OCR Foundation — VERIFIED
+Durable extraction leases/retry, normalized/raw text, confidence, review, approved search.
 
-Recovery uses temporary password + session revocation + forced private replacement; device loss uses Admin reset/rebind.
+### Stage 11 — Provider-Neutral AI Contracts — VERIFIED
+Modes, prompt versioning, provenance, validation, golden fixtures, benchmark harness.
 
-## Stage 9 — Content Source Import ✅ VERIFIED
-Canonical `alwaslh-go` inventory: 15 roots / 48 docs / 5,552 images / 0 fatal inventory issues. Source inventory is provenance evidence, not curriculum authority.
+### Stage 12 — Durable AI Execution / Runtime — VERIFIED backend/runtime
+Jobs/units/attempts, leases, retries, cancellation, partial success, distributed capacity, cooldown/kill/budget, pause/resume/progress, dedicated bounded worker runtime. Production live provider selection remains a later benchmark/runtime gate.
 
-## Stage 10 — Media Pipeline ✅ VERIFIED
-Sharp + Poppler, deterministic ordering/keys/checksums, idempotency, storage abstraction, cleanup, source/display/thumbnail/ai variants and real PDF coverage.
+# Stage 13 — Super Admin Product
 
-## OCR Foundation ✅ VERIFIED
-Durable OCR queue/leases/retry, provider-neutral adapter, conservative normalization, review gates, approved-only search and real Tesseract wiring.
+Stage13 is incremental. Do not mark the whole Admin Product complete because one substage passes.
 
-## Stage 11 — Provider-Neutral AI Contracts ✅ VERIFIED
-Typed provider-neutral inputs/outputs, Prompt Registry/versioning, source/page evidence, semantic/provenance/count/notation validators, uncertainty behavior and golden benchmark harness.
-
-## Stage 12 — Durable Provider-Neutral AI Execution ✅ VERIFIED BACKEND LIFECYCLE/RUNTIME
-
-```text
-Generation Plan
-→ source/page units
-→ ai_jobs / ai_job_units
-→ bounded worker slots
-→ leases
-→ distributed capacity + operational controls
-→ AiModelRouter
-→ provider call outside DB transaction
-→ validation
-→ durable attempt/output
-→ partial success/retry/review/failure
-```
-
-Verified: global/provider/project/model capacity, cooldown/Retry-After/kill/budget controls, route identity, cancellation, pause/resume/progress, stale-worker rejection, single lifecycle owner and dedicated bounded worker runtime.
-
-Live provider adapters/credentials/benchmark/production routes remain `NOT YET VERIFIED`.
-
-## Stage 13A — Curriculum Structure Backend ✅ VERIFIED
+## Stage13A — Curriculum Structure Backend — VERIFIED
 
 ```text
 Class
 → Subject Offering (`subject_class_links`)
 → optional Unit/Section
 → Lesson
-→ Content
 ```
 
-One optional Section layer only; lesson/section same-offering scope is DB-enforced; Admin curriculum mutations are audited; Stage9 source folders never define curriculum hierarchy.
+One optional hierarchy layer, DB scope integrity, non-destructive lifecycle.
 
-## Stage 13B — Admin Curriculum Web ✅ VERIFIED
+## Stage13B — Admin Curriculum Web — VERIFIED
 
-Server-backed Admin login/session restore/logout + real curriculum operations. Chromium proves create Class/Subject/Offering/Section/Lesson, Lesson move/detach, rename/status, reload/session restore, logout and narrow responsive behavior.
+Admin login/session, Class/Subject/Offering/Section/Lesson safe management, order/status/moves, responsive Chromium.
 
-Latest exact executable closure for the current verified product baseline:
-
-`d3e621e6f60cc56ee3838b7df36a86ebafa37524`
-
-- Stage13 `34168788666` SUCCESS;
-- Stage12 `34168788667` SUCCESS;
-- Stage11 `34168788661` SUCCESS;
-- OCR `34168788704` SUCCESS;
-- Stage10 `34168788646` SUCCESS;
-- Stage9 `34168788663` SUCCESS;
-- Full Rebuild `34168788747` SUCCESS.
-
----
-
-# Current implementation sequence
-
-## Stage 13C — Admin Content / Media / OCR Operations — CURRENT
-
-Repository authorities already exist:
+## Stage13C — Content / Media / OCR Operations — VERIFIED
 
 ```text
-Stage9 source documents/assets
-→ Stage10 media assets/variants
-→ OCR extractions/review
+Stage9 source evidence
+→ Stage10 media state/variants
+→ OCR state/detail
+→ Admin supervision/review
 ```
 
-Current gaps to close in order:
+Search/filter/status/detail/OCR correction/approve/reject with PostgreSQL + Admin Chromium evidence.
 
-1. Admin read model for source document list/search/filter and processing summaries.
-2. Ordered source-asset detail with linked media/variant state.
-3. OCR extraction metadata/detail and pending review list.
-4. Admin approve/reject/correct review actions using existing OCR lifecycle/repository rules.
-5. Admin “الوسائط وOCR” workspace with loading/error/empty/search/filter/detail/review states.
-6. API/PostgreSQL/unit/Chromium verification and parity evidence.
+## Stage13D — Upload / Processing History / Publication Linking — CURRENT NEXT
 
-Hard boundaries:
+Required:
 
-- no second OCR/media queue;
-- no browser worker execution;
-- no direct DB access;
-- source labels are source facets, not curriculum hierarchy;
-- Stage10 media/OCR does not become published Lesson content automatically;
-- `lesson_assets` linking/publication must be an explicit verified contract.
+- image upload;
+- PDF upload;
+- mixed PDF/images;
+- preserve original user-selected order;
+- reuse Stage10 processing, never a second pipeline;
+- durable upload/processing task progress;
+- task history/archive/error/retry visibility;
+- explicit source/media → curriculum Lesson association;
+- explicit Draft/Review/Published content transition;
+- no automatic publication merely because media is `ready`;
+- dependency-aware update/removal semantics;
+- API/PostgreSQL/unit/integration/Chromium evidence;
+- legacy `LES-A-010..015` coverage closure only where proven.
 
-## Stage 13D — Upload / Processing History / Publication Linking — REQUIRED NEXT WITH EXPLICIT CONTRACT
+## Stage13E — Admin AI Operations / Review — REQUIRED
 
-Legacy parity requires:
+- use verified Stage12 jobs/units/attempts;
+- queued/running/retrying/paused/failed/completed status;
+- progress, retry, cancel, pause/resume;
+- provider/model/project observability without secrets;
+- generated summary/question/page-detection review;
+- edit/reject/approve outputs;
+- source/page provenance visible;
+- no client-owned queue/progress;
+- live provider routing only after benchmark authorization.
 
-- ordered image upload;
-- PDF extraction;
-- mixed PDF/image order preservation;
-- media processing/compression variants;
-- durable upload/progress/history behavior;
-- explicit reviewed save/link to curriculum Lesson content.
+## Stage13F — Question Bank / Quiz Builder / Publish — REQUIRED
 
-Do not fake upload task history with unrelated processing rows. Add a durable task model only if the workflow requires it.
+- reviewed Question Bank authority;
+- MCQ/T-F/manual/generated editing;
+- resolve `direct` question persistence explicitly;
+- class/subject/lesson/source provenance;
+- Quiz Builder and multiple versions;
+- exact ministerial model handling;
+- regenerate one question preserving context;
+- Draft→Review→Published;
+- QA status/history;
+- safe exports/print.
 
-## Stage 13E — Admin AI Operations / Review — REQUIRED
+## Stage13G — Remaining Admin Product — REQUIRED
 
-Use existing Stage12 queue/runtime only:
-
-- generation plans/jobs/units/progress;
-- retry/cancel/pause/resume;
-- route/provider health without secrets;
-- outputs needing review;
-- approved source/OCR provenance;
-- no client-owned progress or second queue.
-
-## Stage 13F — Question Bank / Review / Publish — REQUIRED
-
-- Draft → Review → Published;
-- manual/edit/generated content in one validated schema;
-- resolve `direct` persistence before publish depends on it;
-- Student sessions consume Published reviewed content only.
-
-## Stage 13G — Students / Codes / Operations — REQUIRED
-
-- students/accounts;
-- Full/Class Codes;
-- recovery/device rebind;
+- Student accounts/search/status;
+- access code generation/search/filter/sort/bulk/import/export/print;
+- recovery/device rebind operations;
 - notifications;
 - import/export/reports;
-- settings/security/audit.
-
-Stage13 closes only when parity mapping is complete or an explicit owner-approved disposition exists for every valuable Admin capability.
-
----
+- settings/security/audit/operations dashboard;
+- any remaining parity rows with explicit disposition/evidence.
 
 # Stage 14 — Student Web/PWA Product — REQUIRED
 
+Build the complete Student learning surface on the already verified auth/device/access foundation:
+
 ```text
-Welcome
-→ Activate | لدي حساب بالفعل
-→ Home / Continue Learning
-→ My Classes / Add Class Code
-→ Subjects / Lessons
+Activation/Login
+→ entitled Classes/Subjects/Lessons
 → Reader
-   ├── optimized page view
-   ├── Text View
-   ├── Search
-   ├── Listen/TTS
-   ├── Summary
+   ├── page/media
+   ├── text/search/TTS
+   ├── summary
    ├── Notes
    ├── Favorite
    └── Needs Review
 → Practice / Tests / Models
-→ Progress / Private Achievements
+→ Progress / private achievements
 → Notifications
 ```
 
-Auth/device foundation is already verified; remaining Student product stages must preserve it.
+Requirements include mobile-first RTL, clear loading/error/empty/offline states, accessibility and entitlement filtering.
 
 # Stage 15 — Practice / Assessment Engine — REQUIRED
 
-- Published Question Bank only;
-- immediate feedback for `اختبر نفسك`;
-- final Test/Model result/review;
-- custom lesson(s)/count/types;
-- stable question/option/version identity;
-- safe random/shuffle;
-- explanations/images;
-- resume/restart/attempt history;
-- repeated wrong-answer events feed Needs Review;
-- original ministerial exact provenance;
-- server-trusted finalization;
-- offline outbox where applicable.
+Published Question Bank only; immediate Practice feedback; final Test/Model results; multi-lesson/custom counts/types; stable identities; shuffle/randomization; explanations/images; resume/restart/history; Needs Review events; exact ministerial provenance; trusted finalization; offline outbox where applicable.
 
 # Stage 16 — Offline / PWA — REQUIRED
 
-Account/device-scoped IndexedDB, signed entitlement lease, resumable downloads, optimized media/audio/text, storage budgets, revisions/tombstones/outbox/delta sync, safe SW updates and clear offline/backend/sync states.
+Account/device-scoped IndexedDB, explicit downloads, signed entitlement lease max 14 days capped by entitlement expiry, storage budgets, revisions/tombstones/outbox/delta sync, safe Service Worker update lifecycle and clear offline/backend/sync states.
 
 # Stage 17 — Personal Learning Data — REQUIRED
 
-Notes text/image/capture/audio, Favorites, Needs Review, stable provenance and proper binary storage/sync/conflict behavior.
+Notes text/image/capture/audio, Favorites, Needs Review, stable provenance, correct Blob/media storage and defined local/sync behavior.
 
 # Stage 18 — Notifications — REQUIRED
 
-Web Push where supported, In-App fallback, gentle reminders/quiet hours/opt-out and secure subscription lifecycle.
+Web Push where supported + In-App fallback, useful content/access/admin messages, gentle study reminders, quiet hours, opt-out and secure subscription lifecycle.
 
 # Stage 19 — Progress / Statistics / Achievements — REQUIRED
 
-Server-derived progress, explainable weak-area suggestions, private achievements, no global leaderboard and no client-authoritative awards.
+Server-derived metrics, sufficient-sample weak-area recommendations, private achievements, no global leaderboard, no client-authoritative mastery/awards.
 
 # Stage 20 — Import / Export / Reporting — REQUIRED
 
-Module-scoped validated import/export for curriculum/question bank/codes/reports/print; no blind generic importer.
+Module-scoped validated import/export for curriculum/Question Bank/codes/reports/print; no blind generic importer.
 
 # Stage 21 — Performance Engineering
-Bundle/API/DB/media/OCR/TTS/AI/cache/upload/export budgets and measurement.
+Measure bundle/API/DB/media/OCR/TTS/AI/cache/upload/export budgets. Optimize only with evidence.
 
 # Stage 22 — Security Hardening
-Authorization/IDOR, rates, device/rebind abuse, upload/storage/OCR/AI secrets, CSP/CORS/session/CSRF, dependencies, audit and backups.
+Authorization/IDOR/rates/session/CSRF/CORS/CSP/device abuse/upload/storage/secrets/dependencies/audit/backups.
 
 # Stage 23 — Automated Tests & CI Expansion
 Unit/DB/Auth/Device/Access/Content/Media/OCR/TTS/AI/Practice/Offline/Admin/Student E2E + legacy coverage regression.
 
 # Stage 24 — Accessibility / Device QA
-RTL, keyboard/focus/screen reader, 200% zoom, contrast, reduced motion, targets, mobile/tablet/desktop/PWA/offline/device-reset scenarios.
+RTL, keyboard/focus/screen reader, 200% zoom, contrast, reduced motion, touch targets, mobile/tablet/desktop/PWA/offline/device-reset scenarios.
 
 # Stage 25 — Initial Data / Content Load
-Canonical curriculum/content through final pipelines.
+Canonical production curriculum/content through final verified pipelines. Old DB migration is not current scope unless explicitly reopened.
 
 # Stage 26 — Staging
-Fresh reproducible production-like environment.
+Fresh reproducible production-like environment with real storage/workers/runtime.
 
 # Stage 27 — Release Gate
-No unresolved/unaccepted P0/P1; real-host DB/storage/OCR/TTS/AI; backup restore; Auth/device/access concurrency; Admin/Student E2E; Offline/PWA; performance/security/a11y; legacy coverage complete.
+No unresolved/unaccepted P0/P1; real-host DB/storage/OCR/TTS/AI evidence; backup restore; Auth/device/access races; Admin/Student E2E; Offline/PWA; performance/security/a11y; full Legacy Coverage.
 
 # Stage 28 — Production Cutover
 Provision → migrations → content → backend/workers → Admin → Student → smoke → rollback readiness.
@@ -311,48 +212,40 @@ Provision → migrations → content → backend/workers → Admin → Student �
 # Stage 29 — Monitoring & Operations
 Auth/access/device reset, DB/backups, media/OCR/TTS/AI jobs, offline sync, Push, storage/PWA/runtime health, runbooks/incidents.
 
----
+## Current Progress
 
-# Deployment / Preview status
+| Area | Status |
+|---|---|
+| Stages1–10 | VERIFIED |
+| OCR | VERIFIED |
+| Stage11 | VERIFIED |
+| Stage12 | VERIFIED backend/runtime |
+| Stage13A Curriculum backend | VERIFIED |
+| Stage13B Admin Curriculum Web | VERIFIED |
+| Stage13C Content/Media/OCR Operations | **VERIFIED** |
+| Stage13D Upload/History/Publication Linking | **CURRENT NEXT** |
+| Stage13E–G | REQUIRED / NOT YET VERIFIED |
+| Stage14–20 | REQUIRED |
+| Stage21–29 | PLANNED release/hardening gates |
+| Hosted deployment | **DEFERRED BY PRODUCT OWNER** |
 
-Canonical policy: `docs/engineering/DEVELOPMENT_RUNTIME_AND_PREVIEW_POLICY.md`.
+Latest executable evidence: `260cfef1c48d1290611103f8443d222f8cd041b6`, with Stage9/10/OCR/11/12/13 and Full Rebuild all SUCCESS.
 
-Current Product Owner decision: **deployment is deferred during development**.
+## Deployment policy
 
-Therefore the old roadmap rule “stable batch → Preview sync/deploy” is suspended. Current stable-batch rule is:
+Current stable-batch sequence is:
 
 ```text
-implementation
-→ local/CI/runtime gates available in repository
-→ exact-head SUCCESS evidence
+repository discovery
+→ implementation
+→ lint/type/unit/integration/PostgreSQL/browser gates
+→ exact-head regressions
 → documentation closure
 → next isolated batch
 ```
 
-Hosted Student/Admin/API/media/OCR/AI runtime remains `NOT YET VERIFIED`. Do not re-enable Git deployment or publish until explicit Product Owner instruction.
+The historical automatic Preview sync cadence is suspended by Product Owner. Do not deploy until explicit re-enable. Hosted surfaces remain `NOT YET VERIFIED`.
 
----
+## Final completion rule
 
-# Current Progress
-
-| Area | Status |
-|---|---|
-| Stages 1–5 | VERIFIED |
-| Stage6 Auth/Authorization | VERIFIED final refactor |
-| Stage7 Access/Entitlements | VERIFIED |
-| Stage8 Activation/Login/Recovery/Device | VERIFIED incl. Chromium |
-| Stage9 Source Import | VERIFIED |
-| Stage10 Media Pipeline | VERIFIED |
-| OCR Foundation | VERIFIED |
-| Stage11 AI Contracts | VERIFIED |
-| Stage12 AI durable execution/runtime | VERIFIED backend lifecycle/runtime |
-| Stage13 Curriculum Structure backend | VERIFIED |
-| Stage13 Admin Curriculum Web | **VERIFIED** |
-| Stage13 Content/Media/OCR Operations | **CURRENT IMPLEMENTATION** |
-| Stage13 upload/history/publication linking | REQUIRED NEXT / NOT YET VERIFIED |
-| Stage13 AI Operations / Question Bank / remaining Admin modules | REQUIRED / NOT YET VERIFIED |
-| Stage14–20 | REQUIRED according to Product decisions |
-| Stage21–29 | PLANNED engineering/release gates |
-| Hosted deployment | **DEFERRED BY PRODUCT OWNER** |
-
-**Current rule:** continue Stage13 incrementally from repository evidence. Do not reopen completed Product Review unless a genuine Business Rule conflict appears. Before Admin/Student stages close, every valuable legacy capability must map to implementation/test evidence or explicit owner-approved removal.
+The product is not feature-complete until every valuable legacy capability is mapped through `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` to a verified implementation/test or an explicit owner-approved removal.
