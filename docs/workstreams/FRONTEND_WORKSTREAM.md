@@ -340,3 +340,35 @@ Backend Board `#14` must publish the stabilized read/control/review contract. Fr
 **Ready for integration:** NO — presentation preparation is meaningful and isolated, but production transport and end-to-end evidence are blocked on Backend contract.
 
 **Exact next action:** re-read Backend Board `#14`; once a stabilized contract REPORT exists, inspect the changed Backend API files, implement a thin authenticated `ai-operations-api.ts` adapter, wire `AiOperationsWorkspace` into Admin shell without recomputing server state, then add real Chromium + 390px tests and report exact results.
+
+### Stage13E Batch 1 — verification addendum
+
+This addendum supersedes the provisional CI sentence above and records the final evidence after the batch documentation was written.
+
+**Additional commits:**
+
+- `957fa210bc257c30f02182953a1a8a4c9c8ea4aa` — `docs(frontend): record Stage13E preparation batch`;
+- `a54625a6f533d32cd4448765573649fab3700f61` — `ci(admin): scope Stage13E preparation checks`.
+
+**Final automated evidence:** GitHub Actions run `34184228250` on `a54625a6f533d32cd4448765573649fab3700f61` completed `success`.
+
+- Admin lint: PASS (`eslint . --max-warnings 0`).
+- Admin typecheck: PASS (`tsc --noEmit`).
+- Admin unit tests: PASS — 4 test files / 19 tests; Stage13E view-model regression suite = 6/6 PASS.
+- Admin production build: PASS (`tsc -b && vite build`; Vite transformed 37 modules).
+- The workflow is now path-scoped to `apps/admin-web/**` and its own Stage13E workflow file, so docs-only handoff commits do not invalidate the latest product-code evidence.
+
+**CI evidence churn root cause:**
+
+- Symptom: earlier Stage13E preparation runs could be cancelled/replaced when documentation commits landed on the same branch.
+- Root cause: the first workflow revision triggered on every branch push while `cancel-in-progress` used branch-level concurrency.
+- Affected contract/flow: verification traceability only; no Admin runtime behavior or server authority was affected.
+- Blast radius: Stage13E preparation workflow runs on this frontend branch.
+- Correct fix location and why: `.github/workflows/stage13e-frontend-prep.yml` push `paths`, because the issue was CI trigger scope rather than product code.
+- Regression test: run `34184228250` completed green after the scope fix.
+
+**Still NOT YET VERIFIED:** real Stage13E API integration, review/control mutations, Chromium lifecycle/reload/error/permission flows, and 390px real-data browser verification remain blocked by the missing Backend Stage13E contract. Backend Board `#14` was rechecked after the final CI run and still had no implementation `REPORT`/frontend-facing contract.
+
+**Ready for integration:** NO.
+
+**Exact next action:** wait only on the repository dependency—not on chat memory. Re-read Backend Board `#14`; when its stabilized contract/report appears, inspect the actual Backend diff, implement the thin authenticated transport adapter, connect this workspace to the Admin shell, then run the real Chromium + 390px contract flows before requesting Integration review.
