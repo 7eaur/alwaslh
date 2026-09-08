@@ -2,7 +2,7 @@
 
 > Engineering source of truth for product understanding, architecture decisions, audit findings, changes, verification and remaining work. Code/migrations + executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last consolidated: **2026-09-08 — Single Owner mode; hosting deferred until VPS; Stage13E audit found/fixed four P1 defects including Review History truncation/current-authority coupling; executable verification blocked before checkout.**
+Last consolidated: **2026-09-08 — Single Owner mode; hosting deferred until VPS; Stage13E candidate has four P1 root fixes plus P2 Output Detail snapshot consistency; executable verification blocked before checkout.**
 
 ## 1. Project Understanding
 
@@ -69,6 +69,7 @@ Stable authority boundaries:
 - credentials/raw provider metadata/internal provider errors never Frontend contract.
 - Admin durable operational/audit history is fully reachable through bounded server pagination; browser must not silently truncate or load unbounded history.
 - **paginated historical views are evidence only; they never determine canonical current lifecycle/review authority**.
+- one Output Detail response is assembled from one short PostgreSQL repeatable-read snapshot so output/reviewer/time/history/count/latest fields cannot represent mixed committed states.
 
 ## 3. Stage Ledger
 
@@ -154,6 +155,7 @@ reviewed source
 → stable output only (`completed | review_required`)
 → append-only edit/approve/reject review
 → bounded audit navigation independent from canonical-latest review authority
+→ snapshot-consistent Output Detail read model
 ```
 
 Stage13E review remains distinct from Stage13F Question Bank publication. Non-stable outputs may be inspected but are not review-mutable.
@@ -210,15 +212,17 @@ Candidate includes:
 - Frontend authenticated transport/controller/workspace;
 - canonical refresh on 409;
 - bounded Jobs/Units/Attempts/Review History pagination;
+- snapshot-consistent Output Detail reads;
 - deterministic real session-expiry/stale-review/pagination browser fixtures;
 - no Stage13F publication.
 
-Audit hardened four P1 boundaries:
+Audit hardened four P1 boundaries plus one P2 read-model boundary:
 
 1. reject reason durable at PostgreSQL boundary;
 2. human review bound to execution-stable outputs;
 3. Jobs/Units/Attempts durable history completely reachable;
-4. Review History completely reachable while canonical latest review remains independent of historical page selection.
+4. Review History completely reachable while canonical latest review remains independent of historical page selection;
+5. Output Detail output/history/count/latest/reviewer metadata comes from one repeatable database snapshot.
 
 ## 6. Architecture Decisions
 
@@ -243,7 +247,8 @@ Audit hardened four P1 boundaries:
 - **AD-138** — durable review invariants belong in PostgreSQL as well as caller validation.
 - **AD-139** — human AI review authority is valid only after unit execution is stable; output+unit locked together.
 - **AD-140** — durable operational history is server-paginated authority, not a browser subset. Jobs/Units/Attempts cannot be silently truncated or loaded unbounded.
-- **AD-141** — **current authority is independent from paginated history views**. Review History pages are audit evidence only; `reviewStatus`, effective reviewed output and allowed actions must always derive from the canonical latest durable revision, regardless of which historical page the Admin is viewing.
+- **AD-141** — **current authority is independent from paginated history views**. Review History pages are audit evidence only; `reviewStatus`, effective reviewed output and allowed actions always derive from the canonical latest durable revision.
+- **AD-142** — **a coupled Admin audit/read model must be snapshot-consistent**. Output Detail reads the output/owning unit, requested review page, total review count and canonical latest review inside one short PostgreSQL `REPEATABLE READ` transaction; mapping occurs after commit, with no write locks or provider/network calls.
 
 ## 7. Audit Findings
 
@@ -267,6 +272,7 @@ Audit hardened four P1 boundaries:
 | AI-013E-REVIEW-002 | P1 | AI Review / Retry | review could attach to output Stage12 later replaces | stale human authority over different AI content | stable-unit gate + output/unit locks | FIXED IN CANDIDATE / EXECUTION PENDING |
 | AI-013E-OPS-003 | P1 | Admin AI Operations | only first 30/50/50 Jobs/Units/Attempts exposed | durable operational history unreachable | bounded server pagination + real browser regression | FIXED IN CANDIDATE / EXECUTION PENDING |
 | AI-013E-OPS-004 | P1 | AI Review Audit | only latest 100 review events exposed; current state tied to `history[0]` | old audit inaccessible; naive paging could redefine authority | paged history + separate canonical-latest query + real browser regression | FIXED IN CANDIDATE / EXECUTION PENDING |
+| AI-013E-OPS-005 | P2 | AI Review Read Model | Output/page/count/latest were separate READ COMMITTED snapshots | concurrent review could yield internally mixed reviewer/time/page/current state | short REPEATABLE READ snapshot + regression | FIXED IN CANDIDATE / EXECUTION PENDING |
 
 ### AI-013E-DB-001 Root Cause Record
 
@@ -306,30 +312,35 @@ Audit hardened four P1 boundaries:
 
 **Root cause:** review history was modeled as a bounded display array rather than durable navigable audit authority, and canonical-current review derivation was coupled to whichever event was first in that array.
 
-**Broken invariants:**
+**Broken invariants:** every durable human review revision must remain reachable; selecting a historical page must never change current review state/authority.
 
-1. every durable human review revision must remain reachable from Admin;
-2. selecting a historical page must never change current review state/authority.
-
-**Blast radius:** long-lived outputs could hide old human decisions. A naive pagination patch could make a terminally approved/rejected output appear open while browsing an older page, or present stale reviewed content as current.
+**Blast radius:** long-lived outputs could hide old human decisions. A naive pagination patch could make a terminally approved/rejected output appear open while browsing an older page.
 
 **Correct fix location:** Backend output-detail read model + Frontend page state. PostgreSQL append-only audit remains unchanged and correct.
 
-**Fix:**
+**Fix:** `d242e054...` page/total/latest separation; `f04fe2be...` HTTP query; Frontend DTO/controller/UI lineage `9c18826a...`, `2c82e879...`, `72711ec8...`, `de3a9dc2...`, `bf782c92...`.
 
-- `d242e0542df4402392780098418cdd015cb11107` — `reviewPagination`, page/total/latest separated; canonical latest alone drives status/actions/effective output.
-- `f04fe2beeff79dea0353f69fbe5e2774fe5703ea` — bounded `reviewLimit/reviewOffset` HTTP contract.
-- `9c18826acbc8f2deeb42f70b2e0f651321504f94`, `2c82e8790b066a2ac035f8eee8c172136a0ed28a`, `72711ec8aaefc09fa4e2979008b0be03beb526c3`, `de3a9dc260871ab913bd9d60350479b60de708b9`, `bf782c92bd74436831e74391768c53c9cd9cb075` — Frontend transport/model/adapter/controller/workspace pagination.
+**Regression:** `e33d43c1...` 105-revision Backend regression; `a1ef3d7a...` 101-edit real fixture; `f95c1a9e...` Chromium complete audit navigation/current-authority isolation; `6a9e9df0...` workflow fixture assertion.
 
-**Regression:**
+**Verification:** `NOT YET VERIFIED`; runner remains pre-checkout.
 
-- `e33d43c19c8b954429036bba24ca0f3c72d0ba15` — inserts 105 revisions; requests offset 100 (revisions 5..1) yet expects canonical revision 105 approved/no-actions/latest reviewed output.
-- `d7830d187e89bb16619234609f8480c5bec070cf` / `f64419fa20c930ac0bbd641ba63c229dc9db9605` — transport/adapter pagination tests.
-- `a1ef3d7a824d1e8c7503ecb3203df3bebe850619` — real fixture adds 101 edit revisions.
-- `f95c1a9ee5e800125bdcc665c5a64d0fe10a1fd9` — Chromium navigates all audit pages, confirms revision 1 reachable, keeps Approve authority from latest revision while oldest page is shown, then creates revision 102 and verifies reload durability.
-- `6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b` — workflow asserts 101 review rows/latest action edit before browser.
+### AI-013E-OPS-005 Root Cause Record
 
-**Verification:** `NOT YET VERIFIED`. Latest run `34275316004`, job `102226771007`, ended pre-checkout with `runner_id=0`, `steps=[]`.
+**Symptom:** after OPS-004, `outputDetail()` correctly separated paginated history from canonical latest authority, but it first read `ai_outputs`/unit state and then issued separate top-level page/count/latest queries under PostgreSQL default `READ COMMITTED`.
+
+**Root cause:** logical authority separation was fixed, but the coupled HTTP read model still had no single snapshot boundary.
+
+**Broken invariant:** one Output Detail response must describe one coherent committed database state across current review authority, reviewer/time metadata, requested audit page and total count.
+
+**Blast radius:** if another Admin review commits between reads, durable data stays correct but one response can combine newer current review status with older reviewer/time or page/count metadata, weakening audit observability and operator trust.
+
+**Correct fix location:** Backend Output Detail read path. Adding write locks, serializing reviewers, changing Frontend state, or broadening mutation transactions would be unnecessary and harmful.
+
+**Fix:** `9d59f84fb516db5cfaf89382f548c3eea595e365` wraps output/unit + page + count + latest reads in one short `REPEATABLE READ` transaction. Parsing, Stage11 schema checks and provenance mapping occur after commit. No row write locks and no provider/network calls are added.
+
+**Regression:** new `apps/api/tests/ai-admin-output-detail-snapshot.test.ts` uses a controlled `Database` to fail if any Output Detail read escapes the transaction, asserts `set transaction isolation level repeatable read` is the first transaction operation, and verifies approved state, no actions, reviewer/time, history pagination and effective output remain mapped correctly.
+
+**Verification:** `NOT YET VERIFIED`. Runtime/test run `34277281675`, job `102233304479`, ended before checkout with `runner_id=0`, `steps=[]`. Candidate/docs run `34277419491`, job `102233751450`, showed the same condition.
 
 ## 8. Stage13E Static / Operational Audit Evidence
 
@@ -337,7 +348,8 @@ Reviewed on combined candidate:
 
 - Admin HTTP authorization/query/body validation;
 - service list/detail/provenance/secret filtering;
-- output+unit locked review transaction;
+- output+unit locked review mutation transaction;
+- Output Detail repeatable-read snapshot boundary;
 - Stage11 semantic validator;
 - Stage12 controls/output persistence;
 - Jobs/Units/Attempts/Review History pagination;
@@ -355,16 +367,17 @@ Confirmed after fixes:
 - review only on stable execution output;
 - all durable Admin operational/audit history reachable through bounded pages;
 - historical page selection cannot redefine canonical latest review authority;
+- Output Detail audit/current fields are read from one repeatable snapshot;
 - polling/refresh preserve selected pages;
-- no additional proven cross-contract mismatch in inspected surfaces.
+- no additional proven cross-contract mismatch in inspected surfaces after OPS-005 review.
 
-Current Stage13E candidate docs HEAD at this sync:
+Current Stage13E candidate/docs HEAD:
 
-`integration/stage13e-ai-operations @ b344c6cdc21ce71e5d8c6b34bb2dc7f6e42b5ebb`.
+`integration/stage13e-ai-operations @ bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`.
 
 Latest runtime/test HEAD:
 
-`6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b`.
+`9d59f84fb516db5cfaf89382f548c3eea595e365`.
 
 ## 9. Verification Evidence
 
@@ -372,20 +385,29 @@ Latest fully green executable baseline remains:
 
 `4eca7de8877ac9e2289b9c7990c912d33c256935`
 
-Latest Stage13E runtime/test run:
+Latest Stage13E runtime/test-head run:
 
-- run `34275316004`;
-- head `6a9e9df01ecdab8a6298f0a47c05001d4cb8dd6b`;
-- job `102226771007`;
-- `runner_id=0`, `runner_name=""`, `runner_group_id=0`, `steps=[]`;
+- run `34277281675`;
+- head `9d59f84fb516db5cfaf89382f548c3eea595e365`;
+- job `102233304479`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
 - no checkout/lint/typecheck/test/build/PostgreSQL/Chromium command executed.
 
-Earlier Stage13E runs show the same pre-checkout condition. These failures do not invalidate Stage13D baseline and do not verify Stage13E.
+Latest candidate/docs-head run:
+
+- run `34277419491`;
+- head `bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`;
+- job `102233751450`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`.
+
+Prior run `34275641643` was manually rerun unchanged; attempt 2 job `102231252401` also ended pre-checkout with `runner_id=0`, `steps=[]`.
+
+These failures do not invalidate Stage13D baseline and do not verify Stage13E. They contain no executed product/test failure evidence.
 
 ## 10. Known Issues / Remaining Risk
 
 - Stage13E still needs executable lint/typecheck/unit/build/PostgreSQL/integration/Chromium evidence.
-- four Stage13E P1 findings are fixed in candidate but execution pending.
+- four Stage13E P1 findings plus OPS-005 P2 are fixed in candidate but execution pending.
 - GitHub runner allocation root cause remains externally unverified.
 - live provider/model benchmark/routes/credentials/bootstrap unverified.
 - Question Bank direct-question persistence unresolved until Stage13F.
@@ -397,9 +419,9 @@ Earlier Stage13E runs show the same pre-checkout condition. These failures do no
 Canonical task authority: `PROJECT_EXECUTION_QUEUE.md`.
 
 1. keep Stage13E outside `main`.
-2. retain all four Stage13E P1 root fixes/regressions.
+2. retain all four Stage13E P1 root fixes plus OPS-005 P2 hardening/regressions.
 3. execute same-head Stage13E combined gate when a real runner is allocated.
-4. fix any executed failure from root cause.
+4. fix any actually executed failure from root cause.
 5. run wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions after combined PASS.
 6. promote Stage13E to `main`, update Legacy Coverage/Roadmap/docs and Closure Report.
 7. Stage13F Question Bank / Quiz Builder / Publish.
