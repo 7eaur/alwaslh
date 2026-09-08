@@ -2,7 +2,7 @@
 
 > Engineering source of truth for product understanding, architecture decisions, audit findings, changes, verification and remaining work. Code/migrations + executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last consolidated: **2026-09-09 — Single Owner mode; hosting deferred until VPS; Stage13E candidate has four P1 + four P2 hardenings, final static audit found no additional proven defect, and zero-overlap selective promotion readiness is documented; executable verification remains blocked before checkout.**
+Last consolidated: **2026-09-09 — Single Owner mode; hosting deferred until VPS; Stage13E candidate has four P1 + four P2 hardenings, final static audit found no additional proven defect, zero-overlap selective promotion readiness is documented, and CI-001 scope is verified repository-wide while its exact external runner-allocation cause remains unverified.**
 
 ## 1. Project Understanding
 
@@ -244,6 +244,34 @@ While executable CI remains blocked before checkout, non-speculative closure pre
 - `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` records the exact 36-file promotion set and exact-head re-verification sequence;
 - no promotion branch was created prematurely because it would add only another unverified head while hosted runner allocation is unavailable.
 
+### CI-001 repository-wide Actions runner incident — OPEN / SCOPE VERIFIED
+
+The pre-checkout failure was initially observed on Stage13E, then proven to affect independent repository workflows:
+
+- last known fully executing green baseline: Full Rebuild `34177369768` on `4eca7de...`, created `2026-09-08T01:39:16Z`, completed SUCCESS `2026-09-08T01:43:19Z`; jobs executed real setup, containers, `actions/checkout@v4`, setup/install, tests, PostgreSQL and Chromium;
+- independent Stage10 Media Pipeline `34191051851` / job `101949023395` later completed `failure` with `steps=null` before checkout;
+- independent Stage11 AI Contract `34191051835` / job `101949023152` later completed `failure` with `steps=null` before checkout;
+- Stage13E runtime/test `34283353562` / job `102253102885` and candidate/docs attempt 2 `34283442253` / job `102256556365` also failed pre-checkout;
+- an explicit Stage13E attempt 3 rerun produced job `102266150322`, still `failure` with `steps=[]`, and no log blob existed because no job step ever started.
+
+Public/admin investigation narrowed but did not prove the exact external root cause:
+
+- GitHub public status reported no Actions incident for September 8, 2026; CI-001 is therefore not classified as a known global GitHub outage;
+- repository owner permission is confirmed `admin` through the connected integration;
+- available tooling does not expose Actions usage/billing/budget/payment/runner-allocation settings, so exact repository/account-side allocation cause remains `NOT YET VERIFIED`;
+- GitHub documentation confirms private-repository hosted-runner availability is tied to account-plan usage/billing policy, but quota/payment exhaustion is only a diagnostic possibility until account evidence is inspected.
+
+Local fallback is independently blocked:
+
+- `/mnt/data/alwaslh-stage13e` is empty and not a checkout;
+- execution-container DNS cannot resolve `github.com` or `registry.npmjs.org`;
+- HTTPS cannot connect because DNS resolution fails;
+- `git ls-remote https://github.com/7eaur/alwaslh.git HEAD` fails with `Could not resolve host`.
+
+Detailed evidence/runbook: `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`.
+
+Engineering decision: preserve Stage13E product/workflow/test gates unchanged. Infrastructure recovery is recognized only once a real runner executes setup/checkout; any failure after that becomes actionable engineering evidence.
+
 ### Git write-method incident — RESOLVED / NO RUNTIME EFFECT
 While switching repository write method after a connector safety rejection, an accidental file `tmp-ignore` was created in `5916ac42f1d6ed216e0efe336b20a8f030d1f45e` and immediately deleted in `52fa960155964903290a78657029b3cb950bd6ee`. The resulting tree returned to the intended documentation tree. No product/runtime behavior, contract, migration or test file was changed by this incident.
 
@@ -294,7 +322,7 @@ While switching repository write method after a connector safety rejection, an a
 | CONTENT-013-007 | P2 | Retry/lease | retry/late-write risk | inconsistent state | lease + idempotency + stale guards | FIXED + VERIFIED |
 | DOC-001 | P2 | Continuity | chat-memory/stale docs risk | contradictory continuation | central docs + Queue + Continuity | CONTROLLED |
 | DOC-003 | P2 | Team | parallel chats created merge debt | duplicate coordination overhead | Single Owner mode | SUPERSEDED / CONTROLLED |
-| CI-001 | P1 | GitHub Actions | hosted jobs terminate before checkout | no new executable evidence | keep gates unchanged; retry when runner exists | OPEN / EXTERNAL CAUSE NOT YET VERIFIED |
+| CI-001 | P1 | GitHub Actions | hosted jobs across independent workflows terminate before checkout | Stage13E cannot obtain executable same-head evidence; product failure not demonstrated | inspect/restore account/repository runner allocation; preserve gates unchanged | OPEN / REPOSITORY-WIDE SCOPE VERIFIED / EXACT ROOT CAUSE NOT YET VERIFIED |
 | AI-013E-DB-001 | P1 | AI Review / DB | reject reason required by product but not DB | incomplete terminal audit possible | DB check + direct insert regression | FIXED IN CANDIDATE / EXECUTION PENDING |
 | AI-013E-REVIEW-002 | P1 | AI Review / Retry | review could attach to output Stage12 later replaces | stale human authority over different AI content | stable-unit gate + output/unit locks | FIXED IN CANDIDATE / EXECUTION PENDING |
 | AI-013E-OPS-003 | P1 | Admin AI Operations | only first 30/50/50 Jobs/Units/Attempts exposed | durable operational history unreachable | bounded server pagination + real browser regression | FIXED IN CANDIDATE / EXECUTION PENDING |
@@ -303,6 +331,22 @@ While switching repository write method after a connector safety rejection, an a
 | AI-013E-OPS-006 | P2 | Admin AI Read Models | List/Job/Unit responses combined multiple committed states | progress/action or page/total/latest-attempt could contradict within one response | shared `readSnapshot()` + explicit regressions | FIXED IN CANDIDATE / EXECUTION PENDING |
 | AI-013E-PERF-007 | P2 | Admin AI Performance | Job list aggregated all matching Unit history before pagination | bounded page cost grew with complete durable history | page Jobs first, then correlated Unit counts + query-shape regression | FIXED IN CANDIDATE / EXECUTION PENDING |
 | AI-013E-API-008 | P2 | Admin AI HTTP | offsets accepted unsafe JavaScript integers beyond exact representation boundary | malformed large offsets could escape caller validation and surface as DB errors | shared safe-integer offset schema + Fastify regression | FIXED IN CANDIDATE / EXECUTION PENDING |
+
+### CI-001 Scope / Root-Cause Record
+
+**Symptom:** current GitHub Actions runs receive a workflow/job record but no actual hosted runner step; jobs end `failure` before checkout with `steps=[]`/`steps=null` and no usable log blob.
+
+**Scope evidence:** not Stage13E-specific. The last fully executing green Full Rebuild `34177369768` ran real setup/checkout/tests and completed SUCCESS at `2026-09-08T01:43:19Z`. Independent later Stage10 `34191051851` and Stage11 `34191051835` jobs both fail before checkout, as do Stage13E runs.
+
+**Latest recheck:** Stage13E run `34283442253` was explicitly rerun as attempt `3`; job `102266150322` still ended before any step and produced no log blob. Further blind reruns are not useful evidence.
+
+**External evidence:** GitHub public status reported no Actions incident on September 8, 2026. Repository owner permission is `admin`, but the connected integration does not expose Actions billing/usage/budget/payment/runner-allocation settings. Therefore a repository/account-specific restriction or unreported platform condition is the remaining class, but exact cause is `NOT YET VERIFIED`. Account quota/payment is not asserted without account telemetry.
+
+**Local fallback:** also unavailable independently because the execution container has no checkout and cannot resolve GitHub/npm DNS.
+
+**Correct action:** inspect/restore runner availability via an administrative channel with Actions usage/billing/settings visibility; then rerun the unchanged Combined Gate. A real setup/checkout step marks infrastructure recovery. Only failures after that are actionable code/test failures.
+
+**Runbook:** `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`.
 
 ### AI-013E-DB-001 Root Cause Record
 
@@ -490,32 +534,25 @@ Latest fully green executable baseline remains:
 
 `4eca7de8877ac9e2289b9c7990c912d33c256935`
 
-Latest Stage13E runtime/test-head run:
+Last known fully executing green Actions run remains Full Rebuild `34177369768`, which completed SUCCESS at `2026-09-08T01:43:19Z` with real runner steps.
 
-- run `34283353562`;
-- head `d60218b518fb0fe453c21386e77cd35a2228ad07`;
-- job `102253102885`;
-- `steps=[]`;
-- no checkout/lint/typecheck/test/build/PostgreSQL/Chromium command executed.
+Current repository Actions verification infrastructure is blocked under `CI-001`:
 
-Latest Stage13E candidate/docs-head attempt:
+- independent Stage10 run `34191051851` / job `101949023395` → `steps=null`;
+- independent Stage11 run `34191051835` / job `101949023152` → `steps=null`;
+- Stage13E runtime/test `34283353562` / job `102253102885` → `steps=[]`;
+- Stage13E candidate/docs `34283442253`, attempt 2 job `102256556365` → no checkout;
+- Stage13E explicit attempt 3 job `102266150322` → `steps=[]`, no log blob.
 
-- run `34283442253`;
-- head `c48d1e597497e6054340f71235c78937082b9371`;
-- attempt `2`;
-- job `102256556365`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`;
-- no checkout/repository command executed.
+Local fallback is not executable either because no checkout exists and the execution container cannot resolve GitHub/npm DNS.
 
-Local fallback investigation found `/mnt/data/alwaslh-stage13e` is an empty directory, not a checkout. Node/npm/git exist, but npm registry access times out and no authenticated private-repository checkout is available. No local PASS is claimed.
-
-These failures do not invalidate Stage13D baseline and do not verify Stage13E. They contain no executed product/test failure evidence.
+Therefore no current run supplies lint/typecheck/unit/build/PostgreSQL/integration/Chromium evidence. These infrastructure failures do not invalidate Stage13D baseline and do not verify Stage13E; they contain no executed Stage13E product/test failure evidence.
 
 ## 10. Known Issues / Remaining Risk
 
 - Stage13E still needs executable lint/typecheck/unit/build/PostgreSQL/integration/Chromium evidence.
 - four Stage13E P1 findings plus OPS-005/OPS-006/PERF-007/API-008 P2 findings are fixed in candidate but execution pending.
-- GitHub runner allocation root cause remains externally unverified.
+- `CI-001` repository-wide runner-allocation scope is verified; exact account/platform cause remains unverified until Actions usage/billing/settings can be inspected.
 - live provider/model benchmark/routes/credentials/bootstrap unverified.
 - Question Bank direct-question persistence unresolved until Stage13F.
 - later Admin/Student/product/hardening stages incomplete.
@@ -526,16 +563,17 @@ These failures do not invalidate Stage13D baseline and do not verify Stage13E. T
 Canonical task authority: `PROJECT_EXECUTION_QUEUE.md`.
 
 1. keep Stage13E outside `main`.
-2. retain all four Stage13E P1 root fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings/regressions.
-3. execute same-head Stage13E combined gate when a real runner is allocated.
-4. fix any actually executed failure from root cause.
-5. run wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions after candidate combined PASS.
-6. follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`: re-check overlap, build promotion branch from latest `main`, overlay exact accepted files, run combined + wider gates again on exact promotion HEAD.
-7. promotion-head PASS → promote Stage13E to `main`, update Legacy Coverage/Roadmap/docs and Closure Report.
-8. Stage13F Question Bank / Quiz Builder / Publish.
-9. Stage13G remaining Admin.
-10. Stage14–25 Student/Product/Hardening.
-11. Stage26–29 only after VPS/deployment explicitly reopens.
+2. preserve all four Stage13E P1 root fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings/regressions unchanged.
+3. inspect/restore GitHub-hosted runner availability through an administrative channel exposing Actions usage/budget/payment/settings; exact cause is not inferred from code.
+4. rerun the unchanged same-head Stage13E Combined Gate after a real runner is available; infrastructure recovery requires actual setup/checkout execution.
+5. fix any actually executed failure from root cause.
+6. run wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions after candidate combined PASS.
+7. follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`: re-check overlap, build promotion branch from latest `main`, overlay exact accepted files, run combined + wider gates again on exact promotion HEAD.
+8. promotion-head PASS → promote Stage13E to `main`, update Legacy Coverage/Roadmap/docs and Closure Report.
+9. Stage13F Question Bank / Quiz Builder / Publish.
+10. Stage13G remaining Admin.
+11. Stage14–25 Student/Product/Hardening.
+12. Stage26–29 only after VPS/deployment explicitly reopens.
 
 ## 12. Documentation Continuity Contract
 
