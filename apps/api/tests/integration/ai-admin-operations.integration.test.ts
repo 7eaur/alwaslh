@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
+import { aiGenerationOutputSchema } from "../../src/ai/contracts.js";
 import { buildApp } from "../../src/app.js";
-import { aiGenerationOutputSchema, type AiGenerationRequest } from "../../src/ai/contracts.js";
 import { AuthService } from "../../src/auth/service.js";
 import { loadConfig } from "../../src/config.js";
 import { createDatabase, type Database } from "../../src/db.js";
@@ -154,8 +154,14 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
   const review = await insertJob(db, suffix, "review", "completed", "review_required", { withOutput: true });
   const reject = await insertJob(db, suffix, "reject", "completed", "review_required", { withOutput: true });
   const race = await insertJob(db, suffix, "race", "completed", "review_required", { withOutput: true });
-  const failed = await insertJob(db, suffix, "failed", "failed", "failed", { attemptCount: 1, maxAttempts: 1 });
-  const exhausted = await insertJob(db, suffix, "exhausted", "failed", "failed", { attemptCount: 20, maxAttempts: 20 });
+  const failed = await insertJob(db, suffix, "failed", "failed", "failed", {
+    attemptCount: 1,
+    maxAttempts: 1,
+  });
+  const exhausted = await insertJob(db, suffix, "exhausted", "failed", "failed", {
+    attemptCount: 20,
+    maxAttempts: 20,
+  });
   const control = await insertJob(db, suffix, "control", "queued", "queued");
   assert.ok(review.outputId && reject.outputId && race.outputId);
 
@@ -179,7 +185,7 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
 
     const list = await app.inject({
       method: "GET",
-      url: `/v1/admin/ai/jobs?jobType=question_generation&limit=100`,
+      url: "/v1/admin/ai/jobs?jobType=question_generation&limit=100",
       headers: { cookie: adminCookie },
     });
     assert.equal(list.statusCode, 200);
@@ -232,14 +238,20 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
     assert.equal(edited.statusCode, 200);
     assert.equal(edited.json().output.reviewStatus, "edited");
     assert.equal(edited.json().output.reviewHistory[0].revision, 1);
-    assert.equal(edited.json().output.effectiveReviewedOutput.questions[0].prompt, editedOutput.questions[0].prompt);
+    assert.equal(
+      edited.json().output.effectiveReviewedOutput.questions[0].prompt,
+      editedOutput.questions[0].prompt,
+    );
 
     const storedAfterEdit = await db.query<{ raw_response: unknown; normalized_output: unknown }>(
       "select raw_response, normalized_output from ai_outputs where id = $1",
       [review.outputId],
     );
     assert.deepEqual(storedAfterEdit[0]?.normalized_output, validOutput);
-    assert.deepEqual(storedAfterEdit[0]?.raw_response, { providerRawSecret: "raw-stage13e-secret", payload: validOutput });
+    assert.deepEqual(storedAfterEdit[0]?.raw_response, {
+      providerRawSecret: "raw-stage13e-secret",
+      payload: validOutput,
+    });
 
     const approved = await app.inject({
       method: "PATCH",
@@ -249,7 +261,10 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
     });
     assert.equal(approved.statusCode, 200);
     assert.equal(approved.json().output.reviewStatus, "approved");
-    assert.deepEqual(approved.json().output.reviewHistory.map((event: { revision: number }) => event.revision), [2, 1]);
+    assert.deepEqual(
+      approved.json().output.reviewHistory.map((event: { revision: number }) => event.revision),
+      [2, 1],
+    );
     const afterTerminal = await app.inject({
       method: "PATCH",
       url: `/v1/admin/ai/outputs/${review.outputId}/review`,
@@ -289,7 +304,10 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
         payload: { action: "approve", note: "race-b" },
       }),
     ]);
-    assert.deepEqual([raceA.statusCode, raceB.statusCode].sort((a, b) => a - b), [200, 409]);
+    assert.deepEqual(
+      [raceA.statusCode, raceB.statusCode].sort((a, b) => a - b),
+      [200, 409],
+    );
     const raceEvents = await db.query<{ count: string }>(
       "select count(*) from ai_output_review_events where ai_output_id = $1",
       [race.outputId],

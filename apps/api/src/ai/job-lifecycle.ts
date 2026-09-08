@@ -190,7 +190,9 @@ export class AiJobLifecycleRepository {
   }
 
   async clearPause(executor: QueryExecutor, jobId: string): Promise<void> {
-    await executor.query("update ai_jobs set paused_at = null where id = $1 and paused_at is not null", [jobId]);
+    await executor.query("update ai_jobs set paused_at = null where id = $1 and paused_at is not null", [
+      jobId,
+    ]);
   }
 
   async getProgress(executor: QueryExecutor, jobId: string): Promise<AiJobProgress> {

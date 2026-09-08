@@ -6,7 +6,15 @@ import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
 import type { AdminAiOperationsService } from "./admin-operations.js";
 
-const JobStatusSchema = z.enum(["queued", "running", "retrying", "completed", "failed", "cancelled", "paused"]);
+const JobStatusSchema = z.enum([
+  "queued",
+  "running",
+  "retrying",
+  "completed",
+  "failed",
+  "cancelled",
+  "paused",
+]);
 
 const JobListQuerySchema = z.object({
   status: JobStatusSchema.optional(),

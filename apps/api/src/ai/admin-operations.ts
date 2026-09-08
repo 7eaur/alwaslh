@@ -1,14 +1,10 @@
 import type { Database, QueryExecutor } from "../db.js";
 import { AppError } from "../errors.js";
-import {
-  aiGenerationOutputSchema,
-  aiGenerationRequestSchema,
-  type AiGenerationOutput,
-} from "./contracts.js";
+import { type AiGenerationOutput, aiGenerationOutputSchema, aiGenerationRequestSchema } from "./contracts.js";
 import { AiExecutionRepository } from "./execution-repository.js";
 import {
-  AiJobLifecycleRepository,
   type AiJobExecutionStatus,
+  AiJobLifecycleRepository,
   type AiJobLifecycleStatus,
   type AiJobProgress,
 } from "./job-lifecycle.js";
@@ -312,9 +308,15 @@ function mapJob(row: JobRow): AdminAiJobListItem {
   };
 }
 
-function sourceInfo(inputPayload: unknown): { mode: string; subjectDomain: string; sources: AdminAiSourceProvenance[] } {
+function sourceInfo(inputPayload: unknown): {
+  mode: string;
+  subjectDomain: string;
+  sources: AdminAiSourceProvenance[];
+} {
   const parsed = aiGenerationRequestSchema.safeParse(inputPayload);
-  if (!parsed.success) throw new AppError("INTERNAL_ERROR", "تعذر التحقق من مصدر مهمة الذكاء الاصطناعي", 500);
+  if (!parsed.success) {
+    throw new AppError("INTERNAL_ERROR", "تعذر التحقق من مصدر مهمة الذكاء الاصطناعي", 500);
+  }
   return {
     mode: parsed.data.mode,
     subjectDomain: parsed.data.subjectDomain,
@@ -344,7 +346,8 @@ function mapAttempt(row: AttemptRow): AdminAiAttemptView {
     inputTokens: row.input_tokens,
     outputTokens: row.output_tokens,
     latencyMs: row.latency_ms,
-    estimatedCostUsdMicros: row.estimated_cost_usd_micros === null ? null : Number(row.estimated_cost_usd_micros),
+    estimatedCostUsdMicros:
+      row.estimated_cost_usd_micros === null ? null : Number(row.estimated_cost_usd_micros),
     errorCode: row.error_code,
     startedAt: row.started_at,
     completedAt: row.completed_at,
@@ -353,10 +356,16 @@ function mapAttempt(row: AttemptRow): AdminAiAttemptView {
 
 function latestAttempt(row: UnitRow): AdminAiAttemptView | null {
   if (
-    !row.attempt_id || row.attempt_number === null || !row.attempt_provider_key ||
-    !row.attempt_model_used || !row.attempt_route_key || !row.attempt_benchmark_version ||
-    !row.attempt_status || !row.attempt_started_at
-  ) return null;
+    !row.attempt_id ||
+    row.attempt_number === null ||
+    !row.attempt_provider_key ||
+    !row.attempt_model_used ||
+    !row.attempt_route_key ||
+    !row.attempt_benchmark_version ||
+    !row.attempt_status ||
+    !row.attempt_started_at
+  )
+    return null;
   return mapAttempt({
     id: row.attempt_id,
     attempt_number: row.attempt_number,
@@ -399,12 +408,15 @@ function mapUnit(row: UnitRow): AdminAiUnitView {
     updatedAt: row.updated_at,
     sourceProvenance: source.sources,
     latestAttempt: latestAttempt(row),
-    output: row.output_id && row.output_validation_status && row.output_updated_at ? {
-      id: row.output_id,
-      validationStatus: row.output_validation_status,
-      reviewStatus: reviewStatus(row.latest_review_action),
-      updatedAt: row.output_updated_at,
-    } : null,
+    output:
+      row.output_id && row.output_validation_status && row.output_updated_at
+        ? {
+            id: row.output_id,
+            validationStatus: row.output_validation_status,
+            reviewStatus: reviewStatus(row.latest_review_action),
+            updatedAt: row.output_updated_at,
+          }
+        : null,
   };
 }
 
@@ -490,15 +502,16 @@ export class AdminAiOperationsService {
     };
   }
 
-  async jobDetail(jobId: string, unitLimit: number, unitOffset: number): Promise<{
+  async jobDetail(
+    jobId: string,
+    unitLimit: number,
+    unitOffset: number,
+  ): Promise<{
     job: AdminAiJobListItem;
     units: AdminAiUnitView[];
     pagination: { total: number; limit: number; offset: number };
   }> {
-    const jobs = await this.database.query<JobRow>(
-      `${JOB_SELECT} where j.id = $1 group by j.id`,
-      [jobId],
-    );
+    const jobs = await this.database.query<JobRow>(`${JOB_SELECT} where j.id = $1 group by j.id`, [jobId]);
     const job = jobs[0];
     if (!job) throw new AppError("NOT_FOUND", "مهمة الذكاء الاصطناعي غير موجودة", 404);
     const units = await this.database.query<UnitRow>(
@@ -512,7 +525,11 @@ export class AdminAiOperationsService {
     };
   }
 
-  async unitDetail(unitId: string, attemptLimit: number, attemptOffset: number): Promise<{
+  async unitDetail(
+    unitId: string,
+    attemptLimit: number,
+    attemptOffset: number,
+  ): Promise<{
     unit: AdminAiUnitView;
     attempts: AdminAiAttemptView[];
     attemptPagination: { total: number; limit: number; offset: number };
@@ -562,12 +579,14 @@ export class AdminAiOperationsService {
       [outputId],
     );
 
-    const normalized = output.normalized_output === null ? null : aiGenerationOutputSchema.safeParse(output.normalized_output);
+    const normalized =
+      output.normalized_output === null ? null : aiGenerationOutputSchema.safeParse(output.normalized_output);
     if (normalized && !normalized.success) {
       throw new AppError("INTERNAL_ERROR", "المخرج المخزن لا يطابق عقد الذكاء الاصطناعي", 500);
     }
     const history = events.map((event): AdminAiOutputReviewEvent => {
-      const reviewed = event.reviewed_output === null ? null : aiGenerationOutputSchema.safeParse(event.reviewed_output);
+      const reviewed =
+        event.reviewed_output === null ? null : aiGenerationOutputSchema.safeParse(event.reviewed_output);
       if (reviewed && !reviewed.success) {
         throw new AppError("INTERNAL_ERROR", "سجل المراجعة لا يطابق عقد الذكاء الاصطناعي", 500);
       }
@@ -585,7 +604,8 @@ export class AdminAiOperationsService {
     const latest = history[0] ?? null;
     const source = sourceInfo(output.input_payload);
     let effectiveReviewedOutput: AiGenerationOutput | null = normalized?.data ?? null;
-    if (latest?.action === "edit" || latest?.action === "approve") effectiveReviewedOutput = latest.reviewedOutput;
+    if (latest?.action === "edit" || latest?.action === "approve")
+      effectiveReviewedOutput = latest.reviewedOutput;
     if (latest?.action === "reject") effectiveReviewedOutput = null;
 
     return {
@@ -671,7 +691,11 @@ export class AdminAiOperationsService {
       const output = outputs[0];
       if (!output) throw new AppError("NOT_FOUND", "مخرج الذكاء الاصطناعي غير موجود", 404);
 
-      const latestRows = await tx.query<{ revision: number; action: AiOutputReviewAction; reviewed_output: unknown }>(
+      const latestRows = await tx.query<{
+        revision: number;
+        action: AiOutputReviewAction;
+        reviewed_output: unknown;
+      }>(
         `select revision, action, reviewed_output from ai_output_review_events
          where ai_output_id = $1 order by revision desc limit 1`,
         [outputId],
@@ -682,14 +706,14 @@ export class AdminAiOperationsService {
       }
 
       const normalized = aiGenerationOutputSchema.safeParse(output.normalized_output);
-      const currentDraft = latest?.action === "edit"
-        ? aiGenerationOutputSchema.safeParse(latest.reviewed_output)
-        : normalized;
+      const currentDraft =
+        latest?.action === "edit" ? aiGenerationOutputSchema.safeParse(latest.reviewed_output) : normalized;
       let reviewedOutput: AiGenerationOutput | null = null;
 
       if (input.action === "edit") {
         const edited = aiGenerationOutputSchema.safeParse(input.editedOutput);
-        if (!edited.success) throw new AppError("BAD_REQUEST", "المخرج المعدل لا يطابق عقد الذكاء الاصطناعي", 400);
+        if (!edited.success)
+          throw new AppError("BAD_REQUEST", "المخرج المعدل لا يطابق عقد الذكاء الاصطناعي", 400);
         if (normalized.success && edited.data.kind !== normalized.data.kind) {
           throw new AppError("BAD_REQUEST", "لا يمكن تغيير نوع مخرج الذكاء الاصطناعي أثناء المراجعة", 400);
         }
@@ -712,15 +736,18 @@ export class AdminAiOperationsService {
           note,
         ],
       );
-      await tx.query(
-        "update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1",
-        [outputId, actorProfileId],
-      );
+      await tx.query("update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1", [
+        outputId,
+        actorProfileId,
+      ]);
     });
     return this.outputDetail(outputId);
   }
 
-  private async lockJob(executor: QueryExecutor, jobId: string): Promise<{ id: string; status: AiJobExecutionStatus }> {
+  private async lockJob(
+    executor: QueryExecutor,
+    jobId: string,
+  ): Promise<{ id: string; status: AiJobExecutionStatus }> {
     const rows = await executor.query<{ id: string; status: AiJobExecutionStatus }>(
       "select id, status from ai_jobs where id = $1 for update",
       [jobId],
