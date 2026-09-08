@@ -3,15 +3,21 @@ import { AppError } from "../errors.js";
 import { type AiGenerationOutput, aiGenerationOutputSchema, aiGenerationRequestSchema } from "./contracts.js";
 import { AiExecutionRepository } from "./execution-repository.js";
 import {
+  type AiJobAllowedAction,
   type AiJobExecutionStatus,
   AiJobLifecycleRepository,
   type AiJobLifecycleStatus,
   type AiJobProgress,
 } from "./job-lifecycle.js";
-import { validateAdminApprovalOutput, validateAdminEditedOutput } from "./review-validation.js";
+import {
+  isAdminApprovalCandidateAllowed,
+  validateAdminApprovalOutput,
+  validateAdminEditedOutput,
+} from "./review-validation.js";
 
 export type AiOutputReviewAction = "edit" | "approve" | "reject";
 export type AiOutputReviewStatus = "pending" | "edited" | "approved" | "rejected";
+export type AiOutputAllowedReviewAction = AiOutputReviewAction;
 
 export interface AdminAiJobFilters {
   status?: AiJobLifecycleStatus;
@@ -37,6 +43,10 @@ export interface AdminAiJobListItem {
   createdAt: Date;
   updatedAt: Date;
   progress: Omit<AiJobProgress, "jobId" | "status" | "executionStatus" | "pausedAt">;
+}
+
+export interface AdminAiJobDetailItem extends AdminAiJobListItem {
+  allowedActions: AiJobAllowedAction[];
 }
 
 export interface AdminAiSourceProvenance {
@@ -117,6 +127,7 @@ export interface AdminAiOutputDetail {
   semanticWarnings: unknown;
   hasRawResponse: boolean;
   reviewStatus: AiOutputReviewStatus;
+  allowedReviewActions: AiOutputAllowedReviewAction[];
   effectiveReviewedOutput: AiGenerationOutput | null;
   reviewedByProfileId: string | null;
   reviewedAt: Date | null;
@@ -260,6 +271,18 @@ function reviewStatus(action: AiOutputReviewAction | null): AiOutputReviewStatus
   if (action === "approve") return "approved";
   if (action === "reject") return "rejected";
   return "pending";
+}
+
+function allowedReviewActions(
+  latestAction: AiOutputReviewAction | null,
+  requestInput: unknown,
+  candidateInput: unknown,
+): AiOutputAllowedReviewAction[] {
+  if (latestAction === "approve" || latestAction === "reject") return [];
+  const actions: AiOutputAllowedReviewAction[] = ["edit"];
+  if (isAdminApprovalCandidateAllowed(requestInput, candidateInput)) actions.push("approve");
+  actions.push("reject");
+  return actions;
 }
 
 function progressFromRow(row: JobRow): AiJobProgress {
@@ -508,19 +531,22 @@ export class AdminAiOperationsService {
     unitLimit: number,
     unitOffset: number,
   ): Promise<{
-    job: AdminAiJobListItem;
+    job: AdminAiJobDetailItem;
     units: AdminAiUnitView[];
     pagination: { total: number; limit: number; offset: number };
   }> {
     const jobs = await this.database.query<JobRow>(`${JOB_SELECT} where j.id = $1 group by j.id`, [jobId]);
     const job = jobs[0];
     if (!job) throw new AppError("NOT_FOUND", "مهمة الذكاء الاصطناعي غير موجودة", 404);
-    const units = await this.database.query<UnitRow>(
-      `${UNIT_SELECT} where u.job_id = $1 order by u.position, u.id limit $2 offset $3`,
-      [jobId, unitLimit, unitOffset],
-    );
+    const [units, allowedActions] = await Promise.all([
+      this.database.query<UnitRow>(
+        `${UNIT_SELECT} where u.job_id = $1 order by u.position, u.id limit $2 offset $3`,
+        [jobId, unitLimit, unitOffset],
+      ),
+      this.database.transaction((tx) => this.lifecycle.getAllowedActions(tx, jobId)),
+    ]);
     return {
-      job: mapJob(job),
+      job: { ...mapJob(job), allowedActions },
       units: units.map(mapUnit),
       pagination: { total: job.total, limit: unitLimit, offset: unitOffset },
     };
@@ -604,6 +630,7 @@ export class AdminAiOperationsService {
     });
     const latest = history[0] ?? null;
     const source = sourceInfo(output.input_payload);
+    const currentReviewCandidate = latest?.action === "edit" ? latest.reviewedOutput : normalized?.data ?? null;
     let effectiveReviewedOutput: AiGenerationOutput | null = normalized?.data ?? null;
     if (latest?.action === "edit" || latest?.action === "approve")
       effectiveReviewedOutput = latest.reviewedOutput;
@@ -620,6 +647,11 @@ export class AdminAiOperationsService {
       semanticWarnings: output.semantic_warnings,
       hasRawResponse: output.raw_response !== null,
       reviewStatus: reviewStatus(latest?.action ?? null),
+      allowedReviewActions: allowedReviewActions(
+        latest?.action ?? null,
+        output.input_payload,
+        currentReviewCandidate,
+      ),
       effectiveReviewedOutput,
       reviewedByProfileId: output.reviewed_by_profile_id,
       reviewedAt: output.reviewed_at,
