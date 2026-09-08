@@ -30,7 +30,7 @@
 
 المرحلة الحالية Stage13E. لا تبدأ Stage13F قبل إغلاق Stage13E بالـevidence المطلوبة إلا إذا غيّر Product Owner ترتيب المراحل صراحة.
 
-إذا كان EXEC-004 ما زال pre-checkout بسبب GitHub hosted runner، لا تعتبر ذلك PASS ولا product failure، ولا تغيّر الكود بلا defect مثبت. اقرأ آخر CI evidence في Queue/Continuity/Issue #16.
+إذا كان EXEC-004 ما زال pre-checkout، اقرأ أولًا `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`. CI-001 نطاقه مثبت repository-wide عبر Stage10/Stage11/Stage13E، والـworkflows تستخدم standard `ubuntu-latest` الذي كان ينجح سابقًا؛ لذلك لا تغيّر runner labels/YAML ولا product code بلا defect مثبت. لا تكرر reruns عمياء. exact root cause ما زال NOT YET VERIFIED لأن Actions usage/billing/budget/payment/runner settings غير مكشوفة عبر الاتصال الحالي. الخطوة الصحيحة هي فحص/استعادة GitHub-hosted runner availability من سطح إداري يملك هذه البيانات، ثم إعادة تشغيل Combined Gate بدون تعديل. recovery لا يثبت إلا عندما ينفذ runner فعلي setup/checkout.
 
 إذا أصبحت Stage13E candidate خضراء، لا تعمل merge/cherry-pick لتاريخ الفرع المتباعد مباشرة. اقرأ `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`: أعد فحص latest main/candidate overlap، ابنِ promotion branch قصيرة من أحدث main، انقل فقط manifest files المقبولة، ثم شغّل Combined + wider gates على exact promotion HEAD قبل إدخالها إلى main.
 
