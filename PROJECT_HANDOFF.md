@@ -2,7 +2,7 @@
 
 > **Purpose:** أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-09 — Single Owner active; hosting deferred; Stage13E candidate has four P1 + four P2 fixes, final static audit found no additional proven defect, closure + zero-overlap selective-promotion readiness are prepared, executable verification still blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; hosting deferred; Stage13E candidate has four P1 + four P2 fixes, final static audit found no additional proven defect, closure + zero-overlap selective-promotion readiness are prepared; CI-001 scope is verified repository-wide while exact external runner-allocation cause remains unverified.**
 
 ## 0. Mandatory startup
 
@@ -125,7 +125,7 @@ Latest static pass checked:
 
 Result: **no additional proven Stage13E defect after API-008**. Do not add speculative fixes merely because CI does not allocate a runner.
 
-## 7. Real Chromium / executable contract
+## 7. CI-001 / Real Chromium executable contract
 
 Fixtures:
 
@@ -137,25 +137,34 @@ Suite contract covers complete Jobs/Units/Attempts/Review History pagination, cu
 
 Workflow: `.github/workflows/stage13e-integration.yml`.
 
-Latest runtime/test-head attempt:
+`CI-001` scope is **VERIFIED repository-wide**. Exact account/platform runner-allocation cause is `NOT YET VERIFIED`.
 
-- run `34283353562`;
-- head `d60218b518fb0fe453c21386e77cd35a2228ad07`;
-- job `102253102885`;
-- `steps=[]`; no checkout or repository command executed.
+Evidence:
 
-Latest candidate/docs-head attempt:
+- Full Rebuild `34177369768` on verified head `4eca7de...` completed SUCCESS at `2026-09-08T01:43:19Z`; its jobs executed real setup/container/checkout/install/test/PostgreSQL/Chromium steps.
+- independent Stage10 Media Pipeline `34191051851` / job `101949023395` later failed before checkout with `steps=null`;
+- independent Stage11 AI Contract `34191051835` / job `101949023152` later failed before checkout with `steps=null`;
+- Stage13E runtime/test `34283353562` / job `102253102885` failed with `steps=[]`;
+- Stage13E candidate/docs `34283442253`, attempt `2`, job `102256556365` failed before checkout;
+- explicit rerun attempt `3` produced job `102266150322`, also `failure` with `steps=[]`; no log blob exists because no runner step executed.
 
-- run `34283442253`;
-- head `c48d1e597497e6054340f71235c78937082b9371`;
-- attempt `2`;
-- job `102256556365`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`;
-- no checkout or repository command executed.
+Public/admin boundary:
 
-This is **not product failure evidence**. `CI-001` remains an external hosted-runner-allocation blocker; exact account/platform cause is `NOT YET VERIFIED`. Do not weaken gates and do not claim PASS.
+- GitHub public status reported no Actions incident on September 8, 2026; do not classify this as a known global GitHub outage.
+- repository owner permission is confirmed `admin` through the connected integration.
+- connected tooling does not expose Actions usage/billing/budget/payment/runner-allocation settings, so the exact account-side cause cannot be verified here.
+- GitHub documentation confirms private-repository hosted-runner use depends on account-plan usage/billing policy; quota/payment exhaustion is only a possible diagnostic branch, not a finding without account evidence.
 
-Local fallback was explicitly checked: `/mnt/data/alwaslh-stage13e` is an empty directory, not a checkout. Node/npm/git exist, but npm registry access times out and no authenticated private-repository checkout is available. No local PASS is claimed.
+Local fallback was also rechecked and remains unavailable:
+
+- `/mnt/data/alwaslh-stage13e` is empty/not a checkout;
+- execution-container DNS cannot resolve `github.com` or `registry.npmjs.org`;
+- HTTPS cannot connect because DNS fails;
+- `git ls-remote` fails with `Could not resolve host`.
+
+Detailed incident/runbook: `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`.
+
+This remains **not product failure evidence**. Do not weaken gates, rewrite workflow semantics, or claim PASS.
 
 ## 8. Closure + promotion readiness
 
@@ -181,18 +190,19 @@ Do not create the promotion branch now; without executable candidate evidence it
 ## 9. Exact next work
 
 1. keep Stage13E outside `main`;
-2. retain all four P1 fixes + OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions;
-3. execute unchanged Combined Gate when a real runner starts;
-4. any executed failure → root-cause fix + regression;
-5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head matrix on candidate;
-6. follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`, assemble/reverify exact promotion HEAD from latest `main`;
-7. promotion-head PASS → integrate to `main`, convert only actually proven candidate legacy rows to VERIFIED, update central/closure docs + Closure Report in Issue #16;
-8. only then begin Stage13F;
-9. hosting remains deferred.
+2. preserve all four P1 fixes + OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions unchanged;
+3. inspect/restore GitHub-hosted runner availability through an administrative channel that exposes Actions usage/budget/payment/settings;
+4. rerun the **unchanged** Combined Gate once real runner allocation is available;
+5. infrastructure recovery counts only when setup/checkout executes; any subsequent executed failure → root-cause fix + regression;
+6. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head matrix on candidate;
+7. follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`, assemble/reverify exact promotion HEAD from latest `main`;
+8. promotion-head PASS → integrate to `main`, convert only actually proven candidate legacy rows to VERIFIED, update central/closure docs + Closure Report in Issue #16;
+9. only then begin Stage13F;
+10. hosting remains deferred.
 
 ## 10. Open findings
 
-- `CI-001` P1 — runner terminates before checkout; external cause not verified.
+- `CI-001` P1 — **repository-wide hosted-runner allocation scope VERIFIED; exact account/platform cause NOT YET VERIFIED**.
 - `AI-013E-DB-001` P1 — fixed, execution pending.
 - `AI-013E-REVIEW-002` P1 — fixed, execution pending.
 - `AI-013E-OPS-003` P1 — fixed, execution pending.
