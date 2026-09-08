@@ -2,7 +2,7 @@
 
 > **Purpose:** أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-08 — Single Owner active; hosting deferred; Stage13E candidate hardened by four P1 root fixes plus one P2 Output Detail snapshot-consistency fix; executable verification still pending.**
+Last synchronized: **2026-09-08 — Single Owner active; hosting deferred; Stage13E candidate hardened by four P1 root fixes plus two P2 read-snapshot consistency fixes; executable verification still pending.**
 
 ## 0. Mandatory startup
 
@@ -49,7 +49,7 @@ Do not replace verified baseline with docs-only/unexecuted heads.
 - no duplicate queue/pipeline/state authority.
 - durable Admin operational/audit history is reachable through bounded server pagination.
 - historical page selection never defines canonical current review authority.
-- one Output Detail response must be internally consistent across output/history/count/latest/reviewer metadata under one database snapshot.
+- **all multi-query Stage13E Admin AI read responses are snapshot-consistent**: page/total, progress/actions, latest-attempt and review authority come from one short `REPEATABLE READ` snapshot.
 - no patching/test weakening/auth bypass/fake API/sleep-race masking.
 
 ## 4. Current Stage13E — Admin AI Operations / Review
@@ -58,15 +58,15 @@ Status: **COMBINED INTEGRATION CANDIDATE / NOT YET VERIFIED / OUTSIDE `main`**.
 
 Active candidate/docs HEAD:
 
-`integration/stage13e-ai-operations @ bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`
+`integration/stage13e-ai-operations @ dd723f2451a0b2edcdaab2e6045a626cae44c15d`
 
 Latest runtime/test HEAD below docs:
 
-`9d59f84fb516db5cfaf89382f548c3eea595e365`
+`10f32c72a684a8243a789a3561426a68dad1bcea`
 
 Historical source branches are evidence only: Backend `348c02646d0ff873fd305beff16f41c46d9c0285`; Frontend `1eb141e950e96c9f53ffd103a386d59166113c16`; Product/Test `7bf2f8c32907032551aace9f3aa27681040c4b0f`.
 
-Candidate includes Admin Job/Unit/Attempt/Output observability, server-derived progress/actions, Stage12 controls, safe provider telemetry, provenance, append-only Stage11-validated review, stable-unit review boundary, authenticated Admin UI, canonical 409 refresh, bounded Jobs/Units/Attempts/Review History pagination, snapshot-consistent Output Detail reads, and real browser regressions. No Stage13F publication.
+Candidate includes Admin Job/Unit/Attempt/Output observability, server-derived progress/actions, Stage12 controls, safe provider telemetry, provenance, append-only Stage11-validated review, stable-unit review boundary, authenticated Admin UI, canonical 409 refresh, bounded Jobs/Units/Attempts/Review History pagination, snapshot-consistent multi-query read models, and real browser regressions. No Stage13F publication.
 
 ## 5. Stage13E audit fixes
 
@@ -91,9 +91,23 @@ Fix `9d59f84fb516db5cfaf89382f548c3eea595e365`:
 - all four reads execute in one short `REPEATABLE READ` transaction;
 - schema/provenance mapping occurs after commit;
 - no write locks and no provider/network calls are added;
-- `apps/api/tests/ai-admin-output-detail-snapshot.test.ts` prevents future reads escaping the snapshot and validates approved state/actor/time/pagination mapping.
+- `apps/api/tests/ai-admin-output-detail-snapshot.test.ts` prevents future reads escaping the snapshot.
 
-All four P1 findings and OPS-005 P2 are **FIXED IN CANDIDATE / EXECUTION PENDING**.
+### AI-013E-OPS-006 — P2 Admin multi-query read-model consistency
+
+List Jobs page/total, Job Detail progress/units/allowed-actions, and Unit Detail unit/latest-attempt/page/total were still assembled from different top-level reads. Concurrent Stage12 worker/lifecycle commits could therefore make one response internally contradictory without corrupting durable state.
+
+Fix lineage:
+
+- `6a146c26b771a991530f12b1c1c12b6e3b43263b` — adds private `readSnapshot()` and moves List Jobs, Job Detail, Unit Detail, Output Detail to one short `REPEATABLE READ` read transaction each; Job Detail calls Stage12 `getAllowedActions` inside the same snapshot.
+- `f5c5dddfdcb807b87fd18796e8b1154118a51f6e` — adds `apps/api/tests/ai-admin-read-snapshots.test.ts`.
+- `10f32c72a684a8243a789a3561426a68dad1bcea` — hardens the fixture so Stage12 allowed-action SQL is matched explicitly and cannot false-pass via a generic Job query branch.
+
+Mutations keep existing write transactions. Read snapshots introduce no write locks or provider/network calls.
+
+All four P1 findings and OPS-005/OPS-006 P2 are **FIXED IN CANDIDATE / EXECUTION PENDING**.
+
+Administrative continuity note: `tmp-ignore` was accidentally created on `main` while switching GitHub write method (`5916ac42f1d6ed216e0efe336b20a8f030d1f45e`) and immediately removed (`52fa960155964903290a78657029b3cb950bd6ee`). There is no net file/runtime effect.
 
 ## 6. Real Chromium / executable contract
 
@@ -109,26 +123,24 @@ Workflow: `.github/workflows/stage13e-integration.yml`.
 
 Latest runtime/test-head attempt:
 
-- run `34277281675`;
-- head `9d59f84fb516db5cfaf89382f548c3eea595e365`;
-- job `102233304479`;
+- run `34279168308`;
+- head `10f32c72a684a8243a789a3561426a68dad1bcea`;
+- job `102239495903`;
 - `runner_id=0`, `runner_name=""`, `steps=[]`.
 
 Latest candidate/docs-head attempt:
 
-- run `34277419491`;
-- head `bbefe54eb2d0bc6e4323df05c04e7b138f75ae72`;
-- job `102233751450`;
+- run `34279304388`;
+- head `dd723f2451a0b2edcdaab2e6045a626cae44c15d`;
+- job `102239938382`;
 - `runner_id=0`, `runner_name=""`, `steps=[]`.
-
-Prior candidate run `34275641643` was manually rerun unchanged; attempt 2 job `102231252401` also ended pre-checkout with `runner_id=0`, `steps=[]`.
 
 This is **not product failure evidence**. `CI-001` remains an external hosted-runner-allocation blocker; exact account/platform cause is `NOT YET VERIFIED`. Do not weaken gates and do not claim PASS.
 
 ## 7. Exact next work
 
 1. keep Stage13E outside `main`;
-2. retain all four P1 fixes + OPS-005 P2 hardening and regressions;
+2. retain all four P1 fixes + OPS-005/OPS-006 P2 hardenings and regressions;
 3. execute unchanged Combined Gate when a real runner starts;
 4. any executed failure → root-cause fix + regression;
 5. Combined PASS → wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head matrix;
@@ -144,6 +156,7 @@ This is **not product failure evidence**. `CI-001` remains an external hosted-ru
 - `AI-013E-OPS-003` P1 — fixed, execution pending.
 - `AI-013E-OPS-004` P1 — fixed, execution pending.
 - `AI-013E-OPS-005` P2 — fixed, execution pending.
+- `AI-013E-OPS-006` P2 — fixed, execution pending.
 - `AI-011-005` P2 — Stage13F.
 - `AI-012-019` P2 — live provider bootstrap unverified.
 
