@@ -8,12 +8,16 @@ const databaseUrl = process.env.DATABASE_URL;
 const happyJobType = process.env.STAGE13E_E2E_JOB_TYPE?.trim();
 const raceJobType = process.env.STAGE13E_E2E_RACE_JOB_TYPE?.trim();
 const paginationJobType = process.env.STAGE13E_E2E_PAGINATION_JOB_TYPE?.trim();
+const adminIdentifier = process.env.STAGE13E_ADMIN_IDENTIFIER?.trim().toLowerCase();
 
 if (!databaseUrl) throw new Error("DATABASE_URL is required for Stage13E E2E fixture seeding");
 if (!happyJobType) throw new Error("STAGE13E_E2E_JOB_TYPE is required for Stage13E E2E fixture seeding");
 if (!raceJobType) throw new Error("STAGE13E_E2E_RACE_JOB_TYPE is required for Stage13E E2E fixture seeding");
 if (!paginationJobType) {
   throw new Error("STAGE13E_E2E_PAGINATION_JOB_TYPE is required for Stage13E E2E fixture seeding");
+}
+if (!adminIdentifier) {
+  throw new Error("STAGE13E_ADMIN_IDENTIFIER is required for Stage13E E2E review-history seeding");
 }
 if (new Set([happyJobType, raceJobType, paginationJobType]).size !== 3) {
   throw new Error("Stage13E happy, race and pagination fixture job types must be different");
@@ -131,6 +135,27 @@ async function insertAttemptHistory(tx: QueryExecutor, unitId: string, count: nu
   );
 }
 
+async function insertReviewHistory(
+  tx: QueryExecutor,
+  outputId: string,
+  actorProfileId: string,
+  count: number,
+): Promise<void> {
+  await tx.query(
+    `insert into ai_output_review_events (
+       ai_output_id, revision, action, actor_profile_id, reviewed_output, note
+     )
+     select $1, series.revision, 'edit'::ai_output_review_action, $2, $3::jsonb,
+            'stage13e-e2e-review-' || series.revision::text
+     from generate_series(1, $4::integer) as series(revision)`,
+    [outputId, actorProfileId, JSON.stringify(output), count],
+  );
+  await tx.query(
+    "update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1",
+    [outputId, actorProfileId],
+  );
+}
+
 const database = createDatabase(databaseUrl);
 try {
   const seeded = await database.transaction(async (tx) => {
@@ -141,16 +166,25 @@ try {
     if (existing.length > 0) {
       throw new Error(`Stage13E E2E fixture job types already exist: ${existing.map((row) => row.job_type).join(", ")}`);
     }
+    const actorRows = await tx.query<{ profile_id: string }>(
+      "select profile_id from auth_credentials where normalized_identifier = $1",
+      [adminIdentifier],
+    );
+    const actorProfileId = actorRows[0]?.profile_id;
+    if (!actorProfileId) {
+      throw new Error(`Stage13E E2E Admin credential is missing for identifier: ${adminIdentifier}`);
+    }
 
     const now = Date.now();
 
     // Happy fixture: active server-owned lifecycle + open review output. It deliberately
-    // has 51 units and 51 execution-attempt rows so real Chromium proves unit/attempt
-    // pagination instead of silently truncating durable operational history.
+    // has 51 units, 51 execution-attempt rows and 101 append-only review revisions so
+    // real Chromium proves every durable operational/audit history remains reachable.
     const happyJobId = await insertJob(tx, happyJobType, "queued", 51, 1, new Date(now));
     const happyReviewUnitId = await insertUnit(tx, happyJobId, `${happyJobType}-review`, 0, "review_required");
-    await insertOutput(tx, happyReviewUnitId);
+    const happyOutputId = await insertOutput(tx, happyReviewUnitId);
     await insertAttemptHistory(tx, happyReviewUnitId, 51);
+    await insertReviewHistory(tx, happyOutputId, actorProfileId, 101);
     await insertQueuedUnits(tx, happyJobId, `${happyJobType}-queued`, 1, 50);
 
     // Race fixture: terminal execution with an intentionally open review output.
@@ -186,7 +220,7 @@ try {
       await insertUnit(tx, fillerId, `${fillerType}-review`, 0, "review_required");
     }
 
-    return { happyJobId, happyReviewUnitId, raceJobId, raceOutputId, paginationJobId };
+    return { happyJobId, happyReviewUnitId, happyOutputId, raceJobId, raceOutputId, paginationJobId };
   });
 
   console.log(JSON.stringify({
