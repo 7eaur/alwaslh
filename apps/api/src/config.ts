@@ -25,6 +25,7 @@ const EnvSchema = z.object({
     .default(24 * 7),
   SESSION_COOKIE_SAME_SITE: z.enum(["lax", "none"]).default("lax"),
   ALLOWED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:5174"),
+  MEDIA_STORAGE_ROOT: z.string().trim().min(1).default("./.media-storage"),
 });
 
 export type AppConfig = z.infer<typeof EnvSchema>;
