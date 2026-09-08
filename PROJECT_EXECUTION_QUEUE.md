@@ -4,7 +4,7 @@
 >
 > **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 + four P2 fixes; final static closure audit found no additional proven defect; Roadmap/Legacy Coverage and a zero-overlap selective Promotion Manifest are prepared; executable verification remains blocked before checkout.**
+Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 + four P2 fixes; final static closure audit found no additional proven defect; Roadmap/Legacy Coverage and a zero-overlap selective Promotion Manifest are prepared; CI-001 scope is now verified repository-wide while exact runner-allocation cause remains unverified.**
 
 ## 1. Operating mode
 
@@ -106,7 +106,7 @@ Reject reason existed only at caller validation. Fixed by PostgreSQL `ai_output_
 
 #### AI-013E-REVIEW-002 — P1 Data/Review Integrity
 
-Stage12 can replace `ai_outputs` during retry while review audit is append-only. Fixed by allowing review only for stable `completed|review_required` units and locking output+unit before mutation.
+Stage12 can replace `ai_outputs` during retry while review audit is append-only. Fixed by allowing review only on stable `completed|review_required` units and locking output+unit before mutation.
 
 **Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
 
@@ -160,7 +160,7 @@ List Jobs page/total, Job Detail progress/units/allowed-actions, and Unit Detail
 
 **Priority: P1**
 
-**Status: BLOCKED BY EXTERNAL GITHUB HOSTED-RUNNER ALLOCATION**
+**Status: BLOCKED BY REPOSITORY-WIDE GITHUB HOSTED-RUNNER ALLOCATION INCIDENT; EXACT CAUSE NOT YET VERIFIED**
 
 Workflow: `.github/workflows/stage13e-integration.yml`.
 
@@ -177,27 +177,33 @@ Expected gate:
 9. Chromium Jobs/Units/Attempts/Review History pagination;
 10. Chromium pause/resume, approve/reload, session expiry, stale-review 409, 390px.
 
-Latest runtime/test-head run:
+#### CI-001 evidence
 
-- run `34283353562`;
-- head `d60218b518fb0fe453c21386e77cd35a2228ad07`;
-- job `102253102885`;
-- `steps=[]` / no checkout or repository command executed.
+Scope is now verified **repository-wide**, not Stage13E-specific:
 
-Latest candidate/docs-head attempt:
+- last known fully executing green run: Full Rebuild `34177369768` on `4eca7de...`, created `2026-09-08T01:39:16Z`, completed SUCCESS `2026-09-08T01:43:19Z`; jobs executed real setup/container/checkout/install/test/database/browser steps;
+- independent Stage10 Media Pipeline run `34191051851` / job `101949023395` later failed before checkout with `steps=null`;
+- independent Stage11 AI Contract run `34191051835` / job `101949023152` later failed before checkout with `steps=null`;
+- Stage13E runtime/test run `34283353562` / job `102253102885` failed with `steps=[]`;
+- Stage13E candidate/docs run `34283442253`, attempt `2`, job `102256556365`, failed before checkout;
+- an explicit new rerun was performed as attempt `3`; job `102266150322` again completed `failure` with `steps=[]`, and no log blob exists because no runner step executed;
+- GitHub public status reports no Actions incident for September 8, 2026, so this is not classified as a known global outage;
+- repository owner permission is confirmed `admin`, but Actions usage/billing/budget/allocation settings are not exposed through the connected integration;
+- exact repository/account-side allocation cause remains `NOT YET VERIFIED`;
+- GitHub docs confirm private-repository hosted runners depend on account-plan usage/billing policy, but quota/payment exhaustion is a diagnostic possibility only and is **not** claimed without account evidence.
 
-- run `34283442253`;
-- head `c48d1e597497e6054340f71235c78937082b9371`;
-- attempt `2`;
-- job `102256556365`;
-- `runner_id=0`, `runner_name=""`, `steps=[]`;
-- completed before checkout; no repository command executed.
+Local fallback remains independently unavailable:
 
-Local fallback check found `/mnt/data/alwaslh-stage13e` exists but is an empty directory, not a checkout. The execution container can run Node/npm/git, but npm registry access times out and no authenticated private-repository checkout is available; no local PASS is claimed.
+- `/mnt/data/alwaslh-stage13e` is empty/not a checkout;
+- execution-container DNS cannot resolve `github.com` or `registry.npmjs.org`;
+- HTTPS to both fails before connection;
+- `git ls-remote https://github.com/7eaur/alwaslh.git HEAD` fails with `Could not resolve host`.
 
-Interpretation: this is not product/test failure evidence. External account/platform cause remains `NOT YET VERIFIED`. Repository-level Check Run output/logs do not expose a more specific cause through available connector permissions. Do not weaken tests or churn product code because a job never starts.
+Detailed evidence/runbook: `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`.
 
-**Exact next action:** execute the unchanged combined gate when GitHub allocates a real runner. Any command that actually executes and fails must be root-caused before Stage promotion.
+Interpretation: this is verification-infrastructure evidence, **not product/test failure evidence**. Do not weaken tests, alter workflow semantics, or churn Stage13E runtime because a runner is never allocated.
+
+**Exact next action:** inspect/restore Actions runner availability through an administrative channel that exposes account/repository Actions usage/budget/payment/settings, then rerun the **unchanged** combined gate. Infrastructure recovery is proven only when setup/checkout actually executes. Any later executed failure must be root-caused before Stage promotion.
 
 ---
 
@@ -254,7 +260,7 @@ Follow `MASTER_REBUILD_ROADMAP.md`: Stage14 Student Product → Stage15 Assessme
 
 ## 5. Open findings
 
-- `CI-001` P1 — GitHub hosted runner terminates before checkout; external cause not verified.
+- `CI-001` P1 — **repository-wide hosted-runner allocation scope VERIFIED; exact account/platform cause NOT YET VERIFIED**. See `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`.
 - `AI-011-005` P2 — direct generated-question persistence unresolved; Stage13F owns resolution.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
 - `AI-013E-DB-001` P1 — fixed in candidate; executable verification pending.
