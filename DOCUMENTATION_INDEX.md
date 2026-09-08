@@ -71,6 +71,7 @@ Historical files/issues remain evidence only; do not place new commands/reports 
 | `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | current Product Owner overrides |
 | `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md` | current engineering method/quality gates |
 | `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` | exact Stage13E selective promotion file set + exact-head promotion procedure after executable PASS |
+| `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md` | CI-001 evidence: repository-wide hosted-runner allocation blocker, recovery rules, local fallback limits |
 | `MASTER_REBUILD_ROADMAP.md` | target stage sequence, not runtime evidence |
 | `NEXT_CONVERSATION_PROMPT.md` | compact startup launcher |
 
@@ -170,6 +171,7 @@ Key docs:
 - `docs/ai/STAGE13E_ADMIN_AI_HTTP_VALIDATION.md`
 - `docs/admin/STAGE13E_AI_OPERATIONS_FRONTEND_PREP.md`
 - `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`
+- `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`
 
 Live provider benchmark/routes/credentials/bootstrap remain `NOT YET VERIFIED`. Never fake provider readiness or move the background worker into Fastify.
 
@@ -217,7 +219,7 @@ VERIFIED through Stage13D
 
 Exact current task is always the first unfinished item in `PROJECT_EXECUTION_QUEUE.md`.
 
-## 13. Current Stage13E snapshot
+## 13. Current Stage13E / CI snapshot
 
 Combined branch:
 
@@ -227,7 +229,16 @@ Latest runtime/test HEAD below docs:
 
 `d60218b518fb0fe453c21386e77cd35a2228ad07`
 
-Latest candidate/docs run `34283442253`, attempt `2`, job `102256556365`, and latest runtime/test run `34283353562` / job `102253102885` terminated before repository execution (`steps=[]`). Stage13E therefore remains `NOT YET VERIFIED`; this is not code-failure evidence.
+Stage13E remains `NOT YET VERIFIED` because no current candidate run has executed repository steps. Latest explicit rerun is run `34283442253`, attempt `3`, job `102266150322`, which completed with `steps=[]` and no log blob.
+
+`CI-001` scope is now verified **repository-wide**, not Stage13E-specific:
+
+- last known fully executing green baseline: Full Rebuild `34177369768`, completed SUCCESS at `2026-09-08T01:43:19Z` with real setup/checkout/test jobs;
+- independent Stage10 run `34191051851` / job `101949023395` later failed pre-checkout with `steps=null`;
+- independent Stage11 run `34191051835` / job `101949023152` later failed pre-checkout with `steps=null`;
+- GitHub public status reported no Actions incident for September 8, 2026;
+- exact repository/account-side runner-allocation cause remains `NOT YET VERIFIED` because Actions usage/billing/settings telemetry is not exposed by the connected integration;
+- local fallback is also unavailable: execution-container DNS cannot resolve `github.com` or `registry.npmjs.org`, and no authenticated checkout exists.
 
 Current static audit additionally fixed:
 
@@ -236,7 +247,7 @@ Current static audit additionally fixed:
 
 Promotion readiness audit proved the Stage13E candidate and current `main` have **zero changed-file overlap since their common merge base**. `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` defines the exact 36 Stage13E files and requires a fresh exact-head combined + wider regression run on a short-lived promotion branch before `main` promotion.
 
-See Queue, Continuity and specialized Stage13E docs for exact commits and next action.
+See Queue, Continuity, `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`, and specialized Stage13E docs for exact evidence and next action.
 
 ## 14. Documentation maintenance
 
