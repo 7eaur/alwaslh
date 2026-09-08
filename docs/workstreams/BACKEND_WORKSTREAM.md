@@ -239,11 +239,15 @@ Integration Lead هو من يحدث central status/log/handoff بعد القبو
 
 **Integration-approved command base:** `dd8b801103b4ef3f16bd0539f08ab8fd6d51b67c`.
 
-**Protocol-synchronized starting HEAD inspected before product changes:** `fe94731ec688fca2f1c40d96308ea680d31f7891`.
+**Protocol-synchronized starting HEAD:** `fe94731ec688fca2f1c40d96308ea680d31f7891`.
 
-**Current authority:** existing verified Stage11 contracts + Stage12 durable execution/lifecycle. No second queue/lifecycle was introduced.
+**Latest Integration Review:** Issue `#14` comment `5579170754`, reviewed `27da24b84d6769d673ab1bcb91f22a9829c0e64a`, decision `RETURN / CONTINUE` for a bounded contract/test/doc batch. Team Room decision `#13` comment `5579176219` requires Backend-owned action availability and preserves the raw/error secrecy boundaries.
+
+**Current authority:** verified Stage11 semantic contracts + Stage12 durable execution/lifecycle. No second queue/lifecycle or browser-owned authority is introduced.
 
 ### Latest commits
+
+Core Stage13E before latest Integration Review:
 
 - `b8ba831aaee6800d806a50112daf183b68738005` — `feat(ai): add admin operations and review authority`
 - `ff7f7bf6686dfb28a4d7229b29092b7e2cdaed65` — `fix(ai): bound admin retry semantics`
@@ -253,195 +257,217 @@ Integration Lead هو من يحدث central status/log/handoff بعد القبو
 - `0b617538c84c4722c289ddbf6186d12c5ab6c27b` — `chore(api): satisfy Stage13E biome checks`
 - `d40d0cc4853d492b623d5d4301fd0c2f6304c811` — `docs(ai): publish Stage13E Admin API contract`
 - `99072af7631bf4f25197b4b4b1e2e27be8d7889e` — `docs(backend): record Stage13E implementation and CI blocker`
-- `a11df051da47cc24acb136e326e856e9d240054b` — `fix(ai): enforce Stage11 semantics on Admin review`
 - `0c390432a8a0a93c821f45f1da3be92a31175862` — `fix(ai): validate Admin review semantics in owning transaction`
 - `3e00f61638d41474fe3365af379213f36ecf2b93` — `test(ai): cover semantic Admin review validation`
 - `3d48e8a85dcf3d3f771fef272ed2e2c7a1f0b736` — `docs(ai): enforce semantic review contract`
+- `f0a3ebc2dbf21b152a0f43093b3c7a2fa1568461` — `docs(backend): record Stage13E semantic review fix`
+- `96d5f993d5fcef142dac037d4b11bb208c25cd2f` — `fix(ai): clear pause in cancellation authority`
+- `74a3781e754a76b441f93aedb19afd348c1cb779` — `test(ai): cover paused Admin cancellation`
+- `27da24b84d6769d673ab1bcb91f22a9829c0e64a` — `fix(api): reject ambiguous AI review payloads`
+
+Latest Integration-return batch:
+
+- `e8f27e37e5563a85ce3747f0515b67f11102298c` — `feat(ai): derive Admin job action availability`
+- `20a36eacdf6516339f68ff38f3ced8c339b29c0c` — `feat(ai): expose review action authority`
+- `9056fd44dda3285e561d787833593c77d5380f8f` — `feat(ai): expose server-derived action availability`
+- `5a9062c227132a3305d393aadd0dc91c1b875ede` — `fix(api): require exact AI review union`
+- `1f2e26789989e43a92b790a212ea108727a5f87e` — `test(ai): cover Stage13E action authority contracts`
+- `37559d2a0492dfc4dd10faa78bc984d03960a43f` — `ci(ai): include Stage13E action authority regression`
+- `846169609d344d01a6056a22fc7634c86fcb31fb` — `docs(ai): synchronize Stage13E action authority contract`
 
 ### What was inspected
 
-- mandatory repository documentation and operating model;
-- Backend Board `#14` COMMAND + protocol amendment;
-- Team Room `#13`, including Frontend Stage13E contract blocker;
-- Stage11 generation contracts and the full semantic `validateAiGenerationOutput` validator;
-- Stage12 job/unit/attempt/output migrations and execution repository/service;
-- Stage12 lease, pause/resume/cancel, retry/capacity/control semantics and PostgreSQL integration tests;
-- existing Fastify/Zod Admin HTTP/auth patterns;
-- app registration/CORS/public error envelope;
-- current migration chain through `0017_content_ingestion_publication.sql` before adding Stage13E migration;
-- current Stage13E implementation/test/workflow after every pushed batch;
-- hosted-runner job evidence for every post-Biome rerun/latest head.
+- latest Stage13E COMMAND/protocol in Backend Board `#14`;
+- latest Integration Review `#14` comment `5579170754` before this batch;
+- Team Room `#13`, especially Integration decision `5579176219`, before implementation;
+- actual branch `backend/stage13e-ai-operations` at reviewed HEAD `27da24b8...`;
+- `AiJobLifecycleRepository` pause/resume/retry/progress and hard attempt ceiling;
+- Stage12 cancellation authority and the accepted `pause -> cancel` invariant;
+- Stage11 semantic validator + Stage13E review validator;
+- Admin AI read models, review HTTP boundary, current integration tests and Stage13E workflow;
+- canonical Frontend contract `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md`.
 
-### What was implemented
+### What was implemented in the Integration-return batch
 
-- Admin-only job list/detail APIs over existing `ai_jobs`/`ai_job_units`/`ai_execution_attempts`/`ai_outputs`;
-- server-derived lifecycle status/progress including `paused` overlay without browser authority;
-- bounded pagination/filtering;
-- unit/attempt provider/model/project/route/benchmark/cost/latency/error-code observability;
-- deliberate secret boundary: no credential alias, provider metadata, raw provider response or internal provider error message in Admin responses;
-- source/page/checksum/OCR/source-asset provenance derived from canonical Stage11 input payload;
-- pause/resume through existing `AiJobLifecycleRepository`;
-- cancel through existing Stage12 `AiExecutionRepository.requestCancel` authority;
-- Admin retry only for failed jobs, preserving attempt history, granting exactly one additional attempt per failed unit, and refusing retry at hard attempt ceiling 20;
-- append-only output review events for `edit | approve | reject`, actor/timestamp/revision audit and row-lock race serialization;
-- Stage11 semantic validation is re-applied inside the same review transaction using canonical `ai_job_units.input_payload`; semantic `invalid` edits/approvals are blocked while `review_required` remains Admin-approvable;
-- review does not mutate raw/normalized AI output and does not publish to Stage13F Question Bank;
-- specialized Frontend-facing contract: `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md`;
-- dedicated Stage13E GitHub Actions workflow and PostgreSQL integration coverage, plus Stage12/auth regressions;
-- focused unit regression `apps/api/tests/ai-admin-review-validation.test.ts` for semantic review authority.
+- `AiJobLifecycleRepository.getAllowedActions()` is now the server authority for Job Detail action availability.
+- `GET /v1/admin/ai/jobs/:jobId` returns `job.allowedActions: Array<"pause" | "resume" | "cancel" | "retry">`.
+- Active unpaused jobs advertise `pause,cancel`; paused jobs advertise `resume,cancel`.
+- `retry` is advertised only for a failed job with at least one failed unit, no cancellation request, and no failed unit at attempt ceiling 20.
+- Completed/cancelled and ineligible failed jobs advertise no actions.
+- `GET /v1/admin/ai/outputs/:outputId` returns `allowedReviewActions: Array<"edit" | "approve" | "reject">`.
+- Terminal approve/reject exposes no review actions.
+- Open review exposes edit/reject; approve is advertised only when the current candidate passes the same Stage11 semantic authority used by approval (`valid` or `review_required`, not `invalid`).
+- Review HTTP body is an exact strict discriminated union; edit requires non-`undefined` `editedOutput`, approve cannot carry `editedOutput`, reject requires a nonblank trimmed reason, and unknown fields are rejected.
+- Raw provider response and provider/internal error-message boundaries remain unchanged: only `hasRawResponse`, safe `errorCode` and `lastErrorCode` are exposed.
+- `pause -> cancel` invariant remains in owning Stage12 cancellation authority: cancellation atomically clears `paused_at`.
+- New independent PostgreSQL integration regression `ai-admin-action-authority.integration.test.ts` covers the Integration Review matrix and is wired into the full Stage13E workflow.
+- Canonical Frontend contract is synchronized with exact request and action-availability semantics.
 
 ### Contracts/schema/endpoints changed
 
-Migration:
+No new migration beyond existing Stage13E `database/migrations/0018_ai_admin_review.sql`.
 
-- `database/migrations/0018_ai_admin_review.sql`
-  - enum `ai_output_review_action`;
-  - table `ai_output_review_events`;
-  - unique output/revision invariant;
-  - FK/audit/payload-shape/note-length constraints;
-  - latest-review and actor audit indexes.
+Existing endpoints are unchanged, but read response contracts are extended:
 
-Endpoints:
+- `GET /v1/admin/ai/jobs/:jobId` -> `job.allowedActions`.
+- `GET /v1/admin/ai/outputs/:outputId` -> `output.allowedReviewActions`.
+- `PATCH /v1/admin/ai/outputs/:outputId/review` -> exact strict discriminated request union documented in `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md`.
 
-- `GET /v1/admin/ai/jobs`
-- `GET /v1/admin/ai/jobs/:jobId`
-- `GET /v1/admin/ai/units/:unitId`
-- `GET /v1/admin/ai/outputs/:outputId`
-- `POST /v1/admin/ai/jobs/:jobId/pause`
-- `POST /v1/admin/ai/jobs/:jobId/resume`
-- `POST /v1/admin/ai/jobs/:jobId/cancel`
-- `POST /v1/admin/ai/jobs/:jobId/retry`
-- `PATCH /v1/admin/ai/outputs/:outputId/review`
-
-Canonical Frontend contract: `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md`.
+Mutation endpoints remain canonical and may still return `409`; Frontend must refresh after conflict.
 
 ### Tests and exact results
 
-GitHub Actions workflow: `Stage 13E Admin AI Operations Verification`.
+Workflow: `Stage 13E Admin AI Operations Verification`.
 
-Run `34184515829` on `8e27c1a6a927dfc411be36a9156b32ee7507ec66`:
+Historical executable run `34184515829` reached a GitHub-hosted runner/PostgreSQL and failed only at initial Biome hygiene; the source hygiene was fixed in `0b617538...` without weakening CI.
 
-- PostgreSQL service provisioned successfully;
-- dependency install succeeded;
-- `npm run lint --prefix apps/api` failed before later gates because new Stage13E files had Biome formatting/import hygiene issues and one unused test import;
-- typecheck/unit/build/migrations/schema/integration/regression steps were skipped after the lint failure.
+Repeated post-fix runs, including Integration-reviewed run `34186560937` on `27da24b8...`, failed before checkout with `runner_id=0`, empty runner name and `steps=[]`. That is infrastructure evidence, not product PASS/FAIL.
 
-Fix:
+New committed regression `apps/api/tests/integration/ai-admin-action-authority.integration.test.ts` covers:
 
-- formatting/import hygiene corrected in source/test and committed as `0b617538c84c4722c289ddbf6186d12c5ab6c27b`;
-- CI was not weakened; the same gate remains required.
+- active/paused/resumed/cancelled Job Detail action arrays;
+- retry advertised only when lifecycle preconditions are satisfied;
+- retry not advertised at attempt ceiling, with cancellation requested, or with no failed unit;
+- output review actions before terminal review;
+- empty review actions after approve/reject;
+- strict HTTP matrix: `approve + editedOutput -> 400`, edit missing output -> `400`, reject missing/blank reason -> `400`, unknown field -> `400`;
+- rejected strict bodies create zero review events.
 
-Post-fix hosted-runner evidence:
-
-- run `34185062185` on `0b617538...`, attempts 1/2/3: `runner_id=0`, `runner_name=""`, `steps=[]`;
-- run `34185372543` on `99072af...`: job `101932542529`, `runner_id=0`, `steps=[]`;
-- run `34185691717` on semantic-regression source/test head `3e00f616...`: job `101933453784`, `runner_id=0`, `steps=[]`.
-
-These jobs ended before checkout/service initialization; no repository command executed in them. Current-head lint/typecheck/unit/build/migrations/integration/regression results therefore remain `NOT YET VERIFIED`.
+The workflow now runs this regression in addition to the existing Stage13E integration test. **These latest-head tests have not yet been observed executing on a hosted runner.**
 
 ### Failures + root causes + fixes
 
-#### Failure 1 — Stage13E referenced nonexistent job-level failure columns
+#### Failure 1 — nonexistent job-level failure columns
 
-Symptom: inspection found Stage13E list/retry queries referencing `ai_jobs.failure_code` / `failure_message` even though Stage12 schema owns execution errors at unit/attempt level.
+Symptom: early Stage13E projected `ai_jobs.failure_code/failure_message` that do not exist.
 
-Root cause: initial Stage13E implementation projected an unverified job-level error shape instead of using actual Stage12 persistence.
+Root cause: unverified duplicate job-level error shape instead of Stage12 unit/attempt authority.
 
-Affected invariant/contract: no duplicate lifecycle/state authority; schema correctness.
+Affected invariant/contract: schema correctness + single state authority.
 
-Blast radius: job list/retry would fail on PostgreSQL despite TypeScript compiling.
+Blast radius: PostgreSQL list/retry failure.
 
-Fix location and why: `apps/api/src/ai/admin-operations.ts`; removed nonexistent job columns rather than adding duplicate state, preserving `ai_job_units.last_error_code` + attempt `error_code` as owning authority.
+Fix location and why: Stage13E Admin query layer; nonexistent fields removed, unit/attempt error codes retained as authority.
 
-Regression test: Stage13E clean PostgreSQL/list/retry integration test is present; execution remains blocked by hosted-runner provisioning.
+Regression test: clean PostgreSQL Stage13E integration coverage.
 
-#### Failure 2 — Admin retry ceiling / retry-budget semantics
+#### Failure 2 — Admin retry budget / ceiling
 
-Symptom: retry needed explicit handling at Stage12 hard max 20 and must not restore an old multi-attempt budget.
+Symptom: manual retry needed exactly one new attempt and hard ceiling 20.
 
-Root cause: generic `greatest(max_attempts, attempt_count + 1)` did not encode one explicit Admin retry precisely.
+Root cause: generic retry growth did not encode the Admin contract precisely.
 
-Affected invariant/contract: bounded retries and historical attempt integrity.
+Affected invariant/contract: bounded retries + attempt history.
 
-Blast radius: units near the hard ceiling could hit a DB constraint or receive excess retry budget.
+Blast radius: excess retry budget or constraint failure.
 
-Fix location and why: existing `AiJobLifecycleRepository.requestRetry`; precheck all failed units for `attempt_count >= 20`, then set `max_attempts = attempt_count + 1`. No second retry queue.
+Fix location and why: `AiJobLifecycleRepository.requestRetry`, the existing lifecycle authority.
 
-Regression test: integration test asserts one-attempt extension, preserved attempt history and unchanged exhausted state.
+Regression test: one-attempt extension, history preservation, exhausted retry unchanged; latest action-availability test also ensures ineligible retry is not advertised.
 
-#### Failure 3 — Admin review could bypass Stage11 semantic rules
+#### Failure 3 — semantic review bypass
 
-Symptom: a schema-valid Admin edit could be stored and later approved without re-running semantic validation against the canonical generation request.
+Symptom: a schema-valid manual edit could bypass Stage11 semantic rules.
 
-Root cause: initial Stage13E review path reused only `aiGenerationOutputSchema`, treating structure as sufficient for Admin edits.
+Root cause: structural schema validation was initially treated as sufficient.
 
-Affected invariant/contract: Stage11 generation/validation authority, provenance correctness, notation/count/answer rules, and the requirement not to create a weaker parallel acceptance path.
+Affected invariant/contract: Stage11 semantic/provenance authority.
 
-Blast radius: manual `edit -> approve` could accept content the provider pipeline would classify `invalid` (for example invalid provenance, requested counts, exact quote or visible-digit rules).
+Blast radius: invalid content could be manually approved.
 
-Fix location and why: `apps/api/src/ai/review-validation.ts` reuses `validateAiGenerationOutput`; `AdminAiOperationsService.reviewOutput` now reads canonical unit `input_payload` and validates edit/approve candidates inside the same `ai_outputs FOR UPDATE` transaction. `invalid` is blocked; `review_required` is allowed because Admin is the human-review authority.
+Fix location and why: shared Stage11 validation reused inside the owning review transaction; no weaker parallel validator.
 
-Regression test: `apps/api/tests/ai-admin-review-validation.test.ts` covers valid edit, semantic-invalid edit -> `400`, review-required approval allowed, semantic-invalid approval -> `409`.
+Regression test: semantic edit/approve unit regressions; output action availability uses the same semantic authority.
 
-#### Failure 4 — Initial Stage13E CI lint failure
+#### Failure 4 — paused cancellation stale gate
 
-Symptom: run `34184515829` stopped at Biome before typecheck/build/PostgreSQL gates.
+Symptom: Stage13E Admin cancel initially called `AiExecutionRepository.requestCancel` without Stage12 service-level `clearPause`, so a paused job could become terminal while retaining `paused_at`.
 
-Root cause: formatting/import ordering and one unused import in new Stage13E files.
+Root cause: cancellation invariant was split between repository and one service caller.
 
-Affected invariant/contract: repository quality gate only.
+Affected invariant/contract: terminal lifecycle state must not retain an active pause gate.
 
-Blast radius: prevented later verification gates from running.
+Blast radius: stale canonical lifecycle metadata and misleading Admin state.
 
-Fix location and why: source/test formatting and imports corrected in `0b617538...`; no `--write` or weakened CI workaround.
+Fix location and why: owning `AiExecutionRepository.requestCancel` now clears `paused_at` atomically with cancellation, protecting every caller.
 
-Regression test: same lint command remains in Stage13E workflow.
+Regression test: `pause -> cancel` asserts API `pausedAt=null` and PostgreSQL `paused_at IS NULL` (`74a3781e...`).
 
-#### Failure 5 — GitHub-hosted runner provisioning blocker
+#### Failure 5 — ambiguous review HTTP body
 
-Symptom: repeated post-fix runs terminate in seconds with no workflow steps.
+Symptom: `approve` could receive an `editedOutput` that would be ignored, and the generic documented shape implied optional fields across all actions.
 
-Root cause: GitHub does not provision a hosted runner; evidence is `runner_id=0`, empty runner name and `steps=[]`. Available connector evidence does not expose a more specific billing/quota/platform reason, so no narrower cause is assumed.
+Root cause: request contract was not encoded/documented as an exact discriminated union.
 
-Affected invariant/contract: verification availability, not product code.
+Affected invariant/contract: explicit mutation intent and no silently ignored write payload.
 
-Blast radius: current-head lint/typecheck/unit/build/clean PostgreSQL/integration/regression results cannot be established.
+Blast radius: Frontend/backend ambiguity and unsafe operator expectations.
 
-Fix location and why: external CI infrastructure; product code/test harness must not be weakened. Re-runs/new pushes were attempted and the blocker is recorded in Team Room `#13`.
+Fix location and why: strict Zod discriminated union at the HTTP boundary; canonical contract updated to match it exactly.
 
-Regression test: rerun unchanged full Stage13E workflow when GitHub allocates a runner; require same-head green before Ready.
+Regression test: dedicated strict HTTP matrix with zero-event side-effect assertion.
+
+#### Failure 6 — action-availability authority gap
+
+Symptom: Frontend was forbidden from deriving action permissions from enums, while Backend read models did not expose permissions.
+
+Root cause: mutation transition authority existed, but no server-derived read projection exposed its current availability.
+
+Affected invariant/contract: server/PostgreSQL must own lifecycle/review permissions; browser must not duplicate them.
+
+Blast radius: Frontend would either guess actions or maintain a duplicate permission table that could drift from mutations.
+
+Fix location and why: job availability is derived in `AiJobLifecycleRepository`; review availability reuses the same Stage11 review validation authority as mutation. Read arrays contain action identifiers only, no presentation strings.
+
+Regression test: dedicated action-authority integration test covering positive/negative lifecycle and terminal review cases.
+
+#### Failure 7 — GitHub-hosted runner provisioning blocker
+
+Symptom: repeated jobs terminate before checkout with `runner_id=0` and `steps=[]`.
+
+Root cause: no hosted runner is provisioned; available repo-level evidence does not expose a narrower billing/quota/platform diagnosis, so none is assumed.
+
+Affected invariant/contract: required same-head verification availability, not application behavior.
+
+Blast radius: latest lint/typecheck/unit/build/PostgreSQL/integration/regression status cannot be established.
+
+Fix location and why: external CI/account/platform layer; workflow/product tests are not weakened or skipped.
+
+Regression test: unchanged full Stage13E workflow must execute and be green on the latest head.
 
 ### Open issues/blockers
 
-- **BLOCKER:** current Stage13E same-head CI cannot complete while GitHub-hosted runner allocation returns `runner_id=0`/no steps.
-- Frontend transport-contract blocker is resolved by `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md` and Team Room `#13` handoff comments; Backend still is not integration-ready until verification is green.
-- live provider adapter/benchmark/bootstrap remains `NOT YET VERIFIED` and outside this Stage13E command.
-- direct Question Bank persistence/publication remains Stage13F and is not implemented here.
+- **BLOCKER:** same-head full verification is still required; inspect newest workflow evidence after the latest code/docs commits.
+- Stage13F Question Bank persistence/publication remains explicitly outside Stage13E.
+- Live production provider adapter/benchmark/bootstrap remains `NOT YET VERIFIED` and outside this command.
 
 ### Cross-team dependencies/decisions
 
-- Team Room `#13` received the stabilized Frontend contract handoff and CI infrastructure blocker.
-- Team Room `#13` also received the semantic-review correction: no Frontend decision required; server `400/409` is authoritative.
-- Integration Lead must verify same-head CI before marking Stage13E `VERIFIED`.
-- Frontend must not infer lifecycle/review success locally; refresh server state after mutations/conflicts.
+- Team Room `#13` Integration decision `5579176219` is implemented: raw/error secrecy boundaries preserved and Backend now exposes server-derived action availability.
+- Frontend may bind to the canonical contract but must never infer successful transition after `409`; refresh canonical state.
+- No Frontend presentation strings are returned by Backend action availability.
+- Integration Lead must not mark Stage13E `VERIFIED` until same-head full gate is green.
 
 ### NOT YET VERIFIED
 
-- current-head lint/typecheck/unit/build after semantic-review changes;
-- clean application of migration `0018_ai_admin_review.sql` on PostgreSQL;
-- Stage13E authorization/secret-boundary/provenance/review-race/retry/control integration tests;
-- semantic-review unit regression execution on current head;
-- Stage12 execution/capacity/control/lifecycle regressions on current Stage13E head;
-- auth security regression on current Stage13E head;
+- latest-head lint;
+- latest-head strict typecheck;
+- latest-head unit tests;
+- latest-head build;
+- clean PostgreSQL application of migration `0018_ai_admin_review.sql`;
+- existing Stage13E authorization/secret/provenance/review-race/retry/control integration regression;
+- new strict-body/action-authority PostgreSQL integration regression;
+- Stage12 execution/capacity/control/lifecycle regressions on latest Stage13E head;
+- auth security regression on latest Stage13E head;
 - live provider adapter/benchmark/bootstrap.
 
 ### Ready for integration
 
-**NO** — implementation, stabilized Frontend contract and regression coverage are present, but required same-head verification is blocked by GitHub-hosted runner provisioning.
+**NO** — the Integration-return contract/test/doc batch is implemented, but Closure requires the unchanged full same-head verification gate to actually execute green.
 
 ### Exact next action
 
-1. Inspect the newest Stage13E workflow run for the latest docs/workstream head.
-2. If GitHub provisions a runner, run the unchanged full gate and fix any real lint/type/schema/DB/test failure at its owning layer.
-3. If runner allocation again reports `runner_id=0`/`steps=[]`, append that evidence to Issue `#14` without weakening CI.
-4. Once a same-head run is green, update this file + Issue `#14` with exact results and issue the mandatory Stage13E Closure Report with `Ready for integration: YES`.
+1. Inspect the newest `Stage 13E Admin AI Operations Verification` run for the latest branch head.
+2. If a runner is allocated, fix any real lint/typecheck/schema/PostgreSQL/test failure at its owning layer until all required gates are green.
+3. If runner allocation is still `runner_id=0`/`steps=[]`, record exact evidence in Issue `#14` and Team Room as an infrastructure blocker without weakening CI.
+4. When same-head full verification is green, update this file and Issue `#14`, then issue the mandatory Stage13E Closure Report with `Ready for integration: YES`.
