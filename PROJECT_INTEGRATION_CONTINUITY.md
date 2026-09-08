@@ -4,7 +4,7 @@
 >
 > **Authority:** current code + PostgreSQL migrations + executable evidence أعلى من هذا الملف. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-09 — Single Owner; Stage13E has four P1 + four P2 fixes in candidate, final static contract/schema/lifecycle audit found no additional proven defect, Roadmap/Legacy Coverage are closure-ready, executable runner still unavailable before checkout.**
+Last synchronized: **2026-09-09 — Single Owner; Stage13E has four P1 + four P2 fixes in candidate, final static audit found no additional proven defect, Roadmap/Legacy Coverage plus zero-overlap Promotion Manifest are closure-ready, executable runner still unavailable before checkout.**
 
 ## 1. Resume procedure
 
@@ -155,23 +155,49 @@ No executed product/test failure exists on the current candidate. `CI-001` remai
 
 While EXEC-004 is externally blocked, closure documentation was prepared without changing verification state:
 
-- `MASTER_REBUILD_ROADMAP.md` now records Stage13E as `COMBINED CANDIDATE / EXECUTION PENDING`, Stage13F as blocked by ordered closure, and deployment as future VPS-only work;
+- `MASTER_REBUILD_ROADMAP.md` records Stage13E as `COMBINED CANDIDATE / EXECUTION PENDING`, Stage13F as blocked by ordered closure, and deployment as future VPS-only work;
 - `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` introduces `CANDIDATE / EXECUTION PENDING` and maps Stage13E candidate evidence to relevant legacy rows without marking them VERIFIED;
 - candidate-targeted rows currently include `LES-A-035/036/037`, `AIRULE-025`, and `AI-OPS-012/013/014/015/017`; final closure can only promote rows proven by executable evidence;
 - rows not actually closed by the Operations/Review boundary remain explicitly NOT YET VERIFIED, including bulk generation trigger, full page-detection batch-save authoring, complete generated/manual editor/delete flows, exports, and Stage13F Question Bank publication.
 
-## 11. Exact next action
+## 11. Promotion readiness / merge-debt audit
+
+A live compare was performed before promotion preparation:
+
+- common merge base: `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`;
+- audited `main`: `e10de6d7811ad04811e8a841628966a5269b1dfd`;
+- candidate: `c48d1e597497e6054340f71235c78937082b9371`;
+- candidate is 53 commits ahead / 77 commits behind current `main` at that snapshot;
+- candidate changed exactly 36 Stage13E workflow/Admin/API/test/migration/specialized-doc files since the merge base;
+- `main` changed 19 central governance/workstream/deployment-portability files since the same merge base;
+- **changed-file intersection = 0**.
+
+This proves no historical merge/cherry-pick chain is required. `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` is the authority for the exact 36-file promotion set.
+
+Promotion policy after candidate combined + wider PASS:
+
+1. re-live-check `main` and candidate and repeat the overlap comparison;
+2. create short-lived `integration/stage13e-promotion` from then-current `main`;
+3. overlay only the accepted manifest files;
+4. reject any unrelated/central-doc diff;
+5. run combined Stage13E + wider regression matrix again on the exact promotion HEAD;
+6. only after that exact-head PASS, promote to `main` if `main` has not moved; otherwise rebuild/reverify from latest `main`.
+
+Do not create the promotion branch while candidate CI cannot execute; that would only create another unverified head and runner trigger without new evidence.
+
+## 12. Exact next action
 
 1. Keep Stage13E outside `main`.
 2. Retain all four P1 fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions.
 3. Execute unchanged Combined Gate when a real runner is allocated.
 4. Any command that actually executes and fails → root-cause fix + regression.
-5. Combined PASS → wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild matrix.
-6. Wider PASS → integrate Stage13E runtime into `main`, convert only actually proven legacy candidate rows to VERIFIED, update closure docs and Issue #16.
-7. Only then begin Stage13F.
-8. Hosting stays deferred until explicit VPS command.
+5. Combined PASS → wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild matrix on candidate.
+6. Follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` to assemble and reverify exact promotion HEAD from latest `main`.
+7. Promotion-head PASS → integrate to `main`, convert only proven legacy candidate rows to VERIFIED, update closure docs and Issue #16.
+8. Only then begin Stage13F.
+9. Hosting stays deferred until explicit VPS command.
 
-## 12. Open findings
+## 13. Open findings
 
 - `CI-001` P1 — runner terminates before checkout; external cause unverified.
 - `AI-013E-DB-001` P1 — fixed, execution pending.
