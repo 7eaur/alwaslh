@@ -43,6 +43,7 @@ interface Props {
   onJobPageChange: (offset: number) => void;
   onUnitPageChange: (offset: number) => void;
   onAttemptPageChange: (unitId: string, offset: number) => void;
+  onReviewPageChange: (unitId: string, offset: number) => void;
   onJobAction: (jobId: string, action: AiJobAction) => void;
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
 }
@@ -69,6 +70,7 @@ export function AiOperationsWorkspace({
   onJobPageChange,
   onUnitPageChange,
   onAttemptPageChange,
+  onReviewPageChange,
   onJobAction,
   onReviewSubmit,
 }: Props) {
@@ -136,6 +138,7 @@ export function AiOperationsWorkspace({
                 onSelectUnit={onSelectUnit}
                 onUnitPageChange={onUnitPageChange}
                 onAttemptPageChange={onAttemptPageChange}
+                onReviewPageChange={onReviewPageChange}
                 onJobAction={onJobAction}
                 onReviewSubmit={onReviewSubmit}
               />
@@ -172,6 +175,7 @@ function JobDetail({
   onSelectUnit,
   onUnitPageChange,
   onAttemptPageChange,
+  onReviewPageChange,
   onJobAction,
   onReviewSubmit,
 }: {
@@ -183,6 +187,7 @@ function JobDetail({
   onSelectUnit: (unitId: string) => void;
   onUnitPageChange: (offset: number) => void;
   onAttemptPageChange: (unitId: string, offset: number) => void;
+  onReviewPageChange: (unitId: string, offset: number) => void;
   onJobAction: (jobId: string, action: AiJobAction) => void;
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
 }) {
@@ -243,6 +248,7 @@ function JobDetail({
               unit={selectedUnit}
               mutationPending={mutationPending}
               onAttemptPageChange={onAttemptPageChange}
+              onReviewPageChange={onReviewPageChange}
               onReviewSubmit={onReviewSubmit}
             />
           ) : null}
@@ -257,11 +263,13 @@ function UnitDetail({
   unit,
   mutationPending,
   onAttemptPageChange,
+  onReviewPageChange,
   onReviewSubmit,
 }: {
   unit: AiUnitView;
   mutationPending: boolean;
   onAttemptPageChange: (unitId: string, offset: number) => void;
+  onReviewPageChange: (unitId: string, offset: number) => void;
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
 }) {
   return (
@@ -291,7 +299,14 @@ function UnitDetail({
 
       <section className="ai-subsection" aria-labelledby={`output-${unit.id}`}>
         <h4 id={`output-${unit.id}`}>مراجعة المخرَج</h4>
-        {unit.output ? <ReviewOutput output={unit.output} mutationPending={mutationPending} onReviewSubmit={onReviewSubmit} /> : <p className="empty-inline">لا يوجد مخرَج محفوظ لهذه الوحدة حتى الآن.</p>}
+        {unit.output ? (
+          <ReviewOutput
+            output={unit.output}
+            mutationPending={mutationPending}
+            onReviewPageChange={(offset) => onReviewPageChange(unit.id, offset)}
+            onReviewSubmit={onReviewSubmit}
+          />
+        ) : <p className="empty-inline">لا يوجد مخرَج محفوظ لهذه الوحدة حتى الآن.</p>}
       </section>
     </div>
   );
@@ -319,9 +334,10 @@ function AttemptCard({ attempt }: { attempt: AiAttemptView }) {
   );
 }
 
-function ReviewOutput({ output, mutationPending, onReviewSubmit }: {
+function ReviewOutput({ output, mutationPending, onReviewPageChange, onReviewSubmit }: {
   output: NonNullable<AiUnitView["output"]>;
   mutationPending: boolean;
+  onReviewPageChange: (offset: number) => void;
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
 }) {
   const [mode, setMode] = useState<"edit" | "reject" | null>(null);
@@ -400,11 +416,21 @@ function ReviewOutput({ output, mutationPending, onReviewSubmit }: {
         />
       )}
 
-      {output.reviewHistory.length > 0 ? (
-        <details className="ai-review-history">
-          <summary>سجل المراجعة ({output.reviewHistory.length})</summary>
-          <ol>{output.reviewHistory.map((event) => <li key={event.id}><strong>{reviewActionLabel(event.action)}</strong><span>{event.actorDisplayName ?? event.actorProfileId} · {formatDateTime(event.createdAt)}</span>{event.note ? <p>{event.note}</p> : null}</li>)}</ol>
-        </details>
+      {output.reviewPagination.total > 0 ? (
+        <div className="ai-review-history-block">
+          <details className="ai-review-history">
+            <summary>سجل المراجعة ({output.reviewPagination.total})</summary>
+            {output.reviewHistory.length > 0 ? (
+              <ol>{output.reviewHistory.map((event) => <li key={event.id}><strong>{reviewActionLabel(event.action)}</strong><span>الإصدار {event.revision} · {event.actorDisplayName ?? event.actorProfileId} · {formatDateTime(event.createdAt)}</span>{event.note ? <p>{event.note}</p> : null}</li>)}</ol>
+            ) : <p className="empty-inline">لا توجد أحداث مراجعة في هذه الصفحة.</p>}
+          </details>
+          <PaginationControls
+            label="صفحات سجل مراجعة مخرج AI"
+            pagination={output.reviewPagination}
+            disabled={mutationPending}
+            onPageChange={onReviewPageChange}
+          />
+        </div>
       ) : null}
 
       <div className="ai-review-actions" aria-label="إجراءات مراجعة المخرَج المتاحة من الخادم">
