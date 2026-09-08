@@ -80,6 +80,21 @@ More importantly, the same Stage10 and Stage11 workflows have known green runs w
 
 Therefore the incident is **not explained by a custom/self-hosted runner label, missing runner label, or a Stage13E-only `runs-on` configuration error**. Changing `ubuntu-latest` or introducing self-hosted infrastructure without separate product need would be unsupported by evidence.
 
+## Check Run annotation evidence
+
+GitHub's Check Run representation exposes one additional clue even though job logs are empty:
+
+- Stage13E attempt 3 check run `102266150322` has `annotations_count: 1` while `output.title`, `output.summary`, and `output.text` are null;
+- the independent Stage10 failure check run `101949023395` also has `annotations_count: 1`;
+- the independent Stage11 failure check run `101949023152` also has `annotations_count: 1`;
+- several other failing jobs on the same repository commit at the incident boundary show the same one-annotation pattern, while skipped jobs show `annotations_count: 0`.
+
+This strongly confirms GitHub Actions is attaching a machine-generated failure annotation to the pre-checkout condition across workflows. The annotation body is the **best remaining account/platform diagnostic evidence**.
+
+However, the connected GitHub tool can list commit Check Runs but its allowlist rejects the direct `/check-runs/{id}/annotations` endpoint, and no dedicated annotation action is available. Therefore the annotation text is currently **NOT ACCESSIBLE FROM THIS SESSION** and its content must not be guessed.
+
+Recovery should prioritize reading this annotation in the GitHub Actions/Checks UI or another administrative API surface before changing any repository code.
+
 ## Public platform status check
 
 GitHub Status was checked for September 8, 2026. No public GitHub Actions incident was reported for that date.
@@ -104,9 +119,10 @@ The execution container was checked independently from GitHub-hosted runners:
 - `github.com` DNS resolution fails;
 - HTTPS to `github.com` fails before connection;
 - `registry.npmjs.org` DNS/HTTPS fails;
-- `git ls-remote https://github.com/7eaur/alwaslh.git HEAD` fails with `Could not resolve host`.
+- `git ls-remote https://github.com/7eaur/alwaslh.git HEAD` fails with `Could not resolve host`;
+- the optional local `agent-browser` CLI is not installed, so there is no authenticated browser-session fallback from this execution environment.
 
-Therefore the current container cannot clone the private repository or install dependencies as a trustworthy local replacement gate. No local PASS is claimed.
+Therefore the current container cannot clone the private repository, install dependencies, or inspect the private GitHub job UI as a trustworthy local replacement gate. No local PASS is claimed.
 
 ## What must NOT be changed because of CI-001
 
@@ -124,17 +140,18 @@ Do not:
 
 ## Recovery procedure
 
-1. Inspect account/repository GitHub Actions usage/budget/payment and Actions availability through the GitHub account UI or another administrative channel that exposes those settings.
-2. Restore/confirm standard GitHub-hosted `ubuntu-latest` runner allocation for this private repository if an account-side restriction is found.
-3. Re-run the **unchanged** Stage13E Combined Integration workflow.
-4. A recovery attempt counts as infrastructure recovery only after a real runner executes at least `Set up job` / checkout steps.
-5. Any command that then executes and fails becomes a real engineering failure and must be root-caused in the owning DB/API/Admin/test layer.
-6. Combined PASS → wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild matrix.
-7. Wider PASS → follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` and re-run Combined + wider gates on the exact promotion HEAD.
-8. Only exact promotion-head PASS can close Stage13E and unblock Stage13F.
+1. Open one current failing Check Run in GitHub Actions/Checks and read its single failure annotation. Record the exact text in this incident file / Issue #16; do not paraphrase an unseen message.
+2. Inspect account/repository GitHub Actions usage/budget/payment and Actions availability through the GitHub account UI or another administrative channel that exposes those settings.
+3. Restore/confirm standard GitHub-hosted `ubuntu-latest` runner allocation for this private repository if an account-side restriction is found.
+4. Re-run the **unchanged** Stage13E Combined Integration workflow.
+5. A recovery attempt counts as infrastructure recovery only after a real runner executes at least `Set up job` / checkout steps.
+6. Any command that then executes and fails becomes a real engineering failure and must be root-caused in the owning DB/API/Admin/test layer.
+7. Combined PASS → wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild matrix.
+8. Wider PASS → follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` and re-run Combined + wider gates on the exact promotion HEAD.
+9. Only exact promotion-head PASS can close Stage13E and unblock Stage13F.
 
 ## Current decision
 
 `CI-001` is a **repository-wide verification-infrastructure blocker with scope verified and exact root cause unverified**.
 
-The runner-label/YAML explanation has been ruled out on the inspected workflows. The correct engineering action is to preserve the candidate and gates unchanged until standard GitHub-hosted runner allocation becomes available or account-side evidence identifies a concrete administrative cause. Product-code or workflow-label churn is not justified by the current evidence.
+The runner-label/YAML explanation has been ruled out on the inspected workflows. GitHub itself is attaching one failure annotation to the affected Check Runs, but that annotation body is outside the current connector's readable endpoint surface. The correct engineering action is to read that annotation/admin state externally, preserve the candidate and gates unchanged, and resume executable verification only when standard GitHub-hosted runner allocation becomes available. Product-code or workflow-label churn is not justified by the current evidence.
