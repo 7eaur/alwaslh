@@ -4,7 +4,7 @@
 >
 > **Authority:** current code + PostgreSQL migrations + executable evidence أعلى من هذا الملف. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-09 — Single Owner; Stage13E candidate has four P1 root fixes plus four P2 hardenings, including safe HTTP pagination offsets; executable runner still unavailable before checkout.**
+Last synchronized: **2026-09-09 — Single Owner; Stage13E has four P1 + four P2 fixes in candidate, final static contract/schema/lifecycle audit found no additional proven defect, Roadmap/Legacy Coverage are closure-ready, executable runner still unavailable before checkout.**
 
 ## 1. Resume procedure
 
@@ -43,6 +43,7 @@ Stable rules include:
 - every Stage13E Admin AI response assembled from multiple PostgreSQL queries uses one short `REPEATABLE READ` snapshot.
 - bounded HTTP pagination must also bound expensive DB aggregation where the query can enforce that directly; query-shape root causes are fixed before speculative indexing.
 - pagination offsets accepted by HTTP must be safely representable end-to-end; unsafe integer values fail as `400 BAD_REQUEST` before service/DB execution.
+- Stage13E progress semantics reuse Stage12 lifecycle authority exactly; no second progress calculation contract is allowed.
 
 ## 4. Verified application baseline
 
@@ -89,7 +90,6 @@ Output/page/count/latest reads moved into one short `REPEATABLE READ` transactio
 List Jobs, Job Detail and Unit Detail use shared `readSnapshot()`; Stage12 `allowedActions` stays in the same Job Detail snapshot. Fix lineage `6a146c26...` → `f5c5dddf...` → `10f32c72...`. `FIXED IN CANDIDATE / EXECUTION PENDING`.
 
 ### AI-013E-PERF-007 — P2 Admin Job-list bounded aggregation
-
 `listJobs()` previously aggregated Unit history across all matching Jobs before page bounding. Fix `8501d2e0...` pages/filter/orders Jobs first, then aggregates only selected Jobs. Regression `6efce151...` proves page-before-aggregation and rejects the former global join shape. `FIXED IN CANDIDATE / EXECUTION PENDING`.
 
 ### AI-013E-API-008 — P2 Safe pagination input boundary
@@ -106,7 +106,22 @@ List Jobs, Job Detail and Unit Detail use shared `readSnapshot()`; Stage12 `allo
 
 Status: `FIXED IN CANDIDATE / EXECUTION PENDING`.
 
-## 8. Browser / executable gate
+## 8. Final static closure audit
+
+The latest static pass checked:
+
+- HTTP query/body/UUID/status/note boundaries against PostgreSQL schema;
+- Stage13E pagination representation bounds;
+- Stage13E progress math/status semantics against Stage12 `AiJobLifecycleRepository.getProgress()`;
+- mutation return/canonical-refresh behavior;
+- current review authority vs historical audit page;
+- multi-query snapshot consistency;
+- Job-list query shape and existing indexes;
+- workflow coverage of all new unit/integration/browser regressions.
+
+Result: **no additional proven Stage13E defect** after API-008. Do not create speculative fixes merely because executable CI is blocked.
+
+## 9. Browser / executable gate
 
 Real fixtures: Happy Job = 51 Units + 51 Attempts + 101 review edits; Race Job = terminal execution + open output for real stale-review 409; Pagination Marker = old Job + 30 newer fillers.
 
@@ -120,22 +135,43 @@ Latest runtime/test-head run:
 - job `102253102885`;
 - `steps=[]`; no checkout or repository command executed.
 
+Latest candidate/docs-head attempt:
+
+- run `34283442253` on `c48d1e597497e6054340f71235c78937082b9371`;
+- attempt `2`;
+- job `102256556365`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- no checkout or repository command executed.
+
 The existing workflow already runs `npm test --prefix apps/api`, whose unit command is `node --import tsx --test tests/*.test.ts`, so `ai-admin-pagination-bounds.test.ts` is inside the executable gate without modifying workflow secrets/fixtures.
 
-No executed product/test failure exists on the current candidate. `CI-001` remains P1 external hosted-runner allocation; exact external/account cause is `NOT YET VERIFIED`.
+Local fallback investigation: `/mnt/data/alwaslh-stage13e` exists in the execution container but is empty and is not a Git checkout. Node/npm/git are installed, but npm registry access times out and there is no authenticated private-repository checkout available. Therefore no local executable PASS is claimed.
 
-## 9. Exact next action
+CI root-cause investigation: current GitHub connector can read workflow runs/jobs/steps/log endpoint results, but jobs terminate with `runner_id=0` and no steps/log blob. Repository Actions permission/billing/account settings are not exposed by the available connector endpoint family, so billing/quota/policy attribution remains `NOT YET VERIFIED` rather than guessed.
+
+No executed product/test failure exists on the current candidate. `CI-001` remains P1 external hosted-runner allocation.
+
+## 10. Closure-readiness documentation
+
+While EXEC-004 is externally blocked, closure documentation was prepared without changing verification state:
+
+- `MASTER_REBUILD_ROADMAP.md` now records Stage13E as `COMBINED CANDIDATE / EXECUTION PENDING`, Stage13F as blocked by ordered closure, and deployment as future VPS-only work;
+- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` introduces `CANDIDATE / EXECUTION PENDING` and maps Stage13E candidate evidence to relevant legacy rows without marking them VERIFIED;
+- candidate-targeted rows currently include `LES-A-035/036/037`, `AIRULE-025`, and `AI-OPS-012/013/014/015/017`; final closure can only promote rows proven by executable evidence;
+- rows not actually closed by the Operations/Review boundary remain explicitly NOT YET VERIFIED, including bulk generation trigger, full page-detection batch-save authoring, complete generated/manual editor/delete flows, exports, and Stage13F Question Bank publication.
+
+## 11. Exact next action
 
 1. Keep Stage13E outside `main`.
 2. Retain all four P1 fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings and regressions.
 3. Execute unchanged Combined Gate when a real runner is allocated.
 4. Any command that actually executes and fails → root-cause fix + regression.
 5. Combined PASS → wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild matrix.
-6. Wider PASS → integrate Stage13E runtime into `main`, update Legacy Coverage/Roadmap/closure docs and Issue #16.
+6. Wider PASS → integrate Stage13E runtime into `main`, convert only actually proven legacy candidate rows to VERIFIED, update closure docs and Issue #16.
 7. Only then begin Stage13F.
 8. Hosting stays deferred until explicit VPS command.
 
-## 10. Open findings
+## 12. Open findings
 
 - `CI-001` P1 — runner terminates before checkout; external cause unverified.
 - `AI-013E-DB-001` P1 — fixed, execution pending.
