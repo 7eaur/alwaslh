@@ -49,6 +49,7 @@ jobs:
       STAGE13E_ADMIN_PASSWORD: Stage13eAdminUiPass123!
       STAGE13E_E2E_JOB_TYPE: stage13e_e2e_happy
       STAGE13E_E2E_RACE_JOB_TYPE: stage13e_e2e_race
+      STAGE13E_E2E_PAGINATION_JOB_TYPE: stage13e_e2e_pagination_marker
 
     steps:
       - uses: actions/checkout@v4
@@ -126,9 +127,13 @@ jobs:
       - name: Verify browser fixture invariants
         run: |
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type = '$STAGE13E_E2E_JOB_TYPE' and status not in ('completed','failed','cancelled')")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_job_units u join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_JOB_TYPE'")" = "51"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_execution_attempts a join ai_job_units u on u.id=a.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_JOB_TYPE' and u.position = 0")" = "51"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type = '$STAGE13E_E2E_RACE_JOB_TYPE' and status = 'completed')" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_outputs o join ai_job_units u on u.id=o.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_RACE_JOB_TYPE'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_output_review_events e join ai_outputs o on o.id=e.ai_output_id join ai_job_units u on u.id=o.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_RACE_JOB_TYPE'")" = "0"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type = '$STAGE13E_E2E_PAGINATION_JOB_TYPE' and status = 'completed'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs")" -gt "30"
 
       - name: Install Chromium
         run: npx --prefix apps/admin-web playwright install --with-deps chromium
