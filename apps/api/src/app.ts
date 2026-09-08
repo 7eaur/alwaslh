@@ -3,6 +3,8 @@ import { registerAccessRoutes } from "./access/http.js";
 import { AccessService } from "./access/service.js";
 import { registerStudentActivationRoutes } from "./activation/http.js";
 import { StudentActivationService } from "./activation/service.js";
+import { AdminAiOperationsService } from "./ai/admin-operations.js";
+import { registerAdminAiOperationsRoutes } from "./ai/admin-operations-http.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
 import { type AppConfig, allowedOrigins } from "./config.js";
@@ -35,6 +37,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const activation = new StudentActivationService(database);
   const curriculum = new CurriculumService(database);
   const contentOperations = new AdminContentOperationsService(database);
+  const aiOperations = new AdminAiOperationsService(database);
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
 
@@ -62,6 +65,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerCurriculumRoutes(app, config, auth, curriculum);
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
+  registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
 
   app.get("/health", async () => ({
     status: "ok",

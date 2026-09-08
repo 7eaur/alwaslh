@@ -155,6 +155,41 @@ export class AiJobLifecycleRepository {
     return this.getProgress(executor, jobId);
   }
 
+  async requestRetry(executor: QueryExecutor, jobId: string): Promise<AiJobProgress> {
+    const job = await this.lockJob(executor, jobId);
+    if (job.status !== "failed") throw new Error(`ai_job_not_retryable:${job.status}`);
+    if (job.cancel_requested_at) throw new Error("ai_job_not_retryable:cancel_requested");
+
+    const retried = await executor.query<{ id: string }>(
+      `update ai_job_units
+       set status = 'retrying',
+           max_attempts = greatest(max_attempts, attempt_count + 1),
+           next_attempt_at = now(),
+           lease_token = null,
+           lease_expires_at = null,
+           resume_route_key = null,
+           last_error_code = null,
+           last_error_message = null,
+           completed_at = null
+       where job_id = $1 and status = 'failed'
+       returning id`,
+      [jobId],
+    );
+    if (retried.length === 0) throw new Error("ai_job_retry_no_failed_units");
+
+    await executor.query(
+      `update ai_jobs
+       set status = 'retrying',
+           paused_at = null,
+           completed_at = null,
+           failure_code = null,
+           failure_message = null
+       where id = $1`,
+      [jobId],
+    );
+    return this.getProgress(executor, jobId);
+  }
+
   async clearPause(executor: QueryExecutor, jobId: string): Promise<void> {
     await executor.query("update ai_jobs set paused_at = null where id = $1 and paused_at is not null", [
       jobId,
