@@ -2,7 +2,7 @@
 
 > Engineering source of truth for product understanding, architecture decisions, audit findings, changes, verification and remaining work. Code/migrations + executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last consolidated: **2026-09-09 — Single Owner mode; hosting deferred until VPS; Stage13E candidate has four P1 root fixes plus four P2 hardenings including safe HTTP pagination offsets; executable verification blocked before checkout.**
+Last consolidated: **2026-09-09 — Single Owner mode; hosting deferred until VPS; Stage13E candidate has four P1 + four P2 hardenings, final static audit found no additional proven defect, and zero-overlap selective promotion readiness is documented; executable verification remains blocked before checkout.**
 
 ## 1. Project Understanding
 
@@ -58,7 +58,7 @@ Stable authority boundaries:
 - activation verification non-consuming; finalization atomic.
 - returning Student requires password + registered P-256 proof.
 - Curriculum = Class → Subject Offering (`subject_class_links`) → optional Section → Lesson.
-- Stage9 source inventory is provenance, not curriculum hierarchy.
+- Stage9 source inventory is provenance, never curriculum hierarchy.
 - Stage10 ready media is processing evidence, not Published Lesson content.
 - Stage13D ready media enters Lesson only through Draft → Review → Published.
 - OCR/AI/TTS are derived layers and do not redefine source-upload success.
@@ -233,6 +233,17 @@ Audit hardened four P1 boundaries plus four P2 boundaries:
 7. List Jobs bounds expensive Unit aggregation to the already-selected Job page;
 8. unsafe JavaScript integer pagination offsets are rejected at HTTP validation before service/DB execution.
 
+### Stage13E closure/promotion readiness — PREPARED, NOT VERIFIED
+
+While executable CI remains blocked before checkout, non-speculative closure preparation was completed:
+
+- Roadmap now records Stage13E as `COMBINED CANDIDATE / EXECUTION PENDING` and keeps Stage13F ordered-blocked;
+- Legacy Coverage distinguishes `CANDIDATE / EXECUTION PENDING` from VERIFIED and maps candidate outcomes without overclaiming acceptance;
+- merge-debt audit used common base `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`, audited `main @ e10de6d7811ad04811e8a841628966a5269b1dfd` and candidate `c48d1e597497e6054340f71235c78937082b9371`;
+- candidate changed 36 Stage13E files while `main` changed 19 central/workstream/deployment-portability files from the same base; changed-file intersection was **zero**;
+- `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` records the exact 36-file promotion set and exact-head re-verification sequence;
+- no promotion branch was created prematurely because it would add only another unverified head while hosted runner allocation is unavailable.
+
 ### Git write-method incident — RESOLVED / NO RUNTIME EFFECT
 While switching repository write method after a connector safety rejection, an accidental file `tmp-ignore` was created in `5916ac42f1d6ed216e0efe336b20a8f030d1f45e` and immediately deleted in `52fa960155964903290a78657029b3cb950bd6ee`. The resulting tree returned to the intended documentation tree. No product/runtime behavior, contract, migration or test file was changed by this incident.
 
@@ -264,6 +275,7 @@ While switching repository write method after a connector safety rejection, an a
 - **AD-143** — **Stage13E multi-query read responses use one shared read-snapshot policy**. `AdminAiOperationsService.readSnapshot()` owns the short `REPEATABLE READ` boundary for List Jobs, Job Detail, Unit Detail and Output Detail. Server-derived action advice must be read in the same snapshot as the progress/unit data it describes; mutation transactions remain separate.
 - **AD-144** — **bounded Admin pagination must bound expensive aggregation when the owning query can enforce it directly**. Stage13E List Jobs pages/filter/orders `ai_jobs` before Unit aggregation. Query-shape root causes are fixed before adding speculative indexes or denormalized counters; further indexing requires executable plan/benchmark evidence.
 - **AD-145** — **pagination validation is an end-to-end representation boundary**. Stage13E accepts offsets only in `0..Number.MAX_SAFE_INTEGER`; unsafe integer-looking values are caller errors and must be rejected before service/PostgreSQL execution rather than surfacing as database failures. Page-size limits remain a separate bounded-work policy.
+- **AD-146** — **promotion of a verified divergent stage uses a selective manifest plus exact-head re-verification, not stale-history merge**. For Stage13E, after candidate combined + wider PASS, re-check overlap against latest `main`, create a short-lived promotion branch from latest `main`, overlay only the exact accepted manifest files, then run combined + wider gates again on that exact promotion HEAD before `main` promotion. If `main` moves, rebuild and reverify.
 
 ## 7. Audit Findings
 
@@ -462,6 +474,16 @@ Latest runtime/test HEAD:
 
 `d60218b518fb0fe453c21386e77cd35a2228ad07`.
 
+### Promotion-readiness evidence
+
+- merge base `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`;
+- audited candidate: 53 commits ahead of merge base with 36 Stage13E changed files;
+- audited `main @ e10de6d7811ad04811e8a841628966a5269b1dfd`: 77 commits ahead of merge base with 19 changed central/workstream/deployment-portability files;
+- changed-file intersection: **0**;
+- exact promotion set/procedure: `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`.
+
+This is merge/promotion readiness evidence only, not executable product verification.
+
 ## 9. Verification Evidence
 
 Latest fully green executable baseline remains:
@@ -475,6 +497,17 @@ Latest Stage13E runtime/test-head run:
 - job `102253102885`;
 - `steps=[]`;
 - no checkout/lint/typecheck/test/build/PostgreSQL/Chromium command executed.
+
+Latest Stage13E candidate/docs-head attempt:
+
+- run `34283442253`;
+- head `c48d1e597497e6054340f71235c78937082b9371`;
+- attempt `2`;
+- job `102256556365`;
+- `runner_id=0`, `runner_name=""`, `steps=[]`;
+- no checkout/repository command executed.
+
+Local fallback investigation found `/mnt/data/alwaslh-stage13e` is an empty directory, not a checkout. Node/npm/git exist, but npm registry access times out and no authenticated private-repository checkout is available. No local PASS is claimed.
 
 These failures do not invalidate Stage13D baseline and do not verify Stage13E. They contain no executed product/test failure evidence.
 
@@ -496,12 +529,13 @@ Canonical task authority: `PROJECT_EXECUTION_QUEUE.md`.
 2. retain all four Stage13E P1 root fixes plus OPS-005/OPS-006/PERF-007/API-008 P2 hardenings/regressions.
 3. execute same-head Stage13E combined gate when a real runner is allocated.
 4. fix any actually executed failure from root cause.
-5. run wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions after combined PASS.
-6. promote Stage13E to `main`, update Legacy Coverage/Roadmap/docs and Closure Report.
-7. Stage13F Question Bank / Quiz Builder / Publish.
-8. Stage13G remaining Admin.
-9. Stage14–25 Student/Product/Hardening.
-10. Stage26–29 only after VPS/deployment explicitly reopens.
+5. run wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild regressions after candidate combined PASS.
+6. follow `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`: re-check overlap, build promotion branch from latest `main`, overlay exact accepted files, run combined + wider gates again on exact promotion HEAD.
+7. promotion-head PASS → promote Stage13E to `main`, update Legacy Coverage/Roadmap/docs and Closure Report.
+8. Stage13F Question Bank / Quiz Builder / Publish.
+9. Stage13G remaining Admin.
+10. Stage14–25 Student/Product/Hardening.
+11. Stage26–29 only after VPS/deployment explicitly reopens.
 
 ## 12. Documentation Continuity Contract
 
