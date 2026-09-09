@@ -29,6 +29,48 @@ export interface EntitlementView {
   expiresAt: string | null;
 }
 
+export interface StudentCurriculumLesson {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  position: number;
+  contentRevision: number;
+  publishedAt: string;
+}
+
+export interface StudentCurriculumSection {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  position: number;
+  lessons: StudentCurriculumLesson[];
+}
+
+export interface StudentCurriculumSubject {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  position: number;
+  unsectionedLessons: StudentCurriculumLesson[];
+  sections: StudentCurriculumSection[];
+}
+
+export interface StudentCurriculumClass {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  position: number;
+  subjects: StudentCurriculumSubject[];
+}
+
+export interface StudentCurriculumCatalog {
+  classes: StudentCurriculumClass[];
+}
+
 export interface ActivationVerificationResponse {
   activationTicket: string;
   accountIdentifier: string;
@@ -73,6 +115,10 @@ interface EntitlementsResponse {
 
 interface AccessRedemptionResponse {
   entitlement: EntitlementView;
+}
+
+interface CurriculumResponse {
+  curriculum: StudentCurriculumCatalog;
 }
 
 export class ApiRequestError extends Error {
@@ -192,6 +238,11 @@ export async function redeemStudentAccess(code: string, idempotencyKey: string):
     body: JSON.stringify({ code, idempotencyKey }),
   });
   return result.entitlement;
+}
+
+export async function listStudentCurriculum(): Promise<StudentCurriculumCatalog> {
+  const result = await request<CurriculumResponse>("/v1/student/curriculum");
+  return result.curriculum;
 }
 
 export function normalizeAccessCode(value: string): string {
