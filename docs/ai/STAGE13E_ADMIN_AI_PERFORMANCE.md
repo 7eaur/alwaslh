@@ -1,82 +1,61 @@
 # Stage13E — Admin AI Operations Performance Hardening
 
-Status: **COMBINED INTEGRATION CANDIDATE / NOT YET VERIFIED**.
+Status: **FIXED + VERIFIED / PROMOTED**.
 
-This document records performance findings that are part of Stage13E correctness/operability. It does not relax the Stage13E verification gate and does not add deployment scope.
+Verified runtime/application SHA: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
 
-## AI-013E-PERF-007 — P2 Admin Job List Aggregates Before Pagination
+## AI-013E-PERF-007 — P2 Job List Aggregation
 
 ### Problem
 
-`AdminAiOperationsService.listJobs()` originally built every list page from `ai_jobs LEFT JOIN ai_job_units`, grouped all matching Jobs and their Units, sorted the grouped result, and only then applied `LIMIT/OFFSET`.
-
-A request for 30 Admin rows could therefore aggregate Unit history for the complete matching durable Job history before discarding all but the requested page.
-
-### Evidence
-
-Original query shape:
-
-```sql
-select ... count(u.id) ...
-from ai_jobs j
-left join ai_job_units u on u.job_id = j.id
-where ...
-group by j.id
-order by j.created_at desc, j.id desc
-limit $3 offset $4
-```
-
-This is a Stage13E operational-performance defect rather than data corruption. Cost grows with durable history even though the HTTP contract has a bounded page size.
+`AdminAiOperationsService.listJobs()` originally joined/aggregated Unit history for all matching Jobs and only then applied `LIMIT/OFFSET`. A 30-row Admin page could therefore perform work proportional to complete durable history before discarding most rows.
 
 ### Root cause
 
-The Backend had bounded API pagination, but pagination was applied to the **aggregated join result** instead of to the owning `ai_jobs` rows before Unit aggregation.
+HTTP pagination bounded returned rows, but the expensive aggregation happened before the page boundary.
 
-The bounded HTTP contract therefore did not imply bounded aggregation work.
+### Root fix
 
-### Correct fix
+The list query now:
 
-Commit `8501d2e0317c0e1e4eb83b72c997e321ee79fe81` changes only `listJobs()`:
+1. selects/filters/orders the `ai_jobs` page first;
+2. applies `LIMIT/OFFSET` before Unit aggregation;
+3. calculates Unit status counts only for Jobs in that page through a correlated `LATERAL` aggregate;
+4. preserves the separate total count inside the same short `REPEATABLE READ` snapshot;
+5. preserves `created_at DESC, id DESC` ordering and zero-Unit semantics.
 
-1. a `page` CTE selects/filter/orders `ai_jobs` and applies `LIMIT/OFFSET` first;
-2. a correlated `LATERAL` aggregate computes Unit status counts only for Jobs in that page;
-3. the existing separate total count remains in the same Stage13E `REPEATABLE READ` snapshot;
-4. ordering and response semantics stay `created_at DESC, id DESC`;
-5. a Job with zero Units still receives zero counts because the lateral aggregate always returns one row.
-
-No speculative index or denormalized counter was added. Existing Job→Unit indexes remain reusable for the bounded `u.job_id = p.id` lookups. Further indexing requires executable `EXPLAIN`/benchmark evidence rather than assumption.
+No speculative index, materialized view or denormalized counter was added. Query shape was the proven root cause.
 
 ### Regression
 
-Commit `6efce1510231de5d569c4b96dbdffa3d4d488b31` adds:
+`apps/api/tests/ai-admin-job-list-query-shape.test.ts` verifies:
 
-`apps/api/tests/ai-admin-job-list-query-shape.test.ts`
+- list reads remain inside the Stage13E repeatable-read snapshot;
+- filters/limit/offset are preserved;
+- Job page selection occurs before Unit aggregation;
+- Unit aggregation is correlated to the selected page;
+- the old global Job→Unit aggregation shape is absent;
+- total pagination count remains independent.
 
-The regression proves:
+## Related read-model performance/correctness boundaries
 
-- no list query escapes the repeatable-read snapshot;
-- Job filters/limit/offset parameters are preserved;
-- the list SQL starts from a bounded Job page;
-- `LIMIT $3 OFFSET $4` appears before Unit aggregation;
-- Unit aggregation is correlated to `p.id` after the page boundary;
-- the old global `LEFT JOIN ai_job_units ... GROUP BY` list shape is absent;
-- total pagination count remains independent and bounded to `ai_jobs`.
+Stage13E List Jobs, Job Detail, Unit Detail and Output Detail use short read-only `REPEATABLE READ` snapshots for coupled reads. These transactions contain bounded PostgreSQL reads only; no provider/network call or write lock is introduced.
 
-### Verification state
+Review History and operational histories are server-paginated with max page size 100. Canonical latest review uses a bounded one-row query independent from the selected audit page.
 
-`FIXED IN CANDIDATE / EXECUTION PENDING`.
+## Executable verification
 
-Latest code/test HEAD for this finding:
+Accepted candidate `72ead8446af237392dc6d953c8e0c2382f468286` passed the full required candidate matrix.
 
-`6efce1510231de5d569c4b96dbdffa3d4d488b31`
+Selective promotion `d5ebc7f25a369430387a758c7c0bb89350963d67` passed **12/12** exact-head workflows including Combined `34401502463`, Stage13E standalone `34401549935`, Rebuild `34401550016`, and the Stage9/10/OCR/11/12/13/13D regression set.
 
-GitHub Actions run `34281631521`, job `102247518121`, terminated before checkout with no executable steps. Therefore lint/typecheck/unit/PostgreSQL execution remains `NOT YET VERIFIED`; this run is not evidence of a product/test failure.
+Therefore `AI-013E-PERF-007` and the Stage13E read-snapshot/query-shape performance boundary are **FIXED + VERIFIED**.
 
-## Performance policy carried forward
+## Carry-forward performance policy
 
-- bounded HTTP pagination must also bound expensive database work where practical;
-- do not add indexes without query-plan/benchmark evidence when query shape itself is the root cause;
-- durable histories remain server-paginated and fully reachable;
-- read responses remain snapshot-consistent;
-- provider/network calls never occur inside Admin read snapshots;
-- Stage13E remains outside `main` until the unchanged executable gate passes.
+- bounded API pagination should also bound expensive database work where practical;
+- fix proven query-shape causes before adding indexes/caches/denormalization;
+- add indexes only with plan/benchmark evidence when needed;
+- durable histories remain completely reachable through bounded pages;
+- provider calls stay outside database read/write transactions;
+- do not trade correctness/audit reachability for superficial speed.
