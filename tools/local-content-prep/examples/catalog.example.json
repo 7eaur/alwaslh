@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "collection": {
+    "slug": "yemen-secondary",
+    "title": "المناهج اليمنية",
+    "source_label": "local-content-prep"
+  },
+  "classes": [
+    {
+      "slug": "grade-12",
+      "title": "الصف الثالث الثانوي",
+      "subjects": [
+        {
+          "slug": "physics",
+          "title": "الفيزياء",
+          "lessons": [
+            {
+              "slug": "lesson-01",
+              "title": "اسم الدرس الأول",
+              "position": 0,
+              "source_dir": "grade-12/physics/lesson-01",
+              "document_kind": "textbook",
+              "section": {
+                "slug": "unit-01",
+                "title": "الوحدة الأولى"
+              },
+              "metadata": {
+                "edition": "ضع بيانات الطبعة هنا إن وجدت"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

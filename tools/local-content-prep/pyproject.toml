@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=75", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alwaslh-content-prep"
+version = "0.1.0"
+description = "Offline-first local image preparation and Arabic OCR packaging for Alwaslh content."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "Pillow>=11,<13",
+]
+
+[project.optional-dependencies]
+ocr = [
+  "paddleocr>=3,<4",
+]
+dev = [
+  "pytest>=8,<10",
+]
+
+[project.scripts]
+alwaslh-content-prep = "alwaslh_content_prep.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
