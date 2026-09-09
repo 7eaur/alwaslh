@@ -94,10 +94,10 @@ test("protected Reader serves published media, approved OCR, search and honest o
 
   await page.context().setOffline(true);
   await expect(page.getByText(/Reader الحالي يحتاج اتصالًا للتحقق من صلاحية الدرس والوسائط/)).toBeVisible();
-  await page.context().setOffline(false);
   const restoredReader = page.waitForResponse(
     (response) => response.url().includes("/v1/student/lessons/") && response.url().endsWith("/reader") && response.status() === 200,
   );
+  await page.context().setOffline(false);
   await restoredReader;
   await expect(page.getByText(fixture.approvedText, { exact: true })).toBeVisible();
 
