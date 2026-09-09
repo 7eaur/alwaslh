@@ -60,7 +60,10 @@ test("Stage13F Question Bank imports approved direct questions idempotently and 
   const classId = classRows[0]?.id;
   const subjectId = subjectRows[0]?.id;
   assert.ok(classId && subjectId);
-  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [classId, subjectId]);
+  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [
+    classId,
+    subjectId,
+  ]);
   const lessonRows = await db.query<{ id: string }>(
     `insert into lessons (class_id, subject_id, slug, title)
      values ($1, $2, $3, 'درس Stage13F') returning id`,
@@ -173,10 +176,7 @@ test("Stage13F Question Bank imports approved direct questions idempotently and 
       lessonIds: [lessonId],
     }),
   ]);
-  assert.deepEqual(
-    concurrent.map((result) => result.replayed).sort(),
-    [false, true],
-  );
+  assert.deepEqual(concurrent.map((result) => result.replayed).sort(), [false, true]);
   assert.equal(concurrent[0]?.imports.length, 1);
   assert.equal(concurrent[1]?.imports.length, 1);
   const imported = concurrent[0]?.imports[0] ?? concurrent[1]?.imports[0];
@@ -199,7 +199,10 @@ test("Stage13F Question Bank imports approved direct questions idempotently and 
   );
   assert.equal(directRows.length, 1);
   assert.equal(directRows[0]?.type, "direct");
-  assert.equal(directRows[0]?.answer_text, approvedOutput.kind === "question_set" ? approvedOutput.questions[0]?.answerText : null);
+  assert.equal(
+    directRows[0]?.answer_text,
+    approvedOutput.kind === "question_set" ? approvedOutput.questions[0]?.answerText : null,
+  );
   assert.equal(directRows[0]?.status, "draft");
 
   const sourceRows = await db.query<{
@@ -218,7 +221,7 @@ test("Stage13F Question Bank imports approved direct questions idempotently and 
 
   await questionBank.submitForReview(adminId, imported.itemId);
   await questionBank.publish(adminId, imported.itemId);
-  let detail = await questionBank.itemDetail(imported.itemId);
+  const detail = await questionBank.itemDetail(imported.itemId);
   assert.equal(detail.item.currentRevision?.status, "published");
   assert.equal(detail.revisions[0]?.question.type, "direct");
 

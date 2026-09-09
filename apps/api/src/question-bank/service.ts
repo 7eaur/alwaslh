@@ -1,8 +1,5 @@
 import type { AiGenerationOutput, AiGenerationRequest, AiQuestion } from "../ai/contracts.js";
-import {
-  aiGenerationRequestSchema,
-  aiQuestionSchema,
-} from "../ai/contracts.js";
+import { aiGenerationRequestSchema, aiQuestionSchema } from "../ai/contracts.js";
 import { validateAdminApprovalOutput } from "../ai/review-validation.js";
 import type { Database, QueryExecutor } from "../db.js";
 import { AppError } from "../errors.js";
@@ -213,7 +210,10 @@ function json(value: unknown): string {
 }
 
 function normalizedQuestion(input: QuestionBankQuestionInput | AiQuestion): AiQuestion {
-  const parsed = aiQuestionSchema.safeParse({ ...input, sourceEvidence: "sourceEvidence" in input ? input.sourceEvidence : [] });
+  const parsed = aiQuestionSchema.safeParse({
+    ...input,
+    sourceEvidence: "sourceEvidence" in input ? input.sourceEvidence : [],
+  });
   if (!parsed.success) {
     throw new AppError("BAD_REQUEST", "بيانات السؤال لا تطابق عقد الأسئلة المعتمد", 400);
   }
@@ -237,7 +237,12 @@ function normalizedQuestion(input: QuestionBankQuestionInput | AiQuestion): AiQu
       }
     } else {
       const index = question.correctOptionIndex;
-      if (index === null || index < 0 || index >= question.options.length || question.answerText !== question.options[index]) {
+      if (
+        index === null ||
+        index < 0 ||
+        index >= question.options.length ||
+        question.answerText !== question.options[index]
+      ) {
         throw new AppError("BAD_REQUEST", "إجابة السؤال لا تطابق الخيار الصحيح", 400);
       }
     }
@@ -271,7 +276,13 @@ function mapListItem(row: ItemListRow): QuestionBankListItem {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     currentRevision:
-      row.revision_id && row.revision_number !== null && row.revision_status && row.revision_type && row.revision_prompt && row.revision_difficulty && row.revision_answer_status
+      row.revision_id &&
+      row.revision_number !== null &&
+      row.revision_status &&
+      row.revision_type &&
+      row.revision_prompt &&
+      row.revision_difficulty &&
+      row.revision_answer_status
         ? {
             id: row.revision_id,
             revisionNumber: row.revision_number,
@@ -323,7 +334,8 @@ function sourceChunk(
   evidence: AiQuestion["sourceEvidence"][number],
 ): AiGenerationRequest["sourceChunks"][number] {
   const source = request.sourceChunks.find(
-    (candidate) => candidate.mediaAssetId === evidence.mediaAssetId && candidate.pageNumber === evidence.pageNumber,
+    (candidate) =>
+      candidate.mediaAssetId === evidence.mediaAssetId && candidate.pageNumber === evidence.pageNumber,
   );
   if (!source) {
     throw new AppError("INTERNAL_ERROR", "مصدر السؤال المعتمد لا يطابق طلب الذكاء الاصطناعي", 500);
@@ -518,7 +530,9 @@ export class QuestionBankService {
             normalizedQuestion({
               prompt: revision.prompt,
               type: revision.type,
-              options: Array.isArray(revision.options) ? revision.options.filter((value): value is string => typeof value === "string") : [],
+              options: Array.isArray(revision.options)
+                ? revision.options.filter((value): value is string => typeof value === "string")
+                : [],
               correctOptionIndex: revision.correct_option_index,
               answerText: revision.answer_text,
               answerStatus: revision.answer_status,
@@ -559,7 +573,10 @@ export class QuestionBankService {
     });
   }
 
-  async createManual(actorProfileId: string, input: CreateManualQuestionInput): Promise<{ itemId: string; revisionId: string }> {
+  async createManual(
+    actorProfileId: string,
+    input: CreateManualQuestionInput,
+  ): Promise<{ itemId: string; revisionId: string }> {
     const question = normalizedQuestion(input.question);
     const lessonIds = await this.normalizeAndValidateScope(this.database, input);
     return this.database.transaction(async (tx) => {
@@ -629,7 +646,10 @@ export class QuestionBankService {
       if (existing.length > 0) {
         const expected = [...entries.map((entry) => entry.locator)].sort();
         const actual = existing.map((row) => row.question_locator).sort();
-        if (expected.length !== actual.length || expected.some((locator, index) => locator !== actual[index])) {
+        if (
+          expected.length !== actual.length ||
+          expected.some((locator, index) => locator !== actual[index])
+        ) {
           throw new AppError("INTERNAL_ERROR", "سجل استيراد بنك الأسئلة غير متسق", 500);
         }
         return { imports: existing.map(mapImport), replayed: true };
@@ -657,7 +677,15 @@ export class QuestionBankService {
             quote: evidence.quote?.trim() || null,
           };
         });
-        const revisionId = await this.insertRevision(tx, itemId, 1, actorProfileId, question, lessonIds, sources);
+        const revisionId = await this.insertRevision(
+          tx,
+          itemId,
+          1,
+          actorProfileId,
+          question,
+          lessonIds,
+          sources,
+        );
         const inserted = await tx.query<ImportRow>(
           `insert into question_bank_ai_imports (
              ai_output_id, approved_review_revision, question_locator, item_id, revision_id,
@@ -686,7 +714,11 @@ export class QuestionBankService {
     });
   }
 
-  async editItem(actorProfileId: string, itemId: string, questionInputValue: QuestionBankQuestionInput): Promise<{ revisionId: string }> {
+  async editItem(
+    actorProfileId: string,
+    itemId: string,
+    questionInputValue: QuestionBankQuestionInput,
+  ): Promise<{ revisionId: string }> {
     const question = normalizedQuestion(questionInputValue);
     return this.database.transaction(async (tx) => {
       const item = await this.lockItem(tx, itemId);
