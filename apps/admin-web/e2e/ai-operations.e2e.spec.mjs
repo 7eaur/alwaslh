@@ -50,7 +50,7 @@ async function login(page) {
 
 async function openAiWorkspace(page) {
   await page.getByRole("button", { name: "عمليات AI والمراجعة" }).click();
-  await expect(page.getByRole("heading", { name: "عمليات AI" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "عمليات AI", exact: true })).toBeVisible();
 }
 
 async function openJob(page, jobType) {
