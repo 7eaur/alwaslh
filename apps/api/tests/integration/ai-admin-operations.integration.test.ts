@@ -154,7 +154,9 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
   const review = await insertJob(db, suffix, "review", "completed", "review_required", { withOutput: true });
   const reject = await insertJob(db, suffix, "reject", "completed", "review_required", { withOutput: true });
   const race = await insertJob(db, suffix, "race", "completed", "review_required", { withOutput: true });
-  const history = await insertJob(db, suffix, "history", "completed", "review_required", { withOutput: true });
+  const history = await insertJob(db, suffix, "history", "completed", "review_required", {
+    withOutput: true,
+  });
   const failed = await insertJob(db, suffix, "failed", "failed", "failed", {
     attemptCount: 1,
     maxAttempts: 1,
@@ -190,10 +192,10 @@ test("Stage13E Admin AI operations are durable, authorized, secret-safe and race
      ) values ($1, 105, 'approve', $2, $3::jsonb, 'canonical-latest-review')`,
     [history.outputId, adminId, JSON.stringify(historyLatestOutput)],
   );
-  await db.query(
-    "update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1",
-    [history.outputId, adminId],
-  );
+  await db.query("update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1", [
+    history.outputId,
+    adminId,
+  ]);
 
   const app = buildApp({ config, database: db });
   try {

@@ -129,10 +129,7 @@ async function insertAttemptHistory(tx: QueryExecutor, unitId: string, count: nu
      from generate_series(1, $2::integer) as series(attempt_number)`,
     [unitId, count],
   );
-  await tx.query(
-    "update ai_job_units set attempt_count = 20, max_attempts = 20 where id = $1",
-    [unitId],
-  );
+  await tx.query("update ai_job_units set attempt_count = 20, max_attempts = 20 where id = $1", [unitId]);
 }
 
 async function insertReviewHistory(
@@ -150,10 +147,10 @@ async function insertReviewHistory(
      from generate_series(1, $4::integer) as series(revision)`,
     [outputId, actorProfileId, JSON.stringify(output), count],
   );
-  await tx.query(
-    "update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1",
-    [outputId, actorProfileId],
-  );
+  await tx.query("update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1", [
+    outputId,
+    actorProfileId,
+  ]);
 }
 
 const database = createDatabase(databaseUrl);
@@ -164,7 +161,9 @@ try {
       [[happyJobType, raceJobType, paginationJobType]],
     );
     if (existing.length > 0) {
-      throw new Error(`Stage13E E2E fixture job types already exist: ${existing.map((row) => row.job_type).join(", ")}`);
+      throw new Error(
+        `Stage13E E2E fixture job types already exist: ${existing.map((row) => row.job_type).join(", ")}`,
+      );
     }
     const actorRows = await tx.query<{ profile_id: string }>(
       "select profile_id from auth_credentials where normalized_identifier = $1",
@@ -181,7 +180,13 @@ try {
     // has 51 units, 51 execution-attempt rows and 101 append-only review revisions so
     // real Chromium proves every durable operational/audit history remains reachable.
     const happyJobId = await insertJob(tx, happyJobType, "queued", 51, 1, new Date(now));
-    const happyReviewUnitId = await insertUnit(tx, happyJobId, `${happyJobType}-review`, 0, "review_required");
+    const happyReviewUnitId = await insertUnit(
+      tx,
+      happyJobId,
+      `${happyJobType}-review`,
+      0,
+      "review_required",
+    );
     const happyOutputId = await insertOutput(tx, happyReviewUnitId);
     await insertAttemptHistory(tx, happyReviewUnitId, 51);
     await insertReviewHistory(tx, happyOutputId, actorProfileId, 101);
@@ -223,12 +228,14 @@ try {
     return { happyJobId, happyReviewUnitId, happyOutputId, raceJobId, raceOutputId, paginationJobId };
   });
 
-  console.log(JSON.stringify({
-    happyJobType,
-    raceJobType,
-    paginationJobType,
-    ...seeded,
-  }));
+  console.log(
+    JSON.stringify({
+      happyJobType,
+      raceJobType,
+      paginationJobType,
+      ...seeded,
+    }),
+  );
 } finally {
   await database.close();
 }

@@ -389,7 +389,8 @@ function mapAttempt(row: AttemptRow): AdminAiAttemptView {
 }
 
 function mapReviewEvent(row: ReviewEventRow): AdminAiOutputReviewEvent {
-  const reviewed = row.reviewed_output === null ? null : aiGenerationOutputSchema.safeParse(row.reviewed_output);
+  const reviewed =
+    row.reviewed_output === null ? null : aiGenerationOutputSchema.safeParse(row.reviewed_output);
   if (reviewed && !reviewed.success) {
     throw new AppError("INTERNAL_ERROR", "سجل المراجعة لا يطابق عقد الذكاء الاصطناعي", 500);
   }
@@ -573,10 +574,10 @@ export class AdminAiOperationsService {
          order by p.created_at desc, p.id desc`,
         [status, jobType, filters.limit, filters.offset],
       );
-      const totals = await tx.query<{ count: string }>(
-        `select count(*) from ai_jobs j where ${where}`,
-        [status, jobType],
-      );
+      const totals = await tx.query<{ count: string }>(`select count(*) from ai_jobs j where ${where}`, [
+        status,
+        jobType,
+      ]);
       return { rows, totals };
     });
     return {
@@ -693,7 +694,8 @@ export class AdminAiOperationsService {
     const history = events.map(mapReviewEvent);
     const latest = latestRows[0] ? mapReviewEvent(latestRows[0]) : null;
     const source = sourceInfo(output.input_payload);
-    const currentReviewCandidate = latest?.action === "edit" ? latest.reviewedOutput : normalized?.data ?? null;
+    const currentReviewCandidate =
+      latest?.action === "edit" ? latest.reviewedOutput : (normalized?.data ?? null);
     let effectiveReviewedOutput: AiGenerationOutput | null = normalized?.data ?? null;
     if (latest?.action === "edit" || latest?.action === "approve")
       effectiveReviewedOutput = latest.reviewedOutput;
