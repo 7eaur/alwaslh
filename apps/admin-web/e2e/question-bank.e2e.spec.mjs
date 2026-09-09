@@ -45,12 +45,13 @@ test("Question Bank reaches later pages and publishes a reviewed durable questio
   const reviewCard = page.locator(".qb-question-card").filter({ hasText: "أي الخيارات يمثل وحدة قياس الطاقة؟" });
   await expect(reviewCard).toBeVisible();
   await reviewCard.click();
-  await expect(page.getByText("قيد المراجعة", { exact: true }).last()).toBeVisible();
-  await expect(page.getByText("الجول", { exact: true }).first()).toBeVisible();
+  const detail = page.locator(".qb-detail");
+  await expect(detail.locator(".qb-detail-heading .qb-status-review")).toBeVisible();
+  await expect(detail.getByText("الجول", { exact: true }).first()).toBeVisible();
 
-  await page.getByRole("button", { name: "نشر النسخة" }).click();
+  await detail.getByRole("button", { name: "نشر النسخة" }).click();
   await expect(page.getByText("نُشرت النسخة التي كانت قيد المراجعة.", { exact: true })).toBeVisible();
-  await expect(page.getByText("منشور", { exact: true }).last()).toBeVisible();
+  await expect(detail.locator(".qb-detail-heading .qb-status-published")).toBeVisible();
 });
 
 test("Question Bank creates, reviews and publishes a manual direct question through the real API", async ({ page }) => {
@@ -69,11 +70,12 @@ test("Question Bank creates, reviews and publishes a manual direct question thro
   await editor.getByRole("button", { name: "حفظ كمسودة" }).click();
 
   await expect(page.getByText("تم إنشاء السؤال كمسودة. لم يصل إلى النشر بعد.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "تفاصيل السؤال" })).toBeVisible();
-  await expect(page.getByText("ما المقصود بالطاقة الحركية في السؤال اليدوي؟", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "إرسال للمراجعة" }).click();
+  const detail = page.locator(".qb-detail");
+  await expect(detail.getByRole("heading", { name: "تفاصيل السؤال" })).toBeVisible();
+  await expect(detail.getByRole("heading", { name: "ما المقصود بالطاقة الحركية في السؤال اليدوي؟", exact: true })).toBeVisible();
+  await detail.getByRole("button", { name: "إرسال للمراجعة" }).click();
   await expect(page.getByText("أُرسل السؤال للمراجعة.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "نشر النسخة" }).click();
+  await detail.getByRole("button", { name: "نشر النسخة" }).click();
   await expect(page.getByText("نُشرت النسخة التي كانت قيد المراجعة.", { exact: true })).toBeVisible();
 
   await page.reload();
@@ -82,7 +84,7 @@ test("Question Bank creates, reviews and publishes a manual direct question thro
   const search = page.getByRole("form", { name: "فلترة بنك الأسئلة" });
   await search.getByLabel("بحث في نص السؤال").fill("الطاقة الحركية");
   await search.getByRole("button", { name: "تطبيق" }).click();
-  await expect(page.getByText("ما المقصود بالطاقة الحركية في السؤال اليدوي؟", { exact: true })).toBeVisible();
+  await expect(page.locator(".qb-question-card").filter({ hasText: "ما المقصود بالطاقة الحركية في السؤال اليدوي؟" })).toBeVisible();
 });
 
 test("Question Bank imports only the pre-approved AI fixture as a draft with provenance", async ({ page }) => {
@@ -97,13 +99,14 @@ test("Question Bank imports only the pre-approved AI fixture as a draft with pro
   await editor.getByRole("button", { name: "استيراد كمسودات" }).click();
 
   await expect(page.getByText("تم استيراد 1 سؤال كمسودات قابلة للمراجعة.", { exact: true })).toBeVisible();
-  await expect(page.getByText("ما التحول الرئيس للطاقة الموضح في المصدر؟", { exact: true })).toBeVisible();
-  await expect(page.getByText("صفحة 1", { exact: true })).toBeVisible();
-  await expect(page.getByText("تحول الطاقة", { exact: true })).toBeVisible();
+  const detail = page.locator(".qb-detail");
+  await expect(detail.getByRole("heading", { name: "ما التحول الرئيس للطاقة الموضح في المصدر؟", exact: true })).toBeVisible();
+  await expect(detail.getByText("صفحة 1", { exact: true })).toBeVisible();
+  await expect(detail.getByText("تحول الطاقة", { exact: true })).toBeVisible();
 
-  await page.getByText("مرجع AI", { exact: true }).click();
-  await expect(page.getByText("stage13f-question-generation · v1", { exact: true })).toBeVisible();
-  await expect(page.getByText("قرار اعتماد #1", { exact: true })).toBeVisible();
+  await detail.getByText("مرجع AI", { exact: true }).click();
+  await expect(detail.getByText("stage13f-question-generation · v1", { exact: true })).toBeVisible();
+  await expect(detail.getByText("قرار اعتماد #1", { exact: true })).toBeVisible();
 
   // Replaying the exact approved output must not duplicate the Question Bank mapping.
   await page.getByRole("button", { name: "استيراد مخرج AI" }).click();
