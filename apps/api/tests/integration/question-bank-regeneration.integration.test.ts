@@ -43,7 +43,10 @@ test("Stage13F regeneration creates an approved draft revision under the same st
     const classId = classRows[0]?.id;
     const subjectId = subjectRows[0]?.id;
     assert.ok(classId && subjectId);
-    await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [classId, subjectId]);
+    await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [
+      classId,
+      subjectId,
+    ]);
     const lessonRows = await db.query<{ id: string }>(
       `insert into lessons (class_id, subject_id, slug, title)
        values ($1, $2, $3, 'درس إعادة التوليد') returning id`,
@@ -214,7 +217,11 @@ test("Stage13F regeneration creates an approved draft revision under the same st
     );
     assert.equal(revisions[1]?.prompt, "كيف يعرّف المصدر مفهوم الطاقة؟");
 
-    const regenerationImports = await db.query<{ item_id: string; revision_id: string; generation_mode: string }>(
+    const regenerationImports = await db.query<{
+      item_id: string;
+      revision_id: string;
+      generation_mode: string;
+    }>(
       `select item_id, revision_id, generation_mode
        from question_bank_ai_imports
        where ai_output_id = $1`,
