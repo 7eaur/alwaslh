@@ -4,9 +4,13 @@ import { aiGenerationOutputSchema, aiGenerationRequestSchema } from "../../src/a
 import { createDatabase } from "../../src/db.js";
 import { type QuestionBankQuestionInput, QuestionBankService } from "../../src/question-bank/service.js";
 
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) throw new Error("DATABASE_URL is required for Stage13F browser seed");
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`${name} is required for Stage13F browser seed`);
+  return value;
+}
 
+const databaseUrl = requiredEnv("DATABASE_URL");
 const adminIdentifier = process.env.STAGE13F_ADMIN_IDENTIFIER ?? "stage13f-admin-ui";
 const outputId = process.env.STAGE13F_E2E_OUTPUT_ID ?? "13000000-0000-4000-8000-000000000004";
 const mediaAssetId = "13000000-0000-4000-8000-000000000001";
