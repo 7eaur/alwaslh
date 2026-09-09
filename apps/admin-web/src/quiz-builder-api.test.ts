@@ -3,6 +3,7 @@ import {
   addQuizVersion,
   createQuiz,
   fetchQuiz,
+  fetchQuizCandidates,
   fetchQuizzes,
   publishQuiz,
   rejectQuizReview,
@@ -47,6 +48,21 @@ describe("quiz builder admin API", () => {
     expect((init as RequestInit).credentials).toBe("include");
   });
 
+  it("loads only the server-scoped published question candidates", async () => {
+    const fetchMock = mockJson({ items: [], pagination: { total: 0, limit: 25, offset: 25 } });
+    await fetchQuizCandidates("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", {
+      search: " طاقة ",
+      limit: 25,
+      offset: 25,
+    });
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(String(url)).toContain("/v1/admin/quizzes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/candidates?");
+    expect(String(url)).toContain("search=%D8%B7%D8%A7%D9%82%D8%A9");
+    expect(String(url)).toContain("limit=25");
+    expect(String(url)).toContain("offset=25");
+    expect((init as RequestInit).credentials).toBe("include");
+  });
+
   it("uses the canonical detail and create/version routes", async () => {
     const fetchMock = mockJson({ quizId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" }, 201);
     await createQuiz({
@@ -60,7 +76,9 @@ describe("quiz builder admin API", () => {
 
     const detailFetch = mockJson({ quiz: { id: "a" }, lessons: [], versions: [], events: [] });
     await fetchQuiz("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
-    expect(String(detailFetch.mock.calls[0]?.[0])).toContain("/v1/admin/quizzes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+    expect(String(detailFetch.mock.calls[0]?.[0])).toContain(
+      "/v1/admin/quizzes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+    );
 
     const versionFetch = mockJson({ versionId: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" }, 201);
     await addQuizVersion("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", {
