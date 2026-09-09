@@ -36,7 +36,7 @@ CREATE TABLE question_bank_revisions (
   status question_bank_revision_status NOT NULL DEFAULT 'draft',
   type question_bank_question_type NOT NULL,
   prompt text NOT NULL,
-  options jsonb NOT NULL DEFAULT '[]'::jsonb,
+  options text[] NOT NULL DEFAULT '{}'::text[],
   correct_option_index integer,
   answer_text text,
   answer_status question_bank_answer_status NOT NULL,
@@ -52,7 +52,10 @@ CREATE TABLE question_bank_revisions (
   CONSTRAINT question_bank_revisions_item_number_unique UNIQUE (item_id, revision_number),
   CONSTRAINT question_bank_revisions_item_id_id_unique UNIQUE (item_id, id),
   CONSTRAINT question_bank_revisions_prompt_nonblank CHECK (length(btrim(prompt)) > 0),
-  CONSTRAINT question_bank_revisions_options_array CHECK (jsonb_typeof(options) = 'array'),
+  CONSTRAINT question_bank_revisions_option_text_nonblank CHECK (
+    array_position(options, '') IS NULL
+    AND array_position(options, NULL) IS NULL
+  ),
   CONSTRAINT question_bank_revisions_explanation_nonblank CHECK (
     explanation IS NULL OR length(btrim(explanation)) > 0
   ),
@@ -60,11 +63,11 @@ CREATE TABLE question_bank_revisions (
     method IS NULL OR length(btrim(method)) > 0
   ),
   CONSTRAINT question_bank_revisions_type_shape CHECK (
-    (type = 'multiple_choice' AND jsonb_array_length(options) = 4)
+    (type = 'multiple_choice' AND cardinality(options) = 4)
     OR
-    (type = 'true_false' AND options = '["صح", "خطأ"]'::jsonb)
+    (type = 'true_false' AND options = ARRAY['صح', 'خطأ']::text[])
     OR
-    (type = 'direct' AND jsonb_array_length(options) = 0)
+    (type = 'direct' AND cardinality(options) = 0)
   ),
   CONSTRAINT question_bank_revisions_answer_shape CHECK (
     (
@@ -81,9 +84,9 @@ CREATE TABLE question_bank_revisions (
           type IN ('multiple_choice', 'true_false')
           AND correct_option_index IS NOT NULL
           AND correct_option_index >= 0
-          AND correct_option_index < jsonb_array_length(options)
+          AND correct_option_index < cardinality(options)
           AND answer_text IS NOT NULL
-          AND answer_text = options ->> correct_option_index
+          AND answer_text = options[correct_option_index + 1]
         )
       )
     )
