@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createDatabase } from "../../src/db.js";
 import { QuestionBankService } from "../../src/question-bank/service.js";
+import { QuizVersionExportService } from "../../src/quiz-builder/export.js";
 import { QuizBuilderService } from "../../src/quiz-builder/service.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -97,6 +98,7 @@ test("Stage13F Quiz Builder snapshots only published Question Bank revisions and
     });
 
     const quizzes = new QuizBuilderService(db);
+    const exports = new QuizVersionExportService(quizzes);
     const created = await quizzes.create(adminId, {
       classId,
       subjectId,
@@ -141,10 +143,29 @@ test("Stage13F Quiz Builder snapshots only published Question Bank revisions and
     assert.equal(detail.versions[0]?.questions[1]?.options.filter((option) => option.isCorrect).length, 1);
     assert.equal(detail.versions[0]?.questions[1]?.questionBankRevisionId, mcqPublished.id);
 
+    await assert.rejects(
+      () => exports.bundle(created.quizId, version.versionId),
+      (error: unknown) => {
+        assert.equal((error as { code?: string }).code, "CONFLICT");
+        return true;
+      },
+    );
+
     await quizzes.submitForReview(adminId, created.quizId);
     assert.equal((await quizzes.detail(created.quizId)).quiz.status, "review");
+    const reviewedExport = await exports.bundle(created.quizId, version.versionId);
+    assert.ok(reviewedExport.csv.startsWith("\uFEFF"));
+    assert.match(reviewedExport.csv, /ما تعريف الطاقة؟/);
+    assert.match(reviewedExport.csv, /الجول/);
+    assert.match(reviewedExport.csv, new RegExp(mcqPublished.id));
+    assert.match(reviewedExport.printHtml, /<html lang="ar" dir="rtl">/);
+    assert.match(reviewedExport.printHtml, /القدرة على بذل شغل/);
+    assert.match(reviewedExport.filenameBase, /اختبار الطاقة-النموذج أ/);
+
     await quizzes.publish(adminId, created.quizId);
     assert.equal((await quizzes.detail(created.quizId)).quiz.status, "published");
+    const publishedExport = await exports.bundle(created.quizId, version.versionId);
+    assert.equal(publishedExport.csv, reviewedExport.csv);
 
     await assert.rejects(
       () =>
