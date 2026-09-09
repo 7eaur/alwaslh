@@ -18,7 +18,10 @@ export class QuizQuestionCandidateService {
   async list(
     quizId: string,
     input: { search?: string; limit: number; offset: number },
-  ): Promise<{ items: QuizQuestionCandidate[]; pagination: { total: number; limit: number; offset: number } }> {
+  ): Promise<{
+    items: QuizQuestionCandidate[];
+    pagination: { total: number; limit: number; offset: number };
+  }> {
     const quizzes = await this.database.query<{ class_id: string | null; subject_id: string | null }>(
       "select class_id, subject_id from quizzes where id = $1",
       [quizId],
