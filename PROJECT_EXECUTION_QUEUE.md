@@ -1,281 +1,162 @@
 # PROJECT EXECUTION QUEUE — الوسيلة الذكية
 
-> **Purpose:** قائمة التنفيذ الوحيدة للمشروع في Single Owner mode. أي محادثة جديدة تبدأ من أول عنصر غير مكتمل هنا بعد قراءة Source of Truth.
->
-> **Rule:** لا تعتمد على Chat memory. Code/migrations/executable evidence أعلى من هذا الملف. غير المفحوص/غير المنفذ = `NOT YET VERIFIED`.
+> قائمة التنفيذ الحالية في Single Owner mode. ابدأ دائمًا من أول عنصر غير مكتمل بعد قراءة Source of Truth.
 
-Last synchronized: **2026-09-09 — Single Owner active; Stage13E candidate has four P1 + four P2 fixes; final static closure audit found no additional proven defect; Roadmap/Legacy Coverage and a zero-overlap selective Promotion Manifest are prepared; CI-001 scope is now verified repository-wide while exact runner-allocation cause remains unverified.**
+Last synchronized: **2026-09-09 22:57 Asia/Aden**.
 
-## 1. Operating mode
+## Operating rules
 
-- One replaceable engineering conversation owns Product + Architecture + Backend + Frontend + UX + Security + Performance + QA + Git + Documentation.
-- Sole GitHub execution ledger: Issue `#16`.
-- Issues `#13/#14/#15`: CLOSED/HISTORICAL only.
-- Hosting/deployment: outside current scope until Product Owner provides VPS and explicitly reopens it.
-- `main`: latest Integration-approved development baseline, not deployment authority.
-- Use short task/stage branches; do not merge a Stage without required executable evidence.
-- Root-cause fixes only. No test weakening, auth bypass, fake APIs, client-owned durable state, duplicate lifecycle, or timeout-based masking.
+- Repository: `7eaur/alwaslh`.
+- Issue `#16` is the sole execution board.
+- Hosting/deployment fully deferred until VPS + explicit reopening.
+- `main` is development baseline, not deployment authority.
+- Root-cause fixes only; no test weakening/auth bypass/fake API/sleeps/duplicate authority.
+- Code/migrations/executable evidence outrank prose.
+- Read `PROJECT_RESUME_SNAPSHOT.md` before executing the queue.
 
-## 2. Mandatory startup
+## Current stage
 
-1. `README.md`
-2. `DOCUMENTATION_INDEX.md`
-3. `PROJECT_HANDOFF.md`
-4. `PROJECT_STATUS.md`
-5. `PROJECT_ENGINEERING_LOG.md`
-6. `PROJECT_INTEGRATION_CONTINUITY.md`
-7. **this file**
-8. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-9. `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md`
-10. Issue `#16` latest comments
-11. current stage specialized docs + actual code/migrations/tests
-12. Legacy Coverage + Roadmap when closing/starting a stage
+**Stage13E — Admin AI Operations / Review**
 
-Then live-check `main`, active branch HEADs and GitHub Actions before conclusions.
+Candidate: `integration/stage13e-ai-operations @ e291c6bde3971845048bf8bcc4561b65d3c702e6`
 
-## 3. Immutable verified context
+Combined Gate: **PASS** — run `34394580893`.
 
-Latest fully executable green application baseline:
+Wider candidate matrix: **10 SUCCESS + 1 CI-workflow drift failure**.
 
-`4eca7de8877ac9e2289b9c7990c912d33c256935`
+Verification-only Draft PR: **#24 — MUST NOT BE MERGED**.
 
-Verified through Stage13D including Stage9/10/OCR/11/12/13/13D and Full Rebuild same-head matrix.
+## Ordered queue
 
-Current active product stage: **Stage13E — Admin AI Operations / Review**.
+### EXEC-004A — Synchronize stale standalone Stage13E CI contract
 
-Current combined candidate branch: `integration/stage13e-ai-operations`.
+**Priority: P1 · Status: ACTIVE / FIRST TASK**
 
-Current candidate docs HEAD: `c48d1e597497e6054340f71235c78937082b9371`.
+Tracking: `CI-013E-009`.
 
-Latest runtime/test HEAD immediately below docs: `d60218b518fb0fe453c21386e77cd35a2228ad07`.
+Evidence:
 
-Historical candidate sources remain evidence only:
+- standalone Stage13E Admin run `34395034000`, job `102612508570`;
+- API quality PASS;
+- clean migrations PASS;
+- failure only at `Verify Stage13E PostgreSQL contracts`;
+- shell error: `unexpected EOF while looking for matching ')'`.
 
-- Backend `348c02646d0ff873fd305beff16f41c46d9c0285`.
-- Frontend `1eb141e950e96c9f53ffd103a386d59166113c16`; Product/Test `7bf2f8c32907032551aace9f3aa27681040c4b0f`.
+Root cause:
 
-## 4. Ordered task queue
+`.github/workflows/stage13e-ai-operations.yml` still reflects an older DB contract and shell syntax. Current migration/Combined workflow use four review constraints, including reject-note enforcement; the redundant latest-review index was intentionally removed.
 
-### EXEC-001 — Retire multi-chat team topology
+Required implementation:
 
-**Status: DONE**
+1. inspect `.github/workflows/stage13e-ai-operations.yml`;
+2. compare with `.github/workflows/stage13e-integration.yml` and `database/migrations/0018_ai_admin_review.sql`;
+3. fix shell quoting;
+4. require all current four review constraints;
+5. remove only the stale requirement for the intentionally removed redundant latest-review index;
+6. preserve legitimate current index/contract assertions;
+7. do not weaken any migration/test/product rule;
+8. push to `integration/stage13e-ai-operations`.
 
-#13/#14/#15 closed as historical; #16 is sole Project Execution Board.
+Acceptance: standalone Stage13E Admin workflow PASS on real runner/PostgreSQL.
 
 ---
 
-### EXEC-002 — Synchronize startup/governance docs to Single Owner
+### EXEC-004B — Re-run full wider candidate matrix on exact new HEAD
 
-**Priority: P1 · Status: DONE**
+**Priority: P1 · Status: BLOCKED BY EXEC-004A**
 
-Repository startup docs, Queue, Continuity, Handoff, Product Overrides and Single Owner model are authoritative. Hosting remains future-only until explicit VPS reopening.
+PR #24 should trigger existing `pull_request` workflows after candidate push.
 
----
+Require SUCCESS on the new exact HEAD for at least:
 
-### EXEC-003 — Stage13E combined candidate static/operational audit
+- Stage9;
+- Stage10;
+- OCR;
+- Stage11;
+- Stage12;
+- Stage13 Admin;
+- Stage13D Content Ingestion;
+- Stage13D Admin Chromium;
+- Full Rebuild;
+- Stage13E Frontend Prep;
+- Stage13E Admin standalone;
+- Combined Stage13E gate as applicable to the new candidate HEAD.
 
-**Priority: P1**
+Any executed failure must be root-caused in the owning layer.
 
-**Status: DONE for inspected surfaces; reopen whenever later evidence exposes a real defect**
-
-Inspected actual Admin AI HTTP/service/lifecycle/review/persistence/frontend/fixtures/workflow code. Confirmed after fixes:
-
-- no second queue/lifecycle;
-- server owns lifecycle/review action availability;
-- Admin authorization enforced;
-- raw response/credential/provider metadata/internal errors excluded from Frontend contract;
-- cancel/retry reuse Stage12 authority;
-- review is Stage11-validated and only allowed on stable `completed | review_required` units;
-- failed/retrying/in-flight/cancelled outputs are inspection-only;
-- canonical refresh after mutations/409;
-- complete Jobs/Units/Attempts/Review History is reachable through bounded server pagination;
-- polling/refresh stay on current pages;
-- selected historical review page never becomes current review authority;
-- all multi-query Admin AI read models use one short repeatable-read database snapshot;
-- List Jobs applies the bounded Job page before Unit status aggregation;
-- all Stage13E pagination offsets are bounded to JavaScript safe integers before service/DB execution;
-- Stage13E progress semantics match Stage12 lifecycle authority exactly;
-- final HTTP/schema/lifecycle alignment pass found no additional proven defect;
-- real fixtures use durable tables and real APIs only.
-
-#### AI-013E-DB-001 — P1 Data/Audit Integrity
-
-Reject reason existed only at caller validation. Fixed by PostgreSQL `ai_output_review_events_reject_note_required` plus direct NULL/blank insert regression.
-
-**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
-
-#### AI-013E-REVIEW-002 — P1 Data/Review Integrity
-
-Stage12 can replace `ai_outputs` during retry while review audit is append-only. Fixed by allowing review only on stable `completed|review_required` units and locking output+unit before mutation.
-
-**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
-
-#### AI-013E-OPS-003 — P1 Durable Operational History Accessibility
-
-Frontend previously exposed only first 30 Jobs / 50 Units / 50 Attempts. Fixed with end-to-end bounded server pagination and real fixtures proving second Jobs page, Unit 51 and Attempt 1 on page two.
-
-**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
-
-#### AI-013E-OPS-004 — P1 Review Audit Completeness / Authority Isolation
-
-Output detail originally returned only newest 100 append-only review events and derived current state from the displayed page. Fixed with bounded review pagination plus an independent canonical-latest authority and real >100 browser fixture.
-
-**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
-
-#### AI-013E-OPS-005 — P2 Output Detail Snapshot Consistency
-
-Output row, audit page, count and canonical latest review were separate top-level reads. Fixed by one short `REPEATABLE READ` snapshot. Regression: `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`.
-
-**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
-
-#### AI-013E-OPS-006 — P2 Admin Multi-query Read-model Consistency
-
-List Jobs page/total, Job Detail progress/units/allowed-actions, and Unit Detail summary/attempt-page/total were separate reads. Fixed by shared `readSnapshot()` and `apps/api/tests/ai-admin-read-snapshots.test.ts`.
-
-**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
-
-#### AI-013E-PERF-007 — P2 Admin Job-list Bounded Aggregation
-
-`listJobs()` originally aggregated Units for every matching durable Job before `LIMIT/OFFSET`. Fixed by paging Jobs first and aggregating Units only for the selected page. Regression: `apps/api/tests/ai-admin-job-list-query-shape.test.ts`.
-
-**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
-
-#### AI-013E-API-008 — P2 Safe Pagination Input Boundary
-
-**Problem:** `offset`, `unitOffset`, `attemptOffset`, and `reviewOffset` accepted any non-negative JavaScript integer. Integer-looking values outside the safe-integer range could pass HTTP validation and reach PostgreSQL pagination as a representation/DB error instead of client `400`.
-
-**Correct fix:** one shared `PaginationOffsetSchema` now enforces `0..Number.MAX_SAFE_INTEGER` for all Stage13E offsets. This is a representation bound, not a smaller product paging cap.
-
-**Regression:** `apps/api/tests/ai-admin-pagination-bounds.test.ts` uses real Fastify routing/error mapping to prove all four unsafe offsets return `400 BAD_REQUEST` before service execution, while `Number.MAX_SAFE_INTEGER` remains accepted. It is included automatically by the existing `npm test --prefix apps/api` gate.
-
-**Commits:** `887f772df927c8d24df0003b76b9cb7ea0313e15`, final regression `d60218b518fb0fe453c21386e77cd35a2228ad07`. An initial DB integration-test attempt was removed (`6b04c9f50256d96fda9b2f1c322775ddf682aa9f`) after the safety layer rejected a workflow rewrite containing an existing fixed browser-test credential; no workflow was weakened.
-
-**Specialized doc:** `docs/ai/STAGE13E_ADMIN_AI_HTTP_VALIDATION.md`.
-
-**Status:** FIXED IN CANDIDATE / EXECUTION PENDING.
+When fully green, capture run IDs and close PR #24 **unmerged**.
 
 ---
 
-### EXEC-004 — Stage13E executable same-head gate
+### EXEC-005 — Stage13E selective promotion assembly
 
-**Priority: P1**
+**Priority: P1 · Status: BLOCKED BY EXEC-004B**
 
-**Status: BLOCKED BY REPOSITORY-WIDE GITHUB HOSTED-RUNNER ALLOCATION INCIDENT; EXACT CAUSE NOT YET VERIFIED**
+After wider candidate PASS:
 
-Workflow: `.github/workflows/stage13e-integration.yml`.
-
-Expected gate:
-
-1. API lint/typecheck/unit/build, including pagination-bound, Output Detail, List/Job/Unit snapshot and Job-list query-shape regressions;
-2. Admin lint/typecheck/unit/build;
-3. clean PostgreSQL migrations + Stage13E DB constraints;
-4. Stage13E authorization/action/review/concurrency/DB/stable-review/review-history pagination tests;
-5. Stage12 execution/capacity/control/lifecycle regressions;
-6. auth regression;
-7. fresh DB reset + real Admin bootstrap;
-8. deterministic fixtures: 51 Units, 51 Attempts, 101 Review revisions, later Jobs page;
-9. Chromium Jobs/Units/Attempts/Review History pagination;
-10. Chromium pause/resume, approve/reload, session expiry, stale-review 409, 390px.
-
-#### CI-001 evidence
-
-Scope is now verified **repository-wide**, not Stage13E-specific:
-
-- last known fully executing green run: Full Rebuild `34177369768` on `4eca7de...`, created `2026-09-08T01:39:16Z`, completed SUCCESS `2026-09-08T01:43:19Z`; jobs executed real setup/container/checkout/install/test/database/browser steps;
-- independent Stage10 Media Pipeline run `34191051851` / job `101949023395` later failed before checkout with `steps=null`;
-- independent Stage11 AI Contract run `34191051835` / job `101949023152` later failed before checkout with `steps=null`;
-- Stage13E runtime/test run `34283353562` / job `102253102885` failed with `steps=[]`;
-- Stage13E candidate/docs run `34283442253`, attempt `2`, job `102256556365`, failed before checkout;
-- an explicit new rerun was performed as attempt `3`; job `102266150322` again completed `failure` with `steps=[]`, and no log blob exists because no runner step executed;
-- GitHub public status reports no Actions incident for September 8, 2026, so this is not classified as a known global outage;
-- repository owner permission is confirmed `admin`, but Actions usage/billing/budget/allocation settings are not exposed through the connected integration;
-- exact repository/account-side allocation cause remains `NOT YET VERIFIED`;
-- GitHub docs confirm private-repository hosted runners depend on account-plan usage/billing policy, but quota/payment exhaustion is a diagnostic possibility only and is **not** claimed without account evidence.
-
-Local fallback remains independently unavailable:
-
-- `/mnt/data/alwaslh-stage13e` is empty/not a checkout;
-- execution-container DNS cannot resolve `github.com` or `registry.npmjs.org`;
-- HTTPS to both fails before connection;
-- `git ls-remote https://github.com/7eaur/alwaslh.git HEAD` fails with `Could not resolve host`.
-
-Detailed evidence/runbook: `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`.
-
-Interpretation: this is verification-infrastructure evidence, **not product/test failure evidence**. Do not weaken tests, alter workflow semantics, or churn Stage13E runtime because a runner is never allocated.
-
-**Exact next action:** inspect/restore Actions runner availability through an administrative channel that exposes account/repository Actions usage/budget/payment/settings, then rerun the **unchanged** combined gate. Infrastructure recovery is proven only when setup/checkout actually executes. Any later executed failure must be root-caused before Stage promotion.
+1. live-check latest `main` and candidate;
+2. re-run changed-file overlap comparison;
+3. read `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`;
+4. create `integration/stage13e-promotion` from latest `main`;
+5. overlay only accepted manifest files;
+6. reject unrelated/central-doc regressions or stale candidate history;
+7. run Combined + wider matrix on exact promotion HEAD;
+8. if `main` moves, rebuild/reverify from latest `main`.
 
 ---
 
-### EXEC-005 — Stage13E wider regression + closure
+### EXEC-005B — Stage13E closure to main
 
-**Priority: P1 · Status: BLOCKED BY EXEC-004; CLOSURE + PROMOTION READINESS PREPARED**
+**Priority: P1 · Status: BLOCKED BY EXEC-005**
 
-Closure-readiness completed while the executable gate is externally blocked:
+Only after promotion-head Combined + wider PASS:
 
-- `MASTER_REBUILD_ROADMAP.md` records Stage13E as `COMBINED CANDIDATE / EXECUTION PENDING`, not “current next”;
-- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` maps candidate coverage to relevant legacy rows as `CANDIDATE / EXECUTION PENDING` without marking unexecuted rows VERIFIED;
-- `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` records the exact 36 Stage13E promotion files and exact-head promotion procedure;
-- promotion-readiness comparison uses merge base `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`: candidate is 53 commits ahead, current audited `main` was 77 commits ahead, and the candidate 36-file set has **zero overlap** with the 19 files changed on `main` since the merge base;
-- therefore do not merge/cherry-pick the stale 53-commit history. After candidate PASS, create a short-lived promotion branch from then-current `main`, overlay only the accepted 36 files, and re-run combined + wider gates on that exact promotion HEAD before `main` promotion;
-- if `main` moves or runtime overlap appears before promotion, regenerate the comparison/manifest and reverify rather than relying on this snapshot;
-- Stage13F remains explicitly blocked by Stage13E closure;
-- deployment remains outside the development gate until VPS.
-
-After combined PASS:
-
-1. wider Stage9/10/OCR/11/12/13/13D/Full Rebuild same-head regression matrix on accepted candidate;
-2. re-live-check latest `main` and candidate; regenerate merge-base overlap check;
-3. create `integration/stage13e-promotion` from latest `main`;
-4. overlay only the manifest's exact accepted 36 Stage13E files;
-5. inspect promotion diff for unrelated/central-doc regressions;
-6. run combined Stage13E + wider matrix again on the exact promotion HEAD;
-7. only after exact-head PASS, promote to `main` if `main` has not moved;
-8. convert only actually proven candidate legacy rows to VERIFIED;
-9. update Status/Continuity/Engineering Log/Handoff/Roadmap/Legacy Coverage and add Stage13E Closure Report in Issue #16.
-
-No hosted deployment is required under current policy.
+- integrate Stage13E to `main`;
+- update `PROJECT_RESUME_SNAPSHOT.md`, Status, Handoff, Queue, Continuity, Engineering Log/addendum;
+- update `MASTER_REBUILD_ROADMAP.md`;
+- update `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` and promote only actually proven rows to VERIFIED;
+- update specialized Stage13E docs;
+- post Stage13E Closure Report to Issue #16;
+- retire/close temporary promotion verification artifacts.
 
 ---
 
 ### EXEC-006 — Stage13F Question Bank / Quiz Builder / Publish
 
-**Priority: P1 after Stage13E closure · Status: BLOCKED BY EXEC-005**
+**Priority: P1 · Status: BLOCKED BY STAGE13E CLOSURE**
 
-Do not implement before Stage13E VERIFIED unless Product Owner explicitly changes ordering. First work includes resolving `AI-011-005`, reviewed Question Bank authority/provenance, editing, Draft→Review→Published, Quiz Builder/versioning/regeneration/export, and DB/API/Admin/Chromium evidence.
+Do not start before Stage13E closes unless Product Owner explicitly changes ordering.
 
----
-
-### EXEC-007 — Stage13G Remaining Admin Product
-
-**Status: BLOCKED by Stage13F closure**
-
-Student/account/access code/recovery/device operations, notifications, reporting/settings/audit and remaining Admin parity.
+Initial Stage13F scope includes `AI-011-005`, reviewed Question Bank persistence/provenance, editing, Draft→Review→Published, Quiz Builder/versioning/regeneration/export, DB/API/Admin/Chromium evidence.
 
 ---
 
-### EXEC-008+ — Remaining roadmap
+### EXEC-007+ — Remaining roadmap
 
-Follow `MASTER_REBUILD_ROADMAP.md`: Stage14 Student Product → Stage15 Assessment → Stage16 Offline/PWA → Stage17 Personal Data → Stage18 Notifications → Stage19 Progress → Stage20 Reporting → Stage21 Performance → Stage22 Security → Stage23 Tests → Stage24 Accessibility/device QA → Stage25 initial content load → Stage26+ deployment/release only after VPS and explicit reopening.
+Follow `MASTER_REBUILD_ROADMAP.md` for Stage13G and later Student/Product/Hardening stages. Deployment work remains future-only until VPS.
 
-## 5. Open findings
+## Known open boundaries
 
-- `CI-001` P1 — **repository-wide hosted-runner allocation scope VERIFIED; exact account/platform cause NOT YET VERIFIED**. See `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md`.
-- `AI-011-005` P2 — direct generated-question persistence unresolved; Stage13F owns resolution.
-- `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap unverified.
-- `AI-013E-DB-001` P1 — fixed in candidate; executable verification pending.
-- `AI-013E-REVIEW-002` P1 — fixed in candidate; executable verification pending.
-- `AI-013E-OPS-003` P1 — fixed in candidate; executable verification pending.
-- `AI-013E-OPS-004` P1 — fixed in candidate; executable verification pending.
-- `AI-013E-OPS-005` P2 — fixed in candidate; executable verification pending.
-- `AI-013E-OPS-006` P2 — fixed in candidate; executable verification pending.
-- `AI-013E-PERF-007` P2 — fixed in candidate; executable verification pending.
-- `AI-013E-API-008` P2 — fixed in candidate; executable verification pending.
-- later Admin/Student/assessment/offline/product stages remain incomplete.
-- Hosting/VPS intentionally not a current blocker.
+- `CI-013E-009` P1 — active closure blocker: standalone Stage13E workflow DB assertion drift.
+- `CI-001` historical runner-allocation incident — not currently blocking; exact historical external cause NOT YET VERIFIED.
+- `AI-011-005` P2 — Stage13F.
+- `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap NOT YET VERIFIED.
 
-## 6. Mandatory end-of-batch updates
+## Latest successful candidate evidence
 
-After meaningful work update: this Queue, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, specialized stage docs, Issue #16 `EXECUTION REPORT`, and Handoff/Index/Roadmap/Legacy Coverage when truth changes.
+Combined run `34394580893`: SUCCESS including Chromium 5/5.
 
-Never leave continuation-critical information only in chat.
+Wider green runs before CI-013E-009 fix:
+
+- Stage9 `34395033866`
+- Stage10 `34395033929`
+- OCR `34395033922`
+- Stage11 `34395033876`
+- Stage12 `34395033892`
+- Stage13 Admin `34395033898`
+- Stage13D Content `34395033978`
+- Stage13D Admin UI `34395034010`
+- Full Rebuild `34395033928`
+- Stage13E Frontend Prep `34395033957`
+
+Do not mark Stage13E VERIFIED until the exact-current candidate/promotion gates satisfy the ordered closure rules.
