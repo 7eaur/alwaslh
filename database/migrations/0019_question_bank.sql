@@ -1,9 +1,8 @@
 BEGIN;
 
-ALTER TYPE question_type ADD VALUE IF NOT EXISTS 'direct';
-
 CREATE TYPE question_bank_origin AS ENUM ('manual', 'ai');
 CREATE TYPE question_bank_revision_status AS ENUM ('draft', 'review', 'published', 'archived');
+CREATE TYPE question_bank_question_type AS ENUM ('multiple_choice', 'true_false', 'direct');
 CREATE TYPE question_bank_answer_status AS ENUM ('known', 'unknown', 'review_required');
 CREATE TYPE question_bank_difficulty AS ENUM ('easy', 'medium', 'hard');
 CREATE TYPE question_bank_event_action AS ENUM (
@@ -35,7 +34,7 @@ CREATE TABLE question_bank_revisions (
   item_id uuid NOT NULL REFERENCES question_bank_items(id) ON DELETE CASCADE,
   revision_number integer NOT NULL CHECK (revision_number > 0),
   status question_bank_revision_status NOT NULL DEFAULT 'draft',
-  type question_type NOT NULL,
+  type question_bank_question_type NOT NULL,
   prompt text NOT NULL,
   options jsonb NOT NULL DEFAULT '[]'::jsonb,
   correct_option_index integer,
