@@ -7,7 +7,6 @@ import {
   createActivationIdempotencyKey,
   isMissingSessionError,
   isSixDigitAccessCode,
-  listStudentEntitlements,
   logoutStudent,
   normalizeAccessCode,
   restoreStudentSession,
@@ -16,7 +15,6 @@ import {
 } from "./auth-api";
 import type {
   ActivationVerificationResponse,
-  EntitlementView,
   SessionProfile,
   StudentLoginChallenge,
 } from "./auth-api";
@@ -27,15 +25,10 @@ import {
   signDeviceProof,
   type StoredDeviceKey,
 } from "./device-key";
+import { StudentAccessSection } from "./student-access";
 
 type EntryMode = "activation" | "login" | "recovery";
 type SessionPhase = "checking" | "anonymous" | "authenticated" | "offline" | "unavailable";
-
-type AccessState =
-  | { status: "loading" }
-  | { status: "ready"; entitlements: EntitlementView[] }
-  | { status: "offline" }
-  | { status: "error"; message: string };
 
 interface PendingPasswordChange {
   identifier: string;
@@ -684,26 +677,18 @@ function EntryPage({
   );
 }
 
-function AccountPage({ profile, online, onLoggedOut }: { profile: SessionProfile; online: boolean; onLoggedOut: () => void }) {
-  const [access, setAccess] = useState<AccessState>({ status: "loading" });
+function AccountPage({
+  profile,
+  online,
+  onLoggedOut,
+  onSessionExpired,
+}: {
+  profile: SessionProfile;
+  online: boolean;
+  onLoggedOut: () => void;
+  onSessionExpired: () => void;
+}) {
   const [busy, setBusy] = useState(false);
-
-  async function loadAccess() {
-    if (!navigator.onLine) {
-      setAccess({ status: "offline" });
-      return;
-    }
-    setAccess({ status: "loading" });
-    try {
-      setAccess({ status: "ready", entitlements: await listStudentEntitlements() });
-    } catch (error) {
-      setAccess({ status: "error", message: errorMessage(error) });
-    }
-  }
-
-  useEffect(() => {
-    void loadAccess();
-  }, []);
 
   async function handleLogout() {
     if (busy) return;
@@ -730,50 +715,13 @@ function AccountPage({ profile, online, onLoggedOut }: { profile: SessionProfile
         <div>
           <p className="eyebrow">تم تسجيل الدخول</p>
           <h1>{profile.displayName ?? "مساحة الطالب"}</h1>
-          <p>تم التحقق من الجلسة والجهاز المسجل. تظهر هنا صلاحيات الوصول الحالية فقط.</p>
+          <p>الجلسة والجهاز موثقان. نعرض هنا فقط صلاحيات الدراسة التي أكدها الخادم.</p>
         </div>
         <button className="secondary-button" type="button" onClick={handleLogout} disabled={busy}>
           {busy ? "جاري الخروج" : "تسجيل الخروج"}
         </button>
       </section>
-      <section className="access-section" aria-labelledby="access-title">
-        <div className="section-heading">
-          <h2 id="access-title">صلاحيات الوصول</h2>
-          <button className="text-button" type="button" onClick={() => void loadAccess()} disabled={!online}>
-            تحديث
-          </button>
-        </div>
-        {access.status === "loading" ? (
-          <div className="inline-state" role="status">
-            <Spinner /> جاري تحميل الصلاحيات
-          </div>
-        ) : access.status === "offline" ? (
-          <FormAlert tone="warning">يلزم اتصال لعرض حالة الصلاحيات المحدثة. وضع التعلم دون اتصال سيُبنى في مرحلته المخصصة.</FormAlert>
-        ) : access.status === "error" ? (
-          <FormAlert tone="danger">{access.message}</FormAlert>
-        ) : access.entitlements.length === 0 ? (
-          <div className="empty-state">
-            <strong>لا توجد صلاحيات فعالة</strong>
-            <p>أضف رمز صف من شاشة الوصول عندما تصبح هذه الميزة متاحة في واجهة الطالب الكاملة.</p>
-          </div>
-        ) : (
-          <ul className="entitlement-list">
-            {access.entitlements.map((entitlement) => (
-              <li key={entitlement.id}>
-                <span className="entitlement-icon" aria-hidden="true">✓</span>
-                <div>
-                  <strong>{entitlement.scope === "all_content" ? "وصول كامل" : "وصول إلى صف"}</strong>
-                  <small>
-                    {entitlement.expiresAt
-                      ? `صالح حتى ${new Intl.DateTimeFormat("ar", { dateStyle: "medium" }).format(new Date(entitlement.expiresAt))}`
-                      : "بدون تاريخ انتهاء محدد"}
-                  </small>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <StudentAccessSection online={online} onSessionExpired={onSessionExpired} />
     </main>
   );
 }
@@ -817,6 +765,13 @@ export default function App() {
     void checkSession();
   }, []);
 
+  function handleSessionExpired() {
+    setProfile(null);
+    setNotice("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.");
+    setMode("login");
+    setPhase("anonymous");
+  }
+
   if (phase === "checking") return <LoadingScreen />;
   if (phase === "offline") return <ConnectionGate kind="offline" onRetry={() => void checkSession()} />;
   if (phase === "unavailable") return <ConnectionGate kind="unavailable" onRetry={() => void checkSession()} />;
@@ -827,6 +782,7 @@ export default function App() {
         <AccountPage
           profile={profile}
           online={online}
+          onSessionExpired={handleSessionExpired}
           onLoggedOut={() => {
             setProfile(null);
             setNotice(null);

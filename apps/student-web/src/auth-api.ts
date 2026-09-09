@@ -71,6 +71,10 @@ interface EntitlementsResponse {
   entitlements: EntitlementView[];
 }
 
+interface AccessRedemptionResponse {
+  entitlement: EntitlementView;
+}
+
 export class ApiRequestError extends Error {
   constructor(
     readonly code: ApiErrorCode,
@@ -182,6 +186,14 @@ export async function listStudentEntitlements(): Promise<EntitlementView[]> {
   return result.entitlements;
 }
 
+export async function redeemStudentAccess(code: string, idempotencyKey: string): Promise<EntitlementView> {
+  const result = await request<AccessRedemptionResponse>("/v1/student/access/redeem", {
+    method: "POST",
+    body: JSON.stringify({ code, idempotencyKey }),
+  });
+  return result.entitlement;
+}
+
 export function normalizeAccessCode(value: string): string {
   const arabicIndic = "٠١٢٣٤٥٦٧٨٩";
   const easternArabic = "۰۱۲۳۴۵۶۷۸۹";
@@ -198,7 +210,15 @@ export function isSixDigitAccessCode(value: string): boolean {
   return /^\d{6}$/.test(normalizeAccessCode(value));
 }
 
+export function isSevenDigitClassCode(value: string): boolean {
+  return /^\d{7}$/.test(normalizeAccessCode(value));
+}
+
 export function createActivationIdempotencyKey(): string {
+  return globalThis.crypto.randomUUID();
+}
+
+export function createAccessRedemptionIdempotencyKey(): string {
   return globalThis.crypto.randomUUID();
 }
 

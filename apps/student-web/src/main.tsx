@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "@alwaslh/brand/tokens.css";
 import "./styles.css";
+import "./stage14.css";
 import App from "./App";
 
 const root = document.getElementById("root");
