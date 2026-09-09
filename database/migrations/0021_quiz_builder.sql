@@ -14,6 +14,7 @@ CREATE TYPE quiz_builder_event_action AS ENUM (
 ALTER TABLE quizzes
   ADD COLUMN class_id uuid,
   ADD COLUMN subject_id uuid,
+  ADD COLUMN shuffle_versions boolean NOT NULL DEFAULT true,
   ADD COLUMN submitted_for_review_by_profile_id uuid REFERENCES profiles(id) ON DELETE RESTRICT,
   ADD COLUMN submitted_for_review_at timestamptz,
   ADD COLUMN published_by_profile_id uuid REFERENCES profiles(id) ON DELETE RESTRICT,
@@ -58,7 +59,7 @@ ALTER TABLE questions
 CREATE TABLE quiz_builder_events (
   id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   quiz_id uuid NOT NULL REFERENCES quizzes(id) ON DELETE RESTRICT,
-  quiz_version_id uuid REFERENCES quiz_versions(id) ON DELETE RESTRICT,
+  quiz_version_id uuid REFERENCES quiz_versions(id) ON DELETE SET NULL,
   action quiz_builder_event_action NOT NULL,
   actor_profile_id uuid NOT NULL REFERENCES profiles(id) ON DELETE RESTRICT,
   note text,
@@ -178,8 +179,9 @@ BEGIN
     target_quiz_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.quiz_id ELSE NEW.quiz_id END;
   ELSIF TG_TABLE_NAME = 'questions' THEN
     version_id_value := CASE WHEN TG_OP = 'DELETE' THEN OLD.quiz_version_id ELSE NEW.quiz_version_id END;
-    IF version_id_value IS NULL THEN RETURN COALESCE(NEW, OLD); END IF;
-    SELECT quiz_id INTO target_quiz_id FROM quiz_versions WHERE id = version_id_value;
+    IF version_id_value IS NOT NULL THEN
+      SELECT quiz_id INTO target_quiz_id FROM quiz_versions WHERE id = version_id_value;
+    END IF;
   ELSIF TG_TABLE_NAME = 'question_options' THEN
     question_id_value := CASE WHEN TG_OP = 'DELETE' THEN OLD.question_id ELSE NEW.question_id END;
     SELECT v.quiz_id INTO target_quiz_id
@@ -188,14 +190,17 @@ BEGIN
     WHERE q.id = question_id_value;
   END IF;
 
-  IF target_quiz_id IS NULL THEN
-    RETURN COALESCE(NEW, OLD);
+  IF target_quiz_id IS NOT NULL THEN
+    SELECT status INTO current_status FROM quizzes WHERE id = target_quiz_id;
+    IF current_status = 'published' THEN
+      RAISE EXCEPTION 'published quiz snapshots are immutable' USING ERRCODE = '23514';
+    END IF;
   END IF;
-  SELECT status INTO current_status FROM quizzes WHERE id = target_quiz_id;
-  IF current_status = 'published' THEN
-    RAISE EXCEPTION 'published quiz snapshots are immutable' USING ERRCODE = '23514';
+
+  IF TG_OP = 'DELETE' THEN
+    RETURN OLD;
   END IF;
-  RETURN COALESCE(NEW, OLD);
+  RETURN NEW;
 END;
 $$;
 
