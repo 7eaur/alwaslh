@@ -74,7 +74,7 @@ describe("Stage13E AI operations API transport", () => {
   });
 
   it("sends the strict discriminated review payloads", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(response({ output: { id: "output-1" } }));
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(response({ output: { id: "output-1" } })));
     vi.stubGlobal("fetch", fetchMock);
     const editedOutput: AiGenerationOutputApi = { kind: "summary", summary: "ملخص", sourceEvidence: [] };
     await reviewAiOutput("output-1", { action: "edit", editedOutput, note: "مراجعة" });
