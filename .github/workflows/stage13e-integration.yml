@@ -96,6 +96,14 @@ jobs:
           node --test --import tsx tests/integration/ai-admin-operations.integration.test.ts
           node --test --import tsx tests/integration/ai-admin-action-authority.integration.test.ts
 
+      - name: Reset PostgreSQL before wider Stage12 and auth regressions
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          drop schema public cascade;
+          create schema public;
+          SQL
+          npm run db:migrate --prefix apps/api
+
       - name: Re-run Stage12 and auth security regressions
         working-directory: apps/api
         run: |
