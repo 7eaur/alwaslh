@@ -1,11 +1,11 @@
 # NEXT CONVERSATION PROMPT
 
-هذا Launcher فقط؛ الحالة الفعلية في المستودع.
+هذا Launcher فقط؛ الحالة الفعلية في GitHub والمستودع.
 
 ```text
-اعمل كالمسؤول الهندسي/التصميمي الكامل والوحيد عن `7eaur/alwaslh`. لا تعتمد على أي ذاكرة Chat سابقة.
+اعمل كالمسؤول الهندسي/التصميمي الكامل والوحيد عن `7eaur/alwaslh`. لا تعتمد على ذاكرة Chat سابقة.
 
-ابدأ من المستودع بهذا الترتيب:
+ابدأ بهذا الترتيب:
 1) README.md
 2) DOCUMENTATION_INDEX.md
 3) PROJECT_HANDOFF.md
@@ -16,40 +16,38 @@
 8) PROJECT_EXECUTION_QUEUE.md
 9) docs/product/CURRENT_PRODUCT_OVERRIDES.md
 10) docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md
-11) docs/integration/STAGE13E_PROMOTION_MANIFEST.md
-12) آخر تعليقات GitHub Issue #16
-13) PR #24 الحالي + checks/changed files
-14) Stage13E workflows/code/migrations/tests الفعلية
+11) آخر تعليقات Issue #16
+12) current main + Actions
+13) الكود/DB/API/Admin/tests للمرحلة الحالية
 
-تحقق live من main والفرع النشط وGitHub Actions قبل الحكم. Code/migrations/executable evidence هي السلطة. أي شيء غير مفحوص أو غير منفذ = NOT YET VERIFIED.
+تحقق live من GitHub قبل الحكم. Code/migrations/executable evidence أعلى من prose. أي جزء غير مفحوص = NOT YET VERIFIED.
 
-الاستضافة والنشر خارج النطاق بالكامل حتى يوفر Product Owner VPS ويعيد فتح النشر صراحة. لا تعمل على Render/Vercel/Railway ولا تجعل hosted runtime Stage gate.
+الاستضافة والنشر خارج النطاق بالكامل حتى يوفر Product Owner VPS ويعيد فتحها صراحة.
 
-المرحلة الحالية Stage13E. لا تبدأ Stage13F قبل إغلاق Stage13E إلا إذا غيّر Product Owner ترتيب المراحل صراحة.
+Stage13E Admin AI Operations / Review مغلقة VERIFIED:
+- accepted candidate: 72ead8446af237392dc6d953c8e0c2382f468286
+- candidate matrix: 12/12 SUCCESS
+- PR #24 verification-only: closed unmerged
+- verified selective promotion/runtime SHA: d5ebc7f25a369430387a758c7c0bb89350963d67
+- promotion matrix: 12/12 SUCCESS
+- PR #25 verification-only: closed unmerged
+- Stage13E was fast-forwarded to main without importing divergent candidate history.
 
-الحالة عند آخر handoff:
-- candidate branch: integration/stage13e-ai-operations
-- executable candidate HEAD: e291c6bde3971845048bf8bcc4561b65d3c702e6
-- Combined Gate run 34394580893: SUCCESS كامل، بما فيه real Chromium 5/5.
-- Draft verification-only PR #24: MUST NOT BE MERGED.
-- wider matrix: Stage9/10/OCR/11/12/13/13D backend+Admin/Full Rebuild/Stage13E Frontend كلها SUCCESS.
-- الوحيد الأحمر: Stage13E Admin AI Operations standalone run 34395034000 / job 102612508570.
-- API quality + clean migrations نجحت فيه؛ الفشل فقط في Verify Stage13E PostgreSQL contracts بسبب shell `unexpected EOF while looking for matching ')'`.
-- root cause: `.github/workflows/stage13e-ai-operations.yml` stale؛ ما زال يتوقع contract قديم (3 constraints + 2 indexes) وفيه quote defect. المايغريشن الحالي فيه 4 review constraints بما فيها reject-note invariant، والـlatest-review index المكرر أزيل عمدًا. Combined workflow الصحيح مرّ على نفس DB contract.
-- classification: CI workflow drift, not product/database failure. Tracking: CI-013E-009 P1.
+المرحلة التالية Stage13F Question Bank / Quiz Builder / Publish: READY / NOT STARTED.
 
-أول مهمة:
-1) قارن `.github/workflows/stage13e-ai-operations.yml` مع `.github/workflows/stage13e-integration.yml` و`database/migrations/0018_ai_admin_review.sql`.
-2) أصلح فقط standalone DB assertion: shell quoting + current four constraints + current legitimate indexes، بدون إعادة فرض index المكرر وبدون تخفيف gates.
-3) push على candidate branch ودع PR #24 يعيد wider matrix على exact new HEAD.
-4) إذا كل wider workflows PASS، أغلق PR #24 unmerged.
-5) أعد live-check latest main/candidate overlap، ثم اتبع STAGE13E_PROMOTION_MANIFEST.md لإنشاء promotion branch من أحدث main ونقل manifest files فقط.
-6) شغّل Combined + wider matrix مرة ثانية على exact promotion HEAD.
-7) فقط بعد PASS كامل: integrate Stage13E إلى main، حدّث Roadmap/Legacy Coverage/central docs + Issue #16 Closure Report، ثم ابدأ Stage13F.
+أول مهمة Stage13F ليست كتابة كود مباشرة. ابدأ Repository Discovery فعليًا لبنك الأسئلة/الاختبارات الحالي: migrations/tables, API/routes/services, Admin components/state, tests, legacy coverage. صنّف كل جزء KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE ولا تفترض API أو schema غير مفحوصة.
 
-لا تعمل merge/cherry-pick لتاريخ candidate المتباعد مباشرة. لا تستبدل central docs الحالية بنسخ أقدم من feature branch.
+Stage13F يجب أن يحافظ على السلطات القائمة:
+- Stage11 = typed AI validation/prompt/provenance contracts
+- Stage12 = durable AI execution/queue/lifecycle
+- Stage13E = Admin output review authority
+ولا ينشئ queue/review authority مكررًا.
 
-بعد كل batch حدث PROJECT_RESUME_SNAPSHOT.md وPROJECT_STATUS.md وPROJECT_HANDOFF.md وQueue/Continuity/Engineering Log والوثائق المتأثرة، ثم ارفع EXECUTION REPORT إلى Issue #16.
+المطلوب من Stage13F: reviewed Question Bank persistence/provenance، حل AI-011-005، editing، Draft→Review→Published، Quiz Builder + stable identities/versioning/regeneration/export، PostgreSQL/API/Admin/real Chromium evidence، ثم wider same-head regression closure.
+
+لا تعتبر Stage13E approval نشرًا لبنك الأسئلة. لا تبدأ deployment. AI-012-019 live provider bootstrap ما زال NOT YET VERIFIED.
+
+بعد كل batch حدّث Status/Handoff/Resume/Engineering Log/Continuity/Queue والوثائق المتخصصة وIssue #16.
 ```
 
-إذا تعارض هذا Launcher مع Source of Truth أحدث، اتبع المصدر الأعلى ثم حدّث هذا الملف.
+إذا تعارض هذا Launcher مع Source of Truth أحدث، اتبع GitHub ثم حدّث هذا الملف.
