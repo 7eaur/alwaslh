@@ -36,7 +36,7 @@ CREATE TABLE question_bank_revisions (
   status question_bank_revision_status NOT NULL DEFAULT 'draft',
   type question_bank_question_type NOT NULL,
   prompt text NOT NULL,
-  options text[] NOT NULL DEFAULT '{}'::text[],
+  options jsonb NOT NULL DEFAULT '[]'::jsonb,
   correct_option_index integer,
   answer_text text,
   answer_status question_bank_answer_status NOT NULL,
@@ -52,10 +52,6 @@ CREATE TABLE question_bank_revisions (
   CONSTRAINT question_bank_revisions_item_number_unique UNIQUE (item_id, revision_number),
   CONSTRAINT question_bank_revisions_item_id_id_unique UNIQUE (item_id, id),
   CONSTRAINT question_bank_revisions_prompt_nonblank CHECK (length(btrim(prompt)) > 0),
-  CONSTRAINT question_bank_revisions_option_text_nonblank CHECK (
-    array_position(options, '') IS NULL
-    AND array_position(options, NULL) IS NULL
-  ),
   CONSTRAINT question_bank_revisions_explanation_nonblank CHECK (
     explanation IS NULL OR length(btrim(explanation)) > 0
   ),
@@ -63,16 +59,27 @@ CREATE TABLE question_bank_revisions (
     method IS NULL OR length(btrim(method)) > 0
   ),
   CONSTRAINT question_bank_revisions_type_shape CHECK (
-    (type = 'multiple_choice' AND cardinality(options) = 4)
-    OR
-    (type = 'true_false' AND options = ARRAY['صح', 'خطأ']::text[])
-    OR
-    (type = 'direct' AND cardinality(options) = 0)
+    CASE
+      WHEN jsonb_typeof(options) <> 'array' THEN false
+      WHEN type = 'multiple_choice' THEN
+        jsonb_array_length(options) = 4
+        AND jsonb_typeof(options -> 0) = 'string'
+        AND jsonb_typeof(options -> 1) = 'string'
+        AND jsonb_typeof(options -> 2) = 'string'
+        AND jsonb_typeof(options -> 3) = 'string'
+        AND length(btrim(options ->> 0)) > 0
+        AND length(btrim(options ->> 1)) > 0
+        AND length(btrim(options ->> 2)) > 0
+        AND length(btrim(options ->> 3)) > 0
+      WHEN type = 'true_false' THEN options = '["صح", "خطأ"]'::jsonb
+      WHEN type = 'direct' THEN jsonb_array_length(options) = 0
+      ELSE false
+    END
   ),
   CONSTRAINT question_bank_revisions_answer_shape CHECK (
-    (
-      answer_status = 'known'
-      AND (
+    CASE
+      WHEN jsonb_typeof(options) <> 'array' THEN false
+      WHEN answer_status = 'known' THEN
         (
           type = 'direct'
           AND correct_option_index IS NULL
@@ -84,18 +91,15 @@ CREATE TABLE question_bank_revisions (
           type IN ('multiple_choice', 'true_false')
           AND correct_option_index IS NOT NULL
           AND correct_option_index >= 0
-          AND correct_option_index < cardinality(options)
+          AND correct_option_index < jsonb_array_length(options)
           AND answer_text IS NOT NULL
-          AND answer_text = options[correct_option_index + 1]
+          AND answer_text = options ->> correct_option_index
         )
-      )
-    )
-    OR
-    (
-      answer_status IN ('unknown', 'review_required')
-      AND correct_option_index IS NULL
-      AND answer_text IS NULL
-    )
+      ELSE
+        answer_status IN ('unknown', 'review_required')
+        AND correct_option_index IS NULL
+        AND answer_text IS NULL
+    END
   ),
   CONSTRAINT question_bank_revisions_review_state CHECK (
     status <> 'review'
