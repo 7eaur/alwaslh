@@ -3,6 +3,7 @@ import type { AiGenerationRequest } from "./contracts.js";
 
 export type AiJobExecutionStatus = "queued" | "running" | "retrying" | "completed" | "failed" | "cancelled";
 export type AiJobLifecycleStatus = AiJobExecutionStatus | "paused";
+export type AiJobAllowedAction = "pause" | "resume" | "cancel" | "retry";
 
 export interface AiLifecycleClaimedUnit {
   id: string;
@@ -44,6 +45,11 @@ interface AiJobLifecycleRow {
   status: AiJobExecutionStatus;
   paused_at: Date | null;
   cancel_requested_at: Date | null;
+}
+
+interface AiJobActionAvailabilityRow extends AiJobLifecycleRow {
+  failed_units: number;
+  exhausted_failed_units: number;
 }
 
 const TERMINAL_JOB_STATUSES = new Set<AiJobExecutionStatus>(["completed", "failed", "cancelled"]);
@@ -138,21 +144,86 @@ export class AiJobLifecycleRepository {
   async requestPause(executor: QueryExecutor, jobId: string): Promise<AiJobProgress> {
     const job = await this.lockJob(executor, jobId);
     if (TERMINAL_JOB_STATUSES.has(job.status)) throw new Error(`ai_job_not_pauseable:${job.status}`);
-
-    if (!job.paused_at) {
-      await executor.query("update ai_jobs set paused_at = now() where id = $1", [jobId]);
-    }
+    if (!job.paused_at) await executor.query("update ai_jobs set paused_at = now() where id = $1", [jobId]);
     return this.getProgress(executor, jobId);
   }
 
   async requestResume(executor: QueryExecutor, jobId: string): Promise<AiJobProgress> {
     const job = await this.lockJob(executor, jobId);
     if (TERMINAL_JOB_STATUSES.has(job.status)) throw new Error(`ai_job_not_resumable:${job.status}`);
-
-    if (job.paused_at) {
-      await executor.query("update ai_jobs set paused_at = null where id = $1", [jobId]);
-    }
+    if (job.paused_at) await executor.query("update ai_jobs set paused_at = null where id = $1", [jobId]);
     return this.getProgress(executor, jobId);
+  }
+
+  async requestRetry(executor: QueryExecutor, jobId: string): Promise<AiJobProgress> {
+    const job = await this.lockJob(executor, jobId);
+    if (job.status !== "failed") throw new Error(`ai_job_not_retryable:${job.status}`);
+    if (job.cancel_requested_at) throw new Error("ai_job_not_retryable:cancel_requested");
+
+    const exhausted = await executor.query<{ id: string }>(
+      `select id
+       from ai_job_units
+       where job_id = $1 and status = 'failed' and attempt_count >= 20
+       limit 1`,
+      [jobId],
+    );
+    if (exhausted[0]) throw new Error("ai_job_not_retryable:attempt_limit");
+
+    const retried = await executor.query<{ id: string }>(
+      `update ai_job_units
+       set status = 'retrying',
+           max_attempts = attempt_count + 1,
+           next_attempt_at = now(),
+           lease_token = null,
+           lease_expires_at = null,
+           resume_route_key = null,
+           last_error_code = null,
+           last_error_message = null,
+           completed_at = null
+       where job_id = $1 and status = 'failed'
+       returning id`,
+      [jobId],
+    );
+    if (retried.length === 0) throw new Error("ai_job_retry_no_failed_units");
+
+    await executor.query(
+      `update ai_jobs
+       set status = 'retrying', paused_at = null, completed_at = null
+       where id = $1`,
+      [jobId],
+    );
+    return this.getProgress(executor, jobId);
+  }
+
+  async getAllowedActions(executor: QueryExecutor, jobId: string): Promise<AiJobAllowedAction[]> {
+    const rows = await executor.query<AiJobActionAvailabilityRow>(
+      `select j.id, j.status, j.paused_at, j.cancel_requested_at,
+              count(*) filter (where u.status = 'failed')::int as failed_units,
+              count(*) filter (where u.status = 'failed' and u.attempt_count >= 20)::int
+                as exhausted_failed_units
+       from ai_jobs j
+       left join ai_job_units u on u.job_id = j.id
+       where j.id = $1
+       group by j.id`,
+      [jobId],
+    );
+    const job = rows[0];
+    if (!job) throw new Error("ai_job_not_found");
+
+    const actions: AiJobAllowedAction[] = [];
+    if (!TERMINAL_JOB_STATUSES.has(job.status)) {
+      actions.push(job.paused_at ? "resume" : "pause");
+      if (!job.cancel_requested_at) actions.push("cancel");
+    }
+    if (
+      job.status === "failed" &&
+      !job.cancel_requested_at &&
+      job.failed_units > 0 &&
+      job.exhausted_failed_units === 0
+    ) {
+      actions.push("retry");
+    }
+    return actions;
   }
 
   async clearPause(executor: QueryExecutor, jobId: string): Promise<void> {
@@ -198,8 +269,6 @@ export class AiJobLifecycleRepository {
     const remaining = Math.max(0, row.total - settled);
     const terminal = TERMINAL_JOB_STATUSES.has(row.status);
     const status: AiJobLifecycleStatus = !terminal && row.paused_at ? "paused" : row.status;
-    const progressPercent = row.total === 0 ? 100 : Math.min(100, Math.floor((settled * 100) / row.total));
-
     return {
       jobId: row.id,
       status,
@@ -216,7 +285,7 @@ export class AiJobLifecycleRepository {
       retryingUnits: row.retrying,
       settledUnits: settled,
       remainingUnits: remaining,
-      progressPercent,
+      progressPercent: row.total === 0 ? 100 : Math.min(100, Math.floor((settled * 100) / row.total)),
     };
   }
 
