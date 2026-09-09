@@ -10,6 +10,7 @@ from pathlib import Path
 from PIL import __version__ as pillow_version
 
 from . import __version__
+from .benchmark import benchmark_package
 from .catalog import load_catalog, scan_input_tree, write_draft_catalog
 from .ocr import PaddleOcrAdapter
 from .pipeline import run_pipeline
@@ -129,6 +130,17 @@ def command_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def command_benchmark(args: argparse.Namespace) -> int:
+    workspace = _workspace(args.workspace)
+    summary = benchmark_package(workspace)
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    if summary["evaluated_page_count"] == 0:
+        print("No ground-truth.txt files found. Add corrected text beside selected page.json files, then rerun benchmark.")
+        return 1
+    print(f"benchmark report: {workspace / 'prepared' / 'reports' / 'ocr-benchmark.csv'}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="alwaslh-content-prep",
@@ -168,6 +180,10 @@ def build_parser() -> argparse.ArgumentParser:
     validate = sub.add_parser("validate", help="Verify package checksums, references, image dimensions and ordering.")
     validate.add_argument("workspace")
     validate.set_defaults(func=command_validate)
+
+    benchmark = sub.add_parser("benchmark", help="Measure OCR character error rate against manually corrected sample pages.")
+    benchmark.add_argument("workspace")
+    benchmark.set_defaults(func=command_benchmark)
     return parser
 
 
