@@ -22,6 +22,8 @@ import { registerQuestionBankRegenerationRoutes } from "./question-bank/regenera
 import { QuestionBankRegenerationService } from "./question-bank/regeneration.js";
 import { QuestionBankService } from "./question-bank/service.js";
 import { QuizQuestionCandidateService } from "./quiz-builder/candidates.js";
+import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
+import { QuizVersionExportService } from "./quiz-builder/export.js";
 import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
 import { QuizBuilderService } from "./quiz-builder/service.js";
 
@@ -49,6 +51,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const questionBankRegeneration = new QuestionBankRegenerationService(database);
   const quizBuilder = new QuizBuilderService(database);
   const quizCandidates = new QuizQuestionCandidateService(database);
+  const quizExports = new QuizVersionExportService(quizBuilder);
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
 
@@ -80,6 +83,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerQuestionBankRoutes(app, config, auth, questionBank);
   registerQuestionBankRegenerationRoutes(app, config, auth, questionBankRegeneration);
   registerQuizBuilderRoutes(app, config, auth, quizBuilder, quizCandidates);
+  registerQuizVersionExportRoutes(app, config, auth, quizExports);
 
   app.get("/health", async () => ({
     status: "ok",
