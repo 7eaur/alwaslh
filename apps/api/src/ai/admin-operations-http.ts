@@ -149,6 +149,13 @@ export function registerAdminAiOperationsRoutes(
     const actor = await adminActor(request, config, auth);
     const params = parseBody(OutputParamsSchema, request.params);
     const input = parseBody(OutputReviewSchema, request.body);
-    return { output: await operations.reviewOutput(actor.id, params.outputId, input) };
+    const normalizedInput = {
+      action: input.action,
+      ...(input.action === "edit" && input.editedOutput !== undefined
+        ? { editedOutput: input.editedOutput }
+        : {}),
+      ...(input.note !== undefined ? { note: input.note } : {}),
+    };
+    return { output: await operations.reviewOutput(actor.id, params.outputId, normalizedInput) };
   });
 }
