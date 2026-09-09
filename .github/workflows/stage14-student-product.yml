@@ -39,7 +39,7 @@ jobs:
           npm run build --prefix apps/student-web
 
   student-browser:
-    name: Real Chromium · auth/access · 390px
+    name: Real Chromium · auth/access/curriculum · 390px
     needs: student-quality
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -82,15 +82,18 @@ jobs:
           npm run build --prefix apps/student-web
       - name: Apply clean PostgreSQL migrations
         run: npm run db:migrate --prefix apps/api
-      - name: Verify Student curriculum contract
+      - name: Verify Student curriculum and Reader contracts
         working-directory: apps/api
-        run: node --import tsx --test tests/integration/student-curriculum.integration.test.ts
+        run: >-
+          node --import tsx --test --test-concurrency=1
+          tests/integration/student-curriculum.integration.test.ts
+          tests/integration/student-reader.integration.test.ts
       - name: Seed activation code
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "insert into full_access_codes (code, entitlement_duration_days) values ('654321', 365);"
       - name: Create recovery-support Admin fixture
         env:
           ADMIN_BOOTSTRAP_IDENTIFIER: stage14-admin
-          ADMIN_BOOTSTRAP_PASSWORD: Stage14AdminPass123!
+          ADMIN_BOOTSTRAP_PASSWORD: Stage14-${{ github.run_id }}-${{ github.run_attempt }}!
           ADMIN_BOOTSTRAP_DISPLAY_NAME: مدير اختبار الطالب
         run: npm run auth:create-admin --prefix apps/api
       - name: Install Chromium
