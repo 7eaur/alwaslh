@@ -233,6 +233,9 @@ test("Student curriculum is session-protected, entitlement-filtered and publicat
     assert.equal(JSON.stringify(allContent.json()).includes(otherClassLesson.id), true);
     assert.equal(JSON.stringify(allContent.json()).includes(draft.id), false);
   } finally {
+    await db.query("delete from student_entitlements where profile_id = any($1::uuid[])", [
+      [studentId, fullStudentId],
+    ]);
     await db.query("delete from lessons where id = any($1::uuid[])", [
       [unsectioned.id, sectioned.id, draft.id, otherClassLesson.id],
     ]);
