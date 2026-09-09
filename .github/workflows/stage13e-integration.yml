@@ -87,7 +87,7 @@ jobs:
       - name: Verify Stage13E database contract
         run: |
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname='ai_output_review_events' and relkind='r'")" = "1"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_type where typname='ai_output_review_action')" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_type where typname='ai_output_review_action'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_constraint where conname in ('ai_output_review_events_output_revision_unique','ai_output_review_events_payload_shape','ai_output_review_events_note_length','ai_output_review_events_reject_note_required')")" = "4"
 
       - name: Run Stage13E Backend authority regressions
@@ -131,7 +131,7 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_execution_attempts a join ai_job_units u on u.id=a.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_JOB_TYPE' and u.position = 0")" = "51"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_output_review_events e join ai_outputs o on o.id=e.ai_output_id join ai_job_units u on u.id=o.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_JOB_TYPE' and u.position = 0")" = "101"
           test "$(psql "$DATABASE_URL" -Atqc "select e.action::text from ai_output_review_events e join ai_outputs o on o.id=e.ai_output_id join ai_job_units u on u.id=o.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_JOB_TYPE' and u.position = 0 order by e.revision desc limit 1")" = "edit"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type = '$STAGE13E_E2E_RACE_JOB_TYPE' and status = 'completed')" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type = '$STAGE13E_E2E_RACE_JOB_TYPE' and status = 'completed'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_outputs o join ai_job_units u on u.id=o.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_RACE_JOB_TYPE'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_output_review_events e join ai_outputs o on o.id=e.ai_output_id join ai_job_units u on u.id=o.job_unit_id join ai_jobs j on j.id=u.job_id where j.job_type = '$STAGE13E_E2E_RACE_JOB_TYPE'")" = "0"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type = '$STAGE13E_E2E_PAGINATION_JOB_TYPE' and status = 'completed'")" = "1"
