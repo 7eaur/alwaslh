@@ -11,16 +11,32 @@ if (!databaseUrl) throw new Error("DATABASE_URL is required for Student curricul
 
 const origin = "http://127.0.0.1:5174";
 
+type TestDatabase = ReturnType<typeof createDatabase>;
+
+async function createStudentDevice(db: TestDatabase, profileId: string): Promise<string> {
+  const keyMaterial = `stage14-device-${crypto.randomUUID()}`;
+  const rows = await db.query<{ id: string }>(
+    `insert into student_devices (profile_id, public_key_spki, public_key_sha256, label)
+     values ($1, $2, $3, 'Stage14 curriculum integration fixture')
+     returning id`,
+    [profileId, `fixture-${keyMaterial}`.padEnd(96, "x"), hashToken(keyMaterial)],
+  );
+  const id = rows[0]?.id;
+  assert.ok(id);
+  return id;
+}
+
 async function sessionCookie(
-  db: ReturnType<typeof createDatabase>,
+  db: TestDatabase,
   cookieName: string,
   profileId: string,
+  deviceId: string | null = null,
 ): Promise<string> {
   const token = `stage14-${crypto.randomUUID()}-${crypto.randomUUID()}`;
   await db.query(
-    `insert into auth_sessions (profile_id, token_hash_sha256, expires_at)
-     values ($1, $2, now() + interval '1 hour')`,
-    [profileId, hashToken(token)],
+    `insert into auth_sessions (profile_id, token_hash_sha256, device_id, expires_at)
+     values ($1, $2, $3, now() + interval '1 hour')`,
+    [profileId, hashToken(token), deviceId],
   );
   return `${cookieName}=${encodeURIComponent(token)}`;
 }
@@ -152,57 +168,71 @@ test("Student curriculum is session-protected, entitlement-filtered and publicat
     [fullStudentId],
   );
 
-  const studentCookie = await sessionCookie(db, config.SESSION_COOKIE_NAME, studentId);
-  const fullStudentCookie = await sessionCookie(db, config.SESSION_COOKIE_NAME, fullStudentId);
+  const studentDeviceId = await createStudentDevice(db, studentId);
+  const fullStudentDeviceId = await createStudentDevice(db, fullStudentId);
+  const studentCookie = await sessionCookie(db, config.SESSION_COOKIE_NAME, studentId, studentDeviceId);
+  const fullStudentCookie = await sessionCookie(
+    db,
+    config.SESSION_COOKIE_NAME,
+    fullStudentId,
+    fullStudentDeviceId,
+  );
   const adminCookie = await sessionCookie(db, config.SESSION_COOKIE_NAME, adminId);
   const app = buildApp({ config, database: db });
 
-  const unauthenticated = await app.inject({ method: "GET", url: "/v1/student/curriculum" });
-  assert.equal(unauthenticated.statusCode, 401);
+  try {
+    const unauthenticated = await app.inject({ method: "GET", url: "/v1/student/curriculum" });
+    assert.equal(unauthenticated.statusCode, 401);
 
-  const adminRejected = await app.inject({
-    method: "GET",
-    url: "/v1/student/curriculum",
-    headers: { cookie: adminCookie },
-  });
-  assert.equal(adminRejected.statusCode, 403);
+    const adminRejected = await app.inject({
+      method: "GET",
+      url: "/v1/student/curriculum",
+      headers: { cookie: adminCookie },
+    });
+    assert.equal(adminRejected.statusCode, 403);
 
-  const limited = await app.inject({
-    method: "GET",
-    url: "/v1/student/curriculum",
-    headers: { cookie: studentCookie },
-  });
-  assert.equal(limited.statusCode, 200);
-  const limitedClasses = limited.json().curriculum.classes as Array<{
-    id: string;
-    subjects: Array<{
+    const limited = await app.inject({
+      method: "GET",
+      url: "/v1/student/curriculum",
+      headers: { cookie: studentCookie },
+    });
+    assert.equal(limited.statusCode, 200);
+    const limitedClasses = limited.json().curriculum.classes as Array<{
       id: string;
-      position: number;
-      unsectionedLessons: Array<{ id: string; title: string }>;
-      sections: Array<{ id: string; lessons: Array<{ id: string; title: string }> }>;
+      subjects: Array<{
+        id: string;
+        position: number;
+        unsectionedLessons: Array<{ id: string; title: string }>;
+        sections: Array<{ id: string; lessons: Array<{ id: string; title: string }> }>;
+      }>;
     }>;
-  }>;
-  assert.deepEqual(limitedClasses.map((record) => record.id), [classOne.id]);
-  assert.equal(limitedClasses[0]?.subjects[0]?.id, subject.id);
-  assert.equal(limitedClasses[0]?.subjects[0]?.position, 3);
-  assert.deepEqual(
-    limitedClasses[0]?.subjects[0]?.unsectionedLessons.map((lesson) => lesson.id),
-    [unsectioned.id],
-  );
-  assert.deepEqual(limitedClasses[0]?.subjects[0]?.sections[0]?.lessons.map((lesson) => lesson.id), [sectioned.id]);
-  assert.equal(JSON.stringify(limited.json()).includes(draft.id), false);
-  assert.equal(JSON.stringify(limited.json()).includes(otherClassLesson.id), false);
+    assert.deepEqual(limitedClasses.map((record) => record.id), [classOne.id]);
+    assert.equal(limitedClasses[0]?.subjects[0]?.id, subject.id);
+    assert.equal(limitedClasses[0]?.subjects[0]?.position, 3);
+    assert.deepEqual(
+      limitedClasses[0]?.subjects[0]?.unsectionedLessons.map((lesson) => lesson.id),
+      [unsectioned.id],
+    );
+    assert.deepEqual(
+      limitedClasses[0]?.subjects[0]?.sections[0]?.lessons.map((lesson) => lesson.id),
+      [sectioned.id],
+    );
+    assert.equal(JSON.stringify(limited.json()).includes(draft.id), false);
+    assert.equal(JSON.stringify(limited.json()).includes(otherClassLesson.id), false);
 
-  const allContent = await app.inject({
-    method: "GET",
-    url: "/v1/student/curriculum",
-    headers: { cookie: fullStudentCookie },
-  });
-  assert.equal(allContent.statusCode, 200);
-  const allClassIds = (allContent.json().curriculum.classes as Array<{ id: string }>).map((record) => record.id);
-  assert.deepEqual(allClassIds, [classTwo.id, classOne.id]);
-  assert.equal(JSON.stringify(allContent.json()).includes(otherClassLesson.id), true);
-  assert.equal(JSON.stringify(allContent.json()).includes(draft.id), false);
-
-  await app.close();
+    const allContent = await app.inject({
+      method: "GET",
+      url: "/v1/student/curriculum",
+      headers: { cookie: fullStudentCookie },
+    });
+    assert.equal(allContent.statusCode, 200);
+    const allClassIds = (allContent.json().curriculum.classes as Array<{ id: string }>).map(
+      (record) => record.id,
+    );
+    assert.deepEqual(allClassIds, [classTwo.id, classOne.id]);
+    assert.equal(JSON.stringify(allContent.json()).includes(otherClassLesson.id), true);
+    assert.equal(JSON.stringify(allContent.json()).includes(draft.id), false);
+  } finally {
+    await app.close();
+  }
 });
