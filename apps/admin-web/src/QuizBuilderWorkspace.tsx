@@ -19,6 +19,7 @@ import {
   fetchQuiz,
   fetchQuizCandidates,
   fetchQuizzes,
+  fetchQuizVersionExport,
   publishQuiz,
   rejectQuizReview,
   removeQuizVersion,
@@ -112,7 +113,11 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
   const [quizDraft, setQuizDraft] = useState<QuizDraft>(emptyQuizDraft);
   const [versionEditor, setVersionEditor] = useState<VersionEditorState | null>(null);
   const [candidates, setCandidates] = useState<QuizQuestionCandidate[]>([]);
-  const [candidatePagination, setCandidatePagination] = useState({ total: 0, limit: CANDIDATE_PAGE_SIZE, offset: 0 });
+  const [candidatePagination, setCandidatePagination] = useState({
+    total: 0,
+    limit: CANDIDATE_PAGE_SIZE,
+    offset: 0,
+  });
   const [candidateSearch, setCandidateSearch] = useState("");
   const [candidateOffset, setCandidateOffset] = useState(0);
   const [candidateState, setCandidateState] = useState<"idle" | "loading" | "ready" | "error">("idle");
@@ -260,7 +265,12 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
   async function submitCreate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFeedback(null);
-    if (!quizDraft.title.trim() || !quizDraft.classId || !quizDraft.subjectId || quizDraft.lessonIds.length === 0) {
+    if (
+      !quizDraft.title.trim() ||
+      !quizDraft.classId ||
+      !quizDraft.subjectId ||
+      quizDraft.lessonIds.length === 0
+    ) {
       setFeedback({ kind: "error", text: "اكتب عنوان الاختبار وحدد الصف والمادة ودرسًا واحدًا على الأقل." });
       return;
     }
@@ -276,7 +286,10 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
       });
       setCreateOpen(false);
       setQuizDraft(emptyQuizDraft);
-      setFeedback({ kind: "success", text: "تم إنشاء الاختبار كمسودة. أضف نموذجًا من الأسئلة المنشورة قبل المراجعة." });
+      setFeedback({
+        kind: "success",
+        text: "تم إنشاء الاختبار كمسودة. أضف نموذجًا من الأسئلة المنشورة قبل المراجعة.",
+      });
       await refreshAfterMutation(created.quizId);
     } catch (cause) {
       if (isMissingSessionError(cause)) onSessionExpired();
@@ -409,8 +422,7 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
     }
   }
 
-  async function searchCandidates(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function searchCandidates() {
     if (!detail) return;
     setCandidateOffset(0);
     await loadCandidates(detail.quiz.id, candidateSearch, 0);
@@ -420,6 +432,42 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
     if (!detail) return;
     setCandidateOffset(nextOffset);
     await loadCandidates(detail.quiz.id, candidateSearch, nextOffset);
+  }
+
+  async function exportVersion(versionId: string, format: "csv" | "print") {
+    if (!detail) return;
+    const printWindow = format === "print" ? window.open("", "_blank") : null;
+    setMutationState("saving");
+    setFeedback(null);
+    try {
+      const bundle = await fetchQuizVersionExport(detail.quiz.id, versionId);
+      if (format === "csv") {
+        const blob = new Blob([bundle.csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${bundle.filenameBase}.csv`;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        setFeedback({ kind: "success", text: "تم تجهيز ملف Excel CSV من النموذج المحدد." });
+      } else {
+        if (!printWindow) throw new Error("print window unavailable");
+        printWindow.document.open();
+        printWindow.document.write(bundle.printHtml);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        setFeedback({ kind: "success", text: "فُتحت نسخة الطباعة؛ يمكن طباعتها أو حفظها PDF." });
+      }
+    } catch (cause) {
+      printWindow?.close();
+      if (isMissingSessionError(cause)) onSessionExpired();
+      else setFeedback({ kind: "error", text: messageFor(cause) });
+    } finally {
+      setMutationState("idle");
+    }
   }
 
   return (
@@ -433,7 +481,12 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
           </p>
         </div>
         <div className="qz-header-actions">
-          <button className="secondary-button" type="button" onClick={() => void loadList()} disabled={listState === "loading"}>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => void loadList()}
+            disabled={listState === "loading"}
+          >
             تحديث
           </button>
           <button
@@ -500,7 +553,9 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
           <span>الحالة</span>
           <select
             value={filters.status}
-            onChange={(event) => setFilters((current) => ({ ...current, status: event.target.value as ListFilters["status"] }))}
+            onChange={(event) =>
+              setFilters((current) => ({ ...current, status: event.target.value as ListFilters["status"] }))
+            }
           >
             <option value="">كل الحالات</option>
             <option value="draft">مسودة</option>
@@ -522,7 +577,9 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
                 <span>عنوان الاختبار</span>
                 <input
                   value={quizDraft.title}
-                  onChange={(event) => setQuizDraft((current) => ({ ...current, title: event.target.value }))}
+                  onChange={(event) =>
+                    setQuizDraft((current) => ({ ...current, title: event.target.value }))
+                  }
                   maxLength={500}
                   required
                 />
@@ -531,7 +588,9 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
                 <span>الوصف</span>
                 <textarea
                   value={quizDraft.description}
-                  onChange={(event) => setQuizDraft((current) => ({ ...current, description: event.target.value }))}
+                  onChange={(event) =>
+                    setQuizDraft((current) => ({ ...current, description: event.target.value }))
+                  }
                   rows={3}
                   maxLength={4000}
                 />
@@ -563,7 +622,11 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
                 <select
                   value={quizDraft.subjectId}
                   onChange={(event) =>
-                    setQuizDraft((current) => ({ ...current, subjectId: event.target.value, lessonIds: [] }))
+                    setQuizDraft((current) => ({
+                      ...current,
+                      subjectId: event.target.value,
+                      lessonIds: [],
+                    }))
                   }
                   disabled={!quizDraft.classId}
                   required
@@ -630,7 +693,9 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
             <span className="count-pill">{pagination.total}</span>
           </div>
 
-          {listState === "loading" ? <StatePanel title="جارٍ تحميل الاختبارات" body="نقرأ الحالة الحالية من الخادم." /> : null}
+          {listState === "loading" ? (
+            <StatePanel title="جارٍ تحميل الاختبارات" body="نقرأ الحالة الحالية من الخادم." />
+          ) : null}
           {listState === "error" ? (
             <StatePanel
               title="تعذر تحميل الاختبارات"
@@ -691,8 +756,12 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
         </section>
 
         <aside className="qz-detail-panel" aria-label="تفاصيل الاختبار">
-          {detailState === "idle" ? <StatePanel title="اختر اختبارًا" body="افتح اختبارًا لعرض النماذج وسجل القرارات." /> : null}
-          {detailState === "loading" ? <StatePanel title="جارٍ تحميل الاختبار" body="نقرأ النماذج من الخادم." /> : null}
+          {detailState === "idle" ? (
+            <StatePanel title="اختر اختبارًا" body="افتح اختبارًا لعرض النماذج وسجل القرارات." />
+          ) : null}
+          {detailState === "loading" ? (
+            <StatePanel title="جارٍ تحميل الاختبار" body="نقرأ النماذج من الخادم." />
+          ) : null}
           {detailState === "error" ? <StatePanel title="تعذر تحميل الاختبار" body={detailError} /> : null}
           {detailState === "ready" && detail ? (
             <QuizDetail
@@ -703,6 +772,7 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
               onAddVersion={() => void openVersionEditor()}
               onEditVersion={(version) => void openVersionEditor(version)}
               onRemoveVersion={(versionId) => void deleteVersion(versionId)}
+              onExport={(versionId, format) => void exportVersion(versionId, format)}
               onSubmit={() => void lifecycle("submit")}
               onPublish={() => void lifecycle("publish")}
               onReject={() => void lifecycle("reject")}
@@ -724,7 +794,9 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
                 <input
                   value={versionEditor.label}
                   onChange={(event) =>
-                    setVersionEditor((current) => (current ? { ...current, label: event.target.value } : current))
+                    setVersionEditor((current) =>
+                      current ? { ...current, label: event.target.value } : current,
+                    )
                   }
                   disabled={versionEditor.mode === "replace"}
                   maxLength={200}
@@ -747,7 +819,7 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
               <strong>{versionEditor.selected.length} سؤال محدد</strong>
             </div>
 
-            <form className="qz-candidate-search" onSubmit={searchCandidates}>
+            <div className="qz-candidate-search">
               <label>
                 <span>بحث في الأسئلة المنشورة</span>
                 <input
@@ -756,15 +828,30 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
                   placeholder="ابحث في نص السؤال"
                 />
               </label>
-              <button className="secondary-button" type="submit" disabled={candidateState === "loading"}>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={candidateState === "loading"}
+                onClick={() => void searchCandidates()}
+              >
                 بحث
               </button>
-            </form>
+            </div>
 
-            {candidateState === "loading" ? <StatePanel title="جارٍ تحميل الأسئلة" body="نقرأ فقط revisions المنشورة المطابقة للدروس." /> : null}
-            {candidateState === "error" ? <StatePanel title="تعذر تحميل الأسئلة" body={candidateError} /> : null}
+            {candidateState === "loading" ? (
+              <StatePanel
+                title="جارٍ تحميل الأسئلة"
+                body="نقرأ فقط revisions المنشورة المطابقة للدروس."
+              />
+            ) : null}
+            {candidateState === "error" ? (
+              <StatePanel title="تعذر تحميل الأسئلة" body={candidateError} />
+            ) : null}
             {candidateState === "ready" && candidates.length === 0 ? (
-              <StatePanel title="لا توجد أسئلة منشورة مطابقة" body="انشر أسئلة مناسبة في بنك الأسئلة أو غيّر البحث." />
+              <StatePanel
+                title="لا توجد أسئلة منشورة مطابقة"
+                body="انشر أسئلة مناسبة في بنك الأسئلة أو غيّر البحث."
+              />
             ) : null}
             {candidateState === "ready" && candidates.length > 0 ? (
               <div className="qz-candidate-list" aria-label="الأسئلة المنشورة المتاحة">
@@ -773,13 +860,23 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
                     (item) => item.questionBankRevisionId === candidate.revisionId,
                   );
                   return (
-                    <label className={`qz-candidate-card${checked ? " is-selected" : ""}`} key={candidate.revisionId}>
-                      <input type="checkbox" checked={checked} onChange={() => toggleCandidate(candidate)} />
+                    <label
+                      className={`qz-candidate-card${checked ? " is-selected" : ""}`}
+                      key={candidate.revisionId}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCandidate(candidate)}
+                      />
                       <span className="qz-candidate-body">
                         <strong>{candidate.prompt}</strong>
                         <small>
-                          {typeLabel(candidate.type)} · {difficultyLabel(candidate.difficulty)} · revision {candidate.revisionNumber}
-                          {candidate.sourcePages.length > 0 ? ` · ص ${candidate.sourcePages.join("، ")}` : ""}
+                          {typeLabel(candidate.type)} · {difficultyLabel(candidate.difficulty)} · revision{" "}
+                          {candidate.revisionNumber}
+                          {candidate.sourcePages.length > 0
+                            ? ` · ص ${candidate.sourcePages.join("، ")}`
+                            : ""}
                         </small>
                       </span>
                     </label>
@@ -793,7 +890,9 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
                 className="secondary-button small-button"
                 type="button"
                 disabled={!candidateCanPrevious || candidateState === "loading"}
-                onClick={() => void changeCandidatePage(Math.max(0, candidateOffset - CANDIDATE_PAGE_SIZE))}
+                onClick={() =>
+                  void changeCandidatePage(Math.max(0, candidateOffset - CANDIDATE_PAGE_SIZE))
+                }
               >
                 السابق
               </button>
@@ -809,7 +908,11 @@ export function QuizBuilderWorkspace({ onSessionExpired }: Props) {
             </nav>
 
             <div className="qz-form-actions">
-              <button className="secondary-button" type="button" onClick={() => setVersionEditor(null)}>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setVersionEditor(null)}
+              >
                 إلغاء
               </button>
               <button className="primary-button" type="submit" disabled={mutationState === "saving"}>
@@ -831,6 +934,7 @@ function QuizDetail({
   onAddVersion,
   onEditVersion,
   onRemoveVersion,
+  onExport,
   onSubmit,
   onPublish,
   onReject,
@@ -843,6 +947,7 @@ function QuizDetail({
   onAddVersion: () => void;
   onEditVersion: (version: QuizBuilderVersion) => void;
   onRemoveVersion: (versionId: string) => void;
+  onExport: (versionId: string, format: "csv" | "print") => void;
   onSubmit: () => void;
   onPublish: () => void;
   onReject: () => void;
@@ -918,31 +1023,68 @@ function QuizDetail({
           <h3>النماذج</h3>
           {quiz.status === "published" ? <small>snapshots ثابتة بعد النشر</small> : null}
         </div>
-        {detail.versions.length === 0 ? <StatePanel title="لا توجد نماذج" body="أضف نموذجًا واحدًا على الأقل قبل المراجعة." /> : null}
+        {detail.versions.length === 0 ? (
+          <StatePanel title="لا توجد نماذج" body="أضف نموذجًا واحدًا على الأقل قبل المراجعة." />
+        ) : null}
         {detail.versions.map((version) => (
           <article className="qz-version-card" key={version.id}>
             <div className="qz-version-heading">
               <div>
                 <strong>{version.label}</strong>
-                <small>النموذج {version.versionNumber} · {version.questions.length} سؤال</small>
+                <small>
+                  النموذج {version.versionNumber} · {version.questions.length} سؤال
+                </small>
               </div>
               {quiz.status === "draft" ? (
                 <div className="qz-version-actions">
-                  <button className="secondary-button small-button" type="button" onClick={() => onEditVersion(version)} disabled={busy}>
+                  <button
+                    className="secondary-button small-button"
+                    type="button"
+                    onClick={() => onEditVersion(version)}
+                    disabled={busy}
+                  >
                     تعديل الأسئلة
                   </button>
-                  <button className="danger-button small-button" type="button" onClick={() => onRemoveVersion(version.id)} disabled={busy}>
+                  <button
+                    className="danger-button small-button"
+                    type="button"
+                    onClick={() => onRemoveVersion(version.id)}
+                    disabled={busy}
+                  >
                     حذف
                   </button>
                 </div>
-              ) : null}
+              ) : (
+                <div className="qz-version-actions" aria-label={`تصدير ${version.label}`}>
+                  <button
+                    className="secondary-button small-button"
+                    type="button"
+                    onClick={() => onExport(version.id, "csv")}
+                    disabled={busy}
+                  >
+                    Excel CSV
+                  </button>
+                  <button
+                    className="secondary-button small-button"
+                    type="button"
+                    onClick={() => onExport(version.id, "print")}
+                    disabled={busy}
+                  >
+                    طباعة / PDF
+                  </button>
+                </div>
+              )}
             </div>
             <ol className="qz-version-questions">
               {version.questions.map((question) => (
                 <li key={question.id}>
                   <strong>{question.prompt}</strong>
                   <small>
-                    {question.type === "multiple_choice" ? "اختيار متعدد" : question.type === "true_false" ? "صح / خطأ" : "مباشر"}
+                    {question.type === "multiple_choice"
+                      ? "اختيار متعدد"
+                      : question.type === "true_false"
+                        ? "صح / خطأ"
+                        : "مباشر"}
                     {question.sourcePage ? ` · ص ${question.sourcePage}` : ""}
                   </small>
                 </li>
