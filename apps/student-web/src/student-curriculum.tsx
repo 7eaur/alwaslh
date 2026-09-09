@@ -1,17 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ApiRequestError,
+  getStudentLessonReader,
   isMissingSessionError,
   listStudentCurriculum,
+  studentAssetContentUrl,
   type StudentCurriculumCatalog,
   type StudentCurriculumClass,
   type StudentCurriculumLesson,
   type StudentCurriculumSubject,
+  type StudentLessonReader,
+  type StudentReaderAsset,
 } from "./auth-api";
 
 type CurriculumState =
   | { status: "loading" }
   | { status: "ready"; catalog: StudentCurriculumCatalog }
+  | { status: "offline" }
+  | { status: "error"; message: string };
+
+type ReaderState =
+  | { status: "loading" }
+  | { status: "ready"; reader: StudentLessonReader }
   | { status: "offline" }
   | { status: "error"; message: string };
 
@@ -27,22 +37,264 @@ function lessonCount(subject: StudentCurriculumSubject): number {
   );
 }
 
-function LessonRow({ lesson, index }: { lesson: StudentCurriculumLesson; index: number }) {
-  return (
-    <article className="lesson-row" data-lesson-id={lesson.id}>
-      <span className="lesson-number" aria-hidden="true">
-        {String(index + 1).padStart(2, "0")}
-      </span>
-      <div className="lesson-copy">
-        <strong>{lesson.title}</strong>
-        {lesson.summary ? <p>{lesson.summary}</p> : <p className="lesson-muted">لا يوجد ملخص منشور لهذا الدرس بعد.</p>}
+function normalizeSearch(value: string): string {
+  return value.trim().toLocaleLowerCase("ar");
+}
+
+function ReaderMedia({ asset }: { asset: StudentReaderAsset }) {
+  const [failed, setFailed] = useState(false);
+  const [retryVersion, setRetryVersion] = useState(0);
+  const isImage = asset.mimeType.startsWith("image/");
+  const pageLabel = asset.sourcePageNumber ? `صفحة ${asset.sourcePageNumber}` : `محتوى ${asset.position + 1}`;
+
+  if (!isImage) {
+    return (
+      <div className="reader-media-unsupported" role="status">
+        <strong>{pageLabel}</strong>
+        <p>هذا النوع من الوسائط ({asset.mimeType}) غير مدعوم في Reader الحالي.</p>
       </div>
-      <span className="lesson-status">منشور</span>
-    </article>
+    );
+  }
+
+  if (failed) {
+    return (
+      <div className="reader-media-error" role="alert">
+        <strong>تعذر تحميل {pageLabel}</strong>
+        <p>قد يكون الاتصال انقطع أو أن الملف لم يعد متاحًا. لن نعرض بديلًا قديمًا على أنه حديث.</p>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={() => {
+            setFailed(false);
+            setRetryVersion((current) => current + 1);
+          }}
+        >
+          إعادة تحميل الصفحة
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <figure className="reader-media">
+      <img
+        src={`${studentAssetContentUrl(asset.id)}?retry=${retryVersion}`}
+        alt={pageLabel}
+        width={asset.width ?? undefined}
+        height={asset.height ?? undefined}
+        loading="lazy"
+        onError={() => setFailed(true)}
+      />
+      <figcaption>{pageLabel}</figcaption>
+    </figure>
   );
 }
 
-function SubjectLessons({ subject }: { subject: StudentCurriculumSubject }) {
+function StudentLessonReaderPanel({
+  lesson,
+  online,
+  onBack,
+  onSessionExpired,
+}: {
+  lesson: StudentCurriculumLesson;
+  online: boolean;
+  onBack: () => void;
+  onSessionExpired: () => void;
+}) {
+  const [state, setState] = useState<ReaderState>({ status: "loading" });
+  const [query, setQuery] = useState("");
+  const [speaking, setSpeaking] = useState(false);
+
+  async function loadReader() {
+    if (!online) {
+      setState({ status: "offline" });
+      return;
+    }
+    setState({ status: "loading" });
+    try {
+      setState({ status: "ready", reader: await getStudentLessonReader(lesson.id) });
+    } catch (error) {
+      if (isMissingSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setState({ status: "error", message: requestMessage(error) });
+    }
+  }
+
+  useEffect(() => {
+    setQuery("");
+    void loadReader();
+  }, [lesson.id, online]);
+
+  useEffect(
+    () => () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
+    },
+    [],
+  );
+
+  const normalizedQuery = normalizeSearch(query);
+  const reader = state.status === "ready" ? state.reader : null;
+  const readableText = reader
+    ? [reader.lesson.summary, ...reader.assets.map((asset) => asset.text)].filter(
+        (value): value is string => Boolean(value?.trim()),
+      )
+    : [];
+  const speechSupported =
+    typeof window !== "undefined" &&
+    "speechSynthesis" in window &&
+    typeof window.SpeechSynthesisUtterance === "function";
+  const visibleAssets = reader
+    ? normalizedQuery
+      ? reader.assets.filter((asset) => normalizeSearch(asset.text ?? "").includes(normalizedQuery))
+      : reader.assets
+    : [];
+
+  function toggleSpeech() {
+    if (!speechSupported || readableText.length === 0) return;
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(readableText.join("\n\n"));
+    utterance.lang = "ar";
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    setSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  }
+
+  return (
+    <section className="reader-panel" aria-labelledby="reader-title">
+      <div className="reader-toolbar">
+        <button className="text-button reader-back" type="button" onClick={onBack}>
+          العودة إلى دروس المادة
+        </button>
+        {state.status === "ready" ? (
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={toggleSpeech}
+            disabled={!speechSupported || readableText.length === 0}
+            aria-pressed={speaking}
+          >
+            {speaking ? "إيقاف الاستماع" : speechSupported ? "استماع للنص" : "الاستماع غير مدعوم"}
+          </button>
+        ) : null}
+      </div>
+
+      <header className="reader-heading">
+        <p className="eyebrow">قارئ الدرس</p>
+        <h3 id="reader-title">{lesson.title}</h3>
+        {lesson.summary ? <p>{lesson.summary}</p> : null}
+      </header>
+
+      {state.status === "loading" ? (
+        <div className="reader-skeleton" role="status" aria-live="polite" aria-busy="true">
+          <span className="sr-only">جاري تحميل الدرس</span>
+          <span />
+          <span />
+        </div>
+      ) : state.status === "offline" ? (
+        <div className="form-alert is-warning" role="status">
+          Reader الحالي يحتاج اتصالًا للتحقق من صلاحية الدرس والوسائط. القراءة المخزنة دون اتصال ستُنفذ في Stage16 بعقد مزامنة وصلاحية صريح.
+        </div>
+      ) : state.status === "error" ? (
+        <div className="access-error" role="alert">
+          <div className="form-alert is-danger">{state.message}</div>
+          <button className="secondary-button" type="button" onClick={() => void loadReader()} disabled={!online}>
+            إعادة محاولة فتح الدرس
+          </button>
+        </div>
+      ) : (
+        <>
+          {state.reader.assets.length > 0 && readableText.length > 0 ? (
+            <div className="reader-search">
+              <label htmlFor={`reader-search-${lesson.id}`}>بحث داخل النص المعتمد</label>
+              <input
+                id={`reader-search-${lesson.id}`}
+                className="text-input"
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="اكتب كلمة أو عبارة"
+              />
+              <p className="field-hint">البحث يعمل على نص OCR المنشور والموثوق فقط، ولا يستخدم نصوصًا قيد المراجعة.</p>
+            </div>
+          ) : null}
+
+          {state.reader.assets.length === 0 ? (
+            <div className="empty-state">
+              <strong>لا توجد صفحات منشورة لهذا الدرس بعد</strong>
+              <p>يبقى ملخص الدرس ظاهرًا، لكن Reader لا يعرض مسودات أو وسائط غير جاهزة.</p>
+            </div>
+          ) : normalizedQuery && visibleAssets.length === 0 ? (
+            <div className="empty-state" role="status">
+              <strong>لا توجد نتيجة في النص المعتمد</strong>
+              <p>جرّب كلمة أخرى أو امسح البحث للعودة إلى جميع صفحات الدرس.</p>
+            </div>
+          ) : (
+            <div className="reader-pages" aria-label={`محتوى ${lesson.title}`}>
+              {visibleAssets.map((asset) => (
+                <article className="reader-page" key={asset.id} data-reader-asset-id={asset.id}>
+                  <ReaderMedia asset={asset} />
+                  {asset.text ? (
+                    <div className="reader-text">
+                      <p className="eyebrow">النص المعتمد</p>
+                      <p>{asset.text}</p>
+                    </div>
+                  ) : (
+                    <div className="reader-text is-muted" role="status">
+                      لا يوجد نص OCR معتمد لهذه الصفحة. الصورة المنشورة تبقى المصدر المرئي.
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+function LessonRow({
+  lesson,
+  index,
+  onOpen,
+}: {
+  lesson: StudentCurriculumLesson;
+  index: number;
+  onOpen: (lesson: StudentCurriculumLesson) => void;
+}) {
+  return (
+    <button className="lesson-row" type="button" data-lesson-id={lesson.id} onClick={() => onOpen(lesson)}>
+      <span className="lesson-number" aria-hidden="true">
+        {String(index + 1).padStart(2, "0")}
+      </span>
+      <span className="lesson-copy">
+        <strong>{lesson.title}</strong>
+        {lesson.summary ? (
+          <span className="lesson-summary">{lesson.summary}</span>
+        ) : (
+          <span className="lesson-summary lesson-muted">لا يوجد ملخص منشور لهذا الدرس بعد.</span>
+        )}
+      </span>
+      <span className="lesson-status">فتح الدرس</span>
+    </button>
+  );
+}
+
+function SubjectLessons({
+  subject,
+  onOpenLesson,
+}: {
+  subject: StudentCurriculumSubject;
+  onOpenLesson: (lesson: StudentCurriculumLesson) => void;
+}) {
   let lessonIndex = 0;
   return (
     <div className="subject-lessons" aria-label={`دروس ${subject.name}`}>
@@ -51,7 +303,7 @@ function SubjectLessons({ subject }: { subject: StudentCurriculumSubject }) {
           {subject.unsectionedLessons.map((lesson) => {
             const currentIndex = lessonIndex;
             lessonIndex += 1;
-            return <LessonRow key={lesson.id} lesson={lesson} index={currentIndex} />;
+            return <LessonRow key={lesson.id} lesson={lesson} index={currentIndex} onOpen={onOpenLesson} />;
           })}
         </div>
       ) : null}
@@ -70,7 +322,7 @@ function SubjectLessons({ subject }: { subject: StudentCurriculumSubject }) {
             {section.lessons.map((lesson) => {
               const currentIndex = lessonIndex;
               lessonIndex += 1;
-              return <LessonRow key={lesson.id} lesson={lesson} index={currentIndex} />;
+              return <LessonRow key={lesson.id} lesson={lesson} index={currentIndex} onOpen={onOpenLesson} />;
             })}
           </div>
         </section>
@@ -91,6 +343,7 @@ export function StudentCurriculumSection({
   const [state, setState] = useState<CurriculumState>({ status: "loading" });
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
+  const [selectedLesson, setSelectedLesson] = useState<StudentCurriculumLesson | null>(null);
 
   async function loadCurriculum() {
     if (!online) {
@@ -105,13 +358,23 @@ export function StudentCurriculumSection({
       setSelectedClassId((current) =>
         current && catalog.classes.some((record) => record.id === current) ? current : (firstClass?.id ?? null),
       );
-      const preferredClass =
-        catalog.classes.find((record) => record.id === selectedClassId) ?? firstClass ?? null;
+      const preferredClass = catalog.classes.find((record) => record.id === selectedClassId) ?? firstClass ?? null;
       setSelectedSubjectId((current) =>
         current && preferredClass?.subjects.some((subject) => subject.id === current)
           ? current
           : (preferredClass?.subjects[0]?.id ?? null),
       );
+      setSelectedLesson((current) => {
+        if (!current) return null;
+        const stillPublished = catalog.classes.some((classRecord) =>
+          classRecord.subjects.some(
+            (subject) =>
+              subject.unsectionedLessons.some((candidate) => candidate.id === current.id) ||
+              subject.sections.some((section) => section.lessons.some((candidate) => candidate.id === current.id)),
+          ),
+        );
+        return stillPublished ? current : null;
+      });
     } catch (error) {
       if (isMissingSessionError(error)) {
         onSessionExpired();
@@ -132,9 +395,7 @@ export function StudentCurriculumSection({
 
   const selectedSubject = useMemo<StudentCurriculumSubject | null>(() => {
     if (!selectedClass) return null;
-    return (
-      selectedClass.subjects.find((subject) => subject.id === selectedSubjectId) ?? selectedClass.subjects[0] ?? null
-    );
+    return selectedClass.subjects.find((subject) => subject.id === selectedSubjectId) ?? selectedClass.subjects[0] ?? null;
   }, [selectedClass, selectedSubjectId]);
 
   function chooseClass(classId: string) {
@@ -143,6 +404,12 @@ export function StudentCurriculumSection({
     if (!nextClass) return;
     setSelectedClassId(classId);
     setSelectedSubjectId(nextClass.subjects[0]?.id ?? null);
+    setSelectedLesson(null);
+  }
+
+  function chooseSubject(subjectId: string) {
+    setSelectedSubjectId(subjectId);
+    setSelectedLesson(null);
   }
 
   return (
@@ -224,7 +491,7 @@ export function StudentCurriculumSection({
                         type="button"
                         className={subject.id === selectedSubject?.id ? "is-active" : ""}
                         aria-pressed={subject.id === selectedSubject?.id}
-                        onClick={() => setSelectedSubjectId(subject.id)}
+                        onClick={() => chooseSubject(subject.id)}
                       >
                         <span>{subject.name}</span>
                         <small>{lessonCount(subject)} درس</small>
@@ -234,22 +501,33 @@ export function StudentCurriculumSection({
 
                   {selectedSubject ? (
                     <section className="subject-panel" aria-labelledby={`subject-${selectedSubject.id}`}>
-                      <div className="subject-heading">
-                        <div>
-                          <p className="eyebrow">المادة</p>
-                          <h3 id={`subject-${selectedSubject.id}`}>{selectedSubject.name}</h3>
-                          {selectedSubject.description ? <p>{selectedSubject.description}</p> : null}
-                        </div>
-                        <span className="subject-count">{lessonCount(selectedSubject)} درس منشور</span>
-                      </div>
-
-                      {lessonCount(selectedSubject) === 0 ? (
-                        <div className="empty-state">
-                          <strong>لا توجد دروس منشورة في هذه المادة بعد</strong>
-                          <p>سيظهر الدرس هنا فقط عندما تسمح به authority الحالية ويصبح منشورًا فعليًا.</p>
-                        </div>
+                      {selectedLesson ? (
+                        <StudentLessonReaderPanel
+                          lesson={selectedLesson}
+                          online={online}
+                          onBack={() => setSelectedLesson(null)}
+                          onSessionExpired={onSessionExpired}
+                        />
                       ) : (
-                        <SubjectLessons subject={selectedSubject} />
+                        <>
+                          <div className="subject-heading">
+                            <div>
+                              <p className="eyebrow">المادة</p>
+                              <h3 id={`subject-${selectedSubject.id}`}>{selectedSubject.name}</h3>
+                              {selectedSubject.description ? <p>{selectedSubject.description}</p> : null}
+                            </div>
+                            <span className="subject-count">{lessonCount(selectedSubject)} درس منشور</span>
+                          </div>
+
+                          {lessonCount(selectedSubject) === 0 ? (
+                            <div className="empty-state">
+                              <strong>لا توجد دروس منشورة في هذه المادة بعد</strong>
+                              <p>سيظهر الدرس هنا فقط عندما تسمح به authority الحالية ويصبح منشورًا فعليًا.</p>
+                            </div>
+                          ) : (
+                            <SubjectLessons subject={selectedSubject} onOpenLesson={setSelectedLesson} />
+                          )}
+                        </>
                       )}
                     </section>
                   ) : null}
