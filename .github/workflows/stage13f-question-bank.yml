@@ -8,7 +8,7 @@ on:
       - integration/stage13f-question-bank
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: stage13f-question-bank-${{ github.event.pull_request.number || github.ref }}
@@ -49,6 +49,19 @@ jobs:
           sudo apt-get install -y postgresql-client >/dev/null
       - name: Install API dependencies
         run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Apply one-time Stage13F Biome formatting
+        if: github.event_name == 'push' && github.ref_name == 'integration/stage13f-question-bank'
+        run: |
+          npx biome check --write src/question-bank/service.ts tests/integration/question-bank.integration.test.ts
+          if git diff --quiet -- src/question-bank/service.ts tests/integration/question-bank.integration.test.ts; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/question-bank/service.ts tests/integration/question-bank.integration.test.ts
+          git commit -m "style(stage13f): apply biome formatting"
+          git push origin HEAD:${GITHUB_REF_NAME}
+        working-directory: apps/api
       - name: Lint, typecheck, unit test and build
         run: |
           npm run lint --prefix apps/api
