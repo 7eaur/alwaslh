@@ -34,7 +34,13 @@ function correctAnswer(question: QuizBuilderQuestionView): string {
 }
 
 function safeFilename(value: string): string {
-  const normalized = value.trim().replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "-").replace(/\s+/g, " ");
+  const printable = Array.from(value)
+    .filter((character) => character.charCodeAt(0) >= 32)
+    .join("");
+  const normalized = printable
+    .trim()
+    .replace(/[\\/:*?"<>|]+/g, "-")
+    .replace(/\s+/g, " ");
   return normalized.slice(0, 120) || "quiz-version";
 }
 
