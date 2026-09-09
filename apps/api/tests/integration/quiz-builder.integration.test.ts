@@ -110,9 +110,7 @@ test("Stage13F Quiz Builder snapshots only published Question Bank revisions and
       () =>
         quizzes.addVersion(adminId, created.quizId, {
           label: "نموذج غير صالح",
-          questions: [
-            { questionBankItemId: draftOnly.itemId, questionBankRevisionId: draftOnly.revisionId },
-          ],
+          questions: [{ questionBankItemId: draftOnly.itemId, questionBankRevisionId: draftOnly.revisionId }],
         }),
       (error: unknown) => {
         assert.equal((error as { code?: string }).code, "CONFLICT");
