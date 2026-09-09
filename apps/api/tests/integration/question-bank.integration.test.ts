@@ -48,6 +48,7 @@ test("Stage13F Question Bank imports approved direct questions idempotently and 
   const studentId = studentRows[0]?.id;
   assert.ok(adminId && studentId);
   await auth.createCredential(adminId, `stage13f-admin-${suffix}`, "AdminPass123!");
+  await auth.createCredential(studentId, `stage13f-student-${suffix}`, "StudentPass123!");
 
   const classRows = await db.query<{ id: string }>(
     "insert into classes (slug, name) values ($1, 'الصف التجريبي') returning id",
