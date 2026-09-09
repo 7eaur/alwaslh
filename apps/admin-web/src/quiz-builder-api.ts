@@ -85,6 +85,12 @@ export interface QuizQuestionCandidateResponse {
   pagination: { total: number; limit: number; offset: number };
 }
 
+export interface QuizVersionExportBundle {
+  filenameBase: string;
+  csv: string;
+  printHtml: string;
+}
+
 function withQuery(path: string, values: Record<string, string | number | undefined>): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(values)) {
@@ -131,6 +137,10 @@ export function fetchQuizCandidates(
       offset: filters.offset,
     }),
   );
+}
+
+export function fetchQuizVersionExport(quizId: string, versionId: string): Promise<QuizVersionExportBundle> {
+  return adminApiRequest<QuizVersionExportBundle>(`/v1/admin/quizzes/${quizId}/versions/${versionId}/export`);
 }
 
 export function createQuiz(input: {
