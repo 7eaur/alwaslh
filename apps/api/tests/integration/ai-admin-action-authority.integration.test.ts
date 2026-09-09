@@ -133,7 +133,9 @@ test("Stage13E exposes authoritative job/review actions and strict review bodies
     attemptCount: 1,
     withOutput: true,
   });
-  assert.ok(review.outputId && reject.outputId && strict.outputId && failedOutput.outputId && retryingOutput.outputId);
+  assert.ok(
+    review.outputId && reject.outputId && strict.outputId && failedOutput.outputId && retryingOutput.outputId,
+  );
 
   const app = buildApp({ config, database: db });
   try {
