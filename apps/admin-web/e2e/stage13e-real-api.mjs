@@ -24,7 +24,7 @@ function unsafeHeaders() {
 
 export async function logoutRealAdminSession(page) {
   const response = await page.context().request.post(`${apiBaseUrl}/v1/auth/logout`, {
-    headers: unsafeHeaders(),
+    headers: { Origin: adminOrigin },
   });
   await parseJsonResponse(response, "Stage13E real-session logout");
 }
