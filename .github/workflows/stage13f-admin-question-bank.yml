@@ -98,9 +98,13 @@ jobs:
         run: |
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('question_bank_items','question_bank_revisions','question_bank_revision_lessons','question_bank_revision_sources','question_bank_ai_imports','question_bank_events') and relkind='r'")" = "6"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='question_bank_question_type' and e.enumlabel='direct'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_trigger where tgname='question_bank_regeneration_identity_guard' and not tgisinternal")" = "1"
       - name: Run Stage13F backend authority regression
         working-directory: apps/api
-        run: node --test --import tsx tests/integration/question-bank.integration.test.ts
+        run: |
+          node --test --import tsx tests/integration/question-bank.integration.test.ts
+          node --test --import tsx tests/integration/question-bank-regeneration.integration.test.ts
+          node --test --import tsx tests/integration/quiz-builder.integration.test.ts
       - name: Reset PostgreSQL for deterministic browser fixture
         run: |
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
