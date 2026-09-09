@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - integration/stage13e-ai-operations
+      - integration/stage13e-promotion
 
 permissions:
   contents: read
