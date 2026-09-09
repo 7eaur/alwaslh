@@ -22,6 +22,11 @@ async function openQuestionBank(page) {
   await expect(page.getByRole("heading", { name: "بنك الأسئلة", exact: true })).toBeVisible();
 }
 
+async function openQuizBuilder(page) {
+  await page.getByRole("button", { name: "الاختبارات والنماذج" }).click();
+  await expect(page.getByRole("heading", { name: "منشئ الاختبارات والنماذج", exact: true })).toBeVisible();
+}
+
 async function selectFixtureScope(panel) {
   await panel.getByLabel("الصف").selectOption({ label: "الصف التجريبي لبنك الأسئلة" });
   await panel.getByLabel("المادة").selectOption({ label: "العلوم التجريبية" });
@@ -72,7 +77,9 @@ test("Question Bank creates, reviews and publishes a manual direct question thro
   await expect(page.getByText("تم إنشاء السؤال كمسودة. لم يصل إلى النشر بعد.", { exact: true })).toBeVisible();
   const detail = page.locator(".qb-detail");
   await expect(detail.getByRole("heading", { name: "تفاصيل السؤال" })).toBeVisible();
-  await expect(detail.getByRole("heading", { name: "ما المقصود بالطاقة الحركية في السؤال اليدوي؟", exact: true })).toBeVisible();
+  await expect(
+    detail.getByRole("heading", { name: "ما المقصود بالطاقة الحركية في السؤال اليدوي؟", exact: true }),
+  ).toBeVisible();
   await detail.getByRole("button", { name: "إرسال للمراجعة" }).click();
   await expect(page.getByText("أُرسل السؤال للمراجعة.", { exact: true })).toBeVisible();
   await detail.getByRole("button", { name: "نشر النسخة" }).click();
@@ -84,7 +91,9 @@ test("Question Bank creates, reviews and publishes a manual direct question thro
   const search = page.getByRole("form", { name: "فلترة بنك الأسئلة" });
   await search.getByLabel("بحث في نص السؤال").fill("الطاقة الحركية");
   await search.getByRole("button", { name: "تطبيق" }).click();
-  await expect(page.locator(".qb-question-card").filter({ hasText: "ما المقصود بالطاقة الحركية في السؤال اليدوي؟" })).toBeVisible();
+  await expect(
+    page.locator(".qb-question-card").filter({ hasText: "ما المقصود بالطاقة الحركية في السؤال اليدوي؟" }),
+  ).toBeVisible();
 });
 
 test("Question Bank imports only the pre-approved AI fixture as a draft with provenance", async ({ page }) => {
@@ -100,7 +109,9 @@ test("Question Bank imports only the pre-approved AI fixture as a draft with pro
 
   await expect(page.getByText("تم استيراد 1 سؤال كمسودات قابلة للمراجعة.", { exact: true })).toBeVisible();
   const detail = page.locator(".qb-detail");
-  await expect(detail.getByRole("heading", { name: "ما التحول الرئيس للطاقة الموضح في المصدر؟", exact: true })).toBeVisible();
+  await expect(
+    detail.getByRole("heading", { name: "ما التحول الرئيس للطاقة الموضح في المصدر؟", exact: true }),
+  ).toBeVisible();
   const sourceEvidence = detail.locator(".qb-source-list article").filter({ hasText: "صفحة 1" });
   await expect(sourceEvidence).toBeVisible();
   await expect(sourceEvidence).toContainText("تحول الطاقة");
@@ -141,6 +152,62 @@ test("Question Bank stays within a 390px viewport", async ({ page }) => {
   const publishedCard = page.locator(".qb-question-card").filter({ hasText: "ما تعريف الطاقة في هذا الاختبار؟" });
   await expect(publishedCard).toBeVisible();
   await publishedCard.click();
+  const dimensions = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    documentWidth: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.viewport + 1);
+});
+
+test("Quiz Builder creates a model from published Question Bank revisions and publishes immutable snapshots", async ({
+  page,
+}) => {
+  await login(page);
+  await openQuizBuilder(page);
+
+  await page.getByRole("button", { name: "اختبار جديد" }).click();
+  const createEditor = page.locator(".qz-editor-panel").filter({ hasText: "إنشاء اختبار جديد" });
+  await expect(createEditor.getByRole("heading", { name: "إنشاء اختبار جديد" })).toBeVisible();
+  await createEditor.getByLabel("عنوان الاختبار").fill("اختبار الطاقة المنشور من منشئ الاختبارات");
+  await createEditor.getByLabel("الوصف").fill("اختبار متكامل يتحقق من snapshot منشورة من بنك الأسئلة.");
+  await selectFixtureScope(createEditor);
+  await createEditor.getByRole("button", { name: "حفظ كمسودة" }).click();
+
+  await expect(
+    page.getByText("تم إنشاء الاختبار كمسودة. أضف نموذجًا من الأسئلة المنشورة قبل المراجعة.", { exact: true }),
+  ).toBeVisible();
+  const detail = page.getByTestId("quiz-builder-detail");
+  await expect(detail.getByRole("heading", { name: "اختبار الطاقة المنشور من منشئ الاختبارات" })).toBeVisible();
+  await expect(detail.getByTestId("quiz-status")).toHaveText("مسودة");
+
+  await detail.getByRole("button", { name: "إضافة نموذج" }).click();
+  const versionEditor = page.locator(".qz-editor-panel").filter({ hasText: "إضافة نموذج اختبار" });
+  await expect(versionEditor.getByRole("heading", { name: "إضافة نموذج اختبار" })).toBeVisible();
+  const candidate = versionEditor.locator(".qz-candidate-card").filter({ hasText: "ما تعريف الطاقة في هذا الاختبار؟" });
+  await expect(candidate).toBeVisible();
+  await candidate.locator('input[type="checkbox"]').check();
+  await versionEditor.getByRole("button", { name: "إنشاء النموذج" }).click();
+
+  await expect(page.getByText("تم إنشاء نموذج الاختبار من revisions منشورة وثابتة.", { exact: true })).toBeVisible();
+  await expect(detail.locator(".qz-version-card").filter({ hasText: "ما تعريف الطاقة في هذا الاختبار؟" })).toBeVisible();
+
+  await detail.getByRole("button", { name: "إرسال للمراجعة" }).click();
+  await expect(page.getByText("أُرسل الاختبار للمراجعة.", { exact: true })).toBeVisible();
+  await expect(detail.getByTestId("quiz-status")).toHaveText("قيد المراجعة");
+  await detail.getByRole("button", { name: "نشر الاختبار" }).click();
+  await expect(
+    page.getByText("تم نشر الاختبار. أصبحت نماذجه snapshots غير قابلة للتعديل.", { exact: true }),
+  ).toBeVisible();
+  await expect(detail.getByTestId("quiz-status")).toHaveText("منشور");
+  await expect(detail.getByRole("button", { name: "إضافة نموذج" })).toHaveCount(0);
+  await expect(detail.getByRole("button", { name: "تعديل الأسئلة" })).toHaveCount(0);
+});
+
+test("Quiz Builder stays within a 390px viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page);
+  await openQuizBuilder(page);
+
   const dimensions = await page.evaluate(() => ({
     viewport: window.innerWidth,
     documentWidth: document.documentElement.scrollWidth,
