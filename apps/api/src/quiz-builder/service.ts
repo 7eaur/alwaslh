@@ -178,10 +178,20 @@ export class QuizBuilderService {
          and ($4::text is null or q.title ilike '%' || $4 || '%')
        order by q.created_at desc, q.id
        limit $5 offset $6`,
-      [filters.classId ?? null, filters.subjectId ?? null, filters.status ?? null, search, filters.limit, filters.offset],
+      [
+        filters.classId ?? null,
+        filters.subjectId ?? null,
+        filters.status ?? null,
+        search,
+        filters.limit,
+        filters.offset,
+      ],
     );
     const total = Number(rows[0]?.total_count ?? 0);
-    return { items: rows.map(asListItem), pagination: { total, limit: filters.limit, offset: filters.offset } };
+    return {
+      items: rows.map(asListItem),
+      pagination: { total, limit: filters.limit, offset: filters.offset },
+    };
   }
 
   async detail(quizId: string): Promise<QuizBuilderDetail> {
@@ -203,7 +213,12 @@ export class QuizBuilderService {
          where ql.quiz_id = $1 order by l.position, l.id`,
         [quizId],
       );
-      const versions = await tx.query<{ id: string; version_number: number; label: string; shuffle_options: boolean }>(
+      const versions = await tx.query<{
+        id: string;
+        version_number: number;
+        label: string;
+        shuffle_options: boolean;
+      }>(
         `select id, version_number, label, shuffle_options
          from quiz_versions where quiz_id = $1 order by version_number, id`,
         [quizId],
@@ -252,7 +267,12 @@ export class QuizBuilderService {
       const optionMap = new Map<string, QuizBuilderQuestionView["options"]>();
       for (const option of options) {
         const list = optionMap.get(option.question_id) ?? [];
-        list.push({ key: option.option_key, text: option.option_text, isCorrect: option.is_correct, position: option.position });
+        list.push({
+          key: option.option_key,
+          text: option.option_text,
+          isCorrect: option.is_correct,
+          position: option.position,
+        });
         optionMap.set(option.question_id, list);
       }
       const questionMap = new Map<string, QuizBuilderQuestionView[]>();
@@ -340,15 +360,21 @@ export class QuizBuilderService {
     const description = input.description?.trim() || null;
     await this.database.transaction(async (tx) => {
       await this.lockDraftQuiz(tx, quizId);
-      await tx.query(
-        `update quizzes set title = $2, description = $3, shuffle_versions = $4 where id = $1`,
-        [quizId, title, description, input.shuffleVersions ?? true],
-      );
+      await tx.query(`update quizzes set title = $2, description = $3, shuffle_versions = $4 where id = $1`, [
+        quizId,
+        title,
+        description,
+        input.shuffleVersions ?? true,
+      ]);
       await this.event(tx, quizId, null, "edit", actorProfileId, null);
     });
   }
 
-  async addVersion(actorProfileId: string, quizId: string, input: CreateQuizVersionInput): Promise<{ versionId: string }> {
+  async addVersion(
+    actorProfileId: string,
+    quizId: string,
+    input: CreateQuizVersionInput,
+  ): Promise<{ versionId: string }> {
     const label = normalizeText(input.label, "اسم النموذج");
     return this.database.transaction(async (tx) => {
       const quiz = await this.lockDraftQuiz(tx, quizId);
@@ -464,7 +490,8 @@ export class QuizBuilderService {
       );
       const quiz = rows[0];
       if (!quiz) throw new AppError("NOT_FOUND", "الاختبار غير موجود", 404);
-      if (quiz.status === "review") throw new AppError("CONFLICT", "أعد الاختبار من المراجعة قبل أرشفته", 409);
+      if (quiz.status === "review")
+        throw new AppError("CONFLICT", "أعد الاختبار من المراجعة قبل أرشفته", 409);
       await tx.query("update quizzes set status = 'archived' where id = $1", [quizId]);
     });
   }
@@ -480,11 +507,17 @@ export class QuizBuilderService {
     const quiz = rows[0];
     if (!quiz) throw new AppError("NOT_FOUND", "الاختبار غير موجود", 404);
     if (quiz.status !== "draft") throw new AppError("CONFLICT", "يمكن تعديل الاختبار وهو مسودة فقط", 409);
-    if (!quiz.class_id || !quiz.subject_id) throw new AppError("CONFLICT", "الاختبار القديم لا يملك نطاق البناء الجديد", 409);
+    if (!quiz.class_id || !quiz.subject_id)
+      throw new AppError("CONFLICT", "الاختبار القديم لا يملك نطاق البناء الجديد", 409);
     return quiz;
   }
 
-  private async assertScope(executor: QueryExecutor, classId: string, subjectId: string, lessonIds: readonly string[]) {
+  private async assertScope(
+    executor: QueryExecutor,
+    classId: string,
+    subjectId: string,
+    lessonIds: readonly string[],
+  ) {
     const offering = await executor.query<{ class_id: string }>(
       "select class_id from subject_class_links where class_id = $1 and subject_id = $2",
       [classId, subjectId],
@@ -494,7 +527,8 @@ export class QuizBuilderService {
       "select id from lessons where class_id = $1 and subject_id = $2 and id = any($3::uuid[])",
       [classId, subjectId, lessonIds],
     );
-    if (lessons.length !== lessonIds.length) throw new AppError("BAD_REQUEST", "أحد الدروس خارج نطاق الصف والمادة", 400);
+    if (lessons.length !== lessonIds.length)
+      throw new AppError("BAD_REQUEST", "أحد الدروس خارج نطاق الصف والمادة", 400);
   }
 
   private async replaceLessonLinks(executor: QueryExecutor, quizId: string, lessonIds: readonly string[]) {
@@ -516,7 +550,8 @@ export class QuizBuilderService {
     if (refs.length === 0) throw new AppError("BAD_REQUEST", "اختر سؤالًا واحدًا على الأقل للنموذج", 400);
     if (refs.length > 500) throw new AppError("BAD_REQUEST", "عدد أسئلة النموذج يتجاوز الحد المسموح", 400);
     const revisionIds = refs.map((ref) => ref.questionBankRevisionId);
-    if (new Set(revisionIds).size !== revisionIds.length) throw new AppError("BAD_REQUEST", "لا تكرر السؤال نفسه داخل النموذج", 400);
+    if (new Set(revisionIds).size !== revisionIds.length)
+      throw new AppError("BAD_REQUEST", "لا تكرر السؤال نفسه داخل النموذج", 400);
     const itemByRevision = new Map(refs.map((ref) => [ref.questionBankRevisionId, ref.questionBankItemId]));
     const bankRows = await executor.query<BankRevisionRow>(
       `select r.id as revision_id, r.item_id, r.revision_number, i.class_id, i.subject_id,
@@ -540,14 +575,22 @@ export class QuizBuilderService {
        where r.id = any($1::uuid[]) and r.status = 'published' and r.answer_status = 'known'`,
       [revisionIds],
     );
-    if (bankRows.length !== refs.length) throw new AppError("CONFLICT", "كل أسئلة النموذج يجب أن تكون منشورة وإجاباتها محسومة", 409);
+    if (bankRows.length !== refs.length)
+      throw new AppError("CONFLICT", "كل أسئلة النموذج يجب أن تكون منشورة وإجاباتها محسومة", 409);
     const bankMap = new Map(bankRows.map((row) => [row.revision_id, row]));
-    const quizLessons = await executor.query<{ lesson_id: string }>("select lesson_id from quiz_lessons where quiz_id = $1", [quizId]);
+    const quizLessons = await executor.query<{ lesson_id: string }>(
+      "select lesson_id from quiz_lessons where quiz_id = $1",
+      [quizId],
+    );
     const quizLessonSet = new Set(quizLessons.map((row) => row.lesson_id));
 
     for (const [position, ref] of refs.entries()) {
       const row = bankMap.get(ref.questionBankRevisionId);
-      if (!row || row.item_id !== ref.questionBankItemId || itemByRevision.get(row.revision_id) !== row.item_id) {
+      if (
+        !row ||
+        row.item_id !== ref.questionBankItemId ||
+        itemByRevision.get(row.revision_id) !== row.item_id
+      ) {
         throw new AppError("BAD_REQUEST", "مرجع سؤال بنك الأسئلة غير صحيح", 400);
       }
       if (row.class_id !== quiz.class_id || row.subject_id !== quiz.subject_id) {
@@ -555,7 +598,9 @@ export class QuizBuilderService {
       }
       const lessonId = row.lesson_ids.find((id) => quizLessonSet.has(id));
       if (!lessonId) throw new AppError("BAD_REQUEST", "السؤال لا ينتمي إلى دروس الاختبار المحددة", 400);
-      const options = Array.isArray(row.options) ? row.options.filter((value): value is string => typeof value === "string") : [];
+      const options = Array.isArray(row.options)
+        ? row.options.filter((value): value is string => typeof value === "string")
+        : [];
       const sources = Array.isArray(row.sources) ? row.sources : [];
       const firstSource = sources[0] as { pageNumber?: unknown; quote?: unknown } | undefined;
       const questionRows = await executor.query<{ id: string }>(
