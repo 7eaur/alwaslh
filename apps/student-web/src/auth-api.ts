@@ -71,6 +71,30 @@ export interface StudentCurriculumCatalog {
   classes: StudentCurriculumClass[];
 }
 
+export interface StudentReaderAsset {
+  id: string;
+  kind: "image" | "pdf_page" | "document" | "audio" | "video";
+  position: number;
+  mimeType: string;
+  byteSize: number | null;
+  width: number | null;
+  height: number | null;
+  checksumSha256: string | null;
+  sourcePageNumber: number | null;
+  text: string | null;
+}
+
+export interface StudentLessonReader {
+  lesson: {
+    id: string;
+    title: string;
+    summary: string | null;
+    contentRevision: number;
+    publishedAt: string;
+  };
+  assets: StudentReaderAsset[];
+}
+
 export interface ActivationVerificationResponse {
   activationTicket: string;
   accountIdentifier: string;
@@ -119,6 +143,10 @@ interface AccessRedemptionResponse {
 
 interface CurriculumResponse {
   curriculum: StudentCurriculumCatalog;
+}
+
+interface ReaderResponse {
+  reader: StudentLessonReader;
 }
 
 export class ApiRequestError extends Error {
@@ -243,6 +271,15 @@ export async function redeemStudentAccess(code: string, idempotencyKey: string):
 export async function listStudentCurriculum(): Promise<StudentCurriculumCatalog> {
   const result = await request<CurriculumResponse>("/v1/student/curriculum");
   return result.curriculum;
+}
+
+export async function getStudentLessonReader(lessonId: string): Promise<StudentLessonReader> {
+  const result = await request<ReaderResponse>(`/v1/student/lessons/${encodeURIComponent(lessonId)}/reader`);
+  return result.reader;
+}
+
+export function studentAssetContentUrl(assetId: string): string {
+  return `${apiBaseUrl}/v1/student/lesson-assets/${encodeURIComponent(assetId)}/content`;
 }
 
 export function normalizeAccessCode(value: string): string {
