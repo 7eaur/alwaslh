@@ -21,6 +21,22 @@ function runAuthFixture(action, profileId) {
   return JSON.parse(output);
 }
 
+function runAccessFixture(action, profileId) {
+  const apiDirectory = resolve(process.cwd(), "../api");
+  const fixture = resolve(process.cwd(), "e2e/access-fixture.ts");
+  const output = execFileSync(process.execPath, ["--import", "tsx", fixture, action, profileId], {
+    cwd: apiDirectory,
+    env: process.env,
+    encoding: "utf8",
+  });
+  return JSON.parse(output);
+}
+
+function toArabicIndic(value) {
+  const digits = "٠١٢٣٤٥٦٧٨٩";
+  return value.replace(/\d/g, (digit) => digits[Number(digit)]);
+}
+
 async function storedPublicKey(page, accountIdentifier) {
   return page.evaluate(
     ({ dbName, storeName, identifier }) =>
@@ -54,7 +70,7 @@ async function fillLogin(page, password) {
   await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
 }
 
-test("student activation, returning login, forced recovery and rebind use the correct browser device keys", async ({
+test("student activation, returning login, recovery, rebind and class access use canonical browser/API state", async ({
   page,
 }) => {
   await page.goto("/");
@@ -95,6 +111,8 @@ test("student activation, returning login, forced recovery and rebind use the co
 
   await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
   await expect(page.getByText("وصول كامل", { exact: true })).toBeVisible();
+  await expect(page.getByText(/لديك وصول كامل فعّال/)).toBeVisible();
+  await expect(page.getByLabel("رمز الصف")).toHaveCount(0);
   const firstPublicKey = await storedPublicKey(page, accountCode);
   expect(firstPublicKey).toEqual(expect.any(String));
   expect(firstPublicKey.length).toBeGreaterThan(80);
@@ -178,9 +196,38 @@ test("student activation, returning login, forced recovery and rebind use the co
   expect(reboundPublicKey).toEqual(expect.any(String));
   expect(reboundPublicKey).not.toBe(firstPublicKey);
 
+  const classAccess = runAccessFixture("prepare-class-access", studentProfileId);
+  expect(classAccess.code).toMatch(/^\d{7}$/);
+  expect(classAccess.classId).toMatch(/^[0-9a-f-]{36}$/);
+
+  await page.reload();
+  await expect(page.getByText("لا توجد صلاحيات فعالة الآن", { exact: true })).toBeVisible();
+  await page.getByLabel("رمز الصف").fill(toArabicIndic(classAccess.code));
+  await expect(page.getByLabel("رمز الصف")).toHaveValue(classAccess.code);
+  const redeemPromise = page.waitForResponse(
+    (response) => response.url().includes("/v1/student/access/redeem") && response.request().method() === "POST",
+  );
+  await page.getByRole("button", { name: "تفعيل الصف" }).click();
+  const redeem = await redeemPromise;
+  expect(redeem.status()).toBe(200);
+  expect((await redeem.json()).entitlement.classId).toBe(classAccess.classId);
+  await expect(page.getByText("تم تفعيل وصول الصف بنجاح.", { exact: true })).toBeVisible();
+  await expect(page.getByText("وصول إلى صف", { exact: true })).toBeVisible();
+
   const bodyMetrics = await page.locator("body").evaluate((body) => ({
     scrollWidth: body.scrollWidth,
     clientWidth: body.clientWidth,
   }));
   expect(bodyMetrics.scrollWidth).toBeLessThanOrEqual(bodyMetrics.clientWidth + 1);
+
+  await page.evaluate(async () => {
+    await fetch("/v1/auth/logout", { method: "POST", credentials: "include" });
+  });
+  const expiredRequest = page.waitForResponse(
+    (response) => response.url().includes("/v1/student/access/entitlements") && response.status() === 401,
+  );
+  await page.getByRole("button", { name: "تحديث" }).click();
+  await expiredRequest;
+  await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
+  await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.", { exact: true })).toBeVisible();
 });

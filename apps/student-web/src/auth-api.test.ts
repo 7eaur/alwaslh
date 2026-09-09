@@ -2,9 +2,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   completeActivation,
   completeStudentLogin,
+  createAccessRedemptionIdempotencyKey,
   createActivationIdempotencyKey,
+  isSevenDigitClassCode,
   isSixDigitAccessCode,
+  listStudentEntitlements,
   normalizeAccessCode,
+  redeemStudentAccess,
   startStudentLogin,
   verifyActivation,
 } from "./auth-api";
@@ -27,15 +31,20 @@ describe("normalizeAccessCode", () => {
   });
 });
 
-describe("isSixDigitAccessCode", () => {
-  it("accepts exactly six normalized digits", () => {
+describe("access-code validation", () => {
+  it("accepts exactly six normalized activation digits", () => {
     expect(isSixDigitAccessCode("١٢٣٤٥٦")).toBe(true);
     expect(isSixDigitAccessCode("123456")).toBe(true);
-  });
-
-  it("rejects shorter and longer values", () => {
     expect(isSixDigitAccessCode("12345")).toBe(false);
     expect(isSixDigitAccessCode("1234567")).toBe(false);
+  });
+
+  it("accepts exactly seven normalized class-code digits", () => {
+    expect(isSevenDigitClassCode("١٢٣٤٥٦٧")).toBe(true);
+    expect(isSevenDigitClassCode("۱۲۳۴۵۶۷")).toBe(true);
+    expect(isSevenDigitClassCode("1234567")).toBe(true);
+    expect(isSevenDigitClassCode("123456")).toBe(false);
+    expect(isSevenDigitClassCode("12345678")).toBe(false);
   });
 });
 
@@ -162,9 +171,53 @@ describe("student auth API contract", () => {
     });
   });
 
+  it("reads canonical entitlements and redeems a class code with an idempotency key", async () => {
+    const activeEntitlement = {
+      id: "11111111-1111-4111-8111-111111111111",
+      scope: "class",
+      classId: "22222222-2222-4222-8222-222222222222",
+      status: "active",
+      startsAt: "2026-09-10T00:00:00.000Z",
+      expiresAt: "2026-10-10T00:00:00.000Z",
+    };
+    const responses = [
+      new Response(JSON.stringify({ entitlements: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+      new Response(JSON.stringify({ entitlement: activeEntitlement }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    ];
+    const calls: Array<[RequestInfo | URL, RequestInit | undefined]> = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        calls.push([input, init]);
+        const response = responses.shift();
+        if (!response) throw new Error("Unexpected fetch");
+        return response;
+      }),
+    );
+
+    expect(await listStudentEntitlements()).toEqual([]);
+    const entitlement = await redeemStudentAccess("1234567", "student-access-request-0001");
+    expect(entitlement).toEqual(activeEntitlement);
+    expect(calls[0]?.[0]).toBe("/v1/student/access/entitlements");
+    expect(calls[0]?.[1]?.credentials).toBe("include");
+    expect(calls[1]?.[0]).toBe("/v1/student/access/redeem");
+    expect(calls[1]?.[1]?.method).toBe("POST");
+    expect(JSON.parse(String(calls[1]?.[1]?.body))).toEqual({
+      code: "1234567",
+      idempotencyKey: "student-access-request-0001",
+    });
+  });
+
   it("creates UUID-shaped stable request keys", () => {
-    const key = createActivationIdempotencyKey();
-    expect(key.length).toBeGreaterThanOrEqual(12);
-    expect(key).toMatch(/^[0-9a-f-]+$/i);
+    for (const key of [createActivationIdempotencyKey(), createAccessRedemptionIdempotencyKey()]) {
+      expect(key.length).toBeGreaterThanOrEqual(12);
+      expect(key).toMatch(/^[0-9a-f-]+$/i);
+    }
   });
 });
