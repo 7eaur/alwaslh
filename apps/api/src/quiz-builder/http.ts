@@ -87,14 +87,27 @@ export function registerQuizBuilderRoutes(
   app.post("/v1/admin/quizzes", async (request, reply) => {
     const actor = await adminActor(request, config, auth);
     const input = parseBody(CreateSchema, request.body);
-    return reply.code(201).send(await quizzes.create(actor.id, input));
+    return reply.code(201).send(
+      await quizzes.create(actor.id, {
+        classId: input.classId,
+        subjectId: input.subjectId,
+        lessonIds: input.lessonIds,
+        title: input.title,
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        ...(input.shuffleVersions !== undefined ? { shuffleVersions: input.shuffleVersions } : {}),
+      }),
+    );
   });
 
   app.patch("/v1/admin/quizzes/:quizId", async (request, reply) => {
     const actor = await adminActor(request, config, auth);
     const params = parseBody(QuizParamsSchema, request.params);
     const input = parseBody(UpdateSchema, request.body);
-    await quizzes.update(actor.id, params.quizId, input);
+    await quizzes.update(actor.id, params.quizId, {
+      title: input.title,
+      ...(input.description !== undefined ? { description: input.description } : {}),
+      ...(input.shuffleVersions !== undefined ? { shuffleVersions: input.shuffleVersions } : {}),
+    });
     return reply.code(204).send();
   });
 
@@ -102,7 +115,13 @@ export function registerQuizBuilderRoutes(
     const actor = await adminActor(request, config, auth);
     const params = parseBody(QuizParamsSchema, request.params);
     const input = parseBody(VersionSchema, request.body);
-    return reply.code(201).send(await quizzes.addVersion(actor.id, params.quizId, input));
+    return reply.code(201).send(
+      await quizzes.addVersion(actor.id, params.quizId, {
+        label: input.label,
+        questions: input.questions,
+        ...(input.shuffleOptions !== undefined ? { shuffleOptions: input.shuffleOptions } : {}),
+      }),
+    );
   });
 
   app.put("/v1/admin/quizzes/:quizId/versions/:versionId/questions", async (request, reply) => {
