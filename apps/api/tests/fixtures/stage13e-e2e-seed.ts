@@ -44,9 +44,9 @@ async function insertJob(
      ) values (
        $1, $2::ai_job_status, 'stage13e-e2e', '1', 'provider-neutral',
        5, $3, $4, 0, $5,
-       case when $2 = 'completed' then $6 else null end,
-       case when $2 = 'completed' then $6 else null end,
-       $6, $6
+       case when $2 = 'completed' then $6::timestamptz else null end,
+       case when $2 = 'completed' then $6::timestamptz else null end,
+       $6::timestamptz, $6::timestamptz
      ) returning id`,
     [jobType, status, totalUnits, completedUnits, `stage13e-e2e-${randomUUID()}`, createdAt],
   );
