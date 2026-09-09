@@ -5,6 +5,7 @@ import {
   fetchQuiz,
   fetchQuizCandidates,
   fetchQuizzes,
+  fetchQuizVersionExport,
   publishQuiz,
   rejectQuizReview,
   replaceQuizVersionQuestions,
@@ -62,6 +63,19 @@ describe("quiz builder admin API", () => {
     expect(String(url)).toContain("search=%D8%B7%D8%A7%D9%82%D8%A9");
     expect(String(url)).toContain("limit=25");
     expect(String(url)).toContain("offset=25");
+    expect(init?.credentials).toBe("include");
+  });
+
+  it("loads the exact reviewed/published version export bundle", async () => {
+    const fetchMock = mockJson({ filenameBase: "اختبار-نموذج", csv: "csv", printHtml: "<html></html>" });
+    await fetchQuizVersionExport(
+      "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+    );
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(String(url)).toContain(
+      "/v1/admin/quizzes/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/versions/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb/export",
+    );
     expect(init?.credentials).toBe("include");
   });
 
