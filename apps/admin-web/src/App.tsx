@@ -14,6 +14,7 @@ import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
 import { LoginScreen } from "./LoginScreen";
 import { QuestionBankWorkspace } from "./QuestionBankWorkspace";
+import { QuizBuilderWorkspace } from "./QuizBuilderWorkspace";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
@@ -130,7 +131,8 @@ type AdminWorkspace =
   | "content-ingestion"
   | "content-operations"
   | "ai-operations"
-  | "question-bank";
+  | "question-bank"
+  | "quiz-builder";
 
 function AdminShell({
   profile,
@@ -188,6 +190,14 @@ function AdminShell({
           >
             بنك الأسئلة
           </button>
+          <button
+            className={`nav-item nav-button${workspace === "quiz-builder" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "quiz-builder" ? "page" : undefined}
+            onClick={() => setWorkspace("quiz-builder")}
+          >
+            الاختبارات والنماذج
+          </button>
           <span className="nav-item is-disabled">
             الطلاب والوصول <small>مرحلة لاحقة</small>
           </span>
@@ -212,8 +222,10 @@ function AdminShell({
           <ContentOperationsWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "ai-operations" ? (
           <AiOperationsPage onSessionExpired={onSessionExpired} />
-        ) : (
+        ) : workspace === "question-bank" ? (
           <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
+        ) : (
+          <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
         )}
       </main>
     </div>
