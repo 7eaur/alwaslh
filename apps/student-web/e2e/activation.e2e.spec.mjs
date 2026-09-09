@@ -4,8 +4,8 @@ import { expect, test } from "@playwright/test";
 
 const accountCode = "654321";
 const accountCodeArabic = "٦٥٤٣٢١";
-const initialPassword = "StudentBrowser123!";
-const privatePassword = "StudentBrowser456!";
+const initialPassword = `Stage14-${crypto.randomUUID()}!`;
+const privatePassword = `Stage14-${crypto.randomUUID()}!`;
 
 function runAuthFixture(action, profileId) {
   const apiDirectory = resolve(process.cwd(), "../api");
@@ -70,9 +70,7 @@ async function fillLogin(page, password) {
   await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
 }
 
-test("student activation, returning login, recovery, rebind and class access use canonical browser/API state", async ({
-  page,
-}) => {
+test("student activation, recovery, device access and canonical curriculum work at 390px", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
 
@@ -199,6 +197,7 @@ test("student activation, returning login, recovery, rebind and class access use
   const classAccess = runAccessFixture("prepare-class-access", studentProfileId);
   expect(classAccess.code).toMatch(/^\d{7}$/);
   expect(classAccess.classId).toMatch(/^[0-9a-f-]{36}$/);
+  expect(classAccess.lessonTitles).toEqual(["مدخل إلى الفيزياء", "القوة والحركة", "قوانين نيوتن"]);
 
   await page.reload();
   await expect(page.getByText("لا توجد صلاحيات فعالة الآن", { exact: true })).toBeVisible();
@@ -207,12 +206,22 @@ test("student activation, returning login, recovery, rebind and class access use
   const redeemPromise = page.waitForResponse(
     (response) => response.url().includes("/v1/student/access/redeem") && response.request().method() === "POST",
   );
+  const curriculumPromise = page.waitForResponse(
+    (response) => response.url().includes("/v1/student/curriculum") && response.status() === 200,
+  );
   await page.getByRole("button", { name: "تفعيل الصف" }).click();
   const redeem = await redeemPromise;
   expect(redeem.status()).toBe(200);
   expect((await redeem.json()).entitlement.classId).toBe(classAccess.classId);
+  await curriculumPromise;
   await expect(page.getByText("تم تفعيل وصول الصف بنجاح.", { exact: true })).toBeVisible();
   await expect(page.getByText("وصول إلى صف", { exact: true })).toBeVisible();
+
+  await expect(page.getByRole("heading", { name: classAccess.className })).toBeVisible();
+  await expect(page.getByRole("button", { name: new RegExp(classAccess.subjectName) })).toBeVisible();
+  await expect(page.getByRole("heading", { name: classAccess.sectionTitle })).toBeVisible();
+  await expect(page.getByText("درس غير منشور يجب ألا يظهر", { exact: true })).toHaveCount(0);
+  await expect(page.locator(".lesson-row .lesson-copy strong")).toHaveText(classAccess.lessonTitles);
 
   const bodyMetrics = await page.locator("body").evaluate((body) => ({
     scrollWidth: body.scrollWidth,
@@ -226,7 +235,7 @@ test("student activation, returning login, recovery, rebind and class access use
   const expiredRequest = page.waitForResponse(
     (response) => response.url().includes("/v1/student/access/entitlements") && response.status() === 401,
   );
-  await page.getByRole("button", { name: "تحديث" }).click();
+  await page.getByRole("button", { name: "تحديث", exact: true }).click();
   await expiredRequest;
   await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
   await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.", { exact: true })).toBeVisible();
