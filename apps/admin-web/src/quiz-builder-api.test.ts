@@ -19,12 +19,14 @@ afterEach(() => {
 });
 
 function mockJson(payload: unknown, status = 200) {
-  const fetchMock = vi.fn<typeof fetch>(async (_input, _init) =>
-    new Response(status === 204 ? null : JSON.stringify(payload), {
+  const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+    void input;
+    void init;
+    return new Response(status === 204 ? null : JSON.stringify(payload), {
       status,
       headers: { "Content-Type": "application/json" },
-    }),
-  );
+    });
+  });
   globalThis.fetch = fetchMock;
   return fetchMock;
 }
