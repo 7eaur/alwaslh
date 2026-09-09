@@ -67,14 +67,6 @@ export class QuestionBankRegenerationService {
       if (!item) throw new AppError("NOT_FOUND", "سؤال بنك الأسئلة غير موجود", 404);
       if (item.archived_at) throw new AppError("CONFLICT", "لا يمكن إعادة توليد سؤال مؤرشف", 409);
 
-      const open = await tx.query<{ id: string }>(
-        "select id from question_bank_revisions where item_id = $1 and status in ('draft','review') limit 1 for update",
-        [itemId],
-      );
-      if (open[0]) {
-        throw new AppError("CONFLICT", "أغلق المسودة أو المراجعة الحالية قبل إنشاء إعادة توليد جديدة", 409);
-      }
-
       const publishedRows = await tx.query<PublishedRevisionRow>(
         `select id, revision_number, prompt, type, difficulty
          from question_bank_revisions
@@ -144,6 +136,14 @@ export class QuestionBankRegenerationService {
           throw new AppError("CONFLICT", "مخرج إعادة التوليد مرتبط بسؤال آخر", 409);
         }
         return { itemId, revisionId: existing[0].revision_id, replayed: true };
+      }
+
+      const open = await tx.query<{ id: string }>(
+        "select id from question_bank_revisions where item_id = $1 and status in ('draft','review') limit 1 for update",
+        [itemId],
+      );
+      if (open[0]) {
+        throw new AppError("CONFLICT", "أغلق المسودة أو المراجعة الحالية قبل إنشاء إعادة توليد جديدة", 409);
       }
 
       await this.assertRequestUsesPublishedSources(tx, published.id, request.sourceChunks);
