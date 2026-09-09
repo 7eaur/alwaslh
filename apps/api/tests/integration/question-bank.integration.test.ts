@@ -224,10 +224,12 @@ test("Stage13F Question Bank imports approved direct questions idempotently and 
   const detail = await questionBank.itemDetail(imported.itemId);
   assert.equal(detail.item.currentRevision?.status, "published");
   assert.equal(detail.revisions[0]?.question.type, "direct");
+  const publishedRevision = detail.revisions[0];
+  assert.ok(publishedRevision);
 
   const editedPrompt = "ما تعريف المفهوم التعليمي بعد المراجعة الجديدة؟";
   await questionBank.editItem(adminId, imported.itemId, {
-    ...detail.revisions[0]!.question,
+    ...publishedRevision.question,
     prompt: editedPrompt,
   });
   const beforeReplacementPublish = await db.query<{ status: string; prompt: string }>(
