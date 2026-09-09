@@ -64,8 +64,24 @@ export interface QuizVersionQuestionRef {
   questionBankRevisionId: string;
 }
 
+export interface QuizQuestionCandidate {
+  itemId: string;
+  revisionId: string;
+  revisionNumber: number;
+  prompt: string;
+  type: QuizBuilderQuestionType;
+  difficulty: "easy" | "medium" | "hard";
+  lessonIds: string[];
+  sourcePages: number[];
+}
+
 export interface QuizBuilderListResponse {
   items: QuizBuilderListItem[];
+  pagination: { total: number; limit: number; offset: number };
+}
+
+export interface QuizQuestionCandidateResponse {
+  items: QuizQuestionCandidate[];
   pagination: { total: number; limit: number; offset: number };
 }
 
@@ -102,6 +118,19 @@ export function fetchQuizzes(
 
 export function fetchQuiz(quizId: string): Promise<QuizBuilderDetail> {
   return adminApiRequest<QuizBuilderDetail>(`/v1/admin/quizzes/${quizId}`);
+}
+
+export function fetchQuizCandidates(
+  quizId: string,
+  filters: { search?: string; limit?: number; offset?: number } = {},
+): Promise<QuizQuestionCandidateResponse> {
+  return adminApiRequest<QuizQuestionCandidateResponse>(
+    withQuery(`/v1/admin/quizzes/${quizId}/candidates`, {
+      search: filters.search?.trim() || undefined,
+      limit: filters.limit,
+      offset: filters.offset,
+    }),
+  );
 }
 
 export function createQuiz(input: {
