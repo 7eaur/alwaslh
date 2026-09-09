@@ -15,6 +15,7 @@ import {
   type QuestionBankQuestionInput,
   type QuestionBankQuestionType,
   type QuestionBankStatus,
+  applyApprovedQuestionRegeneration,
   createManualQuestion,
   editQuestionBankItem,
   fetchQuestionBank,
@@ -122,7 +123,7 @@ export function QuestionBankWorkspace({ onSessionExpired }: Props) {
   const [detail, setDetail] = useState<QuestionBankDetailResponse | null>(null);
   const [detailState, setDetailState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [detailError, setDetailError] = useState("");
-  const [editorMode, setEditorMode] = useState<"closed" | "manual" | "edit" | "import">("closed");
+  const [editorMode, setEditorMode] = useState<"closed" | "manual" | "edit" | "import" | "regenerate">("closed");
   const [questionDraft, setQuestionDraft] = useState<QuestionBankQuestionInput>(emptyQuestion);
   const [scopeDraft, setScopeDraft] = useState<ScopeDraft>({ classId: "", subjectId: "", lessonIds: [] });
   const [outputId, setOutputId] = useState("");
@@ -252,6 +253,13 @@ export function QuestionBankWorkspace({ onSessionExpired }: Props) {
     setMutationFeedback(null);
   }
 
+  function beginRegenerate() {
+    if (!detail || currentRevision?.status !== "published") return;
+    setEditorMode("regenerate");
+    setOutputId("");
+    setMutationFeedback(null);
+  }
+
   function beginEdit() {
     if (!detail || !currentRevision) return;
     setEditorMode("edit");
@@ -319,6 +327,32 @@ export function QuestionBankWorkspace({ onSessionExpired }: Props) {
       });
       setEditorMode("closed");
       await refreshAfterMutation(result.imports[0]?.itemId);
+    } catch (cause) {
+      if (isMissingSessionError(cause)) onSessionExpired();
+      else setMutationFeedback({ kind: "error", text: messageFor(cause) });
+    } finally {
+      setMutationState("idle");
+    }
+  }
+
+  async function submitRegeneration(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMutationFeedback(null);
+    if (!detail || currentRevision?.status !== "published" || !outputId.trim()) {
+      setMutationFeedback({ kind: "error", text: "حدد مخرج إعادة التوليد المعتمد لسؤال منشور." });
+      return;
+    }
+    setMutationState("saving");
+    try {
+      const result = await applyApprovedQuestionRegeneration(detail.item.id, outputId.trim());
+      setMutationFeedback({
+        kind: "success",
+        text: result.replayed
+          ? "هذا المخرج طُبق سابقًا على السؤال نفسه؛ لم تُنشأ نسخة مكررة."
+          : "تم إنشاء Draft revision جديدة لنفس هوية السؤال من مخرج إعادة التوليد المعتمد.",
+      });
+      setEditorMode("closed");
+      await refreshAfterMutation(detail.item.id);
     } catch (cause) {
       if (isMissingSessionError(cause)) onSessionExpired();
       else setMutationFeedback({ kind: "error", text: messageFor(cause) });
@@ -478,6 +512,24 @@ export function QuestionBankWorkspace({ onSessionExpired }: Props) {
         </EditorPanel>
       ) : null}
 
+      {editorMode === "regenerate" && detail && currentRevision ? (
+        <EditorPanel title="تطبيق إعادة توليد معتمدة" onClose={() => setEditorMode("closed")}>
+          <p className="qb-editor-note">
+            استخدم مخرج Stage12 بوضع regenerate_question بعد اعتماده في Stage13E. الخادم يتحقق من أن السؤال الأصلي والمصدر يطابقان النسخة المنشورة الحالية ثم ينشئ Draft revision لنفس item ID.
+          </p>
+          <form className="qb-editor-form" onSubmit={submitRegeneration}>
+            <label className="qb-wide-field">
+              <span>معرف مخرج إعادة التوليد المعتمد</span>
+              <input value={outputId} onChange={(event) => setOutputId(event.target.value)} placeholder="UUID لمخرج regenerate_question" />
+            </label>
+            <div className="qb-form-actions">
+              <button className="secondary-button" type="button" onClick={() => setEditorMode("closed")}>إلغاء</button>
+              <button className="primary-button" type="submit" disabled={mutationState === "saving"}>إنشاء Draft revision</button>
+            </div>
+          </form>
+        </EditorPanel>
+      ) : null}
+
       <div className="qb-workspace-grid">
         <section className="qb-list-panel" aria-label="قائمة أسئلة البنك">
           <div className="qb-section-heading">
@@ -520,6 +572,7 @@ export function QuestionBankWorkspace({ onSessionExpired }: Props) {
               rejectNote={rejectNote}
               setRejectNote={setRejectNote}
               onEdit={beginEdit}
+              onRegenerate={beginRegenerate}
               onSubmit={() => void lifecycle("submit")}
               onPublish={() => void lifecycle("publish")}
               onReject={() => void lifecycle("reject")}
@@ -557,6 +610,7 @@ function QuestionDetail({
   rejectNote,
   setRejectNote,
   onEdit,
+  onRegenerate,
   onSubmit,
   onPublish,
   onReject,
@@ -568,6 +622,7 @@ function QuestionDetail({
   rejectNote: string;
   setRejectNote: (value: string) => void;
   onEdit: () => void;
+  onRegenerate: () => void;
   onSubmit: () => void;
   onPublish: () => void;
   onReject: () => void;
@@ -608,6 +663,11 @@ function QuestionDetail({
       <div className="qb-lifecycle-actions">
         {revision.status === "draft" ? <button className="primary-button" type="button" onClick={onSubmit} disabled={busy}>إرسال للمراجعة</button> : null}
         {revision.status !== "review" ? <button className="secondary-button" type="button" onClick={onEdit} disabled={busy}>إنشاء نسخة معدلة</button> : null}
+        {revision.status === "published" && revision.sources.length > 0 ? (
+          <button className="secondary-button" type="button" onClick={onRegenerate} disabled={busy}>
+            تطبيق إعادة توليد معتمدة
+          </button>
+        ) : null}
         {revision.status === "review" ? (
           <>
             <button className="primary-button" type="button" onClick={onPublish} disabled={busy}>نشر النسخة</button>
