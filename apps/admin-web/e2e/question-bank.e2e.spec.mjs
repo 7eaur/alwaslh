@@ -101,8 +101,9 @@ test("Question Bank imports only the pre-approved AI fixture as a draft with pro
   await expect(page.getByText("تم استيراد 1 سؤال كمسودات قابلة للمراجعة.", { exact: true })).toBeVisible();
   const detail = page.locator(".qb-detail");
   await expect(detail.getByRole("heading", { name: "ما التحول الرئيس للطاقة الموضح في المصدر؟", exact: true })).toBeVisible();
-  await expect(detail.getByText("صفحة 1", { exact: true })).toBeVisible();
-  await expect(detail.getByText("تحول الطاقة", { exact: true })).toBeVisible();
+  const sourceEvidence = detail.locator(".qb-source-list article").filter({ hasText: "صفحة 1" });
+  await expect(sourceEvidence).toBeVisible();
+  await expect(sourceEvidence).toContainText("تحول الطاقة");
 
   await detail.getByText("مرجع AI", { exact: true }).click();
   await expect(detail.getByText("stage13f-question-generation · v1", { exact: true })).toBeVisible();
