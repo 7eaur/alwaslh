@@ -40,7 +40,9 @@ interface SourceRow {
   input_checksum_sha256: string;
 }
 
-function sourceKey(source: Pick<AiSourceChunk, "mediaAssetId" | "pageNumber" | "inputChecksumSha256">): string {
+function sourceKey(
+  source: Pick<AiSourceChunk, "mediaAssetId" | "pageNumber" | "inputChecksumSha256">,
+): string {
   return `${source.mediaAssetId}:${source.pageNumber}:${source.inputChecksumSha256}`;
 }
 
@@ -124,7 +126,11 @@ export class QuestionBankRegenerationService {
         request.originalQuestion.type !== published.type ||
         request.originalQuestion.difficulty !== published.difficulty
       ) {
-        throw new AppError("CONFLICT", "طلب إعادة التوليد لا يستهدف النسخة المنشورة الحالية لهذا السؤال", 409);
+        throw new AppError(
+          "CONFLICT",
+          "طلب إعادة التوليد لا يستهدف النسخة المنشورة الحالية لهذا السؤال",
+          409,
+        );
       }
 
       const existing = await tx.query<ImportRow>(
@@ -202,7 +208,8 @@ export class QuestionBankRegenerationService {
       const requestSources = new Map(request.sourceChunks.map((source) => [sourceKey(source), source]));
       const sources = question.sourceEvidence.map((evidence, position) => {
         const requestSource = [...requestSources.values()].find(
-          (source) => source.mediaAssetId === evidence.mediaAssetId && source.pageNumber === evidence.pageNumber,
+          (source) =>
+            source.mediaAssetId === evidence.mediaAssetId && source.pageNumber === evidence.pageNumber,
         );
         if (!requestSource) {
           throw new AppError("INTERNAL_ERROR", "مصدر السؤال المعاد توليده لا يطابق طلب Stage11", 500);
@@ -238,7 +245,15 @@ export class QuestionBankRegenerationService {
            ai_output_id, approved_review_revision, question_locator, item_id, revision_id,
            prompt_key, prompt_version, generation_mode, imported_by_profile_id
          ) values ($1, $2, 'questions.0', $3, $4, $5, $6, 'regenerate_question', $7)`,
-        [outputId, latest.revision, itemId, revisionId, context.prompt_key, context.prompt_version, actorProfileId],
+        [
+          outputId,
+          latest.revision,
+          itemId,
+          revisionId,
+          context.prompt_key,
+          context.prompt_version,
+          actorProfileId,
+        ],
       );
       await tx.query(
         `insert into question_bank_events (item_id, revision_id, action, actor_profile_id, note)
@@ -265,7 +280,9 @@ export class QuestionBankRegenerationService {
       throw new AppError("CONFLICT", "إعادة التوليد تتطلب سؤالًا منشورًا مرتبطًا بمصدر موثق", 409);
     }
     const allowed = new Set(
-      sourceRows.map((source) => `${source.media_asset_id}:${source.page_number}:${source.input_checksum_sha256}`),
+      sourceRows.map(
+        (source) => `${source.media_asset_id}:${source.page_number}:${source.input_checksum_sha256}`,
+      ),
     );
     if (requestSources.length === 0 || requestSources.some((source) => !allowed.has(sourceKey(source)))) {
       throw new AppError("CONFLICT", "مصادر طلب إعادة التوليد لا تطابق مصادر النسخة المنشورة", 409);
