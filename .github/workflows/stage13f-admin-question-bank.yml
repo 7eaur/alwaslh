@@ -1,0 +1,36 @@
+name: Stage 13F Admin Question Bank Verification
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - integration/stage13f-question-bank
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage13f-admin-question-bank-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admin-question-bank:
+    name: Stage 13F · Admin Question Bank UI quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install workspace dependencies
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Admin lint
+        run: npm run lint --prefix apps/admin-web
+      - name: Admin strict typecheck
+        run: npm run typecheck --prefix apps/admin-web
+      - name: Admin unit tests
+        run: npm test --prefix apps/admin-web
+      - name: Admin build
+        run: npm run build --prefix apps/admin-web
