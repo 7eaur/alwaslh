@@ -1,46 +1,52 @@
-# Stage13E Promotion Manifest
+# Stage13E Promotion Manifest — COMPLETED
 
-> Purpose: promote the verified Stage13E Admin AI Operations / Review implementation onto the latest `main` without importing stale branch history or overwriting newer central documentation.
->
-> This manifest is **promotion preparation only**. Stage13E remains `NOT YET VERIFIED` until the executable gates pass.
+> Purpose: record the exact selective Stage13E Admin AI Operations / Review promotion and its executable evidence without importing stale candidate history or overwriting newer central documentation.
 
-## Snapshot used for this audit
+Status: **COMPLETED / VERIFIED / PROMOTED TO MAIN**.
 
-Initial audit snapshot:
+## Accepted candidate
 
-- merge base: `1069aabc5a921b38ca6c8e4bb4bf801f83fc2455`
-- audited `main`: `e10de6d7811ad04811e8a841628966a5269b1dfd`
-- Stage13E candidate/docs: `c48d1e597497e6054340f71235c78937082b9371`
-- Stage13E runtime/test beneath docs: `d60218b518fb0fe453c21386e77cd35a2228ad07`
+Candidate branch final accepted HEAD:
 
-Git comparison at the initial snapshot:
+`72ead8446af237392dc6d953c8e0c2382f468286`
 
-- candidate vs merge base: **53 commits ahead**;
-- audited `main` vs merge base: **77 commits ahead**;
-- candidate branch vs `main`: divergent;
-- Stage13E candidate changes: **36 files**;
-- `main` changes since the same merge base: **19 files**;
-- intersection between those two changed-file sets: **0 files**.
+Candidate required matrix: **12/12 SUCCESS on exact same HEAD**.
 
-Post-documentation revalidation:
+Verification-only PR #24 was closed **unmerged** after evidence capture.
 
-- revalidated `main`: `646b3824e3f7fef05a916e394af56d0af9e02926`;
-- `main` is now **84 commits ahead** of the same merge base;
-- `main` changed-file set is now **20 files** because this promotion manifest itself was added;
-- Stage13E candidate file set remains the same **36 files**;
-- changed-file intersection remains **0 files**.
+## Promotion base and result
 
-Therefore a historical branch merge/cherry-pick chain is unnecessary and creates avoidable governance/history risk. The safe strategy is AD-136 + AD-146 selective integration: promote the exact accepted Stage13E files onto the latest `main` tree and re-run exact-head verification.
+Latest `main` inspected before assembly:
 
-## Exact Stage13E promotion file set
+`e304d61286b9ca120db2dad695d29f4f1642e733`
 
-### GitHub Actions — 3 files
+The commits that had advanced `main` from the older Stage13E common history were inspected by changed files. They were central documentation/continuity updates and had no overlap with the accepted Stage13E 36-file runtime/test/specialized-doc manifest.
+
+Selective promotion commit:
+
+`d5ebc7f25a369430387a758c7c0bb89350963d67`
+
+Properties:
+
+- direct parent: `e304d61286b9ca120db2dad695d29f4f1642e733`;
+- one atomic promotion commit;
+- exactly **36 changed files**;
+- no merge commit;
+- no divergent candidate history;
+- latest central documentation from `main` preserved;
+- no hosting/deployment change.
+
+Verification-only PR #25 represented exactly that promotion diff, reported one commit / 36 changed files, and was closed **unmerged**.
+
+## Exact promoted file set
+
+### GitHub Actions — 3
 
 1. `.github/workflows/stage13e-ai-operations.yml`
 2. `.github/workflows/stage13e-frontend-prep.yml`
 3. `.github/workflows/stage13e-integration.yml`
 
-### Admin Web runtime/tests — 14 files
+### Admin Web runtime/tests — 14
 
 4. `apps/admin-web/e2e/ai-operations.e2e.spec.mjs`
 5. `apps/admin-web/e2e/stage13e-real-api.mjs`
@@ -57,7 +63,7 @@ Therefore a historical branch merge/cherry-pick chain is unnecessary and creates
 16. `apps/admin-web/src/ai-operations-view-model.ts`
 17. `apps/admin-web/src/ai-operations.css`
 
-### API runtime — 6 files
+### API runtime — 6
 
 18. `apps/api/src/ai/admin-operations-http.ts`
 19. `apps/api/src/ai/admin-operations.ts`
@@ -66,7 +72,7 @@ Therefore a historical branch merge/cherry-pick chain is unnecessary and creates
 22. `apps/api/src/ai/review-validation.ts`
 23. `apps/api/src/app.ts`
 
-### API tests / real fixtures — 8 files
+### API tests / real fixtures — 8
 
 24. `apps/api/tests/ai-admin-job-list-query-shape.test.ts`
 25. `apps/api/tests/ai-admin-output-detail-snapshot.test.ts`
@@ -77,60 +83,59 @@ Therefore a historical branch merge/cherry-pick chain is unnecessary and creates
 30. `apps/api/tests/integration/ai-admin-action-authority.integration.test.ts`
 31. `apps/api/tests/integration/ai-admin-operations.integration.test.ts`
 
-### PostgreSQL — 1 file
+### PostgreSQL — 1
 
 32. `database/migrations/0018_ai_admin_review.sql`
 
-### Stage-specialized documentation — 4 files
+### Specialized Stage13E documentation — 4
 
 33. `docs/admin/STAGE13E_AI_OPERATIONS_FRONTEND_PREP.md`
 34. `docs/ai/STAGE13E_ADMIN_AI_HTTP_VALIDATION.md`
 35. `docs/ai/STAGE13E_ADMIN_AI_OPERATIONS.md`
 36. `docs/ai/STAGE13E_ADMIN_AI_PERFORMANCE.md`
 
-## Files that must NOT be taken from the old candidate history
+## Promotion exact-head verification
 
-The latest central state on `main` is newer than the candidate branch and remains authoritative. In particular, do not overwrite current versions of:
+All workflows below completed **SUCCESS** on exact promotion SHA `d5ebc7f25a369430387a758c7c0bb89350963d67`:
 
-- `DOCUMENTATION_INDEX.md`
-- `MASTER_REBUILD_ROADMAP.md`
-- `NEXT_CONVERSATION_PROMPT.md`
-- `PROJECT_ENGINEERING_LOG.md`
-- `PROJECT_EXECUTION_QUEUE.md`
-- `PROJECT_HANDOFF.md`
-- `PROJECT_INTEGRATION_CONTINUITY.md`
-- `PROJECT_STATUS.md`
-- `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
-- `docs/workstreams/*`
-- `docs/integration/STAGE13E_PROMOTION_MANIFEST.md`
-- hosting/deployment portability files such as `render.yaml` and `docs/deployment/*`
+| Gate | Run |
+|---|---:|
+| Stage13E Combined Integration | `34401502463` |
+| Stage13E Admin AI Operations | `34401549935` |
+| Stage13E Frontend Preparation | `34401549849` |
+| Rebuild Stage Verification | `34401550016` |
+| Stage13 Admin Product | `34401549835` |
+| Stage9 Content Import | `34401549851` |
+| Stage10 Media Pipeline | `34401549989` |
+| OCR Foundation | `34401549910` |
+| Stage11 AI Contracts | `34401549927` |
+| Stage12 AI Execution | `34401549964` |
+| Stage13D Content Ingestion | `34401550065` |
+| Stage13D Admin Upload UI | `34401549903` |
 
-Those files contain newer Single Owner governance, VPS-deferred policy and closure/promotion-readiness state.
+Combined execution included real runner checkout/setup, API/Admin lint/type/unit/build, clean PostgreSQL migrations through `0018`, current DB contract assertions, Stage13E authority/review/concurrency regressions, isolated Stage12/auth regressions, real Super Admin bootstrap, deterministic DB fixtures and real Chromium Admin flows.
 
-## Promotion procedure after candidate executable PASS
+## Final integration
 
-Do **not** promote Stage13E merely because this manifest is clean.
+Immediately before integration, `main` was re-read and remained at the promotion base. `main` was then moved non-force/fast-forward to `d5ebc7f25a369430387a758c7c0bb89350963d67`.
 
-1. Run the existing combined Stage13E gate successfully on the accepted candidate.
-2. Run the required wider Stage9/10/OCR/11/12/13/13D/Full Rebuild regression matrix on that accepted candidate.
-3. Live-check latest `main` and candidate heads again.
-4. Re-run the two merge-base comparisons and verify the promotion file set still has no unexpected overlap with newer `main` runtime changes.
-5. Create a short-lived `integration/stage13e-promotion` branch from the then-current `main`.
-6. Overlay **only** the exact accepted 36 files above from the accepted Stage13E candidate.
-7. Review the resulting diff: no central governance/hosting file may regress; no unrelated product file may appear.
-8. Run the **combined Stage13E gate and required wider regression matrix again on this exact promotion HEAD**. This second execution is required because repository policy demands exact-head closure evidence; candidate PASS alone does not verify the new promotion commit SHA.
-9. Any executed failure must be root-caused on the promotion branch. Do not weaken tests or silently drop files.
-10. Only after exact promotion-head PASS, fast-forward/promote that branch to `main` if `main` has not moved. If `main` moved, rebuild the promotion branch from latest `main` and repeat exact-head verification.
-11. Update central docs, Roadmap and Legacy Coverage; mark only actually proven candidate mappings VERIFIED; write Stage13E Closure Report in Issue #16.
-12. Then begin Stage13F.
+Later documentation-only commits may advance `main`; they do not replace the executable runtime evidence attached to `d5ebc7f...`.
 
-## Why no promotion branch is created now
+## Closed CI drift
 
-Creating a promotion branch before the candidate can execute would add another unverified head and another failing hosted-runner trigger without increasing evidence. The manifest is enough to eliminate merge ambiguity today. The promotion branch should be created only after the current candidate has executable combined + wider PASS evidence.
+`CI-013E-009` was fixed before candidate acceptance:
 
-## Current blocker
+- standalone workflow shell quoting corrected;
+- all current four review constraints asserted;
+- intentionally removed redundant latest-review index no longer required;
+- legitimate current index/DB checks preserved.
 
-`CI-001` remains the sole proven Stage13E closure blocker at this snapshot. Latest candidate run `34283442253`, attempt `2`, job `102256556365`, terminated before checkout with `runner_id=0` and `steps=[]`.
+A subsequent Stage12 regression failure was correctly classified as suite state pollution and fixed by resetting/reapplying migrations between Stage13E and Stage12/auth groups. No production lifecycle behavior or test expectation was weakened.
 
-Hosting/VPS is unrelated and remains outside the development gate.
+## Result
+
+Stage13E is **VERIFIED / PROMOTED / CLOSED**.
+
+Stage13F Question Bank / Quiz Builder / Publish is **READY / NOT STARTED**.
+
+Hosting/VPS remains outside current development scope until explicitly reopened.
