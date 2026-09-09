@@ -181,6 +181,16 @@ export function importApprovedAiQuestions(
   );
 }
 
+export function applyApprovedQuestionRegeneration(
+  itemId: string,
+  outputId: string,
+): Promise<{ itemId: string; revisionId: string; replayed: boolean }> {
+  return adminApiRequest<{ itemId: string; revisionId: string; replayed: boolean }>(
+    `/v1/admin/question-bank/${itemId}/regenerate-ai/${outputId}`,
+    { method: "POST" },
+  );
+}
+
 export function editQuestionBankItem(
   itemId: string,
   question: QuestionBankQuestionInput,
