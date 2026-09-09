@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { AdminAiOperationsService } from "../../src/ai/admin-operations.js";
 import { aiGenerationOutputSchema, aiGenerationRequestSchema } from "../../src/ai/contracts.js";
 import { createDatabase } from "../../src/db.js";
-import { QuestionBankService, type QuestionBankQuestionInput } from "../../src/question-bank/service.js";
+import { type QuestionBankQuestionInput, QuestionBankService } from "../../src/question-bank/service.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error("DATABASE_URL is required for Stage13F browser seed");
