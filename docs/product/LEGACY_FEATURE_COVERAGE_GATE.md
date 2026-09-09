@@ -6,90 +6,65 @@ Canonical inventory: `PRODUCT_FEATURE_PARITY_MATRIX.md`.
 
 ## Rule
 
-Before Admin Product or Student Product can be declared feature-complete, **every legacy capability row** must have an explicit disposition:
+Before Admin Product or Student Product can be declared feature-complete, every legacy capability row must have:
 
 ```text
 legacy capability ID
 → KEEP | IMPROVE | REFACTOR | REBUILD | REMOVE
 → target module/flow
-→ Product Decision / Architecture Decision where relevant
+→ decision where relevant
 → implementation evidence
-→ test/acceptance evidence
+→ executable acceptance evidence
 ```
 
-`REMOVE` is valid only with explicit Product Owner approval and a documented reason/replacement.
-
-A capability may move to a better screen or share infrastructure, but its useful user/business outcome must remain unless removal is explicitly approved.
+`REMOVE` requires explicit Product Owner approval and documented reason/replacement.
 
 ## Evidence vocabulary
 
 - `VERIFIED` — implementation exists and executable acceptance evidence passed.
-- `FOUNDATION VERIFIED` — lower-level infrastructure exists but legacy user outcome is not yet closed.
-- `CANDIDATE / EXECUTION PENDING` — implementation and static/integration design evidence exist, but required executable acceptance has not run successfully yet.
-- `NOT YET VERIFIED` — no complete acceptance evidence for that capability.
-- `REMOVE APPROVED` — only with explicit Product Owner evidence.
+- `FOUNDATION VERIFIED` — lower-level infrastructure exists but the legacy user outcome is not yet closed.
+- `CANDIDATE / EXECUTION PENDING` — implementation exists but required executable acceptance has not passed.
+- `NOT YET VERIFIED` — no complete acceptance evidence.
+- `REMOVE APPROVED` — explicit Product Owner evidence exists.
 
-Never count a backend foundation or an unexecuted candidate as completion of a later UI/business flow automatically.
+Infrastructure does not automatically close a later UI/business capability.
 
-## Current exact verified executable baseline
+## Current verified executable baseline
 
-`4eca7de8877ac9e2289b9c7990c912d33c256935`
+Stage13E runtime/application baseline:
 
-Same-head evidence:
+`d5ebc7f25a369430387a758c7c0bb89350963d67`
 
-- Stage13D Admin Upload UI `34177369743` — SUCCESS incl. mixed upload/publication Chromium + narrow viewport;
-- Stage13D Content Ingestion `34177369784` — SUCCESS incl. clean PostgreSQL and mixed ordering/link/publication/archive integration;
-- Stage13 Admin Product `34177369748` — SUCCESS incl. existing Admin Chromium;
-- Stage12 AI Execution `34177369812` — SUCCESS;
-- Stage11 AI Contracts `34177369753` — SUCCESS;
-- OCR Foundation `34177369750` — SUCCESS;
-- Stage10 Media Pipeline `34177369777` — SUCCESS;
-- Stage9 Content Import `34177369756` — SUCCESS;
-- Full Rebuild `34177369768` — SUCCESS incl. Student Chromium.
+Promotion exact-head evidence is **12/12 SUCCESS**:
+
+- Combined Stage13E `34401502463`
+- Stage13E Admin AI Operations `34401549935`
+- Stage13E Frontend Preparation `34401549849`
+- Rebuild `34401550016`
+- Stage13 Admin Product `34401549835`
+- Stage9 `34401549851`
+- Stage10 `34401549989`
+- OCR `34401549910`
+- Stage11 `34401549927`
+- Stage12 `34401549964`
+- Stage13D Content Ingestion `34401550065`
+- Stage13D Admin UI `34401549903`
+
+Accepted candidate `72ead8446af237392dc6d953c8e0c2382f468286` independently passed the same required 12-gate candidate matrix before promotion. PR #24/#25 were verification-only and closed unmerged.
 
 ## Verified Admin Curriculum subset
 
-| Capability | Disposition / evidence |
-|---|---|
-| `PUB-002` | KEEP/IMPROVE — separate Admin login/session/logout verified in Chromium |
-| `ADMIN-007` | REBUILD — real grouped Admin navigation; unimplemented modules remain visibly unavailable |
-| `ADMIN-008` | IMPROVE — responsive Admin shell; narrow viewport checked |
-| `CLASS-A-001` | KEEP — server-backed class list |
-| `CLASS-A-002` | KEEP — create Class |
-| `CLASS-A-003` | KEEP — rename/status/order Class |
-| `CLASS-A-005` | KEEP — Subjects inside selected Class Offering context |
-| `CLASS-A-006` | KEEP — create Subject |
-| `CLASS-A-007` | KEEP — rename/status Subject |
-| `CLASS-A-010` | KEEP — explicit Subject→Class Offering link |
-| `LES-A-001` | KEEP/REBUILD — server-backed hierarchy/list foundation |
-| `LES-A-002` | KEEP — Class selection/filter |
-| `LES-A-003` | KEEP — Subject Offering selection/filter |
-| `LES-A-006` | KEEP — Lesson title edit |
-| `LES-A-007` | KEEP — deterministic Lesson order edit |
+Previously verified Curriculum/Admin rows remain verified, including `PUB-002`, `ADMIN-007/008`, `CLASS-A-001/002/003/005/006/007/010`, and `LES-A-001/002/003/006/007` under their recorded KEEP/IMPROVE/REBUILD dispositions.
 
-Still not closed by Curriculum UI alone: `CLASS-A-004`, `CLASS-A-008/009/011/012`, `LES-A-004`, `LES-A-005`, `LES-A-008/009` where exact legacy semantics/operations remain absent.
+Rows whose exact later product behavior is still absent remain open; lower-level foundation is not treated as completion.
 
-## Stage13C Content / Media / OCR evidence
+## Stage13C Content / Media / OCR — VERIFIED
 
-Stage13C provides verified operational supervision/review over existing Stage9→Stage10→OCR authorities:
-
-- source document search/filter/pagination;
-- ordered source assets;
-- ready/failed media and deterministic variants;
-- processing/error visibility;
-- pending OCR visibility;
-- OCR raw/detail/source provenance;
-- correction + approve/reject review;
-- server guard against approving empty OCR;
-- Admin Chromium flow proves review and metrics refresh.
+Verified operational supervision/review over Stage9 → Stage10 → OCR authorities includes source search/filter/pagination, ordered assets, media state/variants/errors, OCR detail/provenance, correction and approve/reject review.
 
 Specialized evidence: `docs/admin/STAGE13_CONTENT_MEDIA_OCR_OPERATIONS.md`.
 
 ## Stage13D Upload / Processing History / Publication Linking — VERIFIED
-
-Specialized evidence: `docs/admin/STAGE13_CONTENT_INGESTION_PUBLICATION.md`.
-
-Stage13D closes the legacy upload-authoring outcome while replacing unsafe browser-owned state with server/PostgreSQL authority.
 
 Verified flow:
 
@@ -105,124 +80,103 @@ Admin selects Lesson + ordered image/PDF/mixed files
 → reload/history/archive retains provenance
 ```
 
-Important evidence:
+Closed rows remain:
 
-- backend integration proves image → 2-page PDF → image becomes ordered source positions `[0,1,2,3]`;
-- no `lesson_assets` are created merely because media processing becomes ready;
-- link creates Draft assets with media/task/item provenance;
-- Review/Publish are separate explicit Admin actions;
-- Chromium proves actual mixed upload, processing, Draft/Review/Publish, reload/history/archive and responsive UX;
-- Stage10 pipeline is reused; there is no parallel Admin compression/media implementation.
-
-### Closed Stage13D rows
-
-| Capability | Disposition / executable evidence |
+| Capability | Final state |
 |---|---|
-| `LES-A-010` | **VERIFIED — KEEP/REFACTOR**: Admin image upload through durable ingestion + Stage10; `34177369784`, `34177369743` |
-| `LES-A-011` | **VERIFIED — KEEP/REFACTOR**: PDF upload and Poppler page extraction through Stage10; `34177369784`, `34177369743` |
-| `LES-A-012` | **VERIFIED — KEEP/FIX**: mixed PDF/image original selected order preserved; backend expansion + Chromium order assertions |
-| `LES-A-013` | **VERIFIED — KEEP/REFACTOR**: upload authoring uses the single Stage10 source/display/thumbnail/AI media pipeline |
-| `LES-A-014` | **VERIFIED — KEEP**: durable server-owned upload/processing task progress, status, errors and retry |
-| `LES-A-015` | **VERIFIED — KEEP/REBUILD**: Admin task history/reopen/archive with non-destructive provenance retention |
+| `LES-A-010` | VERIFIED — image upload via durable ingestion + Stage10 |
+| `LES-A-011` | VERIFIED — PDF upload/page extraction via Stage10 |
+| `LES-A-012` | VERIFIED — mixed PDF/image selected order preserved |
+| `LES-A-013` | VERIFIED — single Stage10 media pipeline reused |
+| `LES-A-014` | VERIFIED — durable processing progress/status/error/retry |
+| `LES-A-015` | VERIFIED — history/reopen/archive with provenance |
 
-`CONTENT-013-002` is closed: media→Lesson publication linking is now explicit and executable evidence proves `media ready != published`.
+`CONTENT-013-002` is VERIFIED: `media ready != published`; Lesson publication requires explicit Draft → Review → Published.
 
-## Stage13E candidate coverage — EXECUTION PENDING, NOT VERIFIED
+## Stage13E Admin AI Operations / Review — VERIFIED
 
-Current candidate:
+Accepted candidate:
 
-`integration/stage13e-ai-operations @ c48d1e597497e6054340f71235c78937082b9371`
+`72ead8446af237392dc6d953c8e0c2382f468286`
 
-Latest runtime/test HEAD:
+Verified promotion/runtime:
 
-`d60218b518fb0fe453c21386e77cd35a2228ad07`
+`d5ebc7f25a369430387a758c7c0bb89350963d67`
 
-The candidate reuses verified Stage12 authority and currently implements:
+Verified flow:
 
 ```text
 Stage12 durable jobs/units/attempts/outputs
-→ Admin status/progress/filter/detail
-→ pause/resume/cancel/retry from server authority
-→ provider/model/project/usage observability without secrets
-→ source/page/checksum provenance
-→ output inspection + edit/reject/approve
+→ authenticated Admin status/progress/filter/detail
 → bounded Jobs/Units/Attempts/Review History navigation
-→ canonical latest review independent from historical page
-→ real-browser pagination/session-expiry/stale-409/responsive contract
+→ pause/resume/cancel/retry through Stage12 authority
+→ safe telemetry + provenance
+→ stable-output inspection
+→ Stage11-validated edit/reject/approve
+→ canonical latest review remains independent from selected audit page
 ```
 
-It also contains eight audit fixes that are **fixed in candidate but not executable-verified**: four P1 (`AI-013E-DB-001`, `AI-013E-REVIEW-002`, `AI-013E-OPS-003`, `AI-013E-OPS-004`) and four P2 (`AI-013E-OPS-005`, `AI-013E-OPS-006`, `AI-013E-PERF-007`, `AI-013E-API-008`).
+Important verified properties:
 
-Latest combined attempt `34283442253`, attempt `2`, job `102256556365` ended before checkout with `runner_id=0`, `steps=[]`. Therefore none of the candidate mappings below may be promoted to VERIFIED yet.
+- no second queue/lifecycle authority;
+- server-derived actions/progress;
+- review mutation only while owning unit is execution-stable;
+- durable nonblank reject reason at PostgreSQL boundary;
+- append-only human review history remains fully reachable;
+- historical page selection never redefines current review authority;
+- coupled Admin read models use one short repeatable-read snapshot;
+- Job list pages before expensive Unit aggregation;
+- unsafe numeric offsets rejected at HTTP boundary;
+- raw provider response, credential aliases and internal provider errors excluded from browser contract;
+- real Chromium covers pagination, pause/resume, approval/reload, real session expiry, stale-review `409` canonical refresh and 390px responsive behavior.
 
-### Legacy rows targeted by the Stage13E candidate
+Eight audit findings are now **FIXED + VERIFIED**: `AI-013E-DB-001`, `AI-013E-REVIEW-002`, `AI-013E-OPS-003`, `AI-013E-OPS-004`, `AI-013E-OPS-005`, `AI-013E-OPS-006`, `AI-013E-PERF-007`, `AI-013E-API-008`.
 
-| Capability | Current evidence state |
+### Stage13E legacy rows promoted to VERIFIED
+
+| Capability | Final evidence state |
 |---|---|
-| `LES-A-035` | **CANDIDATE / EXECUTION PENDING** — durable jobs remain visible through authenticated Admin AI Operations while navigation/polling is independent of worker ownership |
-| `LES-A-036` | **CANDIDATE / EXECUTION PENDING** — Admin cancel action delegates to Stage12 cancellation authority |
-| `LES-A-037` | **CANDIDATE / EXECUTION PENDING** — failed-job retry delegates to Stage12 bounded retry authority |
-| `AIRULE-025` | **CANDIDATE / EXECUTION PENDING** — generated output supports Stage11-validated human edit before approval/rejection |
-| `AI-OPS-012` | **CANDIDATE / EXECUTION PENDING** — cancellation is exposed from Admin without browser-owned task lifecycle |
-| `AI-OPS-013` | **CANDIDATE / EXECUTION PENDING** — retry is exposed with server-derived action availability |
-| `AI-OPS-014` | **CANDIDATE / EXECUTION PENDING** — progress/status is server-derived and snapshot-consistent |
-| `AI-OPS-015` | **CANDIDATE / EXECUTION PENDING** — safe model/project/attempt/latency/token/cost telemetry where durable Stage12 data exists; secret/internal provider fields remain excluded |
-| `AI-OPS-017` | **CANDIDATE / EXECUTION PENDING** — Admin AI Operations workspace covers jobs, units, attempts, outputs, controls and review without a second queue |
+| `LES-A-035` | **VERIFIED** — durable AI jobs remain reachable through authenticated Admin Operations with bounded pagination/polling independent of worker ownership |
+| `LES-A-036` | **VERIFIED** — Admin cancel delegates to Stage12 cancellation authority |
+| `LES-A-037` | **VERIFIED** — failed-job retry delegates to Stage12 bounded retry authority |
+| `AIRULE-025` | **VERIFIED** — generated output supports Stage11-validated human edit before terminal review |
+| `AI-OPS-012` | **VERIFIED** — cancellation exposed without browser-owned task lifecycle |
+| `AI-OPS-013` | **VERIFIED** — retry exposed with server-derived action authority |
+| `AI-OPS-014` | **VERIFIED** — progress/status is server-derived and snapshot-consistent |
+| `AI-OPS-015` | **VERIFIED** — safe durable model/project/attempt/latency/token/cost telemetry where data exists, while secret/internal fields remain excluded |
+| `AI-OPS-017` | **VERIFIED** — Admin AI Operations covers jobs, units, attempts, outputs, controls and review without a second queue |
 
-These rows become VERIFIED only after Stage13E combined gate plus required wider regressions execute green on the accepted same head.
+These rows are promoted because both candidate and selective promotion exact-head matrices executed green, including real PostgreSQL and Chromium; they are no longer candidate-only mappings.
 
-## Remaining Admin lesson/AI rows not closed by Stage13E candidate alone
+## Rows not closed by Stage13E
 
-| Capability | Reason / next evidence needed |
+| Capability / group | Reason / next boundary |
 |---|---|
-| `LES-A-004` | Admin lesson search itself is not yet a verified lesson-management flow |
-| `LES-A-005` | no published Lesson preview contract yet |
-| `LES-A-008/009` | dependency-aware removal/bulk lesson selection not complete |
-| `LES-A-016..019` | candidate can inspect/review generic AI outputs, but the complete page-detection → edit metadata → transactional batch-save lesson authoring flow is not yet proven |
-| `LES-A-020..028` | Stage11/12 generation foundations are VERIFIED and Stage13E can inspect/review outputs, but complete Admin generation authoring flows are not closed by operations/review alone |
-| `LES-A-029..033` | generic generated-output edit exists in candidate, but full summary/question/manual editor/delete product flows remain later coverage |
-| `LES-A-034` | bulk generation trigger across selected lessons is not implemented by Stage13E Operations candidate |
-| `LES-A-038/039` | export/history product UI is not verified |
+| `LES-A-004` | lesson search product flow remains separate |
+| `LES-A-005` | published Lesson preview contract remains separate |
+| `LES-A-008/009` | dependency-aware removal/bulk lesson selection remains incomplete |
+| `LES-A-016..019` | generic output review does not prove complete page-detection → metadata edit → transactional lesson batch-save authoring |
+| `LES-A-020..028` | AI foundations/operations are verified, but complete lesson-generation authoring flows are not automatically closed |
+| `LES-A-029..033` | generic reviewed-output edit does not equal full summary/question/manual editor/delete product flows |
+| `LES-A-034` | bulk generation trigger across selected lessons is not Stage13E |
+| `LES-A-038/039` | export/history product UI remains later coverage |
 
-This distinction is required: **verified infrastructure ≠ candidate implementation ≠ verified legacy user capability**.
+## Stage13F coverage gate — READY / NOT STARTED
 
-## AI capability evidence
+Stage13F must close Question Bank / Quiz Builder / Publish outcomes, including `AI-011-005`, reviewed persistence/provenance, editing, Draft → Review → Published, stable question identity/versioning/regeneration and safe export/print.
 
-Stage11/12 provide strong VERIFIED foundations for `AIRULE-*` and `AI-OPS-*`: provider-neutral contracts, Prompt Registry, exact counts/types, answer/index validation, source/page provenance, exact-mode uncertainty, duplicate checks, durable jobs, retries, cancellation, progress, pause/resume, capacity/cooldown/budget controls and dedicated worker runtime.
+Stage13E approval is **not** Question Bank publication. Raw/unreviewed provider output remains ineligible for Student/Question Bank authority.
 
-Stage13E adds the current **candidate** for Admin operations/review over that authority, but executable acceptance is still pending.
+## AI capability boundaries still open
 
-Not yet closed as product capabilities:
-
-- live provider/model benchmark and authorized route/bootstrap selection;
-- Stage13E candidate mappings until executable combined + wider evidence passes;
-- full Admin generated-content authoring/editor/delete/publish flows beyond the operations/review boundary;
-- `direct` Question Bank persistence and Question Bank publication authority (Stage13F);
-- actual production provider credentials/billing behavior.
+- `AI-012-019`: live provider/model benchmark/routes/credentials/bootstrap = `NOT YET VERIFIED`.
+- reviewed Question Bank persistence/publication = Stage13F.
+- complete Admin generated-content authoring flows beyond Operations/Review = later explicit coverage.
+- actual production provider credentials/billing behavior = `NOT YET VERIFIED`.
 
 ## Student coverage status
 
-Student Auth/Activation/Returning Login/Recovery/Device foundations are VERIFIED including Chromium.
-
-Most learning-product rows remain later-stage work: entitlement-filtered curriculum browsing, Reader/media/text/search/TTS, Practice/Test/Models, Notes/Favorites/Needs Review, Offline/PWA final contract, Notifications, progress/statistics/private achievements.
-
-Do not mark these complete from the old root frontend or legacy TODO entries.
-
-## Current coverage gate — Stage13E closure
-
-Required acceptance direction:
-
-```text
-candidate implementation
-→ API/Admin lint + strict typecheck + unit + build
-→ clean PostgreSQL migration/constraint/integration evidence
-→ Stage12/auth regressions
-→ real Admin Chromium including controls/review/pagination/session/409/390px
-→ wider same-head Stage9/10/OCR/11/12/13/13D/Full Rebuild matrix
-→ only then mark mapped legacy rows VERIFIED
-```
-
-The current blocker is `CI-001`: GitHub hosted jobs terminate before checkout. This is not executable product-failure evidence and does not permit marking candidate rows VERIFIED. Hosting/VPS is unrelated and intentionally outside current development gates.
+Student Auth/Activation/Returning Login/Recovery/Device foundations remain VERIFIED including Chromium. Most learning-product rows remain later-stage work: entitled curriculum browsing, Reader/media/text/search/TTS, Practice/Test/Models, Notes/Favorites/Needs Review, Offline/PWA, Notifications and progress/statistics/private achievements.
 
 ## Final release gate
 
