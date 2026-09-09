@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  applyApprovedQuestionRegeneration,
   createManualQuestion,
   editQuestionBankItem,
   fetchQuestionBank,
@@ -101,16 +102,18 @@ describe("question bank api client", () => {
     expect(parsed.searchParams.get("eventOffset")).toBe("30");
   });
 
-  it("keeps manual create, approved AI import and edit contracts explicit", async () => {
+  it("keeps manual create, approved AI import, stable regeneration and edit contracts explicit", async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(response({ itemId, revisionId: "rev-1" }, 201))
       .mockResolvedValueOnce(response({ imports: [], replayed: false }, 201))
-      .mockResolvedValueOnce(response({ revisionId: "rev-2" }));
+      .mockResolvedValueOnce(response({ itemId, revisionId: "rev-2", replayed: false }, 201))
+      .mockResolvedValueOnce(response({ revisionId: "rev-3" }));
     vi.stubGlobal("fetch", fetchMock);
 
     await createManualQuestion({ ...scope, question });
     await importApprovedAiQuestions(outputId, scope);
+    await applyApprovedQuestionRegeneration(itemId, outputId);
     await editQuestionBankItem(itemId, { ...question, prompt: "ما تعريف الشغل؟" });
 
     const [, createInit] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -124,7 +127,13 @@ describe("question bank api client", () => {
     expect(importInit.method).toBe("POST");
     expect(importInit.body).toBe(JSON.stringify(scope));
 
-    const [editUrl, editInit] = fetchMock.mock.calls[2] as [string, RequestInit];
+    const [regenerateUrl, regenerateInit] = fetchMock.mock.calls[2] as [string, RequestInit];
+    expect(new URL(regenerateUrl, "http://admin.test").pathname).toBe(
+      `/v1/admin/question-bank/${itemId}/regenerate-ai/${outputId}`,
+    );
+    expect(regenerateInit.method).toBe("POST");
+
+    const [editUrl, editInit] = fetchMock.mock.calls[3] as [string, RequestInit];
     expect(new URL(editUrl, "http://admin.test").pathname).toBe(`/v1/admin/question-bank/${itemId}`);
     expect(editInit.method).toBe("PATCH");
     expect(editInit.body).toBe(JSON.stringify({ question: { ...question, prompt: "ما تعريف الشغل؟" } }));
