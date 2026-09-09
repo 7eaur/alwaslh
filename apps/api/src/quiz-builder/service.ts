@@ -210,13 +210,13 @@ export class QuizBuilderService {
       const lessons = await tx.query<{ id: string; title: string; position: number }>(
         `select l.id, l.title, l.position
          from quiz_lessons ql join lessons l on l.id = ql.lesson_id
-         where ql.quiz_id = $1 order by l.position, l.id`,
+         where ql.quiz_id = $1 order by ql.position, l.id`,
         [quizId],
       );
       const versions = await tx.query<{
         id: string;
         version_number: number;
-        label: string;
+        label: string | null;
         shuffle_options: boolean;
       }>(
         `select id, version_number, label, shuffle_options
@@ -253,12 +253,11 @@ export class QuizBuilderService {
       const options = questionIds.length
         ? await tx.query<{
             question_id: string;
-            option_key: string;
-            option_text: string;
+            label: string;
             is_correct: boolean;
             position: number;
           }>(
-            `select question_id, option_key, option_text, is_correct, position
+            `select question_id, label, is_correct, position
              from question_options where question_id = any($1::uuid[])
              order by question_id, position`,
             [questionIds],
@@ -268,8 +267,8 @@ export class QuizBuilderService {
       for (const option of options) {
         const list = optionMap.get(option.question_id) ?? [];
         list.push({
-          key: option.option_key,
-          text: option.option_text,
+          key: `option-${option.position + 1}`,
+          text: option.label,
           isCorrect: option.is_correct,
           position: option.position,
         });
@@ -319,7 +318,7 @@ export class QuizBuilderService {
         versions: versions.map((version) => ({
           id: version.id,
           versionNumber: version.version_number,
-          label: version.label,
+          label: version.label ?? `النموذج ${version.version_number}`,
           shuffleOptions: version.shuffle_options,
           questions: questionMap.get(version.id) ?? [],
         })),
@@ -343,9 +342,10 @@ export class QuizBuilderService {
     return this.database.transaction(async (tx) => {
       await this.assertScope(tx, input.classId, input.subjectId, lessonIds);
       const rows = await tx.query<{ id: string }>(
-        `insert into quizzes (title, description, status, shuffle_versions, class_id, subject_id)
-         values ($1, $2, 'draft', $3, $4, $5) returning id`,
-        [title, description, input.shuffleVersions ?? true, input.classId, input.subjectId],
+        `insert into quizzes (
+           title, description, status, shuffle_versions, class_id, subject_id, created_by_profile_id
+         ) values ($1, $2, 'draft', $3, $4, $5, $6) returning id`,
+        [title, description, input.shuffleVersions ?? true, input.classId, input.subjectId, actorProfileId],
       );
       const quizId = rows[0]?.id;
       if (!quizId) throw new AppError("INTERNAL_ERROR", "تعذر إنشاء الاختبار", 500);
@@ -417,14 +417,14 @@ export class QuizBuilderService {
   async removeVersion(actorProfileId: string, quizId: string, versionId: string): Promise<void> {
     await this.database.transaction(async (tx) => {
       await this.lockDraftQuiz(tx, quizId);
-      const rows = await tx.query<{ label: string }>(
+      const rows = await tx.query<{ label: string | null }>(
         "select label from quiz_versions where id = $1 and quiz_id = $2 for update",
         [versionId, quizId],
       );
       const version = rows[0];
       if (!version) throw new AppError("NOT_FOUND", "نموذج الاختبار غير موجود", 404);
       await tx.query("delete from quiz_versions where id = $1", [versionId]);
-      await this.event(tx, quizId, null, "version_remove", actorProfileId, version.label);
+      await this.event(tx, quizId, null, "version_remove", actorProfileId, version.label ?? "نموذج محذوف");
     });
   }
 
@@ -534,9 +534,10 @@ export class QuizBuilderService {
   private async replaceLessonLinks(executor: QueryExecutor, quizId: string, lessonIds: readonly string[]) {
     await executor.query("delete from quiz_lessons where quiz_id = $1", [quizId]);
     await executor.query(
-      `insert into quiz_lessons (quiz_id, lesson_id)
-       select $1, x.lesson_id from jsonb_to_recordset($2::jsonb) as x(lesson_id uuid)`,
-      [quizId, JSON.stringify(lessonIds.map((lessonId) => ({ lesson_id: lessonId })))],
+      `insert into quiz_lessons (quiz_id, lesson_id, position)
+       select $1, x.lesson_id, x.position
+       from jsonb_to_recordset($2::jsonb) as x(lesson_id uuid, position integer)`,
+      [quizId, JSON.stringify(lessonIds.map((lessonId, position) => ({ lesson_id: lessonId, position })))],
     );
   }
 
@@ -576,7 +577,7 @@ export class QuizBuilderService {
       [revisionIds],
     );
     if (bankRows.length !== refs.length)
-      throw new AppError("CONFLICT", "كل أسئلة النموذج يجب أن تكون منشورة وإجاباتها محسومة", 409);
+      throw new AppError("CONFLICT", "كل أسئلة النموذج يجب أن تكون منشورة وإجاباتها محسمومة", 409);
     const bankMap = new Map(bankRows.map((row) => [row.revision_id, row]));
     const quizLessons = await executor.query<{ lesson_id: string }>(
       "select lesson_id from quiz_lessons where quiz_id = $1",
@@ -634,15 +635,14 @@ export class QuizBuilderService {
       if (!questionId) throw new AppError("INTERNAL_ERROR", "تعذر إنشاء لقطة السؤال", 500);
       if (row.type !== "direct") {
         await executor.query(
-          `insert into question_options (question_id, option_key, option_text, is_correct, position)
-           select $1, x.option_key, x.option_text, x.is_correct, x.position
-           from jsonb_to_recordset($2::jsonb) as x(option_key text, option_text text, is_correct boolean, position integer)`,
+          `insert into question_options (question_id, label, is_correct, position)
+           select $1, x.label, x.is_correct, x.position
+           from jsonb_to_recordset($2::jsonb) as x(label text, is_correct boolean, position integer)`,
           [
             questionId,
             JSON.stringify(
               options.map((text, optionPosition) => ({
-                option_key: `option-${optionPosition + 1}`,
-                option_text: text,
+                label: text,
                 is_correct: row.correct_option_index === optionPosition,
                 position: optionPosition,
               })),
