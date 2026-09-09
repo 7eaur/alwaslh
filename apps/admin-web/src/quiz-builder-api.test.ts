@@ -19,13 +19,13 @@ afterEach(() => {
 });
 
 function mockJson(payload: unknown, status = 200) {
-  const fetchMock = vi.fn(async () =>
+  const fetchMock = vi.fn<typeof fetch>(async (_input, _init) =>
     new Response(status === 204 ? null : JSON.stringify(payload), {
       status,
       headers: { "Content-Type": "application/json" },
     }),
   );
-  globalThis.fetch = fetchMock as typeof fetch;
+  globalThis.fetch = fetchMock;
   return fetchMock;
 }
 
@@ -45,7 +45,7 @@ describe("quiz builder admin API", () => {
     expect(String(url)).toContain("/v1/admin/quizzes?");
     expect(String(url)).toContain("status=published");
     expect(String(url)).toContain("search=%D8%B7%D8%A7%D9%82%D8%A9");
-    expect((init as RequestInit).credentials).toBe("include");
+    expect(init?.credentials).toBe("include");
   });
 
   it("loads only the server-scoped published question candidates", async () => {
@@ -60,7 +60,7 @@ describe("quiz builder admin API", () => {
     expect(String(url)).toContain("search=%D8%B7%D8%A7%D9%82%D8%A9");
     expect(String(url)).toContain("limit=25");
     expect(String(url)).toContain("offset=25");
-    expect((init as RequestInit).credentials).toBe("include");
+    expect(init?.credentials).toBe("include");
   });
 
   it("uses the canonical detail and create/version routes", async () => {
