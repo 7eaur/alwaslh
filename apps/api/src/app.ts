@@ -18,6 +18,8 @@ import type { Database } from "./db.js";
 import { AppError, toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
 import { registerQuestionBankRoutes } from "./question-bank/http.js";
+import { registerQuestionBankRegenerationRoutes } from "./question-bank/regeneration-http.js";
+import { QuestionBankRegenerationService } from "./question-bank/regeneration.js";
 import { QuestionBankService } from "./question-bank/service.js";
 import { QuizQuestionCandidateService } from "./quiz-builder/candidates.js";
 import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
@@ -44,6 +46,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const contentOperations = new AdminContentOperationsService(database);
   const aiOperations = new AdminAiOperationsService(database);
   const questionBank = new QuestionBankService(database);
+  const questionBankRegeneration = new QuestionBankRegenerationService(database);
   const quizBuilder = new QuizBuilderService(database);
   const quizCandidates = new QuizQuestionCandidateService(database);
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
@@ -75,6 +78,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
   registerQuestionBankRoutes(app, config, auth, questionBank);
+  registerQuestionBankRegenerationRoutes(app, config, auth, questionBankRegeneration);
   registerQuizBuilderRoutes(app, config, auth, quizBuilder, quizCandidates);
 
   app.get("/health", async () => ({
