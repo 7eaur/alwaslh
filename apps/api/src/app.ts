@@ -19,6 +19,7 @@ import { AppError, toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
 import { registerQuestionBankRoutes } from "./question-bank/http.js";
 import { QuestionBankService } from "./question-bank/service.js";
+import { QuizQuestionCandidateService } from "./quiz-builder/candidates.js";
 import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
 import { QuizBuilderService } from "./quiz-builder/service.js";
 
@@ -44,6 +45,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const aiOperations = new AdminAiOperationsService(database);
   const questionBank = new QuestionBankService(database);
   const quizBuilder = new QuizBuilderService(database);
+  const quizCandidates = new QuizQuestionCandidateService(database);
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
 
@@ -73,7 +75,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
   registerQuestionBankRoutes(app, config, auth, questionBank);
-  registerQuizBuilderRoutes(app, config, auth, quizBuilder);
+  registerQuizBuilderRoutes(app, config, auth, quizBuilder, quizCandidates);
 
   app.get("/health", async () => ({
     status: "ok",
