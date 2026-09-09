@@ -70,6 +70,48 @@ export interface AdminCurriculumSnapshot {
   lessons: CurriculumLessonView[];
 }
 
+export interface StudentCurriculumLessonView {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  position: number;
+  contentRevision: number;
+  publishedAt: Date;
+}
+
+export interface StudentCurriculumSectionView {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  position: number;
+  lessons: StudentCurriculumLessonView[];
+}
+
+export interface StudentCurriculumSubjectView {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  position: number;
+  unsectionedLessons: StudentCurriculumLessonView[];
+  sections: StudentCurriculumSectionView[];
+}
+
+export interface StudentCurriculumClassView {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  position: number;
+  subjects: StudentCurriculumSubjectView[];
+}
+
+export interface StudentCurriculumCatalog {
+  classes: StudentCurriculumClassView[];
+}
+
 export interface CreateClassInput {
   slug: string;
   name: string;
@@ -205,6 +247,38 @@ interface LessonRow {
   updated_at: Date;
 }
 
+interface StudentOfferingRow {
+  class_id: string;
+  subject_id: string;
+  subject_slug: string;
+  subject_name: string;
+  subject_description: string | null;
+  position: number;
+}
+
+interface StudentSectionRow {
+  id: string;
+  class_id: string;
+  subject_id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  position: number;
+}
+
+interface StudentLessonRow {
+  id: string;
+  class_id: string;
+  subject_id: string;
+  section_id: string | null;
+  slug: string;
+  title: string;
+  summary: string | null;
+  position: number;
+  content_revision: number;
+  published_at: Date;
+}
+
 const classColumns = "id, slug, name, description, position, status, created_at, updated_at";
 const subjectColumns = "id, slug, name, description, status, created_at, updated_at";
 const offeringColumns = "class_id, subject_id, position, status, created_at, updated_at";
@@ -296,6 +370,18 @@ function lessonView(row: LessonRow): CurriculumLessonView {
   };
 }
 
+function studentLessonView(row: StudentLessonRow): StudentCurriculumLessonView {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    summary: row.summary,
+    position: row.position,
+    contentRevision: row.content_revision,
+    publishedAt: row.published_at,
+  };
+}
+
 function addPatch(sets: string[], values: unknown[], column: string, value: unknown): void {
   values.push(value);
   sets.push(`${column} = $${values.length}`);
@@ -380,6 +466,16 @@ async function assertSectionScope(
   if (row.status === "archived") throw new AppError("CONFLICT", "لا يمكن ربط الدرس بوحدة أو قسم مؤرشف", 409);
 }
 
+const activeStudentEntitlement = `exists (
+  select 1
+    from student_entitlements e
+   where e.profile_id = $1
+     and e.status = 'active'
+     and e.starts_at <= now()
+     and (e.expires_at is null or e.expires_at > now())
+     and (e.scope = 'all_content' or (e.scope = 'class' and e.class_id = c.id))
+)`;
+
 export class CurriculumService {
   constructor(private readonly db: Database) {}
 
@@ -409,6 +505,144 @@ export class CurriculumService {
       sections: sections.map(sectionView),
       lessons: lessons.map(lessonView),
     };
+  }
+
+  async studentCatalog(profileId: string): Promise<StudentCurriculumCatalog> {
+    const [classes, offerings, sections, lessons] = await Promise.all([
+      this.db.query<ClassRow>(
+        `select ${classColumns}
+           from classes c
+          where c.status = 'active'
+            and ${activeStudentEntitlement}
+          order by c.position, c.name, c.id`,
+        [profileId],
+      ),
+      this.db.query<StudentOfferingRow>(
+        `select o.class_id,
+                o.subject_id,
+                s.slug as subject_slug,
+                s.name as subject_name,
+                s.description as subject_description,
+                o.position
+           from subject_class_links o
+           join classes c on c.id = o.class_id
+           join subjects s on s.id = o.subject_id
+          where c.status = 'active'
+            and s.status = 'active'
+            and o.status = 'active'
+            and ${activeStudentEntitlement}
+          order by c.position, o.position, s.name, s.id`,
+        [profileId],
+      ),
+      this.db.query<StudentSectionRow>(
+        `select cs.id,
+                cs.class_id,
+                cs.subject_id,
+                cs.slug,
+                cs.title,
+                cs.description,
+                cs.position
+           from curriculum_sections cs
+           join classes c on c.id = cs.class_id
+           join subjects s on s.id = cs.subject_id
+           join subject_class_links o
+             on o.class_id = cs.class_id and o.subject_id = cs.subject_id
+          where c.status = 'active'
+            and s.status = 'active'
+            and o.status = 'active'
+            and cs.status = 'active'
+            and ${activeStudentEntitlement}
+          order by c.position, o.position, cs.position, cs.title, cs.id`,
+        [profileId],
+      ),
+      this.db.query<StudentLessonRow>(
+        `select l.id,
+                l.class_id,
+                l.subject_id,
+                l.section_id,
+                l.slug,
+                l.title,
+                l.summary,
+                l.position,
+                l.content_revision,
+                l.published_at
+           from lessons l
+           join classes c on c.id = l.class_id
+           join subjects s on s.id = l.subject_id
+           join subject_class_links o
+             on o.class_id = l.class_id and o.subject_id = l.subject_id
+           left join curriculum_sections cs on cs.id = l.section_id
+          where c.status = 'active'
+            and s.status = 'active'
+            and o.status = 'active'
+            and l.status = 'active'
+            and l.published_at is not null
+            and l.published_at <= now()
+            and (l.section_id is null or cs.status = 'active')
+            and ${activeStudentEntitlement}
+          order by c.position,
+                   o.position,
+                   cs.position nulls first,
+                   l.position,
+                   l.title,
+                   l.id`,
+        [profileId],
+      ),
+    ]);
+
+    const catalogClasses: StudentCurriculumClassView[] = classes.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      name: row.name,
+      description: row.description,
+      position: row.position,
+      subjects: [],
+    }));
+    const classById = new Map(catalogClasses.map((record) => [record.id, record]));
+    const subjectByScope = new Map<string, StudentCurriculumSubjectView>();
+    const sectionById = new Map<string, StudentCurriculumSectionView>();
+
+    for (const row of offerings) {
+      const classRecord = classById.get(row.class_id);
+      if (!classRecord) continue;
+      const subjectRecord: StudentCurriculumSubjectView = {
+        id: row.subject_id,
+        slug: row.subject_slug,
+        name: row.subject_name,
+        description: row.subject_description,
+        position: row.position,
+        unsectionedLessons: [],
+        sections: [],
+      };
+      classRecord.subjects.push(subjectRecord);
+      subjectByScope.set(`${row.class_id}:${row.subject_id}`, subjectRecord);
+    }
+
+    for (const row of sections) {
+      const subjectRecord = subjectByScope.get(`${row.class_id}:${row.subject_id}`);
+      if (!subjectRecord) continue;
+      const sectionRecord: StudentCurriculumSectionView = {
+        id: row.id,
+        slug: row.slug,
+        title: row.title,
+        description: row.description,
+        position: row.position,
+        lessons: [],
+      };
+      subjectRecord.sections.push(sectionRecord);
+      sectionById.set(row.id, sectionRecord);
+    }
+
+    for (const row of lessons) {
+      const lesson = studentLessonView(row);
+      if (row.section_id) {
+        sectionById.get(row.section_id)?.lessons.push(lesson);
+        continue;
+      }
+      subjectByScope.get(`${row.class_id}:${row.subject_id}`)?.unsectionedLessons.push(lesson);
+    }
+
+    return { classes: catalogClasses };
   }
 
   async createClass(actorProfileId: string, input: CreateClassInput): Promise<CurriculumClassView> {

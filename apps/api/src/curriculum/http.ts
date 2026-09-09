@@ -104,12 +104,27 @@ async function adminActor(
   return actor;
 }
 
+async function studentActor(
+  request: Parameters<typeof currentProfile>[0],
+  config: AppConfig,
+  auth: AuthService,
+): Promise<SessionProfile> {
+  const actor = await currentProfile(request, config, auth);
+  if (actor.role !== "student") throw new AppError("FORBIDDEN", "هذه العملية للطالب فقط", 403);
+  return actor;
+}
+
 export function registerCurriculumRoutes(
   app: FastifyInstance,
   config: AppConfig,
   auth: AuthService,
   curriculum: CurriculumService,
 ): void {
+  app.get("/v1/student/curriculum", async (request) => {
+    const actor = await studentActor(request, config, auth);
+    return { curriculum: await curriculum.studentCatalog(actor.id) };
+  });
+
   app.get("/v1/admin/curriculum", async (request) => {
     await adminActor(request, config, auth);
     return { curriculum: await curriculum.snapshot() };

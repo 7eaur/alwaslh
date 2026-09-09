@@ -80,10 +80,13 @@ jobs:
           npm run build --prefix apps/api
           npm run typecheck --prefix apps/student-web
           npm run build --prefix apps/student-web
-      - name: Apply clean PostgreSQL migrations and seed activation code
-        run: |
-          npm run db:migrate --prefix apps/api
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "insert into full_access_codes (code, entitlement_duration_days) values ('654321', 365);"
+      - name: Apply clean PostgreSQL migrations
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify Student curriculum contract
+        working-directory: apps/api
+        run: node --import tsx --test tests/integration/student-curriculum.integration.test.ts
+      - name: Seed activation code
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "insert into full_access_codes (code, entitlement_duration_days) values ('654321', 365);"
       - name: Create recovery-support Admin fixture
         env:
           ADMIN_BOOTSTRAP_IDENTIFIER: stage14-admin
