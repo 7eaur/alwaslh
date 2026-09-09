@@ -2,7 +2,7 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable CI evidence أعلى من prose. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-09 — Stage13E verified on candidate and selective promotion heads, promoted to `main`; Stage13F is READY / NOT STARTED.**
+Last synchronized: **2026-09-09 — Stage13F Question Bank backend foundation VERIFIED on branch; Admin Question Bank UI is the active next batch.**
 
 ## Current Position
 
@@ -11,10 +11,39 @@ Last synchronized: **2026-09-09 — Stage13E verified on candidate and selective
 - Sole execution ledger: GitHub Issue `#16`.
 - Hosting/deployment: **FULLY DEFERRED UNTIL VPS + explicit Product Owner reopening**.
 - Verified Stage13E runtime/application SHA: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
-- That promotion commit is a direct child of `e304d61286b9ca120db2dad695d29f4f1642e733`; no divergent candidate history or merge commit was imported.
-- Current documentation-closure work may advance `main` beyond the verified runtime SHA. Docs-only commits are not new runtime evidence.
-- Current product position: **Stage13E CLOSED / VERIFIED; Stage13F READY / NOT STARTED**.
-- Stage13F implementation has not started in the Stage13E closure batch.
+- Current Stage13F branch: `integration/stage13f-question-bank`.
+- Verified Stage13F-A foundation HEAD: `b7a8668bc54b0265e57326b5c64e744366129daa`.
+- Stage13F-A verification run: `34409961494` — **SUCCESS**.
+- Current product position: **Stage13E CLOSED / VERIFIED; Stage13F ACTIVE — Question Bank backend foundation VERIFIED, Admin UI / Quiz Builder / export remain open.**
+- Deployment remains deferred; this branch is development/integration authority only.
+
+## Stage13F-A Question Bank Foundation — VERIFIED
+
+Verified on exact HEAD `b7a8668bc54b0265e57326b5c64e744366129daa`:
+
+- canonical reusable Question Bank persistence separate from assessment delivery snapshots;
+- immutable revision history with stable item identity;
+- explicit `draft → review → published` lifecycle plus archived historical revisions;
+- typed `multiple_choice`, `true_false`, and `direct` persistence, closing the backend portion of `AI-011-005`;
+- answer-shape and publication-state PostgreSQL invariants;
+- class/subject/lesson provenance;
+- AI source/page/checksum/OCR/content-source provenance;
+- prompt key/version + generation mode import provenance;
+- import only from the latest Stage13E `approve` authority;
+- idempotent/concurrent approved-AI import without duplicate Question Bank items;
+- manual create/edit/review/reject/publish API under existing Admin auth/origin boundaries;
+- bounded pagination and safe offset validation;
+- published revision replacement without mutating historical published content.
+
+Run `34409961494` passed:
+
+- API lint;
+- API strict typecheck;
+- 46 API unit tests;
+- API build;
+- clean PostgreSQL migrations `0001` through `0019_question_bank.sql`;
+- Stage13F PostgreSQL contract checks;
+- Stage13F real PostgreSQL integration including Stage13E approval → Stage13F import, direct-question persistence, concurrent idempotency, lifecycle, provenance, Admin-only authorization and HTTP validation.
 
 ## Stage13E Verification — CLOSED / VERIFIED
 
@@ -67,13 +96,15 @@ Verified Stage13E provides:
 - safe provider/model/project/provenance observability without raw secrets/provider responses/internal errors;
 - real session-expiry, stale-review `409`, reload durability and 390px responsive evidence.
 
-Stage13E review **does not** publish to Question Bank. That is Stage13F.
+Stage13E review **does not** publish to Question Bank. Stage13F-A now owns that reviewed persistence boundary.
 
 ## Root-cause CI fixes closed during verification
 
 - `CI-013E-009`: stale standalone Stage13E DB contract assertion/quoting synchronized to migration + Combined contract — **FIXED / VERIFIED**.
 - Standalone suite state pollution into Stage12 global-worker regressions fixed by database reset+migrate between suites — **FIXED / VERIFIED**.
 - Combined workflow enabled for the short-lived promotion branch so exact promotion-head evidence could execute.
+- Stage13F initial Biome-only failure was fixed without weakening lint; the unsafe test assertion was replaced with a runtime assertion.
+- Stage13F authorization fixture failure was fixed by creating a valid student credential/device fixture rather than bypassing AuthService.
 
 No product rule, security boundary, DB invariant or test expectation was weakened.
 
@@ -90,7 +121,9 @@ No product rule, security boundary, DB invariant or test expectation was weakene
 | Stage13C Content/Media/OCR | VERIFIED |
 | Stage13D Upload/History/Publication | VERIFIED incl. Chromium |
 | Stage13E Admin AI Operations / Review | **VERIFIED / PROMOTED TO MAIN** |
-| Stage13F Question Bank / Quiz Builder | **READY / NOT STARTED** |
+| Stage13F-A Question Bank Backend | **VERIFIED on branch** |
+| Stage13F-B Admin Question Bank UI | **ACTIVE / NOT YET VERIFIED** |
+| Stage13F-C Quiz Builder / versioning / regeneration / export | **REQUIRED / NOT YET VERIFIED** |
 | Stage13G+ | REQUIRED later |
 | Deployment stages | FUTURE only after VPS + explicit reopening |
 
@@ -105,16 +138,17 @@ No product rule, security boundary, DB invariant or test expectation was weakene
 - `AI-013E-PERF-007` P2 — FIXED + VERIFIED.
 - `AI-013E-API-008` P2 — FIXED + VERIFIED.
 - `CI-013E-009` P1 — FIXED + VERIFIED.
-- `CI-001` — historical hosted-runner allocation incident, **not blocking**. Exact external historical cause remains `NOT YET VERIFIED`.
-- `AI-011-005` P2 — Stage13F reviewed direct Question Bank persistence; OPEN for next stage.
+- `AI-011-005` P2 — **backend persistence FIXED + VERIFIED in Stage13F-A; Admin UI + delivery use remain open until Stage13F closure**.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap remains `NOT YET VERIFIED`.
+- `CI-001` — historical hosted-runner allocation incident, **not blocking**. Exact external historical cause remains `NOT YET VERIFIED`.
 
 ## Exact Next Work
 
-1. Finish this Stage13E documentation closure and post the closure report to Issue #16.
-2. Keep deployment/hosting deferred.
-3. Start Stage13F only as a new isolated implementation batch from current `main` after live-checking GitHub.
-4. Stage13F must own reviewed Question Bank persistence/provenance, editing, Draft→Review→Published, Quiz Builder/versioning/regeneration/export and executable DB/API/Admin/Chromium evidence.
+1. Build Stage13F-B Admin Question Bank workspace in `apps/admin-web` using the verified Stage13F-A API.
+2. Cover loading/error/empty/search/filter/detail/manual edit/review/publish states and responsive/accessibility behavior.
+3. Add Admin unit/API tests and real Chromium evidence for the Question Bank workspace.
+4. Then implement Stage13F-C Quiz Builder, stable question selection/versioning, one-question deterministic regeneration and reviewed/published export authority.
+5. Keep deployment/hosting deferred.
 
 ## Mandatory Startup
 
