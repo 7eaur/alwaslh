@@ -4,6 +4,7 @@ import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService, SessionProfile } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
+import type { StudentReaderService } from "./student-reader.js";
 import type { CurriculumService } from "./service.js";
 
 const RecordStatusSchema = z.enum(["active", "inactive", "archived"]);
@@ -93,6 +94,7 @@ const SubjectParamsSchema = z.object({ subjectId: z.string().uuid() });
 const OfferingParamsSchema = z.object({ classId: z.string().uuid(), subjectId: z.string().uuid() });
 const SectionParamsSchema = z.object({ sectionId: z.string().uuid() });
 const LessonParamsSchema = z.object({ lessonId: z.string().uuid() });
+const LessonAssetParamsSchema = z.object({ assetId: z.string().uuid() });
 
 async function adminActor(
   request: Parameters<typeof currentProfile>[0],
@@ -119,10 +121,30 @@ export function registerCurriculumRoutes(
   config: AppConfig,
   auth: AuthService,
   curriculum: CurriculumService,
+  studentReader: StudentReaderService,
 ): void {
   app.get("/v1/student/curriculum", async (request) => {
     const actor = await studentActor(request, config, auth);
     return { curriculum: await curriculum.studentCatalog(actor.id) };
+  });
+
+  app.get("/v1/student/lessons/:lessonId/reader", async (request) => {
+    const actor = await studentActor(request, config, auth);
+    const params = parseBody(LessonParamsSchema, request.params);
+    return { reader: await studentReader.lesson(actor.id, params.lessonId) };
+  });
+
+  app.get("/v1/student/lesson-assets/:assetId/content", async (request, reply) => {
+    const actor = await studentActor(request, config, auth);
+    const params = parseBody(LessonAssetParamsSchema, request.params);
+    const content = await studentReader.assetContent(actor.id, params.assetId);
+    reply.header("Content-Type", content.mimeType);
+    reply.header("Content-Length", String(content.byteSize));
+    reply.header("Cache-Control", "private, no-store");
+    reply.header("Pragma", "no-cache");
+    reply.header("X-Content-Type-Options", "nosniff");
+    reply.header("ETag", `"${content.checksumSha256}"`);
+    return reply.send(content.bytes);
   });
 
   app.get("/v1/admin/curriculum", async (request) => {
