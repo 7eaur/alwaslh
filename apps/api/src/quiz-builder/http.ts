@@ -4,6 +4,7 @@ import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
+import type { QuizQuestionCandidateService } from "./candidates.js";
 import type { QuizBuilderService } from "./service.js";
 
 const PaginationOffsetSchema = z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
@@ -48,6 +49,11 @@ const ListSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(30),
   offset: PaginationOffsetSchema.default(0),
 });
+const CandidateListSchema = z.object({
+  search: z.string().trim().min(1).max(500).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: PaginationOffsetSchema.default(0),
+});
 
 async function adminActor(
   request: Parameters<typeof currentProfile>[0],
@@ -64,6 +70,7 @@ export function registerQuizBuilderRoutes(
   config: AppConfig,
   auth: AuthService,
   quizzes: QuizBuilderService,
+  candidates: QuizQuestionCandidateService,
 ): void {
   app.get("/v1/admin/quizzes", async (request) => {
     await adminActor(request, config, auth);
@@ -82,6 +89,17 @@ export function registerQuizBuilderRoutes(
     await adminActor(request, config, auth);
     const params = parseBody(QuizParamsSchema, request.params);
     return quizzes.detail(params.quizId);
+  });
+
+  app.get("/v1/admin/quizzes/:quizId/candidates", async (request) => {
+    await adminActor(request, config, auth);
+    const params = parseBody(QuizParamsSchema, request.params);
+    const query = parseBody(CandidateListSchema, request.query);
+    return candidates.list(params.quizId, {
+      ...(query.search ? { search: query.search } : {}),
+      limit: query.limit ?? 50,
+      offset: query.offset ?? 0,
+    });
   });
 
   app.post("/v1/admin/quizzes", async (request, reply) => {
