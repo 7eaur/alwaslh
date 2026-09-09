@@ -18,12 +18,12 @@ import type { Database } from "./db.js";
 import { AppError, toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
 import { registerQuestionBankRoutes } from "./question-bank/http.js";
-import { registerQuestionBankRegenerationRoutes } from "./question-bank/regeneration-http.js";
 import { QuestionBankRegenerationService } from "./question-bank/regeneration.js";
+import { registerQuestionBankRegenerationRoutes } from "./question-bank/regeneration-http.js";
 import { QuestionBankService } from "./question-bank/service.js";
 import { QuizQuestionCandidateService } from "./quiz-builder/candidates.js";
-import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
 import { QuizVersionExportService } from "./quiz-builder/export.js";
+import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
 import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
 import { QuizBuilderService } from "./quiz-builder/service.js";
 
