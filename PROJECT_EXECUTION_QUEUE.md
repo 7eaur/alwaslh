@@ -2,7 +2,7 @@
 
 > Ordered execution authority. Always start from the first incomplete item after reading Source of Truth and Issue #16.
 
-Last synchronized: **2026-09-10 — Stage13F implementation verified 13/13; closure checkpoint re-verification/promotion is the active Track A task.**
+Last synchronized: **2026-09-10 — Stage13F promoted + integrated to Student; Stage14 CLOSED; Stage15 discovery is the active Track B task.**
 
 ## Operating Rules
 
@@ -10,135 +10,168 @@ Last synchronized: **2026-09-10 — Stage13F implementation verified 13/13; clos
 - Issue #16 is the sole cross-track execution ledger.
 - Code/migrations/executable evidence outrank prose.
 - Root-cause fixes only; no test weakening, auth bypass, fake API, sleep-based race masking or duplicate durable authority.
-- Current model: parallel Track A (Backend/Admin/AI) + Track B (Student Product).
+- Parallel model: Track A Backend/Admin; Track B Student Product.
 - Production deployment/cutover remains future-only.
 
-## Completed Track A Checkpoints
+## Completed Shared / Track B Checkpoints
 
-### EXEC-005 — Stage13E Admin AI Operations / Review
+### EXEC-006 — Stage13F Question Bank / Quiz Builder
+
+**DONE / VERIFIED / CLOSED / PROMOTED TO MAIN**
+
+Canonical main checkpoint:
+
+`3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
+
+Provides stable Question Bank items/revisions, Draft→Review→Published, provenance, immutable published quiz snapshots, direct-question delivery support, same-item regeneration and reviewed/published export.
+
+### STUDENT-014 — Stage14 Student Product
 
 **DONE / VERIFIED / CLOSED**
 
-Runtime authority: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
+Verified runtime:
 
-### EXEC-006A — Stage13F Question Bank foundation
+`ac55f1435d232cadff334816407f1182125dda90`
 
-**DONE / VERIFIED**
+Evidence:
 
-Canonical stable items/revisions, typed direct/MCQ/T-F persistence, provenance, approved-AI import, manual authoring, lifecycle and PostgreSQL/API integration.
+- Student Product `34420993805` — SUCCESS.
+- API Regression `34420993840` — SUCCESS.
+- Student Auth/Access/Curriculum/Reader Chromium and responsive/a11y critical path PASS.
 
-### EXEC-006B — Stage13F Admin Question Bank
-
-**DONE / VERIFIED**
-
-Dedicated Admin workspace, typed client, lifecycle/provenance/history/session/responsive UX and real Chromium.
-
-### EXEC-006C — Stage13F Quiz Builder / immutable snapshots
+### STUDENT-014I — Integrate canonical Stage13F main
 
 **DONE / VERIFIED**
 
-Published Question Bank candidates, class/subject/multi-lesson quiz scope, multiple versions/models, immutable delivery snapshots, direct delivery support, review/publish/archive lifecycle.
+History-preserving merge runtime:
 
-### EXEC-006D — Regenerate one / export
+`4a476e1f29cb605fce294d7c34fd68e8218a32e8`
 
-**DONE / VERIFIED**
+- parents: Student `9ccfe1e6...` + main `3aeca598...`;
+- non-force branch update;
+- `behind_by=0` vs main;
+- Student API Regression `34422553459` — SUCCESS;
+- Student Product `34422553405` — SUCCESS;
+- clean migrations `0001`→`0022` PASS;
+- Curriculum/Reader integration + Chromium PASS.
 
-Same-item approved regeneration apply, DB identity guard, idempotent replay, exact Review/Published version CSV + RTL print/PDF template and Draft export rejection.
+The Stage15 dependency block is resolved.
 
-Runtime checkpoint: `afbe552710b3f1cf79ee70594f691fa836c05a45`.
+## Active Track B Queue
 
-Stage-specific runs `34420441878` and `34420441837` SUCCESS.
+### STUDENT-015A — Assessment runtime contract + persistence audit
 
-Runtime wider verification-only PR #27: **13/13 SUCCESS**, closed unmerged. Runs: `34420900598`, `34420900550`, `34420900527`, `34420900592`, `34420900501`, `34420900492`, `34420900547`, `34420900488`, `34420900522`, `34420900503`, `34420900520`, `34420900476`, `34420900482`.
+**Priority: P1 · Status: ACTIVE**
 
-## Active Queue
+Verified facts:
 
-### EXEC-006E — Stage13F closure documentation exact-head verification + main promotion
+- Stage13F Admin HTTP is not a Student API.
+- `QuizBuilderService.detail()` contains answer correctness/direct answer/Admin audit and must not be exposed to Student.
+- existing durable runtime tables in `0003_learning.sql` are canonical:
+  - `practice_sessions`
+  - `practice_session_questions`
+  - `practice_session_options`
+  - `practice_answers`
+  - `quiz_attempts`
+- `0020_quiz_builder_enums.sql` adds `direct` delivery type.
+- `0021_quiz_builder.sql` materializes immutable Published+known-answer Question Bank snapshots and DB-blocks invalid scope/publication/mutation.
+- proven gap: `practice_answers` has option answer only, no direct-text answer representation.
 
-**Priority: P0 process gate · Status: ACTIVE**
+Required completion:
 
-1. commit synchronized Status/Engineering Log/Handoff/Resume/Continuity/Queue/Roadmap/Stage13F contract/Legacy Coverage atomically;
-2. open verification-only Draft PR to `main`;
-3. require the same wider pull-request matrix to pass on that exact closure commit;
-4. close PR unmerged;
-5. re-check live `main` is still the Stage13F base;
-6. fast-forward `main` non-force to the exact verified closure commit;
-7. post final Stage13F EXECUTION REPORT in Issue #16.
-
-No merge commit or force update.
+1. finish caller/constraint audit;
+2. define smallest additive direct-answer/finalization migration;
+3. document shared DB/API edit in Issue #16 before modifying shared areas;
+4. add PostgreSQL contracts for invariants;
+5. no second attempt store.
 
 ---
+
+### STUDENT-015B — Student-safe assessment service/API
+
+**Priority: P1 · Status: NEXT**
+
+Required:
+
+- authenticated Student role + bound device/session;
+- entitlement-safe published quiz discovery;
+- immutable version/model selection;
+- create/resume/restart/abandon session rules;
+- one persisted question order and option order per session;
+- answer-key-free Student payload;
+- idempotent answer writes;
+- Practice feedback policy;
+- Test/Model withheld correctness before finalization;
+- transactional/idempotent finalization;
+- server-derived score and attempt history;
+- exact Question Bank/source provenance without answer leakage.
+
+---
+
+### STUDENT-015C — Student Practice UI
+
+**Priority: P1 · Status: AFTER API CONTRACT**
+
+Learning-first Practice workspace with immediate server-authorized feedback, explanation/provenance where policy allows, keyboard/touch/mobile states, loading/error/offline/session expiry and resume.
+
+---
+
+### STUDENT-015D — Student Test / Model UI
+
+**Priority: P1 · Status: AFTER API CONTRACT**
+
+No correctness leakage before finalization; stable progress, resume/restart, final score/result/history and version/model identity.
+
+---
+
+### STUDENT-015E — Stage15 verification/closure
+
+**Priority: P0 process gate · Status: PENDING**
+
+Require exact-head:
+
+- Student lint/typecheck/unit/build;
+- API lint/typecheck/unit/build;
+- clean PostgreSQL migrations;
+- assessment PostgreSQL integration including races/idempotency;
+- Auth/Access/Curriculum/Reader regressions;
+- real Chromium Practice + Test/Model;
+- 390px/tablet/desktop responsive checks;
+- keyboard/focus/accessibility checks;
+- Issue #16 execution report + synchronized docs.
+
+## Parallel Track A
 
 ### EXEC-007 — Stage13G Remaining Admin Product
 
-**Priority: P1 · Status: NEXT AFTER EXEC-006E**
+Track A follow-on. Track B must not absorb Admin ownership or block Student Stage15 on unrelated Stage13G work.
 
-Required outcomes include:
+### EXEC-007A — `AI-012-019` live provider runtime
 
-- Student account search/status/admin recovery actions;
-- access-code generation/search/filter/sort/bulk/import/export/print;
-- recovery/device rebind operations;
-- notifications;
-- import/export/reporting;
-- settings/security/audit/operations dashboard;
-- unresolved Admin legacy parity;
-- unresolved Quiz/AI authoring outcomes explicitly left open by Stage13F, including direct generation orchestration inside the Admin product and specialized export variants where still valuable.
+**P2 · NOT YET VERIFIED**
 
-Before implementation, inspect current code and map each remaining legacy row. Do not infer completion from Stage11/12/13E foundations.
+Does not block Stage15 consumption of already-published quiz snapshots.
 
----
+## Later Student Roadmap
 
-### EXEC-007A — Live provider runtime boundary `AI-012-019`
-
-**Priority: P2 · Status: NOT YET VERIFIED**
-
-Benchmark/select live provider/model/routes, configure authorized credentials outside source control, execute real runtime generation and prove billing/limits/errors/fallback behavior. This is not closed by provider-neutral prompts/contracts.
-
-Do not block Stage13F closure on absent live credentials, but do not claim production generation readiness until this gate passes.
-
----
-
-## Parallel Track B
-
-### STUDENT-014 — Stage14 Student Web/PWA
-
-**Status from Track B Source of Truth: IN PROGRESS**
-
-Verified there: Access, entitlement-safe Curriculum and protected Reader including real Chromium. Latest recorded verified runtime: `0d0a1778b0525560ec288dbfc612bbfa0efa9a6d`.
-
-Remaining Stage14 closure: learning-first shell, product copy and whole-surface accessibility polish/audit.
-
-### STUDENT-015 — Practice / Assessment
-
-**BLOCKED until Track B incorporates Stage13F promoted main authority.**
-
-After EXEC-006E, Track B must merge/rebase the exact verified main checkpoint before implementing published quiz consumption. No local/fake Question Bank authority.
-
----
-
-## Later Roadmap
-
-- Stage15 Practice/Assessment — after Stage13F integration.
-- Stage16 Offline/PWA.
+- Stage16 Offline/PWA — blocked until Stage15 closes.
 - Stage17 Personal Learning Data.
 - Stage18 Notifications.
 - Stage19 Progress/Statistics/Achievements.
-- Stage20 Import/Export/Reporting.
-- Stage21 Performance.
-- Stage22 Security hardening.
-- Stage23 automated tests/CI expansion.
-- Stage24 accessibility/device QA.
-- Stage25 initial canonical data/content load.
-- Stage26–29 staging/release/production/monitoring only when release/deployment is explicitly active.
+- Stage20+ later roadmap/hardening.
+- Stage26–29 release/deployment only when explicitly active.
 
 ## Open Findings
 
+- `STUDENT-015-API-002` P1 — no Student-safe assessment runtime API.
+- `STUDENT-015-DIRECT-003` P1 — direct answer persistence gap.
 - `AI-012-019` P2 — live provider runtime `NOT YET VERIFIED`.
-- legacy Admin/Quiz authoring rows explicitly marked open in `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
-- historical `CI-001` exact external runner-allocation cause `NOT YET VERIFIED`, nonblocking.
+- historical `CI-001` nonblocking.
 
-## Do Not Reopen
+## Do Not Reopen / Do Not Do
 
-- Stage13E verification PRs #24/#25.
-- Stage13F runtime verification PR #27 after closure; it was evidence-only.
-- accidental `.noop` history; cleanup restored exact tree and no rewrite is needed.
+- do not merge obsolete integration PR #29; integration was completed manually with a verified two-parent merge;
+- do not duplicate Question Bank/Quiz models;
+- do not expose Admin authoring/detail endpoints to Student;
+- do not score canonically in browser;
+- do not begin Stage16 before Stage15 closes.
