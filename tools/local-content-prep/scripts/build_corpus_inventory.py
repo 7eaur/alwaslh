@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
+import urllib.request
 from collections import defaultdict
 from pathlib import Path, PurePosixPath
 
@@ -11,21 +11,35 @@ SUPPORTED_IMAGES = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
 ARABIC_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
 
 
-def _tracked_blobs(repo: Path, commit: str) -> list[tuple[str, str, int]]:
-    raw = subprocess.run(
-        ["git", "-C", str(repo), "ls-tree", "-r", "-z", "--long", commit],
-        check=True,
-        capture_output=True,
-    ).stdout.decode("utf-8", errors="strict")
+def _github_json(url: str) -> dict:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "alwaslh-content-corpus-inventory/1",
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=60) as response:
+        return json.load(response)
+
+
+def _tracked_blobs(repository: str, commit: str) -> list[tuple[str, str, int]]:
+    commit_payload = _github_json(f"https://api.github.com/repos/{repository}/git/commits/{commit}")
+    tree_sha = commit_payload["tree"]["sha"]
+    tree_payload = _github_json(f"https://api.github.com/repos/{repository}/git/trees/{tree_sha}?recursive=1")
+    if tree_payload.get("truncated"):
+        raise RuntimeError("GitHub recursive tree response was truncated; inventory cannot be trusted")
     rows: list[tuple[str, str, int]] = []
-    for entry in raw.split("\0"):
-        if not entry:
+    for entry in tree_payload.get("tree", []):
+        if entry.get("type") != "blob":
             continue
-        meta, path = entry.split("\t", 1)
-        mode, object_type, sha, size_text = meta.split(None, 3)
-        if object_type != "blob" or mode == "160000" or size_text == "-":
+        path = entry.get("path")
+        sha = entry.get("sha")
+        size = entry.get("size")
+        if not isinstance(path, str) or not isinstance(sha, str) or not isinstance(size, int):
             continue
-        rows.append((path, sha, int(size_text)))
+        rows.append((path, sha, size))
     return rows
 
 
@@ -60,21 +74,20 @@ def _subject_from_top(top: str) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Inventory alwaslh-go images from Git metadata without downloading blobs.")
-    parser.add_argument("source_git", type=Path)
+    parser = argparse.ArgumentParser(description="Inventory alwaslh-go images via GitHub tree metadata; no image download.")
     parser.add_argument("output_dir", type=Path)
     parser.add_argument("--source-repository", default="7eaur/alwaslh-go")
     parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
 
-    source_git = args.source_git.resolve()
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-
     records: list[dict[str, object]] = []
     summary: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"images": 0, "bytes": 0})
 
-    for relative, blob_sha, byte_size in sorted(_tracked_blobs(source_git, args.source_commit), key=lambda row: row[0]):
+    for relative, blob_sha, byte_size in sorted(
+        _tracked_blobs(args.source_repository, args.source_commit), key=lambda row: row[0]
+    ):
         posix = PurePosixPath(relative)
         if posix.suffix.lower() not in SUPPORTED_IMAGES:
             continue
