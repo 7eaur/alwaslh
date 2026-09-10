@@ -1,0 +1,95 @@
+name: Content Corpus Stage 2 Textbook OCR
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - content-prep/full-corpus-extraction
+    paths:
+      - .github/workflows/content-corpus-stage2-textbook-ocr.yml
+      - tools/local-content-prep/scripts/extract_textbook_batch.py
+      - tools/local-content-prep/CORPUS_BATCH.json
+      - tools/local-content-prep/src/alwaslh_content_prep/ocr.py
+      - tools/local-content-prep/src/alwaslh_content_prep/images.py
+      - tools/local-content-prep/src/alwaslh_content_prep/models.py
+      - tools/local-content-prep/src/alwaslh_content_prep/utils.py
+      - tools/local-content-prep/pyproject.toml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: content-corpus-stage2-textbook-ocr
+  cancel-in-progress: true
+
+env:
+  PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: 'True'
+
+jobs:
+  extract:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout corpus branch
+        uses: actions/checkout@v4
+        with:
+          ref: content-prep/full-corpus-extraction
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: tools/local-content-prep/pyproject.toml
+
+      - name: Cache PaddleOCR models
+        uses: actions/cache@v4
+        with:
+          path: ~/.paddlex/official_models
+          key: paddleocr-arabic-mobile-v1
+
+      - name: Install OCR runtime
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'paddlepaddle>=3,<4'
+          python -m pip install -e 'tools/local-content-prep[ocr]'
+
+      - name: Extract configured textbook batch
+        run: |
+          python tools/local-content-prep/scripts/extract_textbook_batch.py \
+            --inventory data/content-corpus/inventory.jsonl \
+            --config tools/local-content-prep/CORPUS_BATCH.json \
+            --output-root data/content-corpus/textbooks
+
+      - name: Validate generated corpus records
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          config = json.loads(Path('tools/local-content-prep/CORPUS_BATCH.json').read_text(encoding='utf-8'))
+          root = Path('data/content-corpus/textbooks') / config['class_slug'] / config['subject_slug']
+          status = json.loads((root / 'status.json').read_text(encoding='utf-8'))
+          assert status['stored_page_records'] > 0
+          assert status['stored_page_records'] == status['completed_extractions'] + status['failed_extractions']
+          lines = (root / 'pages.jsonl').read_text(encoding='utf-8').splitlines()
+          assert len(lines) == status['stored_page_records']
+          for line in lines:
+              page = json.loads(line)
+              assert page['source']['git_blob_sha1']
+              assert page['identity']['page_id']
+              assert page['extraction']['status'] in {'completed', 'failed'}
+          print(json.dumps(status, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Commit extracted textbook records
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/content-corpus/textbooks
+          if git diff --cached --quiet; then
+            echo 'No corpus changes to commit.'
+          else
+            git commit -m 'data(corpus): extract configured textbook OCR batch'
+            git push origin HEAD:content-prep/full-corpus-extraction
+          fi
