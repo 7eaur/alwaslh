@@ -2,7 +2,7 @@
 
 > Ordered execution authority. Start from the first incomplete Track A item after reading Source of Truth + Issue #16.
 
-Last synchronized: **2026-09-10 — Stage13G G-A/G-B VERIFIED; G-C ACTIVE.**
+Last synchronized: **2026-09-10 — Stage13G G-A/G-B/G-C1 VERIFIED; G-C2 ACTIVE.**
 
 ## Operating Rules
 
@@ -45,44 +45,72 @@ Closed:
 - Student API visibility/read state;
 - real session + 390px evidence.
 
-Student notification UI is not silently closed; it remains later Student work.
-
-## Active Queue
+Student notification UI remains later Student work.
 
 ### EXEC-007C1 — Code Import / Export / Print
 
-**Priority: P1 · Status: ACTIVE**
+**DONE / VERIFIED**
 
-Required evidence-backed outcomes:
+Runtime/code HEAD: `345e0712c45e9e4c0479dc65d96efc3fb7da33cd`.
+Run `34430915626` — all jobs SUCCESS.
+Admin unit: 57/57.
+Real Chromium: 10/10 total Stage13G scenarios.
 
-- `CODE-A-013` strict import with exact format and row-level errors;
-- `CODE-A-014` correct template;
-- `CODE-A-015/016` safe all/used export scopes;
-- printable code cards with explicit Full/Class/filter/selection scope;
-- no password/device-secret leakage;
-- server-owned validation/output, bounded payloads and real integration tests.
+Closed outcomes:
 
-Use existing Access tables/service; do not create a second code store.
+- strict bounded Full Access CSV import over existing Access authority;
+- Arabic digit normalization + exact 6-digit validation;
+- row-level invalid/duplicate handling;
+- durable Access audit for accepted import rows;
+- import template;
+- canonical Full/Class code export with pagination consistency checks;
+- UTF-8 BOM CSV compatible with Excel + spreadsheet formula-injection protection;
+- all/filtered/used/selected scopes where supported;
+- RTL printable code cards with explicit selected/filtered scope;
+- browser Print / Save-as-PDF;
+- session/mobile evidence.
+
+Not claimed: binary `.xlsx` generation or server-generated binary PDF.
+
+## Active Queue
 
 ### EXEC-007C2 — Reports / Settings / Security / Audit
 
-**Priority: P1 · Status: NEXT**
+**Priority: P1 · Status: ACTIVE / FIRST INCOMPLETE TRACK A ITEM**
 
-Inspect actual config/schema/event authorities first. Preserve existing Auth/Access/content/AI audit evidence; add only missing read/product contracts. Do not expose secrets or make browser state authoritative.
+Start with Repository Discovery, not UI guessing.
+
+Inspect:
+
+1. Auth security/audit authority: `auth_events`, sessions, login guards, reset/recovery/device/challenge state.
+2. Access audit authority: `access_events`, redemptions, entitlements and code lifecycle.
+3. Content/media/OCR/AI/review/question-bank/quiz history/event authorities.
+4. API runtime configuration/environment ownership and any existing settings contracts.
+5. Legacy Coverage rows for reports/settings/security/audit and specialized export requirements.
+
+Architecture constraints:
+
+- prefer bounded read projections/search/filter/page/export over existing canonical authorities;
+- do not create a second generic audit store without evidence;
+- do not make browser state authoritative for runtime/security configuration;
+- never expose password hashes, token hashes, raw device key material, provider credentials or secret config;
+- classify each gap KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE before implementation;
+- add executable API/PostgreSQL/Admin/real Chromium evidence before closure.
 
 ### EXEC-007D — Remaining Lesson / Quiz AI Authoring Parity
 
-**Priority: P1 · Status: REQUIRED after G-C**
+**Priority: P1 · Status: REQUIRED after G-C2**
 
 Open outcomes include lesson generation trigger/orchestration, selected-lesson bulk generation, direct generation inside Quiz Builder, version generation settings/orchestration, per-version source scope where still required, archive/delete semantics and specialized exports not closed by G-C.
 
 ### EXEC-007E — Stage13G Closure
 
-**Priority: P0 process gate · Status: BLOCKED on G-C/G-D**
+**Priority: P0 process gate · Status: BLOCKED on G-C2/G-D**
 
 - update Legacy Coverage row by row;
 - synchronize all Source of Truth;
-- run wider exact-head regression matrix including earlier Admin E2E helpers adapted to the new Operations default home;
+- adapt earlier Stage13D/E/F Admin E2E helpers to the Operations default home without weakening feature assertions;
+- run wider exact-head regression matrix;
 - verification-only PR if needed;
 - integrate/promote to main only after evidence.
 

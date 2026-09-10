@@ -31,6 +31,9 @@ Infrastructure never silently closes a later UI/business outcome.
 
 - Stage13E AI Operations/Review: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
 - Stage13F Question Bank/Quiz Builder runtime checkpoint: `afbe552710b3f1cf79ee70594f691fa836c05a45`.
+- Stage13G G-A Accounts + Access: `4822f87d60ab7a467c4708b5f75bb24cb90e7738`, run `34425317912`, Chromium 4/4.
+- Stage13G G-B Notifications + Operations: `bc19f6e198c8cfede62e9f1b7a7eb1b0fed121cb`, run `34428052472`, Chromium 7/7 total.
+- Stage13G G-C1 Code Import / Export / Print: `345e0712c45e9e4c0479dc65d96efc3fb7da33cd`, run `34430915626`, Chromium 10/10 total.
 
 Stage13F stage-specific runs:
 
@@ -165,6 +168,45 @@ Verified:
 - stable regenerate-one identity + replay;
 - Draft export rejected;
 - real session expiry and mobile responsive browser behavior.
+
+## Stage13G Admin Operations Coverage
+
+### G-A Accounts / Access — VERIFIED
+
+Verified outcomes include canonical Student account status/detail, recovery/device-rebind actions through Auth authority, entitlement revoke through Access authority, Full/Class code inventory/generation/search/filter/pagination and non-destructive unused-code revoke with audit.
+
+### G-B Notifications / Operations — VERIFIED
+
+Verified outcomes include a shared Admin/Student notification authority over existing durable tables, Admin notification lifecycle, Student visibility/read API, real Operations dashboard metrics and Auth/Access activity projection.
+
+Student notification UI remains later Student work.
+
+### G-C1 Code Import / Export / Print — VERIFIED BOUNDARY
+
+Runtime/code HEAD: `345e0712c45e9e4c0479dc65d96efc3fb7da33cd`.
+Run `34430915626`: all jobs SUCCESS; Chromium 10/10 total.
+
+| Capability | State | Evidence / boundary |
+|---|---|---|
+| `CODE-A-013` strict Excel/CSV import | **VERIFIED for CSV path** | strict bounded Full Access CSV import; Arabic-digit normalization; exact 6-digit validation; row-level invalid/duplicate reporting; accepted rows persisted/audited. Binary `.xlsx` import is not claimed |
+| `CODE-A-014` import template | **VERIFIED** | downloadable CSV template with explicit code/duration contract |
+| `CODE-A-015` export all codes | **VERIFIED for CSV path** | canonical Full/Class projection, bounded pagination, consistency guard, UTF-8 BOM CSV |
+| `CODE-A-016` export used codes | **VERIFIED for CSV path** | used/redeemed scope supported through canonical filters; spreadsheet-safe CSV |
+| `ENT-011` Admin exports class codes CSV | **VERIFIED** | Class code CSV export with explicit canonical scope and safe escaping |
+| `ENT-012` Admin exports printable code cards | **VERIFIED** | RTL printable cards with explicit selected/filtered scope + Chromium print path |
+
+Additional G-C1 security/quality evidence:
+
+- spreadsheet formula-leading cells are sanitized before CSV download;
+- if paginated inventory total changes during export, export fails instead of silently truncating;
+- no password, password hash, token hash, device key material or provider secret is included in exports;
+- selection parity gap was identified before closure and explicit selected-code export/print scope was added and reverified.
+
+Boundary: browser Print/Save-as-PDF is verified; **server-generated binary PDF is not**. CSV is Excel-compatible; **binary `.xlsx` generation is not**.
+
+### G-C2 Reports / Settings / Security / Audit — NOT YET VERIFIED / CURRENT
+
+Do not mark generic reporting/settings/security/audit rows complete from G-C1. G-C2 must inspect existing Auth/Access/content/OCR/AI/review/question-bank/quiz event/config authorities and build only the missing product/read contracts with executable evidence.
 
 ## Student Coverage Status
 
