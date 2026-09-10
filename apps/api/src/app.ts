@@ -8,6 +8,8 @@ import { registerAdminStudentAccessRoutes } from "./admin-access/http.js";
 import { AdminStudentAccessService } from "./admin-access/service.js";
 import { registerAdminOperationsRoutes } from "./admin-operations/http.js";
 import { AdminOperationsService } from "./admin-operations/service.js";
+import { AdminAiAuthoringService } from "./ai/admin-authoring.js";
+import { registerAdminAiAuthoringRoutes } from "./ai/admin-authoring-http.js";
 import { AdminAiOperationsService } from "./ai/admin-operations.js";
 import { registerAdminAiOperationsRoutes } from "./ai/admin-operations-http.js";
 import { registerAuthRoutes } from "./auth/http.js";
@@ -33,6 +35,8 @@ import { QuizVersionExportService } from "./quiz-builder/export.js";
 import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
 import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
 import { QuizBuilderService } from "./quiz-builder/service.js";
+import { QuizSpecializedExportService } from "./quiz-builder/specialized-export.js";
+import { registerQuizSpecializedExportRoutes } from "./quiz-builder/specialized-export-http.js";
 
 export interface AppDependencies {
   config: AppConfig;
@@ -65,6 +69,8 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const quizExports = new QuizVersionExportService(quizBuilder);
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
+  const aiAuthoring = new AdminAiAuthoringService(database, questionBank);
+  const quizSpecializedExports = new QuizSpecializedExportService(quizBuilder, database, mediaStorage);
 
   app.addHook("onRequest", async (request, reply) => {
     const origin = request.headers.origin;
@@ -94,10 +100,12 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
+  registerAdminAiAuthoringRoutes(app, config, auth, aiAuthoring);
   registerQuestionBankRoutes(app, config, auth, questionBank);
   registerQuestionBankRegenerationRoutes(app, config, auth, questionBankRegeneration);
-  registerQuizBuilderRoutes(app, config, auth, quizBuilder, quizCandidates);
+  registerQuizBuilderRoutes(app, config, auth, quizBuilder, quizCandidates, aiAuthoring);
   registerQuizVersionExportRoutes(app, config, auth, quizExports);
+  registerQuizSpecializedExportRoutes(app, config, auth, quizSpecializedExports);
 
   app.get("/health", async () => ({
     status: "ok",

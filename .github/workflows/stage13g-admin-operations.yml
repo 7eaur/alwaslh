@@ -38,6 +38,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_stage13g
       LOG_LEVEL: silent
       ALLOWED_ORIGINS: http://localhost:5173
+      MEDIA_STORAGE_ROOT: /tmp/alwaslh-stage13g-media
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +49,7 @@ jobs:
         run: |
           sudo apt-get update >/dev/null
           sudo apt-get install -y postgresql-client >/dev/null
+          mkdir -p "$MEDIA_STORAGE_ROOT"
       - name: Install API dependencies
         run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
       - name: API lint
@@ -66,6 +68,7 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('full_access_codes','class_access_codes','student_entitlements','access_redemptions','access_events','student_devices','auth_events','notifications','notification_reads') and relkind='r'")" = "9"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='notification_severity' and e.enumlabel in ('info','success','warning','critical')")" = "4"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('curriculum_events','ai_output_review_events','question_bank_events','quiz_builder_events','ai_execution_runtime_control','ai_route_runtime_state') and relkind='r'")" = "6"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='quiz_builder_event_action' and e.enumlabel='archive'")" = "1"
       - name: Run Stage13G Accounts + Access integration
         working-directory: apps/api
         run: node --test --import tsx tests/integration/admin-student-access.integration.test.ts
@@ -75,6 +78,9 @@ jobs:
       - name: Run Stage13G Reports + Settings + Security + Audit integration
         working-directory: apps/api
         run: node --test --import tsx tests/integration/admin-governance.integration.test.ts
+      - name: Run Stage13G AI authoring integration
+        working-directory: apps/api
+        run: node --test --import tsx tests/integration/admin-ai-authoring.integration.test.ts
       - name: Run Access and Auth regression
         working-directory: apps/api
         run: |
