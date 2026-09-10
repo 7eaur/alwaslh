@@ -68,7 +68,9 @@ test("Governance reads safe live projections and filters the canonical audit fee
   const accessBody = await (await accessResponse).json();
   expect(accessBody.page.total).toBeGreaterThan(0);
   expect(accessBody.entries.every((entry) => entry.source === "access")).toBe(true);
-  await expect(page.getByText("الوصول", { exact: true }).first()).toBeVisible();
+  await expect(
+    page.locator(".governance-source-badge").filter({ hasText: "الوصول" }).first(),
+  ).toBeVisible();
 
   const eventResponse = page.waitForResponse(
     (response) =>
