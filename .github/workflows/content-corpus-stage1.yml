@@ -51,9 +51,11 @@ jobs:
           rows = (root / 'inventory.jsonl').read_text(encoding='utf-8').splitlines()
           assert summary['source_commit'] == 'f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23'
           assert summary['image_count'] == len(rows) > 0
+          assert summary['unclassified_image_count'] == 0
           parsed = [json.loads(row) for row in rows]
           assert all(row['source_git_blob_sha1'] for row in parsed)
           assert all(row['byte_size'] >= 0 for row in parsed)
+          assert all(row['class_slug'] in {'grade-9', 'grade-12'} for row in parsed)
           print(f"validated {len(rows)} source images")
           PY
 
