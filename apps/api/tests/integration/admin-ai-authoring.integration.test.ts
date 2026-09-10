@@ -498,7 +498,8 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
     }
     const questionsOnly = await app.inject({
       method: "GET",
-      url: `/v1/admin/quizzes/${quizId}/specialized-export` + `?versionIds=${versionId}&variant=questions_only`,
+      url:
+        `/v1/admin/quizzes/${quizId}/specialized-export` + `?versionIds=${versionId}&variant=questions_only`,
       headers: { cookie: adminCookie },
     });
     assert.ok((questionsOnly.json().printHtml as string).includes("=G-D formula-safe prompt"));
