@@ -113,7 +113,7 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
   await page.getByRole("button", { name: "السؤال التالي" }).click();
   await page.getByLabel("إجابتك").fill(fixture.directAnswer);
   await page.getByRole("button", { name: "حفظ الإجابة" }).click();
-  await expect(page.getByText(fixture.directAnswer, { exact: true })).toHaveCount(0);
+  await expect(page.getByText(fixture.directExplanation, { exact: true })).toHaveCount(0);
   await expect(page.getByText("إجابة صحيحة", { exact: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: "إنهاء اختبار" }).click();
