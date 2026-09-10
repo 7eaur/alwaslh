@@ -314,7 +314,7 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
       kind: "question_set",
       questions: [
         {
-          prompt: "=G-D formula-safe prompt",
+          prompt: "=G-D سؤال موثق للصيغة",
           type: "multiple_choice",
           options: ["الإجابة الصحيحة", "خيار ٢", "خيار ٣", "خيار ٤"],
           correctOptionIndex: 0,
@@ -390,7 +390,7 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
       )
     )[0]?.input_payload;
     assert.equal(regenerateRequest?.mode, "regenerate_question");
-    assert.equal(regenerateRequest?.originalQuestion?.prompt, "=G-D formula-safe prompt");
+    assert.equal(regenerateRequest?.originalQuestion?.prompt, "=G-D سؤال موثق للصيغة");
 
     const quiz = await app.inject({
       method: "POST",
@@ -493,7 +493,7 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
         headers: { cookie: adminCookie },
       });
       assert.equal(exported.statusCode, 200, variant);
-      assert.match(exported.json().csv, /'=G-D formula-safe prompt/);
+      assert.match(exported.json().csv, /'=G-D سؤال موثق للصيغة/);
       assert.ok((exported.json().printHtml as string).length > 100);
     }
     const questionsOnly = await app.inject({
@@ -502,7 +502,7 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
         `/v1/admin/quizzes/${quizId}/specialized-export` + `?versionIds=${versionId}&variant=questions_only`,
       headers: { cookie: adminCookie },
     });
-    assert.ok((questionsOnly.json().printHtml as string).includes("=G-D formula-safe prompt"));
+    assert.ok((questionsOnly.json().printHtml as string).includes("=G-D سؤال موثق للصيغة"));
     assert.equal((questionsOnly.json().printHtml as string).includes("الإجابة الصحيحة"), false);
     const asset = await app.inject({
       method: "GET",
