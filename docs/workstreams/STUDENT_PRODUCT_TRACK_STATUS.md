@@ -2,7 +2,7 @@
 
 > Branch-specific continuation checkpoint for the parallel Student Product track. Code/migrations + executable CI evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-10 — Stage14 CLOSED / VERIFIED; Stage13F main integrated and regression-verified; Stage15 discovery ACTIVE.**
+Last synchronized: **2026-09-10 — Stage14 CLOSED / VERIFIED; Stage15 CLOSED / VERIFIED; Stage16 next by sequence and NOT YET STARTED.**
 
 ## Track Identity
 
@@ -12,19 +12,22 @@ Last synchronized: **2026-09-10 — Stage14 CLOSED / VERIFIED; Stage13F main int
 - Operating contract: `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`
 - Stage14 verified runtime: `ac55f1435d232cadff334816407f1182125dda90`
 - Canonical Stage13F main incorporated: `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
-- Verified history-preserving integration HEAD: `4a476e1f29cb605fce294d7c34fd68e8218a32e8`
+- Stage13F→Student integration runtime: `4a476e1f29cb605fce294d7c34fd68e8218a32e8`
+- **Stage15 verified runtime: `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d`**
+
+Documentation commits after the verified runtime do not replace runtime evidence.
 
 ## Current Stage
 
 **Stage15 — Practice / Assessment Engine**
 
-State: **DISCOVERY / ARCHITECTURE ACTIVE — IMPLEMENTATION NOT YET VERIFIED**
+State: **CLOSED / VERIFIED**
 
-Stage14 remains **CLOSED / VERIFIED**. The former Stage15 dependency block is resolved: canonical Stage13F Question Bank / Quiz Builder authority is in `main`, has been merged into this Student branch with a real two-parent merge commit, and the merged runtime passed Student/API/PostgreSQL/Chromium regression.
+Stage16 — Offline / PWA is next by sequence, but remains **NOT YET STARTED** until its source-of-truth contract is re-read after this closure.
 
 ## Stage14 Closed Product Boundary
 
-Verified Student foundation:
+Stage14 remains verified for:
 
 - activation, returning login, recovery, device/session restoration and rebind;
 - canonical entitlement listing and seven-digit class redemption;
@@ -33,188 +36,204 @@ Verified Student foundation:
 - media byte-size + SHA-256 validation and no raw `storage_key` exposure;
 - OCR only from completed `approved` / `not_required` authority;
 - Reader search and browser TTS capability state;
-- explicit loading/error/empty/session-expired/offline/reconnect behavior;
+- loading/error/empty/session-expired/offline/reconnect behavior;
 - Arabic RTL learning-first shell;
 - keyboard Reader entry + focus return;
 - responsive/no-overflow evidence at 390×844, 768×1024 and 1366×900.
 
-Stage14 exact evidence:
-
-- Student Product run `34420993805` — **SUCCESS**.
-- API Regression run `34420993840` — **SUCCESS**.
-- Student lint / strict typecheck / Vitest `12/12` / production build — PASS.
-- API Biome / strict typecheck / unit `46/46` / build — PASS at Stage14 runtime.
-- clean PostgreSQL `0001`→`0018`, Curriculum + Reader integration — PASS.
-- real Chromium `2/2` — PASS.
-
-Stage14 offline behavior preserves only in-session context. It does not claim Stage16 offline-learning/PWA authority.
+Stage14 does not claim Stage16 offline-learning/PWA authority.
 
 ## Stage13F → Student Integration — VERIFIED
 
-Integration commit:
+Canonical Question Bank / Quiz Builder authority from `main @ 3aeca598759e31b4eddc5cb3535e00c11fc0f7d2` was integrated through real two-parent merge commit:
 
 `4a476e1f29cb605fce294d7c34fd68e8218a32e8`
 
-Parents:
+Stage15 consumes this authority rather than duplicating it:
 
-1. Student documentation/runtime lineage `9ccfe1e6c6468a6b63cc91bc44311b65bdb067f7`
-2. canonical `main @ 3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
+- stable Question Bank item UUIDs;
+- immutable published revisions;
+- Published + known-answer requirement for quiz materialization;
+- immutable quiz-version question/option snapshots;
+- exact Question Bank item/revision provenance;
+- DB guards against invalid/out-of-scope/unpublished snapshots and post-publish structural mutation.
 
-The branch ref was advanced with **non-force** update. Compare against main reports `behind_by = 0`; merge-base is the exact Stage13F main checkpoint.
+Admin Question Bank/Quiz HTTP remains Admin-only.
 
-Conflict resolution was additive and narrow:
+## Stage15 Closed Product Boundary
 
-- kept Student `StudentReaderService` + Student Curriculum/Reader route registration;
-- kept canonical Stage13F Question Bank, regeneration, Quiz Builder, candidate and export services/routes;
-- reconciled project status/resume from newer main truth plus verified Stage14 closure;
-- no duplicate Question Bank/Quiz model, no history rewrite and no fake Student API.
+### Canonical runtime
 
-Integration evidence on exact HEAD `4a476e1f...`:
-
-- Stage14 Student API Regression `34422553459` — **SUCCESS**.
-- Stage14 Student Product `34422553405` — **SUCCESS**.
-- Student quality job — PASS.
-- API regression job — PASS.
-- API + Student runtime build — PASS.
-- clean PostgreSQL migrations `0001`→`0022` — PASS.
-- Student Curriculum + Reader PostgreSQL integrations — PASS.
-- recovery-support Admin bootstrap — PASS.
-- real Chromium Auth/Access/Curriculum/Reader — PASS.
-
-Decision: **Stage15 dependency gate is RESOLVED.**
-
-## Stage15 Discovery — Verified So Far
-
-### Canonical Question / Quiz authority — KEEP / CONSUME
-
-Stage13F is authoritative for assessment authoring/publication:
-
-- `question_bank_items` = stable reusable item identity;
-- `question_bank_revisions` = immutable authoring revisions;
-- only Published + known-answer revisions may be materialized into quiz snapshots;
-- `quiz_versions` + `questions` + `question_options` are immutable delivery snapshots once quiz is published;
-- snapshot rows retain exact Question Bank item/revision provenance;
-- DB guards reject out-of-scope, unpublished or unknown-answer bank revisions;
-- published quiz structure mutation is DB-blocked.
-
-Student Stage15 must consume **published quiz snapshots**, never mutable Question Bank authoring rows.
-
-### Existing HTTP surface — KEEP ADMIN-ONLY
-
-Inspected:
-
-- `apps/api/src/question-bank/http.ts`
-- `apps/api/src/quiz-builder/http.ts`
-
-Both are explicitly Admin-only via `adminActor` and `/v1/admin/...` routes. They must remain Admin-only. Stage15 requires separate Student-safe contracts that never reveal answer authority before allowed feedback/finalization.
-
-### Existing assessment persistence — KEEP / IMPROVE
-
-Inspected `database/migrations/0003_learning.sql` and Stage13F extensions `0019`–`0022`.
-
-Existing durable runtime tables already include:
+Stage15 reuses and hardens the existing assessment persistence instead of creating a parallel engine:
 
 - `practice_sessions`;
 - `practice_session_questions`;
 - `practice_session_options`;
 - `practice_answers`;
-- `quiz_attempts`;
-- stable profile/session and quiz/version foreign keys;
-- current-question pointer;
-- session status `in_progress | completed | abandoned`;
-- attempt status `completed | invalidated`;
-- deterministic stored `correct_count`, `question_count`, generated `score_percent`;
-- history index by profile/completion.
+- `quiz_attempts`.
 
-Therefore a second attempt/session store would be a regression. Stage15 should activate and harden this existing schema.
+Migration `0023_student_assessment_runtime.sql` closes the narrow direct-answer/runtime gaps while keeping one durable authority.
 
-### Confirmed Stage15 schema gap — IMPROVE
+### Student-safe API
 
-`practice_answers` currently stores only `selected_option_id`; Stage13F added delivery question type `direct` plus `questions.answer_text`.
+A purpose-built Student assessment API now provides:
 
-A direct-answer attempt cannot be represented correctly by the current answer row. This is a proven narrow schema gap. Any migration must extend existing attempt persistence rather than create parallel tables.
+- entitlement-filtered published quiz catalog;
+- immutable version/model selection;
+- create/resume/restart session behavior;
+- persisted question and option presentation order;
+- answer writes through server authority;
+- idempotent finalization;
+- attempts/history;
+- access recheck while a session is in progress.
 
-### QuizBuilderService — KEEP ADMIN AUTHORING; DO NOT EXPOSE DIRECTLY
+The Student payload does **not** expose `is_correct`, correct-option authority, or direct answer keys before product policy permits feedback/result.
 
-`QuizBuilderService.detail()` includes option correctness, direct answer text and authoring/audit data. Reusing it directly for Student delivery would leak answers and Admin metadata. Stage15 needs a purpose-built Student read model that selects only safe question presentation fields and performs scoring server-side.
+### Practice policy
 
-## Stage15 Architecture Decision — ACTIVE
+- initial question payload is answer-key-free;
+- after a Practice answer is submitted, server feedback may reveal correctness/explanation/method;
+- after feedback has been revealed, the Practice answer cannot be changed;
+- direct text answers are normalized conservatively server-side for scoring;
+- final score/history comes from server authority.
 
-Target flow:
+### Test / Model policy
+
+- answers can be edited while the test remains in progress;
+- correctness, explanation, correct option and direct answer remain withheld before finalize;
+- finalization is server-scored and idempotent;
+- completed results may reveal feedback according to result policy.
+
+### Resume / randomization
+
+- version selection is persisted once per session;
+- question/option presentation order is persisted;
+- resume returns the same session/version/order rather than re-randomizing;
+- restart abandons the previous in-progress session and creates a new one.
+
+### Student UX
+
+The authenticated learning hierarchy is now:
 
 ```text
-Student authenticated session + device
-→ entitlement check for quiz class
-→ published quiz only
-→ select immutable published quiz version/model
-→ create/resume durable practice_session
-→ freeze question order + option order in practice_session_* tables
-→ return Student-safe question payload without answer key
-→ persist answer idempotently
-→ Practice: server may return feedback only under Practice rules
-→ Test/Model: withhold correctness/answer until finalization
-→ finalize transactionally
-→ calculate from immutable snapshot + presented options
-→ create one durable quiz_attempt
-→ expose score/history/provenance from server authority
+Curriculum / Reader
+→ Practice & Tests
+→ Access management
 ```
 
-Principles:
+The Assessment surface includes:
 
-- no browser scoring authority;
-- no correct-option flags or direct `answer_text` in pre-feedback Student payloads;
-- shuffle once when session is created and persist resulting order;
-- resume uses persisted order, not a new randomization;
-- stable IDs remain UUIDs from quiz/version/question/option snapshots;
-- finalization must be idempotent/concurrency-safe;
-- entitlement and publication are rechecked at appropriate boundaries;
-- exact source/page and Question Bank revision provenance can be exposed safely without exposing answer keys;
-- Practice and Test/Model share one engine but differ in feedback/finalization policy, not duplicate persistence.
+- quiz catalog and filters;
+- explicit model/version selection;
+- separate Practice and Test entry actions;
+- question workspace with progress/navigation;
+- server feedback in Practice;
+- withheld-feedback messaging in Test;
+- attempt result/history;
+- offline state that disables answer/finalize writes rather than pretending they were saved;
+- reconnect refresh from server authority;
+- responsive no-overflow behavior at 390×844, 768×1024 and 1366×900.
 
-## Component Classification — Stage15
+## Stage15 Security / Correctness Findings Closed
 
-| Area | Classification | Decision |
+### `STUDENT-015-ASSESSMENT-001` — P1 — RESOLVED / VERIFIED
+
+Problem: no Student-safe runtime contract existed; Admin Quiz detail exposes correctness/direct answers/audit data.
+
+Solution: dedicated Student assessment service/routes over immutable published quiz snapshots, server-owned scoring/session/finalization, no browser scoring authority.
+
+### `STUDENT-015-PUBLISH-002` — P1 — RESOLVED / VERIFIED
+
+Problem: direct Reader/Assessment paths could treat a lesson with future `published_at` as available because some checks required only non-null publication time.
+
+Solution: Student Reader and Assessment now enforce the same canonical Curriculum boundary: `published_at <= now()`. Regression coverage is in `student-publication-time.integration.test.ts`.
+
+### `STUDENT-015-ACCESS-004` — P1 — RESOLVED / VERIFIED
+
+Problem: when entitlement disappeared during an in-progress assessment, backend correctly returned 404, but reconnect UX could leave stale workspace visible.
+
+Solution: Student Web treats `NOT_FOUND` as resource unavailability, exits the workspace, reloads permitted catalog state, and does not incorrectly log the student out.
+
+### `STUDENT-015-UX-003` — P2 — RESOLVED / VERIFIED
+
+Problem: Assessment needed to fit the learning-first hierarchy without turning the account screen into a dashboard.
+
+Solution: Assessment sits after Curriculum and before Access management with explicit Practice/Test policies and honest connectivity states.
+
+### `STUDENT-015-QA-005` — P2 — RESOLVED / VERIFIED
+
+Problem: full-suite integration introduced selector ambiguity and a stale-locator race after React model-selection rerender.
+
+Solution: scope Access refresh selector to its labeled surface and re-resolve the Assessment card/action after model-selection state settles. Standalone and full-suite Chromium now both pass.
+
+## Stage15 Exact Verification
+
+Verified runtime HEAD:
+
+`9a787b7c0f6bd3ed12f24de92546c33fcc21e26d`
+
+Exact same-head runs:
+
+- **Stage14 Student API Regression `34427900263` — SUCCESS**
+  - Biome: **104 files checked**, no errors/fixes;
+  - API strict typecheck — PASS;
+  - API unit: **46/46 PASS**;
+  - API build — PASS.
+- **Stage15 Student Assessment `34427900257` — SUCCESS**
+  - clean PostgreSQL migrations `0001`→`0023` — PASS;
+  - Student assessment + future-publication PostgreSQL integration — PASS;
+  - real Chromium Stage15 acceptance: **1/1 PASS**.
+- **Stage14 Student Product `34427900209` — SUCCESS**
+  - Student lint + strict typecheck — PASS;
+  - Student Vitest: **15/15 PASS**;
+  - production build — PASS;
+  - full PostgreSQL migrations `0001`→`0023` — PASS;
+  - Curriculum + Reader integration: **2/2 PASS**;
+  - full real Chromium suite: **3/3 PASS**.
+
+Production Student bundle from the exact-head Student quality job:
+
+- JS: **200.16 kB raw / 60.78 kB gzip**;
+- CSS: **30.84 kB raw / 5.71 kB gzip**;
+- index: **0.67 kB raw / 0.40 kB gzip**.
+
+Browser jobs run under `NODE_ENV=test`; their larger Vite bundle is not production bundle evidence.
+
+## Component Classification — Stage15 Closure
+
+| Area | Classification | Closure decision |
 |---|---|---|
 | Stage13F Question Bank | KEEP | canonical authoring/publication authority |
 | Stage13F quiz snapshots | KEEP | canonical immutable assessment content |
-| Admin Question Bank/Quiz HTTP | KEEP | stay Admin-only |
-| `practice_sessions` persistence | KEEP / IMPROVE | activate existing durable session authority |
-| presented question/option order | KEEP / IMPROVE | persist once; resume exact order |
-| `practice_answers` | IMPROVE | add safe direct-answer representation + invariants |
-| `quiz_attempts` | KEEP / IMPROVE | transactional idempotent finalization/history |
-| Student assessment API | REBUILD / NEW MINIMAL SURFACE | purpose-built safe read/write contracts |
-| Student Practice UI | REBUILD | immediate-feedback learning flow |
-| Student Test/Model UI | REBUILD | no answer leakage before finalize |
-| browser scoring/state authority | REMOVE / FORBIDDEN | server remains canonical |
+| Admin Question Bank/Quiz HTTP | KEEP | remains Admin-only |
+| existing practice/session tables | KEEP / IMPROVE | activated as single Student runtime authority |
+| `practice_answers` | IMPROVE | direct-answer runtime support added without second store |
+| Student assessment API | REBUILD / NEW MINIMAL SURFACE | implemented as safe purpose-built contract |
+| Student Practice UI | REBUILD | implemented with server feedback policy |
+| Student Test/Model UI | REBUILD | implemented with withheld feedback until finalize |
+| browser scoring authority | REMOVE / FORBIDDEN | server remains canonical |
 
 ## NOT YET VERIFIED
 
-- exact migration shape for direct answers / finalization invariants;
-- existing callers of `practice_sessions` outside schema — repository search found no implementation, but final code-path audit continues;
-- Student published-quiz catalog query and entitlement rules;
-- deterministic version selection when `shuffle_versions = true`;
-- exact option-shuffle algorithm and reproducibility rule;
-- resume/restart/abandon semantics;
-- Practice feedback policy vs Test/Model policy;
-- direct-answer normalization/scoring rule;
-- finalization concurrency/idempotency behavior;
-- Student Stage15 UI / responsive / accessibility;
-- Stage15 PostgreSQL/API/Chromium evidence.
+- Stage16 Offline/PWA durable offline-learning behavior, Service Worker, IndexedDB and sync authority;
+- Stage17 Notes/Favorites/Needs Review;
+- Stage18 Notifications;
+- Stage19 Progress/statistics/private achievements;
+- later Stage20+ roadmap work;
+- production deployment/cutover.
 
 ## Sequence Boundary
 
-- Stage15 — **ACTIVE discovery; implementation next after the above contracts are closed incrementally.**
-- Stage16 — Offline/PWA only after Stage15 closure.
-- Stage17 — Notes/Favorites/Needs Review.
-- Stage18 — Notifications.
-- Stage19 — Progress/statistics/private achievements.
-- Stage20+ — ordered roadmap/hardening.
+- Stage14 — **CLOSED / VERIFIED**.
+- Stage15 — **CLOSED / VERIFIED**.
+- Stage16 — **NEXT / NOT YET STARTED**.
+- Stage17–19 — required later by sequence.
+- deployment — deferred.
 
 ## Exact Next Action
 
-1. finish Stage15 backend/schema caller audit and define minimal direct-answer/finalization migration;
-2. document shared DB/API change in Issue #16 before editing Track A-owned shared areas;
-3. implement Student-safe assessment service/routes incrementally with PostgreSQL tests first;
-4. add typed Student Web client and Practice/Test/Model UX only after backend contracts pass;
-5. verify lint/typecheck/unit/build + clean migrations + PostgreSQL integration + real Chromium + responsive/keyboard behavior on exact heads;
-6. keep Stage16 blocked until Stage15 is closed.
+1. re-read `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`, this status file and latest Issue #16 after Stage15 closure;
+2. inspect actual Stage16 offline/PWA contracts and existing service-worker/IndexedDB/sync code before changing anything;
+3. classify Stage16 pieces KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE;
+4. do not infer offline authority from Stage14/15 temporary network-loss UX;
+5. begin Stage16 incrementally only after the source-of-truth boundary is verified.
