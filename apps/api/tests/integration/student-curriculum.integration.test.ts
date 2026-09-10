@@ -206,7 +206,10 @@ test("Student curriculum is session-protected, entitlement-filtered and publicat
         sections: Array<{ id: string; lessons: Array<{ id: string; title: string }> }>;
       }>;
     }>;
-    assert.deepEqual(limitedClasses.map((record) => record.id), [classOne.id]);
+    assert.deepEqual(
+      limitedClasses.map((record) => record.id),
+      [classOne.id],
+    );
     assert.equal(limitedClasses[0]?.subjects[0]?.id, subject.id);
     assert.equal(limitedClasses[0]?.subjects[0]?.position, 3);
     assert.deepEqual(
@@ -240,10 +243,10 @@ test("Student curriculum is session-protected, entitlement-filtered and publicat
       [unsectioned.id, sectioned.id, draft.id, otherClassLesson.id],
     ]);
     await db.query("delete from curriculum_sections where id = $1", [section.id]);
-    await db.query(
-      "delete from subject_class_links where subject_id = $1 and class_id = any($2::uuid[])",
-      [subject.id, [classOne.id, classTwo.id]],
-    );
+    await db.query("delete from subject_class_links where subject_id = $1 and class_id = any($2::uuid[])", [
+      subject.id,
+      [classOne.id, classTwo.id],
+    ]);
     await db.query("delete from classes where id = any($1::uuid[])", [[classOne.id, classTwo.id]]);
     await db.query("delete from subjects where id = $1", [subject.id]);
     await db.query("delete from profiles where id = any($1::uuid[])", [[adminId, studentId, fullStudentId]]);
