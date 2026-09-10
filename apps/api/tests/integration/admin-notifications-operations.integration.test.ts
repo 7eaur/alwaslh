@@ -50,10 +50,10 @@ test("Admin notifications share one authority with Student visibility and the op
   const subjectId = subjectRows[0]?.id;
   assert.ok(adminId && studentId && classId && subjectId);
 
-  await db.query(
-    "insert into subject_class_links (class_id, subject_id) values ($1, $2)",
-    [classId, subjectId],
-  );
+  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [
+    classId,
+    subjectId,
+  ]);
   await db.query(
     `insert into lessons (class_id, subject_id, slug, title)
      values ($1, $2, 'stage13g-notif-lesson', 'درس الإشعارات')`,
@@ -165,9 +165,9 @@ test("Admin notifications share one authority with Student visibility and the op
   });
   assert.equal(afterRead.statusCode, 200);
   assert.equal(afterRead.json().unreadCount, 1);
-  const globalAfterRead = (afterRead.json().notifications as Array<{ id: string; readAt: string | null }>).find(
-    (item) => item.id === globalId,
-  );
+  const globalAfterRead = (
+    afterRead.json().notifications as Array<{ id: string; readAt: string | null }>
+  ).find((item) => item.id === globalId);
   assert.ok(globalAfterRead?.readAt);
 
   const overview = await app.inject({
@@ -184,9 +184,15 @@ test("Admin notifications share one authority with Student visibility and the op
   assert.equal(overview.json().metrics.activeFullCodes, 1);
   assert.equal(overview.json().metrics.activeClassCodes, 1);
   assert.equal(overview.json().metrics.activeNotifications, 2);
-  assert.ok((overview.json().recentNotifications as Array<{ id: string }>).some((item) => item.id === globalId));
-  assert.ok((overview.json().recentActivity as Array<{ source: string }>).some((item) => item.source === "access"));
-  assert.ok((overview.json().recentActivity as Array<{ source: string }>).some((item) => item.source === "auth"));
+  assert.ok(
+    (overview.json().recentNotifications as Array<{ id: string }>).some((item) => item.id === globalId),
+  );
+  assert.ok(
+    (overview.json().recentActivity as Array<{ source: string }>).some((item) => item.source === "access"),
+  );
+  assert.ok(
+    (overview.json().recentActivity as Array<{ source: string }>).some((item) => item.source === "auth"),
+  );
 
   const studentForbiddenOverview = await app.inject({
     method: "GET",

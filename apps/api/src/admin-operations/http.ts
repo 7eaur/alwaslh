@@ -4,7 +4,7 @@ import { currentProfile } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
-import { AdminOperationsService } from "./service.js";
+import type { AdminOperationsService } from "./service.js";
 
 const OverviewQuerySchema = z.object({
   recentLimit: z.coerce.number().int().min(1).max(20).optional(),

@@ -4,7 +4,7 @@ import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
-import { NotificationService, type NotificationSeverity } from "./service.js";
+import type { NotificationService, NotificationSeverity } from "./service.js";
 
 const NotificationSeveritySchema = z.enum(["info", "success", "warning", "critical"]);
 

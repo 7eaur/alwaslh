@@ -161,16 +161,7 @@ export class NotificationService {
          returning id, title, body, severity, target_profile_id, target_class_id,
                    null::text as target_class_name, action_path, published_at, expires_at,
                    created_by_profile_id, null::text as created_by_display_name, created_at`,
-        [
-          title,
-          body,
-          input.severity,
-          targetProfileId,
-          targetClassId,
-          actionPath,
-          expiresAt,
-          actorProfileId,
-        ],
+        [title, body, input.severity, targetProfileId, targetClassId, actionPath, expiresAt, actorProfileId],
       );
       const row = rows[0];
       if (!row) throw new AppError("INTERNAL_ERROR", "تعذر إنشاء الإشعار", 500);
@@ -179,10 +170,9 @@ export class NotificationService {
   }
 
   async deleteAdmin(notificationId: string): Promise<void> {
-    const rows = await this.db.query<{ id: string }>(
-      "delete from notifications where id = $1 returning id",
-      [notificationId],
-    );
+    const rows = await this.db.query<{ id: string }>("delete from notifications where id = $1 returning id", [
+      notificationId,
+    ]);
     if (!rows[0]) throw new AppError("NOT_FOUND", "الإشعار غير موجود", 404);
   }
 
