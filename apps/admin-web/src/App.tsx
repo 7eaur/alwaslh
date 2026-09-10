@@ -7,6 +7,7 @@ import {
   logoutAdmin,
   restoreAdminSession,
 } from "./admin-api";
+import { AdminGovernanceWorkspace } from "./AdminGovernanceWorkspace";
 import { AdminOperationsWorkspace } from "./AdminOperationsWorkspace";
 import { AdminReportsWorkspace } from "./AdminReportsWorkspace";
 import { AdminStudentAccessWorkspace } from "./AdminStudentAccessWorkspace";
@@ -131,6 +132,7 @@ function BrandBlock({ auth = false }: { auth?: boolean }) {
 
 type AdminWorkspace =
   | "operations"
+  | "governance"
   | "curriculum"
   | "content-ingestion"
   | "content-operations"
@@ -163,6 +165,14 @@ function AdminShell({
             onClick={() => setWorkspace("operations")}
           >
             لوحة التشغيل
+          </button>
+          <button
+            className={`nav-item nav-button${workspace === "governance" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "governance" ? "page" : undefined}
+            onClick={() => setWorkspace("governance")}
+          >
+            الحوكمة والأمان
           </button>
           <button
             className={`nav-item nav-button${workspace === "curriculum" ? " is-active" : ""}`}
@@ -240,6 +250,8 @@ function AdminShell({
       <main className="admin-main">
         {workspace === "operations" ? (
           <AdminOperationsWorkspace onSessionExpired={onSessionExpired} />
+        ) : workspace === "governance" ? (
+          <AdminGovernanceWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "curriculum" ? (
           <CurriculumWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "content-ingestion" ? (

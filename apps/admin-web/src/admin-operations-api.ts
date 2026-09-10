@@ -1,6 +1,7 @@
 import { adminApiRequest } from "./admin-api";
 
 export type NotificationSeverity = "info" | "success" | "warning" | "critical";
+export type OperationsAuditSource = "auth" | "access" | "ai_review" | "question_bank" | "quiz_builder";
 
 export interface AdminNotification {
   id: string;
@@ -51,6 +52,80 @@ export interface OperationsOverview {
   recentActivity: OperationsActivity[];
 }
 
+export interface OperationsGovernanceOverview {
+  reports: {
+    content: {
+      activeIngestionTasks: number;
+      failedIngestionTasks: number;
+      draftAssets: number;
+      reviewAssets: number;
+      publishedAssets: number;
+    };
+    ocr: {
+      activeExtractions: number;
+      failedExtractions: number;
+      pendingReview: number;
+    };
+    ai: {
+      activeJobs: number;
+      failedJobs: number;
+      reviewRequiredUnits: number;
+    };
+    questionBank: {
+      draft: number;
+      review: number;
+      published: number;
+      archived: number;
+    };
+    quizzes: {
+      draft: number;
+      review: number;
+      published: number;
+      archived: number;
+    };
+  };
+  settings: {
+    environment: "development" | "test" | "production";
+    databaseSsl: "disable" | "require";
+    databasePoolMax: number;
+    sessionTtlHours: number;
+    sessionSameSite: "lax" | "none";
+    allowedOriginCount: number;
+    aiGlobalKillSwitch: boolean;
+    aiBudgetConfigured: boolean;
+  };
+  security: {
+    activeAdminSessions: number;
+    activeStudentSessions: number;
+    lockedLoginGuards: number;
+    pendingRecoveryTokens: number;
+    activeStudentDevices: number;
+    pendingDeviceChallenges: number;
+    pendingActivationTickets: number;
+    forcedPasswordChanges: number;
+    aiRoutesPaused: number;
+    aiRoutesCoolingDown: number;
+  };
+}
+
+export interface OperationsAuditEntry {
+  id: string;
+  source: OperationsAuditSource;
+  eventType: string;
+  actorProfileId: string | null;
+  actorDisplayName: string | null;
+  subjectProfileId: string | null;
+  subjectDisplayName: string | null;
+  resourceType: string | null;
+  resourceId: string | null;
+  createdAt: string;
+}
+
+export interface OperationsAuditPage {
+  entries: OperationsAuditEntry[];
+  page: { total: number; limit: number; offset: number };
+}
+
 function queryString(values: Record<string, string | number | undefined>): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(values)) {
@@ -64,6 +139,26 @@ function queryString(values: Record<string, string | number | undefined>): strin
 export function fetchAdminOperationsOverview(recentLimit = 8): Promise<OperationsOverview> {
   return adminApiRequest<OperationsOverview>(
     `/v1/admin/operations/overview${queryString({ recentLimit })}`,
+  );
+}
+
+export function fetchAdminOperationsGovernance(): Promise<OperationsGovernanceOverview> {
+  return adminApiRequest<OperationsGovernanceOverview>("/v1/admin/operations/governance");
+}
+
+export function fetchAdminOperationsAudit(input: {
+  source?: OperationsAuditSource;
+  eventType?: string;
+  limit?: number;
+  offset?: number;
+} = {}): Promise<OperationsAuditPage> {
+  return adminApiRequest<OperationsAuditPage>(
+    `/v1/admin/operations/audit${queryString({
+      source: input.source,
+      eventType: input.eventType?.trim(),
+      limit: input.limit,
+      offset: input.offset,
+    })}`,
   );
 }
 
