@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.metadata
+import os
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -91,6 +92,14 @@ class PaddleOcrAdapter:
     provider_key = "paddleocr-local"
 
     def __init__(self, *, language: str = "ar", profile_key: str = "arabic-document-v1") -> None:
+        # PaddleOCR 3.x on CPU can enter a broken PaddlePaddle oneDNN/PIR path
+        # (ConvertPirAttribute2RuntimeAttribute ... ArrayAttribute<DoubleAttribute>).
+        # These defaults keep the local preparation pipeline portable and favor
+        # correctness over a CPU optimization that is not stable across hosts.
+        os.environ.setdefault("PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT", "0")
+        os.environ.setdefault("FLAGS_use_mkldnn", "0")
+        os.environ.setdefault("FLAGS_enable_pir_api", "0")
+
         try:
             from paddleocr import PaddleOCR
         except ImportError as exc:
@@ -105,15 +114,23 @@ class PaddleOcrAdapter:
         self.profile_key = profile_key
         self.language = language
 
+        modern_kwargs = {
+            "lang": language,
+            "use_doc_orientation_classify": False,
+            "use_doc_unwarping": False,
+            "use_textline_orientation": False,
+            "enable_mkldnn": False,
+        }
         try:
-            self._engine = PaddleOCR(
-                lang=language,
-                use_doc_orientation_classify=False,
-                use_doc_unwarping=False,
-                use_textline_orientation=False,
-            )
+            self._engine = PaddleOCR(**modern_kwargs)
         except TypeError:
-            self._engine = PaddleOCR(lang=language, use_angle_cls=True)
+            try:
+                self._engine = PaddleOCR(lang=language, use_angle_cls=True, enable_mkldnn=False)
+            except TypeError:
+                # Compatibility fallback for older releases that do not expose
+                # enable_mkldnn in the Python constructor. The environment
+                # defaults above still disable the backend where supported.
+                self._engine = PaddleOCR(lang=language, use_angle_cls=True)
 
     def extract(self, image_path: Path) -> OcrResult:
         try:
