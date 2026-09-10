@@ -3,146 +3,193 @@
   "groups": [
     {
       "byte_size": 79400733,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "government_exam",
       "image_count": 284,
       "subject_title": "الأحياء"
     },
     {
       "byte_size": 59524106,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "textbook",
       "image_count": 226,
       "subject_title": "الأحياء"
     },
     {
       "byte_size": 47964682,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "government_exam",
       "image_count": 228,
       "subject_title": "الانجليزي"
     },
     {
       "byte_size": 7658442,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "textbook",
       "image_count": 81,
       "subject_title": "الانجليزي"
     },
     {
       "byte_size": 15343745,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "government_exam",
       "image_count": 93,
       "subject_title": "التربية الاسلاميه"
     },
     {
       "byte_size": 86843938,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "textbook",
       "image_count": 319,
       "subject_title": "التربية الاسلاميه"
     },
     {
       "byte_size": 142203267,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "government_exam",
       "image_count": 539,
       "subject_title": "الرياضيات"
     },
     {
       "byte_size": 14919192,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "textbook",
       "image_count": 248,
       "subject_title": "الرياضيات"
     },
     {
       "byte_size": 90737511,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "government_exam",
       "image_count": 292,
       "subject_title": "الفيزياء"
     },
     {
       "byte_size": 17279152,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "textbook",
       "image_count": 203,
       "subject_title": "الفيزياء"
     },
     {
       "byte_size": 34105570,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "government_exam",
       "image_count": 93,
       "subject_title": "القران الكريم"
     },
     {
       "byte_size": 32570808,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "textbook",
       "image_count": 106,
       "subject_title": "القران الكريم"
     },
     {
       "byte_size": 64574573,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "government_exam",
       "image_count": 244,
       "subject_title": "الكيمياء"
     },
     {
       "byte_size": 34551688,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "textbook",
       "image_count": 194,
       "subject_title": "الكيمياء"
     },
     {
       "byte_size": 16025396,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "government_exam",
       "image_count": 95,
       "subject_title": "اللغة العربية"
     },
     {
       "byte_size": 97156918,
+      "class_slug": "grade-12",
+      "class_title": "الثالث الثانوي",
       "content_kind": "textbook",
       "image_count": 347,
       "subject_title": "اللغة العربية"
     },
     {
       "byte_size": 64602275,
+      "class_slug": "grade-9",
+      "class_title": "التاسع",
       "content_kind": "textbook",
       "image_count": 391,
-      "subject_title": "تاسع إجتماعيات"
+      "subject_title": "إجتماعيات"
     },
     {
       "byte_size": 37000004,
+      "class_slug": "grade-9",
+      "class_title": "التاسع",
       "content_kind": "textbook",
       "image_count": 347,
-      "subject_title": "تاسع التربية الإسلامية"
+      "subject_title": "التربية الإسلامية"
     },
     {
       "byte_size": 12497408,
+      "class_slug": "grade-9",
+      "class_title": "التاسع",
       "content_kind": "textbook",
       "image_count": 126,
-      "subject_title": "تاسع القران الكريم"
+      "subject_title": "القران الكريم"
     },
     {
       "byte_size": 30892561,
+      "class_slug": "grade-9",
+      "class_title": "التاسع",
       "content_kind": "textbook",
       "image_count": 356,
-      "subject_title": "تاسع اللغه العربية"
+      "subject_title": "اللغه العربية"
     },
     {
       "byte_size": 8390689,
+      "class_slug": "grade-9",
+      "class_title": "التاسع",
       "content_kind": "textbook",
       "image_count": 75,
-      "subject_title": "تاسع انجليزي"
+      "subject_title": "انجليزي"
     },
     {
       "byte_size": 23864231,
+      "class_slug": "grade-9",
+      "class_title": "التاسع",
       "content_kind": "textbook",
       "image_count": 341,
-      "subject_title": "تاسع رياضيات"
+      "subject_title": "رياضيات"
     },
     {
       "byte_size": 68946401,
+      "class_slug": "grade-9",
+      "class_title": "التاسع",
       "content_kind": "textbook",
       "image_count": 324,
-      "subject_title": "تاسع علوم"
+      "subject_title": "علوم"
     }
   ],
   "image_count": 5552,
   "inventory_jsonl": "inventory.jsonl",
   "schema_version": 1,
   "source_commit": "f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23",
-  "source_repository": "7eaur/alwaslh-go"
+  "source_repository": "7eaur/alwaslh-go",
+  "unclassified_image_count": 0
 }
