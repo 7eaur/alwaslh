@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .catalog import discover_image_files
-from .images import optimize_for_display, write_lossless_ocr_input
+from .images import DISPLAY_PROFILE, optimize_for_display, write_lossless_ocr_input
 from .manifest import build_package, build_page_record
 from .models import Catalog, LessonSpec, OcrAdapter, OcrResult
 from .reports import write_reports
@@ -39,7 +39,12 @@ def _profile_sha(catalog: Catalog, lesson: LessonSpec, adapter: OcrAdapter | Non
             "document_kind": lesson.document_kind,
             "metadata": lesson.metadata,
         },
-        "display": {"quality": quality, "max_edge": max_edge, "max_pixels": max_pixels},
+        "display": {
+            "profile_version": DISPLAY_PROFILE,
+            "quality": quality,
+            "max_edge": max_edge,
+            "max_pixels": max_pixels,
+        },
         "ocr": None if adapter is None else {
             "provider_key": adapter.provider_key,
             "provider_version": adapter.provider_version,
