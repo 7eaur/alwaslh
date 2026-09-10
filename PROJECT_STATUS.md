@@ -2,7 +2,36 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable CI evidence أعلى من prose. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-09 — Stage13E verified on candidate and selective promotion heads, promoted to `main`; Stage13F is READY / NOT STARTED.**
+Last synchronized: **2026-09-10 — main/global Stage13E state preserved; parallel Student Track Stage14 CLOSED / VERIFIED on its isolated branch.**
+
+## Parallel Student Product Track — Stage14 CLOSED / VERIFIED
+
+This section is branch-specific and does **not** mean the Student work has been promoted to `main`.
+
+- Branch: `parallel/stage14-student-product`.
+- Verified Stage14 runtime/code HEAD: `ac55f1435d232cadff334816407f1182125dda90`.
+- Documentation-only closure commits may advance the branch beyond that runtime SHA; they are not new runtime evidence.
+- Stage14 Student Product state on this branch: **CLOSED / VERIFIED**.
+- Stage14 Student Product run `34420993805`: **SUCCESS** on exact runtime HEAD `ac55f143...`.
+- Stage14 Student API Regression run `34420993840`: **SUCCESS** on exact runtime HEAD `ac55f143...`.
+- Student: ESLint PASS, strict TypeScript PASS, Vitest **12/12 PASS**, production build PASS.
+- Production Student bundle at closure: ~**184.20 kB JS / 57.16 kB gzip**, ~**23.02 kB CSS / 4.82 kB gzip**.
+- Shared API regression: Biome **87 files / 0 errors**, strict TypeScript PASS, **46/46 unit tests PASS**, build PASS.
+- Clean PostgreSQL migrations `0001` → `0018`: PASS.
+- Student Curriculum integration: PASS.
+- Student Reader integration: PASS.
+- Real Chromium: **2/2 PASS**, covering Auth/Access/Curriculum and protected Reader with media/OCR/search/connectivity/focus/responsive behavior.
+- Verified responsive Reader path: 390×844, 768×1024 and 1366×900 with no horizontal overflow.
+- Stage14 authenticated hierarchy is learning-first: Curriculum/Reader precedes access administration.
+- Stage14 does not claim installable/offline-learning PWA behavior; that is Stage16.
+- No Router was added because Stage14 has no verified deep-link/shareable-URL requirement; stateful class→subject→lesson navigation is the simpler verified contract.
+
+Current integration dependency boundary at last live verification:
+
+- `main @ 5fdb23030c77cae9bff5f8c33d4be466427eb6e5`
+- Track A `integration/stage13f-question-bank @ 24549cd05cfde6d22b6a9847d195456cb3b9514e`
+- Stage15 Student Practice/Test/Models: **BLOCKED until Stage13F Question Bank/Quiz authority is canonical in `main`**.
+- Do not replace this dependency with mocks, temporary persistence, duplicate Question Bank/Quiz models, or by skipping ahead to Stage16.
 
 ## Current Position
 
@@ -13,8 +42,8 @@ Last synchronized: **2026-09-09 — Stage13E verified on candidate and selective
 - Verified Stage13E runtime/application SHA: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
 - That promotion commit is a direct child of `e304d61286b9ca120db2dad695d29f4f1642e733`; no divergent candidate history or merge commit was imported.
 - Current documentation-closure work may advance `main` beyond the verified runtime SHA. Docs-only commits are not new runtime evidence.
-- Current product position: **Stage13E CLOSED / VERIFIED; Stage13F READY / NOT STARTED**.
-- Stage13F implementation has not started in the Stage13E closure batch.
+- Current global/main product position recorded by this historical section: **Stage13E CLOSED / VERIFIED; Stage13F READY / NOT STARTED**. The live parallel Track A branch may be newer; use GitHub live state before executing Stage13F/Stage15 work.
+- Stage13F implementation had not started in the Stage13E closure batch described below.
 
 ## Stage13E Verification — CLOSED / VERIFIED
 
@@ -90,8 +119,10 @@ No product rule, security boundary, DB invariant or test expectation was weakene
 | Stage13C Content/Media/OCR | VERIFIED |
 | Stage13D Upload/History/Publication | VERIFIED incl. Chromium |
 | Stage13E Admin AI Operations / Review | **VERIFIED / PROMOTED TO MAIN** |
-| Stage13F Question Bank / Quiz Builder | **READY / NOT STARTED** |
-| Stage13G+ | REQUIRED later |
+| Stage13F Question Bank / Quiz Builder | **LIVE STATE MUST BE RE-CHECKED; parallel Track A branch exists outside `main` at last Student closure verification** |
+| Parallel Student Stage14 | **CLOSED / VERIFIED on `parallel/stage14-student-product`; NOT PROMOTED TO MAIN** |
+| Student Stage15 | **BLOCKED by Stage13F promotion** |
+| Student Stage16+ | REQUIRED later by sequence |
 | Deployment stages | FUTURE only after VPS + explicit reopening |
 
 ## Findings State
@@ -106,15 +137,26 @@ No product rule, security boundary, DB invariant or test expectation was weakene
 - `AI-013E-API-008` P2 — FIXED + VERIFIED.
 - `CI-013E-009` P1 — FIXED + VERIFIED.
 - `CI-001` — historical hosted-runner allocation incident, **not blocking**. Exact external historical cause remains `NOT YET VERIFIED`.
-- `AI-011-005` P2 — Stage13F reviewed direct Question Bank persistence; OPEN for next stage.
+- `AI-011-005` P2 — Stage13F reviewed direct Question Bank persistence; historical OPEN state; use current Track A source for live status.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap remains `NOT YET VERIFIED`.
+- `STUDENT-014-API-001` P1 — RESOLVED + VERIFIED.
+- `STUDENT-014-READER-001` P1 — RESOLVED + VERIFIED.
+- `STUDENT-014-UX-002` P2 — RESOLVED + VERIFIED.
+- `STUDENT-014-A11Y-003` P2 — RESOLVED + VERIFIED.
+- `STUDENT-014-QA-004` P2 — RESOLVED + VERIFIED.
+- `STUDENT-015-QB-001` P1 — BLOCKED by Track A promotion to `main`.
 
 ## Exact Next Work
 
-1. Finish this Stage13E documentation closure and post the closure report to Issue #16.
-2. Keep deployment/hosting deferred.
-3. Start Stage13F only as a new isolated implementation batch from current `main` after live-checking GitHub.
-4. Stage13F must own reviewed Question Bank persistence/provenance, editing, Draft→Review→Published, Quiz Builder/versioning/regeneration/export and executable DB/API/Admin/Chromium evidence.
+Global/Track A historical next work remains Stage13F according to its own current branch/source of truth.
+
+For the parallel Student Track:
+
+1. Keep Stage14 branch stable; runtime evidence is `ac55f143...`.
+2. Re-check `main` + Track A before every Stage15 attempt.
+3. Start Stage15 only after canonical Question Bank/Quiz contracts are present in `main` and have been read directly.
+4. Keep deployment/hosting deferred.
+5. Do not skip Stage15 to begin Stage16 solely because the Stage15 dependency is blocked.
 
 ## Mandatory Startup
 
