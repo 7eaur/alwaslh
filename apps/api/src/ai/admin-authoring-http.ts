@@ -121,6 +121,12 @@ export function registerAdminAiAuthoringRoutes(
     return authoring.applyLessonOutput(actor.id, params.outputId);
   });
 
+  app.post("/v1/admin/authoring/outputs/:outputId/apply-quiz", async (request) => {
+    const actor = await adminActor(request, config, auth);
+    const params = parseBody(OutputParamsSchema, request.params);
+    return authoring.applyQuizOutput(actor.id, params.outputId);
+  });
+
   app.post("/v1/admin/quizzes/:quizId/generate", async (request, reply) => {
     const actor = await adminActor(request, config, auth);
     const params = parseBody(QuizParamsSchema, request.params);
