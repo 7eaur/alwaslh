@@ -22,14 +22,19 @@ async function expectNoHorizontalOverflow(page) {
 }
 
 async function openVersionA(page, card, fixture, mode) {
+  const selector = `[data-quiz-id="${fixture.quizId}"]`;
   await card.getByLabel("النموذج").selectOption({ label: fixture.versionALabel });
+  await expect(page.locator(selector).getByText(`سيُستخدم ${fixture.versionALabel}.`, { exact: true })).toBeVisible();
   const responsePromise = page.waitForResponse(
     (response) =>
       response.url().includes(`/v1/student/quizzes/${fixture.quizId}/sessions`) &&
       response.request().method() === "POST" &&
       response.status() === 200,
   );
-  await card.getByRole("button", { name: mode === "practice" ? "بدء تدريب" : "بدء اختبار" }).click();
+  await page
+    .locator(selector)
+    .getByRole("button", { name: mode === "practice" ? "بدء تدريب" : "بدء اختبار" })
+    .click();
   const response = await responsePromise;
   return response.json();
 }
