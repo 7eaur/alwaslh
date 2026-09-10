@@ -1,23 +1,24 @@
 # DOCUMENTATION INDEX — الوسيلة الذكية
 
-> خريطة ذاكرة المشروع الرسمية. أي محادثة/مهندس جديد يبدأ هنا ولا يعتمد على Chat memory.
+> خريطة ذاكرة المشروع الرسمية. أي محادثة أو مهندس يبدأ من هنا ولا يعتمد على Chat memory.
 
-Last synchronized: **2026-09-09 — Stage13E VERIFIED / PROMOTED / CLOSED; Stage13F READY / NOT STARTED.**
+Last synchronized: **2026-09-10 — Stage13F VERIFIED / CLOSED / PROMOTED; Stage13G ACTIVE on Track A; Stage14 parallel Track B in progress.**
 
 ## 1. Source of Truth precedence
 
 عند التعارض:
 
 1. **current code + PostgreSQL migrations + executable test/CI evidence**.
-2. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
-3. `PROJECT_HANDOFF.md` + `PROJECT_STATUS.md`.
-4. `PROJECT_RESUME_SNAPSHOT.md` — latest continuation checkpoint.
-5. `PROJECT_ENGINEERING_LOG.md`.
-6. `PROJECT_INTEGRATION_CONTINUITY.md`.
-7. `PROJECT_EXECUTION_QUEUE.md`.
-8. specialized product/stage docs.
-9. Legacy Coverage + Roadmap.
-10. historical workstream/deployment docs.
+2. **explicit current Product Owner instruction** + `docs/product/CURRENT_PRODUCT_OVERRIDES.md`.
+3. latest Issue `#16` execution model/report when it records a newer explicit Product Owner coordination decision.
+4. `PROJECT_HANDOFF.md` + `PROJECT_STATUS.md`.
+5. `PROJECT_RESUME_SNAPSHOT.md`.
+6. `PROJECT_ENGINEERING_LOG.md`.
+7. `PROJECT_INTEGRATION_CONTINUITY.md`.
+8. `PROJECT_EXECUTION_QUEUE.md`.
+9. current workstream/stage docs.
+10. Legacy Coverage + Roadmap.
+11. historical docs/workstreams/deployment records.
 
 Anything not inspected/executed = `NOT YET VERIFIED`.
 
@@ -32,142 +33,89 @@ Anything not inspected/executed = `NOT YET VERIFIED`.
 7. `PROJECT_INTEGRATION_CONTINUITY.md`
 8. `PROJECT_EXECUTION_QUEUE.md`
 9. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-10. `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md`
-11. latest Issue `#16` comments
-12. live current `main` + relevant Actions
+10. `docs/workstreams/PARALLEL_TWO_TRACK_OPERATING_MODEL.md`
+11. latest Issue `#16` body/comments
+12. live current `main` + current track branch + Actions
 13. current-stage DB/API/Frontend/tests
-14. `MASTER_REBUILD_ROADMAP.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` when starting/closing a stage
+14. `MASTER_REBUILD_ROADMAP.md` + `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
 
-`NEXT_CONVERSATION_PROMPT.md` is Launcher only.
+`NEXT_CONVERSATION_PROMPT.md` launcher فقط.
 
-## 3. Current operating model
+## 3. Current execution model
 
-- Single replaceable engineering owner for Product + Architecture + Backend + Frontend + UX + Security + Performance + QA + Git + Documentation.
-- Issue `#16` is sole active Project Execution Board.
-- Issues `#13/#14/#15` and old permanent workstream docs are historical only.
-- Hosting/deployment is fully deferred until VPS + explicit Product Owner reopening.
-- `main` is a development/integration baseline, not deployment authority.
-- Root-cause fixes only; no test weakening/auth bypass/fake API/duplicate durable authority.
+**Parallel Two-Track Execution** is current and supersedes Single Owner for active work.
+
+- Track A: API/Admin/DB/AI/generation/Question Bank/Quiz Builder/Stage13G.
+- Track B: Student Product Stage14+ on `parallel/stage14-student-product`.
+- Issue #16 is the sole cross-track execution ledger.
+- Shared backend contracts reach Track B through verified `main`.
+- No duplicate durable authority to avoid integration.
+
+Current model doc: `docs/workstreams/PARALLEL_TWO_TRACK_OPERATING_MODEL.md`.
+
+Historical only: `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md`, `TEAM_OPERATING_MODEL.md`, `BACKEND_WORKSTREAM.md`, `FRONTEND_WORKSTREAM.md`, `INTEGRATION_WORKSTREAM.md`.
 
 ## 4. Central state files
 
 | File | Purpose |
 |---|---|
-| `PROJECT_HANDOFF.md` | replacement-engineer startup and current handoff |
-| `PROJECT_STATUS.md` | concise current status/gates/open boundaries |
-| `PROJECT_RESUME_SNAPSHOT.md` | latest exact verification/next-action checkpoint |
-| `PROJECT_ENGINEERING_LOG.md` | project understanding, architecture decisions, findings, changes and verification |
-| `PROJECT_INTEGRATION_CONTINUITY.md` | detailed current continuity |
-| `PROJECT_EXECUTION_QUEUE.md` | ordered implementation queue |
-| `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | Product Owner overrides |
-| `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md` | current engineering method |
-| `MASTER_REBUILD_ROADMAP.md` | target stage sequence |
-| `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` | legacy capability acceptance state |
-| `NEXT_CONVERSATION_PROMPT.md` | compact launcher |
-
-Historical/closure evidence:
-
-- `docs/integration/STAGE13E_PROMOTION_MANIFEST.md` — completed exact 36-file selective Stage13E promotion record;
-- `docs/integration/GITHUB_ACTIONS_RUNNER_INCIDENT.md` — historical CI-001 evidence/runbook;
-- Stage13E specialized contracts under `docs/ai/` and `docs/admin/`.
+| `PROJECT_HANDOFF.md` | replacement-engineer startup/current handoff |
+| `PROJECT_STATUS.md` | concise current state/gates/open boundaries |
+| `PROJECT_RESUME_SNAPSHOT.md` | exact continuation checkpoint |
+| `PROJECT_ENGINEERING_LOG.md` | architecture/findings/changes/tests |
+| `PROJECT_INTEGRATION_CONTINUITY.md` | detailed resumable state |
+| `PROJECT_EXECUTION_QUEUE.md` | ordered active tasks |
+| `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | current PO decisions |
+| `docs/workstreams/PARALLEL_TWO_TRACK_OPERATING_MODEL.md` | current coordination model |
+| `MASTER_REBUILD_ROADMAP.md` | stage sequence |
+| `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` | capability acceptance state |
 
 ## 5. Current verified checkpoint
 
-Stage13E accepted candidate:
+`main`:
 
-`72ead8446af237392dc6d953c8e0c2382f468286`
+`3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
 
-Candidate required matrix: **12/12 SUCCESS**. Verification-only PR #24 was closed unmerged.
+Stage13F runtime checkpoint:
 
-Stage13E verified selective promotion/runtime SHA:
+`afbe552710b3f1cf79ee70594f691fa836c05a45`
 
-`d5ebc7f25a369430387a758c7c0bb89350963d67`
+Stage13F verification:
 
-Promotion properties:
+- runtime verification-only PR #27 — **13/13 SUCCESS**, closed unmerged;
+- closure verification-only PR #28 — **13/13 SUCCESS**, closed unmerged;
+- `main` moved by non-force fast-forward to exact closure checkpoint `3aeca598...`.
 
-- built from inspected `main @ e304d61286b9ca120db2dad695d29f4f1642e733`;
-- exact accepted 36-file Stage13E manifest;
-- one promotion commit;
-- no divergent candidate history/central-doc rollback;
-- promotion required matrix: **12/12 SUCCESS**;
-- verification-only PR #25 closed unmerged;
-- `main` fast-forwarded non-force after confirming it had not moved.
+Stage13F provides canonical reviewed Question Bank, immutable revisions, direct questions, stable same-item regeneration, Quiz Builder immutable versions/snapshots, review/publish/archive and reviewed/published export authority.
 
-Promotion run IDs:
-
-- Combined Stage13E `34401502463`
-- Stage13E standalone `34401549935`
-- Stage13E Frontend Prep `34401549849`
-- Rebuild `34401550016`
-- Stage13 Admin `34401549835`
-- Stage9 `34401549851`
-- Stage10 `34401549989`
-- OCR `34401549910`
-- Stage11 `34401549927`
-- Stage12 `34401549964`
-- Stage13D Content `34401550065`
-- Stage13D Admin `34401549903`
-
-All are SUCCESS on exact `d5ebc7f...`.
-
-Documentation-only closure commits after the promotion do not replace the verified runtime/application evidence attached to `d5ebc7f...`.
-
-## 6. Stable product architecture
-
-**الوسيلة الذكية** لها سطحان مستقلان:
-
-- `apps/student-web`: Student Web/PWA;
-- `apps/admin-web`: Super Admin Web;
-- `apps/api`: authoritative Fastify/TypeScript API;
-- `database/migrations`: PostgreSQL schema/integrity authority.
-
-Stable boundaries:
-
-- browser does not own canonical durable business state;
-- Full Code = 6 digits; Class Code = 7 digits;
-- returning Student login = password + registered P-256 device proof;
-- Curriculum = Class → Subject Offering → optional Section → Lesson;
-- source inventory = provenance, not curriculum hierarchy;
-- `media ready != published`;
-- educational publication = explicit Draft → Review → Published;
-- raw AI/provider output never automatic Student/Question Bank authority;
-- provider calls stay outside long DB transactions;
-- durable AI worker is separate from Fastify HTTP;
-- Stage13E Admin history is bounded/paginated and current review authority is independent from selected historical page;
-- Stage13E does not create a second Stage12 queue or Stage13F Question Bank authority.
-
-## 7. Current implementation sequence
+## 6. Current implementation sequence
 
 ```text
-VERIFIED through Stage13E
-→ Stage13F repository discovery
-→ Stage13F Question Bank / Quiz Builder / Publish implementation
-→ exact-head DB/API/Admin/Chromium + wider regression closure
-→ Stage13G Remaining Admin
-→ Stage14+ Student/Product/Hardening
-→ deployment only after VPS + explicit reopening
+Stage13F VERIFIED / PROMOTED
+→ Track A Stage13G Remaining Admin Product
+→ Track B closes Stage14 and incorporates current main before Stage15
+→ Stage15+ in dependency/order sequence
+→ hardening/load/release gates later
 ```
 
-Stage13F is **READY / NOT STARTED**. Repository discovery precedes implementation; uninspected Stage13F areas are `NOT YET VERIFIED`.
+Track A current branch: `integration/stage13g-admin-product`.
 
-## 8. Current open boundaries
+## 7. Current open boundaries
 
-- `AI-011-005` P2 — Stage13F reviewed `direct` Question Bank persistence.
 - `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap `NOT YET VERIFIED`.
-- `CI-001` — historical hosted-runner allocation incident, no longer blocking; exact historical external cause `NOT YET VERIFIED`.
-- Stage13G+ remains later ordered work.
-- deployment/VPS remains future-only.
+- Stage13G Admin parity remains active: student accounts, access-code operations, recovery/device operations, notifications, dashboard/operations, import/export/reporting/settings/security/audit and explicitly open lesson/quiz generation/export variants.
+- Track B Stage14 final shell/copy/a11y closure is independent parallel work.
+- Track B Stage15 must consume promoted Stage13F authority from `main`.
+- Production deployment/cutover remains future-only; no deployment action is implied by Stage13G.
 
-Closed Stage13E IDs include `AI-013E-DB-001`, `AI-013E-REVIEW-002`, `AI-013E-OPS-003..006`, `AI-013E-PERF-007`, `AI-013E-API-008`, and `CI-013E-009` — all FIXED + VERIFIED.
-
-## 9. Documentation maintenance
+## 8. Documentation maintenance
 
 After every meaningful batch:
 
-1. update `PROJECT_RESUME_SNAPSHOT.md`;
-2. update Status/Handoff when truth changes;
-3. update Queue/Continuity/Engineering Log + specialized docs;
-4. add an execution/closure report to Issue #16;
-5. record exact HEAD + run IDs;
+1. update Status + Engineering Log during work;
+2. update Queue/Continuity/Handoff/Resume when continuation truth changes;
+3. update specialized stage docs and Legacy Coverage when capability state changes;
+4. add an EXECUTION REPORT to Issue #16;
+5. record exact HEAD/run IDs;
 6. never mark PASS from prose/build alone;
-7. never leave continuation-critical information only in chat.
+7. never leave continuation-critical state only in Chat.

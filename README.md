@@ -1,110 +1,80 @@
 # الوسيلة الذكية — Alwaseela Smart
 
-> **المستودع هو ذاكرة المشروع الرسمية.** لا تعتمد على ذاكرة محادثات سابقة. ابدأ دائمًا من `DOCUMENTATION_INDEX.md` ثم اتبع ترتيب Source of Truth المذكور فيه.
+> **المستودع هو ذاكرة المشروع الرسمية.** لا تعتمد على Chat history. ابدأ دائمًا من `DOCUMENTATION_INDEX.md` واتبع Source of Truth الحالي.
 
-## فكرة المنتج
+## المنتج
 
-**الوسيلة الذكية** منصة تعليمية عربية هدفها تحويل المحتوى الدراسي الموثوق إلى تجربة تعلم ومراجعة واختبار منظمة، مع إدارة كاملة للمحتوى والوصول من جهة الإدارة.
+**الوسيلة الذكية** منصة تعليمية عربية تحول المحتوى الدراسي الموثوق إلى تجربة تعلم ومراجعة واختبار منظمة، مع إدارة كاملة للمنهج والمحتوى والوصول والذكاء الاصطناعي والأسئلة من جهة الإدارة.
 
-المنتج يحافظ على مخرجات التطبيق القديم ذات القيمة، لكنه لا يكرر معماريته القديمة. التطبيق القديم ومستنداته مرجع للميزات والسيناريوهات والمشكلات، وليس مواصفة تقنية ملزمة.
+الأسطح الحالية:
 
-المنتج المستهدف يتكون من:
+- `apps/student-web` — Student Web/PWA.
+- `apps/admin-web` — Super Admin Web.
+- `apps/api` — Fastify/TypeScript API والسلطة الوحيدة للمنطق التجاري والهوية والصلاحيات.
+- `database/migrations` — PostgreSQL schema/integrity authority.
+- `packages/*` — عقود وهوية وprimitives مشتركة.
 
-- **Student Web/PWA** — تفعيل ودخول آمن، صفوف ومواد ودروس، Reader، ملخصات، بحث، TTS، تدريب واختبارات ونماذج، ملاحظات ومفضلة وNeeds Review، تقدم وإشعارات وOffline/PWA.
-- **Admin Web** — Super Admin مستقل لإدارة المنهج والمحتوى والوسائط وOCR والذكاء الاصطناعي وبنك الأسئلة والطلاب والأكواد والاسترداد والإشعارات والاستيراد/التصدير والتقارير والتدقيق.
-- **Backend API** — السلطة الوحيدة للهوية والصلاحيات والبيانات والمنطق التجاري فوق PostgreSQL خاصة، مع Media/OCR/AI workers خلف الخادم.
+الملفات القديمة في root و`supabase/` تبقى parity/failure evidence فقط؛ الـruntime الجديد هو `apps/* + database/migrations/*`.
 
-## المعمارية الحالية
+## الحالة الحالية — 2026-09-10
 
-```text
-Student PWA ─┐
-             ├── apps/api ── private PostgreSQL
-Admin Web ───┘      │
-                    ├── Stage9 source/provenance inventory
-                    ├── Stage10 media pipeline
-                    ├── reviewed OCR
-                    ├── provider-neutral AI contracts
-                    ├── durable AI jobs/workers/controls
-                    └── later TTS / notifications / offline sync
-```
+`main` integration baseline:
 
-أسطح الـrebuild الحالية:
+`3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
 
-```text
-apps/student-web   Student Web/PWA
-apps/admin-web     Super Admin Web
-apps/api           Fastify + TypeScript Backend API
-packages/brand     shared brand/design primitives
-packages/contracts shared contracts where applicable
-database/migrations PostgreSQL source of truth
-```
+- Stage1–10: VERIFIED.
+- OCR Foundation: VERIFIED.
+- Stage11 AI contracts: VERIFIED.
+- Stage12 durable AI execution: VERIFIED backend/runtime؛ live provider bootstrap ما زال `NOT YET VERIFIED`.
+- Stage13A–D: VERIFIED.
+- Stage13E Admin AI Operations / Review: VERIFIED / CLOSED.
+- Stage13F Question Bank / Quiz Builder / Publish: **VERIFIED / CLOSED / PROMOTED TO MAIN**.
+- Stage13G Remaining Admin Product: **ACTIVE على Track A**.
+- Stage14 Student Product: **IN PROGRESS على Track B**.
 
-**مهم:** ما زالت بعض ملفات التطبيق القديم موجودة في root (`src/`, `supabase/`, ملفات legacy أخرى) كمرجع تاريخي/Parity evidence. لا تفترض أنها runtime المعتمد للمنتج الجديد. الـrebuild الحالي هو `apps/* + database/migrations/*` والعقود الموثقة.
+Stage13F أُغلق على runtime `afbe552710b3f1cf79ee70594f691fa836c05a45` ثم closure checkpoint `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`؛ كلاهما اجتاز wider matrix **13/13 SUCCESS** عبر PRs #27/#28 verification-only المغلقة دون دمج.
 
-## الحالة الحالية
+## نموذج التنفيذ الحالي
 
-الفرع التنفيذي/التوثيقي الحالي:
+المشروع يعمل بنموذج **Parallel Two-Track Execution**:
 
-`planning/product-evolution-review` — Draft PR #12.
+- **Track A** — Backend / Admin / DB / AI / generation / Question Bank / Quiz Builder / Stage13G؛ الفرع الحالي `integration/stage13g-admin-product`.
+- **Track B** — Student Product Stage14+؛ الفرع `parallel/stage14-student-product`.
+- Issue #16 هو execution ledger المشترك.
+- `main` هو نقطة دمج العقود المتحققة بين المسارين.
+- لا يجوز لأي Track إنشاء سلطة Auth/Access/Question Bank/AI/content/sync بديلة لتجنب الدمج.
 
-آخر **executable baseline** متحقق بالكامل:
+اقرأ `docs/workstreams/PARALLEL_TWO_TRACK_OPERATING_MODEL.md` للتفاصيل. `SINGLE_OWNER_OPERATING_MODEL.md` تاريخي ومُلغى تشغيليًا.
 
-`260cfef1c48d1290611103f8443d222f8cd041b6`
-
-على هذا الرأس نجحت بوابات Stage9 وStage10 وOCR وStage11 وStage12 وStage13 وFull Rebuild، بما فيها Chromium الفعلي للطالب والإدارة.
-
-تم التحقق حتى الآن من:
-
-- Stages 1–10؛
-- OCR Foundation؛
-- Stage11 provider-neutral AI contracts؛
-- Stage12 durable AI execution + distributed capacity/controls + pause/resume/progress + dedicated worker runtime؛
-- Stage13 Curriculum backend؛
-- Stage13 Admin Curriculum Web؛
-- Stage13 Admin Content / Media / OCR Operations.
-
-العمل التالي الموثق يبدأ من **Stage13 Upload / Processing History / Publication Linking** ثم بقية Admin Product وفق `MASTER_REBUILD_ROADMAP.md` وLegacy Coverage Gate.
-
-## قواعد لا يجوز كسرها
+## قواعد ثابتة
 
 1. Correctness > Cleverness، Evidence > Assumptions.
-2. لا ترقيع كحل نهائي؛ أصلح السبب الجذري.
-3. لا تُحذف Feature قديمة ذات قيمة بدون قرار Product Owner صريح.
-4. Browser لا يتصل مباشرة بPostgreSQL ولا يملك auth/progress/publish authority.
-5. Upload/Media مستقل عن OCR/AI/TTS.
-6. OCR/AI/TTS طبقات مشتقة؛ failure فيها لا يفسد الأصل.
-7. Student يستهلك محتوى وأسئلة منشورة ومراجعة فقط.
-8. Stage9 source folders = provenance evidence، وليست Curriculum hierarchy.
-9. Stage10 media/OCR لا يصبح Published Lesson Content تلقائيًا؛ الربط يحتاج عقدًا صريحًا.
-10. AI provider/model-neutral، ولا تُدّعى جودة provider أو production readiness بدون benchmark فعلي.
-11. أي شيء لم يُنفذ ويُختبر = `NOT YET VERIFIED`.
-12. Deployment/Preview حاليًا **`DEFERRED BY PRODUCT OWNER`**؛ لا تعِد تفعيله أو نشره بدون أمر صريح لاحق.
-13. قاعدة البيانات القديمة ليست dependency حالية؛ repository migrations/tests/current PostgreSQL contracts هي السلطة التنفيذية.
+2. لا Feature ذات قيمة تُحذف دون قرار Product Owner صريح.
+3. Browser لا يملك canonical durable business state.
+4. Full Code = 6 digits؛ Class Code = 7 digits.
+5. Student returning login = password + registered P-256 device proof.
+6. Curriculum = Class → Subject Offering → optional Section → Lesson.
+7. source inventory = provenance وليس curriculum hierarchy.
+8. `media ready != published`؛ النشر Draft → Review → Published.
+9. raw AI/provider output لا يصبح Student/Question Bank authority تلقائيًا.
+10. provider/network calls خارج long DB transactions؛ durable worker هو سلطة التنفيذ.
+11. Build وحده لا يساوي PASS؛ استخدم lint/typecheck/unit/integration/PostgreSQL/browser حسب المرحلة.
+12. أي شيء غير مفحوص أو غير منفذ = `NOT YET VERIFIED`.
+13. Production deployment/cutover ليس عملًا حاليًا. أي preview/staging يحتاج أمر Product Owner صريح مستقل ولا يستبدل CI.
 
-## ابدأ من هنا
+## البداية الإلزامية
 
-اقرأ بالترتيب:
+1. `README.md`
+2. `DOCUMENTATION_INDEX.md`
+3. `PROJECT_HANDOFF.md`
+4. `PROJECT_STATUS.md`
+5. `PROJECT_RESUME_SNAPSHOT.md`
+6. `PROJECT_ENGINEERING_LOG.md`
+7. `PROJECT_INTEGRATION_CONTINUITY.md`
+8. `PROJECT_EXECUTION_QUEUE.md`
+9. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+10. `docs/workstreams/PARALLEL_TWO_TRACK_OPERATING_MODEL.md`
+11. latest Issue #16 comments/body
+12. current `main`, current track branch, Actions, code/tests
 
-1. `DOCUMENTATION_INDEX.md` — خريطة التوثيق وSource of Truth precedence.
-2. `PROJECT_HANDOFF.md` — الاستئناف العملي والمراحل والحدود والرأس الحالي.
-3. `PROJECT_STATUS.md` — الحالة المختصرة والمتبقي.
-4. `PROJECT_ENGINEERING_LOG.md` — السجل الزمني، Architecture Decisions، Findings، CI evidence.
-5. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` — قرارات Product Owner الحالية التي تتقدم على قرارات تشغيلية أقدم.
-6. Product Decisions + parity/coverage + roadmap حسب `DOCUMENTATION_INDEX.md`.
-
-لإطلاق محادثة جديدة استخدم `NEXT_CONVERSATION_PROMPT.md` فقط كبوابة قصيرة؛ لا تعتبره بديلًا عن قراءة المستندات.
-
-## التحقق والتطوير
-
-كل Stage لها GitHub Actions executable gate. لا تعتبر Build وحده دليلاً كافيًا؛ اعتمد lint/typecheck/unit/integration/PostgreSQL/browser evidence حسب المجال.
-
-بعد كل دفعة مهمة يجب تحديث:
-
-- `PROJECT_STATUS.md`؛
-- `PROJECT_ENGINEERING_LOG.md`؛
-- `PROJECT_HANDOFF.md`؛
-- الوثيقة المتخصصة؛
-- Legacy coverage evidence عندما تنفذ capability قديمة؛
-- exact commit/run IDs.
-
-التفاصيل الكاملة موجودة في `DOCUMENTATION_INDEX.md`.
+`NEXT_CONVERSATION_PROMPT.md` launcher فقط وليس Source of Truth مستقلًا.
