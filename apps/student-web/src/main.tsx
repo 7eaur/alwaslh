@@ -4,6 +4,7 @@ import "@alwaslh/brand/tokens.css";
 import "./styles.css";
 import "./stage14.css";
 import App from "./App";
+import { registerStudentServiceWorker } from "./pwa";
 
 const root = document.getElementById("root");
 
@@ -16,3 +17,5 @@ ReactDOM.createRoot(root).render(
     <App />
   </React.StrictMode>,
 );
+
+void registerStudentServiceWorker().catch(() => undefined);

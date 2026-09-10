@@ -1,0 +1,20 @@
+{
+  "name": "الوسيلة الذكية — مساحة الطالب",
+  "short_name": "الوسيلة الذكية",
+  "description": "مساحة الطالب للتعلم وقراءة الدروس والتدريب والاختبارات.",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007f78",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
