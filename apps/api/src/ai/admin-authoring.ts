@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { Database } from "../db.js";
 import { AppError } from "../errors.js";
 import type { QuestionBankService } from "../question-bank/service.js";
+import type { QuizBuilderService } from "../quiz-builder/service.js";
 import type {
   AiGenerationMode,
   AiGenerationRequest,
@@ -75,6 +76,16 @@ export interface LessonApplyResult {
   questionImportReplayed: boolean;
 }
 
+export interface QuizApplyResult {
+  quizId: string;
+  versionKey: string;
+  questionBankItemIds: string[];
+  questionImportReplayed: boolean;
+  readyForVersion: boolean;
+  versionId: string | null;
+  versionReplayed: boolean;
+}
+
 interface RequestBase {
   language: "ar";
   subjectDomain: AiSubjectDomain;
@@ -107,6 +118,7 @@ interface OutputContextRow {
   input_payload: unknown;
   prompt_key: string;
   prompt_version: string;
+  input_manifest: unknown;
 }
 
 interface ReviewRow {
@@ -131,6 +143,14 @@ interface PublishedQuestionSourceRow {
   normalized_text: string | null;
   raw_text: string | null;
   review_status: "not_required" | "approved" | null;
+}
+
+interface QuizApplicationManifest {
+  quizId: string;
+  versionKey: string;
+  label: string;
+  lessonIds: string[];
+  shuffleOptions: boolean;
 }
 
 function canonicalize(value: unknown): unknown {
@@ -174,6 +194,38 @@ function sourceRowToChunk(source: PublishedQuestionSourceRow): AiSourceChunk {
     ocrReviewStatus: approved ? source.review_status : null,
     contentSourceAssetId: source.content_source_asset_id,
   } as AiSourceChunk;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function quizApplicationManifest(inputManifest: unknown, unitKey: string): QuizApplicationManifest {
+  const manifest = asRecord(inputManifest);
+  const authoring = asRecord(manifest?.authoring);
+  if (authoring?.kind !== "quiz_generation" || typeof authoring.quizId !== "string") {
+    throw new AppError("INTERNAL_ERROR", "سياق توليد الاختبار المخزن غير مكتمل", 500);
+  }
+  const versions = Array.isArray(authoring.versions) ? authoring.versions : [];
+  const version = versions.map(asRecord).find((entry) => entry?.unitKey === unitKey);
+  if (
+    !version ||
+    typeof version.label !== "string" ||
+    !Array.isArray(version.lessonIds) ||
+    !version.lessonIds.every((lessonId) => typeof lessonId === "string") ||
+    typeof version.shuffleOptions !== "boolean"
+  ) {
+    throw new AppError("INTERNAL_ERROR", "إعداد نموذج الاختبار المخزن غير صالح", 500);
+  }
+  return {
+    quizId: authoring.quizId,
+    versionKey: unitKey.slice("quiz-version:".length),
+    label: version.label,
+    lessonIds: version.lessonIds as string[],
+    shuffleOptions: version.shuffleOptions,
+  };
 }
 
 function baseRequest(
@@ -242,6 +294,7 @@ export class AdminAiAuthoringService {
   constructor(
     private readonly database: Database,
     private readonly questionBank: QuestionBankService,
+    private readonly quizBuilder: QuizBuilderService,
   ) {}
 
   async enqueueLessons(actorProfileId: string, input: LessonGenerationInput): Promise<AuthoringPlanResult> {
@@ -474,6 +527,76 @@ export class AdminAiAuthoringService {
     };
   }
 
+  async applyQuizOutput(actorProfileId: string, outputId: string): Promise<QuizApplyResult> {
+    const { context, review, output } = await this.approvedOutput(outputId);
+    if (!context.unit_key.startsWith("quiz-version:") || output.kind !== "question_set") {
+      throw new AppError("BAD_REQUEST", "المخرج لا يتبع نموذج اختبار قابلًا للتطبيق", 400);
+    }
+    const manifest = quizApplicationManifest(context.input_manifest, context.unit_key);
+    const quizRows = await this.database.query<{
+      class_id: string | null;
+      subject_id: string | null;
+      status: string;
+    }>("select class_id, subject_id, status::text from quizzes where id = $1", [manifest.quizId]);
+    const quiz = quizRows[0];
+    if (!quiz) throw new AppError("NOT_FOUND", "الاختبار المرتبط بالمخرج غير موجود", 404);
+    if (quiz.status !== "draft" || !quiz.class_id || !quiz.subject_id) {
+      throw new AppError("CONFLICT", "يمكن تطبيق المخرج على اختبار مسودة فقط", 409);
+    }
+
+    const imported = await this.questionBank.importApprovedAiOutput(actorProfileId, {
+      classId: quiz.class_id,
+      subjectId: quiz.subject_id,
+      lessonIds: manifest.lessonIds,
+      outputId,
+    });
+    const itemIds = imported.imports.map((item) => item.itemId);
+    if (itemIds.length === 0) {
+      throw new AppError("BAD_REQUEST", "المخرج المعتمد لا يحتوي أسئلة قابلة للنموذج", 400);
+    }
+    const published = await this.database.query<{ item_id: string; revision_id: string }>(
+      `select i.id as item_id, r.id as revision_id
+       from question_bank_items i
+       join question_bank_revisions r on r.item_id = i.id and r.status = 'published'
+       where i.id = any($1::uuid[]) and i.archived_at is null`,
+      [itemIds],
+    );
+    const revisionByItem = new Map(published.map((row) => [row.item_id, row.revision_id]));
+    if (itemIds.some((itemId) => !revisionByItem.has(itemId))) {
+      return {
+        quizId: manifest.quizId,
+        versionKey: manifest.versionKey,
+        questionBankItemIds: itemIds,
+        questionImportReplayed: imported.replayed,
+        readyForVersion: false,
+        versionId: null,
+        versionReplayed: false,
+      };
+    }
+    const materialized = await this.quizBuilder.addVersionOnce(
+      actorProfileId,
+      manifest.quizId,
+      {
+        label: manifest.label,
+        shuffleOptions: manifest.shuffleOptions,
+        questions: itemIds.map((itemId) => ({
+          questionBankItemId: itemId,
+          questionBankRevisionId: revisionByItem.get(itemId) as string,
+        })),
+      },
+      `ai_output:${outputId}:review:${review.revision}`,
+    );
+    return {
+      quizId: manifest.quizId,
+      versionKey: manifest.versionKey,
+      questionBankItemIds: itemIds,
+      questionImportReplayed: imported.replayed,
+      readyForVersion: true,
+      versionId: materialized.versionId,
+      versionReplayed: materialized.replayed,
+    };
+  }
+
   async archiveQuestion(actorProfileId: string, itemId: string): Promise<{ replayed: boolean }> {
     return this.database.transaction(async (tx) => {
       const rows = await tx.query<{ archived_at: Date | null }>(
@@ -583,7 +706,7 @@ export class AdminAiAuthoringService {
 
   private async approvedOutput(outputId: string) {
     const contexts = await this.database.query<OutputContextRow>(
-      `select u.unit_key, u.input_payload, j.prompt_key, j.prompt_version
+      `select u.unit_key, u.input_payload, j.prompt_key, j.prompt_version, j.input_manifest
        from ai_outputs o
        join ai_job_units u on u.id = o.job_unit_id
        join ai_jobs j on j.id = u.job_id
