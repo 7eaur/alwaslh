@@ -8,9 +8,9 @@ import type {
   AdminAccessCodeSort,
   AdminAccessCodeStatus,
   AdminAccessCodeType,
+  AdminStudentAccessService,
   AdminStudentSort,
   AdminStudentStatus,
-  AdminStudentAccessService,
   SortDirection,
 } from "./service.js";
 

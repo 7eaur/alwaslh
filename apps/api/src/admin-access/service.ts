@@ -4,7 +4,13 @@ import { AppError } from "../errors.js";
 
 export type AdminAccessCodeType = "full_access" | "class_access";
 export type AdminAccessCodeStatus = "active" | "redeemed" | "expired" | "revoked";
-export type AdminAccessCodeSort = "created_at" | "code" | "status" | "valid_from" | "expires_at" | "redeemed_at";
+export type AdminAccessCodeSort =
+  | "created_at"
+  | "code"
+  | "status"
+  | "valid_from"
+  | "expires_at"
+  | "redeemed_at";
 export type AdminStudentStatus = "active" | "inactive" | "archived";
 export type AdminStudentSort = "created_at" | "identifier" | "status" | "last_login";
 export type SortDirection = "asc" | "desc";
