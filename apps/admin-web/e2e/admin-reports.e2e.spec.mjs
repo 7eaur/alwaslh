@@ -41,7 +41,7 @@ function toArabicDigits(value) {
   return [...value].map((digit) => digits[Number(digit)]).join("");
 }
 
-test("Files workspace imports row-by-row and exports the complete filtered inventory as safe CSV", async ({ page }) => {
+test("Files workspace imports row-by-row and exports only explicitly selected codes when selection exists", async ({ page }) => {
   await login(page);
   const [firstCode, secondCode] = await unusedImportCodes(page);
   await openReports(page);
@@ -71,6 +71,13 @@ test("Files workspace imports row-by-row and exports the complete filtered inven
   await expect(page.getByLabel("أخطاء صفوف الاستيراد")).toContainText("مكرر داخل ملف الاستيراد");
   await expect(page.getByLabel("أخطاء صفوف الاستيراد")).toContainText("ستة أرقام فقط");
 
+  await page.getByRole("button", { name: "تحميل الأكواد للاختيار" }).click();
+  const choices = page.getByLabel("اختيار أكواد محددة");
+  const firstChoice = choices.locator(".report-code-choice").filter({ hasText: firstCode });
+  await expect(firstChoice).toBeVisible();
+  await firstChoice.locator('input[type="checkbox"]').check();
+  await expect(choices).toContainText(/1 محدد من \d+/);
+
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "تصدير CSV متوافق مع Excel" }).click();
   const download = await downloadPromise;
@@ -80,11 +87,11 @@ test("Files workspace imports row-by-row and exports the complete filtered inven
   expect(exported.charCodeAt(0)).toBe(0xfeff);
   expect(exported).toContain("code,type,status,class_name,duration_days");
   expect(exported).toContain(firstCode);
-  expect(exported).toContain(secondCode);
-  await expect(page.getByText(/تم تجهيز \d+ كود في ملف CSV متوافق مع Excel/)).toBeVisible();
+  expect(exported).not.toContain(secondCode);
+  await expect(page.getByText("تم تجهيز 1 كود في ملف CSV متوافق مع Excel.", { exact: true })).toBeVisible();
 });
 
-test("Files workspace prints all selected-scope cards and stays within a 390px viewport", async ({ page }) => {
+test("Files workspace prints only selected cards and stays within a 390px viewport", async ({ page }) => {
   await page.addInitScript(() => {
     window.__stage13gPrinted = false;
     window.print = () => {
@@ -95,10 +102,15 @@ test("Files workspace prints all selected-scope cards and stays within a 390px v
   await login(page);
   await openReports(page);
 
+  await page.getByRole("button", { name: "تحميل الأكواد للاختيار" }).click();
+  const choices = page.getByLabel("اختيار أكواد محددة");
+  const firstChoice = choices.locator(".report-code-choice").first();
+  await expect(firstChoice).toBeVisible();
+  await firstChoice.locator('input[type="checkbox"]').check();
   await page.getByRole("button", { name: "طباعة البطاقات" }).click();
   await page.waitForFunction(() => window.__stage13gPrinted === true);
-  await expect(page.locator(".print-code-card").first()).toBeAttached();
-  await expect(page.getByText(/تم تجهيز \d+ بطاقة للطباعة أو الحفظ بصيغة PDF من المتصفح/)).toBeVisible();
+  await expect(page.locator(".print-code-card")).toHaveCount(1);
+  await expect(page.getByText("تم تجهيز 1 بطاقة للطباعة أو الحفظ بصيغة PDF من المتصفح.", { exact: true })).toBeVisible();
 
   const dimensions = await page.evaluate(() => ({
     viewport: window.innerWidth,

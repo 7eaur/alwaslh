@@ -74,6 +74,8 @@ export function AdminReportsWorkspace({
   const [type, setType] = useState<AdminAccessCodeType>("full_access");
   const [status, setStatus] = useState<AdminAccessCodeStatus | "">("");
   const [classId, setClassId] = useState("");
+  const [scopeCodes, setScopeCodes] = useState<AdminAccessCode[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [printCodes, setPrintCodes] = useState<AdminAccessCode[]>([]);
   const [printRequested, setPrintRequested] = useState(false);
 
@@ -101,6 +103,11 @@ export function AdminReportsWorkspace({
         if (!handleError(error)) setFeedback({ kind: "error", message: errorMessage(error) });
       });
   }, [handleError]);
+
+  useEffect(() => {
+    setScopeCodes([]);
+    setSelectedIds(new Set());
+  }, [type, status, classId]);
 
   useEffect(() => {
     if (!printRequested || printCodes.length === 0) return;
@@ -143,6 +150,8 @@ export function AdminReportsWorkspace({
         imported: result.summary.imported,
         rejected: result.summary.rejected + localErrors.length,
       });
+      setScopeCodes([]);
+      setSelectedIds(new Set());
       setFeedback({
         kind: "success",
         message: `اكتمل الاستيراد: ${result.summary.imported} كود مضاف و${result.summary.rejected + localErrors.length} صف مرفوض.`,
@@ -168,16 +177,40 @@ export function AdminReportsWorkspace({
     };
   }
 
-  async function exportCsv(): Promise<void> {
-    setFeedback({ kind: "busy", message: "جارٍ تجهيز جميع الأكواد المطابقة…" });
+  async function loadSelection(): Promise<void> {
+    setFeedback({ kind: "busy", message: "جارٍ تحميل الأكواد المطابقة للاختيار…" });
     try {
       const codes = await fetchAllAccessCodesForExport(exportScope());
+      setScopeCodes(codes);
+      setSelectedIds(new Set());
+      setFeedback({
+        kind: "success",
+        message: codes.length > 0 ? `تم تحميل ${codes.length} كود. حدد المطلوب أو اتركها دون تحديد لاستخدام النطاق كاملًا.` : "لا توجد أكواد مطابقة لهذا النطاق.",
+      });
+    } catch (error) {
+      if (!handleError(error)) setFeedback({ kind: "error", message: errorMessage(error) });
+    }
+  }
+
+  async function codesForAction(): Promise<AdminAccessCode[]> {
+    if (selectedIds.size === 0) return fetchAllAccessCodesForExport(exportScope());
+    const selected = scopeCodes.filter((code) => selectedIds.has(code.id));
+    if (selected.length !== selectedIds.size) {
+      throw new Error("تغيرت قائمة الاختيار. أعد تحميل الأكواد قبل المتابعة.");
+    }
+    return selected;
+  }
+
+  async function exportCsv(): Promise<void> {
+    setFeedback({ kind: "busy", message: "جارٍ تجهيز الأكواد المطلوبة…" });
+    try {
+      const codes = await codesForAction();
       if (codes.length === 0) {
         setFeedback({ kind: "error", message: "لا توجد أكواد مطابقة للتصدير." });
         return;
       }
       downloadText(
-        `alwaslh-${type}-${status || "all"}.csv`,
+        `alwaslh-${type}-${selectedIds.size > 0 ? "selected" : status || "all"}.csv`,
         buildAccessCodesCsv(codes),
         "text/csv;charset=utf-8",
       );
@@ -190,7 +223,7 @@ export function AdminReportsWorkspace({
   async function preparePrint(): Promise<void> {
     setFeedback({ kind: "busy", message: "جارٍ تجهيز بطاقات الطباعة…" });
     try {
-      const codes = await fetchAllAccessCodesForExport(exportScope());
+      const codes = await codesForAction();
       if (codes.length === 0) {
         setFeedback({ kind: "error", message: "لا توجد أكواد مطابقة للطباعة." });
         return;
@@ -201,6 +234,15 @@ export function AdminReportsWorkspace({
     } catch (error) {
       if (!handleError(error)) setFeedback({ kind: "error", message: errorMessage(error) });
     }
+  }
+
+  function toggleSelected(id: string): void {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   const allErrors = [
@@ -223,8 +265,8 @@ export function AdminReportsWorkspace({
           <p className="eyebrow">Stage 13G · الملفات والتشغيل</p>
           <h1>الملفات والتقارير</h1>
           <p className="page-description">
-            استيراد أكواد الوصول الشامل بتقرير أخطاء صفّي، وتصدير المخزون المفلتر، وتجهيز بطاقات RTL
-            للطباعة دون إنشاء سلطة بيانات ثانية.
+            استيراد أكواد الوصول الشامل بتقرير أخطاء صفّي، وتصدير المخزون المفلتر أو المحدد، وتجهيز
+            بطاقات RTL للطباعة دون إنشاء سلطة بيانات ثانية.
           </p>
         </div>
       </header>
@@ -300,7 +342,7 @@ export function AdminReportsWorkspace({
           <div>
             <p className="section-kicker">Export / Print</p>
             <h2 id="export-heading">تصدير وطباعة أكواد الوصول</h2>
-            <p>النطاق نفسه يُستخدم للتصدير وبطاقات الطباعة، ولا يتم إخفاء أو اقتطاع صفحات النتائج.</p>
+            <p>حدد النوع والحالة والصف، ثم اختر أكوادًا بعينها عند الحاجة. بدون اختيار تُستخدم كل النتائج المطابقة.</p>
           </div>
         </div>
 
@@ -340,6 +382,9 @@ export function AdminReportsWorkspace({
             </label>
           )}
           <div className="report-actions">
+            <button className="secondary-button" type="button" onClick={() => void loadSelection()}>
+              تحميل الأكواد للاختيار
+            </button>
             <button className="primary-button" type="button" onClick={() => void exportCsv()}>
               تصدير CSV متوافق مع Excel
             </button>
@@ -348,6 +393,35 @@ export function AdminReportsWorkspace({
             </button>
           </div>
         </form>
+
+        {scopeCodes.length > 0 && (
+          <div className="report-code-selection" aria-label="اختيار أكواد محددة">
+            <div className="selection-summary">
+              <strong>اختيار اختياري</strong>
+              <span>{selectedIds.size} محدد من {scopeCodes.length}</span>
+              {selectedIds.size > 0 && (
+                <button className="text-button" type="button" onClick={() => setSelectedIds(new Set())}>
+                  مسح الاختيار
+                </button>
+              )}
+            </div>
+            <div className="report-code-choice-grid">
+              {scopeCodes.map((code) => (
+                <label className="report-code-choice" key={code.id}>
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(code.id)}
+                    onChange={() => toggleSelected(code.id)}
+                  />
+                  <span>
+                    <code>{code.code}</code>
+                    <small>{code.className || typeLabel(code.type)} · {statusLabel(code.status)}</small>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="access-print-sheet" aria-label="بطاقات أكواد الوصول للطباعة">
