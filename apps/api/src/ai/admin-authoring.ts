@@ -230,9 +230,7 @@ function generationRequest(
     return aiGenerationRequestSchema.parse({
       ...base,
       mode,
-      ...(options.expectedQuestionCount
-        ? { expectedQuestionCount: options.expectedQuestionCount }
-        : {}),
+      ...(options.expectedQuestionCount ? { expectedQuestionCount: options.expectedQuestionCount } : {}),
     });
   }
   throw new AppError("BAD_REQUEST", "وضع التوليد غير مدعوم في هذا السياق", 400);
@@ -246,10 +244,7 @@ export class AdminAiAuthoringService {
     private readonly questionBank: QuestionBankService,
   ) {}
 
-  async enqueueLessons(
-    actorProfileId: string,
-    input: LessonGenerationInput,
-  ): Promise<AuthoringPlanResult> {
+  async enqueueLessons(actorProfileId: string, input: LessonGenerationInput): Promise<AuthoringPlanResult> {
     if (!LESSON_MODES.has(input.mode)) {
       throw new AppError("BAD_REQUEST", "وضع توليد الدروس غير مدعوم", 400);
     }
@@ -264,20 +259,14 @@ export class AdminAiAuthoringService {
       const lesson = identityMap.get(lessonId);
       const sourceChunks = sourceMap.get(lessonId) ?? [];
       if (!lesson || sourceChunks.length === 0) {
-        throw new AppError(
-          "CONFLICT",
-          "كل درس مختار يحتاج أصولًا منشورة وجاهزة للذكاء الاصطناعي",
-          409,
-        );
+        throw new AppError("CONFLICT", "كل درس مختار يحتاج أصولًا منشورة وجاهزة للذكاء الاصطناعي", 409);
       }
       return {
         unitKey: `lesson:${lessonId}`,
         request: generationRequest(input.mode, input.subjectDomain, sourceChunks, {
           lessonTitle: lesson.title,
           ...(input.target ? { target: input.target } : {}),
-          ...(input.expectedQuestionCount
-            ? { expectedQuestionCount: input.expectedQuestionCount }
-            : {}),
+          ...(input.expectedQuestionCount ? { expectedQuestionCount: input.expectedQuestionCount } : {}),
         }),
       };
     });
@@ -316,11 +305,7 @@ export class AdminAiAuthoringService {
     const quiz = quizRows[0];
     if (!quiz) throw new AppError("NOT_FOUND", "الاختبار غير موجود", 404);
     if (quiz.status !== "draft" || !quiz.class_id || !quiz.subject_id) {
-      throw new AppError(
-        "CONFLICT",
-        "التوليد متاح فقط لاختبار Quiz Builder في حالة مسودة",
-        409,
-      );
+      throw new AppError("CONFLICT", "التوليد متاح فقط لاختبار Quiz Builder في حالة مسودة", 409);
     }
 
     const scopedRows = await this.database.query<{ lesson_id: string }>(
@@ -338,15 +323,8 @@ export class AdminAiAuthoringService {
       }
       keys.add(key);
       if (!label) throw new AppError("BAD_REQUEST", "اسم النموذج مطلوب", 400);
-      if (
-        lessonIds.length === 0 ||
-        lessonIds.some((lessonId) => !quizLessons.has(lessonId))
-      ) {
-        throw new AppError(
-          "BAD_REQUEST",
-          "مصادر كل نموذج يجب أن تكون من دروس الاختبار المحددة",
-          400,
-        );
+      if (lessonIds.length === 0 || lessonIds.some((lessonId) => !quizLessons.has(lessonId))) {
+        throw new AppError("BAD_REQUEST", "مصادر كل نموذج يجب أن تكون من دروس الاختبار المحددة", 400);
       }
       return { ...version, key, label, lessonIds, position };
     });
@@ -354,23 +332,15 @@ export class AdminAiAuthoringService {
     const allLessonIds = [...new Set(versions.flatMap((version) => version.lessonIds))];
     const sourceMap = await this.lessonSources(allLessonIds);
     const units = versions.map((version) => {
-      const sourceChunks = version.lessonIds.flatMap(
-        (lessonId) => sourceMap.get(lessonId) ?? [],
-      );
+      const sourceChunks = version.lessonIds.flatMap((lessonId) => sourceMap.get(lessonId) ?? []);
       if (sourceChunks.length === 0 || sourceChunks.length > 64) {
-        throw new AppError(
-          "CONFLICT",
-          "مصادر النموذج غير جاهزة أو تتجاوز حد 64 صفحة",
-          409,
-        );
+        throw new AppError("CONFLICT", "مصادر النموذج غير جاهزة أو تتجاوز حد 64 صفحة", 409);
       }
       return {
         unitKey: `quiz-version:${version.key}`,
         request: generationRequest(input.mode, input.subjectDomain, sourceChunks, {
           ...(version.target ? { target: version.target } : {}),
-          ...(version.expectedQuestionCount
-            ? { expectedQuestionCount: version.expectedQuestionCount }
-            : {}),
+          ...(version.expectedQuestionCount ? { expectedQuestionCount: version.expectedQuestionCount } : {}),
         }),
       };
     });
@@ -414,11 +384,7 @@ export class AdminAiAuthoringService {
     );
     const question = rows[0];
     if (!question) {
-      throw new AppError(
-        "CONFLICT",
-        "إعادة التوليد تتطلب سؤالًا منشورًا وغير مؤرشف",
-        409,
-      );
+      throw new AppError("CONFLICT", "إعادة التوليد تتطلب سؤالًا منشورًا وغير مؤرشف", 409);
     }
     const sourceRows = await this.database.query<PublishedQuestionSourceRow>(
       `select s.media_asset_id, s.page_number, s.input_checksum_sha256,
@@ -436,11 +402,7 @@ export class AdminAiAuthoringService {
       throw new AppError("CONFLICT", "السؤال المنشور لا يملك مصادر موثقة", 409);
     }
     const request = aiGenerationRequestSchema.parse({
-      ...baseRequest(
-        "regenerate_question",
-        input.subjectDomain,
-        sourceRows.map(sourceRowToChunk),
-      ),
+      ...baseRequest("regenerate_question", input.subjectDomain, sourceRows.map(sourceRowToChunk)),
       mode: "regenerate_question",
       originalQuestion: {
         prompt: question.prompt,
@@ -463,10 +425,7 @@ export class AdminAiAuthoringService {
     );
   }
 
-  async applyLessonOutput(
-    actorProfileId: string,
-    outputId: string,
-  ): Promise<LessonApplyResult> {
+  async applyLessonOutput(actorProfileId: string, outputId: string): Promise<LessonApplyResult> {
     const { context, review, request, output } = await this.approvedOutput(outputId);
     if (!context.unit_key.startsWith("lesson:")) {
       throw new AppError("BAD_REQUEST", "المخرج لا يتبع عملية توليد درس", 400);
@@ -504,11 +463,7 @@ export class AdminAiAuthoringService {
       summaryReplayed = result.replayed;
     }
     if (!summaryApplied && questionBankItemIds.length === 0) {
-      throw new AppError(
-        "BAD_REQUEST",
-        "المخرج المعتمد لا يحتوي محتوى قابلًا للتطبيق على الدرس",
-        400,
-      );
+      throw new AppError("BAD_REQUEST", "المخرج المعتمد لا يحتوي محتوى قابلًا للتطبيق على الدرس", 400);
     }
     return {
       lessonId,
@@ -519,10 +474,7 @@ export class AdminAiAuthoringService {
     };
   }
 
-  async archiveQuestion(
-    actorProfileId: string,
-    itemId: string,
-  ): Promise<{ replayed: boolean }> {
+  async archiveQuestion(actorProfileId: string, itemId: string): Promise<{ replayed: boolean }> {
     return this.database.transaction(async (tx) => {
       const rows = await tx.query<{ archived_at: Date | null }>(
         "select archived_at from question_bank_items where id = $1 for update",
@@ -539,10 +491,7 @@ export class AdminAiAuthoringService {
       if (review[0]) {
         throw new AppError("CONFLICT", "أعد السؤال من المراجعة قبل أرشفته", 409);
       }
-      await tx.query(
-        "update question_bank_items set archived_at = now() where id = $1",
-        [itemId],
-      );
+      await tx.query("update question_bank_items set archived_at = now() where id = $1", [itemId]);
       await tx.query(
         `update question_bank_revisions set status = 'archived'
          where item_id = $1 and status <> 'archived'`,
@@ -557,10 +506,7 @@ export class AdminAiAuthoringService {
     });
   }
 
-  async archiveQuiz(
-    actorProfileId: string,
-    quizId: string,
-  ): Promise<{ replayed: boolean }> {
+  async archiveQuiz(actorProfileId: string, quizId: string): Promise<{ replayed: boolean }> {
     return this.database.transaction(async (tx) => {
       const rows = await tx.query<{ status: string }>(
         "select status::text from quizzes where id = $1 for update",
@@ -598,11 +544,7 @@ export class AdminAiAuthoringService {
     for (const unit of units) {
       const current = getPromptDefinition(unit.request.mode);
       if (current.key !== definition.key || current.version !== definition.version) {
-        throw new AppError(
-          "BAD_REQUEST",
-          "لا يمكن خلط عقود prompts مختلفة في نفس المهمة",
-          400,
-        );
+        throw new AppError("BAD_REQUEST", "لا يمكن خلط عقود prompts مختلفة في نفس المهمة", 400);
       }
     }
     const planFingerprint = fingerprint({
@@ -662,11 +604,7 @@ export class AdminAiAuthoringService {
     );
     const review = reviews[0];
     if (!review || review.action !== "approve" || review.reviewed_output === null) {
-      throw new AppError(
-        "CONFLICT",
-        "يجب اعتماد المخرج في مراجعة AI قبل تطبيقه",
-        409,
-      );
+      throw new AppError("CONFLICT", "يجب اعتماد المخرج في مراجعة AI قبل تطبيقه", 409);
     }
     const parsed = aiGenerationRequestSchema.safeParse(context.input_payload);
     if (!parsed.success) {
@@ -739,9 +677,7 @@ export class AdminAiAuthoringService {
     );
   }
 
-  private async lessonSources(
-    lessonIds: readonly string[],
-  ): Promise<Map<string, AiSourceChunk[]>> {
+  private async lessonSources(lessonIds: readonly string[]): Promise<Map<string, AiSourceChunk[]>> {
     const rows = await this.database.query<SourceRow>(
       `select l.id as lesson_id,
               ma.id as media_asset_id,
@@ -776,11 +712,7 @@ export class AdminAiAuthoringService {
       const chunks = map.get(row.lesson_id) ?? [];
       chunks.push(sourceRowToChunk(row));
       if (chunks.length > 64) {
-        throw new AppError(
-          "CONFLICT",
-          "مصادر الدرس تتجاوز حد 64 صفحة للمهمة الواحدة",
-          409,
-        );
+        throw new AppError("CONFLICT", "مصادر الدرس تتجاوز حد 64 صفحة للمهمة الواحدة", 409);
       }
       map.set(row.lesson_id, chunks);
     }
