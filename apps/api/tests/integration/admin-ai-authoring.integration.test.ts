@@ -25,9 +25,7 @@ interface StoredRequest {
   originalQuestion?: { prompt: string };
 }
 
-function cookieFrom(response: {
-  headers: Record<string, string | string[] | number | undefined>;
-}): string {
+function cookieFrom(response: { headers: Record<string, string | string[] | number | undefined> }): string {
   const raw = response.headers["set-cookie"];
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (!value || typeof value === "number") throw new Error("Expected Set-Cookie header");
@@ -69,10 +67,7 @@ async function seedLessonMedia(
     [mediaId, displayKey, "c".repeat(64)],
   );
   await mkdir(join(mediaRoot, "gd"), { recursive: true });
-  await writeFile(
-    join(mediaRoot, displayKey),
-    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
-  );
+  await writeFile(join(mediaRoot, displayKey), Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
   await db.query(
     `insert into ocr_extractions (
        input_media_variant_id, input_checksum_sha256, provider_key,
@@ -83,13 +78,7 @@ async function seedLessonMedia(
        $1, $2, 'fixture-ocr', '1', 'gd', 'completed', 1, $3, $3,
        'approved', $4, now(), $5, now()
      )`,
-    [
-      aiVariantId,
-      "b".repeat(64),
-      `نص مصدر موثق ${marker}`,
-      actorId,
-      `gd-ocr-${marker}-${randomUUID()}`,
-    ],
+    [aiVariantId, "b".repeat(64), `نص مصدر موثق ${marker}`, actorId, `gd-ocr-${marker}-${randomUUID()}`],
   );
   const assetRows = await db.query<{ id: string }>(
     `insert into lesson_assets (
@@ -161,11 +150,7 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
   assert.ok(adminId && studentId);
   const adminIdentifier = `stage13g-gd-admin-${suffix}`;
   await auth.createCredential(adminId, adminIdentifier, "Stage13gGdAdmin123!");
-  await auth.createCredential(
-    studentId,
-    `stage13g-gd-student-${suffix}`,
-    "Stage13gGdStudent123!",
-  );
+  await auth.createCredential(studentId, `stage13g-gd-student-${suffix}`, "Stage13gGdStudent123!");
   const deviceId = (
     await db.query<{ id: string }>(
       `insert into student_devices (
@@ -179,22 +164,20 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
   const studentSession = await auth.createStudentSession(studentId, deviceId, "gd-test");
 
   const classId = (
-    await db.query<{ id: string }>(
-      "insert into classes (slug, name) values ($1, 'صف G-D') returning id",
-      [`stage13g-gd-class-${suffix}`],
-    )
+    await db.query<{ id: string }>("insert into classes (slug, name) values ($1, 'صف G-D') returning id", [
+      `stage13g-gd-class-${suffix}`,
+    ])
   )[0]?.id;
   const subjectId = (
-    await db.query<{ id: string }>(
-      "insert into subjects (slug, name) values ($1, 'مادة G-D') returning id",
-      [`stage13g-gd-subject-${suffix}`],
-    )
+    await db.query<{ id: string }>("insert into subjects (slug, name) values ($1, 'مادة G-D') returning id", [
+      `stage13g-gd-subject-${suffix}`,
+    ])
   )[0]?.id;
   assert.ok(classId && subjectId);
-  await db.query(
-    "insert into subject_class_links (class_id, subject_id) values ($1, $2)",
-    [classId, subjectId],
-  );
+  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [
+    classId,
+    subjectId,
+  ]);
   const lessonRows = await db.query<{ id: string; title: string }>(
     `insert into lessons (class_id, subject_id, slug, title, position)
      values
@@ -302,10 +285,7 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
     const lessonState = await db.query<{
       summary: string | null;
       content_revision: string;
-    }>(
-      "select summary, content_revision::text from lessons where id = $1",
-      [lessonOne.id],
-    );
+    }>("select summary, content_revision::text from lessons where id = $1", [lessonOne.id]);
     assert.equal(lessonState[0]?.summary, "ملخص G-D المعتمد");
     assert.equal(Number(lessonState[0]?.content_revision), 2);
 
@@ -509,9 +489,7 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
     for (const variant of variants) {
       const exported = await app.inject({
         method: "GET",
-        url:
-          `/v1/admin/quizzes/${quizId}/specialized-export` +
-          `?versionIds=${versionId}&variant=${variant}`,
+        url: `/v1/admin/quizzes/${quizId}/specialized-export` + `?versionIds=${versionId}&variant=${variant}`,
         headers: { cookie: adminCookie },
       });
       assert.equal(exported.statusCode, 200, variant);
@@ -520,16 +498,11 @@ test("G-D reuses canonical AI jobs and preserves review/provenance boundaries", 
     }
     const questionsOnly = await app.inject({
       method: "GET",
-      url:
-        `/v1/admin/quizzes/${quizId}/specialized-export` +
-        `?versionIds=${versionId}&variant=questions_only`,
+      url: `/v1/admin/quizzes/${quizId}/specialized-export` + `?versionIds=${versionId}&variant=questions_only`,
       headers: { cookie: adminCookie },
     });
     assert.ok((questionsOnly.json().printHtml as string).includes("=G-D formula-safe prompt"));
-    assert.equal(
-      (questionsOnly.json().printHtml as string).includes("الإجابة الصحيحة"),
-      false,
-    );
+    assert.equal((questionsOnly.json().printHtml as string).includes("الإجابة الصحيحة"), false);
     const asset = await app.inject({
       method: "GET",
       url: `/v1/admin/quizzes/${quizId}/export-assets/${mediaOne.assetId}`,
