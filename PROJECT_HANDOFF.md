@@ -1,126 +1,89 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
+> Replacement engineering conversation must be able to resume from repository + Actions + Issue #16 without chat memory.
 
-Last synchronized: **2026-09-10 — Stage13G G-A VERIFIED; G-B Notifications + Operations Dashboard ACTIVE.**
+Last synchronized: **2026-09-10 — Track A Stage13G G-A/G-B VERIFIED; G-C ACTIVE.**
 
 ## Mandatory Startup
 
-1. Confirm repository `7eaur/alwaslh`.
-2. Read `README.md` and `DOCUMENTATION_INDEX.md`.
-3. Read this file, `PROJECT_STATUS.md`, `PROJECT_RESUME_SNAPSHOT.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_EXECUTION_QUEUE.md`.
-4. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` and latest Issue #16 body/comments.
-5. If working Track B, also read `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md` and `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md` from its branch.
-6. Live-check `main`, current branch HEAD and Actions before editing or claiming completion.
+1. Confirm repository `7eaur/alwaslh` and current branch/head.
+2. Read `README.md`, `DOCUMENTATION_INDEX.md`, this file, Status, Resume Snapshot, Engineering Log, Integration Continuity and Execution Queue.
+3. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` and latest Issue #16 body/comments.
+4. If working Track B, read its two workstream files from `parallel/stage14-student-product`.
+5. Live-check `main`, branch and GitHub Actions before conclusions.
 
 Code/migrations/executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
 ## Operating Model
 
-Current model: **Parallel Two-Track Execution**.
+**Parallel Two-Track Execution**:
 
-- Track A: Backend/Admin/DB/AI/Question Bank/Quiz Builder/Stage13G.
-- Track B: Student Product on `parallel/stage14-student-product`.
-- Issue #16 is the cross-track execution ledger.
-- `main` is the verified shared-contract handoff point.
-- No force-push/history rewrite, duplicate durable authority, auth bypass, fake API or test weakening.
-- Deployment/release work remains explicitly deferred.
+- Track A: Backend/Admin/DB/AI/current Stage13G.
+- Track B: Student Product Stage14+.
+- `main` is verified shared-contract handoff.
+- no duplicate durable authority, force-push/history rewrite, fake API, auth bypass or test weakening.
+- production release/deployment remains future-only.
 
-## Stable Architecture / Business Rules
+## Stable Product / Architecture Rules
 
-- Browser is not canonical durable authority.
+- Browser is not durable authority.
 - Full Code = 6 digits; Class Code = 7 digits.
-- Returning Student requires password + registered P-256 device proof.
-- Curriculum = Class → Subject Offering → optional Section → Lesson.
-- `media ready != published`; publication remains explicit.
-- raw AI/provider output never becomes Student/Question Bank authority.
-- Stage11 owns typed AI contracts/validation.
-- Stage12 owns durable AI execution.
-- Stage13E owns append-only human AI review.
-- Stage13F owns stable reusable Question Bank identity/revisions/publication and immutable Quiz Builder snapshots.
-- Stage13E approval is import eligibility, never auto-publication.
-- later Student assessment consumes published immutable snapshots only.
+- Auth, sessions/devices and entitlements are server/PostgreSQL-owned.
+- media ready != published content.
+- Stage11 typed AI → Stage12 durable execution → Stage13E human review → Stage13F Question Bank/Quiz publication.
+- Stage13E approve never auto-publishes a bank question.
+- published Question Bank revisions and Quiz snapshots are immutable delivery authority.
 
-## Shared Main Authority
+## Shared Main
 
-Stage13F is **VERIFIED/CLOSED/PROMOTED**.
-
-Current shared `main` checkpoint:
+Stage13F promoted main checkpoint:
 
 `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
 
-Do not reopen Stage13F architecture merely because Stage13G adds Admin product surfaces.
+Do not move shared main from this conversation until Stage13G closure gates pass.
 
-## Stage13G Current State
+## Stage13G G-A — VERIFIED
 
-Track A branch:
+Runtime `4822f87d60ab7a467c4708b5f75bb24cb90e7738`.
+Run `34425317912` — SUCCESS; Chromium 4/4.
 
-`integration/stage13g-admin-product`
+Owns Admin Student account projection/operations and access-code inventory/maintenance while AuthService/AccessService remain mutation authorities.
 
-### G-A Accounts + Access Codes — VERIFIED
+## Stage13G G-B — VERIFIED
 
-Final runtime/test HEAD:
+Runtime `bc19f6e198c8cfede62e9f1b7a7eb1b0fed121cb`.
+Run `34428052472` — SUCCESS; Chromium 7/7 G-A+G-B.
 
-`4822f87d60ab7a467c4708b5f75bb24cb90e7738`
+Implemented:
 
-Final run:
+- `NotificationService` over existing `notifications` + `notification_reads`;
+- Admin create/list/filter/page/delete;
+- Student global/class/profile visibility and read state from the same store;
+- Operations read model over canonical curriculum/account/access/notification tables;
+- recent Auth/Access events without a new analytics store;
+- real `لوحة التشغيل` as Admin home;
+- responsive/session/error/empty states.
 
-`34425317912` — **SUCCESS**
+Boundary: Student notification API authority is verified; Student notification product UI/sync is later roadmap work.
 
-All three jobs passed:
+## Current Stage13G Continuation
 
-- Accounts + Access backend;
-- Accounts + Access Admin UI quality;
-- Real API + PostgreSQL + Chromium, 4/4 scenarios.
+### G-C1 — Code Import/Export/Print
 
-Implemented/verified:
+Inspect existing Access contracts first. Implement strict six/seven-digit import, row-level result reporting, template, safe scoped export and branded printable cards without exposing credentials/device secrets.
 
-- bounded Admin code inventory/search/filter/sort/page;
-- Full/Class code generation;
-- non-destructive unused-code bulk revoke + audit;
-- bounded Student account/detail projection;
-- entitlements/devices/redemptions/auth/access activity;
-- temporary-password recovery using existing AuthService;
-- device rebind using existing AuthService;
-- entitlement revoke using existing AccessService;
-- real session expiry;
-- 390px responsive no-overflow.
+### G-C2 — Reports/Settings/Security/Audit
 
-Security boundary: Admin never receives stored password values or device public key material.
+Inspect configuration and existing Auth/Access/content/AI event authorities before adding tables or settings. Prefer read projections over another audit store.
 
-### G-B Notifications + Operations Dashboard — ACTIVE
+### G-D — AI Authoring Parity
 
-Verified discovery so far:
+Still required after G-C. Do not infer completion from Stage11/12/13E foundations.
 
-- `0003_learning.sql` already contains `notifications`, `notification_reads`, notification severity, global/class/profile targeting, optional action path, publish/expiry timestamps and feed indexes;
-- current API source inventory has no notification product module;
-- parity `NOTIF-A-001..006` = global create, validated title/body, paginated sent list, delete, Student visibility;
-- parity `ADMIN-001..006` = real dashboard home with curriculum/access/account counts and latest notifications/activity.
+## Important Open Boundary
 
-Architecture direction: **KEEP + IMPROVE notification schema; REBUILD thin notification service/API/UI; REBUILD thin operational aggregate read model over canonical tables/events.** No second analytics/event store.
+`AI-012-019` live provider/model/routes/credentials/bootstrap = **NOT YET VERIFIED**.
 
-## Important Open Boundaries
+## Test Compatibility Note
 
-- `AI-012-019` — live provider benchmark/routes/credentials/bootstrap remains `NOT YET VERIFIED`.
-- Stage13G G-C reports/import-export/settings/security/audit remains required.
-- Stage13G G-D must close lesson-centric generation/admin parity deliberately left open by Stage13F; standalone Question Bank is not sufficient evidence.
-- Track B status must be read from its own branch before claiming latest completion.
-- Stages26–29 release/deployment remain future-only.
-
-## Git / Incident Notes
-
-- historical accidental `.noop` create/delete had no final tree/runtime effect. Cleanup `5fdb23030c77cae9bff5f8c33d4be466427eb6e5` restored exact tree `bcd433bd553b3e7eb539515cffd2a23a92f97192`. Treat as resolved P3 history noise; do not rewrite history.
-- G-A initial Chromium run `34425093946` was not accepted because session-expiry test did not issue a post-logout request. Test was corrected, and final exact-head run `34425317912` passed 4/4.
-
-## Exact Continuation
-
-For Track A:
-
-1. confirm branch/HEAD/Actions;
-2. continue G-B from existing notification schema + durable events;
-3. implement backend contract/integration before Admin UI;
-4. add real Chromium gate;
-5. update Source of Truth + Issue #16;
-6. then G-C → G-D → wider Stage13G closure.
-
-Never infer completion from this file alone; verify GitHub state first.
+Stage13G changed the authenticated Admin default home from Curriculum to Operations. G-A Chromium helper is updated. Earlier Stage13D/E/F browser helpers that assert the old default must be adapted to authenticate via the shell/open their workspace before the final wider Stage13G matrix; do not weaken their feature assertions.

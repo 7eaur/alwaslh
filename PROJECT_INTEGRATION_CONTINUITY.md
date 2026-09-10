@@ -1,118 +1,89 @@
 # PROJECT INTEGRATION CONTINUITY — الوسيلة الذكية
 
-> Operational continuity for replacement engineering conversations. Current code + PostgreSQL migrations + executable CI outrank this file. Anything uninspected/unexecuted = `NOT YET VERIFIED`.
+> Operational continuity for any replacement engineering conversation. Current code + migrations + executable CI outrank this file.
 
-Last synchronized: **2026-09-10 — Stage13G G-A VERIFIED; G-B active.**
+Last synchronized: **2026-09-10 — Stage13G G-A/G-B VERIFIED; G-C ACTIVE.**
 
 ## Resume Procedure
 
-1. Confirm `7eaur/alwaslh`.
-2. Read README, Documentation Index, Handoff, Status, Resume Snapshot, Engineering Log, this file and Execution Queue.
-3. Read latest Issue #16.
-4. Live-check `main`, active branch and Actions.
-5. Read current-stage specialized code/tests before editing.
+1. Confirm repo and exact branch/main HEADs.
+2. Read README/Index/Handoff/Status/Resume/Engineering Log/this file/Execution Queue.
+3. Read latest Issue #16 comments.
+4. Read current-stage code/tests; anything not inspected is `NOT YET VERIFIED`.
 
-## Operating Model
+## Cross-Track Model
 
-- Track A owns Backend/Admin/DB/AI/Question Bank/Quiz Builder/Stage13G.
-- Track B owns Student Product from Stage14 onward on `parallel/stage14-student-product`.
-- `main` is the shared verified contract handoff point.
-- Track B must adapt to canonical backend contracts and must not duplicate Auth/Access/Content/Question Bank/Quiz authority.
-- Deployment/cutover remains future-only.
+- Track A owns Backend/Admin/DB/AI Stage13G.
+- Track B owns Student Product Stage14+.
+- `main` is the only verified shared-contract handoff point.
+- no local duplicate Auth/Access/Notification/Question Bank/Quiz authority to avoid integration.
 
-## Stable Architecture
+## Stable Shared Authority
 
-- Browser is presentation/session UX, not durable authority.
-- Auth/devices/entitlements/curriculum publication/assessment publication are server/PostgreSQL owned.
-- Stage9 source + Stage10 media + OCR preserve provenance; ready media is not published Lesson content.
-- Stage11 owns typed generation contracts.
-- Stage12 owns durable AI execution.
-- Stage13E owns append-only human AI review.
-- Stage13F owns reusable Question Bank identity/revisions/publication and Quiz Builder immutable snapshots.
-- Stage13E approval never auto-publishes a bank question.
-- published bank/quiz snapshots are immutable downstream authority.
+Main remains Stage13F closure checkpoint:
 
-## Shared Git State
+`3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
 
-Stage13F shared main authority:
+Stage13F continues to own canonical Question Bank stable identity/revisions and immutable published Quiz snapshots.
 
-`main @ 3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
-
-Current Track A branch:
-
-`integration/stage13g-admin-product`
-
-G-A verified runtime/test HEAD:
-
-`4822f87d60ab7a467c4708b5f75bb24cb90e7738`
-
-## Stage13G G-A Implemented Authority
-
-### Access / Codes
-
-- existing AccessService remains canonical generation/redemption/renewal/entitlement/revoke authority;
-- Stage13G adds bounded Admin code inventory/search/filter/sort/pagination;
-- safe unused-code revoke is non-destructive and audited as `code_revoked`;
-- redeemed-code deletion and entitlement revoke remain distinct operations.
-
-### Student Account / Recovery / Devices
-
-- existing AuthService remains canonical credential/session/device/recovery authority;
-- bounded Admin Student projection exposes safe support metadata only;
-- original/stored passwords are never exposed;
-- device key material is not exposed;
-- Admin can issue a new temporary password, allow device rebind and revoke entitlement through existing services.
-
-### Admin Web
-
-- dedicated `الطلاب والوصول` workspace;
-- Students tab with search/status/sort/page + detail/history/actions;
-- Access Codes tab with Full/Class inventory, generation, filters and batch unused-code revoke;
-- loading/error/empty/session-expiry/mobile states.
-
-## G-A Verification
-
-Final run `34425317912` on `4822f87d60ab7a467c4708b5f75bb24cb90e7738`: **SUCCESS**.
-
-- backend job: lint/typecheck/unit/build/migrations/DB contract/Stage13G integration/Access+Auth regressions all SUCCESS;
-- Admin UI quality: lint/typecheck/unit/build SUCCESS;
-- real API + PostgreSQL + Chromium: deterministic fixture + 4/4 SUCCESS including recovery/device/entitlement, code generation/revoke, real session expiry and 390px no-overflow.
-
-The prior run `34425093946` was intentionally not accepted because the session-expiry test did not cause a post-logout request. Final test changes the search input, forces a real unauthorized request and verifies return to login.
-
-## Stage13G G-B Boundary
-
-Verified discovery:
-
-- `database/migrations/0003_learning.sql` contains notification authority tables and indexes;
-- current API source inventory contains no notification module;
-- Admin parity `NOTIF-A-001..006` requires global create, validated title/body, paginated sent list, delete and Student visibility;
-- Admin parity `ADMIN-001..006` requires a real dashboard with curriculum counts, access/account usage and latest notifications/activity.
-
-Architecture decision:
+## Track A Stage13G Verified Chain
 
 ```text
-existing notification schema
-→ typed notification service/API
-→ Admin create/list/delete workspace
-→ same authority later exposed to Student feed
-
-canonical curriculum/access/auth/content/AI events
-→ thin aggregate operations read model
-→ real Admin dashboard
+existing Auth + Access authority
+→ G-A bounded Admin accounts/access projection + maintenance UX
+→ existing notification tables
+→ G-B shared NotificationService + Operations read model
+→ current G-C import/export/report/security work
 ```
 
-Do not create a duplicate event/analytics store for basic operational counters.
+### G-A
 
-## Cross-Track / Remaining Work
+Runtime: `4822f87d60ab7a467c4708b5f75bb24cb90e7738`.
+Run `34425317912` — SUCCESS; Chromium 4/4.
 
-- Track B latest state must be read from its own branch files/actions before claims.
-- G-C reports/import-export/settings/security/audit remains required.
-- G-D must close remaining lesson-centric/quiz AI-authoring parity; standalone Question Bank is not enough.
-- `AI-012-019` live provider remains `NOT YET VERIFIED`.
-- Stages16–25 remain ordered work.
-- Stages26–29 deployment/release remain future-only.
+No credential reveal or device-secret exposure. Code deletion semantics are non-destructive revoke for unused codes; redeemed access is a separate entitlement/account operation.
 
-## Historical Incident
+### G-B
 
-Accidental `.noop` create/delete before Stage13F had no final tree/runtime/config effect. Cleanup `5fdb23030c77cae9bff5f8c33d4be466427eb6e5` restored exact tree `bcd433bd553b3e7eb539515cffd2a23a92f97192`. Keep history; do not rewrite it.
+Runtime: `bc19f6e198c8cfede62e9f1b7a7eb1b0fed121cb`.
+Run `34428052472` — SUCCESS; Chromium 7/7.
+
+Notification rules:
+
+- `notifications` + `notification_reads` are durable canonical store;
+- Admin global create/list/delete and server pagination;
+- backend supports global/profile/class targeting;
+- Student feed sees global/direct/entitled-class notifications only while active/not expired;
+- read state is idempotent;
+- Student UI/sync remains later work.
+
+Operations rules:
+
+- dashboard metrics query canonical tables live;
+- recent activity is read from Auth/Access events;
+- no secondary analytics/event persistence;
+- Operations is the authenticated Admin default home.
+
+G-B integration initially failed only because exact global counts assumed G-A left an empty database. Fixed with baseline/delta assertions; no query behavior was weakened.
+
+## Current Integration Hazard
+
+Earlier Admin browser specs (Stage13D/E/F) often assert Curriculum heading immediately after login. Since G-B intentionally makes Operations the Admin home, those helpers must be updated before the wider Stage13G regression to authenticate via the shell and then explicitly open their target workspace. Feature assertions remain unchanged.
+
+## G-C Boundary
+
+- strict code import + template;
+- scoped safe exports and printable cards;
+- audit/report product projections from existing authorities;
+- inspect settings/security schema/config before adding editable state;
+- map specialized Quiz/Lesson exports deliberately.
+
+G-D remains separate for lesson/quiz AI generation orchestration.
+
+## Open Boundary
+
+`AI-012-019` live provider bootstrap/model/routes/credentials = NOT YET VERIFIED.
+
+## Future Promotion Rule
+
+Do not move Stage13G to `main` until G-C/G-D are complete, Legacy Coverage is synchronized, older Admin browser helpers are adapted to Operations default, and the wider exact-head regression matrix is green. No force update or history rewrite.
