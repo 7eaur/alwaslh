@@ -143,12 +143,14 @@ function AssessmentWorkspace({
   onChange,
   onBack,
   onSessionExpired,
+  onUnavailable,
 }: {
   assessment: StudentAssessmentSession;
   online: boolean;
   onChange: (next: StudentAssessmentSession) => void;
   onBack: () => void;
   onSessionExpired: () => void;
+  onUnavailable: (message: string) => void;
 }) {
   const [questionId, setQuestionId] = useState(
     assessment.session.currentQuestionId ?? assessment.questions[0]?.id ?? "",
@@ -183,6 +185,10 @@ function AssessmentWorkspace({
     try {
       onChange(await action());
     } catch (requestError) {
+      if (requestError instanceof ApiRequestError && requestError.code === "NOT_FOUND") {
+        onUnavailable(requestError.message);
+        return;
+      }
       if (isMissingSessionError(requestError)) {
         onSessionExpired();
         return;
@@ -441,6 +447,12 @@ export function StudentAssessmentSection({
     void getStudentAssessmentSession(activeAssessment.session.id)
       .then((next) => setActiveAssessment(next))
       .catch((error: unknown) => {
+        if (error instanceof ApiRequestError && error.code === "NOT_FOUND") {
+          setActiveAssessment(null);
+          setActionError(error.message);
+          void load();
+          return;
+        }
         if (isMissingSessionError(error)) onSessionExpired();
         else setActionError(requestMessage(error));
       });
@@ -500,6 +512,11 @@ export function StudentAssessmentSection({
           online={online}
           onSessionExpired={onSessionExpired}
           onChange={applyAssessment}
+          onUnavailable={(message) => {
+            setActiveAssessment(null);
+            setActionError(message);
+            void load();
+          }}
           onBack={() => {
             setActiveAssessment(null);
             setActionError(null);

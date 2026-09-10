@@ -169,4 +169,23 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
   await reconnectPromise;
   await expect(directInput).toBeEnabled();
   await expectNoHorizontalOverflow(page);
+
+  await page.route(`**/v1/student/assessment-sessions/${resumeSessionId}`, async (route) => {
+    if (route.request().method() === "GET") {
+      await route.fulfill({
+        status: 404,
+        contentType: "application/json",
+        body: JSON.stringify({ error: { code: "NOT_FOUND", message: "الاختبار غير متاح" } }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+  await page.context().setOffline(true);
+  await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+  await page.context().setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect(page.getByRole("heading", { name: "التدريبات والاختبارات" })).toBeVisible();
+  await expect(page.getByText("الاختبار غير متاح", { exact: true })).toBeVisible();
+  await expect(page.locator(".assessment-workspace")).toHaveCount(0);
 });
