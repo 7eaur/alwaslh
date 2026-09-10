@@ -1,0 +1,34 @@
+{
+  "batch_index": 3,
+  "batch_size": 5,
+  "failed": 0,
+  "page_files": [
+    "data/content-corpus/textbooks/grade-12/physics/pages/0016.json",
+    "data/content-corpus/textbooks/grade-12/physics/pages/0017.json",
+    "data/content-corpus/textbooks/grade-12/physics/pages/0018.json",
+    "data/content-corpus/textbooks/grade-12/physics/pages/0019.json",
+    "data/content-corpus/textbooks/grade-12/physics/pages/0020.json"
+  ],
+  "processed": 5,
+  "resumed": 0,
+  "schema_version": 1,
+  "source_end": 20,
+  "source_start": 16,
+  "status_after_batch": {
+    "batch_size": 5,
+    "class_slug": "grade-12",
+    "completed_extractions": 20,
+    "document_kind": "textbook",
+    "failed_extractions": 0,
+    "needs_review": 18,
+    "next_batch_index": 4,
+    "profile": "arabic-document-v1",
+    "provider": "paddleocr-local",
+    "provider_version": "3.7.0",
+    "schema_version": 1,
+    "stored_page_records": 20,
+    "subject_slug": "physics",
+    "subject_title": "الفيزياء",
+    "total_source_pages": 207
+  }
+}
