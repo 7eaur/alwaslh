@@ -35,6 +35,13 @@ test("protected Reader serves published media, approved OCR, search and honest o
 
   await page.goto("/");
   await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
+  await expect(page.getByText(/ابدأ من صفك ومادتك وافتح الدرس مباشرة/)).toBeVisible();
+  const learningSurfaceOrder = await page.locator(".curriculum-surface, .access-section").evaluateAll((elements) =>
+    elements.map((element) => element.className),
+  );
+  expect(learningSurfaceOrder[0]).toContain("curriculum-surface");
+  await expect(page.locator("body")).not.toContainText(/Stage16|PWA|authority/);
+
   await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
   await expect(page.getByRole("button", { name: new RegExp(fixture.subjectName) })).toBeVisible();
 
@@ -94,7 +101,7 @@ test("protected Reader serves published media, approved OCR, search and honest o
 
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await expect(page.getByText(/Reader الحالي يحتاج اتصالًا للتحقق من صلاحية الدرس والوسائط/)).toBeVisible();
+  await expect(page.getByText(/يلزم اتصال للتحقق من صلاحية الدرس ووسائطه/)).toBeVisible();
 
   const restoredReader = page.waitForResponse(
     (response) => response.url().includes("/v1/student/lessons/") && response.url().endsWith("/reader") && response.status() === 200,
@@ -105,5 +112,7 @@ test("protected Reader serves published media, approved OCR, search and honest o
   await expect(page.getByText(fixture.approvedText, { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "العودة إلى دروس المادة" }).click();
-  await expect(page.getByRole("button", { name: new RegExp(fixture.lessonTitle) })).toBeVisible();
+  const returnedLessonButton = page.getByRole("button", { name: new RegExp(fixture.lessonTitle) });
+  await expect(returnedLessonButton).toBeVisible();
+  await expect(returnedLessonButton).toBeFocused();
 });
