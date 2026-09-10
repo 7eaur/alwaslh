@@ -1,6 +1,6 @@
-import { normalizeAccessCode } from "./service.js";
 import type { Database } from "../db.js";
 import { AppError } from "../errors.js";
+import { normalizeAccessCode } from "./service.js";
 
 export interface FullAccessCodeImportRow {
   rowNumber: number;
@@ -8,10 +8,7 @@ export interface FullAccessCodeImportRow {
   durationDays: number;
 }
 
-export type FullAccessCodeImportErrorCode =
-  | "INVALID_CODE"
-  | "DUPLICATE_IN_FILE"
-  | "DUPLICATE_EXISTING";
+export type FullAccessCodeImportErrorCode = "INVALID_CODE" | "DUPLICATE_IN_FILE" | "DUPLICATE_EXISTING";
 
 export interface FullAccessCodeImportError {
   rowNumber: number;

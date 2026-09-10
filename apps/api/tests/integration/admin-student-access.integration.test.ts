@@ -231,7 +231,9 @@ test("Stage13G Admin access inventory and Student read model preserve canonical 
     ],
   );
   assert.deepEqual(
-    imported.json().errors.map((item: { rowNumber: number; errorCode: string }) => [item.rowNumber, item.errorCode]),
+    imported
+      .json()
+      .errors.map((item: { rowNumber: number; errorCode: string }) => [item.rowNumber, item.errorCode]),
     [
       [3, "DUPLICATE_IN_FILE"],
       [4, "INVALID_CODE"],
