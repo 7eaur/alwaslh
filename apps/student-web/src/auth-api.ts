@@ -95,6 +95,83 @@ export interface StudentLessonReader {
   assets: StudentReaderAsset[];
 }
 
+export type StudentAssessmentMode = "practice" | "test";
+
+export interface StudentAssessmentCatalogItem {
+  id: string;
+  title: string;
+  description: string | null;
+  classId: string;
+  className: string;
+  subjectId: string;
+  subjectName: string;
+  shuffleVersions: boolean;
+  versions: Array<{ id: string; versionNumber: number; label: string }>;
+}
+
+export interface StudentAssessmentQuestion {
+  id: string;
+  position: number;
+  lessonId: string | null;
+  type: "multiple_choice" | "true_false" | "direct";
+  prompt: string;
+  options: Array<{ id: string; label: string; position: number }>;
+  sourcePage: number | null;
+  questionBankItemId: string | null;
+  questionBankRevisionId: string | null;
+  answer: null | { selectedOptionId: string | null; directAnswerText: string | null };
+  feedback: null | {
+    correct: boolean;
+    correctOptionId: string | null;
+    correctAnswerText: string | null;
+    explanation: string | null;
+    method: string | null;
+  };
+}
+
+export interface StudentAssessmentAttempt {
+  id: string;
+  sessionId: string;
+  quizId: string;
+  quizTitle: string;
+  versionId: string;
+  versionLabel: string;
+  mode: StudentAssessmentMode;
+  correctCount: number;
+  questionCount: number;
+  scorePercent: number;
+  completedAt: string;
+}
+
+export interface StudentAssessmentSession {
+  session: {
+    id: string;
+    mode: StudentAssessmentMode;
+    status: "in_progress" | "completed" | "abandoned";
+    currentQuestionId: string | null;
+    startedAt: string;
+    completedAt: string | null;
+  };
+  quiz: {
+    id: string;
+    title: string;
+    description: string | null;
+    classId: string;
+    subjectId: string;
+  };
+  version: {
+    id: string;
+    versionNumber: number;
+    label: string;
+  };
+  progress: {
+    questionCount: number;
+    answeredCount: number;
+  };
+  questions: StudentAssessmentQuestion[];
+  attempt: StudentAssessmentAttempt | null;
+}
+
 export interface ActivationVerificationResponse {
   activationTicket: string;
   accountIdentifier: string;
@@ -147,6 +224,18 @@ interface CurriculumResponse {
 
 interface ReaderResponse {
   reader: StudentLessonReader;
+}
+
+interface AssessmentCatalogResponse {
+  quizzes: StudentAssessmentCatalogItem[];
+}
+
+interface AssessmentResponse {
+  assessment: StudentAssessmentSession;
+}
+
+interface AttemptsResponse {
+  attempts: StudentAssessmentAttempt[];
 }
 
 export class ApiRequestError extends Error {
@@ -280,6 +369,63 @@ export async function getStudentLessonReader(lessonId: string): Promise<StudentL
 
 export function studentAssetContentUrl(assetId: string): string {
   return `${apiBaseUrl}/v1/student/lesson-assets/${encodeURIComponent(assetId)}/content`;
+}
+
+export async function listStudentQuizzes(): Promise<StudentAssessmentCatalogItem[]> {
+  const result = await request<AssessmentCatalogResponse>("/v1/student/quizzes");
+  return result.quizzes;
+}
+
+export async function startStudentAssessment(
+  quizId: string,
+  input: { mode: StudentAssessmentMode; versionId?: string; restart?: boolean },
+): Promise<StudentAssessmentSession> {
+  const result = await request<AssessmentResponse>(`/v1/student/quizzes/${encodeURIComponent(quizId)}/sessions`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return result.assessment;
+}
+
+export async function getStudentAssessmentSession(sessionId: string): Promise<StudentAssessmentSession> {
+  const result = await request<AssessmentResponse>(
+    `/v1/student/assessment-sessions/${encodeURIComponent(sessionId)}`,
+  );
+  return result.assessment;
+}
+
+export async function answerStudentAssessmentQuestion(
+  sessionId: string,
+  questionId: string,
+  input: { selectedOptionId?: string | null; directAnswerText?: string | null },
+): Promise<StudentAssessmentSession> {
+  const result = await request<AssessmentResponse>(
+    `/v1/student/assessment-sessions/${encodeURIComponent(sessionId)}/questions/${encodeURIComponent(questionId)}/answer`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
+  return result.assessment;
+}
+
+export async function finalizeStudentAssessment(sessionId: string): Promise<StudentAssessmentSession> {
+  const result = await request<AssessmentResponse>(
+    `/v1/student/assessment-sessions/${encodeURIComponent(sessionId)}/finalize`,
+    { method: "POST" },
+  );
+  return result.assessment;
+}
+
+export async function abandonStudentAssessment(sessionId: string): Promise<void> {
+  await request<void>(`/v1/student/assessment-sessions/${encodeURIComponent(sessionId)}/abandon`, {
+    method: "POST",
+  });
+}
+
+export async function listStudentAttempts(limit = 10): Promise<StudentAssessmentAttempt[]> {
+  const result = await request<AttemptsResponse>(`/v1/student/attempts?limit=${encodeURIComponent(String(limit))}`);
+  return result.attempts;
 }
 
 export function normalizeAccessCode(value: string): string {
