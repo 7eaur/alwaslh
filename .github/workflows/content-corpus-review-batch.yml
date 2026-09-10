@@ -1,0 +1,72 @@
+name: Content Corpus Visual Review Batch
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - content-prep/full-corpus-extraction
+    paths:
+      - .github/workflows/content-corpus-review-batch.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: content-corpus-visual-review
+  cancel-in-progress: true
+
+jobs:
+  review-batch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout corpus branch
+        uses: actions/checkout@v4
+        with:
+          ref: content-prep/full-corpus-extraction
+          fetch-depth: 1
+
+      - name: Download exact source images for current batch
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          config = json.loads(Path('tools/local-content-prep/CORPUS_BATCH.json').read_text(encoding='utf-8'))
+          root = Path('data/content-corpus/textbooks') / config['class_slug'] / config['subject_slug']
+          batch = json.loads((root / 'batches' / f"batch-{int(config['batch_index']):04d}.json").read_text(encoding='utf-8'))
+          output = Path('visual-review-source')
+          output.mkdir(parents=True, exist_ok=True)
+          manifest = []
+          for page_file in batch['page_files']:
+              record = json.loads(Path(page_file).read_text(encoding='utf-8'))
+              source = record['source']
+              sequence = int(record['identity']['source_sequence'])
+              source_path = source['path']
+              suffix = Path(source_path).suffix
+              encoded = urllib.parse.quote(source_path, safe='/')
+              url = f"https://raw.githubusercontent.com/{source['repository']}/{source['commit']}/{encoded}"
+              target = output / f"{sequence:04d}{suffix}"
+              request = urllib.request.Request(url, headers={'User-Agent': 'alwaslh-content-visual-review/1'})
+              with urllib.request.urlopen(request, timeout=120) as response:
+                  target.write_bytes(response.read())
+              manifest.append({
+                  'source_sequence': sequence,
+                  'page_hint': record['identity'].get('page_hint'),
+                  'filename': source['filename'],
+                  'source_path': source_path,
+                  'git_blob_sha1': source['git_blob_sha1'],
+                  'artifact_file': target.name,
+              })
+          (output / 'manifest.json').write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(manifest, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload source images for visual verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-corpus-visual-review-current-batch
+          path: visual-review-source/
+          if-no-files-found: error
+          retention-days: 7
