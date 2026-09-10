@@ -1,7 +1,13 @@
 import { adminApiRequest } from "./admin-api";
 
 export type NotificationSeverity = "info" | "success" | "warning" | "critical";
-export type OperationsAuditSource = "auth" | "access" | "ai_review" | "question_bank" | "quiz_builder";
+export type OperationsAuditSource =
+  | "auth"
+  | "access"
+  | "curriculum"
+  | "ai_review"
+  | "question_bank"
+  | "quiz_builder";
 
 export interface AdminNotification {
   id: string;

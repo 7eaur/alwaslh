@@ -32,7 +32,13 @@ export interface OperationsOverview {
   recentActivity: OperationsActivity[];
 }
 
-export type OperationsAuditSource = "auth" | "access" | "ai_review" | "question_bank" | "quiz_builder";
+export type OperationsAuditSource =
+  | "auth"
+  | "access"
+  | "curriculum"
+  | "ai_review"
+  | "question_bank"
+  | "quiz_builder";
 
 export interface OperationsAuditEntry {
   id: string;
@@ -200,6 +206,21 @@ const AUDIT_UNION_SQL = `
   from access_events ae
   left join profiles actor on actor.id = ae.actor_profile_id
   left join profiles subject on subject.id = ae.subject_profile_id
+
+  union all
+
+  select concat('curriculum:', ce.id::text) as id,
+         'curriculum'::text as source,
+         ce.event_type::text as event_type,
+         ce.actor_profile_id,
+         actor.display_name as actor_display_name,
+         null::uuid as subject_profile_id,
+         null::text as subject_display_name,
+         ce.resource_type::text as resource_type,
+         ce.resource_key::text as resource_id,
+         ce.created_at
+  from curriculum_events ce
+  left join profiles actor on actor.id = ce.actor_profile_id
 
   union all
 

@@ -34,6 +34,7 @@ function sourceLabel(source: OperationsAuditSource): string {
   return {
     auth: "الحسابات",
     access: "الوصول",
+    curriculum: "المنهج والمحتوى",
     ai_review: "مراجعة AI",
     question_bank: "بنك الأسئلة",
     quiz_builder: "الاختبارات",
@@ -59,6 +60,8 @@ function eventLabel(eventType: string): string {
     entitlement_created: "إنشاء صلاحية",
     entitlement_renewed: "تجديد صلاحية",
     entitlement_revoked: "إلغاء صلاحية",
+    created: "إنشاء",
+    updated: "تعديل",
     create: "إنشاء",
     import: "استيراد",
     edit: "تعديل",
@@ -377,7 +380,7 @@ export function AdminGovernanceWorkspace({
             <p className="section-kicker">Audit</p>
             <h2 id="governance-audit-title">سجل التدقيق</h2>
           </div>
-          <p>أحداث الحسابات والوصول ومراجعة AI وبنك الأسئلة والاختبارات من سجلاتها الأصلية.</p>
+          <p>أحداث الحسابات والوصول والمنهج والمحتوى ومراجعة AI وبنك الأسئلة والاختبارات من سجلاتها الأصلية.</p>
         </div>
 
         <form className="governance-audit-filters" aria-label="تصفية سجل التدقيق" onSubmit={applyAuditFilters}>
@@ -393,6 +396,7 @@ export function AdminGovernanceWorkspace({
               <option value="">كل المصادر</option>
               <option value="auth">الحسابات</option>
               <option value="access">الوصول</option>
+              <option value="curriculum">المنهج والمحتوى</option>
               <option value="ai_review">مراجعة AI</option>
               <option value="question_bank">بنك الأسئلة</option>
               <option value="quiz_builder">الاختبارات</option>
@@ -413,7 +417,9 @@ export function AdminGovernanceWorkspace({
         </form>
 
         {auditState === "loading" ? (
-          <p className="governance-audit-state" aria-live="polite">جارٍ تحميل سجل التدقيق…</p>
+          <p className="governance-audit-state" aria-live="polite">
+            جارٍ تحميل سجل التدقيق…
+          </p>
         ) : auditState === "error" ? (
           <div className="governance-audit-state" aria-live="polite">
             <p>{message}</p>

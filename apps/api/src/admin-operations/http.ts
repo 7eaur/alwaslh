@@ -11,7 +11,7 @@ const OverviewQuerySchema = z.object({
 });
 
 const AuditQuerySchema = z.object({
-  source: z.enum(["auth", "access", "ai_review", "question_bank", "quiz_builder"]).optional(),
+  source: z.enum(["auth", "access", "curriculum", "ai_review", "question_bank", "quiz_builder"]).optional(),
   eventType: z.string().trim().min(1).max(80).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),
   offset: z.coerce.number().int().min(0).max(100_000).optional(),

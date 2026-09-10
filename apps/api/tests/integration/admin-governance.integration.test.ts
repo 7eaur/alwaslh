@@ -113,6 +113,11 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
      values ('entitlement_created', $1, $2, jsonb_build_object('private', $3::text))`,
     [adminId, studentId, hiddenMetadataSecret],
   );
+  await db.query(
+    `insert into curriculum_events (actor_profile_id, resource_type, resource_key, event_type, metadata)
+     values ($1, 'class', $2, 'updated', jsonb_build_object('private', $3::text))`,
+    [adminId, classId, hiddenMetadataSecret],
+  );
 
   const aiJobRows = await db.query<{ id: string }>(
     `insert into ai_jobs (created_by_profile_id, job_type, prompt_key, prompt_version, total_units, idempotency_key)
@@ -209,7 +214,19 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
     const sources = new Set((auditBody.entries as Array<{ source: string }>).map((entry) => entry.source));
     assert.deepEqual(
       [...sources].sort(),
-      ["access", "ai_review", "auth", "question_bank", "quiz_builder"].sort(),
+      ["access", "ai_review", "auth", "curriculum", "question_bank", "quiz_builder"].sort(),
+    );
+
+    const curriculumOnly = await app.inject({
+      method: "GET",
+      url: "/v1/admin/operations/audit?source=curriculum&eventType=updated&limit=100",
+      headers: { cookie: adminCookie },
+    });
+    assert.equal(curriculumOnly.statusCode, 200);
+    assert.ok(
+      (curriculumOnly.json().entries as Array<{ source: string; eventType: string }>).some(
+        (entry) => entry.source === "curriculum" && entry.eventType === "updated",
+      ),
     );
 
     const authOnly = await app.inject({
