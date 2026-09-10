@@ -1,137 +1,103 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> **Purpose:** أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
+> أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-09 — Stage13E Admin AI Operations / Review is VERIFIED and promoted; Stage13F is READY / NOT STARTED.**
+Last synchronized: **2026-09-10 — Stage13F implementation VERIFIED/CLOSED; final closure checkpoint requires exact-head PR matrix then non-force fast-forward to main.**
 
-## 0. Mandatory startup
+## Mandatory startup
 
-Before changing code:
-
-1. confirm repo `7eaur/alwaslh`;
-2. read `README.md`;
-3. read `DOCUMENTATION_INDEX.md`;
-4. read this file;
-5. read `PROJECT_STATUS.md`;
-6. read `PROJECT_RESUME_SNAPSHOT.md`;
-7. read `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_EXECUTION_QUEUE.md`;
-8. read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` and `docs/workstreams/SINGLE_OWNER_OPERATING_MODEL.md`;
-9. read latest Issue `#16` comments;
-10. live-check `main`, current Actions and the current-stage code/tests before any conclusion.
+1. Confirm repository `7eaur/alwaslh`.
+2. Read `README.md` and `DOCUMENTATION_INDEX.md`.
+3. Read this file, `PROJECT_STATUS.md`, `PROJECT_RESUME_SNAPSHOT.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_EXECUTION_QUEUE.md`.
+4. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` and the latest Issue #16 body/comments.
+5. If working Track B, also read `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md` and `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md` from its branch.
+6. Live-check `main`, current branch HEAD and Actions before any conclusion.
 
 Code/migrations/executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-## 1. Operating model / deployment policy
+## Operating model
 
-- One replaceable engineering owner owns Product/Architecture/Backend/Frontend/UX/Security/Performance/QA/Git/Documentation.
-- Issue `#16` is the sole active execution board.
-- Issues #13/#14/#15 are historical only.
-- `main` is the integration-approved development baseline, not deployment authority.
-- **Hosting/deployment is fully deferred until Product Owner provides a VPS and explicitly reopens it.**
-- No Render/Vercel/Railway/hosted-smoke work belongs to the current Definition of Done.
+Issue #16 defines the current **parallel two-track** model:
 
-## 2. Stable architecture / business rules
+- Track A: Backend/Admin/AI/Question Bank/Quiz Builder; current next stage after promotion is Stage13G.
+- Track B: Student Product on `parallel/stage14-student-product`.
+- Shared backend contracts become Student authority only after verified promotion through `main`.
+- No force-push/history rewrite, duplicate authority, auth bypass, fake API or test weakening.
+- Production deployment/cutover remains future-only. Stage13F required no deployment.
 
-- Browser owns presentation/session UX, not durable canonical business state.
+## Stable architecture / business rules
+
+- Browser does not own canonical durable state.
 - Full Code = 6 digits; Class Code = 7 digits.
-- Returning Student = password + registered P-256 device proof.
+- Returning Student requires password + registered P-256 device proof.
 - Curriculum = Class → Subject Offering → optional Section → Lesson.
-- source inventory = provenance, not curriculum hierarchy.
-- `media ready != published`; publication is explicit Draft → Review → Published.
-- raw AI/provider output never becomes automatic Student/Question Bank authority.
-- provider calls stay outside long DB transactions; durable AI worker remains separate from Fastify HTTP.
-- no raw provider responses/credentials/internal provider errors in browser contracts.
-- no duplicate queue/lifecycle/storage authority.
-- durable Admin history remains reachable through bounded pagination.
-- historical review pages never redefine canonical current review authority.
-- coupled Admin AI read models are snapshot-consistent.
-- pagination values are validated before reaching service/DB.
-- no test weakening, auth bypass, fake API or timeout/sleep race masking.
+- `media ready != published`; publication is Draft → Review → Published.
+- raw AI/provider output never becomes Student/Question Bank authority.
+- Stage11 owns typed AI contracts/validation.
+- Stage12 owns durable execution/jobs/units/attempts/outputs.
+- Stage13E owns append-only human AI review.
+- Stage13E `approve` is import eligibility, not Question Bank publication.
+- Stage13F Question Bank owns stable reusable item UUID + immutable revisions + Draft/Review/Published.
+- Quiz Builder selects published Question Bank revisions and materializes immutable delivery snapshots.
+- published snapshots are later Student Stage15 authority.
 
-## 3. Exact current state
+## Stage13F verified runtime authority
 
-Stage13E runtime/application verification authority:
+Runtime HEAD:
 
-`d5ebc7f25a369430387a758c7c0bb89350963d67`
+`afbe552710b3f1cf79ee70594f691fa836c05a45`
 
-Accepted candidate:
+Stage-specific evidence:
 
-`72ead8446af237392dc6d953c8e0c2382f468286`
+- backend/PostgreSQL `34420441878` — SUCCESS;
+- Admin/PostgreSQL/real Chromium `34420441837` — SUCCESS.
 
-- Candidate: **12/12 SUCCESS** on the same head; verification-only PR #24 closed unmerged.
-- Selective promotion: one commit / exact 36-file manifest on latest inspected main.
-- Promotion: **12/12 SUCCESS** on `d5ebc7f...`; verification-only PR #25 closed unmerged.
-- `main` was fast-forwarded non-force to `d5ebc7f...` after confirming it had not moved.
-- later documentation-only closure commits may advance `main`; they are not new runtime evidence.
-- Stage13E is **VERIFIED / CLOSED**.
-- Stage13F is **READY / NOT STARTED**.
+Wider verification-only PR `#27` ran **13/13 SUCCESS** on the same runtime HEAD and was closed unmerged:
 
-## 4. Stage13E verified product boundary
+`34420900598`, `34420900550`, `34420900527`, `34420900592`, `34420900501`, `34420900492`, `34420900547`, `34420900488`, `34420900522`, `34420900503`, `34420900520`, `34420900476`, `34420900482`.
 
-Stage13E closes Admin AI Operations / Review while reusing Stage11/12 authorities:
+## Stage13F closed scope
 
-- authenticated Jobs/Units/Attempts/Outputs observability;
-- server-derived progress/actions;
-- pause/resume/cancel/retry via Stage12;
-- complete bounded Jobs/Units/Attempts/Review History navigation;
-- append-only Stage11-validated edit/approve/reject review;
-- review mutation only on execution-stable outputs;
-- PostgreSQL reject-note invariant;
-- canonical latest review independent from selected history page;
-- short repeatable-read snapshots for coupled Admin read models;
-- Job page selected before Unit aggregation;
-- safe pagination numeric boundary;
-- safe telemetry/provenance without credentials/raw provider payload/internal errors;
-- real Chromium pagination, pause/resume, review durability, session expiry, stale `409`, and 390px responsive evidence.
+- reusable canonical Question Bank separate from delivery rows;
+- immutable revisions and stable item identity;
+- MCQ / T-F / direct questions and typed answers;
+- source/page/checksum/OCR/content-source + AI review/prompt provenance;
+- latest-approve-only AI import as Draft with idempotent concurrency behavior;
+- manual authoring/edit/review/reject/publish;
+- dedicated Admin Question Bank UI;
+- Quiz Builder with class/subject/multi-lesson scope, multiple versions/models and published candidates;
+- immutable quiz delivery snapshots retaining Question Bank item/revision refs;
+- review/publish/archive lifecycle;
+- approved regenerate-one applied as a later Draft revision of the same item only;
+- reviewed/published exact-version Excel-compatible CSV and print/PDF template;
+- real Chromium lifecycle/session/responsive evidence.
 
-Stage13E review approval is **not Question Bank publication**. Stage13F owns that boundary.
+## Important open boundaries
 
-## 5. Final promotion verification evidence
+- `AI-012-019` — live provider benchmark/routes/credentials/bootstrap remains `NOT YET VERIFIED`.
+- Stage13F does **not** claim every legacy `QADMIN-001..033` row. Remaining direct generation orchestration and specialized export variants are explicit Stage13G/AI-authoring work in `LEGACY_FEATURE_COVERAGE_GATE.md`.
+- Track B Stage14: Access/Curriculum/Reader verified; final learning-first shell/copy/a11y closure still active in its branch.
+- Stage15 must not begin against stale main; Track B must first incorporate the exact Stage13F closure checkpoint after promotion.
 
-Exact promotion HEAD `d5ebc7f25a369430387a758c7c0bb89350963d67`:
+## Git / incident notes
 
-- Combined Stage13E `34401502463` — SUCCESS
-- Stage13E standalone `34401549935` — SUCCESS
-- Stage13E Frontend Prep `34401549849` — SUCCESS
-- Rebuild `34401550016` — SUCCESS
-- Stage13 Admin `34401549835` — SUCCESS
-- Stage9 `34401549851` — SUCCESS
-- Stage10 `34401549989` — SUCCESS
-- OCR `34401549910` — SUCCESS
-- Stage11 `34401549927` — SUCCESS
-- Stage12 `34401549964` — SUCCESS
-- Stage13D Content `34401550065` — SUCCESS
-- Stage13D Admin UI `34401549903` — SUCCESS
+- Runtime verification PR #27 was verification-only and is closed unmerged.
+- The accidental `.noop` create/delete before Stage13F had no final tree/runtime effect. Cleanup `main @ 5fdb23030c77cae9bff5f8c33d4be466427eb6e5` restored exact tree `bcd433bd553b3e7eb539515cffd2a23a92f97192`. Treat as resolved P3 history noise; do not rewrite history.
 
-The Combined workflow executed real setup/checkout, API/Admin quality gates, clean PostgreSQL migrations/contracts, Stage13E backend regressions, isolated Stage12/auth regressions, deterministic fixtures and real Chromium.
+## Exact continuation
 
-## 6. Closed findings
+For the Stage13F closure owner:
 
-- `AI-013E-DB-001` P1 — FIXED + VERIFIED.
-- `AI-013E-REVIEW-002` P1 — FIXED + VERIFIED.
-- `AI-013E-OPS-003` P1 — FIXED + VERIFIED.
-- `AI-013E-OPS-004` P1 — FIXED + VERIFIED.
-- `AI-013E-OPS-005` P2 — FIXED + VERIFIED.
-- `AI-013E-OPS-006` P2 — FIXED + VERIFIED.
-- `AI-013E-PERF-007` P2 — FIXED + VERIFIED.
-- `AI-013E-API-008` P2 — FIXED + VERIFIED.
-- `CI-013E-009` P1 — FIXED + VERIFIED; workflow drift was not a product failure.
+1. run the wider PR matrix on the documentation checkpoint containing this file;
+2. close that verification PR unmerged;
+3. re-check live `main` is still the Stage13F base;
+4. fast-forward `main` non-force to the exact verified closure checkpoint;
+5. post final Stage13F EXECUTION REPORT on Issue #16.
 
-## 7. Open boundaries carried forward
+Then:
 
-- `AI-011-005` P2 — Stage13F reviewed `direct` Question Bank persistence.
-- `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap remains `NOT YET VERIFIED`.
-- `CI-001` — historical runner allocation incident no longer blocks work; exact historical external cause remains `NOT YET VERIFIED`.
+- Track A begins Stage13G from the new `main` authority;
+- Track B incorporates the new `main` before Stage15;
+- keep `AI-012-019` open until real provider evidence exists.
 
-## 8. Exact next work
-
-1. Complete this documentation closure and Stage13E Closure Report in Issue #16.
-2. Re-read current main live; do not assume the docs closure SHA from chat.
-3. Start Stage13F as a fresh isolated batch only after repository discovery of existing Question Bank/Quiz DB/API/Admin/tests.
-4. Preserve Stage11 validation, Stage12 durable execution and Stage13E review authority; do not duplicate them.
-5. Require reviewed Question Bank persistence/provenance, explicit Draft→Review→Published, Quiz Builder/versioning/regeneration/export, plus PostgreSQL/API/Admin/real Chromium evidence.
-6. Keep deployment fully deferred.
-
-## 9. End-of-batch rule
-
-After every meaningful batch update Queue, Continuity, Status, Engineering Log, Handoff/Resume Snapshot, specialized stage docs and Issue #16. Record exact HEAD/run IDs and explicit `NOT YET VERIFIED`; never leave continuation-critical state only in chat.
+Never infer completion from this prose alone; verify branch/main and Actions first.

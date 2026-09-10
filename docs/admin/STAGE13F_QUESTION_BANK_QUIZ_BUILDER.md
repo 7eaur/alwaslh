@@ -1,12 +1,16 @@
 # Stage13F — Question Bank / Quiz Builder / Publish Contract
 
-Status: **CONTRACT FROZEN / IMPLEMENTATION STARTING / NOT YET VERIFIED**.
+Status: **IMPLEMENTED / VERIFIED / CLOSED**.
 
-Baseline inspected before this decision: `main` tree `bcd433bd553b3e7eb539515cffd2a23a92f97192`; Stage13F branch starts from `5fdb23030c77cae9bff5f8c33d4be466427eb6e5`, which has that exact tree.
+Verified runtime checkpoint: `afbe552710b3f1cf79ee70594f691fa836c05a45`.
 
-## 1. Product boundary
+Stage-specific evidence: backend/PostgreSQL run `34420441878` SUCCESS; Admin/PostgreSQL/real Chromium run `34420441837` SUCCESS.
 
-Stage13F creates the reviewed educational authority between Stage13E-approved AI output and later Student/Practice consumption:
+Wider runtime verification-only PR #27 executed **13/13 SUCCESS** on the exact runtime head and was closed unmerged. The closure documentation checkpoint containing this file must also pass the same wider matrix before non-force promotion to `main`.
+
+## 1. Product Boundary
+
+Stage13F is the reviewed educational assessment authority between Stage13E-approved AI output and later Stage15 Student Practice/Assessment consumption:
 
 ```text
 Stage11 typed generation + validation
@@ -15,252 +19,249 @@ Stage11 typed generation + validation
 → Stage13F Question Bank import/manual authoring
 → Question Bank Draft → Review → Published
 → Stage13F Quiz Builder / immutable version snapshots
-→ later Stage15 Student Practice/Assessment consumption
+→ Stage15 Student Practice/Assessment consumption
 ```
 
-Stage13E approval is **eligibility to import**, not Question Bank publication. Raw/unreviewed provider output is never eligible for Question Bank or Student authority.
+Stage13E approval is **eligibility to import**, not Question Bank publication. Raw/unreviewed provider output is never Question Bank/Student authority.
 
-## 2. Repository inventory and classification
+## 2. Repository Decisions / Classification
 
-### PostgreSQL learning foundation — KEEP + IMPROVE
+### Existing PostgreSQL learning foundation — KEEP + IMPROVE
 
-`database/migrations/0003_learning.sql` already owns:
+Existing `quizzes`, `quiz_lessons`, `quiz_versions`, `questions`, `question_options` and attempt/practice tables remain useful delivery/assessment foundation.
 
-- `quizzes`;
-- `quiz_lessons`;
-- `quiz_versions`;
-- `questions`;
-- `question_options`;
-- Practice/attempt/bookmark tables.
+They are not reused as canonical mutable Question Bank authoring identity.
 
-These tables are not replaced blindly. `quizzes`, `quiz_versions`, `quiz_lessons`, assessment snapshots and later Practice relations remain useful foundation.
+### Canonical reusable Question Bank — REBUILD as explicit layer
 
-Current limitations that Stage13F must fix deliberately:
+Stage13F adds stable `question_bank_items` and append-only `question_bank_revisions` with lesson/source/import/event relations.
 
-- `question_type` supports only `multiple_choice | true_false`; Stage11 also supports `direct`;
-- `questions` requires Lesson or Quiz Version context and therefore models delivered assessment questions, not an independent reusable reviewed Question Bank identity;
-- no Question Bank Draft → Review → Published lifecycle exists;
-- no immutable Question Bank revision history exists;
-- no durable AI-output/review-revision → Question Bank provenance/idempotency boundary exists.
+### Stage11 contracts — KEEP / reused
 
-Classification: existing assessment schema **KEEP/IMPROVE**; canonical reusable Question Bank authority **REBUILD as a new explicit layer**, not by overloading delivery snapshots.
+Question types, answer status, difficulty, source evidence, exact extraction and `regenerate_question` remain Stage11 authority.
 
-### Stage11 contracts — KEEP / authority reused
+### Stage12 execution — KEEP / reused
 
-`apps/api/src/ai/contracts.ts` already defines:
+No second generation queue exists. Durable jobs/units/attempts/outputs remain Stage12 authority.
 
-- modes including question generation, multi-version quiz, exact extraction and single-question regeneration;
-- question types `multiple_choice | true_false | direct`;
-- typed answer status/difficulty;
-- exact source evidence by media asset/page;
-- direct-question `answerText`;
-- multi-version outputs.
+### Stage13E review — KEEP / reused
 
-Stage13F reuses these contracts and Stage11 semantic validation. It does not create a parallel AI-question validator.
+Only the latest terminal `approve` review revision may be imported/applied.
 
-### Stage12 durable execution — KEEP / authority reused
+### Admin Question Bank / Quiz Builder — REBUILD explicit workspaces
 
-`ai_jobs`, `ai_job_units`, `ai_execution_attempts`, `ai_outputs` remain the only durable AI execution authority. Stage13F must not create a second generation queue.
+Dedicated authenticated Admin workspaces were added instead of reviving browser-owned legacy state.
 
-### Stage13E AI review — KEEP / authority reused
+## 3. Canonical Question Bank Model
 
-`ai_output_review_events` remains the Stage13E AI review authority. Only the canonical latest terminal `approve` revision may be imported into Question Bank. Stage13F does not reinterpret a historical review page or raw `ai_outputs.normalized_output` as approved authority.
+### Stable identity
 
-### Current API — REBUILD Stage13F module
-
-Current `apps/api/src/app.ts` registers Auth, Access, Curriculum, Content, Ingestion and Admin AI Operations only. There is no current Question Bank/Quiz Builder API module. Stage13F adds one explicit server-owned module rather than reviving browser/direct-database legacy flows.
-
-### Current Admin Web — REBUILD Stage13F workspace
-
-Current `apps/admin-web/src/App.tsx` exposes Curriculum, Content Ingestion, Media/OCR and AI Operations only. There is no current Question Bank/Quiz Builder workspace. Stage13F must add a dedicated workspace; Question Bank must not be hidden inside Stage13E AI Operations.
-
-### Legacy Admin quiz surface — outcome evidence only
-
-Legacy `src/pages/admin/Quizzes.tsx` proves valuable outcomes such as:
-
-- quiz listing/create/edit/delete;
-- class/subject/one-or-many lesson selection;
-- MCQ/T-F counts and mixed generation;
-- image/exact exam extraction;
-- multiple models/versions;
-- per-version source/count settings;
-- edit/manual/remove/regenerate one question;
-- exports and selected-version export.
-
-Its browser-owned state, old API/direct data assumptions, caches and types are **not implementation authority**.
-
-## 3. Canonical Question Bank model
-
-### Stable item identity
-
-A Question Bank item owns a stable UUID independent of any quiz version. It is reusable across quiz versions and remains stable across edits/regeneration.
+Each item owns a stable UUID independent of quizzes and revisions.
 
 ### Immutable revisions
 
-Question content is stored in append-only immutable revisions. A revision contains the typed question payload plus provenance. Editing/regenerating creates a new revision; it never mutates a revision already used by a published quiz version.
+Question content is append-only by revision. Editing/regeneration never mutates a revision already published or snapshotted into a quiz.
 
 ### Lifecycle
 
-Question Bank lifecycle is:
-
 ```text
-draft → review → published → archived
+draft → review → published → archived historical revision
 ```
 
 Rules:
 
-- create/import/manual edit produces Draft;
+- create/import/edit/regeneration creates Draft;
 - submit-for-review is explicit;
-- publish is possible only from Review and records actor/time;
-- changing a published question creates a new Draft revision while the previously published revision remains the published authority until the replacement is explicitly reviewed/published;
-- archive is non-destructive;
-- rejected review returns the item to Draft with a durable reason/event; no destructive deletion of audit/provenance.
+- publish only from Review;
+- a previously published revision remains authority while a replacement Draft/Review exists;
+- when replacement publishes, old published revision becomes archived history;
+- rejected Review returns to Draft with durable reason/event.
 
-### Content representation
+### Typed content
 
-Canonical Question Bank revisions support:
+- `multiple_choice`: exactly four nonblank options;
+- `true_false`: exact `["صح", "خطأ"]` shape;
+- `direct`: no options;
+- known option answers require matching selected option;
+- known direct answer requires nonblank `answerText`;
+- unknown/review-required answers cannot claim a correct answer.
 
-- `multiple_choice`;
-- `true_false`;
-- `direct`;
-- prompt;
-- options where applicable;
-- correct option index where applicable;
-- direct answer text where applicable;
-- answer status;
-- difficulty;
-- explanation;
-- method/solution method.
-
-Stage11 shape validation remains authoritative for AI-derived payloads. Equivalent typed validation is reused for manual edits before persistence/publish.
+PostgreSQL and service validation both protect the authority boundary.
 
 ## 4. Provenance
 
-Every AI-imported Question Bank item records enough durable provenance to answer where the educational content came from:
+AI-derived revisions retain:
 
-- originating `ai_output_id`;
+- `ai_output_id`;
 - exact approved Stage13E review revision;
-- stable question locator inside the approved output;
-- Stage11 prompt key/version and generation mode through the owning AI job/unit;
-- provider/model/route execution evidence remains referenced through existing Stage12 attempt history rather than duplicated into Question Bank;
-- class/subject offering scope;
-- source Lesson relation(s) where determinable/selected;
+- deterministic question locator;
+- prompt key/version and generation mode;
+- class/subject scope;
+- lesson IDs;
 - media asset ID;
-- source page;
-- source checksum from the original Stage11 request chunk;
-- OCR extraction ID / content source asset ID where available;
-- source quote where Stage11 output supplied one.
+- page number;
+- input checksum;
+- OCR extraction/content source asset where present;
+- source quote where present.
 
-Question Bank must not copy raw provider response or credentials.
+Raw provider responses/credentials are not copied into Question Bank.
 
-## 5. AI import and `AI-011-005`
+## 5. AI Import / `AI-011-005`
 
-`AI-011-005` root gap is explicit:
+`AI-011-005` is **FIXED + VERIFIED** for reviewed direct-question persistence and delivery authority.
 
-- Stage11 validates `direct` questions with `answerText`;
-- old PostgreSQL assessment enum has no `direct` value;
-- Stage13E can approve typed output but has no durable Question Bank transfer.
+Import transaction:
 
-Stage13F resolves it by importing approved `multiple_choice`, `true_false` **and `direct`** questions into the canonical bank revision model.
+1. lock/read output and latest review;
+2. require latest review action = `approve`;
+3. parse reviewed output with Stage11 schema/validation;
+4. reject non-question outputs;
+5. map deterministic locators;
+6. enforce idempotency `(ai_output_id, approved_review_revision, question_locator)`;
+7. preserve source/checksum lineage;
+8. create Draft items only.
 
-Import rules:
+`direct` questions are supported in both canonical bank revisions and immutable quiz delivery snapshots. Student direct-answer interaction remains Stage15.
 
-1. lock/read the owning output and canonical latest Stage13E review;
-2. require latest action = `approve`;
-3. parse the approved `reviewed_output` using Stage11 `aiGenerationOutputSchema`;
-4. accept only output kinds carrying questions;
-5. map each question with a deterministic output locator;
-6. enforce idempotency on `(ai_output_id, approved_review_revision, question_locator)`;
-7. preserve source evidence/checksum mapping from the original Stage11 request;
-8. create Question Bank Draft items; do **not** publish automatically.
+## 6. Manual Authoring / Admin Question Bank
 
-Re-import of the same approved revision is idempotent and returns the same item mappings.
+Verified Admin outcomes:
 
-## 6. Manual authoring
+- list/search/filter/pagination;
+- loading/error/empty states;
+- manual MCQ/T-F/direct authoring;
+- approved AI import;
+- edit as new revision;
+- submit/reject/publish;
+- source/provenance/history/audit detail;
+- session-expiry handling;
+- responsive 390px behavior.
 
-Manual questions use the same Question Bank item/revision/lifecycle model and typed question validation. They have no fabricated AI provenance. Author/actor/time remain durable.
+Browser reloads canonical server state after mutations; local UI is never lifecycle authority.
 
-## 7. Quiz Builder boundary
+## 7. Quiz Builder
 
-Existing `quizzes`, `quiz_lessons` and `quiz_versions` remain the base builder/domain tables.
+Stage13F reuses `quizzes`, `quiz_lessons`, `quiz_versions` and materialized `questions` snapshots.
 
-A quiz version selects **published Question Bank revisions** and materializes immutable assessment snapshots into the existing `questions`/`question_options` delivery layer. Each delivery snapshot retains a reference to its source Question Bank item/revision.
+Verified rules:
 
-This boundary is intentional:
+- quiz owns class/subject and one/multiple lessons;
+- candidate endpoint returns only **published** Question Bank revisions matching quiz scope;
+- version/model has stable ID/number/label and option-shuffle setting;
+- each selected bank revision is materialized into immutable delivery question/options rows;
+- delivery snapshot retains `question_bank_item_id` + `question_bank_revision_id`;
+- direct question delivery shape is explicit;
+- Draft quiz versions may be changed;
+- Review/Published quizzes freeze version mutation;
+- publish/archive are explicit audited lifecycle actions.
 
-- editing a bank item never mutates a historical/published quiz version;
-- quiz attempts remain reproducible;
-- multiple versions/models can share or diverge from stable bank identities;
-- later Stage15 Practice consumes delivery snapshots, not mutable authoring rows.
+Editing the Question Bank later never mutates historical/published quiz versions.
 
-Direct-question delivery support will extend the old assessment representation explicitly before Student direct-answer interaction is enabled; Stage15 still owns Student answer/session behavior.
+## 8. Regenerate One Question
 
-## 8. Regenerate one question
+Verified architecture:
 
-Single-question regeneration reuses Stage11 `regenerate_question` + Stage12 durable execution. The result goes through Stage13E approval and then creates a **new revision of the same stable Question Bank item** only after explicit Stage13F import/apply. Unrelated bank items or quiz-version snapshots are not replaced.
+```text
+published sourced bank revision
+→ Stage11 regenerate_question request
+→ Stage12 output
+→ Stage13E approve
+→ explicit Stage13F apply
+→ later Draft revision of SAME item UUID
+```
 
-No synchronous browser→provider regeneration path is allowed.
+The apply transaction verifies:
 
-## 9. Quiz/version lifecycle and publication
+- no conflicting unrelated open Draft/Review;
+- request mode is exactly `regenerate_question`;
+- original prompt/type/difficulty matches the current published revision;
+- request source set matches published revision source IDs/pages/checksums;
+- approved output contains exactly one valid question;
+- type/difficulty stay unchanged;
+- regenerated prompt is actually different;
+- exact output/review replay returns the same revision.
 
-Quiz authoring must not expose an unreviewed mutable version as Student authority.
+A database guard prevents generic import from using `regenerate_question` output to create a standalone new item. The replay lookup occurs before open-Draft rejection so retries are truly idempotent.
 
-Stage13F will add an explicit review/publish state for the authoring/version boundary. Export/print is permitted only from reviewed/published version authority, with an explicit draft preview path if later required by product UX; draft preview must be clearly labelled and never treated as published Student content.
+## 9. Export
 
-## 10. Legacy coverage target
+Exact quiz/version server authority only.
 
-Stage13F is responsible for explicit evidence against QADMIN-001..033 where implemented in this stage and for Question Bank/editor portions of LES-A-022..033. Stage11/12/13E foundation alone does not close these rows.
+Allowed status: `review | published`.
 
-Student `QUIZ-S-*` execution remains Stage15 except where Stage13F must create the published data contract those flows will consume.
+Draft export is rejected.
 
-## 11. Security and integrity rules
+Current verified formats:
 
-- Admin-only authenticated API; unsafe requests retain Origin protection.
-- PostgreSQL owns lifecycle and uniqueness invariants.
-- browser never owns canonical status/revision/publish truth.
-- no raw provider payloads/secrets in Question Bank responses.
+- UTF-8 BOM CSV suitable for Excel-compatible workflows;
+- RTL print HTML suitable for browser printing / Save as PDF.
+
+Current bundle includes question/order/type/options/correct answer/explanation/source page/source reference/Question Bank item/revision provenance.
+
+This does not silently claim every historical PDF variant; missing variants remain explicit Legacy Coverage items for later Admin work.
+
+## 10. Security / Integrity
+
+- Admin-only authenticated API.
+- unsafe mutations retain Origin protection.
+- lifecycle/shape/idempotency invariants exist in PostgreSQL.
+- browser never owns canonical status/revision/publication truth.
+- no raw provider payloads/secrets in Admin Question Bank contract.
 - no automatic Stage13E approve → Published transition.
-- no update-in-place of published revisions or published quiz snapshots.
-- source/provenance rows are non-destructive.
-- imported AI output must be terminally approved at transaction time, not based on stale UI state.
-- concurrent duplicate imports serialize/idempotently converge.
+- no update-in-place of published bank revisions or published quiz snapshots.
+- concurrent/repeated approved imports converge idempotently.
+- regeneration cannot change stable item identity.
+- export never treats Draft as reviewed/published authority.
 
-## 12. Incremental execution plan
+## 11. Verification Evidence
 
-### Stage13F-A — Question Bank DB/API foundation
+### Runtime checkpoint
 
-- migration for stable items, revisions, provenance, lifecycle events/import idempotency;
-- approved AI import incl. direct questions;
-- manual create/edit;
-- list/detail/filter/pagination;
-- submit/reject/publish lifecycle;
-- PostgreSQL/API unit+integration evidence.
+`afbe552710b3f1cf79ee70594f691fa836c05a45`
 
-### Stage13F-B — Admin Question Bank workspace
+Stage-specific:
 
-- dedicated navigation/workspace;
-- list/filter/detail/editor;
-- import approved AI output;
-- lifecycle actions/history/provenance;
-- loading/empty/error/session-expiry/stale conflict/responsive/accessibility states;
-- real Chromium.
+- `34420441878` — API lint/typecheck/unit/build, migrations, Stage13F DB contracts, Question Bank integration, regeneration integration, Quiz Builder integration — SUCCESS.
+- `34420441837` — Admin lint/typecheck/unit/build, real PostgreSQL/API, deterministic fixtures and real Chromium — SUCCESS.
 
-### Stage13F-C — Quiz Builder / version snapshots
+### Wider runtime matrix / PR #27
 
-- reuse quizzes/quiz_lessons/quiz_versions;
-- select published bank revisions;
-- stable version identities/order/settings;
-- materialized question snapshots with bank provenance;
-- single-question regeneration workflow linkage;
-- review/publish version authority.
+13/13 SUCCESS:
 
-### Stage13F-D — Export / closure
+- Stage9 `34420900598`
+- Stage10 `34420900550`
+- OCR `34420900527`
+- Stage11 `34420900592`
+- Stage12 `34420900501`
+- Stage13 Admin `34420900492`
+- Stage13D Content `34420900547`
+- Stage13D Admin `34420900488`
+- Stage13E Frontend Prep `34420900522`
+- Stage13E Admin AI Ops `34420900503`
+- Stage13F Backend `34420900520`
+- Stage13F Admin/Chromium `34420900476`
+- Rebuild `34420900482`
 
-- safe Excel/PDF/print variants from approved/published authority;
-- exact selected-version scope;
-- same-head wider regressions;
-- Legacy Coverage/Roadmap/central docs/Issue #16 closure.
+PR #27 was closed unmerged after success.
 
-## 13. Verification status
+## 12. Legacy Coverage Outcome
 
-This document freezes the inspected architecture/product contract only. Stage13F implementation remains `NOT YET VERIFIED` until executable PostgreSQL/API/Admin/Chromium and wider same-head gates pass.
+Stage13F has executable evidence for the canonical Question Bank and core Quiz Builder outcomes. It does **not** claim every legacy Admin quiz-generation/export variant.
+
+`docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` records:
+
+- rows promoted to `VERIFIED` by Stage13F;
+- rows that are only `FOUNDATION VERIFIED` because Stage11/12/13E exists without a complete Admin trigger/user flow;
+- rows remaining `NOT YET VERIFIED` for Stage13G/AI authoring.
+
+No legacy capability is silently removed.
+
+## 13. Closure / Promotion
+
+Stage13F implementation is closed. The final documentation checkpoint must still run the wider pull-request matrix on its exact commit. The verification PR must be closed unmerged, then `main` may be non-force fast-forwarded to that exact commit after confirming `main` did not move.
+
+After promotion:
+
+- Track A starts Stage13G;
+- Track B must incorporate the new `main` authority before Stage15;
+- `AI-012-019` remains explicitly `NOT YET VERIFIED` until live provider runtime evidence exists.
