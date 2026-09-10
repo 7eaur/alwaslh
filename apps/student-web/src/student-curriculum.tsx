@@ -51,7 +51,7 @@ function ReaderMedia({ asset }: { asset: StudentReaderAsset }) {
     return (
       <div className="reader-media-unsupported" role="status">
         <strong>{pageLabel}</strong>
-        <p>هذا النوع من الوسائط ({asset.mimeType}) غير مدعوم في Reader الحالي.</p>
+        <p>هذا النوع من الوسائط ({asset.mimeType}) غير مدعوم في قارئ الدرس الحالي.</p>
       </div>
     );
   }
@@ -200,7 +200,7 @@ function StudentLessonReaderPanel({
         </div>
       ) : state.status === "offline" ? (
         <div className="form-alert is-warning" role="status">
-          Reader الحالي يحتاج اتصالًا للتحقق من صلاحية الدرس والوسائط. القراءة المخزنة دون اتصال ستُنفذ في Stage16 بعقد مزامنة وصلاحية صريح.
+          يلزم اتصال للتحقق من صلاحية الدرس ووسائطه. سنحافظ على سياق الدرس، لكن لن نعرض نسخة قديمة على أنها حديثة.
         </div>
       ) : state.status === "error" ? (
         <div className="access-error" role="alert">
@@ -222,14 +222,14 @@ function StudentLessonReaderPanel({
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="اكتب كلمة أو عبارة"
               />
-              <p className="field-hint">البحث يعمل على نص OCR المنشور والموثوق فقط، ولا يستخدم نصوصًا قيد المراجعة.</p>
+              <p className="field-hint">البحث يعمل على النص المنشور والمعتمد فقط، ولا يستخدم نصوصًا قيد المراجعة.</p>
             </div>
           ) : null}
 
           {state.reader.assets.length === 0 ? (
             <div className="empty-state">
               <strong>لا توجد صفحات منشورة لهذا الدرس بعد</strong>
-              <p>يبقى ملخص الدرس ظاهرًا، لكن Reader لا يعرض مسودات أو وسائط غير جاهزة.</p>
+              <p>يبقى ملخص الدرس ظاهرًا، لكن قارئ الدرس لا يعرض مسودات أو وسائط غير جاهزة.</p>
             </div>
           ) : normalizedQuery && visibleAssets.length === 0 ? (
             <div className="empty-state" role="status">
@@ -248,7 +248,7 @@ function StudentLessonReaderPanel({
                     </div>
                   ) : (
                     <div className="reader-text is-muted" role="status">
-                      لا يوجد نص OCR معتمد لهذه الصفحة. الصورة المنشورة تبقى المصدر المرئي.
+                      لا يوجد نص معتمد لهذه الصفحة. الصورة المنشورة تبقى المصدر المرئي.
                     </div>
                   )}
                 </article>
@@ -344,6 +344,7 @@ export function StudentCurriculumSection({
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<StudentCurriculumLesson | null>(null);
+  const [returnFocusLessonId, setReturnFocusLessonId] = useState<string | null>(null);
 
   async function loadCurriculum() {
     if (!online) {
@@ -389,6 +390,12 @@ export function StudentCurriculumSection({
     void loadCurriculum();
   }, [online, refreshKey]);
 
+  useEffect(() => {
+    if (selectedLesson || !returnFocusLessonId) return;
+    const lessonButton = document.querySelector<HTMLButtonElement>(`[data-lesson-id="${returnFocusLessonId}"]`);
+    lessonButton?.focus();
+  }, [selectedLesson, returnFocusLessonId]);
+
   const selectedClass = useMemo<StudentCurriculumClass | null>(() => {
     if (state.status !== "ready") return null;
     return state.catalog.classes.find((record) => record.id === selectedClassId) ?? state.catalog.classes[0] ?? null;
@@ -405,12 +412,19 @@ export function StudentCurriculumSection({
     if (!nextClass) return;
     setSelectedClassId(classId);
     setSelectedSubjectId(nextClass.subjects[0]?.id ?? null);
+    setReturnFocusLessonId(null);
     setSelectedLesson(null);
   }
 
   function chooseSubject(subjectId: string) {
     setSelectedSubjectId(subjectId);
+    setReturnFocusLessonId(null);
     setSelectedLesson(null);
+  }
+
+  function openLesson(lesson: StudentCurriculumLesson) {
+    setReturnFocusLessonId(lesson.id);
+    setSelectedLesson(lesson);
   }
 
   return (
@@ -439,7 +453,7 @@ export function StudentCurriculumSection({
         </div>
       ) : state.status === "offline" ? (
         <div className="form-alert is-warning" role="status">
-          لا يمكن التحقق من أحدث محتوى دراسي أثناء عدم الاتصال. لن نعرض نسخة مخزنة كأنها حديثة قبل تنفيذ Stage16 Offline/PWA.
+          لا يمكن التحقق من أحدث محتوى دراسي أثناء عدم الاتصال. أعد الاتصال قبل فتح محتوى جديد أو تحديث القائمة.
         </div>
       ) : state.status === "error" ? (
         <div className="access-error" role="alert">
@@ -451,7 +465,7 @@ export function StudentCurriculumSection({
       ) : state.catalog.classes.length === 0 ? (
         <div className="empty-state">
           <strong>لا يوجد محتوى دراسي منشور ضمن صلاحياتك الآن</strong>
-          <p>إذا فعّلت رمز صف للتو فحدّث المحتوى. لا يعرض التطبيق دروسًا غير منشورة أو صفوفًا خارج صلاحيات الخادم.</p>
+          <p>إذا أضفت رمز صف للتو فحدّث المحتوى. لن تظهر دروس غير منشورة أو صفوف خارج صلاحياتك.</p>
         </div>
       ) : (
         <div className="curriculum-browser">
@@ -481,7 +495,7 @@ export function StudentCurriculumSection({
               {selectedClass.subjects.length === 0 ? (
                 <div className="empty-state">
                   <strong>لا توجد مواد نشطة منشورة لهذا الصف</strong>
-                  <p>يبقى الصف ظاهرًا لأنه ضمن صلاحياتك، لكن لن نختلق مواد أو دروسًا غير منشورة.</p>
+                  <p>يبقى الصف ظاهرًا لأنه ضمن صلاحياتك، ولن تظهر مواد أو دروس غير منشورة.</p>
                 </div>
               ) : (
                 <>
@@ -523,10 +537,10 @@ export function StudentCurriculumSection({
                           {lessonCount(selectedSubject) === 0 ? (
                             <div className="empty-state">
                               <strong>لا توجد دروس منشورة في هذه المادة بعد</strong>
-                              <p>سيظهر الدرس هنا فقط عندما تسمح به authority الحالية ويصبح منشورًا فعليًا.</p>
+                              <p>سيظهر الدرس هنا فقط بعد نشره واعتماده ضمن صلاحياتك.</p>
                             </div>
                           ) : (
-                            <SubjectLessons subject={selectedSubject} onOpenLesson={setSelectedLesson} />
+                            <SubjectLessons subject={selectedSubject} onOpenLesson={openLesson} />
                           )}
                         </>
                       )}
