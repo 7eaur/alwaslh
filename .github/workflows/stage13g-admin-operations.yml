@@ -177,3 +177,4 @@ jobs:
           npx playwright test
           e2e/admin-student-access.e2e.spec.mjs
           e2e/admin-operations.e2e.spec.mjs
+          e2e/admin-reports.e2e.spec.mjs

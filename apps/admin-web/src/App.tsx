@@ -8,6 +8,7 @@ import {
   restoreAdminSession,
 } from "./admin-api";
 import { AdminOperationsWorkspace } from "./AdminOperationsWorkspace";
+import { AdminReportsWorkspace } from "./AdminReportsWorkspace";
 import { AdminStudentAccessWorkspace } from "./AdminStudentAccessWorkspace";
 import { AiOperationsPage } from "./AiOperationsPage";
 import "./ai-operations-review.css";
@@ -136,7 +137,8 @@ type AdminWorkspace =
   | "ai-operations"
   | "question-bank"
   | "quiz-builder"
-  | "student-access";
+  | "student-access"
+  | "reports";
 
 function AdminShell({
   profile,
@@ -218,9 +220,14 @@ function AdminShell({
           >
             الطلاب والوصول
           </button>
-          <span className="nav-item is-disabled">
-            التقارير والإعدادات <small>مرحلة لاحقة</small>
-          </span>
+          <button
+            className={`nav-item nav-button${workspace === "reports" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "reports" ? "page" : undefined}
+            onClick={() => setWorkspace("reports")}
+          >
+            الملفات والتقارير
+          </button>
         </nav>
         <div className="sidebar-account">
           <span>الحساب الحالي</span>
@@ -245,6 +252,8 @@ function AdminShell({
           <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "quiz-builder" ? (
           <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
+        ) : workspace === "reports" ? (
+          <AdminReportsWorkspace onSessionExpired={onSessionExpired} />
         ) : (
           <AdminStudentAccessWorkspace onSessionExpired={onSessionExpired} />
         )}
