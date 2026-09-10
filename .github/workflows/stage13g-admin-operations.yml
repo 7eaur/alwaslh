@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   admin-operations-backend:
-    name: Stage 13G · Accounts + Access backend
+    name: Stage 13G · Admin operations backend
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:
@@ -63,10 +63,14 @@ jobs:
       - name: Verify Stage13G database contract
         run: |
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='access_event_type' and e.enumlabel='code_revoked'")" = "1"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('full_access_codes','class_access_codes','student_entitlements','access_redemptions','access_events','student_devices','auth_events') and relkind='r'")" = "7"
-      - name: Run Stage13G Admin access/account integration
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('full_access_codes','class_access_codes','student_entitlements','access_redemptions','access_events','student_devices','auth_events','notifications','notification_reads') and relkind='r'")" = "9"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='notification_severity' and e.enumlabel in ('info','success','warning','critical')")" = "4"
+      - name: Run Stage13G Accounts + Access integration
         working-directory: apps/api
         run: node --test --import tsx tests/integration/admin-student-access.integration.test.ts
+      - name: Run Stage13G Notifications + Operations integration
+        working-directory: apps/api
+        run: node --test --import tsx tests/integration/admin-notifications-operations.integration.test.ts
       - name: Run Access and Auth regression
         working-directory: apps/api
         run: |
@@ -74,7 +78,7 @@ jobs:
           node --test --import tsx tests/integration/auth.integration.test.ts
 
   admin-operations-web:
-    name: Stage 13G · Accounts + Access Admin UI quality
+    name: Stage 13G · Admin UI quality
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
