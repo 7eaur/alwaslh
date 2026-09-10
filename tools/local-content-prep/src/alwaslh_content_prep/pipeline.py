@@ -14,6 +14,8 @@ from .models import Catalog, LessonSpec, OcrAdapter, OcrResult
 from .reports import write_reports
 from .utils import atomic_write_json, atomic_write_text, read_json, sha256_bytes, sha256_file, stable_page_id
 
+LOW_CONFIDENCE_BLOCK_RATIO_REVIEW = 0.10
+
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -51,6 +53,7 @@ def _profile_sha(catalog: Catalog, lesson: LessonSpec, adapter: OcrAdapter | Non
             "profile_key": adapter.profile_key,
             "language": adapter.language,
             "low_confidence": low_confidence,
+            "low_confidence_block_ratio_review": LOW_CONFIDENCE_BLOCK_RATIO_REVIEW,
         },
     }
     canonical = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -68,6 +71,8 @@ def _load_state(path: Path) -> dict[str, Any]:
 
 def _ocr_dict(result: OcrResult, low_confidence: float) -> dict[str, Any]:
     mean = result.mean_confidence
+    scores = [block.confidence for block in result.blocks]
+    low_block_ratio = (sum(score < low_confidence for score in scores) / len(scores)) if scores else None
     reason = None
     if not result.normalized_text.strip():
         reason = "empty_text"
@@ -75,6 +80,11 @@ def _ocr_dict(result: OcrResult, low_confidence: float) -> dict[str, Any]:
         reason = "missing_confidence"
     elif mean < low_confidence:
         reason = "low_mean_confidence"
+    elif low_block_ratio is not None and low_block_ratio >= LOW_CONFIDENCE_BLOCK_RATIO_REVIEW:
+        # A high mean can hide substantial local OCR failures in tables,
+        # formulas, footers or mixed Arabic/Latin content. Keep these pages in
+        # the package, but route them to human review before publication/import.
+        reason = "many_low_confidence_blocks"
     return {
         "status": "completed",
         "provider_key": result.provider_key,
@@ -86,6 +96,7 @@ def _ocr_dict(result: OcrResult, low_confidence: float) -> dict[str, Any]:
         "normalized_text": result.normalized_text,
         "mean_confidence": None if mean is None else round(mean * 100, 2),
         "min_confidence": None if result.min_confidence is None else round(result.min_confidence * 100, 2),
+        "low_confidence_block_ratio": None if low_block_ratio is None else round(low_block_ratio * 100, 2),
         "raw_provider_payload": result.raw_provider_payload,
         "needs_review": reason is not None,
         "review_reason": reason,
@@ -160,8 +171,8 @@ def run_pipeline(*, workspace: Path, catalog: Catalog, ocr_adapter: OcrAdapter |
                     ocr_data = {
                         "status": "skipped", "provider_key": None, "provider_version": None,
                         "profile_key": None, "language": None, "raw_text": "", "normalized_text": "",
-                        "mean_confidence": None, "min_confidence": None, "needs_review": False,
-                        "review_reason": "ocr_skipped",
+                        "mean_confidence": None, "min_confidence": None, "low_confidence_block_ratio": None,
+                        "needs_review": False, "review_reason": "ocr_skipped",
                     }
                 else:
                     temp = temp_root / f"{page_id}.png"
