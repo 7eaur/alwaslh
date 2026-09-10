@@ -27,13 +27,8 @@ const AccessCodeSortSchema = z.enum([
 const StudentStatusSchema = z.enum(["active", "inactive", "archived"]);
 const StudentSortSchema = z.enum(["created_at", "identifier", "status", "last_login"]);
 const DirectionSchema = z.enum(["asc", "desc"]);
-
-function queryInteger(defaultValue: number, max: number) {
-  return z.preprocess(
-    (value) => (value === undefined || value === "" ? defaultValue : value),
-    z.coerce.number().int().min(0).max(max),
-  );
-}
+const PageSizeSchema = z.coerce.number().int().min(1).max(100);
+const PageOffsetSchema = z.coerce.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 
 const CodeListQuerySchema = z.object({
   type: AccessCodeTypeSchema.default("full_access"),
@@ -42,8 +37,8 @@ const CodeListQuerySchema = z.object({
   classId: z.string().uuid().optional(),
   sort: AccessCodeSortSchema.default("created_at"),
   direction: DirectionSchema.default("desc"),
-  limit: queryInteger(25, 100).pipe(z.number().min(1)),
-  offset: queryInteger(0, Number.MAX_SAFE_INTEGER),
+  limit: PageSizeSchema.default(25),
+  offset: PageOffsetSchema.default(0),
 });
 
 const RevokeCodesSchema = z.object({
@@ -56,8 +51,8 @@ const StudentListQuerySchema = z.object({
   status: StudentStatusSchema.optional(),
   sort: StudentSortSchema.default("created_at"),
   direction: DirectionSchema.default("desc"),
-  limit: queryInteger(25, 100).pipe(z.number().min(1)),
-  offset: queryInteger(0, Number.MAX_SAFE_INTEGER),
+  limit: PageSizeSchema.default(25),
+  offset: PageOffsetSchema.default(0),
 });
 
 const StudentParamsSchema = z.object({
@@ -65,8 +60,8 @@ const StudentParamsSchema = z.object({
 });
 
 const StudentDetailQuerySchema = z.object({
-  historyLimit: queryInteger(25, 100).pipe(z.number().min(1)),
-  historyOffset: queryInteger(0, Number.MAX_SAFE_INTEGER),
+  historyLimit: PageSizeSchema.default(25),
+  historyOffset: PageOffsetSchema.default(0),
 });
 
 async function requireAdmin(
