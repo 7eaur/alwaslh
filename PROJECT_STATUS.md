@@ -2,87 +2,108 @@
 
 > الحالة التنفيذية المختصرة. Code/migrations + executable CI evidence أعلى من prose. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-10 — Stage13F VERIFIED/CLOSED/PROMOTED; Stage13G Remaining Admin Product ACTIVE on Track A.**
+Last synchronized: **2026-09-10 — Stage13G G-A Accounts + Access Codes VERIFIED; G-B Notifications + Operations Dashboard ACTIVE on Track A.**
 
 ## Current Position
 
 - Repository: `7eaur/alwaslh`.
-- `main`: `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
-- Track A: `integration/stage13g-admin-product`.
-- Track B: `parallel/stage14-student-product`.
+- Shared `main`: `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2` (Stage13F closure checkpoint).
+- Track A branch: `integration/stage13g-admin-product`.
+- G-A verified runtime HEAD: `4822f87d60ab7a467c4708b5f75bb24cb90e7738`.
+- Track B branch: `parallel/stage14-student-product`; its own workstream files remain its Source of Truth.
 - Shared execution ledger: Issue #16.
 - Current model: **Parallel Two-Track Execution**.
-- No deployment action is part of the current Stage13G batch.
-
-## Stage13F Final State
-
-Runtime checkpoint: `afbe552710b3f1cf79ee70594f691fa836c05a45`.
-Closure/main checkpoint: `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
-
-- PR #27: runtime wider matrix **13/13 SUCCESS**, closed unmerged.
-- PR #28: closure wider matrix **13/13 SUCCESS**, closed unmerged.
-- `main` fast-forwarded non-force to the exact closure checkpoint.
-- Issue #16 closure report comment: `5610815790`.
+- Deployment/release work remains deferred; no hosting action is part of current Stage13G.
 
 ## Stage Ledger
 
 | Stage | State |
 |---|---|
-| Stage1–10 | VERIFIED |
-| OCR | VERIFIED |
+| Stage1–10 + OCR | VERIFIED |
 | Stage11 | VERIFIED |
-| Stage12 | VERIFIED backend/runtime; live provider bootstrap `NOT YET VERIFIED` |
+| Stage12 | VERIFIED backend/runtime; live provider bootstrap `AI-012-019` = `NOT YET VERIFIED` |
 | Stage13A–E | VERIFIED / CLOSED |
-| Stage13F | **VERIFIED / CLOSED / PROMOTED** |
-| Stage13G | **ACTIVE — discovery + first foundation batch** |
-| Stage14 | Track B IN PROGRESS |
-| Stage15 | depends on Track B integrating current main Stage13F authority |
-| Stage16–25 | REQUIRED |
+| Stage13F | VERIFIED / CLOSED / PROMOTED |
+| Stage13G G-A Accounts + Access | **VERIFIED** |
+| Stage13G G-B Notifications + Operations | **ACTIVE — discovery** |
+| Stage13G G-C Reports/Import-Export/Settings/Security/Audit | REQUIRED |
+| Stage13G G-D Remaining Admin AI-authoring parity | REQUIRED |
+| Stage14 | parallel Track B; verify from Track B Source of Truth before changing its state |
+| Stage15–25 | REQUIRED in roadmap order |
 | Stage26–29 | future release/deployment track |
 
-## Stage13G Discovery — verified so far
+## Stage13G G-A — VERIFIED
 
-### Access / Codes
+### Backend authority
 
-Inspected `0002_access.sql`, `0006_access_contract.sql`, `apps/api/src/access/http.ts`, `apps/api/src/access/service.ts`.
+Classification:
 
-Classification: **KEEP + IMPROVE**.
+- existing `AccessService`: **KEEP + IMPROVE**;
+- existing `AuthService`: **KEEP + IMPROVE**;
+- Admin accounts/access read + maintenance projection: **REBUILD as bounded Admin layer**, without duplicating redemption/recovery authority.
 
-Existing authority: secure 6-digit/7-digit code generation, DB format/uniqueness constraints, transactional idempotent redemption, renewal, entitlements, revocation and durable access events.
+Implemented:
 
-Missing Admin product outcomes: list/search/filter/sort/page, lifecycle projections, safe unused-code delete/bulk delete, validated import/template, CSV/print export and unified code/account detail.
+- migration `0023_admin_access_operations.sql`;
+- bounded code inventory/search/filter/sort/pagination;
+- safe non-destructive revoke for unused codes with `code_revoked` audit event;
+- bounded Student account list/detail projection;
+- entitlement/device/redemption/auth/access activity projection;
+- Admin routes for inventory/detail/revoke while existing Access/Auth services remain mutation authorities.
 
-### Student Accounts / Recovery / Devices
+### Admin product
 
-Inspected `0010_student_auth_device.sql`, `apps/api/src/auth/http.ts`, `apps/api/src/auth/service.ts`.
+Implemented in `apps/admin-web`:
 
-Classification: **KEEP + IMPROVE**.
+- real **الطلاب والوصول** workspace;
+- Student search/status/sort/page + account detail;
+- temporary-password recovery using existing AuthService;
+- device rebind using existing AuthService;
+- active entitlement revoke using existing AccessService;
+- Full/Class code inventory, filtering, generation and bulk unused-code revoke;
+- loading/error/empty/session-expiry states;
+- responsive 390px card-based layout.
 
-Existing authority already provides secure Admin recovery actions, session revocation, device rebind lifecycle, one-active-device integrity and auth audit events. It intentionally does not expose existing credentials.
+### G-A exact-head evidence
 
-Missing outcomes: account list/search/status/detail, entitlement/code/device/auth-history projection, explicit account lifecycle semantics and Admin recovery/device UX.
+Runtime/test HEAD:
 
-### Admin Web
+`4822f87d60ab7a467c4708b5f75bb24cb90e7738`
 
-Current verified workspaces cover Curriculum, Content/OCR, AI Operations, Question Bank and Quiz Builder. Dedicated Stage13G Accounts / Access Codes / Notifications / Operations workspaces are not yet verified.
+Workflow run:
 
-Classification: **REBUILD product UI on existing backend authorities**.
+`34425317912` — **SUCCESS**
+
+Jobs:
+
+- Stage13G Accounts + Access backend — SUCCESS;
+- Stage13G Accounts + Access Admin UI quality — SUCCESS;
+- Stage13G Real API + PostgreSQL + Chromium — SUCCESS, **4/4 browser scenarios**.
+
+Covered evidence includes API/Admin lint, strict typecheck, unit tests, builds, clean PostgreSQL migrations through `0023`, DB contract, Stage13G integration, Access/Auth regressions, deterministic real fixture, recovery/device/entitlement operations, code generate/revoke, real session expiry and 390px no-overflow.
+
+## Stage13G G-B Discovery — verified so far
+
+Inspected `0003_learning.sql`, API source inventory and parity matrix.
+
+- PostgreSQL already has `notifications` + `notification_reads`, `notification_severity`, global/class/profile targeting, expiry and read timestamps: **KEEP + IMPROVE schema**.
+- No notification service/module is present in the current `apps/api/src` inventory: Admin/Student notification API remains **REBUILD / NOT YET VERIFIED**.
+- Admin parity requires: global notification create, validated title/body, paginated sent list, delete, Student visibility.
+- Admin Dashboard parity requires real counts for classes/subjects/lessons/access/accounts plus latest notifications/activity.
 
 ## Findings
 
-- `DOC-013G-001` P2 — startup docs drifted after Stage13F promotion/two-track switch. **FIX IN PROGRESS**.
-- `ADMIN-013G-ACCESS-002` P1 — backend access authority exists but Admin inventory/operations contract is incomplete. **OPEN**.
-- `ADMIN-013G-ACCOUNT-003` P1 — account recovery authority exists but canonical Admin Student read model/workspace is missing. **OPEN**.
-- `AI-012-019` P2 — live provider bootstrap remains **OPEN / NOT YET VERIFIED**.
-
-## Stage13G Slices
-
-1. G-A Accounts + Access Codes foundation.
-2. G-B Notifications + real Operations Dashboard after authority discovery.
-3. G-C Import/Export/Reports + Settings/Security/Audit.
-4. G-D remaining lesson/quiz AI-authoring parity explicitly left open by Stage13F.
-5. Wider exact-head regression + documentation/Legacy Coverage closure.
+| ID | Sev | Area | Status |
+|---|---:|---|---|
+| `DOC-013G-001` | P2 | operating-model documentation drift | **RESOLVED** by `8501ced93ba751b7fd40f2cf2dcdbd29738feb31` |
+| `ADMIN-013G-ACCESS-002` | P1 | Admin access-code inventory/operations | **FIXED + VERIFIED** on G-A |
+| `ADMIN-013G-ACCOUNT-003` | P1 | Admin Student account/recovery/device workspace | **FIXED + VERIFIED** on G-A |
+| `ADMIN-013G-RECOVERY-004` | P1 | temporary password disappeared during same-account refresh | **FIXED + VERIFIED** before final Chromium |
+| `TEST-013G-005` | P3 | session-expiry E2E initially did not trigger a post-logout request | **RESOLVED**; final test triggers a real request and passes |
+| `ADMIN-013G-NOTIF-006` | P1 | notification schema exists but product service/UI absent | **OPEN — G-B** |
+| `ADMIN-013G-DASH-007` | P1 | real operations dashboard remains absent | **OPEN — G-B** |
+| `AI-012-019` | P2 | live provider bootstrap | **OPEN / NOT YET VERIFIED** |
 
 ## Immediate Next Action
 
-Finish the operating-model documentation checkpoint, then implement G-A by extending existing Access/Auth authorities rather than creating replacements.
+Implement G-B incrementally from the existing notification schema and durable event sources: first freeze the notification/operations contract, then backend integration, Admin UI, real Chromium, documentation and Issue #16 evidence. Do not add a second audit/event authority and do not block current work on deployment.

@@ -2,12 +2,12 @@
 
 > Ordered execution authority. Always start from the first incomplete item after reading Source of Truth and Issue #16.
 
-Last synchronized: **2026-09-10 — Stage13F implementation verified 13/13; closure checkpoint re-verification/promotion is the active Track A task.**
+Last synchronized: **2026-09-10 — Stage13G G-A VERIFIED; G-B Notifications + Operations Dashboard is active Track A work.**
 
 ## Operating Rules
 
 - Repository: `7eaur/alwaslh`.
-- Issue #16 is the sole cross-track execution ledger.
+- Issue #16 is the cross-track execution ledger.
 - Code/migrations/executable evidence outrank prose.
 - Root-cause fixes only; no test weakening, auth bypass, fake API, sleep-based race masking or duplicate durable authority.
 - Current model: parallel Track A (Backend/Admin/AI) + Track B (Student Product).
@@ -19,106 +19,103 @@ Last synchronized: **2026-09-10 — Stage13F implementation verified 13/13; clos
 
 **DONE / VERIFIED / CLOSED**
 
-Runtime authority: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
+### EXEC-006 — Stage13F Question Bank / Quiz Builder
 
-### EXEC-006A — Stage13F Question Bank foundation
+**DONE / VERIFIED / CLOSED / PROMOTED**
 
-**DONE / VERIFIED**
+Shared main checkpoint:
 
-Canonical stable items/revisions, typed direct/MCQ/T-F persistence, provenance, approved-AI import, manual authoring, lifecycle and PostgreSQL/API integration.
+`3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
 
-### EXEC-006B — Stage13F Admin Question Bank
+Question Bank reusable identity/revisions/publication, Quiz Builder immutable snapshots, stable regenerate-one, reviewed/published export and real Admin Chromium are closed Stage13F authority.
 
-**DONE / VERIFIED**
-
-Dedicated Admin workspace, typed client, lifecycle/provenance/history/session/responsive UX and real Chromium.
-
-### EXEC-006C — Stage13F Quiz Builder / immutable snapshots
+### EXEC-007A — Stage13G G-A Accounts + Access Codes
 
 **DONE / VERIFIED**
 
-Published Question Bank candidates, class/subject/multi-lesson quiz scope, multiple versions/models, immutable delivery snapshots, direct delivery support, review/publish/archive lifecycle.
+Final exact runtime/test HEAD:
 
-### EXEC-006D — Regenerate one / export
+`4822f87d60ab7a467c4708b5f75bb24cb90e7738`
 
-**DONE / VERIFIED**
+Verification run:
 
-Same-item approved regeneration apply, DB identity guard, idempotent replay, exact Review/Published version CSV + RTL print/PDF template and Draft export rejection.
+`34425317912` — backend SUCCESS + Admin UI quality SUCCESS + real PostgreSQL/API/Chromium SUCCESS (4/4).
 
-Runtime checkpoint: `afbe552710b3f1cf79ee70594f691fa836c05a45`.
+Closed outcomes:
 
-Stage-specific runs `34420441878` and `34420441837` SUCCESS.
-
-Runtime wider verification-only PR #27: **13/13 SUCCESS**, closed unmerged. Runs: `34420900598`, `34420900550`, `34420900527`, `34420900592`, `34420900501`, `34420900492`, `34420900547`, `34420900488`, `34420900522`, `34420900503`, `34420900520`, `34420900476`, `34420900482`.
+- Student account list/search/status/detail;
+- entitlement/device/redemption/activity projection;
+- secure recovery action UX without password retrieval;
+- device rebind operation;
+- active entitlement revoke;
+- Full/Class access-code list/search/filter/sort/page;
+- code generation;
+- safe non-destructive unused-code bulk revoke with audit;
+- session-expiry and 390px responsive evidence.
 
 ## Active Queue
 
-### EXEC-006E — Stage13F closure documentation exact-head verification + main promotion
+### EXEC-007B — Stage13G Notifications + Operations Dashboard
 
-**Priority: P0 process gate · Status: ACTIVE**
+**Priority: P1 · Status: ACTIVE**
 
-1. commit synchronized Status/Engineering Log/Handoff/Resume/Continuity/Queue/Roadmap/Stage13F contract/Legacy Coverage atomically;
-2. open verification-only Draft PR to `main`;
-3. require the same wider pull-request matrix to pass on that exact closure commit;
-4. close PR unmerged;
-5. re-check live `main` is still the Stage13F base;
-6. fast-forward `main` non-force to the exact verified closure commit;
-7. post final Stage13F EXECUTION REPORT in Issue #16.
+Discovery already verified:
 
-No merge commit or force update.
+- `notifications` + `notification_reads` exist in `0003_learning.sql` with severity, target, expiry/read timestamps and useful indexes;
+- no notification product module is present in current API source inventory;
+- parity `NOTIF-A-001..006` requires global create, validated title/body, paginated sent list, delete and Student visibility;
+- parity `ADMIN-001..006` requires a real operational dashboard with curriculum counts, access/account counts and latest notification/activity.
 
----
+Execution order:
 
-### EXEC-007 — Stage13G Remaining Admin Product
+1. freeze thin notification + operations read/write contract on existing schema/events;
+2. implement API service/routes and PostgreSQL integration tests;
+3. implement Admin notification + dashboard workspaces/typed client;
+4. verify loading/error/empty/session/RTL/mobile behavior;
+5. add real PostgreSQL/API/Chromium gate;
+6. update Source of Truth + Issue #16.
 
-**Priority: P1 · Status: NEXT AFTER EXEC-006E**
-
-Required outcomes include:
-
-- Student account search/status/admin recovery actions;
-- access-code generation/search/filter/sort/bulk/import/export/print;
-- recovery/device rebind operations;
-- notifications;
-- import/export/reporting;
-- settings/security/audit/operations dashboard;
-- unresolved Admin legacy parity;
-- unresolved Quiz/AI authoring outcomes explicitly left open by Stage13F, including direct generation orchestration inside the Admin product and specialized export variants where still valuable.
-
-Before implementation, inspect current code and map each remaining legacy row. Do not infer completion from Stage11/12/13E foundations.
+Do not create a second event/analytics store for dashboard counters.
 
 ---
 
-### EXEC-007A — Live provider runtime boundary `AI-012-019`
+### EXEC-007C — Stage13G Import/Export/Reports + Settings/Security/Audit
+
+**Priority: P1 · Status: NEXT AFTER EXEC-007B**
+
+Inspect actual authorities first. Preserve explicit validation, scope and audit boundaries.
+
+---
+
+### EXEC-007D — Stage13G Remaining Admin AI-Authoring Parity
+
+**Priority: P1 · Status: REQUIRED**
+
+Must close the lesson-centric generation/admin outcomes intentionally left open by Stage13F: Class → Subject → Lesson → source pages → generation/review/question bank, requested counts/types, source/exact/comprehensive modes where supported, edit/manual/regenerate/bulk flows and remaining valuable export variants. Do not treat the standalone Question Bank as sufficient evidence.
+
+---
+
+### EXEC-007E — Stage13G Wider Regression / Legacy Coverage Closure
+
+**Priority: P0 process gate · Status: AFTER G-B/G-C/G-D**
+
+Require exact-head wider verification, synchronize all Source of Truth, map remaining legacy rows to verified implementation or explicit owner-approved removal, then promote only through the project’s verified integration process.
+
+---
+
+### EXEC-007F — Live provider runtime boundary `AI-012-019`
 
 **Priority: P2 · Status: NOT YET VERIFIED**
 
-Benchmark/select live provider/model/routes, configure authorized credentials outside source control, execute real runtime generation and prove billing/limits/errors/fallback behavior. This is not closed by provider-neutral prompts/contracts.
-
-Do not block Stage13F closure on absent live credentials, but do not claim production generation readiness until this gate passes.
-
----
+Benchmark/select live provider/model/routes, configure authorized credentials outside source control and prove real generation/billing/limits/errors/fallback behavior. Provider-neutral contracts do not close this gate.
 
 ## Parallel Track B
 
-### STUDENT-014 — Stage14 Student Web/PWA
-
-**Status from Track B Source of Truth: IN PROGRESS**
-
-Verified there: Access, entitlement-safe Curriculum and protected Reader including real Chromium. Latest recorded verified runtime: `0d0a1778b0525560ec288dbfc612bbfa0efa9a6d`.
-
-Remaining Stage14 closure: learning-first shell, product copy and whole-surface accessibility polish/audit.
-
-### STUDENT-015 — Practice / Assessment
-
-**BLOCKED until Track B incorporates Stage13F promoted main authority.**
-
-After EXEC-006E, Track B must merge/rebase the exact verified main checkpoint before implementing published quiz consumption. No local/fake Question Bank authority.
-
----
+Stage14+ Student work proceeds on `parallel/stage14-student-product` under its own Source of Truth. Before making claims about its latest status, read its branch files and current Actions. Shared backend authority must come from verified `main`; Track B must not duplicate Auth/Access/Content/Question Bank/Quiz authority.
 
 ## Later Roadmap
 
-- Stage15 Practice/Assessment — after Stage13F integration.
+- Stage15 Practice/Assessment.
 - Stage16 Offline/PWA.
 - Stage17 Personal Learning Data.
 - Stage18 Notifications.
@@ -129,16 +126,16 @@ After EXEC-006E, Track B must merge/rebase the exact verified main checkpoint be
 - Stage23 automated tests/CI expansion.
 - Stage24 accessibility/device QA.
 - Stage25 initial canonical data/content load.
-- Stage26–29 staging/release/production/monitoring only when release/deployment is explicitly active.
+- Stage26–29 staging/release/production/monitoring only when deployment is explicitly reopened.
 
 ## Open Findings
 
-- `AI-012-019` P2 — live provider runtime `NOT YET VERIFIED`.
-- legacy Admin/Quiz authoring rows explicitly marked open in `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
-- historical `CI-001` exact external runner-allocation cause `NOT YET VERIFIED`, nonblocking.
+- `ADMIN-013G-NOTIF-006` P1 — G-B.
+- `ADMIN-013G-DASH-007` P1 — G-B.
+- `AI-012-019` P2 — live provider `NOT YET VERIFIED`.
+- legacy Admin/AI-authoring rows explicitly left open in `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
 
 ## Do Not Reopen
 
-- Stage13E verification PRs #24/#25.
-- Stage13F runtime verification PR #27 after closure; it was evidence-only.
-- accidental `.noop` history; cleanup restored exact tree and no rewrite is needed.
+- Stage13E/Stage13F verification-only PR history.
+- resolved historical `.noop` incident; cleanup restored the exact prior tree and no history rewrite is required.

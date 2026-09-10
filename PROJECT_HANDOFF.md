@@ -2,102 +2,125 @@
 
 > أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-10 — Stage13F implementation VERIFIED/CLOSED; final closure checkpoint requires exact-head PR matrix then non-force fast-forward to main.**
+Last synchronized: **2026-09-10 — Stage13G G-A VERIFIED; G-B Notifications + Operations Dashboard ACTIVE.**
 
-## Mandatory startup
+## Mandatory Startup
 
 1. Confirm repository `7eaur/alwaslh`.
 2. Read `README.md` and `DOCUMENTATION_INDEX.md`.
 3. Read this file, `PROJECT_STATUS.md`, `PROJECT_RESUME_SNAPSHOT.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_EXECUTION_QUEUE.md`.
-4. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` and the latest Issue #16 body/comments.
+4. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` and latest Issue #16 body/comments.
 5. If working Track B, also read `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md` and `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md` from its branch.
-6. Live-check `main`, current branch HEAD and Actions before any conclusion.
+6. Live-check `main`, current branch HEAD and Actions before editing or claiming completion.
 
 Code/migrations/executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-## Operating model
+## Operating Model
 
-Issue #16 defines the current **parallel two-track** model:
+Current model: **Parallel Two-Track Execution**.
 
-- Track A: Backend/Admin/AI/Question Bank/Quiz Builder; current next stage after promotion is Stage13G.
+- Track A: Backend/Admin/DB/AI/Question Bank/Quiz Builder/Stage13G.
 - Track B: Student Product on `parallel/stage14-student-product`.
-- Shared backend contracts become Student authority only after verified promotion through `main`.
-- No force-push/history rewrite, duplicate authority, auth bypass, fake API or test weakening.
-- Production deployment/cutover remains future-only. Stage13F required no deployment.
+- Issue #16 is the cross-track execution ledger.
+- `main` is the verified shared-contract handoff point.
+- No force-push/history rewrite, duplicate durable authority, auth bypass, fake API or test weakening.
+- Deployment/release work remains explicitly deferred.
 
-## Stable architecture / business rules
+## Stable Architecture / Business Rules
 
-- Browser does not own canonical durable state.
+- Browser is not canonical durable authority.
 - Full Code = 6 digits; Class Code = 7 digits.
 - Returning Student requires password + registered P-256 device proof.
 - Curriculum = Class → Subject Offering → optional Section → Lesson.
-- `media ready != published`; publication is Draft → Review → Published.
+- `media ready != published`; publication remains explicit.
 - raw AI/provider output never becomes Student/Question Bank authority.
 - Stage11 owns typed AI contracts/validation.
-- Stage12 owns durable execution/jobs/units/attempts/outputs.
+- Stage12 owns durable AI execution.
 - Stage13E owns append-only human AI review.
-- Stage13E `approve` is import eligibility, not Question Bank publication.
-- Stage13F Question Bank owns stable reusable item UUID + immutable revisions + Draft/Review/Published.
-- Quiz Builder selects published Question Bank revisions and materializes immutable delivery snapshots.
-- published snapshots are later Student Stage15 authority.
+- Stage13F owns stable reusable Question Bank identity/revisions/publication and immutable Quiz Builder snapshots.
+- Stage13E approval is import eligibility, never auto-publication.
+- later Student assessment consumes published immutable snapshots only.
 
-## Stage13F verified runtime authority
+## Shared Main Authority
 
-Runtime HEAD:
+Stage13F is **VERIFIED/CLOSED/PROMOTED**.
 
-`afbe552710b3f1cf79ee70594f691fa836c05a45`
+Current shared `main` checkpoint:
 
-Stage-specific evidence:
+`3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
 
-- backend/PostgreSQL `34420441878` — SUCCESS;
-- Admin/PostgreSQL/real Chromium `34420441837` — SUCCESS.
+Do not reopen Stage13F architecture merely because Stage13G adds Admin product surfaces.
 
-Wider verification-only PR `#27` ran **13/13 SUCCESS** on the same runtime HEAD and was closed unmerged:
+## Stage13G Current State
 
-`34420900598`, `34420900550`, `34420900527`, `34420900592`, `34420900501`, `34420900492`, `34420900547`, `34420900488`, `34420900522`, `34420900503`, `34420900520`, `34420900476`, `34420900482`.
+Track A branch:
 
-## Stage13F closed scope
+`integration/stage13g-admin-product`
 
-- reusable canonical Question Bank separate from delivery rows;
-- immutable revisions and stable item identity;
-- MCQ / T-F / direct questions and typed answers;
-- source/page/checksum/OCR/content-source + AI review/prompt provenance;
-- latest-approve-only AI import as Draft with idempotent concurrency behavior;
-- manual authoring/edit/review/reject/publish;
-- dedicated Admin Question Bank UI;
-- Quiz Builder with class/subject/multi-lesson scope, multiple versions/models and published candidates;
-- immutable quiz delivery snapshots retaining Question Bank item/revision refs;
-- review/publish/archive lifecycle;
-- approved regenerate-one applied as a later Draft revision of the same item only;
-- reviewed/published exact-version Excel-compatible CSV and print/PDF template;
-- real Chromium lifecycle/session/responsive evidence.
+### G-A Accounts + Access Codes — VERIFIED
 
-## Important open boundaries
+Final runtime/test HEAD:
+
+`4822f87d60ab7a467c4708b5f75bb24cb90e7738`
+
+Final run:
+
+`34425317912` — **SUCCESS**
+
+All three jobs passed:
+
+- Accounts + Access backend;
+- Accounts + Access Admin UI quality;
+- Real API + PostgreSQL + Chromium, 4/4 scenarios.
+
+Implemented/verified:
+
+- bounded Admin code inventory/search/filter/sort/page;
+- Full/Class code generation;
+- non-destructive unused-code bulk revoke + audit;
+- bounded Student account/detail projection;
+- entitlements/devices/redemptions/auth/access activity;
+- temporary-password recovery using existing AuthService;
+- device rebind using existing AuthService;
+- entitlement revoke using existing AccessService;
+- real session expiry;
+- 390px responsive no-overflow.
+
+Security boundary: Admin never receives stored password values or device public key material.
+
+### G-B Notifications + Operations Dashboard — ACTIVE
+
+Verified discovery so far:
+
+- `0003_learning.sql` already contains `notifications`, `notification_reads`, notification severity, global/class/profile targeting, optional action path, publish/expiry timestamps and feed indexes;
+- current API source inventory has no notification product module;
+- parity `NOTIF-A-001..006` = global create, validated title/body, paginated sent list, delete, Student visibility;
+- parity `ADMIN-001..006` = real dashboard home with curriculum/access/account counts and latest notifications/activity.
+
+Architecture direction: **KEEP + IMPROVE notification schema; REBUILD thin notification service/API/UI; REBUILD thin operational aggregate read model over canonical tables/events.** No second analytics/event store.
+
+## Important Open Boundaries
 
 - `AI-012-019` — live provider benchmark/routes/credentials/bootstrap remains `NOT YET VERIFIED`.
-- Stage13F does **not** claim every legacy `QADMIN-001..033` row. Remaining direct generation orchestration and specialized export variants are explicit Stage13G/AI-authoring work in `LEGACY_FEATURE_COVERAGE_GATE.md`.
-- Track B Stage14: Access/Curriculum/Reader verified; final learning-first shell/copy/a11y closure still active in its branch.
-- Stage15 must not begin against stale main; Track B must first incorporate the exact Stage13F closure checkpoint after promotion.
+- Stage13G G-C reports/import-export/settings/security/audit remains required.
+- Stage13G G-D must close lesson-centric generation/admin parity deliberately left open by Stage13F; standalone Question Bank is not sufficient evidence.
+- Track B status must be read from its own branch before claiming latest completion.
+- Stages26–29 release/deployment remain future-only.
 
-## Git / incident notes
+## Git / Incident Notes
 
-- Runtime verification PR #27 was verification-only and is closed unmerged.
-- The accidental `.noop` create/delete before Stage13F had no final tree/runtime effect. Cleanup `main @ 5fdb23030c77cae9bff5f8c33d4be466427eb6e5` restored exact tree `bcd433bd553b3e7eb539515cffd2a23a92f97192`. Treat as resolved P3 history noise; do not rewrite history.
+- historical accidental `.noop` create/delete had no final tree/runtime effect. Cleanup `5fdb23030c77cae9bff5f8c33d4be466427eb6e5` restored exact tree `bcd433bd553b3e7eb539515cffd2a23a92f97192`. Treat as resolved P3 history noise; do not rewrite history.
+- G-A initial Chromium run `34425093946` was not accepted because session-expiry test did not issue a post-logout request. Test was corrected, and final exact-head run `34425317912` passed 4/4.
 
-## Exact continuation
+## Exact Continuation
 
-For the Stage13F closure owner:
+For Track A:
 
-1. run the wider PR matrix on the documentation checkpoint containing this file;
-2. close that verification PR unmerged;
-3. re-check live `main` is still the Stage13F base;
-4. fast-forward `main` non-force to the exact verified closure checkpoint;
-5. post final Stage13F EXECUTION REPORT on Issue #16.
+1. confirm branch/HEAD/Actions;
+2. continue G-B from existing notification schema + durable events;
+3. implement backend contract/integration before Admin UI;
+4. add real Chromium gate;
+5. update Source of Truth + Issue #16;
+6. then G-C → G-D → wider Stage13G closure.
 
-Then:
-
-- Track A begins Stage13G from the new `main` authority;
-- Track B incorporates the new `main` before Stage15;
-- keep `AI-012-019` open until real provider evidence exists.
-
-Never infer completion from this prose alone; verify branch/main and Actions first.
+Never infer completion from this file alone; verify GitHub state first.
