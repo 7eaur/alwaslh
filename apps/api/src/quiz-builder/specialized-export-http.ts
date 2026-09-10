@@ -33,7 +33,9 @@ async function requireAdmin(
   auth: AuthService,
 ): Promise<void> {
   const actor = await currentProfile(request, config, auth);
-  if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
+  if (actor.role !== "admin") {
+    throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
+  }
 }
 
 export function registerQuizSpecializedExportRoutes(
@@ -54,7 +56,10 @@ export function registerQuizSpecializedExportRoutes(
     const params = parseBody(QuizParamsSchema, request.params);
     const query = parseBody(ExportQuerySchema, request.query);
     const bundle = await exports.bundle(params.quizId, query.versionIds, query.variant);
-    reply.header("Content-Security-Policy", "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; base-uri 'none'");
+    reply.header(
+      "Content-Security-Policy",
+      "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; base-uri 'none'",
+    );
     reply.header("X-Content-Type-Options", "nosniff");
     return reply.type("text/html; charset=utf-8").send(bundle.printHtml);
   });

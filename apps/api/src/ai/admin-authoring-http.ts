@@ -1,11 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { aiDifficultySchema, aiQuestionTargetSchema, aiSubjectDomainSchema } from "./contracts.js";
-import type { AdminAiAuthoringService } from "./admin-authoring.js";
 import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
+import type { AdminAiAuthoringService } from "./admin-authoring.js";
+import { aiQuestionTargetSchema, aiSubjectDomainSchema } from "./contracts.js";
 
 const LessonModeSchema = z.enum([
   "lesson_summary",
@@ -35,10 +35,14 @@ const LessonGenerateSchema = z
   .strict()
   .superRefine((value, context) => {
     if (
-      (value.mode === "question_generation" || value.mode === "comprehensive_lesson_content") &&
+      (value.mode === "question_generation" ||
+        value.mode === "comprehensive_lesson_content") &&
       !value.target
     ) {
-      context.addIssue({ code: z.ZodIssueCode.custom, message: "target is required for generated questions" });
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "target is required for generated questions",
+      });
     }
   });
 const QuizVersionSchema = z
@@ -61,8 +65,14 @@ const QuizGenerateSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    if (value.mode === "question_generation" && value.versions.some((version) => !version.target)) {
-      context.addIssue({ code: z.ZodIssueCode.custom, message: "target is required for generated quiz versions" });
+    if (
+      value.mode === "question_generation" &&
+      value.versions.some((version) => !version.target)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "target is required for generated quiz versions",
+      });
     }
   });
 const OutputParamsSchema = z.object({ outputId: z.string().uuid() });
@@ -82,7 +92,9 @@ async function adminActor(
   auth: AuthService,
 ) {
   const actor = await currentProfile(request, config, auth);
-  if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
+  if (actor.role !== "admin") {
+    throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
+  }
   return actor;
 }
 
@@ -95,7 +107,17 @@ export function registerAdminAiAuthoringRoutes(
   app.post("/v1/admin/authoring/lessons/generate", async (request, reply) => {
     const actor = await adminActor(request, config, auth);
     const input = parseBody(LessonGenerateSchema, request.body);
-    const result = await authoring.enqueueLessons(actor.id, input);
+    const result = await authoring.enqueueLessons(actor.id, {
+      lessonIds: input.lessonIds,
+      mode: input.mode,
+      subjectDomain: input.subjectDomain,
+      clientRequestId: input.clientRequestId,
+      ...(input.target ? { target: input.target } : {}),
+      ...(input.expectedQuestionCount
+        ? { expectedQuestionCount: input.expectedQuestionCount }
+        : {}),
+      ...(input.priority ? { priority: input.priority } : {}),
+    });
     return reply.code(result.replayed ? 200 : 202).send(result);
   });
 
@@ -109,17 +131,39 @@ export function registerAdminAiAuthoringRoutes(
     const actor = await adminActor(request, config, auth);
     const params = parseBody(QuizParamsSchema, request.params);
     const input = parseBody(QuizGenerateSchema, request.body);
-    const result = await authoring.enqueueQuiz(actor.id, params.quizId, input);
+    const result = await authoring.enqueueQuiz(actor.id, params.quizId, {
+      mode: input.mode,
+      subjectDomain: input.subjectDomain,
+      clientRequestId: input.clientRequestId,
+      versions: input.versions.map((version) => ({
+        key: version.key,
+        label: version.label,
+        lessonIds: version.lessonIds,
+        shuffleOptions: version.shuffleOptions,
+        ...(version.target ? { target: version.target } : {}),
+        ...(version.expectedQuestionCount
+          ? { expectedQuestionCount: version.expectedQuestionCount }
+          : {}),
+      })),
+      ...(input.priority ? { priority: input.priority } : {}),
+    });
     return reply.code(result.replayed ? 200 : 202).send(result);
   });
 
-  app.post("/v1/admin/authoring/question-bank/:itemId/regenerate", async (request, reply) => {
-    const actor = await adminActor(request, config, auth);
-    const params = parseBody(ItemParamsSchema, request.params);
-    const input = parseBody(RegenerateSchema, request.body);
-    const result = await authoring.enqueueQuestionRegeneration(actor.id, params.itemId, input);
-    return reply.code(result.replayed ? 200 : 202).send(result);
-  });
+  app.post(
+    "/v1/admin/authoring/question-bank/:itemId/regenerate",
+    async (request, reply) => {
+      const actor = await adminActor(request, config, auth);
+      const params = parseBody(ItemParamsSchema, request.params);
+      const input = parseBody(RegenerateSchema, request.body);
+      const result = await authoring.enqueueQuestionRegeneration(actor.id, params.itemId, {
+        clientRequestId: input.clientRequestId,
+        subjectDomain: input.subjectDomain,
+        ...(input.priority ? { priority: input.priority } : {}),
+      });
+      return reply.code(result.replayed ? 200 : 202).send(result);
+    },
+  );
 
   app.post("/v1/admin/authoring/question-bank/:itemId/archive", async (request) => {
     const actor = await adminActor(request, config, auth);
