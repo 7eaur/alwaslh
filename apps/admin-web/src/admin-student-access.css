@@ -1,0 +1,553 @@
+.admin-access-workspace {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.access-page-header {
+  padding-bottom: var(--space-6);
+}
+
+.access-tabs {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+}
+
+.access-tabs button {
+  min-height: var(--touch-target-min);
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 800;
+}
+
+.access-tabs button.is-active {
+  background: var(--brand-primary-700);
+  color: #fff;
+}
+
+.access-panel-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, 0.9fr) minmax(0, 1.45fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.access-list-panel,
+.access-detail-panel,
+.access-codes-panel,
+.code-filter-card,
+.code-generation-card,
+.generated-code-panel {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+}
+
+.access-list-panel,
+.access-detail-panel,
+.access-codes-panel {
+  padding: var(--space-5);
+}
+
+.access-detail-panel {
+  min-width: 0;
+}
+
+.access-section-heading,
+.access-detail-heading,
+.codes-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.access-section-heading h2,
+.access-detail-heading h2,
+.codes-heading h2 {
+  margin-bottom: 0;
+}
+
+.codes-heading p:last-child {
+  margin: var(--space-2) 0 0;
+  color: var(--text-secondary);
+}
+
+.access-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin-block: var(--space-5);
+}
+
+.access-filter-grid label,
+.code-generation-card label {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.access-filter-grid label > span,
+.code-generation-card label > span {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.access-search-field {
+  grid-column: span 2;
+}
+
+.access-filter-button {
+  align-self: end;
+}
+
+.student-card-list,
+.access-code-list,
+.detail-record-list,
+.activity-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.student-card {
+  width: 100%;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  text-align: start;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+}
+
+.student-card:hover {
+  border-color: var(--border-strong);
+}
+
+.student-card.is-selected {
+  border-color: var(--brand-primary-700);
+  box-shadow: inset 3px 0 0 var(--brand-primary-700);
+}
+
+.student-card-title,
+.student-card-metrics,
+.access-code-title,
+.access-code-meta,
+.access-code-redemption,
+.student-action-row,
+.code-selection-bar,
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.student-card-title,
+.access-code-title,
+.code-selection-bar,
+.activity-row {
+  justify-content: space-between;
+}
+
+.student-card-metrics,
+.access-code-meta,
+.access-code-redemption {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.student-card-metrics span:not(:last-child)::after,
+.access-code-meta span:not(:last-child)::after {
+  content: "·";
+  margin-inline-start: var(--space-2);
+}
+
+.student-attention {
+  width: fit-content;
+  padding: var(--space-1) var(--space-2);
+  border-radius: 999px;
+  background: rgb(181 117 28 / 0.08);
+  color: #8a5b16;
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+}
+
+.access-workspace-state {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  min-height: 9rem;
+  align-content: center;
+  padding: var(--space-5);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-canvas);
+}
+
+.access-workspace-state p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: var(--line-normal);
+}
+
+.access-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.temporary-password-box {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid rgb(181 117 28 / 0.28);
+  border-radius: var(--radius-md);
+  background: rgb(181 117 28 / 0.06);
+}
+
+.temporary-password-box span {
+  color: #7d5417;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.temporary-password-box code {
+  width: fit-content;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+}
+
+.student-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.student-summary-card {
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-canvas);
+}
+
+.student-summary-card span,
+.student-summary-card strong {
+  display: block;
+}
+
+.student-summary-card span {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+}
+
+.student-summary-card strong {
+  margin-top: var(--space-1);
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-xl);
+}
+
+.student-summary-card.is-compact strong {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-normal);
+}
+
+.student-action-section,
+.student-detail-section {
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.student-action-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.student-action-section h3,
+.student-detail-section h3 {
+  margin-bottom: var(--space-2);
+}
+
+.student-action-section p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: var(--line-normal);
+}
+
+.student-action-row {
+  align-items: stretch;
+}
+
+.detail-record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-canvas);
+}
+
+.detail-record > div {
+  min-width: 0;
+}
+
+.detail-record strong,
+.detail-record span {
+  display: block;
+}
+
+.detail-record span,
+.activity-row time {
+  margin-top: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.empty-inline {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.activity-row {
+  padding-block: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.activity-row:last-child {
+  border-bottom: 0;
+}
+
+.danger-button {
+  border-color: rgb(177 56 56 / 0.32);
+  color: var(--danger-700, #9f2f2f);
+}
+
+.access-codes-panel {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.code-toolbar-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
+  gap: var(--space-4);
+}
+
+.code-filter-card,
+.code-generation-card,
+.generated-code-panel {
+  padding: var(--space-4);
+}
+
+.code-filter-card h3,
+.code-generation-card h3,
+.generated-code-panel h3 {
+  margin-bottom: var(--space-3);
+}
+
+.code-filter-grid {
+  margin: 0;
+}
+
+.code-generation-card {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.generation-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.generated-code-panel {
+  display: grid;
+  gap: var(--space-3);
+  border-color: rgb(38 135 87 / 0.22);
+}
+
+.generated-code-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: var(--space-2);
+}
+
+.generated-code-grid code {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-canvas);
+  text-align: center;
+  font-size: var(--font-size-base);
+  font-weight: 800;
+}
+
+.code-selection-bar {
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-canvas);
+}
+
+.checkbox-label,
+.code-select-box {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.checkbox-label input,
+.code-select-box input {
+  width: 1.1rem;
+  min-height: 1.1rem;
+  margin: 0;
+}
+
+.access-code-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+}
+
+.code-select-box {
+  align-self: start;
+  padding-top: var(--space-1);
+}
+
+.access-code-main {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.access-code-title code {
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 800;
+}
+
+.access-code-redemption {
+  justify-content: space-between;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 1100px) {
+  .access-panel-grid,
+  .code-toolbar-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .access-detail-panel {
+    order: 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .access-list-panel,
+  .access-detail-panel,
+  .access-codes-panel {
+    padding: var(--space-4);
+  }
+
+  .access-filter-grid,
+  .student-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .student-summary-grid {
+    gap: var(--space-2);
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-access-workspace {
+    gap: var(--space-4);
+  }
+
+  .access-tabs {
+    width: 100%;
+  }
+
+  .access-tabs button {
+    flex: 1 1 0;
+    min-width: 0;
+    padding-inline: var(--space-2);
+  }
+
+  .access-filter-grid,
+  .student-summary-grid,
+  .generation-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .access-search-field {
+    grid-column: auto;
+  }
+
+  .student-card-title,
+  .detail-record,
+  .code-selection-bar,
+  .access-code-redemption,
+  .activity-row {
+    align-items: flex-start;
+  }
+
+  .detail-record,
+  .code-selection-bar {
+    flex-direction: column;
+  }
+
+  .student-action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .student-action-row button,
+  .code-selection-bar button,
+  .code-generation-card button {
+    width: 100%;
+  }
+
+  .access-pagination {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    width: 100%;
+  }
+
+  .access-pagination button {
+    min-width: 0;
+    padding-inline: var(--space-2);
+  }
+
+  .generated-code-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
