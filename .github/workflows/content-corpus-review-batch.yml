@@ -1,5 +1,6 @@
 name: Content Corpus Visual Review Batch
 
+# Current manual visual-review trigger: physics batch 1
 on:
   workflow_dispatch:
   push:
