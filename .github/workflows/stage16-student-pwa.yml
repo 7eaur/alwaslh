@@ -1,0 +1,33 @@
+name: Stage16 Student PWA
+
+on:
+  push:
+    branches:
+      - parallel/stage14-student-product
+    paths:
+      - "apps/student-web/**"
+      - ".github/workflows/stage16-student-pwa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pwa-shell:
+    name: Student PWA · app shell · real Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Student dependencies
+        run: npm install --prefix apps/student-web --ignore-scripts --no-audit --no-fund
+      - name: Build Student app
+        run: npm run build --prefix apps/student-web
+      - name: Install Chromium
+        run: npx --prefix apps/student-web playwright install --with-deps chromium
+      - name: Verify installable offline-safe app shell
+        working-directory: apps/student-web
+        run: npx playwright test e2e/pwa-shell.e2e.spec.mjs --config=playwright.pwa.config.mjs
