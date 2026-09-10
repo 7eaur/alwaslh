@@ -89,6 +89,7 @@ def build_page_record(
             "language": ocr_data.get("language"),
             "mean_confidence": ocr_data.get("mean_confidence"),
             "min_confidence": ocr_data.get("min_confidence"),
+            "low_confidence_block_ratio": ocr_data.get("low_confidence_block_ratio"),
             "needs_review": ocr_data.get("needs_review", False),
             "review_reason": ocr_data.get("review_reason"),
             "raw_text": ocr_data.get("raw_text", ""),
@@ -208,6 +209,7 @@ def build_package(
                 "profile_key": ocr_adapter.profile_key,
                 "language": ocr_adapter.language,
                 "low_confidence_threshold": low_confidence,
+                "review_policy": "review if mean confidence is low or at least 10% of OCR blocks are below the confidence threshold",
             },
         },
         "import_contract": {
