@@ -7,6 +7,7 @@ import {
   logoutAdmin,
   restoreAdminSession,
 } from "./admin-api";
+import { AdminOperationsWorkspace } from "./AdminOperationsWorkspace";
 import { AdminStudentAccessWorkspace } from "./AdminStudentAccessWorkspace";
 import { AiOperationsPage } from "./AiOperationsPage";
 import "./ai-operations-review.css";
@@ -128,6 +129,7 @@ function BrandBlock({ auth = false }: { auth?: boolean }) {
 }
 
 type AdminWorkspace =
+  | "operations"
   | "curriculum"
   | "content-ingestion"
   | "content-operations"
@@ -145,13 +147,21 @@ function AdminShell({
   onLogout: () => Promise<void>;
   onSessionExpired: () => void;
 }) {
-  const [workspace, setWorkspace] = useState<AdminWorkspace>("curriculum");
+  const [workspace, setWorkspace] = useState<AdminWorkspace>("operations");
 
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar" aria-label="التنقل الرئيسي">
         <BrandBlock />
         <nav className="admin-nav" aria-label="أقسام الإدارة">
+          <button
+            className={`nav-item nav-button${workspace === "operations" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "operations" ? "page" : undefined}
+            onClick={() => setWorkspace("operations")}
+          >
+            لوحة التشغيل
+          </button>
           <button
             className={`nav-item nav-button${workspace === "curriculum" ? " is-active" : ""}`}
             type="button"
@@ -221,7 +231,9 @@ function AdminShell({
         </div>
       </aside>
       <main className="admin-main">
-        {workspace === "curriculum" ? (
+        {workspace === "operations" ? (
+          <AdminOperationsWorkspace onSessionExpired={onSessionExpired} />
+        ) : workspace === "curriculum" ? (
           <CurriculumWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "content-ingestion" ? (
           <ContentIngestionWorkspace onSessionExpired={onSessionExpired} />

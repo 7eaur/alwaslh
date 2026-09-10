@@ -13,7 +13,7 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
 }
 
 async function openStudentAccess(page) {

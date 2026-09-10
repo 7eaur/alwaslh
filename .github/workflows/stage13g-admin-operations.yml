@@ -173,4 +173,7 @@ jobs:
         run: npx --prefix apps/admin-web playwright install --with-deps chromium
       - name: Run Stage13G real Admin Chromium suite
         working-directory: apps/admin-web
-        run: npx playwright test e2e/admin-student-access.e2e.spec.mjs
+        run: >-
+          npx playwright test
+          e2e/admin-student-access.e2e.spec.mjs
+          e2e/admin-operations.e2e.spec.mjs
