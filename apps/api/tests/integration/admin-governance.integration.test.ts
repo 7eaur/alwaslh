@@ -192,27 +192,12 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
     assert.equal(governanceBody.settings.sessionTtlHours, 24);
     assert.equal(governanceBody.settings.allowedOriginCount, 2);
     assert.equal(governanceBody.settings.aiGlobalKillSwitch, true);
-    assert.equal(
-      governanceBody.security.lockedLoginGuards,
-      Number(baseline.locked_login_guards) + 1,
-    );
-    assert.equal(
-      governanceBody.security.pendingRecoveryTokens,
-      Number(baseline.pending_recovery_tokens) + 1,
-    );
-    assert.equal(
-      governanceBody.security.activeStudentDevices,
-      Number(baseline.active_student_devices) + 1,
-    );
-    assert.equal(
-      governanceBody.security.forcedPasswordChanges,
-      Number(baseline.forced_password_changes) + 1,
-    );
+    assert.equal(governanceBody.security.lockedLoginGuards, Number(baseline.locked_login_guards) + 1);
+    assert.equal(governanceBody.security.pendingRecoveryTokens, Number(baseline.pending_recovery_tokens) + 1);
+    assert.equal(governanceBody.security.activeStudentDevices, Number(baseline.active_student_devices) + 1);
+    assert.equal(governanceBody.security.forcedPasswordChanges, Number(baseline.forced_password_changes) + 1);
     assert.equal(governanceBody.security.aiRoutesPaused, Number(baseline.ai_routes_paused) + 1);
-    assert.equal(
-      governanceBody.security.aiRoutesCoolingDown,
-      Number(baseline.ai_routes_cooling_down) + 1,
-    );
+    assert.equal(governanceBody.security.aiRoutesCoolingDown, Number(baseline.ai_routes_cooling_down) + 1);
 
     const audit = await app.inject({
       method: "GET",
