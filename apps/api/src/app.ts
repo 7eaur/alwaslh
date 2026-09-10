@@ -27,6 +27,8 @@ import { QuizVersionExportService } from "./quiz-builder/export.js";
 import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
 import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
 import { QuizBuilderService } from "./quiz-builder/service.js";
+import { registerStudentAssessmentRoutes } from "./student-assessment/http.js";
+import { StudentAssessmentService } from "./student-assessment/service.js";
 
 export interface AppDependencies {
   config: AppConfig;
@@ -55,6 +57,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const quizExports = new QuizVersionExportService(quizBuilder);
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const studentReader = new StudentReaderService(database, mediaStorage);
+  const studentAssessment = new StudentAssessmentService(database);
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
 
   app.addHook("onRequest", async (request, reply) => {
@@ -79,6 +82,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerStudentActivationRoutes(app, config, auth, activation);
   registerAccessRoutes(app, config, auth, access);
   registerCurriculumRoutes(app, config, auth, curriculum, studentReader);
+  registerStudentAssessmentRoutes(app, config, auth, studentAssessment);
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
