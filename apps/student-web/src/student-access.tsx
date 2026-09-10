@@ -96,11 +96,17 @@ export function StudentAccessSection({
 
   return (
     <>
+      <StudentCurriculumSection
+        online={online}
+        refreshKey={curriculumRefreshKey}
+        onSessionExpired={onSessionExpired}
+      />
+
       <section className="access-section" aria-labelledby="access-title">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">وصولك الدراسي</p>
-            <h2 id="access-title">الصفوف والصلاحيات</h2>
+            <p className="eyebrow">إدارة الوصول</p>
+            <h2 id="access-title">صلاحياتك ورموز الصفوف</h2>
           </div>
           <button
             className="text-button"
@@ -121,7 +127,7 @@ export function StudentAccessSection({
           </div>
         ) : access.status === "offline" ? (
           <div className="form-alert is-warning" role="status">
-            لا يمكن التحقق من صلاحيات جديدة وأنت غير متصل. المحتوى المخزّن للعمل دون اتصال سيُدار في مرحلة PWA المخصصة.
+            لا يمكن التحقق من صلاحيات جديدة وأنت غير متصل. أعد الاتصال قبل تفعيل رمز صف أو تحديث صلاحياتك.
           </div>
         ) : access.status === "error" ? (
           <div className="access-error" role="alert">
@@ -135,7 +141,7 @@ export function StudentAccessSection({
             {entitlements.length === 0 ? (
               <div className="empty-state">
                 <strong>لا توجد صلاحيات فعالة الآن</strong>
-                <p>يمكنك إضافة رمز صف صالح من 7 أرقام. لن يعتبر التطبيق أي محتوى متاحًا قبل قبول الخادم للرمز.</p>
+                <p>أضف رمز صف صالحًا من 7 أرقام. لن يعرض التطبيق محتوى جديدًا قبل قبول الخادم للرمز.</p>
               </div>
             ) : (
               <ul className="entitlement-list" aria-label="صلاحيات الوصول الفعالة">
@@ -157,13 +163,13 @@ export function StudentAccessSection({
               <div className="access-tools-heading">
                 <div>
                   <h3 id="class-code-title">إضافة رمز صف</h3>
-                  <p>رمز الصف مكوّن من 7 أرقام ويُستهلك فقط عندما يقبله خادم الوصول.</p>
+                  <p>رمز الصف مكوّن من 7 أرقام، ويُستخدم فقط بعد أن يقبله الخادم.</p>
                 </div>
               </div>
 
               {hasFullAccess ? (
                 <div className="form-alert is-info" role="status">
-                  لديك وصول كامل فعّال، لذلك لا تحتاج إلى استهلاك رمز صف الآن. الخادم يحمي الرمز من الهدر في هذه الحالة.
+                  لديك وصول كامل فعّال، لذلك لا تحتاج إلى استخدام رمز صف الآن. سيبقى الرمز صالحًا بدل استهلاكه بلا حاجة.
                 </div>
               ) : (
                 <form className="access-redeem-form" onSubmit={handleRedeem} noValidate>
@@ -222,12 +228,6 @@ export function StudentAccessSection({
           </>
         )}
       </section>
-
-      <StudentCurriculumSection
-        online={online}
-        refreshKey={curriculumRefreshKey}
-        onSessionExpired={onSessionExpired}
-      />
     </>
   );
 }
