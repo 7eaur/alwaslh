@@ -204,6 +204,86 @@ test("Stage13G Admin access inventory and Student read model preserve canonical 
   assert.equal("publicKeySha256" in detail.json().student.devices[0], false);
   assert.ok(detail.json().student.activityTotal >= 2);
 
+  const importPool = ["000001", "000002", "000003", "000004", "000005", "000006"];
+  const importCodeA = importPool.find((code) => !fullCodes.includes(code));
+  const importCodeB = importPool.find((code) => code !== importCodeA && !fullCodes.includes(code));
+  assert.ok(importCodeA && importCodeB);
+
+  const imported = await app.inject({
+    method: "POST",
+    url: "/v1/admin/access/full-codes/import",
+    headers: { origin, cookie: adminCookie },
+    payload: {
+      rows: [
+        { rowNumber: 2, code: toArabicDigits(importCodeA), durationDays: 90 },
+        { rowNumber: 3, code: importCodeA, durationDays: 90 },
+        { rowNumber: 4, code: "12345", durationDays: 90 },
+        { rowNumber: 5, code: importCodeB, durationDays: 120 },
+      ],
+    },
+  });
+  assert.equal(imported.statusCode, 200);
+  assert.deepEqual(
+    imported.json().imported.map((item: { rowNumber: number; code: string }) => [item.rowNumber, item.code]),
+    [
+      [2, importCodeA],
+      [5, importCodeB],
+    ],
+  );
+  assert.deepEqual(
+    imported.json().errors.map((item: { rowNumber: number; errorCode: string }) => [item.rowNumber, item.errorCode]),
+    [
+      [3, "DUPLICATE_IN_FILE"],
+      [4, "INVALID_CODE"],
+    ],
+  );
+  assert.deepEqual(imported.json().summary, { received: 4, imported: 2, rejected: 2 });
+
+  const existingDuplicate = await app.inject({
+    method: "POST",
+    url: "/v1/admin/access/full-codes/import",
+    headers: { origin, cookie: adminCookie },
+    payload: { rows: [{ rowNumber: 2, code: importCodeB, durationDays: 365 }] },
+  });
+  assert.equal(existingDuplicate.statusCode, 200);
+  assert.equal(existingDuplicate.json().summary.imported, 0);
+  assert.equal(existingDuplicate.json().errors[0].errorCode, "DUPLICATE_EXISTING");
+
+  const importedRows = await db.query<{ code: string; method: string | null; duration_days: number }>(
+    `select code,
+            metadata->>'method' as method,
+            entitlement_duration_days as duration_days
+     from full_access_codes
+     where code = any($1::text[])
+     order by code`,
+    [[importCodeA, importCodeB]],
+  );
+  assert.equal(importedRows.length, 2);
+  assert.ok(importedRows.every((row) => row.method === "csv_import"));
+  assert.deepEqual(
+    importedRows.map((row) => row.duration_days).sort((left, right) => left - right),
+    [90, 120],
+  );
+  const importEvents = await db.query<{ count: string }>(
+    `select count(*)::text as count
+     from access_events
+     where event_type = 'code_generated'
+       and metadata->>'method' = 'csv_import'
+       and full_access_code_id in (
+         select id from full_access_codes where code = any($1::text[])
+       )`,
+    [[importCodeA, importCodeB]],
+  );
+  assert.equal(Number(importEvents[0]?.count), 2);
+
+  const invalidDuration = await app.inject({
+    method: "POST",
+    url: "/v1/admin/access/full-codes/import",
+    headers: { origin, cookie: adminCookie },
+    payload: { rows: [{ rowNumber: 2, code: "999999", durationDays: 0 }] },
+  });
+  assert.equal(invalidDuration.statusCode, 400);
+
   const anonymous = await app.inject({
     method: "GET",
     url: "/v1/admin/students",

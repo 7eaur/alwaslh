@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerAccessRoutes } from "./access/http.js";
+import { AccessCodeImportService } from "./access/import-service.js";
 import { AccessService } from "./access/service.js";
 import { registerStudentActivationRoutes } from "./activation/http.js";
 import { StudentActivationService } from "./activation/service.js";
@@ -49,6 +50,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const origins = allowedOrigins(config);
   const auth = new AuthService(database, config.SESSION_TTL_HOURS);
   const access = new AccessService(database);
+  const accessImport = new AccessCodeImportService(database);
   const activation = new StudentActivationService(database);
   const adminStudentAccess = new AdminStudentAccessService(database);
   const adminOperations = new AdminOperationsService(database);
@@ -85,7 +87,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAuthRoutes(app, config, auth);
   registerStudentActivationRoutes(app, config, auth, activation);
   registerAccessRoutes(app, config, auth, access);
-  registerAdminStudentAccessRoutes(app, config, auth, adminStudentAccess);
+  registerAdminStudentAccessRoutes(app, config, auth, adminStudentAccess, accessImport);
   registerAdminOperationsRoutes(app, config, auth, adminOperations);
   registerNotificationRoutes(app, config, auth, notifications);
   registerCurriculumRoutes(app, config, auth, curriculum);

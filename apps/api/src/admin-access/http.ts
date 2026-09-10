@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import type { AccessCodeImportService } from "../access/import-service.js";
 import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
@@ -46,6 +47,19 @@ const RevokeCodesSchema = z.object({
   codeIds: z.array(z.string().uuid()).min(1).max(100),
 });
 
+const FullAccessImportSchema = z.object({
+  rows: z
+    .array(
+      z.object({
+        rowNumber: z.number().int().min(2).max(1_000_000),
+        code: z.string().min(1).max(32),
+        durationDays: z.number().int().min(1).max(3650),
+      }),
+    )
+    .min(1)
+    .max(500),
+});
+
 const StudentListQuerySchema = z.object({
   search: z.string().trim().max(120).optional(),
   status: StudentStatusSchema.optional(),
@@ -79,6 +93,7 @@ export function registerAdminStudentAccessRoutes(
   config: AppConfig,
   auth: AuthService,
   service: AdminStudentAccessService,
+  importService: AccessCodeImportService,
 ): void {
   app.get("/v1/admin/access/codes", async (request) => {
     await requireAdmin(request, config, auth);
@@ -100,6 +115,12 @@ export function registerAdminStudentAccessRoutes(
     const actor = await requireAdmin(request, config, auth);
     const input = parseBody(RevokeCodesSchema, request.body);
     return service.revokeUnusedCodes(actor.id, input.type as AdminAccessCodeType, input.codeIds);
+  });
+
+  app.post("/v1/admin/access/full-codes/import", async (request) => {
+    const actor = await requireAdmin(request, config, auth);
+    const input = parseBody(FullAccessImportSchema, request.body);
+    return importService.importFullAccessCodes(actor.id, input.rows);
   });
 
   app.get("/v1/admin/students", async (request) => {
