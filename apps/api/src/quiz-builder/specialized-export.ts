@@ -69,11 +69,7 @@ function selectedVersions(
   versionIds: readonly string[],
 ): QuizBuilderVersionView[] {
   if (detail.quiz.status !== "review" && detail.quiz.status !== "published") {
-    throw new AppError(
-      "CONFLICT",
-      "التصدير متاح فقط لاختبار قيد المراجعة أو منشور",
-      409,
-    );
+    throw new AppError("CONFLICT", "التصدير متاح فقط لاختبار قيد المراجعة أو منشور", 409);
   }
   const ids = [...new Set(versionIds)];
   if (ids.length === 0 || ids.length > 20) {
@@ -141,11 +137,7 @@ function baseHtml(title: string, body: string): string {
 <body><header><h1>${htmlEscape(title)}</h1></header>${body}</body></html>`;
 }
 
-function questionHtml(
-  question: QuizBuilderQuestionView,
-  index: number,
-  variant: QuizPrintVariant,
-): string {
+function questionHtml(question: QuizBuilderQuestionView, index: number, variant: QuizPrintVariant): string {
   const options = question.options.length
     ? `<ol class="options">${question.options
         .map((option) => `<li>${htmlEscape(option.text)}</li>`)
@@ -155,9 +147,7 @@ function questionHtml(
     correctAnswer(question),
   )}</section>`;
   const explanation = question.explanation
-    ? `<section class="explanation"><strong>الشرح:</strong> ${htmlEscape(
-        question.explanation,
-      )}</section>`
+    ? `<section class="explanation"><strong>الشرح:</strong> ${htmlEscape(question.explanation)}</section>`
     : "";
   if (variant === "answer_key") {
     return `<p>${index + 1}. ${htmlEscape(correctAnswer(question))}</p>`;
@@ -167,8 +157,7 @@ function questionHtml(
       question.prompt,
     )}</h2>${answer}${explanation}</article>`;
   }
-  const includeOptions =
-    variant === "questions_options" || variant === "questions_answers";
+  const includeOptions = variant === "questions_options" || variant === "questions_answers";
   const includeAnswer = variant === "questions_answers";
   return `<article class="question"><h2>${index + 1}. ${htmlEscape(
     question.prompt,
@@ -233,10 +222,7 @@ export class QuizSpecializedExportService {
     };
   }
 
-  async asset(
-    quizId: string,
-    assetId: string,
-  ): Promise<{ mimeType: string; bytes: Buffer }> {
+  async asset(quizId: string, assetId: string): Promise<{ mimeType: string; bytes: Buffer }> {
     const rows = await this.database.query<{
       storage_key: string;
       mime_type: string;
