@@ -37,8 +37,8 @@ const CodeListQuerySchema = z.object({
   classId: z.string().uuid().optional(),
   sort: AccessCodeSortSchema.default("created_at"),
   direction: DirectionSchema.default("desc"),
-  limit: PageSizeSchema.default(25),
-  offset: PageOffsetSchema.default(0),
+  limit: PageSizeSchema.optional(),
+  offset: PageOffsetSchema.optional(),
 });
 
 const RevokeCodesSchema = z.object({
@@ -51,8 +51,8 @@ const StudentListQuerySchema = z.object({
   status: StudentStatusSchema.optional(),
   sort: StudentSortSchema.default("created_at"),
   direction: DirectionSchema.default("desc"),
-  limit: PageSizeSchema.default(25),
-  offset: PageOffsetSchema.default(0),
+  limit: PageSizeSchema.optional(),
+  offset: PageOffsetSchema.optional(),
 });
 
 const StudentParamsSchema = z.object({
@@ -60,8 +60,8 @@ const StudentParamsSchema = z.object({
 });
 
 const StudentDetailQuerySchema = z.object({
-  historyLimit: PageSizeSchema.default(25),
-  historyOffset: PageOffsetSchema.default(0),
+  historyLimit: PageSizeSchema.optional(),
+  historyOffset: PageOffsetSchema.optional(),
 });
 
 async function requireAdmin(
@@ -90,8 +90,8 @@ export function registerAdminStudentAccessRoutes(
       ...(query.classId ? { classId: query.classId } : {}),
       sort: query.sort as AdminAccessCodeSort,
       direction: query.direction as SortDirection,
-      limit: query.limit,
-      offset: query.offset,
+      limit: query.limit ?? 25,
+      offset: query.offset ?? 0,
     });
     return { codes: page.items, page: { total: page.total, limit: page.limit, offset: page.offset } };
   });
@@ -110,8 +110,8 @@ export function registerAdminStudentAccessRoutes(
       ...(query.status ? { status: query.status as AdminStudentStatus } : {}),
       sort: query.sort as AdminStudentSort,
       direction: query.direction as SortDirection,
-      limit: query.limit,
-      offset: query.offset,
+      limit: query.limit ?? 25,
+      offset: query.offset ?? 0,
     });
     return { students: page.items, page: { total: page.total, limit: page.limit, offset: page.offset } };
   });
@@ -121,7 +121,11 @@ export function registerAdminStudentAccessRoutes(
     const params = parseBody(StudentParamsSchema, request.params);
     const query = parseBody(StudentDetailQuerySchema, request.query);
     return {
-      student: await service.studentDetail(params.profileId, query.historyLimit, query.historyOffset),
+      student: await service.studentDetail(
+        params.profileId,
+        query.historyLimit ?? 25,
+        query.historyOffset ?? 0,
+      ),
     };
   });
 }
