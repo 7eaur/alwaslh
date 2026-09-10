@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "class_slug": "grade-12",
+  "subject_slug": "physics",
+  "subject_title": "الفيزياء",
+  "source_repository": "7eaur/alwaslh-go",
+  "source_commit": "f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23",
+  "total_textbook_pages": 207,
+  "verified_visual_pages": 10,
+  "first_verified_page_number": 9,
+  "last_verified_page_number": 18,
+  "last_verified_source_sequence": 10,
+  "next_source_sequence": 11,
+  "verification_policy": "Only records manually checked against the exact original source image are counted as verified. OCR output is draft evidence only."
+}
