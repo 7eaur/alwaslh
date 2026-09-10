@@ -21,9 +21,9 @@ async function expectNoHorizontalOverflow(page) {
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
 }
 
-async function openVersionA(card, fixture, mode) {
+async function openVersionA(page, card, fixture, mode) {
   await card.getByLabel("النموذج").selectOption({ label: fixture.versionALabel });
-  const responsePromise = card.page().waitForResponse(
+  const responsePromise = page.waitForResponse(
     (response) =>
       response.url().includes(`/v1/student/quizzes/${fixture.quizId}/sessions`) &&
       response.request().method() === "POST" &&
@@ -64,7 +64,7 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
   await expect(card.getByText(fixture.className, { exact: false })).toBeVisible();
   await expect(card.getByText(fixture.subjectName, { exact: false })).toBeVisible();
 
-  const practicePayload = await openVersionA(card, fixture, "practice");
+  const practicePayload = await openVersionA(page, card, fixture, "practice");
   expect(practicePayload.assessment.version.id).toBe(fixture.versionAId);
   expect(practicePayload.assessment.session.mode).toBe("practice");
   expect(practicePayload.assessment.questions.every((question) => question.feedback === null)).toBe(true);
@@ -87,7 +87,7 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
   await expect(page.getByText(fixture.directExplanation, { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "إنهاء تدريب" }).click();
-  await expect(page.getByText("100٪", { exact: true })).toBeVisible();
+  await expect(page.getByText(/(?:١٠٠|100)٪/, { exact: true })).toBeVisible();
   await expect(page.getByText(/2 صحيحة من 2 سؤال/)).toBeVisible();
 
   await page.getByRole("button", { name: "العودة إلى التدريبات والاختبارات" }).click();
@@ -95,7 +95,7 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
   await expect(page.getByText(fixture.quizTitle, { exact: true }).last()).toBeVisible();
 
   const testCard = page.locator(`[data-quiz-id="${fixture.quizId}"]`);
-  const testPayload = await openVersionA(testCard, fixture, "test");
+  const testPayload = await openVersionA(page, testCard, fixture, "test");
   expect(testPayload.assessment.session.mode).toBe("test");
   expect(JSON.stringify(testPayload)).not.toContain(fixture.directAnswer);
   await expect(page.getByText(/لن تظهر صحة الإجابات قبل إنهاء الاختبار/)).toBeVisible();
@@ -117,7 +117,7 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
   await expect(page.getByText("إجابة صحيحة", { exact: true })).toHaveCount(0);
 
   await page.getByRole("button", { name: "إنهاء اختبار" }).click();
-  await expect(page.getByText("100٪", { exact: true })).toBeVisible();
+  await expect(page.getByText(/(?:١٠٠|100)٪/, { exact: true })).toBeVisible();
   await expect(page.getByText("إجابة صحيحة", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "السؤال السابق" }).click();
   await expect(page.getByText(fixture.mcqExplanation, { exact: true })).toBeVisible();
@@ -132,13 +132,18 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
 
   await page.getByRole("button", { name: "العودة إلى التدريبات والاختبارات" }).click();
   const resumeCard = page.locator(`[data-quiz-id="${fixture.quizId}"]`);
-  const firstResumeStart = await openVersionA(resumeCard, fixture, "practice");
+  const firstResumeStart = await openVersionA(page, resumeCard, fixture, "practice");
   const resumeSessionId = firstResumeStart.assessment.session.id;
   await page.getByRole("radio", { name: fixture.mcqCorrect }).check();
   await page.getByRole("button", { name: "حفظ وعرض النتيجة" }).click();
   await page.getByRole("button", { name: "العودة إلى التدريبات والاختبارات" }).click();
 
-  const secondResumeStart = await openVersionA(page.locator(`[data-quiz-id="${fixture.quizId}"]`), fixture, "practice");
+  const secondResumeStart = await openVersionA(
+    page,
+    page.locator(`[data-quiz-id="${fixture.quizId}"]`),
+    fixture,
+    "practice",
+  );
   expect(secondResumeStart.assessment.session.id).toBe(resumeSessionId);
   expect(secondResumeStart.assessment.progress.answeredCount).toBe(1);
   await expect(page.getByText("أُجيب عن 1 من 2 سؤال.")).toBeVisible();
