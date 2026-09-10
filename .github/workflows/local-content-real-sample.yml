@@ -1,0 +1,265 @@
+name: Local Content Prep Real Sample
+
+on:
+  push:
+    branches:
+      - experiment/local-content-ocr-pipeline
+    paths:
+      - .github/workflows/local-content-real-sample.yml
+      - tools/local-content-prep/**
+
+permissions:
+  contents: read
+
+jobs:
+  real-sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout content prep branch
+        uses: actions/checkout@v4
+
+      - name: Checkout real content source
+        uses: actions/checkout@v4
+        with:
+          repository: 7eaur/alwaslh-go
+          ref: master
+          path: source-content
+          sparse-checkout: |
+            الفيزياء ثالث ثانوي/كتاب الفيزياء/الصور
+            الفيزياء ثالث ثانوي/نماذج وزاريه 1447
+          sparse-checkout-cone-mode: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: tools/local-content-prep/pyproject.toml
+
+      - name: Install image pipeline
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e 'tools/local-content-prep[dev]'
+
+      - name: Select representative real pages
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          import shutil
+          from pathlib import Path
+
+          root = Path('source-content')
+          workspace = Path('real-sample-workspace')
+          groups = {
+              'book': root / 'الفيزياء ثالث ثانوي' / 'كتاب الفيزياء' / 'الصور',
+              'exam-1447': root / 'الفيزياء ثالث ثانوي' / 'نماذج وزاريه 1447',
+          }
+          supported = {'.jpg', '.jpeg', '.png', '.webp'}
+          selected = []
+
+          for lesson, source_dir in groups.items():
+              files = sorted(
+                  (p for p in source_dir.rglob('*') if p.is_file() and p.suffix.lower() in supported),
+                  key=lambda p: p.name,
+              )
+              if len(files) < 4:
+                  raise SystemExit(f'expected at least 4 images in {source_dir}, found {len(files)}')
+              indexes = sorted({0, len(files) // 3, (2 * len(files)) // 3, len(files) - 1})
+              target = workspace / 'input' / 'grade-12' / 'physics' / lesson
+              target.mkdir(parents=True, exist_ok=True)
+              for position, source_index in enumerate(indexes, start=1):
+                  source = files[source_index]
+                  destination = target / f'{position:03d}{source.suffix.lower()}'
+                  shutil.copy2(source, destination)
+                  selected.append({
+                      'lesson': lesson,
+                      'sample_position': position,
+                      'source_index': source_index,
+                      'source_count': len(files),
+                      'original_path': source.as_posix(),
+                      'original_filename': source.name,
+                      'copied_path': destination.as_posix(),
+                      'source_bytes': source.stat().st_size,
+                  })
+
+          Path('real-sample-workspace/selected-sources.json').write_text(
+              json.dumps(selected, ensure_ascii=False, indent=2), encoding='utf-8'
+          )
+          print(json.dumps(selected, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Build editable catalog
+        run: |
+          alwaslh-content-prep scan real-sample-workspace \
+            --collection-slug real-alwaslh-go-sample \
+            --collection-title 'عينة حقيقية من محتوى الوسيلة'
+          cat real-sample-workspace/catalog.json
+
+      - name: Prepare images without OCR
+        run: |
+          alwaslh-content-prep prepare real-sample-workspace --skip-ocr --quality 82
+          alwaslh-content-prep validate real-sample-workspace
+
+      - name: Measure image output against real sources
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import csv
+          import json
+          import math
+          from pathlib import Path
+          from PIL import Image, ImageChops
+
+          workspace = Path('real-sample-workspace')
+          selected = json.loads((workspace / 'selected-sources.json').read_text(encoding='utf-8'))
+          rows = []
+
+          for lesson in sorted({item['lesson'] for item in selected}):
+              lesson_items = sorted(
+                  (item for item in selected if item['lesson'] == lesson),
+                  key=lambda item: item['sample_position'],
+              )
+              page_dirs = sorted((workspace / 'prepared' / 'content' / 'grade-12' / 'physics' / lesson / 'pages').iterdir())
+              if len(page_dirs) != len(lesson_items):
+                  raise SystemExit(f'page count mismatch for {lesson}: {len(page_dirs)} != {len(lesson_items)}')
+
+              for item, page_dir in zip(lesson_items, page_dirs):
+                  source_path = Path(item['copied_path'])
+                  output_path = page_dir / 'image.webp'
+                  with Image.open(source_path) as source_img, Image.open(output_path) as output_img:
+                      source_rgb = source_img.convert('RGB')
+                      output_rgb = output_img.convert('RGB')
+                      same_dimensions = source_rgb.size == output_rgb.size
+                      psnr = None
+                      if same_dimensions:
+                          diff = ImageChops.difference(source_rgb, output_rgb)
+                          histogram = diff.histogram()
+                          squared_error = sum(((i % 256) ** 2) * count for i, count in enumerate(histogram))
+                          mse = squared_error / (source_rgb.width * source_rgb.height * 3)
+                          psnr = None if mse == 0 else 20 * math.log10(255.0 / math.sqrt(mse))
+                      output_bytes = output_path.stat().st_size
+                      source_bytes = source_path.stat().st_size
+                      rows.append({
+                          **item,
+                          'source_width': source_rgb.width,
+                          'source_height': source_rgb.height,
+                          'output_width': output_rgb.width,
+                          'output_height': output_rgb.height,
+                          'same_dimensions': same_dimensions,
+                          'output_bytes': output_bytes,
+                          'size_ratio': round(output_bytes / source_bytes, 4),
+                          'reduction_percent': round((1 - output_bytes / source_bytes) * 100, 2),
+                          'psnr_db': None if psnr is None else round(psnr, 2),
+                          'output_path': output_path.as_posix(),
+                      })
+
+          report_dir = workspace / 'prepared' / 'reports'
+          (report_dir / 'real-sample-metrics.json').write_text(
+              json.dumps(rows, ensure_ascii=False, indent=2), encoding='utf-8'
+          )
+          with (report_dir / 'real-sample-metrics.csv').open('w', encoding='utf-8-sig', newline='') as handle:
+              writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+              writer.writeheader()
+              writer.writerows(rows)
+
+          summary = {
+              'sample_count': len(rows),
+              'dimensions_preserved_count': sum(1 for row in rows if row['same_dimensions']),
+              'source_bytes_total': sum(row['source_bytes'] for row in rows),
+              'output_bytes_total': sum(row['output_bytes'] for row in rows),
+              'total_reduction_percent': round(
+                  (1 - sum(row['output_bytes'] for row in rows) / sum(row['source_bytes'] for row in rows)) * 100, 2
+              ),
+              'mean_psnr_db': round(
+                  sum(row['psnr_db'] for row in rows if row['psnr_db'] is not None)
+                  / len([row for row in rows if row['psnr_db'] is not None]),
+                  2,
+              ),
+          }
+          (report_dir / 'real-sample-summary.json').write_text(
+              json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8'
+          )
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          for row in rows:
+              print(json.dumps(row, ensure_ascii=False))
+          PY
+
+      - name: Install PaddleOCR runtime
+        id: install_ocr
+        continue-on-error: true
+        run: |
+          python -m pip install 'paddlepaddle>=3,<4'
+          python -m pip install -e 'tools/local-content-prep[ocr]'
+
+      - name: Run PaddleOCR on the same real sample
+        id: run_ocr
+        if: steps.install_ocr.outcome == 'success'
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          alwaslh-content-prep prepare real-sample-workspace --quality 82 --force 2>&1 | tee real-sample-workspace/prepared/reports/ocr-run.log
+          alwaslh-content-prep validate real-sample-workspace
+
+      - name: Summarize OCR outputs
+        if: always()
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          from pathlib import Path
+
+          workspace = Path('real-sample-workspace')
+          report_dir = workspace / 'prepared' / 'reports'
+          records = []
+          for ocr_path in sorted((workspace / 'prepared' / 'content').glob('**/ocr.json')):
+              try:
+                  payload = json.loads(ocr_path.read_text(encoding='utf-8'))
+              except Exception as exc:
+                  records.append({'ocr_path': ocr_path.as_posix(), 'read_error': str(exc)})
+                  continue
+              records.append({
+                  'ocr_path': ocr_path.as_posix(),
+                  'provider_key': payload.get('provider_key'),
+                  'provider_version': payload.get('provider_version'),
+                  'profile_key': payload.get('profile_key'),
+                  'mean_confidence': payload.get('mean_confidence'),
+                  'review_status': payload.get('review_status'),
+                  'review_reason': payload.get('review_reason'),
+                  'raw_text': payload.get('raw_text'),
+                  'normalized_text': payload.get('normalized_text'),
+                  'block_count': len(payload.get('blocks') or []),
+              })
+          (report_dir / 'real-sample-ocr.json').write_text(
+              json.dumps(records, ensure_ascii=False, indent=2), encoding='utf-8'
+          )
+          print(json.dumps(records, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Record OCR step status
+        if: always()
+        run: |
+          cat > real-sample-workspace/prepared/reports/ocr-status.json <<EOF
+          {
+            "install_outcome": "${{ steps.install_ocr.outcome }}",
+            "run_outcome": "${{ steps.run_ocr.outcome }}"
+          }
+          EOF
+          cat real-sample-workspace/prepared/reports/ocr-status.json
+
+      - name: Upload real-sample evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-content-real-sample
+          path: |
+            real-sample-workspace/selected-sources.json
+            real-sample-workspace/catalog.json
+            real-sample-workspace/prepared/package.json
+            real-sample-workspace/prepared/pages.jsonl
+            real-sample-workspace/prepared/reports/
+            real-sample-workspace/prepared/content/
+          if-no-files-found: error
+          retention-days: 14
