@@ -29,8 +29,9 @@ test("Stage13F regeneration creates an approved draft revision under the same st
     const adminRows = await db.query<{ id: string }>(
       "insert into profiles (role, display_name) values ('admin', 'مدير إعادة التوليد') returning id",
     );
-    const adminId = adminRows[0]?.id;
-    assert.ok(adminId);
+    const admin = adminRows[0];
+    assert.ok(admin);
+    const adminId = admin.id;
 
     const classRows = await db.query<{ id: string }>(
       "insert into classes (slug, name) values ($1, 'صف إعادة التوليد') returning id",
