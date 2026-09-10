@@ -1,109 +1,144 @@
 # PROJECT EXECUTION QUEUE — الوسيلة الذكية
 
-> قائمة التنفيذ الحالية في Single Owner mode. ابدأ دائمًا من أول عنصر غير مكتمل بعد قراءة Source of Truth.
+> Ordered execution authority. Always start from the first incomplete item after reading Source of Truth and Issue #16.
 
-Last synchronized: **2026-09-09 — Stage13E closure completed technically; Stage13F is the next implementation stage after this documentation batch.**
+Last synchronized: **2026-09-10 — Stage13F implementation verified 13/13; closure checkpoint re-verification/promotion is the active Track A task.**
 
-## Operating rules
+## Operating Rules
 
 - Repository: `7eaur/alwaslh`.
-- Issue `#16` is the sole execution board.
+- Issue #16 is the sole cross-track execution ledger.
 - Code/migrations/executable evidence outrank prose.
-- Root-cause fixes only; no test weakening/auth bypass/fake API/sleep-based race masking/duplicate authority.
-- Hosting/deployment remains **fully deferred until VPS + explicit Product Owner reopening**.
-- `main` is the development/integration baseline, not deployment authority.
-- Live-check `main`, Issue #16 and Actions before starting the first active task.
+- Root-cause fixes only; no test weakening, auth bypass, fake API, sleep-based race masking or duplicate durable authority.
+- Current model: parallel Track A (Backend/Admin/AI) + Track B (Student Product).
+- Production deployment/cutover remains future-only.
 
-## Closed stage checkpoint
+## Completed Track A Checkpoints
 
-### EXEC-004A — Synchronize stale standalone Stage13E CI contract
+### EXEC-005 — Stage13E Admin AI Operations / Review
 
-**Status: DONE / VERIFIED**
+**DONE / VERIFIED / CLOSED**
 
-`CI-013E-009` was fixed in the owning workflow: shell contract assertion synchronized with `0018_ai_admin_review.sql`, all four current review constraints retained, removed redundant latest-review index no longer required, legitimate current index checks preserved.
+Runtime authority: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
 
-### EXEC-004B — Full wider candidate matrix
+### EXEC-006A — Stage13F Question Bank foundation
 
-**Status: DONE / VERIFIED**
+**DONE / VERIFIED**
 
-Accepted candidate: `72ead8446af237392dc6d953c8e0c2382f468286`.
+Canonical stable items/revisions, typed direct/MCQ/T-F persistence, provenance, approved-AI import, manual authoring, lifecycle and PostgreSQL/API integration.
 
-Result: **12/12 SUCCESS on exact candidate HEAD**. PR #24 closed unmerged.
+### EXEC-006B — Stage13F Admin Question Bank
 
-### EXEC-005 — Selective Stage13E promotion assembly
+**DONE / VERIFIED**
 
-**Status: DONE / VERIFIED**
+Dedicated Admin workspace, typed client, lifecycle/provenance/history/session/responsive UX and real Chromium.
 
-Built from latest inspected main `e304d61286b9ca120db2dad695d29f4f1642e733` using exactly the accepted 36-file Stage13E promotion manifest.
+### EXEC-006C — Stage13F Quiz Builder / immutable snapshots
 
-Promotion HEAD: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
+**DONE / VERIFIED**
 
-Result: one promotion commit / 36 changed files; **12/12 SUCCESS on exact promotion HEAD**. PR #25 closed unmerged.
+Published Question Bank candidates, class/subject/multi-lesson quiz scope, multiple versions/models, immutable delivery snapshots, direct delivery support, review/publish/archive lifecycle.
 
-### EXEC-005B — Stage13E closure to main
+### EXEC-006D — Regenerate one / export
 
-**Status: DONE / DOCUMENTATION CLOSURE IN THIS BATCH**
+**DONE / VERIFIED**
 
-`main` was fast-forwarded non-force to verified promotion HEAD `d5ebc7f25a369430387a758c7c0bb89350963d67`; later docs-only closure commits do not change the verified runtime tree.
+Same-item approved regeneration apply, DB identity guard, idempotent replay, exact Review/Published version CSV + RTL print/PDF template and Draft export rejection.
 
-## Ordered queue
+Runtime checkpoint: `afbe552710b3f1cf79ee70594f691fa836c05a45`.
 
-### EXEC-006 — Stage13F Question Bank / Quiz Builder / Publish
+Stage-specific runs `34420441878` and `34420441837` SUCCESS.
 
-**Priority: P1 · Status: READY / FIRST IMPLEMENTATION TASK / NOT STARTED**
+Runtime wider verification-only PR #27: **13/13 SUCCESS**, closed unmerged. Runs: `34420900598`, `34420900550`, `34420900527`, `34420900592`, `34420900501`, `34420900492`, `34420900547`, `34420900488`, `34420900522`, `34420900503`, `34420900520`, `34420900476`, `34420900482`.
 
-Start only after this Stage13E documentation closure commit and Issue #16 closure report are complete.
+## Active Queue
 
-Required Stage13F product boundary:
+### EXEC-006E — Stage13F closure documentation exact-head verification + main promotion
 
-1. define canonical reviewed Question Bank persistence from Stage11/12/13E outputs, including `AI-011-005` direct-question persistence;
-2. preserve class/subject/lesson/source/page/checksum/prompt/model provenance;
-3. distinguish generated candidate, human edit/review and publish authority;
-4. support MCQ / True-False / manual/generated editing under typed validation;
-5. implement explicit Draft → Review → Published lifecycle; no raw/unreviewed AI output reaches Student authority;
-6. implement Quiz Builder with stable question identity, versioning and deterministic regeneration of one question without replacing unrelated questions;
-7. define/export safe printable/portable quiz versions only from reviewed/published authority;
-8. reuse Stage11 validation + Stage12 durable execution + Stage13E review authority; do not build a second AI queue or review system;
-9. add PostgreSQL/API/Admin unit/integration/real Chromium evidence;
-10. run same-head wider regressions before closure.
+**Priority: P0 process gate · Status: ACTIVE**
 
-Before coding Stage13F, perform repository discovery of any existing Question Bank/quiz schema/routes/components/tests and classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE. Any uninspected area = `NOT YET VERIFIED`.
+1. commit synchronized Status/Engineering Log/Handoff/Resume/Continuity/Queue/Roadmap/Stage13F contract/Legacy Coverage atomically;
+2. open verification-only Draft PR to `main`;
+3. require the same wider pull-request matrix to pass on that exact closure commit;
+4. close PR unmerged;
+5. re-check live `main` is still the Stage13F base;
+6. fast-forward `main` non-force to the exact verified closure commit;
+7. post final Stage13F EXECUTION REPORT in Issue #16.
+
+No merge commit or force update.
 
 ---
 
 ### EXEC-007 — Stage13G Remaining Admin Product
 
-**Priority: P1 · Status: BLOCKED BY STAGE13F CLOSURE**
+**Priority: P1 · Status: NEXT AFTER EXEC-006E**
 
-Student accounts/search/status, access-code operations, recovery/device rebind operations, notifications, import/export/reports, settings/security/audit/operations dashboard and remaining Admin parity rows.
+Required outcomes include:
+
+- Student account search/status/admin recovery actions;
+- access-code generation/search/filter/sort/bulk/import/export/print;
+- recovery/device rebind operations;
+- notifications;
+- import/export/reporting;
+- settings/security/audit/operations dashboard;
+- unresolved Admin legacy parity;
+- unresolved Quiz/AI authoring outcomes explicitly left open by Stage13F, including direct generation orchestration inside the Admin product and specialized export variants where still valuable.
+
+Before implementation, inspect current code and map each remaining legacy row. Do not infer completion from Stage11/12/13E foundations.
 
 ---
 
-### EXEC-008+ — Student/Product/Hardening roadmap
+### EXEC-007A — Live provider runtime boundary `AI-012-019`
 
-Follow `MASTER_REBUILD_ROADMAP.md` for Stage14–25. Staging/release/production/monitoring Stage26–29 remain future-only until VPS/deployment is explicitly reopened.
+**Priority: P2 · Status: NOT YET VERIFIED**
 
-## Open boundaries carried forward
+Benchmark/select live provider/model/routes, configure authorized credentials outside source control, execute real runtime generation and prove billing/limits/errors/fallback behavior. This is not closed by provider-neutral prompts/contracts.
 
-- `AI-011-005` P2 — Stage13F reviewed direct Question Bank persistence.
-- `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap `NOT YET VERIFIED`.
-- `CI-001` — historical runner-allocation incident no longer blocking; exact external historical cause remains `NOT YET VERIFIED`.
+Do not block Stage13F closure on absent live credentials, but do not claim production generation readiness until this gate passes.
 
-## Stage13E final evidence
+---
 
-Promotion run IDs:
+## Parallel Track B
 
-- Combined `34401502463`
-- Stage13E standalone `34401549935`
-- Stage13E Frontend Prep `34401549849`
-- Rebuild `34401550016`
-- Stage13 Admin `34401549835`
-- Stage9 `34401549851`
-- Stage10 `34401549989`
-- OCR `34401549910`
-- Stage11 `34401549927`
-- Stage12 `34401549964`
-- Stage13D Content `34401550065`
-- Stage13D Admin UI `34401549903`
+### STUDENT-014 — Stage14 Student Web/PWA
 
-All were SUCCESS on `d5ebc7f25a369430387a758c7c0bb89350963d67`.
+**Status from Track B Source of Truth: IN PROGRESS**
+
+Verified there: Access, entitlement-safe Curriculum and protected Reader including real Chromium. Latest recorded verified runtime: `0d0a1778b0525560ec288dbfc612bbfa0efa9a6d`.
+
+Remaining Stage14 closure: learning-first shell, product copy and whole-surface accessibility polish/audit.
+
+### STUDENT-015 — Practice / Assessment
+
+**BLOCKED until Track B incorporates Stage13F promoted main authority.**
+
+After EXEC-006E, Track B must merge/rebase the exact verified main checkpoint before implementing published quiz consumption. No local/fake Question Bank authority.
+
+---
+
+## Later Roadmap
+
+- Stage15 Practice/Assessment — after Stage13F integration.
+- Stage16 Offline/PWA.
+- Stage17 Personal Learning Data.
+- Stage18 Notifications.
+- Stage19 Progress/Statistics/Achievements.
+- Stage20 Import/Export/Reporting.
+- Stage21 Performance.
+- Stage22 Security hardening.
+- Stage23 automated tests/CI expansion.
+- Stage24 accessibility/device QA.
+- Stage25 initial canonical data/content load.
+- Stage26–29 staging/release/production/monitoring only when release/deployment is explicitly active.
+
+## Open Findings
+
+- `AI-012-019` P2 — live provider runtime `NOT YET VERIFIED`.
+- legacy Admin/Quiz authoring rows explicitly marked open in `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
+- historical `CI-001` exact external runner-allocation cause `NOT YET VERIFIED`, nonblocking.
+
+## Do Not Reopen
+
+- Stage13E verification PRs #24/#25.
+- Stage13F runtime verification PR #27 after closure; it was evidence-only.
+- accidental `.noop` history; cleanup restored exact tree and no rewrite is needed.

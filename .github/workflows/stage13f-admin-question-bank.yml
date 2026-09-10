@@ -1,0 +1,136 @@
+name: Stage 13F Admin Question Bank Verification
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - integration/stage13f-question-bank
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage13f-admin-question-bank-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admin-question-bank:
+    name: Stage 13F · Admin Question Bank UI quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Admin dependencies
+        run: npm install --prefix apps/admin-web --ignore-scripts --no-audit --no-fund
+      - name: Admin lint
+        run: npm run lint --prefix apps/admin-web
+      - name: Admin strict typecheck
+        run: npm run typecheck --prefix apps/admin-web
+      - name: Admin unit tests
+        run: npm test --prefix apps/admin-web
+      - name: Admin build
+        run: npm run build --prefix apps/admin-web
+
+  admin-question-bank-chromium:
+    name: Stage 13F · Real API + PostgreSQL + Chromium
+    needs: admin-question-bank
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_stage13f_admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_stage13f_admin"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      HOST: 127.0.0.1
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_stage13f_admin
+      LOG_LEVEL: silent
+      ALLOWED_ORIGINS: http://127.0.0.1:5175
+      MEDIA_STORAGE_ROOT: /tmp/alwaslh-stage13f-admin-media
+      PGPASSWORD: postgres
+      VITE_API_BASE_URL: http://127.0.0.1:3000
+      STAGE13F_E2E: "1"
+      STAGE13F_ADMIN_IDENTIFIER: stage13f-admin-ui
+      STAGE13F_ADMIN_PASSWORD: Stage13fAdminUiPass123!
+      STAGE13F_E2E_OUTPUT_ID: 13000000-0000-4000-8000-000000000004
+      STAGE13E_E2E_API_BASE_URL: http://127.0.0.1:3000
+      STAGE13E_E2E_ADMIN_ORIGIN: http://127.0.0.1:5175
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y postgresql-client >/dev/null
+          mkdir -p "$MEDIA_STORAGE_ROOT"
+      - name: Install API and Admin dependencies
+        run: |
+          npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+          npm install --prefix apps/admin-web --ignore-scripts --no-audit --no-fund
+      - name: API quality and build
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+          npm run build --prefix apps/api
+      - name: Admin build from verified source
+        run: npm run build --prefix apps/admin-web
+      - name: Apply all migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify Stage13F database contract
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('question_bank_items','question_bank_revisions','question_bank_revision_lessons','question_bank_revision_sources','question_bank_ai_imports','question_bank_events') and relkind='r'")" = "6"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='question_bank_question_type' and e.enumlabel='direct'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_trigger where tgname='question_bank_regeneration_identity_guard' and not tgisinternal")" = "1"
+      - name: Run Stage13F backend authority regression
+        working-directory: apps/api
+        run: |
+          node --test --import tsx tests/integration/question-bank.integration.test.ts
+          node --test --import tsx tests/integration/question-bank-regeneration.integration.test.ts
+          node --test --import tsx tests/integration/quiz-builder.integration.test.ts
+      - name: Reset PostgreSQL for deterministic browser fixture
+        run: |
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          drop schema public cascade;
+          create schema public;
+          SQL
+          npm run db:migrate --prefix apps/api
+      - name: Create explicit Stage13F E2E Super Admin
+        env:
+          ADMIN_BOOTSTRAP_IDENTIFIER: stage13f-admin-ui
+          ADMIN_BOOTSTRAP_PASSWORD: Stage13fAdminUiPass123!
+          ADMIN_BOOTSTRAP_DISPLAY_NAME: مدير اختبار بنك الأسئلة
+        run: npm run auth:create-admin --prefix apps/api
+      - name: Seed real Stage13F browser fixtures
+        working-directory: apps/api
+        run: node --import tsx tests/fixtures/stage13f-question-bank-e2e-seed.ts
+      - name: Verify browser fixture invariants
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_items")" = "33"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_revisions where prompt='سؤال الصفحة الثانية في بنك الأسئلة' and status='draft'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_revisions where prompt='أي الخيارات يمثل وحدة قياس الطاقة؟' and status='review'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_revisions where prompt='ما تعريف الطاقة في هذا الاختبار؟' and status='published'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select action::text from ai_output_review_events where ai_output_id='$STAGE13F_E2E_OUTPUT_ID' order by revision desc limit 1")" = "approve"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_ai_imports where ai_output_id='$STAGE13F_E2E_OUTPUT_ID'")" = "0"
+      - name: Install Chromium
+        run: npx --prefix apps/admin-web playwright install --with-deps chromium
+      - name: Run Stage13F real Admin Chromium suite
+        working-directory: apps/admin-web
+        run: npx playwright test e2e/question-bank.e2e.spec.mjs

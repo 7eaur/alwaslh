@@ -18,6 +18,15 @@ import { StudentReaderService } from "./curriculum/student-reader.js";
 import type { Database } from "./db.js";
 import { AppError, toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
+import { registerQuestionBankRoutes } from "./question-bank/http.js";
+import { QuestionBankRegenerationService } from "./question-bank/regeneration.js";
+import { registerQuestionBankRegenerationRoutes } from "./question-bank/regeneration-http.js";
+import { QuestionBankService } from "./question-bank/service.js";
+import { QuizQuestionCandidateService } from "./quiz-builder/candidates.js";
+import { QuizVersionExportService } from "./quiz-builder/export.js";
+import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
+import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
+import { QuizBuilderService } from "./quiz-builder/service.js";
 
 export interface AppDependencies {
   config: AppConfig;
@@ -39,6 +48,11 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const curriculum = new CurriculumService(database);
   const contentOperations = new AdminContentOperationsService(database);
   const aiOperations = new AdminAiOperationsService(database);
+  const questionBank = new QuestionBankService(database);
+  const questionBankRegeneration = new QuestionBankRegenerationService(database);
+  const quizBuilder = new QuizBuilderService(database);
+  const quizCandidates = new QuizQuestionCandidateService(database);
+  const quizExports = new QuizVersionExportService(quizBuilder);
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const studentReader = new StudentReaderService(database, mediaStorage);
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
@@ -68,6 +82,10 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
+  registerQuestionBankRoutes(app, config, auth, questionBank);
+  registerQuestionBankRegenerationRoutes(app, config, auth, questionBankRegeneration);
+  registerQuizBuilderRoutes(app, config, auth, quizBuilder, quizCandidates);
+  registerQuizVersionExportRoutes(app, config, auth, quizExports);
 
   app.get("/health", async () => ({
     status: "ok",
