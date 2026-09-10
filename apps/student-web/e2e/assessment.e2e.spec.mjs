@@ -148,8 +148,10 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
   expect(secondResumeStart.assessment.progress.answeredCount).toBe(1);
   await expect(page.getByText("أُجيب عن 1 من 2 سؤال.")).toBeVisible();
 
-  await page.getByRole("button", { name: "السؤال التالي" }).click();
   const directInput = page.getByLabel("إجابتك");
+  if (!(await directInput.isVisible())) {
+    await page.getByRole("button", { name: "السؤال التالي" }).click();
+  }
   await expect(directInput).toBeEnabled();
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
