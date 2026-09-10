@@ -1,0 +1,77 @@
+name: Content Corpus Stage 1 Inventory
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - content-prep/full-corpus-extraction
+    paths:
+      - .github/workflows/content-corpus-stage1.yml
+      - tools/local-content-prep/scripts/build_corpus_inventory.py
+      - tools/local-content-prep/CORPUS_WORKFLOW.md
+      - tools/local-content-prep/CORPUS_STATUS.md
+
+permissions:
+  contents: write
+
+concurrency:
+  group: content-corpus-stage1-inventory
+  cancel-in-progress: true
+
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout corpus branch
+        uses: actions/checkout@v4
+        with:
+          ref: content-prep/full-corpus-extraction
+          fetch-depth: 1
+
+      - name: Checkout source corpus
+        uses: actions/checkout@v4
+        with:
+          repository: 7eaur/alwaslh-go
+          ref: f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23
+          path: source-content
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Build source inventory
+        run: |
+          python tools/local-content-prep/scripts/build_corpus_inventory.py \
+            source-content \
+            data/content-corpus \
+            --source-repository 7eaur/alwaslh-go \
+            --source-commit f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23
+
+      - name: Validate inventory files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('data/content-corpus')
+          summary = json.loads((root / 'inventory.json').read_text(encoding='utf-8'))
+          rows = (root / 'inventory.jsonl').read_text(encoding='utf-8').splitlines()
+          assert summary['source_commit'] == 'f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23'
+          assert summary['image_count'] == len(rows) > 0
+          assert all(json.loads(row)['source_git_blob_sha1'] for row in rows)
+          print(f"validated {len(rows)} source images")
+          PY
+
+      - name: Commit generated inventory
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/content-corpus/inventory.json data/content-corpus/inventory.jsonl data/content-corpus/INVENTORY.md
+          if git diff --cached --quiet; then
+            echo 'Inventory is unchanged.'
+          else
+            git commit -m 'data(corpus): generate source image inventory'
+            git push origin HEAD:content-prep/full-corpus-extraction
+          fi
