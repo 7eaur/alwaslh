@@ -8,13 +8,19 @@ on:
       - .github/workflows/local-content-real-sample.yml
       - tools/local-content-prep/**
 
+concurrency:
+  group: local-content-real-sample-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   real-sample:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
+    env:
+      PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK: "True"
 
     steps:
       - name: Checkout content prep branch
@@ -42,6 +48,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e 'tools/local-content-prep[dev]'
+
+      - name: Run local-content unit tests
+        run: pytest tools/local-content-prep/tests
 
       - name: Select representative real pages
         run: |
@@ -85,7 +94,7 @@ jobs:
                       'source_bytes': source.stat().st_size,
                   })
 
-          Path('real-sample-workspace/selected-sources.json').write_text(
+          (workspace / 'selected-sources.json').write_text(
               json.dumps(selected, ensure_ascii=False, indent=2), encoding='utf-8'
           )
           print(json.dumps(selected, ensure_ascii=False, indent=2))
@@ -165,6 +174,7 @@ jobs:
               writer.writeheader()
               writer.writerows(rows)
 
+          psnr_values = [row['psnr_db'] for row in rows if row['psnr_db'] is not None]
           summary = {
               'sample_count': len(rows),
               'dimensions_preserved_count': sum(1 for row in rows if row['same_dimensions']),
@@ -173,11 +183,7 @@ jobs:
               'total_reduction_percent': round(
                   (1 - sum(row['output_bytes'] for row in rows) / sum(row['source_bytes'] for row in rows)) * 100, 2
               ),
-              'mean_psnr_db': round(
-                  sum(row['psnr_db'] for row in rows if row['psnr_db'] is not None)
-                  / len([row for row in rows if row['psnr_db'] is not None]),
-                  2,
-              ),
+              'mean_psnr_db': round(sum(psnr_values) / len(psnr_values), 2) if psnr_values else None,
           }
           (report_dir / 'real-sample-summary.json').write_text(
               json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8'
@@ -187,6 +193,35 @@ jobs:
               print(json.dumps(row, ensure_ascii=False))
           PY
 
+      - name: Build focused two-page OCR sample
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+          import json
+          import shutil
+          from pathlib import Path
+
+          image_workspace = Path('real-sample-workspace')
+          ocr_workspace = Path('real-ocr-workspace')
+          selected = json.loads((image_workspace / 'selected-sources.json').read_text(encoding='utf-8'))
+          chosen = []
+          for lesson in ('book', 'exam-1447'):
+              candidates = [item for item in selected if item['lesson'] == lesson]
+              item = next((item for item in candidates if item['sample_position'] == 2), candidates[0])
+              source = Path(item['copied_path'])
+              target = ocr_workspace / 'input' / 'grade-12' / 'physics' / lesson
+              target.mkdir(parents=True, exist_ok=True)
+              destination = target / f'001{source.suffix.lower()}'
+              shutil.copy2(source, destination)
+              chosen.append({**item, 'ocr_copied_path': destination.as_posix()})
+          (ocr_workspace / 'selected-sources.json').write_text(
+              json.dumps(chosen, ensure_ascii=False, indent=2), encoding='utf-8'
+          )
+          PY
+          alwaslh-content-prep scan real-ocr-workspace \
+            --collection-slug real-alwaslh-go-ocr-sample \
+            --collection-title 'عينة OCR حقيقية من محتوى الوسيلة'
+
       - name: Install PaddleOCR runtime
         id: install_ocr
         continue-on-error: true
@@ -194,14 +229,15 @@ jobs:
           python -m pip install 'paddlepaddle>=3,<4'
           python -m pip install -e 'tools/local-content-prep[ocr]'
 
-      - name: Run PaddleOCR on the same real sample
+      - name: Run PaddleOCR on focused real sample
         id: run_ocr
         if: steps.install_ocr.outcome == 'success'
         continue-on-error: true
         run: |
+          mkdir -p real-ocr-workspace/evidence
           set -o pipefail
-          alwaslh-content-prep prepare real-sample-workspace --quality 82 --force 2>&1 | tee real-sample-workspace/prepared/reports/ocr-run.log
-          alwaslh-content-prep validate real-sample-workspace
+          alwaslh-content-prep prepare real-ocr-workspace --quality 82 2>&1 | tee real-ocr-workspace/evidence/ocr-run.log
+          alwaslh-content-prep validate real-ocr-workspace
 
       - name: Summarize OCR outputs
         if: always()
@@ -211,28 +247,30 @@ jobs:
           import json
           from pathlib import Path
 
-          workspace = Path('real-sample-workspace')
-          report_dir = workspace / 'prepared' / 'reports'
+          workspace = Path('real-ocr-workspace')
           records = []
-          for ocr_path in sorted((workspace / 'prepared' / 'content').glob('**/ocr.json')):
-              try:
-                  payload = json.loads(ocr_path.read_text(encoding='utf-8'))
-              except Exception as exc:
-                  records.append({'ocr_path': ocr_path.as_posix(), 'read_error': str(exc)})
-                  continue
-              records.append({
-                  'ocr_path': ocr_path.as_posix(),
-                  'provider_key': payload.get('provider_key'),
-                  'provider_version': payload.get('provider_version'),
-                  'profile_key': payload.get('profile_key'),
-                  'mean_confidence': payload.get('mean_confidence'),
-                  'review_status': payload.get('review_status'),
-                  'review_reason': payload.get('review_reason'),
-                  'raw_text': payload.get('raw_text'),
-                  'normalized_text': payload.get('normalized_text'),
-                  'block_count': len(payload.get('blocks') or []),
-              })
-          (report_dir / 'real-sample-ocr.json').write_text(
+          content_root = workspace / 'prepared' / 'content'
+          if content_root.exists():
+              for ocr_path in sorted(content_root.glob('**/ocr.json')):
+                  try:
+                      payload = json.loads(ocr_path.read_text(encoding='utf-8'))
+                  except Exception as exc:
+                      records.append({'ocr_path': ocr_path.as_posix(), 'read_error': str(exc)})
+                      continue
+                  records.append({
+                      'ocr_path': ocr_path.as_posix(),
+                      'provider_key': payload.get('provider_key'),
+                      'provider_version': payload.get('provider_version'),
+                      'profile_key': payload.get('profile_key'),
+                      'mean_confidence': payload.get('mean_confidence'),
+                      'review_status': payload.get('review_status'),
+                      'review_reason': payload.get('review_reason'),
+                      'raw_text': payload.get('raw_text'),
+                      'normalized_text': payload.get('normalized_text'),
+                      'block_count': len(payload.get('blocks') or []),
+                  })
+          (workspace / 'evidence').mkdir(parents=True, exist_ok=True)
+          (workspace / 'evidence' / 'real-sample-ocr.json').write_text(
               json.dumps(records, ensure_ascii=False, indent=2), encoding='utf-8'
           )
           print(json.dumps(records, ensure_ascii=False, indent=2))
@@ -241,13 +279,14 @@ jobs:
       - name: Record OCR step status
         if: always()
         run: |
-          cat > real-sample-workspace/prepared/reports/ocr-status.json <<EOF
+          mkdir -p real-ocr-workspace/evidence
+          cat > real-ocr-workspace/evidence/ocr-status.json <<EOF
           {
             "install_outcome": "${{ steps.install_ocr.outcome }}",
             "run_outcome": "${{ steps.run_ocr.outcome }}"
           }
           EOF
-          cat real-sample-workspace/prepared/reports/ocr-status.json
+          cat real-ocr-workspace/evidence/ocr-status.json
 
       - name: Upload real-sample evidence
         if: always()
@@ -255,11 +294,14 @@ jobs:
         with:
           name: local-content-real-sample
           path: |
+            real-sample-workspace/input/
             real-sample-workspace/selected-sources.json
             real-sample-workspace/catalog.json
-            real-sample-workspace/prepared/package.json
-            real-sample-workspace/prepared/pages.jsonl
-            real-sample-workspace/prepared/reports/
-            real-sample-workspace/prepared/content/
-          if-no-files-found: error
+            real-sample-workspace/prepared/
+            real-ocr-workspace/input/
+            real-ocr-workspace/selected-sources.json
+            real-ocr-workspace/catalog.json
+            real-ocr-workspace/evidence/
+            real-ocr-workspace/prepared/
+          if-no-files-found: warn
           retention-days: 14
