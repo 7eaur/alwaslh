@@ -44,6 +44,11 @@ export function registerAdminOperationsRoutes(
     await requireAdmin(request, config, auth);
     const parsed = AuditQuerySchema.safeParse(request.query);
     if (!parsed.success) throw new AppError("BAD_REQUEST", "معاملات سجل التدقيق غير صالحة", 400);
-    return operations.audit(parsed.data);
+    return operations.audit({
+      ...(parsed.data.source !== undefined ? { source: parsed.data.source } : {}),
+      ...(parsed.data.eventType !== undefined ? { eventType: parsed.data.eventType } : {}),
+      ...(parsed.data.limit !== undefined ? { limit: parsed.data.limit } : {}),
+      ...(parsed.data.offset !== undefined ? { offset: parsed.data.offset } : {}),
+    });
   });
 }
