@@ -385,6 +385,7 @@ export function StudentCurriculumSection({
   }
 
   useEffect(() => {
+    if (!online && selectedLesson) return;
     void loadCurriculum();
   }, [online, refreshKey]);
 
