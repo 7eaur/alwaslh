@@ -55,7 +55,7 @@ function clearSessionCookie(config: AppConfig): string {
   return sessionCookie(config, "", 0);
 }
 
-export function parseBody<T>(schema: z.ZodType<T>, body: unknown): T {
+export function parseBody<TSchema extends z.ZodTypeAny>(schema: TSchema, body: unknown): z.output<TSchema> {
   const parsed = schema.safeParse(body);
   if (!parsed.success) throw new AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400);
   return parsed.data;
@@ -88,37 +88,20 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, auth
   app.post("/v1/auth/login", async (request, reply) => {
     const input = parseBody(LoginSchema, request.body);
     const result = await auth.login(input.identifier, input.password, request.headers["user-agent"]);
+    if (result.profile.role !== "admin") {
+      await auth.logout(result.token);
+      throw new AppError("FORBIDDEN", "دخول الطالب يتطلب جهازًا مسجلًا", 403);
+    }
     reply.header("Set-Cookie", sessionCookie(config, result.token, config.SESSION_TTL_HOURS * 3600));
     return { profile: result.profile };
   });
 
-  app.post("/v1/student/login/start", async (request) => {
-    const input = parseBody(LoginSchema, request.body);
-    return auth.startStudentLogin(input.identifier, input.password);
-  });
-
-  app.post("/v1/student/login/complete", async (request, reply) => {
-    const input = parseBody(StudentLoginCompleteSchema, request.body);
-    const result = await auth.completeStudentLogin({
-      challengeToken: input.challengeToken,
-      signature: input.signature,
-      ...(input.publicKeySpki ? { publicKeySpki: input.publicKeySpki } : {}),
-      ...(input.newPassword ? { newPassword: input.newPassword } : {}),
-      ...(request.headers["user-agent"] ? { userAgent: request.headers["user-agent"] } : {}),
-    });
-    reply.header("Set-Cookie", sessionCookie(config, result.token, config.SESSION_TTL_HOURS * 3600));
-    return { profile: result.profile, deviceId: result.deviceId };
-  });
-
   app.post("/v1/auth/logout", async (request, reply) => {
-    await auth.logout(sessionToken(request, config));
+    const token = sessionToken(request, config);
+    if (token) await auth.logout(token);
     reply.header("Set-Cookie", clearSessionCookie(config));
     return reply.code(204).send();
   });
-
-  app.get("/v1/auth/me", async (request) => ({
-    profile: await currentProfile(request, config, auth),
-  }));
 
   app.get("/v1/admin/me", async (request) => {
     const profile = await currentProfile(request, config, auth);
@@ -126,24 +109,23 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, auth
     return { profile };
   });
 
-  app.get("/v1/student/me", async (request) => {
+  app.post("/v1/auth/student-login/start", async (request) => {
+    const input = parseBody(LoginSchema, request.body);
+    return auth.startStudentLogin(input.identifier, input.password);
+  });
+
+  app.post("/v1/auth/student-login/complete", async (request, reply) => {
+    const input = parseBody(StudentLoginCompleteSchema, request.body);
+    const result = await auth.completeStudentLogin(input, request.headers["user-agent"]);
+    reply.header("Set-Cookie", sessionCookie(config, result.token, config.SESSION_TTL_HOURS * 3600));
+    return { profile: result.profile };
+  });
+
+  app.post("/v1/admin/auth/revoke-student-sessions", async (request, reply) => {
     const profile = await currentProfile(request, config, auth);
-    if (profile.role !== "student") throw new AppError("FORBIDDEN", "هذه العملية للطالب فقط", 403);
-    return { profile };
-  });
-
-  app.post("/v1/admin/auth/temporary-password", async (request) => {
-    const actor = await currentProfile(request, config, auth);
-    if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
+    if (profile.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
     const input = parseBody(StudentAdminMutationSchema, request.body);
-    return auth.issueTemporaryPassword(actor, input.profileId);
-  });
-
-  app.post("/v1/admin/auth/device-rebind", async (request) => {
-    const actor = await currentProfile(request, config, auth);
-    if (actor.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
-    const input = parseBody(StudentAdminMutationSchema, request.body);
-    await auth.resetStudentDevice(actor, input.profileId);
-    return { status: "device_rebind_allowed" };
+    await auth.revokeStudentSessions(input.profileId);
+    return reply.code(204).send();
   });
 }
