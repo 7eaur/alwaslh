@@ -32,12 +32,7 @@ export interface OperationsOverview {
   recentActivity: OperationsActivity[];
 }
 
-export type OperationsAuditSource =
-  | "auth"
-  | "access"
-  | "ai_review"
-  | "question_bank"
-  | "quiz_builder";
+export type OperationsAuditSource = "auth" | "access" | "ai_review" | "question_bank" | "quiz_builder";
 
 export interface OperationsAuditEntry {
   id: string;
@@ -457,12 +452,9 @@ export class AdminOperationsService {
     };
   }
 
-  async audit(input: {
-    source?: OperationsAuditSource;
-    eventType?: string;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<OperationsAuditPage> {
+  async audit(
+    input: { source?: OperationsAuditSource; eventType?: string; limit?: number; offset?: number } = {},
+  ): Promise<OperationsAuditPage> {
     const source = input.source ?? null;
     const eventType = input.eventType?.trim() || null;
     const limit = input.limit ?? 25;
