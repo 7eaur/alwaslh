@@ -64,13 +64,24 @@ def _kind(parts: tuple[str, ...]) -> str:
     return "textbook"
 
 
-def _subject_from_top(top: str) -> str:
-    suffixes = (" ثالث ثانوي", " ثالثة ثانوي", " الثالث الثانوي")
-    for suffix in suffixes:
+def _class_and_subject(top: str) -> tuple[str, str, str]:
+    grade12_suffixes = (" ثالث ثانوي", " ثالثة ثانوي", " الثالث الثانوي")
+    for suffix in grade12_suffixes:
         if top.endswith(suffix):
-            value = top[: -len(suffix)].strip()
-            return value or top
-    return top
+            subject = top[: -len(suffix)].strip() or top
+            return "grade-12", "الثالث الثانوي", subject
+
+    grade9_prefixes = ("تاسع ", "التاسع ")
+    for prefix in grade9_prefixes:
+        if top.startswith(prefix):
+            subject = top[len(prefix) :].strip() or top
+            return "grade-9", "التاسع", subject
+
+    if top.endswith(" تاسع"):
+        subject = top[: -len(" تاسع")].strip() or top
+        return "grade-9", "التاسع", subject
+
+    return "unclassified", "غير مصنف", top
 
 
 def main() -> int:
@@ -83,7 +94,7 @@ def main() -> int:
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     records: list[dict[str, object]] = []
-    summary: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"images": 0, "bytes": 0})
+    summary: dict[tuple[str, str, str, str], dict[str, int]] = defaultdict(lambda: {"images": 0, "bytes": 0})
 
     for relative, blob_sha, byte_size in sorted(
         _tracked_blobs(args.source_repository, args.source_commit), key=lambda row: row[0]
@@ -94,8 +105,7 @@ def main() -> int:
         parts = posix.parts
         if not parts:
             continue
-        top = parts[0]
-        subject_title = _subject_from_top(top)
+        class_slug, class_title, subject_title = _class_and_subject(parts[0])
         content_kind = _kind(parts)
         source_group = "/".join(parts[1:-1])
         record = {
@@ -107,15 +117,15 @@ def main() -> int:
             "filename": posix.name,
             "extension": posix.suffix.lower(),
             "byte_size": byte_size,
-            "class_slug": "grade-12",
-            "class_title": "الثالث الثانوي",
+            "class_slug": class_slug,
+            "class_title": class_title,
             "subject_title": subject_title,
             "source_group": source_group,
             "content_kind": content_kind,
             "page_hint": _page_hint(posix.name),
         }
         records.append(record)
-        key = (subject_title, content_kind)
+        key = (class_slug, class_title, subject_title, content_kind)
         summary[key]["images"] += 1
         summary[key]["bytes"] += byte_size
 
@@ -128,19 +138,25 @@ def main() -> int:
     )
     groups = [
         {
+            "class_slug": class_slug,
+            "class_title": class_title,
             "subject_title": subject,
             "content_kind": kind,
             "image_count": values["images"],
             "byte_size": values["bytes"],
         }
-        for (subject, kind), values in sorted(summary.items())
+        for (class_slug, class_title, subject, kind), values in sorted(summary.items())
     ]
+    unclassified_count = sum(
+        int(group["image_count"]) for group in groups if group["class_slug"] == "unclassified"
+    )
     payload = {
         "schema_version": 1,
         "source_repository": args.source_repository,
         "source_commit": args.source_commit,
         "image_count": len(records),
         "byte_size": sum(int(record["byte_size"]) for record in records),
+        "unclassified_image_count": unclassified_count,
         "groups": groups,
         "inventory_jsonl": "inventory.jsonl",
     }
@@ -152,12 +168,13 @@ def main() -> int:
         "# Content Corpus Inventory\n",
         f"Source: `{args.source_repository}@{args.source_commit}`\n",
         f"Images: **{len(records)}**\n",
-        "| Subject | Kind | Images | Bytes |\n",
-        "| --- | --- | ---: | ---: |\n",
+        f"Unclassified: **{unclassified_count}**\n",
+        "| Class | Subject | Kind | Images | Bytes |\n",
+        "| --- | --- | --- | ---: | ---: |\n",
     ]
     for group in groups:
         lines.append(
-            f"| {group['subject_title']} | {group['content_kind']} | {group['image_count']} | {group['byte_size']} |\n"
+            f"| {group['class_slug']} | {group['subject_title']} | {group['content_kind']} | {group['image_count']} | {group['byte_size']} |\n"
         )
     (output_dir / "INVENTORY.md").write_text("".join(lines), encoding="utf-8")
     print(json.dumps(payload, ensure_ascii=False, indent=2))
