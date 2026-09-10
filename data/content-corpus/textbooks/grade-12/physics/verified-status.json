@@ -6,10 +6,10 @@
   "source_repository": "7eaur/alwaslh-go",
   "source_commit": "f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23",
   "total_textbook_pages": 207,
-  "verified_visual_pages": 20,
+  "verified_visual_pages": 25,
   "first_verified_page_number": 9,
-  "last_verified_page_number": 28,
-  "last_verified_source_sequence": 20,
-  "next_source_sequence": 21,
+  "last_verified_page_number": 33,
+  "last_verified_source_sequence": 25,
+  "next_source_sequence": 26,
   "verification_policy": "Only records manually checked against the exact original source image are counted as verified. OCR output is draft evidence only."
 }
