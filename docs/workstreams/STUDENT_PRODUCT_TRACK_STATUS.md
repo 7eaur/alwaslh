@@ -2,13 +2,13 @@
 
 > Branch-specific continuation checkpoint for the parallel Student Product track.
 
-Last synchronized: **2026-09-10 — Access + entitled Curriculum + protected Reader verified; Stage14 final closure/polish audit is active.**
+Last synchronized: **2026-09-10 — Stage14 CLOSED / VERIFIED on `parallel/stage14-student-product`; Stage15 remains blocked until Stage13F is canonical in `main`.**
 
 ## Track Identity
 
 - Repository: `7eaur/alwaslh`
 - Branch: `parallel/stage14-student-product`
-- Latest verified Stage14 runtime HEAD: `0d0a1778b0525560ec288dbfc612bbfa0efa9a6d`
+- Latest verified Stage14 runtime HEAD: `ac55f1435d232cadff334816407f1182125dda90`
 - Initial stable baseline: `main @ 5fdb23030c77cae9bff5f8c33d4be466427eb6e5`
 - Shared execution ledger: GitHub Issue #16
 - Operating contract: `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`
@@ -17,67 +17,72 @@ Last synchronized: **2026-09-10 — Access + entitled Curriculum + protected Rea
 
 **Stage14 — Student Web/PWA Product**
 
-State: **IN PROGRESS — ACCESS + ENTITLED CURRICULUM + PROTECTED READER VERIFIED / FINAL PRODUCT-UX-A11Y CLOSURE ACTIVE**
+State: **CLOSED / VERIFIED**
 
-Stage8 Student Activation remains a verified foundation. Reader acceptance does not by itself close Stage14; the learning-first shell, copy and final accessibility/product audit must still be closed or explicitly documented.
+Stage14 now provides a real learning-first Student product foundation on canonical backend authority: activation/session/device, access, entitlement-aware curriculum navigation, published lesson Reader, protected media, approved text, search, TTS capability UX, responsive behavior and explicit connectivity states.
+
+Stage14 does **not** claim Stage15 assessments, Stage16 offline-learning/PWA sync, Stage17 personal-learning data, Stage18 notifications, or Stage19 progress/statistics. Those remain sequenced work.
 
 ## Verified Product Understanding
 
-### Auth / session / device
+### Auth / session / device — KEEP + IMPROVE / VERIFIED
 
 - Activation, returning login, forced password change, recovery support, session restoration and device rebind use real backend contracts.
-- Device private key remains a non-extractable P-256 `CryptoKey` in IndexedDB, scoped by Student account identifier.
+- Device private key remains a non-extractable P-256 `CryptoKey` in IndexedDB and is scoped by Student account identifier.
 - Browser does not own canonical session or entitlement state.
 - Missing/expired sessions return explicitly to login.
+- Session-expiry copy is informational rather than falsely presented as success.
 
-Classification: **KEEP + IMPROVE**.
+### Access / entitlements — KEEP + IMPROVE / VERIFIED
 
-### Access / entitlements
-
-- Canonical active entitlement listing and code redemption are consumed directly.
-- Seven-digit class redemption supports Arabic/Eastern-Arabic digits and per-attempt idempotency.
+- Canonical active entitlement listing and redemption are consumed directly.
+- Seven-digit class redemption accepts Arabic/Eastern-Arabic digits and uses per-attempt idempotency.
 - Active all-content access prevents unnecessary class-code consumption.
 - Access states include loading, empty, error/retry, offline and session-expired.
+- Access management is secondary to study content in the authenticated information hierarchy.
 
-Classification: **KEEP + IMPROVE — VERIFIED**.
+### Curriculum navigation — REBUILD → VERIFIED
 
-### Curriculum navigation
-
-- Canonical Curriculum persistence remains authority for classes, subjects, offerings, sections and lessons.
 - `GET /v1/student/curriculum` is authenticated and server-side entitlement-filtered.
 - Server filtering enforces active/unexpired entitlement, active class/subject/offering/section and active lessons with `published_at <= now()`.
-- Canonical positions are preserved by server and consumed directly by browser.
-- Browser does not reconstruct authority or expose unpublished lessons.
+- Canonical ordering is owned by server and consumed directly.
+- Browser does not reconstruct curriculum authority or expose unpublished lessons.
 - Student Web provides class selection, subject selection, unsectioned lessons and section-grouped ordered lessons.
 
-Classification: **REBUILD → VERIFIED FOUNDATION**.
+### Reader / publication / media / OCR — REBUILD → VERIFIED
 
-### Reader / publication / media / OCR
-
-Verified implementation:
-
-- Lesson publication alone is insufficient: Reader exposes only `lesson_assets.publication_status = 'published'` backed by `media_assets.status = 'ready'`.
-- Raw `storage_key` values remain server-internal and never become browser authority/public URLs.
-- Reader metadata and media requests re-check Student session, entitlement and current curriculum/publication state.
+- Reader exposes only published lesson assets backed by ready media.
+- Raw `storage_key` values remain server-internal.
+- Reader metadata and media requests re-check Student session, entitlement and current publication state.
 - Media delivery validates declared byte size and SHA-256 before response.
-- Student media uses `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`; Stage16 owns any future entitlement-aware offline cache.
-- OCR is exposed only when extraction is `completed` and review is `not_required` or `approved`; pending/rejected text is excluded.
-- Student Reader renders published media/page context, safe OCR text, in-lesson search and browser TTS capability state.
+- Media uses `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`.
+- OCR text is exposed only when extraction is `completed` and review status is `not_required` or `approved`; pending/rejected text is excluded.
+- Reader provides media/page rendering, trusted text, in-lesson search and browser speech-synthesis capability state.
 - Reader loading/error/media-error/offline states are explicit.
-- If connectivity drops while a lesson is open, current in-session class/subject/lesson context remains visible, but Reader transitions to offline and does not claim media/curriculum freshness.
+- When connectivity drops with a lesson open, in-session class/subject/lesson context remains visible while Reader stops claiming current media authorization/freshness.
+- Returning from Reader restores keyboard focus to the lesson that opened it.
 
-Classification: **REBUILD → VERIFIED**.
+### Learning-first shell / accessibility — IMPROVE → VERIFIED
 
-### PWA / offline
+- Authenticated DOM order is study content first, access management second.
+- Post-login copy directs the Student to class → subject → lesson rather than security/account administration.
+- Internal implementation words such as Stage/PWA/authority are not exposed in the verified authenticated Student flow.
+- Lesson open works by keyboard Enter and Reader back restores focus.
+- Student-only focus ring uses `--brand-teal-700` with a 3px outline and 3px offset; the audited white-background pair is approximately 4.88:1.
+- Real Chromium verifies no horizontal overflow at 390×844, 768×1024 and 1366×900 on the Reader path.
 
-- No manifest/service worker/offline-learning store exists yet.
-- Stage14 offline behavior is connectivity/session safety, not offline-learning authority.
-- No second canonical business state is placed in `localStorage`.
-- Entitlement-aware downloads/leases/revisions/tombstones/outbox/sync remain Stage16 work by sequence.
+### Routing decision
 
-Classification: **REBUILD — Stage16**.
+Stage14 does **not** add a router solely for architectural aesthetics. The verified product contract does not require deep links or shareable lesson URLs today. The simpler stateful class/subject/lesson navigation preserves context and passes required flows. A router should be introduced only when a later verified requirement—such as assessment URLs, offline deep links or navigation history—makes it materially useful.
 
-## Stage14 Audit Checklist
+### PWA / offline — REBUILD / DEFERRED TO STAGE16
+
+- No manifest, service worker or offline-learning authority is claimed by Stage14.
+- Existing offline behavior is a truthful connectivity/session/publication safety state.
+- No second canonical business state is stored in `localStorage`.
+- Entitlement-aware downloads, leases, revisions, tombstones, outbox and sync remain Stage16 work by sequence.
+
+## Stage14 Acceptance Checklist
 
 - [x] Student entry/session restoration.
 - [x] Auth/device integration with backend authority.
@@ -87,49 +92,56 @@ Classification: **REBUILD — Stage16**.
 - [x] published lesson listing and canonical ordering.
 - [x] protected lesson Reader.
 - [x] authenticated Reader media loading/integrity/error behavior.
-- [x] safe OCR/generated text consumption.
-- [x] in-lesson search over trusted Reader text.
+- [x] safe approved/generated text consumption.
+- [x] in-lesson search over trusted text.
 - [x] browser TTS capability/availability state.
-- [x] Reader explicit offline/reconnect behavior.
+- [x] explicit Reader offline/reconnect behavior.
+- [x] learning-first authenticated shell hierarchy.
+- [x] product copy cleanup for Stage14 Student surfaces.
+- [x] keyboard open + Reader focus return.
+- [x] high-contrast Student focus-visible treatment.
 - [x] real 390px Auth/Access/Curriculum/Reader evidence.
 - [x] Reader responsive checks at 768×1024 and 1366×900.
-- [x] keyboard activation of lesson Reader and explicit focus-visible styling on current controls.
-- [ ] final learning-first dashboard/shell acceptance — closure audit active.
-- [ ] final product copy cleanup — closure audit active.
-- [ ] final whole-surface keyboard/focus/contrast audit — Reader-critical path verified; closure audit active.
-- [x] PWA manifest/service-worker current state verified absent.
-- [x] lint/typecheck/unit/build on Reader runtime.
-- [x] PostgreSQL integration for Student Curriculum authorization/publication filtering.
-- [x] PostgreSQL integration for Reader entitlement/publication/media/OCR filtering.
-- [x] real Chromium Reader batch.
-- [x] legacy Student parity mapping inspected; no legacy feature removed.
-- [ ] Practice/Test/Model Student implementation — **BLOCKED by Stage15 dependency; no fake authority permitted**.
-- [ ] Notes/Favorites/Needs Review — Stage17 authority not yet available/verified.
+- [x] clean PostgreSQL migrations through `0018`.
+- [x] Student Curriculum PostgreSQL integration.
+- [x] Student Reader PostgreSQL integration.
+- [x] Student lint / strict typecheck / unit / production build.
+- [x] shared API lint / strict typecheck / unit / build regression gate.
+- [x] real Chromium Auth/Access/Curriculum + Reader.
+- [x] legacy Student parity mapping inspected; no legacy value removed.
+
+Sequenced non-Stage14 work:
+
+- [ ] Practice/Test/Model implementation — **Stage15 BLOCKED by Track A promotion; no fake authority permitted**.
+- [ ] PWA/offline-learning sync — Stage16.
+- [ ] Notes/Favorites/Needs Review — Stage17.
 - [ ] Notifications — Stage18.
 - [ ] Progress/statistics/private achievements — Stage19.
 
 ## Component Classification
 
-| Area | Classification | Current decision |
+| Area | Classification | Final Stage14 decision |
 |---|---|---|
-| Student shell/navigation | REBUILD / IMPROVE | Learning hierarchy is real; final learning-first shell polish remains |
-| Auth/session UX | KEEP / IMPROVE | Preserve verified device/session contract; final notice semantics under audit |
-| Access UX | IMPROVE → VERIFIED | Canonical redemption/state handling verified |
-| Curriculum browsing | REBUILD → VERIFIED | Server-authorized class/subject/lesson navigation verified |
-| Lesson Reader | REBUILD → VERIFIED | Protected media/OCR/search/TTS-capability Reader verified |
-| Practice entry | REBUILD | Stage15 blocked until Stage13F authority is canonical in `main` |
-| Offline/PWA | REBUILD | Stage16 only; no Stage14 pseudo-offline authority |
-| Personal learning | REBUILD | Stage17; NOT YET VERIFIED |
-| Notifications | REBUILD | Stage18; NOT YET VERIFIED |
-| Progress/statistics | REBUILD | Stage19; NOT YET VERIFIED |
-| Design system | IMPROVE | Learning surfaces, responsive hierarchy and focus-visible rules exist; closure polish active |
-| Accessibility | IMPROVE | Reader keyboard path verified; whole Stage14 surface final audit active |
-| Performance | KEEP / IMPROVE | Reader bundle remains modest; do not add caching/code splitting without measured need |
+| Student shell/navigation | REBUILD → VERIFIED | Learning-first class/subject/lesson hierarchy; no unnecessary router |
+| Auth/session UX | KEEP / IMPROVE → VERIFIED | Preserve device/session contracts; clear expiry/recovery states |
+| Access UX | IMPROVE → VERIFIED | Canonical redemption and entitlement states; secondary to study flow |
+| Curriculum browsing | REBUILD → VERIFIED | Server-authorized class/subject/lesson navigation |
+| Lesson Reader | REBUILD → VERIFIED | Protected media, approved text, search and TTS capability UX |
+| Practice entry | REBUILD / BLOCKED | Wait for canonical Stage13F Question Bank/Quiz authority |
+| Offline/PWA | REBUILD / DEFERRED | Stage16; no pseudo-offline authority in Stage14 |
+| Personal learning | REBUILD / DEFERRED | Stage17 |
+| Notifications | REBUILD / DEFERRED | Stage18 |
+| Progress/statistics | REBUILD / DEFERRED | Stage19 |
+| Design system | IMPROVE → VERIFIED for Stage14 | RTL/mobile-first hierarchy and Student-local focus correction |
+| Accessibility | IMPROVE → VERIFIED for Stage14 scope | Keyboard Reader path, focus return, responsive and focus contrast evidence |
+| Performance | KEEP / IMPROVE | Production bundle remains small enough; no premature caching/code splitting |
 | REMOVE decisions | NONE | No legacy Student value proven obsolete |
 
 ## Verified Batches
 
 ### Batch 01 — Canonical Access UX
+
+Evidence: Stage14 run `34415384712` — **SUCCESS**.
 
 Core commits:
 
@@ -137,112 +149,130 @@ Core commits:
 - `938d82bea0f92c85dcc546d42ed4823bec06be5a` — canonical class access UX
 - `9197469d5c012f0786e871080e669e562d837422` — class access/session-expiry Chromium coverage
 
-Evidence: Stage14 run `34415384712` — **SUCCESS**.
-
 ### Batch 02 — Entitlement-safe Curriculum navigation
 
 Verified runtime: `5c7080bd3b0dadad4ed7b7d22b725593a44bb403`
 
 Evidence: Stage14 run `34417755484` — **SUCCESS**.
 
-Verified: Student lint/typecheck/11 unit/build, API build, clean migrations through `0018`, Curriculum PostgreSQL integration, Admin fixture isolation, real activation/login/recovery/rebind, class redemption, ordered class→subject→lesson navigation, unpublished draft exclusion, session expiry and 390px overflow.
+Verified: Student quality gates, API build, clean migrations, Curriculum PostgreSQL integration, fixture isolation, real Auth/Access, ordered class→subject→lesson navigation, draft exclusion and 390px behavior.
 
 ### Batch 03 — Protected Lesson Reader
 
-Latest verified runtime: `0d0a1778b0525560ec288dbfc612bbfa0efa9a6d`
+Verified runtime checkpoint: `0d0a1778b0525560ec288dbfc612bbfa0efa9a6d`
 
-Representative implementation/fix commits include:
+Evidence: Stage14 run `34419936648` — **SUCCESS**.
 
-- `1edd305d374cc827af21f9ff044ab13389570b20` — Student Reader service foundation
-- `ccbbd4ffd6d24efe316d297146e253b4abf1f679` — Student Reader HTTP contract
-- `7e80781b3897e06a09dfbfeb40bbc416edded572` — Reader media-storage wiring
-- `91dae3168843a119d3a73ffd256559b58a92fc7d` — Reader PostgreSQL integration coverage
-- `9b15b6a2c0cfc99896066d3c356a9607eac6a643` — Student Reader API consumption
-- `c48d3cd8228c8c80ae481f247d0f71dd2d9f124c` — Reader UI/search/TTS
-- `f24c7b3eda7b6777c72cc9e9050697d750fcd4d2` — real media/OCR browser fixture
-- `fbaacbd426b0d33f850327cf6de25c90595343cc` — Reader responsive styles
-- `8cc984d458356fe8167ebd67af6c07c20469b8e8` — protected Reader Chromium spec
-- `831be45d60b09c53a79ad76c9103e78c91babaaa` — unambiguous Curriculum browser fixture
-- `680252e937fb27bb941ba21001d1a69bedf5ba8b` — explicit browser network-event synchronization
-- `0d0a1778b0525560ec288dbfc612bbfa0efa9a6d` — preserve Reader context while offline
+Verified: protected media and security headers, approved OCR / pending exclusion, search, TTS capability UI, keyboard Enter, responsive 390/768/1366, explicit offline/reconnect and return to lesson list.
 
-GitHub Actions Stage14 run: **`34419936648` — SUCCESS** on exact runtime HEAD `0d0a1778b0525560ec288dbfc612bbfa0efa9a6d`.
+### Batch 04 — Final Stage14 learning-first / UX / accessibility closure
 
-Verified gates:
+Final verified runtime HEAD: **`ac55f1435d232cadff334816407f1182125dda90`**.
 
-- Student ESLint: PASS
-- strict Student TypeScript: PASS
-- Vitest: **12/12 PASS**
-- Student production build: PASS
-- API typecheck/build: PASS
-- clean PostgreSQL migrations through `0018`: PASS
-- Curriculum PostgreSQL integration: PASS
-- Reader PostgreSQL integration: PASS
-- Admin bootstrap after fixture cleanup: PASS
-- real Chromium Auth/Access/Curriculum: PASS
-- real Chromium protected Reader: PASS
-- protected binary media + security headers: PASS
-- approved OCR visible / pending OCR absent: PASS
-- in-lesson search: PASS
-- browser TTS availability state: PASS
-- lesson keyboard focus + Enter open: PASS
-- no horizontal overflow at **390×844**, **768×1024**, **1366×900**: PASS
-- explicit offline Reader state + reconnect reload: PASS
-- return from Reader to lesson list: PASS
+Representative closure commits:
 
-Reader-batch production build evidence:
+- `93c48ff115bb91d86713e57b5c27bc9f3035150d` — study content before access management
+- `84b85f282c3bcd1114173222c10893ca2f789485` — study/access surface separation
+- `5f201b0570298f3e83e7b98ea92aae4d2db9582b` — learning shell copy + session notice semantics
+- `96ae173dcf1df667d0ec84008b7e7c314338f4cc` — Reader copy + focus return
+- `551f98040a9fcbed82d5c2bafb1491c4b56b7dbe` — learning-shell/focus Chromium acceptance
+- `3da1226244819f937d872c8994915465a331fe80` — stronger Student focus contrast
+- `f587888d1bf04fe0ee9322b095fee4c4a266fbdc` — shared API regression workflow
+- `ac55f1435d232cadff334816407f1182125dda90` — final Biome-clean Reader integration formatting
 
-- JS: ~408.84 kB raw / ~113.30 kB gzip
-- CSS: ~22.77 kB raw / ~4.80 kB gzip
+Final Stage14 evidence:
 
-No code splitting or caching layer is justified solely by these sizes. Stage16 must not reuse browser cache as entitlement authority.
+- Stage14 Student Product run **`34420993805` — SUCCESS** on exact HEAD `ac55f143...`.
+- Stage14 Student API Regression run **`34420993840` — SUCCESS** on exact HEAD `ac55f143...`.
+- Student ESLint: PASS.
+- strict Student TypeScript: PASS.
+- Student Vitest: **12/12 PASS**.
+- production build: PASS — ~**184.20 kB JS / 57.16 kB gzip**, ~**23.02 kB CSS / 4.82 kB gzip**.
+- API Biome: **87 files checked, 0 errors**.
+- strict API TypeScript: PASS.
+- API unit tests: **46/46 PASS**.
+- API build: PASS.
+- clean PostgreSQL migrations `0001` → `0018`: PASS.
+- Curriculum integration: PASS.
+- Reader integration: PASS.
+- recovery-support Admin bootstrap after fixture cleanup: PASS.
+- real Chromium Playwright: **2/2 PASS (6.7s)**.
+- Chromium flows include real activation, returning login, recovery/forced password change, device rebind, class-code access, canonical Curriculum, protected Reader, learning-first hierarchy, media/OCR/search/TTS capability, keyboard focus, offline/reconnect and responsive checks.
 
-## Architecture Decisions / Findings
+The browser job uses `NODE_ENV=test`; its Vite bundle output is not used as production performance evidence. Production-size evidence comes from the dedicated Student quality job above.
+
+## Findings / Architecture Decisions
 
 ### STUDENT-014-API-001 — P1 — Student Curriculum read contract
 
 Status: **RESOLVED / VERIFIED**.
 
-Minimal shared Curriculum change; no duplicate browser authority.
+Solution: minimal authenticated, server-side entitlement-filtered Curriculum read contract. No duplicate browser authority.
 
 ### STUDENT-014-READER-001 — P1 — Student lesson publication/read contract
 
 Status: **RESOLVED / VERIFIED**.
 
-Decision: Student Reader may consume only server-authorized published assets backed by ready media; raw storage keys and non-approved OCR remain private. Media is re-authorized per request. In-session learning context may remain visible through a connection drop, but freshness/authorization is never inferred from that context.
+Solution: only server-authorized published assets backed by ready media; storage keys and non-approved OCR remain private; media is re-authorized per request.
 
-### STUDENT-014-UX-002 — P2 — Final Stage14 shell/copy/a11y closure
+### STUDENT-014-UX-002 — P2 — Stage14 shell/copy/a11y closure
 
-Status: **IN PROGRESS**.
+Status: **RESOLVED / VERIFIED**.
 
-Evidence from final audit start: post-login shell still contains account/security-centric copy and some internal stage/PWA wording. Reader-critical keyboard/responsive behavior is verified, but whole-surface semantic/focus/contrast closure remains to be completed before Stage14 is declared closed.
+Evidence/fixes:
+
+- study content moved ahead of access-management UI;
+- account/security-centric post-login copy replaced with study-first guidance;
+- internal Stage/PWA/authority wording removed from verified authenticated surfaces;
+- session-expiry notice changed from success styling to informational styling;
+- Reader back restores keyboard focus to its launching lesson;
+- Student focus ring strengthened to `--brand-teal-700` with 3px width/offset;
+- Chromium asserts learning-first DOM order, no internal terminology, keyboard focus return and responsive behavior.
+
+### STUDENT-014-A11Y-003 — P2 — Weak Student focus indicator
+
+Status: **RESOLVED / VERIFIED**.
+
+Problem: shared `--focus-ring: #00b5a9` is about 2.57:1 on white, and the prior Student style further diluted it with transparency.
+
+Solution: Student-local focus-visible override uses `--brand-teal-700: #007f78`, approximately 4.88:1 on white, with 3px outline + 3px offset. Shared brand tokens were not changed because Track B does not own the shared design system globally.
+
+### STUDENT-014-QA-004 — P2 — Shared API regression coverage
+
+Status: **RESOLVED / VERIFIED**.
+
+Problem: Stage14 browser gate typechecked/built API and ran targeted DB contracts but did not execute full API lint/unit coverage after the small shared Reader addition.
+
+Solution: added `Stage14 Student API Regression` workflow. Initial run correctly exposed three Biome-only drift errors; they were fixed without changing behavior. Final gate: 87 files lint-clean, 46/46 API unit tests, strict typecheck and build PASS.
 
 ### STUDENT-015-QB-001 — P1 — Stage15 Question Bank / Quiz authority
 
 Status: **BLOCKED BY TRACK A PROMOTION**.
 
-Latest live verification:
+Latest live verification during closure:
 
 - `main @ 5fdb23030c77cae9bff5f8c33d4be466427eb6e5`
 - Track A `integration/stage13f-question-bank @ 24549cd05cfde6d22b6a9847d195456cb3b9514e`
 
-Track A is still outside `main`; Stage15 must not start using mocks, temporary persistence or duplicate quiz/question models.
+Track A remains outside `main`. Stage15 must not start with mocks, temporary persistence or duplicate question/quiz models.
 
-## NOT YET VERIFIED / Deferred by Sequence
+## Remaining Work / Sequence Boundary
 
-- final Stage14 learning-first shell/dashboard acceptance
-- final Stage14 product copy cleanup
-- final whole-surface keyboard/focus/contrast audit
-- final study-shell URL/history model decision
-- Stage15 consumption after Stage13F reaches `main`
-- Stage16 manifest/service worker/account-device IndexedDB learning cache/lease/sync
-- Stage17 Notes/Favorites/Needs Review authority
-- Stage18 Student notifications API
-- Stage19 progress/statistics/private achievements API
+Stage14 has no open implementation blocker on this branch.
+
+Next work is **not** Stage16. The required next stage is Stage15, but it is externally blocked until Stage13F Question Bank/Quiz authority reaches `main` and is re-read from source.
+
+Deferred by sequence:
+
+- Stage15 — practice/tests/models once canonical QB/Quiz authority exists.
+- Stage16 — installable PWA and entitlement-aware offline/sync.
+- Stage17 — Notes/Favorites/Needs Review.
+- Stage18 — Student Notifications.
+- Stage19 — progress/statistics/private achievements.
 
 ## Exact Next Action
 
-1. Complete bounded `STUDENT-014-UX-002` audit and root-fix only evidenced Stage14 shell/copy/a11y issues.
-2. Rerun the Stage14 Student quality + PostgreSQL + real Chromium gate on the exact final runtime HEAD.
-3. Update Issue #16 and engineering/status docs with Stage14 closure evidence.
-4. If Stage13F is still not canonical in `main`, stop at the Stage15 dependency boundary; do not skip sequence into Stage16 and do not invent assessment authority.
+1. Keep `parallel/stage14-student-product` stable at the verified Stage14 closure.
+2. Monitor/re-read `main` and Track A authority before any Stage15 implementation.
+3. When Stage13F is promoted to `main`, integrate/rebase only after inspecting the exact diff and conflicts, then read the real Question Bank/Quiz contracts before coding Stage15.
+4. Do not skip into Stage16 while Stage15 authority is blocked, and do not invent assessment authority.
