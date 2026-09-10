@@ -28,13 +28,11 @@ jobs:
           ref: content-prep/full-corpus-extraction
           fetch-depth: 1
 
-      - name: Checkout source corpus
-        uses: actions/checkout@v4
-        with:
-          repository: 7eaur/alwaslh-go
-          ref: f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23
-          path: source-content
-          fetch-depth: 1
+      - name: Fetch source Git metadata only
+        run: |
+          git init source-content
+          git -C source-content remote add origin https://github.com/7eaur/alwaslh-go.git
+          git -C source-content fetch --depth=1 --filter=blob:none origin f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23
 
       - name: Setup Python
         uses: actions/setup-python@v5
