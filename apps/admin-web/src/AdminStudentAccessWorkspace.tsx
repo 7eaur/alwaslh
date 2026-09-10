@@ -201,7 +201,6 @@ function StudentsPanel({ onSessionExpired }: { onSessionExpired: () => void }) {
   const loadDetail = useCallback(
     async (profileId: string) => {
       setDetailState("loading");
-      setTemporaryPassword(null);
       try {
         const result = await fetchAdminStudentDetail(profileId, 25, 0);
         setDetail(result);
@@ -229,13 +228,25 @@ function StudentsPanel({ onSessionExpired }: { onSessionExpired: () => void }) {
     void loadDetail(selectedId);
   }, [loadDetail, selectedId]);
 
+  function selectStudent(profileId: string): void {
+    if (profileId !== selectedId) {
+      setTemporaryPassword(null);
+      setFeedback(null);
+    }
+    setSelectedId(profileId);
+  }
+
+  async function refreshSelected(): Promise<void> {
+    if (selectedId) await loadDetail(selectedId);
+    await loadStudents();
+  }
+
   async function mutateStudent(action: () => Promise<void>, successMessage: string): Promise<void> {
     setFeedback({ kind: "busy", message: "جارٍ تنفيذ العملية…" });
     try {
       await action();
       setFeedback({ kind: "success", message: successMessage });
-      if (selectedId) await loadDetail(selectedId);
-      await loadStudents();
+      await refreshSelected();
     } catch (error) {
       if (!handleError(error)) setFeedback({ kind: "error", message: errorMessage(error) });
     }
@@ -252,8 +263,7 @@ function StudentsPanel({ onSessionExpired }: { onSessionExpired: () => void }) {
         kind: "success",
         message: `تم إصدار كلمة مرور مؤقتة صالحة لمدة ${result.expiresInHours} ساعة. اعرضها للطالب الآن فقط.`,
       });
-      await loadDetail(selectedId);
-      await loadStudents();
+      await refreshSelected();
     } catch (error) {
       if (!handleError(error)) setFeedback({ kind: "error", message: errorMessage(error) });
     }
@@ -277,6 +287,7 @@ function StudentsPanel({ onSessionExpired }: { onSessionExpired: () => void }) {
 
         <form
           className="access-filter-grid"
+          aria-label="فلترة حسابات الطلاب"
           onSubmit={(event) => {
             event.preventDefault();
             setOffset(0);
@@ -344,7 +355,7 @@ function StudentsPanel({ onSessionExpired }: { onSessionExpired: () => void }) {
                 key={student.id}
                 type="button"
                 className={`student-card${selectedId === student.id ? " is-selected" : ""}`}
-                onClick={() => setSelectedId(student.id)}
+                onClick={() => selectStudent(student.id)}
                 aria-pressed={selectedId === student.id}
               >
                 <span className="student-card-title">
@@ -678,6 +689,7 @@ function AccessCodesPanel({
       <div className="code-toolbar-grid">
         <form
           className="code-filter-card"
+          aria-label="فلترة أكواد الوصول"
           onSubmit={(event) => {
             event.preventDefault();
             setOffset(0);
@@ -758,6 +770,7 @@ function AccessCodesPanel({
 
         <form
           className="code-generation-card"
+          aria-label="توليد أكواد الوصول"
           onSubmit={(event) => {
             event.preventDefault();
             void generateCodes();
