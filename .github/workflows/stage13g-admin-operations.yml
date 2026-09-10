@@ -80,7 +80,9 @@ jobs:
         run: node --test --import tsx tests/integration/admin-governance.integration.test.ts
       - name: Run Stage13G AI authoring integration
         working-directory: apps/api
-        run: node --test --import tsx tests/integration/admin-ai-authoring.integration.test.ts
+        run: |
+          node --test --import tsx tests/integration/admin-ai-authoring.integration.test.ts
+          node --test --import tsx tests/integration/admin-ai-quiz-application.integration.test.ts
       - name: Run Access and Auth regression
         working-directory: apps/api
         run: |
