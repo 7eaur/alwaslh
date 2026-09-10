@@ -29,6 +29,7 @@ import { StudentAccessSection } from "./student-access";
 
 type EntryMode = "activation" | "login" | "recovery";
 type SessionPhase = "checking" | "anonymous" | "authenticated" | "offline" | "unavailable";
+type EntryNotice = { message: string; tone: "success" | "info" };
 
 interface PendingPasswordChange {
   identifier: string;
@@ -373,7 +374,7 @@ function LoginForm({
   onRecovery,
 }: {
   online: boolean;
-  notice: string | null;
+  notice: EntryNotice | null;
   onAuthenticated: (profile: SessionProfile) => void;
   onRecovery: () => void;
 }) {
@@ -496,7 +497,7 @@ function LoginForm({
 
   return (
     <form className="auth-form" onSubmit={handleSubmit} noValidate>
-      {notice ? <FormAlert tone="success">{notice}</FormAlert> : null}
+      {notice ? <FormAlert tone={notice.tone}>{notice.message}</FormAlert> : null}
       {error ? <FormAlert tone="danger">{error}</FormAlert> : null}
       <div className="field-group">
         <label htmlFor="student-identifier">معرّف الحساب</label>
@@ -584,7 +585,7 @@ function EntryPage({
 }: {
   online: boolean;
   mode: EntryMode;
-  notice: string | null;
+  notice: EntryNotice | null;
   onMode: (mode: EntryMode) => void;
   onAuthenticated: (profile: SessionProfile, accountIdentifier?: string) => void;
 }) {
@@ -603,7 +604,7 @@ function EntryPage({
           <div className="intro-copy">
             <p className="eyebrow">مرحبًا بك</p>
             <h1 id="welcome-title">تعلّمك في مكان واحد، بدخول بسيط وآمن.</h1>
-            <p>مساحة الطالب منفصلة عن الإدارة، وتعمل من المتصفح ويمكن تثبيتها كتطبيق ويب.</p>
+            <p>مساحة الطالب منفصلة عن الإدارة، وتعمل من المتصفح للوصول إلى صفوفك ودروسك المنشورة.</p>
           </div>
           <ul className="trust-list" aria-label="مزايا الدخول">
             <li>
@@ -714,8 +715,8 @@ function AccountPage({
       <section className="account-summary">
         <div>
           <p className="eyebrow">تم تسجيل الدخول</p>
-          <h1>{profile.displayName ?? "مساحة الطالب"}</h1>
-          <p>الجلسة والجهاز موثقان. نعرض هنا فقط صلاحيات الدراسة التي أكدها الخادم.</p>
+          <h1>{profile.displayName ? `مرحبًا ${profile.displayName}` : "مرحبًا بك"}</h1>
+          <p>ابدأ من صفك ومادتك وافتح الدرس مباشرة. استخدم إدارة الوصول فقط عندما تحتاج إلى إضافة رمز صف.</p>
         </div>
         <button className="secondary-button" type="button" onClick={handleLogout} disabled={busy}>
           {busy ? "جاري الخروج" : "تسجيل الخروج"}
@@ -731,7 +732,7 @@ export default function App() {
   const [phase, setPhase] = useState<SessionPhase>("checking");
   const [profile, setProfile] = useState<SessionProfile | null>(null);
   const [mode, setMode] = useState<EntryMode>("activation");
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<EntryNotice | null>(null);
 
   async function checkSession() {
     if (!navigator.onLine) {
@@ -767,7 +768,10 @@ export default function App() {
 
   function handleSessionExpired() {
     setProfile(null);
-    setNotice("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.");
+    setNotice({
+      message: "انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.",
+      tone: "info",
+    });
     setMode("login");
     setPhase("anonymous");
   }
@@ -808,7 +812,10 @@ export default function App() {
         onAuthenticated={(nextProfile, accountIdentifier) => {
           setProfile(nextProfile);
           if (accountIdentifier) {
-            setNotice(`تم تفعيل الحساب ${accountIdentifier} وتسجيل هذا الجهاز بنجاح.`);
+            setNotice({
+              message: `تم تفعيل الحساب ${accountIdentifier} وتسجيل هذا الجهاز بنجاح.`,
+              tone: "success",
+            });
           }
           setPhase("authenticated");
         }}
