@@ -667,7 +667,7 @@ export class AdminAiAuthoringService {
     });
   }
 
-  private lessonIdentities(lessonIds: readonly string[]): Promise<LessonIdentity[]> {
+  private lessonIdentities(lessonIds: readonly string[]): Promise<readonly LessonIdentity[]> {
     if (lessonIds.length === 0) return Promise.resolve([]);
     return this.database.query<LessonIdentity>(
       `select id, class_id, subject_id, title
