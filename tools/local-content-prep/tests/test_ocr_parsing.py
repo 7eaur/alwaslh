@@ -34,7 +34,7 @@ def test_legacy_result_shape_is_supported() -> None:
     assert [block.text for block in blocks] == ["نص", "آخر"]
 
 
-def test_cpu_adapter_disables_unstable_mkldnn_path(monkeypatch) -> None:
+def test_cpu_adapter_disables_unstable_mkldnn_path_and_uses_mobile_arabic_models(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
     class FakePaddleOCR:
@@ -51,7 +51,9 @@ def test_cpu_adapter_disables_unstable_mkldnn_path(monkeypatch) -> None:
     PaddleOcrAdapter(language="ar")
 
     assert captured["enable_mkldnn"] is False
-    assert captured["lang"] == "ar"
+    assert captured["text_detection_model_name"] == "PP-OCRv5_mobile_det"
+    assert captured["text_recognition_model_name"] == "arabic_PP-OCRv5_mobile_rec"
+    assert "lang" not in captured
     assert os.environ["PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT"] == "0"
     assert os.environ["FLAGS_use_mkldnn"] == "0"
     assert os.environ["FLAGS_enable_pir_api"] == "0"
