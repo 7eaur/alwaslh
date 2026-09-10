@@ -4,7 +4,12 @@ import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService, SessionProfile } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
-import type { StudentAssessmentService } from "./service.js";
+import type {
+  StartStudentAssessmentInput,
+  StudentAssessmentAnswerInput,
+  StudentAssessmentCatalogFilters,
+  StudentAssessmentService,
+} from "./service.js";
 
 const QuizParamsSchema = z.object({ quizId: z.string().uuid() });
 const SessionParamsSchema = z.object({ sessionId: z.string().uuid() });
@@ -48,13 +53,22 @@ export function registerStudentAssessmentRoutes(
   app.get("/v1/student/quizzes", async (request) => {
     const actor = await studentActor(request, config, auth);
     const query = parseBody(CatalogQuerySchema, request.query);
-    return { quizzes: await assessment.catalog(actor.id, query) };
+    const filters: StudentAssessmentCatalogFilters = {
+      ...(query.classId !== undefined ? { classId: query.classId } : {}),
+      ...(query.subjectId !== undefined ? { subjectId: query.subjectId } : {}),
+    };
+    return { quizzes: await assessment.catalog(actor.id, filters) };
   });
 
   app.post("/v1/student/quizzes/:quizId/sessions", async (request) => {
     const actor = await studentActor(request, config, auth);
     const params = parseBody(QuizParamsSchema, request.params);
-    const input = parseBody(StartSchema, request.body);
+    const parsed = parseBody(StartSchema, request.body);
+    const input: StartStudentAssessmentInput = {
+      mode: parsed.mode,
+      ...(parsed.versionId !== undefined ? { versionId: parsed.versionId } : {}),
+      ...(parsed.restart !== undefined ? { restart: parsed.restart } : {}),
+    };
     return { assessment: await assessment.start(actor.id, params.quizId, input) };
   });
 
@@ -67,7 +81,11 @@ export function registerStudentAssessmentRoutes(
   app.put("/v1/student/assessment-sessions/:sessionId/questions/:questionId/answer", async (request) => {
     const actor = await studentActor(request, config, auth);
     const params = parseBody(AnswerParamsSchema, request.params);
-    const input = parseBody(AnswerSchema, request.body);
+    const parsed = parseBody(AnswerSchema, request.body);
+    const input: StudentAssessmentAnswerInput = {
+      ...(parsed.selectedOptionId !== undefined ? { selectedOptionId: parsed.selectedOptionId } : {}),
+      ...(parsed.directAnswerText !== undefined ? { directAnswerText: parsed.directAnswerText } : {}),
+    };
     return {
       assessment: await assessment.answer(actor.id, params.sessionId, params.questionId, input),
     };
