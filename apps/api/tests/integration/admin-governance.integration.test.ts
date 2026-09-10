@@ -46,7 +46,9 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
 
   await auth.createCredential(adminId, "stage13g-gc2-admin", "Stage13gGc2Admin123!");
   await auth.createCredential(studentId, "stage13g-gc2-student", "Stage13gGc2Student123!");
-  await db.query("update auth_credentials set must_change_password = true where profile_id = $1", [studentId]);
+  await db.query("update auth_credentials set must_change_password = true where profile_id = $1", [
+    studentId,
+  ]);
   await db.query(
     `insert into auth_login_guards (normalized_identifier, failed_count, locked_until)
      values ('stage13g-gc2-locked', 4, now() + interval '1 hour')`,
@@ -73,7 +75,10 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
   const classId = classRows[0]?.id;
   const subjectId = subjectRows[0]?.id;
   assert.ok(classId && subjectId);
-  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [classId, subjectId]);
+  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [
+    classId,
+    subjectId,
+  ]);
 
   await db.query(
     `insert into auth_events (profile_id, event_type, actor_profile_id, metadata)
