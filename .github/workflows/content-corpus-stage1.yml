@@ -28,12 +28,6 @@ jobs:
           ref: content-prep/full-corpus-extraction
           fetch-depth: 1
 
-      - name: Fetch source Git metadata only
-        run: |
-          git init source-content
-          git -C source-content remote add origin https://github.com/7eaur/alwaslh-go.git
-          git -C source-content fetch --depth=1 --filter=blob:none origin f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -42,7 +36,6 @@ jobs:
       - name: Build source inventory
         run: |
           python tools/local-content-prep/scripts/build_corpus_inventory.py \
-            source-content \
             data/content-corpus \
             --source-repository 7eaur/alwaslh-go \
             --source-commit f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23
@@ -58,7 +51,9 @@ jobs:
           rows = (root / 'inventory.jsonl').read_text(encoding='utf-8').splitlines()
           assert summary['source_commit'] == 'f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23'
           assert summary['image_count'] == len(rows) > 0
-          assert all(json.loads(row)['source_git_blob_sha1'] for row in rows)
+          parsed = [json.loads(row) for row in rows]
+          assert all(row['source_git_blob_sha1'] for row in parsed)
+          assert all(row['byte_size'] >= 0 for row in parsed)
           print(f"validated {len(rows)} source images")
           PY
 
