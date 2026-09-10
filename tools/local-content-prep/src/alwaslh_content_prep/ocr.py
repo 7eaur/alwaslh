@@ -94,8 +94,7 @@ class PaddleOcrAdapter:
     def __init__(self, *, language: str = "ar", profile_key: str = "arabic-document-v1") -> None:
         # PaddleOCR 3.x on CPU can enter a broken PaddlePaddle oneDNN/PIR path
         # (ConvertPirAttribute2RuntimeAttribute ... ArrayAttribute<DoubleAttribute>).
-        # These defaults keep the local preparation pipeline portable and favor
-        # correctness over a CPU optimization that is not stable across hosts.
+        # Keep the local preparation pipeline portable and favor correctness.
         os.environ.setdefault("PADDLE_PDX_ENABLE_MKLDNN_BYDEFAULT", "0")
         os.environ.setdefault("FLAGS_use_mkldnn", "0")
         os.environ.setdefault("FLAGS_enable_pir_api", "0")
@@ -114,13 +113,24 @@ class PaddleOcrAdapter:
         self.profile_key = profile_key
         self.language = language
 
-        modern_kwargs = {
-            "lang": language,
+        modern_kwargs: dict[str, Any] = {
             "use_doc_orientation_classify": False,
             "use_doc_unwarping": False,
             "use_textline_orientation": False,
             "enable_mkldnn": False,
         }
+        if language.lower() in {"ar", "arabic"}:
+            # Explicit model names avoid the heavier default server detector on
+            # local CPU runs while retaining the Arabic PP-OCRv5 recognizer.
+            modern_kwargs.update(
+                {
+                    "text_detection_model_name": "PP-OCRv5_mobile_det",
+                    "text_recognition_model_name": "arabic_PP-OCRv5_mobile_rec",
+                }
+            )
+        else:
+            modern_kwargs["lang"] = language
+
         try:
             self._engine = PaddleOCR(**modern_kwargs)
         except TypeError:
