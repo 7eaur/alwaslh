@@ -12,6 +12,16 @@ const origin = "http://localhost:5173";
 const hiddenMetadataSecret = "gc2-hidden-metadata-secret";
 const hiddenReviewSecret = "gc2-hidden-reviewed-output-secret";
 
+interface GovernanceBaseline {
+  locked_login_guards: string;
+  pending_recovery_tokens: string;
+  active_student_devices: string;
+  forced_password_changes: string;
+  ai_routes_paused: string;
+  ai_routes_cooling_down: string;
+  password_changed_events: string;
+}
+
 function cookieFrom(response: { headers: Record<string, string | string[] | number | undefined> }): string {
   const raw = response.headers["set-cookie"];
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -33,6 +43,18 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
   });
   const db = createDatabase(databaseUrl);
   const auth = new AuthService(db, config.SESSION_TTL_HOURS);
+  const baselineRows = await db.query<GovernanceBaseline>(`
+    select
+      (select count(*) from auth_login_guards where locked_until > now())::text as locked_login_guards,
+      (select count(*) from auth_password_reset_tokens where used_at is null and expires_at > now())::text as pending_recovery_tokens,
+      (select count(*) from student_devices where revoked_at is null)::text as active_student_devices,
+      (select count(*) from auth_credentials where must_change_password)::text as forced_password_changes,
+      (select count(*) from ai_route_runtime_state where kill_switch)::text as ai_routes_paused,
+      (select count(*) from ai_route_runtime_state where cooldown_until > now())::text as ai_routes_cooling_down,
+      (select count(*) from auth_events where event_type = 'password_changed')::text as password_changed_events
+  `);
+  const baseline = baselineRows[0];
+  assert.ok(baseline);
 
   const adminRows = await db.query<{ id: string }>(
     "insert into profiles (role, display_name) values ('admin', 'مدير G-C2') returning id",
@@ -170,12 +192,27 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
     assert.equal(governanceBody.settings.sessionTtlHours, 24);
     assert.equal(governanceBody.settings.allowedOriginCount, 2);
     assert.equal(governanceBody.settings.aiGlobalKillSwitch, true);
-    assert.equal(governanceBody.security.lockedLoginGuards, 1);
-    assert.equal(governanceBody.security.pendingRecoveryTokens, 1);
-    assert.equal(governanceBody.security.activeStudentDevices, 1);
-    assert.equal(governanceBody.security.forcedPasswordChanges, 1);
-    assert.equal(governanceBody.security.aiRoutesPaused, 1);
-    assert.equal(governanceBody.security.aiRoutesCoolingDown, 1);
+    assert.equal(
+      governanceBody.security.lockedLoginGuards,
+      Number(baseline.locked_login_guards) + 1,
+    );
+    assert.equal(
+      governanceBody.security.pendingRecoveryTokens,
+      Number(baseline.pending_recovery_tokens) + 1,
+    );
+    assert.equal(
+      governanceBody.security.activeStudentDevices,
+      Number(baseline.active_student_devices) + 1,
+    );
+    assert.equal(
+      governanceBody.security.forcedPasswordChanges,
+      Number(baseline.forced_password_changes) + 1,
+    );
+    assert.equal(governanceBody.security.aiRoutesPaused, Number(baseline.ai_routes_paused) + 1);
+    assert.equal(
+      governanceBody.security.aiRoutesCoolingDown,
+      Number(baseline.ai_routes_cooling_down) + 1,
+    );
 
     const audit = await app.inject({
       method: "GET",
@@ -192,13 +229,16 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
 
     const authOnly = await app.inject({
       method: "GET",
-      url: "/v1/admin/operations/audit?source=auth&eventType=password_changed&limit=10",
+      url: "/v1/admin/operations/audit?source=auth&eventType=password_changed&limit=100",
       headers: { cookie: adminCookie },
     });
     assert.equal(authOnly.statusCode, 200);
-    assert.equal(authOnly.json().page.total, 1);
-    assert.equal(authOnly.json().entries[0]?.source, "auth");
-    assert.equal(authOnly.json().entries[0]?.eventType, "password_changed");
+    assert.equal(authOnly.json().page.total, Number(baseline.password_changed_events) + 1);
+    assert.ok(
+      (authOnly.json().entries as Array<{ source: string; eventType: string }>).every(
+        (entry) => entry.source === "auth" && entry.eventType === "password_changed",
+      ),
+    );
 
     const publicProjection = JSON.stringify([governanceBody, auditBody]);
     for (const forbidden of [
