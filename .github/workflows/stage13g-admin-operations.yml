@@ -1,0 +1,74 @@
+name: Stage 13G Admin Operations Verification
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - integration/stage13g-admin-product
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage13g-admin-operations-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admin-operations-backend:
+    name: Stage 13G · Accounts + Access backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: alwaslh_stage13g
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d alwaslh_stage13g"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_stage13g
+      LOG_LEVEL: silent
+      ALLOWED_ORIGINS: http://localhost:5173
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update >/dev/null
+          sudo apt-get install -y postgresql-client >/dev/null
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: API lint
+        run: npm run lint --prefix apps/api
+      - name: API strict typecheck
+        run: npm run typecheck --prefix apps/api
+      - name: API unit tests
+        run: npm test --prefix apps/api
+      - name: API build
+        run: npm run build --prefix apps/api
+      - name: Apply all migrations on clean PostgreSQL
+        run: npm run db:migrate --prefix apps/api
+      - name: Verify Stage13G database contract
+        run: |
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='access_event_type' and e.enumlabel='code_revoked'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('full_access_codes','class_access_codes','student_entitlements','access_redemptions','access_events','student_devices','auth_events') and relkind='r'")" = "7"
+      - name: Run Stage13G Admin access/account integration
+        working-directory: apps/api
+        run: node --test --import tsx tests/integration/admin-student-access.integration.test.ts
+      - name: Run Access and Auth regression
+        working-directory: apps/api
+        run: |
+          node --test --import tsx tests/integration/access.integration.test.ts
+          node --test --import tsx tests/integration/auth.integration.test.ts
