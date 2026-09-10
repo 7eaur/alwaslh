@@ -213,6 +213,7 @@ const ACCESSIBLE_QUIZ_FROM = `
         and (
           l.status <> 'active'
           or l.published_at is null
+          or l.published_at > now()
           or (l.section_id is not null and (cs.id is null or cs.status <> 'active'))
         )
     )`;
