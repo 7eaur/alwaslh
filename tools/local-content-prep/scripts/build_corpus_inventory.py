@@ -58,8 +58,10 @@ def _page_hint(filename: str) -> int | None:
 
 
 def _kind(parts: tuple[str, ...]) -> str:
-    joined = "/".join(parts).lower()
-    if "وزار" in joined or "نموذج" in joined or "exam" in joined:
+    # Content kind is a property of the source directory, not the page title.
+    # Textbook page filenames can legitimately contain words such as "نموذج".
+    directory_text = "/".join(parts[:-1]).lower()
+    if "وزار" in directory_text or "نموذج" in directory_text or "exam" in directory_text:
         return "government_exam"
     return "textbook"
 
