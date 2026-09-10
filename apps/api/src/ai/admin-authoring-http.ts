@@ -34,11 +34,7 @@ const LessonGenerateSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    if (
-      (value.mode === "question_generation" ||
-        value.mode === "comprehensive_lesson_content") &&
-      !value.target
-    ) {
+    if ((value.mode === "question_generation" || value.mode === "comprehensive_lesson_content") && !value.target) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: "target is required for generated questions",
@@ -65,10 +61,7 @@ const QuizGenerateSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    if (
-      value.mode === "question_generation" &&
-      value.versions.some((version) => !version.target)
-    ) {
+    if (value.mode === "question_generation" && value.versions.some((version) => !version.target)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: "target is required for generated quiz versions",
@@ -113,9 +106,7 @@ export function registerAdminAiAuthoringRoutes(
       subjectDomain: input.subjectDomain,
       clientRequestId: input.clientRequestId,
       ...(input.target ? { target: input.target } : {}),
-      ...(input.expectedQuestionCount
-        ? { expectedQuestionCount: input.expectedQuestionCount }
-        : {}),
+      ...(input.expectedQuestionCount ? { expectedQuestionCount: input.expectedQuestionCount } : {}),
       ...(input.priority ? { priority: input.priority } : {}),
     });
     return reply.code(result.replayed ? 200 : 202).send(result);
@@ -141,29 +132,24 @@ export function registerAdminAiAuthoringRoutes(
         lessonIds: version.lessonIds,
         shuffleOptions: version.shuffleOptions,
         ...(version.target ? { target: version.target } : {}),
-        ...(version.expectedQuestionCount
-          ? { expectedQuestionCount: version.expectedQuestionCount }
-          : {}),
+        ...(version.expectedQuestionCount ? { expectedQuestionCount: version.expectedQuestionCount } : {}),
       })),
       ...(input.priority ? { priority: input.priority } : {}),
     });
     return reply.code(result.replayed ? 200 : 202).send(result);
   });
 
-  app.post(
-    "/v1/admin/authoring/question-bank/:itemId/regenerate",
-    async (request, reply) => {
-      const actor = await adminActor(request, config, auth);
-      const params = parseBody(ItemParamsSchema, request.params);
-      const input = parseBody(RegenerateSchema, request.body);
-      const result = await authoring.enqueueQuestionRegeneration(actor.id, params.itemId, {
-        clientRequestId: input.clientRequestId,
-        subjectDomain: input.subjectDomain,
-        ...(input.priority ? { priority: input.priority } : {}),
-      });
-      return reply.code(result.replayed ? 200 : 202).send(result);
-    },
-  );
+  app.post("/v1/admin/authoring/question-bank/:itemId/regenerate", async (request, reply) => {
+    const actor = await adminActor(request, config, auth);
+    const params = parseBody(ItemParamsSchema, request.params);
+    const input = parseBody(RegenerateSchema, request.body);
+    const result = await authoring.enqueueQuestionRegeneration(actor.id, params.itemId, {
+      clientRequestId: input.clientRequestId,
+      subjectDomain: input.subjectDomain,
+      ...(input.priority ? { priority: input.priority } : {}),
+    });
+    return reply.code(result.replayed ? 200 : 202).send(result);
+  });
 
   app.post("/v1/admin/authoring/question-bank/:itemId/archive", async (request) => {
     const actor = await adminActor(request, config, auth);
