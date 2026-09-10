@@ -93,11 +93,14 @@ test("protected Reader serves published media, approved OCR, search and honest o
   await expectNoHorizontalOverflow(page);
 
   await page.context().setOffline(true);
+  await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   await expect(page.getByText(/Reader الحالي يحتاج اتصالًا للتحقق من صلاحية الدرس والوسائط/)).toBeVisible();
+
   const restoredReader = page.waitForResponse(
     (response) => response.url().includes("/v1/student/lessons/") && response.url().endsWith("/reader") && response.status() === 200,
   );
   await page.context().setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
   await restoredReader;
   await expect(page.getByText(fixture.approvedText, { exact: true })).toBeVisible();
 
