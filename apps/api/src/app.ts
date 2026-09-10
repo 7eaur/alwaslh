@@ -18,6 +18,8 @@ import { StudentReaderService } from "./curriculum/student-reader.js";
 import type { Database } from "./db.js";
 import { AppError, toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
+import { registerStudentOfflineRoutes } from "./offline/http.js";
+import { StudentOfflineService } from "./offline/service.js";
 import { registerQuestionBankRoutes } from "./question-bank/http.js";
 import { QuestionBankRegenerationService } from "./question-bank/regeneration.js";
 import { registerQuestionBankRegenerationRoutes } from "./question-bank/regeneration-http.js";
@@ -58,6 +60,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const studentReader = new StudentReaderService(database, mediaStorage);
   const studentAssessment = new StudentAssessmentService(database);
+  const studentOffline = new StudentOfflineService(database);
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
 
   app.addHook("onRequest", async (request, reply) => {
@@ -83,6 +86,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAccessRoutes(app, config, auth, access);
   registerCurriculumRoutes(app, config, auth, curriculum, studentReader);
   registerStudentAssessmentRoutes(app, config, auth, studentAssessment);
+  registerStudentOfflineRoutes(app, config, auth, studentOffline);
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
