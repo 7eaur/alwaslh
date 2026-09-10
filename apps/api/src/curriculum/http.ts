@@ -4,8 +4,8 @@ import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService, SessionProfile } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
-import type { StudentReaderService } from "./student-reader.js";
 import type { CurriculumService } from "./service.js";
+import type { StudentReaderService } from "./student-reader.js";
 
 const RecordStatusSchema = z.enum(["active", "inactive", "archived"]);
 const SlugSchema = z.string().trim().min(1).max(120);
