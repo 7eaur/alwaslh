@@ -3,12 +3,11 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import Any
 
-from .images import OptimizedImage, source_mime_type
+from .images import DISPLAY_PROFILE, OptimizedImage, source_mime_type
 from .models import Catalog, LessonSpec, OcrAdapter
 from .utils import git_blob_sha1, sha256_bytes
 
 PIPELINE_VERSION = "0.1.0"
-DISPLAY_PROFILE = "localprep-webp-v1"
 
 
 def build_page_record(
@@ -76,6 +75,7 @@ def build_page_record(
             "width": display.width,
             "height": display.height,
             "checksum_sha256": display.checksum_sha256,
+            "encoding_strategy": display.encoding_strategy,
             "quality": quality,
             "max_edge": max_edge,
             "preserved_dimensions": display.width == display.source_width and display.height == display.source_height,
@@ -144,6 +144,7 @@ def build_page_record(
                 "width": display.width,
                 "height": display.height,
                 "checksum_sha256": display.checksum_sha256,
+                "encoding_strategy": display.encoding_strategy,
             },
             "ocr_extraction": {
                 "input_checksum_sha256": display.checksum_sha256,
@@ -197,6 +198,7 @@ def build_package(
                 "format": "webp",
                 "quality": quality,
                 "max_edge": max_edge,
+                "policy": "preserve source WebP when a re-encode would not be smaller",
             },
             "ocr": None
             if ocr_adapter is None
