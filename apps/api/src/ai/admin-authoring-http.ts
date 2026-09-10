@@ -34,7 +34,10 @@ const LessonGenerateSchema = z
   })
   .strict()
   .superRefine((value, context) => {
-    if ((value.mode === "question_generation" || value.mode === "comprehensive_lesson_content") && !value.target) {
+    if (
+      (value.mode === "question_generation" || value.mode === "comprehensive_lesson_content") &&
+      !value.target
+    ) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: "target is required for generated questions",
