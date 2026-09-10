@@ -17,11 +17,7 @@ const AuditQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(100_000).optional(),
 });
 
-async function requireAdmin(
-  request: FastifyRequest,
-  config: AppConfig,
-  auth: AuthService,
-): Promise<void> {
+async function requireAdmin(request: FastifyRequest, config: AppConfig, auth: AuthService): Promise<void> {
   const profile = await currentProfile(request, config, auth);
   if (profile.role !== "admin") throw new AppError("FORBIDDEN", "هذه العملية للمدير فقط", 403);
 }
