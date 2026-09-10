@@ -44,7 +44,7 @@ try {
   });
   const subject = await curriculum.createSubject(actorId, {
     slug: `stage14-physics-${targetProfileId.slice(0, 8)}`,
-    name: "الفيزياء",
+    name: "الفيزياء التجريبية",
     description: "مادة تجريبية مرتبة من authority المنهج",
     status: "active",
   });
