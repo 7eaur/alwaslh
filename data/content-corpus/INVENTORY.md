@@ -10,10 +10,10 @@ Unclassified: **0**
 | grade-12 | الانجليزي | textbook | 81 | 7658442 |
 | grade-12 | التربية الاسلاميه | government_exam | 93 | 15343745 |
 | grade-12 | التربية الاسلاميه | textbook | 319 | 86843938 |
-| grade-12 | الرياضيات | government_exam | 539 | 142203267 |
-| grade-12 | الرياضيات | textbook | 248 | 14919192 |
-| grade-12 | الفيزياء | government_exam | 292 | 90737511 |
-| grade-12 | الفيزياء | textbook | 203 | 17279152 |
+| grade-12 | الرياضيات | government_exam | 532 | 141717197 |
+| grade-12 | الرياضيات | textbook | 255 | 15405262 |
+| grade-12 | الفيزياء | government_exam | 288 | 90324393 |
+| grade-12 | الفيزياء | textbook | 207 | 17692270 |
 | grade-12 | القران الكريم | government_exam | 93 | 34105570 |
 | grade-12 | القران الكريم | textbook | 106 | 32570808 |
 | grade-12 | الكيمياء | government_exam | 244 | 64574573 |
