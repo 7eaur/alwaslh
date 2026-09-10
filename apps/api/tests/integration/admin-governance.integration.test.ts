@@ -46,9 +46,6 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
 
   await auth.createCredential(adminId, "stage13g-gc2-admin", "Stage13gGc2Admin123!");
   await auth.createCredential(studentId, "stage13g-gc2-student", "Stage13gGc2Student123!");
-  await db.query("update auth_credentials set must_change_password = true where profile_id = $1", [
-    studentId,
-  ]);
   await db.query(
     `insert into auth_login_guards (normalized_identifier, failed_count, locked_until)
      values ('stage13g-gc2-locked', 4, now() + interval '1 hour')`,
@@ -65,6 +62,10 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
   );
   const deviceId = deviceRows[0]?.id;
   assert.ok(deviceId);
+  const studentSession = await auth.createStudentSession(studentId, deviceId, "gc2-student-session");
+  await db.query("update auth_credentials set must_change_password = true where profile_id = $1", [
+    studentId,
+  ]);
 
   const classRows = await db.query<{ id: string }>(
     "insert into classes (slug, name) values ('stage13g-gc2-class', 'صف G-C2') returning id",
@@ -82,12 +83,12 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
 
   await db.query(
     `insert into auth_events (profile_id, event_type, actor_profile_id, metadata)
-     values ($1, 'password_changed', $2, jsonb_build_object('private', $3))`,
+     values ($1, 'password_changed', $2, jsonb_build_object('private', $3::text))`,
     [studentId, adminId, hiddenMetadataSecret],
   );
   await db.query(
     `insert into access_events (event_type, actor_profile_id, subject_profile_id, metadata)
-     values ('entitlement_created', $1, $2, jsonb_build_object('private', $3))`,
+     values ('entitlement_created', $1, $2, jsonb_build_object('private', $3::text))`,
     [adminId, studentId, hiddenMetadataSecret],
   );
 
@@ -107,7 +108,7 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
   );
   await db.query(
     `insert into ai_output_review_events (ai_output_id, revision, action, actor_profile_id, reviewed_output, note)
-     values ($1, 1, 'edit', $2, jsonb_build_object('private', $3), $4)`,
+     values ($1, 1, 'edit', $2, jsonb_build_object('private', $3::text), $4)`,
     [aiOutputRows[0]?.id, adminId, hiddenReviewSecret, hiddenMetadataSecret],
   );
 
@@ -154,8 +155,6 @@ test("G-C2 projects reports/settings/security/audit from canonical authorities w
     });
     assert.equal(adminLogin.statusCode, 200);
     const adminCookie = cookieFrom(adminLogin);
-
-    const studentSession = await auth.createStudentSession(studentId, deviceId, "gc2-student-session");
     const studentCookie = `${config.SESSION_COOKIE_NAME}=${studentSession.token}`;
 
     const governance = await app.inject({
