@@ -8,7 +8,9 @@ import { StudentAssessmentService } from "../../src/student-assessment/service.j
 
 const databaseUrl = process.env.DATABASE_URL;
 
-test("Student Reader and assessment reject lessons scheduled for future publication", { skip: !databaseUrl }, async () => {
+test("Student Reader and assessment reject lessons scheduled for future publication", {
+  skip: !databaseUrl,
+}, async () => {
   assert.ok(databaseUrl);
   const db = createDatabase(databaseUrl);
   const profileIds: string[] = [];
@@ -76,7 +78,10 @@ test("Student Reader and assessment reject lessons scheduled for future publicat
     );
     quizId = quizRows[0]?.id;
     assert.ok(quizId);
-    await db.query("insert into quiz_lessons (quiz_id, lesson_id, position) values ($1, $2, 0)", [quizId, lessonId]);
+    await db.query("insert into quiz_lessons (quiz_id, lesson_id, position) values ($1, $2, 0)", [
+      quizId,
+      lessonId,
+    ]);
     const versionRows = await db.query<{ id: string }>(
       `insert into quiz_versions (quiz_id, version_number, label, shuffle_questions, shuffle_options)
        values ($1, 1, 'النموذج المجدول', false, false)
@@ -106,15 +111,22 @@ test("Student Reader and assessment reject lessons scheduled for future publicat
       [quizId, adminId],
     );
 
-    const reader = new StudentReaderService(db, new FileSystemMediaStorage("./.stage15-publication-time-media"));
+    const reader = new StudentReaderService(
+      db,
+      new FileSystemMediaStorage("./.stage15-publication-time-media"),
+    );
     await assert.rejects(() => reader.lesson(studentId, lessonId as string), /الدرس غير متاح/);
 
     const assessment = new StudentAssessmentService(db);
     assert.deepEqual(await assessment.catalog(studentId), []);
   } finally {
     if (profileIds.length > 0) {
-      await db.query("delete from practice_sessions where profile_id = any($1::uuid[])", [profileIds]).catch(() => undefined);
-      await db.query("delete from student_entitlements where profile_id = any($1::uuid[])", [profileIds]).catch(() => undefined);
+      await db
+        .query("delete from practice_sessions where profile_id = any($1::uuid[])", [profileIds])
+        .catch(() => undefined);
+      await db
+        .query("delete from student_entitlements where profile_id = any($1::uuid[])", [profileIds])
+        .catch(() => undefined);
     }
     if (quizId) {
       await db.query("update quizzes set status = 'archived' where id = $1", [quizId]).catch(() => undefined);
@@ -123,7 +135,10 @@ test("Student Reader and assessment reject lessons scheduled for future publicat
     if (lessonId) await db.query("delete from lessons where id = $1", [lessonId]).catch(() => undefined);
     if (classId && subjectId) {
       await db
-        .query("delete from subject_class_links where class_id = $1 and subject_id = $2", [classId, subjectId])
+        .query("delete from subject_class_links where class_id = $1 and subject_id = $2", [
+          classId,
+          subjectId,
+        ])
         .catch(() => undefined);
     }
     if (classId) await db.query("delete from classes where id = $1", [classId]).catch(() => undefined);
