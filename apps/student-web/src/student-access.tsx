@@ -10,6 +10,7 @@ import {
   redeemStudentAccess,
 } from "./auth-api";
 import type { EntitlementView } from "./auth-api";
+import { StudentAssessmentSection } from "./student-assessment";
 import { StudentCurriculumSection } from "./student-curriculum";
 
 type AccessState =
@@ -97,6 +98,12 @@ export function StudentAccessSection({
   return (
     <>
       <StudentCurriculumSection
+        online={online}
+        refreshKey={curriculumRefreshKey}
+        onSessionExpired={onSessionExpired}
+      />
+
+      <StudentAssessmentSection
         online={online}
         refreshKey={curriculumRefreshKey}
         onSessionExpired={onSessionExpired}
