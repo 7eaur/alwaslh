@@ -13,6 +13,17 @@ if (!databaseUrl) throw new Error("DATABASE_URL is required for notification/ope
 
 const origin = "http://localhost:5173";
 
+interface BaselineRow {
+  active_classes: string;
+  active_subjects: string;
+  active_lessons: string;
+  active_students: string;
+  students_with_access: string;
+  active_full_codes: string;
+  active_class_codes: string;
+  active_notifications: string;
+}
+
 function cookieFrom(response: { headers: Record<string, string | string[] | number | undefined> }): string {
   const raw = response.headers["set-cookie"];
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -31,6 +42,40 @@ test("Admin notifications share one authority with Student visibility and the op
   const db = createDatabase(databaseUrl);
   const auth = new AuthService(db, config.SESSION_TTL_HOURS);
   const access = new AccessService(db);
+
+  const baselineRows = await db.query<BaselineRow>(`
+    select
+      (select count(*) from classes where status = 'active')::text as active_classes,
+      (select count(*) from subjects where status = 'active')::text as active_subjects,
+      (select count(*) from lessons where status = 'active')::text as active_lessons,
+      (select count(*) from profiles where role = 'student' and status = 'active')::text as active_students,
+      (
+        select count(distinct profile_id)
+        from student_entitlements
+        where status = 'active'
+          and starts_at <= now()
+          and (expires_at is null or expires_at > now())
+      )::text as students_with_access,
+      (
+        select count(*) from full_access_codes
+        where status = 'active'
+          and valid_from <= now()
+          and (expires_at is null or expires_at > now())
+      )::text as active_full_codes,
+      (
+        select count(*) from class_access_codes
+        where status = 'active'
+          and valid_from <= now()
+          and (expires_at is null or expires_at > now())
+      )::text as active_class_codes,
+      (
+        select count(*) from notifications
+        where published_at <= now()
+          and (expires_at is null or expires_at > now())
+      )::text as active_notifications
+  `);
+  const baseline = baselineRows[0];
+  assert.ok(baseline);
 
   const adminRows = await db.query<{ id: string }>(
     "insert into profiles (role, display_name) values ('admin', 'مدير الإشعارات') returning id",
@@ -83,148 +128,150 @@ test("Admin notifications share one authority with Student visibility and the op
 
   const app = buildApp({ config, database: db });
 
-  const adminLogin = await app.inject({
-    method: "POST",
-    url: "/v1/auth/login",
-    headers: { origin },
-    payload: { identifier: "stage13g-notif-admin", password: "Stage13gNotifAdmin123!" },
-  });
-  assert.equal(adminLogin.statusCode, 200);
-  const adminCookie = cookieFrom(adminLogin);
+  try {
+    const adminLogin = await app.inject({
+      method: "POST",
+      url: "/v1/auth/login",
+      headers: { origin },
+      payload: { identifier: "stage13g-notif-admin", password: "Stage13gNotifAdmin123!" },
+    });
+    assert.equal(adminLogin.statusCode, 200);
+    const adminCookie = cookieFrom(adminLogin);
 
-  const studentSession = await auth.createStudentSession(studentId, deviceId, "stage13g-notification-test");
-  const studentCookie = `${config.SESSION_COOKIE_NAME}=${studentSession.token}`;
+    const studentSession = await auth.createStudentSession(studentId, deviceId, "stage13g-notification-test");
+    const studentCookie = `${config.SESSION_COOKIE_NAME}=${studentSession.token}`;
 
-  const invalidCreate = await app.inject({
-    method: "POST",
-    url: "/v1/admin/notifications",
-    headers: { origin, cookie: adminCookie },
-    payload: { title: "   ", body: "نص صالح" },
-  });
-  assert.equal(invalidCreate.statusCode, 400);
+    const invalidCreate = await app.inject({
+      method: "POST",
+      url: "/v1/admin/notifications",
+      headers: { origin, cookie: adminCookie },
+      payload: { title: "   ", body: "نص صالح" },
+    });
+    assert.equal(invalidCreate.statusCode, 400);
 
-  const globalCreate = await app.inject({
-    method: "POST",
-    url: "/v1/admin/notifications",
-    headers: { origin, cookie: adminCookie },
-    payload: {
-      title: "إشعار عام تجريبي",
-      body: "هذا إشعار يصل إلى جميع الطلاب.",
-      severity: "info",
-      actionPath: "/student",
-    },
-  });
-  assert.equal(globalCreate.statusCode, 201);
-  const globalId = globalCreate.json().notification.id as string;
-  assert.ok(globalId);
+    const globalCreate = await app.inject({
+      method: "POST",
+      url: "/v1/admin/notifications",
+      headers: { origin, cookie: adminCookie },
+      payload: {
+        title: "إشعار عام تجريبي",
+        body: "هذا إشعار يصل إلى جميع الطلاب.",
+        severity: "info",
+        actionPath: "/student",
+      },
+    });
+    assert.equal(globalCreate.statusCode, 201);
+    const globalId = globalCreate.json().notification.id as string;
+    assert.ok(globalId);
 
-  const classCreate = await app.inject({
-    method: "POST",
-    url: "/v1/admin/notifications",
-    headers: { origin, cookie: adminCookie },
-    payload: {
-      title: "إشعار صف تجريبي",
-      body: "هذا الإشعار لطلاب الصف ذوي الصلاحية النشطة.",
-      severity: "warning",
-      targetClassId: classId,
-    },
-  });
-  assert.equal(classCreate.statusCode, 201);
-  const classIdNotification = classCreate.json().notification.id as string;
+    const classCreate = await app.inject({
+      method: "POST",
+      url: "/v1/admin/notifications",
+      headers: { origin, cookie: adminCookie },
+      payload: {
+        title: "إشعار صف تجريبي",
+        body: "هذا الإشعار لطلاب الصف ذوي الصلاحية النشطة.",
+        severity: "warning",
+        targetClassId: classId,
+      },
+    });
+    assert.equal(classCreate.statusCode, 201);
+    const classIdNotification = classCreate.json().notification.id as string;
 
-  const adminList = await app.inject({
-    method: "GET",
-    url: "/v1/admin/notifications?search=%D8%AA%D8%AC%D8%B1%D9%8A%D8%A8%D9%8A&limit=10&offset=0",
-    headers: { cookie: adminCookie },
-  });
-  assert.equal(adminList.statusCode, 200);
-  assert.equal(adminList.json().page.total, 2);
+    const adminList = await app.inject({
+      method: "GET",
+      url: "/v1/admin/notifications?search=%D8%AA%D8%AC%D8%B1%D9%8A%D8%A8%D9%8A&limit=10&offset=0",
+      headers: { cookie: adminCookie },
+    });
+    assert.equal(adminList.statusCode, 200);
+    assert.equal(adminList.json().page.total, 2);
 
-  const studentList = await app.inject({
-    method: "GET",
-    url: "/v1/student/notifications?limit=10&offset=0",
-    headers: { cookie: studentCookie },
-  });
-  assert.equal(studentList.statusCode, 200);
-  const visibleIds = (studentList.json().notifications as Array<{ id: string }>).map((item) => item.id);
-  assert.ok(visibleIds.includes(globalId));
-  assert.ok(visibleIds.includes(classIdNotification));
-  assert.equal(studentList.json().unreadCount, 2);
+    const studentList = await app.inject({
+      method: "GET",
+      url: "/v1/student/notifications?limit=10&offset=0",
+      headers: { cookie: studentCookie },
+    });
+    assert.equal(studentList.statusCode, 200);
+    const visibleIds = (studentList.json().notifications as Array<{ id: string }>).map((item) => item.id);
+    assert.ok(visibleIds.includes(globalId));
+    assert.ok(visibleIds.includes(classIdNotification));
+    assert.equal(studentList.json().unreadCount, 2);
 
-  const markRead = await app.inject({
-    method: "POST",
-    url: `/v1/student/notifications/${globalId}/read`,
-    headers: { origin, cookie: studentCookie },
-  });
-  assert.equal(markRead.statusCode, 204);
+    const markRead = await app.inject({
+      method: "POST",
+      url: `/v1/student/notifications/${globalId}/read`,
+      headers: { origin, cookie: studentCookie },
+    });
+    assert.equal(markRead.statusCode, 204);
 
-  const afterRead = await app.inject({
-    method: "GET",
-    url: "/v1/student/notifications?limit=10&offset=0",
-    headers: { cookie: studentCookie },
-  });
-  assert.equal(afterRead.statusCode, 200);
-  assert.equal(afterRead.json().unreadCount, 1);
-  const globalAfterRead = (
-    afterRead.json().notifications as Array<{ id: string; readAt: string | null }>
-  ).find((item) => item.id === globalId);
-  assert.ok(globalAfterRead?.readAt);
+    const afterRead = await app.inject({
+      method: "GET",
+      url: "/v1/student/notifications?limit=10&offset=0",
+      headers: { cookie: studentCookie },
+    });
+    assert.equal(afterRead.statusCode, 200);
+    assert.equal(afterRead.json().unreadCount, 1);
+    const globalAfterRead = (
+      afterRead.json().notifications as Array<{ id: string; readAt: string | null }>
+    ).find((item) => item.id === globalId);
+    assert.ok(globalAfterRead?.readAt);
 
-  const overview = await app.inject({
-    method: "GET",
-    url: "/v1/admin/operations/overview?recentLimit=10",
-    headers: { cookie: adminCookie },
-  });
-  assert.equal(overview.statusCode, 200);
-  assert.equal(overview.json().metrics.activeClasses, 1);
-  assert.equal(overview.json().metrics.activeSubjects, 1);
-  assert.equal(overview.json().metrics.activeLessons, 1);
-  assert.equal(overview.json().metrics.activeStudents, 1);
-  assert.equal(overview.json().metrics.studentsWithAccess, 1);
-  assert.equal(overview.json().metrics.activeFullCodes, 1);
-  assert.equal(overview.json().metrics.activeClassCodes, 1);
-  assert.equal(overview.json().metrics.activeNotifications, 2);
-  assert.ok(
-    (overview.json().recentNotifications as Array<{ id: string }>).some((item) => item.id === globalId),
-  );
-  assert.ok(
-    (overview.json().recentActivity as Array<{ source: string }>).some((item) => item.source === "access"),
-  );
-  assert.ok(
-    (overview.json().recentActivity as Array<{ source: string }>).some((item) => item.source === "auth"),
-  );
+    const overview = await app.inject({
+      method: "GET",
+      url: "/v1/admin/operations/overview?recentLimit=10",
+      headers: { cookie: adminCookie },
+    });
+    assert.equal(overview.statusCode, 200);
+    assert.equal(overview.json().metrics.activeClasses, Number(baseline.active_classes) + 1);
+    assert.equal(overview.json().metrics.activeSubjects, Number(baseline.active_subjects) + 1);
+    assert.equal(overview.json().metrics.activeLessons, Number(baseline.active_lessons) + 1);
+    assert.equal(overview.json().metrics.activeStudents, Number(baseline.active_students) + 1);
+    assert.equal(overview.json().metrics.studentsWithAccess, Number(baseline.students_with_access) + 1);
+    assert.equal(overview.json().metrics.activeFullCodes, Number(baseline.active_full_codes) + 1);
+    assert.equal(overview.json().metrics.activeClassCodes, Number(baseline.active_class_codes) + 1);
+    assert.equal(overview.json().metrics.activeNotifications, Number(baseline.active_notifications) + 2);
+    assert.ok(
+      (overview.json().recentNotifications as Array<{ id: string }>).some((item) => item.id === globalId),
+    );
+    assert.ok(
+      (overview.json().recentActivity as Array<{ source: string }>).some((item) => item.source === "access"),
+    );
+    assert.ok(
+      (overview.json().recentActivity as Array<{ source: string }>).some((item) => item.source === "auth"),
+    );
 
-  const studentForbiddenOverview = await app.inject({
-    method: "GET",
-    url: "/v1/admin/operations/overview",
-    headers: { cookie: studentCookie },
-  });
-  assert.equal(studentForbiddenOverview.statusCode, 403);
+    const studentForbiddenOverview = await app.inject({
+      method: "GET",
+      url: "/v1/admin/operations/overview",
+      headers: { cookie: studentCookie },
+    });
+    assert.equal(studentForbiddenOverview.statusCode, 403);
 
-  const removeGlobal = await app.inject({
-    method: "DELETE",
-    url: `/v1/admin/notifications/${globalId}`,
-    headers: { origin, cookie: adminCookie },
-  });
-  assert.equal(removeGlobal.statusCode, 204);
+    const removeGlobal = await app.inject({
+      method: "DELETE",
+      url: `/v1/admin/notifications/${globalId}`,
+      headers: { origin, cookie: adminCookie },
+    });
+    assert.equal(removeGlobal.statusCode, 204);
 
-  const afterDelete = await app.inject({
-    method: "GET",
-    url: "/v1/student/notifications?limit=10&offset=0",
-    headers: { cookie: studentCookie },
-  });
-  assert.equal(afterDelete.statusCode, 200);
-  assert.deepEqual(
-    (afterDelete.json().notifications as Array<{ id: string }>).map((item) => item.id),
-    [classIdNotification],
-  );
-  assert.equal(afterDelete.json().unreadCount, 1);
+    const afterDelete = await app.inject({
+      method: "GET",
+      url: "/v1/student/notifications?limit=10&offset=0",
+      headers: { cookie: studentCookie },
+    });
+    assert.equal(afterDelete.statusCode, 200);
+    assert.deepEqual(
+      (afterDelete.json().notifications as Array<{ id: string }>).map((item) => item.id),
+      [classIdNotification],
+    );
+    assert.equal(afterDelete.json().unreadCount, 1);
 
-  const anonymousStudentFeed = await app.inject({
-    method: "GET",
-    url: "/v1/student/notifications",
-  });
-  assert.equal(anonymousStudentFeed.statusCode, 401);
-
-  await app.close();
+    const anonymousStudentFeed = await app.inject({
+      method: "GET",
+      url: "/v1/student/notifications",
+    });
+    assert.equal(anonymousStudentFeed.statusCode, 401);
+  } finally {
+    await app.close();
+  }
 });
