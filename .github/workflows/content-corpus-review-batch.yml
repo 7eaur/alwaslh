@@ -1,6 +1,5 @@
 name: Content Corpus Visual Review Batch
 
-# Current manual visual-review trigger: physics batch 2
 on:
   workflow_dispatch:
   push:
@@ -8,7 +7,7 @@ on:
       - content-prep/full-corpus-extraction
     paths:
       - .github/workflows/content-corpus-review-batch.yml
-      - data/content-corpus/textbooks/**/batches/*.json
+      - tools/local-content-prep/VISUAL_REVIEW_BATCH.json
 
 permissions:
   contents: read
@@ -27,7 +26,7 @@ jobs:
           ref: content-prep/full-corpus-extraction
           fetch-depth: 1
 
-      - name: Download exact source images for current batch
+      - name: Download exact source images for selected review batch
         run: |
           python - <<'PY'
           import json
@@ -35,9 +34,10 @@ jobs:
           import urllib.request
           from pathlib import Path
 
-          config = json.loads(Path('tools/local-content-prep/CORPUS_BATCH.json').read_text(encoding='utf-8'))
-          root = Path('data/content-corpus/textbooks') / config['class_slug'] / config['subject_slug']
-          batch = json.loads((root / 'batches' / f"batch-{int(config['batch_index']):04d}.json").read_text(encoding='utf-8'))
+          selector = json.loads(Path('tools/local-content-prep/VISUAL_REVIEW_BATCH.json').read_text(encoding='utf-8'))
+          root = Path('data/content-corpus/textbooks') / selector['class_slug'] / selector['subject_slug']
+          batch_index = int(selector['batch_index'])
+          batch = json.loads((root / 'batches' / f"batch-{batch_index:04d}.json").read_text(encoding='utf-8'))
           output = Path('visual-review-source')
           output.mkdir(parents=True, exist_ok=True)
           manifest = []
