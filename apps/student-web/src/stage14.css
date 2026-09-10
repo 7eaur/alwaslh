@@ -14,6 +14,11 @@
   border: 0;
 }
 
+.curriculum-surface + .access-section {
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--border-subtle);
+}
+
 .access-section .section-heading {
   align-items: center;
 }
