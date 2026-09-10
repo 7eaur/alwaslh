@@ -286,7 +286,10 @@ test("Student Reader enforces entitlement, publication, ready media and safe OCR
     assert.equal(payload.reader.lesson.id, lesson.id);
     assert.equal(payload.reader.lesson.title, lesson.title);
     assert.equal(payload.reader.lesson.summary, lesson.summary);
-    assert.deepEqual(payload.reader.assets.map((asset) => asset.id), [visibleAssetId]);
+    assert.deepEqual(
+      payload.reader.assets.map((asset) => asset.id),
+      [visibleAssetId],
+    );
     assert.equal(payload.reader.assets[0]?.text, "نص معتمد للطالب");
     assert.equal(JSON.stringify(payload).includes("storage_key"), false);
     assert.equal(JSON.stringify(payload).includes(visibleKey), false);
