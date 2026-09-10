@@ -7,6 +7,7 @@ on:
       - content-prep/full-corpus-extraction
     paths:
       - .github/workflows/content-corpus-review-batch.yml
+      - data/content-corpus/textbooks/**/batches/*.json
 
 permissions:
   contents: read
