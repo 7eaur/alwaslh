@@ -69,7 +69,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const quizExports = new QuizVersionExportService(quizBuilder);
   const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
-  const aiAuthoring = new AdminAiAuthoringService(database, questionBank);
+  const aiAuthoring = new AdminAiAuthoringService(database, questionBank, quizBuilder);
   const quizSpecializedExports = new QuizSpecializedExportService(quizBuilder, database, mediaStorage);
 
   app.addHook("onRequest", async (request, reply) => {
