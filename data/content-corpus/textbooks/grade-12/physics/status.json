@@ -1,17 +1,17 @@
 {
   "batch_size": 5,
   "class_slug": "grade-12",
-  "completed_extractions": 5,
+  "completed_extractions": 10,
   "document_kind": "textbook",
   "failed_extractions": 0,
-  "needs_review": 5,
-  "next_batch_index": 1,
+  "needs_review": 10,
+  "next_batch_index": 2,
   "profile": "arabic-document-v1",
   "provider": "paddleocr-local",
   "provider_version": "3.7.0",
   "schema_version": 1,
-  "stored_page_records": 5,
+  "stored_page_records": 10,
   "subject_slug": "physics",
   "subject_title": "الفيزياء",
-  "total_source_pages": 203
+  "total_source_pages": 207
 }
