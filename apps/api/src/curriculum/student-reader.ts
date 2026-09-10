@@ -77,6 +77,7 @@ const ACCESSIBLE_LESSON_SQL = `
   where l.id = $2
     and l.status = 'active'
     and l.published_at is not null
+    and l.published_at <= now()
     and (l.section_id is null or cs.status = 'active')
     and exists (
       select 1
@@ -180,6 +181,7 @@ export class StudentReaderService {
          and la.publication_status = 'published'
          and l.status = 'active'
          and l.published_at is not null
+         and l.published_at <= now()
          and (l.section_id is null or cs.status = 'active')
          and exists (
            select 1
