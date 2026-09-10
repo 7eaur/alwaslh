@@ -5,26 +5,28 @@ import json
 import re
 import subprocess
 from collections import defaultdict
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 SUPPORTED_IMAGES = {".jpg", ".jpeg", ".png", ".webp", ".tif", ".tiff", ".bmp"}
 ARABIC_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
 
 
-def _git_blob_map(repo: Path) -> dict[str, str]:
-    result = subprocess.run(
-        ["git", "-C", str(repo), "ls-files", "-s", "-z"],
+def _tracked_blobs(repo: Path, commit: str) -> list[tuple[str, str, int]]:
+    raw = subprocess.run(
+        ["git", "-C", str(repo), "ls-tree", "-r", "-z", "--long", commit],
         check=True,
         capture_output=True,
     ).stdout.decode("utf-8", errors="strict")
-    mapping: dict[str, str] = {}
-    for entry in result.split("\0"):
+    rows: list[tuple[str, str, int]] = []
+    for entry in raw.split("\0"):
         if not entry:
             continue
         meta, path = entry.split("\t", 1)
-        _mode, sha, _stage = meta.split(" ", 2)
-        mapping[path] = sha
-    return mapping
+        mode, object_type, sha, size_text = meta.split(None, 3)
+        if object_type != "blob" or mode == "160000" or size_text == "-":
+            continue
+        rows.append((path, sha, int(size_text)))
+    return rows
 
 
 def _page_hint(filename: str) -> int | None:
@@ -58,52 +60,46 @@ def _subject_from_top(top: str) -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Inventory real alwaslh-go image corpus without OCR.")
-    parser.add_argument("source_root", type=Path)
+    parser = argparse.ArgumentParser(description="Inventory alwaslh-go images from Git metadata without downloading blobs.")
+    parser.add_argument("source_git", type=Path)
     parser.add_argument("output_dir", type=Path)
     parser.add_argument("--source-repository", default="7eaur/alwaslh-go")
     parser.add_argument("--source-commit", required=True)
     args = parser.parse_args()
 
-    source_root = args.source_root.resolve()
+    source_git = args.source_git.resolve()
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
-    blob_map = _git_blob_map(source_root)
 
     records: list[dict[str, object]] = []
     summary: dict[tuple[str, str], dict[str, int]] = defaultdict(lambda: {"images": 0, "bytes": 0})
 
-    for path in sorted(source_root.rglob("*"), key=lambda p: p.as_posix()):
-        if not path.is_file() or path.suffix.lower() not in SUPPORTED_IMAGES:
+    for relative, blob_sha, byte_size in sorted(_tracked_blobs(source_git, args.source_commit), key=lambda row: row[0]):
+        posix = PurePosixPath(relative)
+        if posix.suffix.lower() not in SUPPORTED_IMAGES:
             continue
-        relative = path.relative_to(source_root).as_posix()
-        parts = tuple(Path(relative).parts)
+        parts = posix.parts
         if not parts:
             continue
         top = parts[0]
         subject_title = _subject_from_top(top)
         content_kind = _kind(parts)
         source_group = "/".join(parts[1:-1])
-        byte_size = path.stat().st_size
-        blob_sha = blob_map.get(relative)
-        if not blob_sha:
-            raise RuntimeError(f"missing git blob SHA for tracked image: {relative}")
-
         record = {
             "schema_version": 1,
             "source_repository": args.source_repository,
             "source_commit": args.source_commit,
             "source_path": relative,
             "source_git_blob_sha1": blob_sha,
-            "filename": path.name,
-            "extension": path.suffix.lower(),
+            "filename": posix.name,
+            "extension": posix.suffix.lower(),
             "byte_size": byte_size,
             "class_slug": "grade-12",
             "class_title": "الثالث الثانوي",
             "subject_title": subject_title,
             "source_group": source_group,
             "content_kind": content_kind,
-            "page_hint": _page_hint(path.name),
+            "page_hint": _page_hint(posix.name),
         }
         records.append(record)
         key = (subject_title, content_kind)
@@ -113,12 +109,10 @@ def main() -> int:
     if not records:
         raise RuntimeError("inventory contained no supported images")
 
-    jsonl_path = output_dir / "inventory.jsonl"
-    jsonl_path.write_text(
+    (output_dir / "inventory.jsonl").write_text(
         "".join(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n" for record in records),
         encoding="utf-8",
     )
-
     groups = [
         {
             "subject_title": subject,
@@ -141,7 +135,6 @@ def main() -> int:
         json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-
     lines = [
         "# Content Corpus Inventory\n",
         f"Source: `{args.source_repository}@{args.source_commit}`\n",
@@ -154,7 +147,6 @@ def main() -> int:
             f"| {group['subject_title']} | {group['content_kind']} | {group['image_count']} | {group['byte_size']} |\n"
         )
     (output_dir / "INVENTORY.md").write_text("".join(lines), encoding="utf-8")
-
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
