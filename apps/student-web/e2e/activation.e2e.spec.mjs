@@ -235,7 +235,10 @@ test("student activation, recovery, device access and canonical curriculum work 
   const expiredRequest = page.waitForResponse(
     (response) => response.url().includes("/v1/student/access/entitlements") && response.status() === 401,
   );
-  await page.getByRole("button", { name: "تحديث", exact: true }).click();
+  await page
+    .getByLabel("صلاحياتك ورموز الصفوف")
+    .getByRole("button", { name: "تحديث", exact: true })
+    .click();
   await expiredRequest;
   await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
   await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.", { exact: true })).toBeVisible();
