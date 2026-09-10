@@ -4,7 +4,7 @@
   "class_slug": "grade-12",
   "subject_title": "الفيزياء",
   "subject_slug": "physics",
-  "batch_index": 3,
+  "batch_index": 4,
   "batch_size": 5,
   "provider": "paddleocr-local",
   "low_confidence_threshold": 0.8,
