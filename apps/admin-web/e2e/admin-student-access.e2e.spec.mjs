@@ -87,8 +87,10 @@ test("Student access workspace returns to login after the real Admin session exp
   await openStudentAccess(page);
 
   const filters = page.getByRole("form", { name: "فلترة حسابات الطلاب" });
+  const search = filters.getByLabel("بحث بالمعرّف أو الاسم");
   await expect(filters.getByRole("button", { name: "تطبيق البحث" })).toBeEnabled();
   await logoutRealAdminSession(page);
+  await search.fill("stage13g");
   await filters.getByRole("button", { name: "تطبيق البحث" }).click();
 
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
