@@ -37,6 +37,29 @@ class FakeOcr:
         )
 
 
+class MixedConfidenceFakeOcr(FakeOcr):
+    def extract(self, image_path: Path) -> OcrResult:
+        self.calls += 1
+        scores = [0.95] * 9 + [0.50]
+        blocks = tuple(
+            OcrBlock(text=f"سطر {index + 1}", confidence=score, polygon=[[0, index], [1, index], [1, index + 1], [0, index + 1]])
+            for index, score in enumerate(scores)
+        )
+        text = "\n".join(block.text for block in blocks)
+        return OcrResult(
+            provider_key=self.provider_key,
+            provider_version=self.provider_version,
+            profile_key=self.profile_key,
+            language=self.language,
+            blocks=blocks,
+            raw_text=text,
+            normalized_text=text,
+            mean_confidence=sum(scores) / len(scores),
+            min_confidence=min(scores),
+            raw_provider_payload={"fake": True},
+        )
+
+
 def _workspace(tmp_path: Path):
     workspace = tmp_path / "workspace"
     lesson = workspace / "input" / "grade-12" / "physics" / "lesson-01"
@@ -97,6 +120,15 @@ def test_low_confidence_is_marked_for_review(tmp_path: Path) -> None:
     page = json.loads((workspace / "prepared" / "pages.jsonl").read_text(encoding="utf-8").splitlines()[0])
     assert page["ocr"]["needs_review"] is True
     assert page["ocr"]["review_reason"] == "low_mean_confidence"
+
+
+def test_high_mean_with_many_weak_blocks_is_marked_for_review(tmp_path: Path) -> None:
+    workspace, catalog = _workspace(tmp_path)
+    run_pipeline(workspace=workspace, catalog=catalog, ocr_adapter=MixedConfidenceFakeOcr(), low_confidence=0.80)
+    page = json.loads((workspace / "prepared" / "pages.jsonl").read_text(encoding="utf-8").splitlines()[0])
+    assert page["ocr"]["mean_confidence"] > 80
+    assert page["ocr"]["needs_review"] is True
+    assert page["ocr"]["review_reason"] == "many_low_confidence_blocks"
 
 
 def test_resume_is_invalidated_when_ocr_profile_changes(tmp_path: Path) -> None:
