@@ -38,15 +38,13 @@ export interface StudentAssessmentQuestionView {
   questionBankItemId: string | null;
   questionBankRevisionId: string | null;
   answer: null | { selectedOptionId: string | null; directAnswerText: string | null };
-  feedback:
-    | null
-    | {
-        correct: boolean;
-        correctOptionId: string | null;
-        correctAnswerText: string | null;
-        explanation: string | null;
-        method: string | null;
-      };
+  feedback: null | {
+    correct: boolean;
+    correctOptionId: string | null;
+    correctAnswerText: string | null;
+    explanation: string | null;
+    method: string | null;
+  };
 }
 
 export interface StudentAssessmentSessionView {
@@ -359,7 +357,11 @@ export class StudentAssessmentService {
       }
       if (!version) throw new AppError("NOT_FOUND", "لا يوجد نموذج اختبار متاح", 404);
 
-      const questions = await tx.query<{ id: string; position: number; type: StudentAssessmentQuestionView["type"] }>(
+      const questions = await tx.query<{
+        id: string;
+        position: number;
+        type: StudentAssessmentQuestionView["type"];
+      }>(
         `select id, position, type
          from questions
          where quiz_version_id = $1
@@ -492,7 +494,8 @@ export class StudentAssessmentService {
       if (alreadyAnswered && session.mode === "practice") {
         const same =
           question.type === "direct"
-            ? normalizeDirectAnswer(question.direct_answer_text ?? "") === normalizeDirectAnswer(directAnswerText ?? "")
+            ? normalizeDirectAnswer(question.direct_answer_text ?? "") ===
+              normalizeDirectAnswer(directAnswerText ?? "")
             : question.selected_option_id === selectedOptionId;
         if (!same) throw new AppError("CONFLICT", "لا يمكن تغيير إجابة التدريب بعد إظهار نتيجتها", 409);
       } else {
@@ -596,7 +599,8 @@ export class StudentAssessmentService {
   async abandon(profileId: string, sessionId: string): Promise<void> {
     await this.db.transaction(async (tx) => {
       const session = await this.sessionRow(tx, profileId, sessionId, true);
-      if (session.status === "completed") throw new AppError("CONFLICT", "المحاولة المكتملة لا يمكن تركها", 409);
+      if (session.status === "completed")
+        throw new AppError("CONFLICT", "المحاولة المكتملة لا يمكن تركها", 409);
       if (session.status === "abandoned") return;
       await tx.query(
         `update practice_sessions
@@ -717,7 +721,8 @@ export class StudentAssessmentService {
         question.type === "direct"
           ? hasAnswer &&
             question.answer_text !== null &&
-            normalizeDirectAnswer(question.direct_answer_text ?? "") === normalizeDirectAnswer(question.answer_text)
+            normalizeDirectAnswer(question.direct_answer_text ?? "") ===
+              normalizeDirectAnswer(question.answer_text)
           : hasAnswer && question.selected_option_id === correctOption?.id;
 
       return {
@@ -743,7 +748,7 @@ export class StudentAssessmentService {
         feedback: canReveal
           ? {
               correct,
-              correctOptionId: question.type === "direct" ? null : correctOption?.id ?? null,
+              correctOptionId: question.type === "direct" ? null : (correctOption?.id ?? null),
               correctAnswerText: question.type === "direct" ? question.answer_text : null,
               explanation: question.explanation,
               method: question.method,
