@@ -12,7 +12,10 @@ if (!databaseUrl) throw new Error("DATABASE_URL is required for Student offline 
 const origin = "http://127.0.0.1:5174";
 type TestDatabase = ReturnType<typeof createDatabase>;
 
-async function createStudent(db: TestDatabase, label: string): Promise<{ profileId: string; deviceId: string }> {
+async function createStudent(
+  db: TestDatabase,
+  label: string,
+): Promise<{ profileId: string; deviceId: string }> {
   const profiles = await db.query<{ id: string }>(
     "insert into profiles (role, display_name) values ('student', $1) returning id",
     [label],
@@ -133,7 +136,8 @@ test("Student offline lease is session/device-bound, bounded and entitlement-saf
   const leaseDuration = milliseconds(payload.lease.expiresAt) - milliseconds(payload.lease.issuedAt);
   assert.ok(leaseDuration > 0);
   assert.ok(leaseDuration <= MAX_OFFLINE_LEASE_HOURS * 60 * 60 * 1000 + 1_000);
-  const grantDuration = milliseconds(payload.lease.grants[0]?.expiresAt ?? "") - milliseconds(payload.lease.issuedAt);
+  const grantDuration =
+    milliseconds(payload.lease.grants[0]?.expiresAt ?? "") - milliseconds(payload.lease.issuedAt);
   assert.ok(grantDuration > 0);
   assert.ok(grantDuration <= 30 * 60 * 1000 + 1_000);
 
@@ -155,13 +159,18 @@ test("Student offline lease is session/device-bound, bounded and entitlement-saf
     headers: { cookie: shortSession.cookie },
   });
   assert.equal(shortResponse.statusCode, 200);
-  const shortPayload = shortResponse.json<{ lease: { issuedAt: string; expiresAt: string; grants: Array<{ expiresAt: string }> } }>();
-  const shortDuration = milliseconds(shortPayload.lease.expiresAt) - milliseconds(shortPayload.lease.issuedAt);
+  const shortPayload = shortResponse.json<{
+    lease: { issuedAt: string; expiresAt: string; grants: Array<{ expiresAt: string }> };
+  }>();
+  const shortDuration =
+    milliseconds(shortPayload.lease.expiresAt) - milliseconds(shortPayload.lease.issuedAt);
   assert.ok(shortDuration > 0);
   assert.ok(shortDuration <= 2 * 60 * 60 * 1000 + 1_000);
   assert.equal(shortPayload.lease.grants[0]?.expiresAt, shortPayload.lease.expiresAt);
 
-  await db.query("update student_devices set revoked_at = now() where id = $1", [longSessionStudent.deviceId]);
+  await db.query("update student_devices set revoked_at = now() where id = $1", [
+    longSessionStudent.deviceId,
+  ]);
   const revokedDevice = await app.inject({
     method: "GET",
     url: "/v1/student/offline/lease",

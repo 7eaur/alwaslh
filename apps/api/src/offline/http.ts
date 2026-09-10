@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
-import type { AppConfig } from "../config.js";
-import { AppError } from "../errors.js";
 import { currentProfile, sessionToken } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
+import type { AppConfig } from "../config.js";
+import { AppError } from "../errors.js";
 import type { StudentOfflineService } from "./service.js";
 
 export function registerStudentOfflineRoutes(
