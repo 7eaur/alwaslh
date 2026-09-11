@@ -37,14 +37,19 @@ function panelByLabelledBy(page, titleId) {
   return page.locator(`section.authoring-panel[aria-labelledby="${titleId}"]`);
 }
 
+function checkboxForText(scope, text) {
+  return scope.locator("label").filter({ hasText: text }).locator('input[type="checkbox"]').first();
+}
+
 test("G-D queues selected lessons and independent quiz versions through the real API", async ({ page }) => {
   await login(page);
   await openAuthoring(page);
 
   const lessonPanel = panelByLabelledBy(page, "lesson-authoring-title");
-  await lessonPanel.getByLabel("الصف", { exact: true }).selectOption({ label: "صف التوليد G-D" });
-  await lessonPanel.getByLabel("المادة", { exact: true }).selectOption({ label: "مادة التوليد G-D" });
-  await lessonPanel.getByLabel("درس التوليد الأول", { exact: true }).check();
+  const lessonSelects = lessonPanel.locator("select");
+  await lessonSelects.nth(0).selectOption({ label: "صف التوليد G-D" });
+  await lessonSelects.nth(1).selectOption({ label: "مادة التوليد G-D" });
+  await checkboxForText(lessonPanel, "درس التوليد الأول").check();
 
   const lessonResponse = page.waitForResponse(
     (response) =>
@@ -62,17 +67,17 @@ test("G-D queues selected lessons and independent quiz versions through the real
       /\/v1\/admin\/quizzes\/[0-9a-f-]+$/i.test(new URL(response.url()).pathname) &&
       response.status() === 200,
   );
-  await quizPanel.getByLabel("اختبار مسودة", { exact: true }).selectOption({ label: "اختبار التوليد G-D" });
+  await quizPanel.locator("select").nth(0).selectOption({ label: "اختبار التوليد G-D" });
   await quizDetailResponse;
 
   let versionCards = quizPanel.locator(".authoring-version-card");
   await expect(versionCards).toHaveCount(1);
-  await versionCards.nth(0).getByLabel("درس التوليد الثاني", { exact: true }).uncheck();
+  await checkboxForText(versionCards.nth(0), "درس التوليد الثاني").uncheck();
   await quizPanel.getByRole("button", { name: "إضافة نموذج", exact: true }).click();
   versionCards = quizPanel.locator(".authoring-version-card");
   await expect(versionCards).toHaveCount(2);
-  await versionCards.nth(1).getByLabel("درس التوليد الأول", { exact: true }).uncheck();
-  await versionCards.nth(1).getByLabel("خلط الخيارات", { exact: true }).uncheck();
+  await checkboxForText(versionCards.nth(1), "درس التوليد الأول").uncheck();
+  await checkboxForText(versionCards.nth(1), "خلط الخيارات").uncheck();
 
   const quizResponse = page.waitForResponse(
     (response) =>
@@ -104,9 +109,8 @@ test("G-D exports only selected versions and opens the authenticated print view"
       /\/v1\/admin\/quizzes\/[0-9a-f-]+$/i.test(new URL(response.url()).pathname) &&
       response.status() === 200,
   );
-  await exportPanel
-    .getByLabel("اختبار قيد المراجعة أو منشور", { exact: true })
-    .selectOption({ label: "اختبار التصدير G-D" });
+  const exportSelects = exportPanel.locator("select");
+  await exportSelects.nth(0).selectOption({ label: "اختبار التصدير G-D" });
   await detailResponse;
 
   const downloadButton = exportPanel.getByRole("button", {
@@ -117,7 +121,7 @@ test("G-D exports only selected versions and opens the authenticated print view"
   await expect(downloadButton).toBeDisabled();
   await exportPanel.getByRole("button", { name: "تحديد الكل", exact: true }).click();
   await expect(downloadButton).toBeEnabled();
-  await exportPanel.getByLabel("نسخة الطباعة", { exact: true }).selectOption("answer_key");
+  await exportSelects.nth(1).selectOption("answer_key");
 
   const exportResponse = page.waitForResponse(
     (response) => response.url().includes("/specialized-export?") && response.status() === 200,
