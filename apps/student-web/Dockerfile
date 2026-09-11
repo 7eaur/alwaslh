@@ -21,7 +21,8 @@ ENV PORT=8080
 
 COPY --from=build /app/apps/student-web/dist /usr/share/nginx/html
 
-RUN printf '%s\n' \
+RUN mkdir -p /etc/nginx/templates \
+  && printf '%s\n' \
   'server {' \
   '  listen ${PORT};' \
   '  server_name _;' \
