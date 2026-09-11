@@ -22,7 +22,7 @@ test("Operations dashboard uses real metrics/activity and manages a global notif
   const studentMetric = page.locator(".metric-row").filter({ hasText: "الطلاب النشطون" });
   await expect(studentMetric).toBeVisible();
   await expect(studentMetric.locator("strong")).not.toHaveText("0");
-  await expect(page.getByText("توليد أكواد وصول", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("تسجيل دخول ناجح", { exact: true }).first()).toBeVisible();
 
   await page.getByRole("tab", { name: "الإشعارات" }).click();
   const compose = page.getByRole("form", { name: "إنشاء إشعار عام" });
