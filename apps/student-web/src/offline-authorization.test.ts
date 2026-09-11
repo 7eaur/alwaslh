@@ -19,6 +19,12 @@ function base64UrlToBytes(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
+function ownedArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -49,17 +55,23 @@ function manifest(): StudentOfflineLessonManifest {
 async function signedEnvelope(value: StudentOfflineLessonManifest): Promise<StudentOfflineAuthorizationEnvelope> {
   const privateKey = await crypto.subtle.importKey(
     "pkcs8",
-    base64UrlToBytes(testPrivateKeyPkcs8),
+    ownedArrayBuffer(base64UrlToBytes(testPrivateKeyPkcs8)),
     { name: "ECDSA", namedCurve: "P-256" },
     false,
     ["sign"],
   );
   const publicKeyBytes = base64UrlToBytes(testPublicKeySpki);
-  const keyIdBytes = new Uint8Array(await crypto.subtle.digest("SHA-256", publicKeyBytes));
+  const keyIdBytes = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", ownedArrayBuffer(publicKeyBytes)),
+  );
   const keyId = [...keyIdBytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
   const payloadBytes = new TextEncoder().encode(canonicalOfflineLessonManifest(value));
   const signature = new Uint8Array(
-    await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, privateKey, payloadBytes),
+    await crypto.subtle.sign(
+      { name: "ECDSA", hash: "SHA-256" },
+      privateKey,
+      ownedArrayBuffer(payloadBytes),
+    ),
   );
   return {
     version: 1,
