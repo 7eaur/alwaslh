@@ -69,6 +69,7 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='notification_severity' and e.enumlabel in ('info','success','warning','critical')")" = "4"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_class where relname in ('curriculum_events','ai_output_review_events','question_bank_events','quiz_builder_events','ai_execution_runtime_control','ai_route_runtime_state') and relkind='r'")" = "6"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_enum e join pg_type t on t.oid=e.enumtypid where t.typname='quiz_builder_event_action' and e.enumlabel='archive'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from pg_trigger where tgname='lessons_summary_content_revision' and not tgisinternal")" = "1"
       - name: Run Stage13G Accounts + Access integration
         working-directory: apps/api
         run: node --test --import tsx tests/integration/admin-student-access.integration.test.ts
@@ -83,6 +84,7 @@ jobs:
         run: |
           node --test --import tsx tests/integration/admin-ai-authoring.integration.test.ts
           node --test --import tsx tests/integration/admin-ai-quiz-application.integration.test.ts
+          node --test --import tsx tests/integration/lesson-authoring-parity.integration.test.ts
       - name: Run Access and Auth regression
         working-directory: apps/api
         run: |
@@ -199,3 +201,4 @@ jobs:
           e2e/admin-reports.e2e.spec.mjs
           e2e/admin-governance.e2e.spec.mjs
           e2e/admin-ai-authoring.e2e.spec.mjs
+          e2e/admin-parity-closure.e2e.spec.mjs
