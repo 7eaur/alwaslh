@@ -35,7 +35,7 @@ function runAuthFixture(action, profileId) {
 async function readOfflineLeases(page) {
   return page.evaluate(() =>
     new Promise((resolveValue, reject) => {
-      const request = indexedDB.open("alwaslh-student-offline", 1);
+      const request = indexedDB.open("alwaslh-student-offline");
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains("leases")) {
@@ -61,7 +61,7 @@ async function putOfflineLease(page, record) {
   await page.evaluate(
     (value) =>
       new Promise((resolveValue, reject) => {
-        const request = indexedDB.open("alwaslh-student-offline", 1);
+        const request = indexedDB.open("alwaslh-student-offline");
         request.onupgradeneeded = () => {
           const db = request.result;
           if (!db.objectStoreNames.contains("leases")) {
