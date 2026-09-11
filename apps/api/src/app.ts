@@ -1,8 +1,15 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import { registerAccessRoutes } from "./access/http.js";
+import { AccessCodeImportService } from "./access/import-service.js";
 import { AccessService } from "./access/service.js";
 import { registerStudentActivationRoutes } from "./activation/http.js";
 import { StudentActivationService } from "./activation/service.js";
+import { registerAdminStudentAccessRoutes } from "./admin-access/http.js";
+import { AdminStudentAccessService } from "./admin-access/service.js";
+import { registerAdminOperationsRoutes } from "./admin-operations/http.js";
+import { AdminOperationsService } from "./admin-operations/service.js";
+import { AdminAiAuthoringService } from "./ai/admin-authoring.js";
+import { registerAdminAiAuthoringRoutes } from "./ai/admin-authoring-http.js";
 import { AdminAiOperationsService } from "./ai/admin-operations.js";
 import { registerAdminAiOperationsRoutes } from "./ai/admin-operations-http.js";
 import { registerAuthRoutes } from "./auth/http.js";
@@ -13,11 +20,15 @@ import { registerAdminContentOperationsRoutes } from "./content/admin-operations
 import { registerAdminContentIngestionRoutes } from "./content/ingestion-http.js";
 import { AdminContentIngestionService } from "./content/ingestion-service.js";
 import { registerCurriculumRoutes } from "./curriculum/http.js";
+import { LessonAuthoringExportService } from "./curriculum/lesson-authoring-export.js";
+import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authoring-export-http.js";
 import { CurriculumService } from "./curriculum/service.js";
 import { StudentReaderService } from "./curriculum/student-reader.js";
 import type { Database } from "./db.js";
 import { AppError, toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
+import { registerNotificationRoutes } from "./notifications/http.js";
+import { NotificationService } from "./notifications/service.js";
 import { StudentOfflineDownloadService } from "./offline/download.js";
 import { registerStudentOfflineRoutes } from "./offline/http.js";
 import { createOfflineAuthorizationSigner } from "./offline/signing.js";
@@ -31,6 +42,8 @@ import { QuizVersionExportService } from "./quiz-builder/export.js";
 import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
 import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
 import { QuizBuilderService } from "./quiz-builder/service.js";
+import { QuizSpecializedExportService } from "./quiz-builder/specialized-export.js";
+import { registerQuizSpecializedExportRoutes } from "./quiz-builder/specialized-export-http.js";
 import { registerStudentAssessmentRoutes } from "./student-assessment/http.js";
 import { StudentAssessmentService } from "./student-assessment/service.js";
 
@@ -50,8 +63,13 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const origins = allowedOrigins(config);
   const auth = new AuthService(database, config.SESSION_TTL_HOURS);
   const access = new AccessService(database);
+  const accessImport = new AccessCodeImportService(database);
   const activation = new StudentActivationService(database);
+  const adminStudentAccess = new AdminStudentAccessService(database);
+  const adminOperations = new AdminOperationsService(database);
+  const notifications = new NotificationService(database);
   const curriculum = new CurriculumService(database);
+  const lessonAuthoringExports = new LessonAuthoringExportService(database);
   const contentOperations = new AdminContentOperationsService(database);
   const aiOperations = new AdminAiOperationsService(database);
   const questionBank = new QuestionBankService(database);
@@ -70,6 +88,8 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
     offlineAuthorizationSigner,
   );
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
+  const aiAuthoring = new AdminAiAuthoringService(database, questionBank, quizBuilder);
+  const quizSpecializedExports = new QuizSpecializedExportService(quizBuilder, database, mediaStorage);
 
   app.addHook("onRequest", async (request, reply) => {
     const origin = request.headers.origin;
@@ -92,16 +112,22 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAuthRoutes(app, config, auth);
   registerStudentActivationRoutes(app, config, auth, activation);
   registerAccessRoutes(app, config, auth, access);
+  registerAdminStudentAccessRoutes(app, config, auth, adminStudentAccess, accessImport);
+  registerAdminOperationsRoutes(app, config, auth, adminOperations);
+  registerNotificationRoutes(app, config, auth, notifications);
   registerCurriculumRoutes(app, config, auth, curriculum, studentReader);
+  registerLessonAuthoringExportRoutes(app, config, auth, lessonAuthoringExports);
   registerStudentAssessmentRoutes(app, config, auth, studentAssessment);
   registerStudentOfflineRoutes(app, config, auth, studentOffline, studentOfflineDownloads);
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
+  registerAdminAiAuthoringRoutes(app, config, auth, aiAuthoring);
   registerQuestionBankRoutes(app, config, auth, questionBank);
   registerQuestionBankRegenerationRoutes(app, config, auth, questionBankRegeneration);
-  registerQuizBuilderRoutes(app, config, auth, quizBuilder, quizCandidates);
+  registerQuizBuilderRoutes(app, config, auth, quizBuilder, quizCandidates, aiAuthoring);
   registerQuizVersionExportRoutes(app, config, auth, quizExports);
+  registerQuizSpecializedExportRoutes(app, config, auth, quizSpecializedExports);
 
   app.get("/health", async () => ({
     status: "ok",

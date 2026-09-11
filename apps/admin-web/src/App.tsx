@@ -7,14 +7,21 @@ import {
   logoutAdmin,
   restoreAdminSession,
 } from "./admin-api";
+import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
+import { AdminGovernanceWorkspace } from "./AdminGovernanceWorkspace";
+import { AdminOperationsWorkspace } from "./AdminOperationsWorkspace";
+import { AdminReportsWorkspace } from "./AdminReportsWorkspace";
+import { AdminStudentAccessWorkspace } from "./AdminStudentAccessWorkspace";
 import { AiOperationsPage } from "./AiOperationsPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
+import { LessonAuthoringParityPanel } from "./LessonAuthoringParityPanel";
 import { LoginScreen } from "./LoginScreen";
 import { QuestionBankWorkspace } from "./QuestionBankWorkspace";
 import { QuizBuilderWorkspace } from "./QuizBuilderWorkspace";
+import { QuizMetadataPanel } from "./QuizMetadataPanel";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
@@ -23,9 +30,9 @@ function errorMessage(error: unknown): string {
 
 export function App() {
   const [session, setSession] = useState<AdminProfile | null>(null);
-  const [sessionState, setSessionState] = useState<"restoring" | "signed_out" | "signed_in" | "error">(
-    "restoring",
-  );
+  const [sessionState, setSessionState] = useState<
+    "restoring" | "signed_out" | "signed_in" | "error"
+  >("restoring");
   const [sessionError, setSessionError] = useState("");
 
   const restore = useCallback(async () => {
@@ -127,12 +134,17 @@ function BrandBlock({ auth = false }: { auth?: boolean }) {
 }
 
 type AdminWorkspace =
+  | "operations"
+  | "governance"
   | "curriculum"
   | "content-ingestion"
   | "content-operations"
   | "ai-operations"
+  | "ai-authoring"
   | "question-bank"
-  | "quiz-builder";
+  | "quiz-builder"
+  | "student-access"
+  | "reports";
 
 function AdminShell({
   profile,
@@ -143,13 +155,29 @@ function AdminShell({
   onLogout: () => Promise<void>;
   onSessionExpired: () => void;
 }) {
-  const [workspace, setWorkspace] = useState<AdminWorkspace>("curriculum");
+  const [workspace, setWorkspace] = useState<AdminWorkspace>("operations");
 
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar" aria-label="التنقل الرئيسي">
         <BrandBlock />
         <nav className="admin-nav" aria-label="أقسام الإدارة">
+          <button
+            className={`nav-item nav-button${workspace === "operations" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "operations" ? "page" : undefined}
+            onClick={() => setWorkspace("operations")}
+          >
+            لوحة التشغيل
+          </button>
+          <button
+            className={`nav-item nav-button${workspace === "governance" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "governance" ? "page" : undefined}
+            onClick={() => setWorkspace("governance")}
+          >
+            الحوكمة والأمان
+          </button>
           <button
             className={`nav-item nav-button${workspace === "curriculum" ? " is-active" : ""}`}
             type="button"
@@ -183,6 +211,14 @@ function AdminShell({
             عمليات AI والمراجعة
           </button>
           <button
+            className={`nav-item nav-button${workspace === "ai-authoring" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "ai-authoring" ? "page" : undefined}
+            onClick={() => setWorkspace("ai-authoring")}
+          >
+            توليد المحتوى بالذكاء الاصطناعي
+          </button>
+          <button
             className={`nav-item nav-button${workspace === "question-bank" ? " is-active" : ""}`}
             type="button"
             aria-current={workspace === "question-bank" ? "page" : undefined}
@@ -198,12 +234,22 @@ function AdminShell({
           >
             الاختبارات والنماذج
           </button>
-          <span className="nav-item is-disabled">
-            الطلاب والوصول <small>مرحلة لاحقة</small>
-          </span>
-          <span className="nav-item is-disabled">
-            التقارير والإعدادات <small>مرحلة لاحقة</small>
-          </span>
+          <button
+            className={`nav-item nav-button${workspace === "student-access" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "student-access" ? "page" : undefined}
+            onClick={() => setWorkspace("student-access")}
+          >
+            الطلاب والوصول
+          </button>
+          <button
+            className={`nav-item nav-button${workspace === "reports" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "reports" ? "page" : undefined}
+            onClick={() => setWorkspace("reports")}
+          >
+            الملفات والتقارير
+          </button>
         </nav>
         <div className="sidebar-account">
           <span>الحساب الحالي</span>
@@ -214,7 +260,11 @@ function AdminShell({
         </div>
       </aside>
       <main className="admin-main">
-        {workspace === "curriculum" ? (
+        {workspace === "operations" ? (
+          <AdminOperationsWorkspace onSessionExpired={onSessionExpired} />
+        ) : workspace === "governance" ? (
+          <AdminGovernanceWorkspace onSessionExpired={onSessionExpired} />
+        ) : workspace === "curriculum" ? (
           <CurriculumWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "content-ingestion" ? (
           <ContentIngestionWorkspace onSessionExpired={onSessionExpired} />
@@ -222,10 +272,22 @@ function AdminShell({
           <ContentOperationsWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "ai-operations" ? (
           <AiOperationsPage onSessionExpired={onSessionExpired} />
+        ) : workspace === "ai-authoring" ? (
+          <>
+            <AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />
+            <LessonAuthoringParityPanel onSessionExpired={onSessionExpired} />
+          </>
         ) : workspace === "question-bank" ? (
           <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
+        ) : workspace === "quiz-builder" ? (
+          <>
+            <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
+            <QuizMetadataPanel onSessionExpired={onSessionExpired} />
+          </>
+        ) : workspace === "reports" ? (
+          <AdminReportsWorkspace onSessionExpired={onSessionExpired} />
         ) : (
-          <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
+          <AdminStudentAccessWorkspace onSessionExpired={onSessionExpired} />
         )}
       </main>
     </div>

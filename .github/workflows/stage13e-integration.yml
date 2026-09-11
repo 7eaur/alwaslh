@@ -1,6 +1,7 @@
 name: Stage 13E Combined Integration Verification
 
 on:
+  pull_request:
   workflow_dispatch:
   push:
     branches:

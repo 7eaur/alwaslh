@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import type { AdminAiAuthoringService } from "../ai/admin-authoring.js";
 import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
@@ -71,6 +72,7 @@ export function registerQuizBuilderRoutes(
   auth: AuthService,
   quizzes: QuizBuilderService,
   candidates: QuizQuestionCandidateService,
+  authoring: AdminAiAuthoringService,
 ): void {
   app.get("/v1/admin/quizzes", async (request) => {
     await adminActor(request, config, auth);
@@ -180,9 +182,9 @@ export function registerQuizBuilderRoutes(
   });
 
   app.post("/v1/admin/quizzes/:quizId/archive", async (request, reply) => {
-    await adminActor(request, config, auth);
+    const actor = await adminActor(request, config, auth);
     const params = parseBody(QuizParamsSchema, request.params);
-    await quizzes.archive(params.quizId);
+    await authoring.archiveQuiz(actor.id, params.quizId);
     return reply.code(204).send();
   });
 }
