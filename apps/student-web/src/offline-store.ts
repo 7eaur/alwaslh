@@ -79,10 +79,11 @@ export function storedLeaseAllowsClass(
 ): boolean {
   const evaluation = evaluateStoredOfflineLease(record, clientNowMs);
   if (evaluation.status !== "fresh" || evaluation.estimatedServerTimeMs === null) return false;
+  const estimatedServerTimeMs = evaluation.estimatedServerTimeMs;
 
   return record.lease.grants.some((grant) => {
     const grantExpiresAtMs = validTimestamp(grant.expiresAt);
-    if (grantExpiresAtMs === null || evaluation.estimatedServerTimeMs >= grantExpiresAtMs) return false;
+    if (grantExpiresAtMs === null || estimatedServerTimeMs >= grantExpiresAtMs) return false;
     return grant.scope === "all_content" || grant.classId === classId;
   });
 }
