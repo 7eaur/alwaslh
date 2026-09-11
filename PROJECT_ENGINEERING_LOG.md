@@ -2,13 +2,13 @@
 
 > Engineering source of truth for project understanding, architecture decisions, findings, changes, verification and remaining work. Code/migrations/executable CI outrank prose.
 
-Last consolidated: **2026-09-11 — Stage14/15 closed; Stage16 active.**
+Last consolidated: **2026-09-11 — Stage14/15 closed; Stage16 active; lease lifecycle verified.**
 
-Historical detail remains in Git history and specialized docs. Current Stage16 continuation lives in `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
+Historical detail remains in Git history and specialized docs. Current continuation lives in `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
 
 ## 1. Project understanding
 
-**الوسيلة الذكية** منصة تعليمية عربية ذات Student Web + Super Admin Web فوق Fastify/PostgreSQL. Browser surfaces are UX/presentation; canonical Auth, devices, entitlements, curriculum publication, Question Bank/Quiz publication and assessment scoring/history remain server/PostgreSQL authority.
+**الوسيلة الذكية** منصة تعليمية عربية ذات Student Web + Super Admin Web فوق Fastify/PostgreSQL. Browser surfaces are presentation/resilience layers; canonical Auth, devices, entitlements, curriculum publication, Question Bank/Quiz publication and assessment scoring/history remain server/PostgreSQL authority.
 
 Primary runtime surfaces:
 
@@ -22,7 +22,7 @@ Operating model:
 - Track A owns Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G.
 - Track B owns Student Product on `parallel/stage14-student-product`.
 - Issue #16 is shared execution ledger.
-- Small Track B shared API additions must be minimal, proven and non-duplicative.
+- Small Track B shared API additions must be minimal, proven, compatible and non-duplicative.
 - deployment remains deferred.
 
 ## 2. Stable architecture
@@ -35,10 +35,9 @@ Admin Web ───┘       │
                      ├── Access / Entitlements
                      ├── Curriculum / Publication
                      ├── Media / OCR
-                     ├── AI Contracts + Durable Runtime + Human Review
-                     ├── Question Bank / Immutable Quiz Snapshots
+                     ├── AI / Question Bank / Quiz
                      ├── Student Assessment Runtime
-                     └── Stage16 Offline Lease / Sync contracts
+                     └── Stage16 Offline Lease + future explicit materialization/sync
 ```
 
 Stable rules:
@@ -46,14 +45,12 @@ Stable rules:
 - Browser is not durable business authority.
 - Full Code = 6 digits; Class Code = 7 digits.
 - returning Student = password + bound P-256 device proof.
-- `media ready != published`.
-- Student direct content access requires `published_at <= now()`.
-- Reader protected media is re-authorized server-side and does not expose raw storage keys.
-- Question Bank published revisions + quiz snapshots are immutable authority.
-- Student assessment scoring/finalization remains server-owned.
-- transient offline UX is not durable Stage16 authority.
+- `media ready != published`; Student direct content requires `published_at <= now()`.
+- Reader protected media is server-authorized and raw storage keys stay private.
+- assessment scoring/finalization remains server-owned.
+- transient offline UX is not Stage16 protected-offline authority.
 
-## 3. Verified stage ledger
+## 3. Stage ledger
 
 | Stage / Area | State |
 |---|---|
@@ -66,170 +63,137 @@ Stable rules:
 | Stage15 Student assessment | CLOSED / VERIFIED @ `9a787b7...` |
 | Stage16 Offline/PWA | **ACTIVE / PARTIALLY VERIFIED** |
 | Stage17+ | blocked/later by sequence |
-| Release/deployment | FUTURE |
+| Release/deployment | FUTURE / DEFERRED |
 
 ## 4. Relevant architecture decisions
 
-Historical ADs remain in Git history. Current decisions include:
-
 - **AD-159** — Reader consumes only server-authorized published assets backed by ready media; raw storage keys/non-approved OCR remain private.
-- **AD-160** — transient network loss may preserve in-session context but never claims durable offline authority.
+- **AD-160** — transient network loss may preserve current UI context but never claims durable offline authority.
 - **AD-163** — Stage15 reuses one durable assessment runtime; no duplicate attempt engine.
-- **AD-165** — Student assessment has purpose-built safe API; Admin authoring detail is not a Student contract.
-- **AD-168** — Student Reader/Assessment share publication-time rule `published_at <= now()`.
+- **AD-165** — Student assessment has a purpose-built safe API; Admin authoring detail is not a Student contract.
+- **AD-168** — Reader/Assessment share publication-time rule `published_at <= now()`.
 - **AD-170** — Stage16 Service Worker caches app shell/static assets only; `/v1` is excluded from SW interception/cache.
 - **AD-171** — Service Worker updates do not auto-`skipWaiting`; activation is explicit to avoid forced reload during lessons/assessments.
 - **AD-172** — protected Reader responses remain `private,no-store`; offline learning requires explicit authorized materialization, never opportunistic API caching.
-- **AD-173** — offline entitlement lease is server-issued, profile/device-bound and uses server/PostgreSQL time; browser clock/cookie TTL is not authority.
-- **AD-174** — current maximum offline lease is 24h, clipped by session expiry; each grant is additionally clipped by entitlement expiry.
-- **AD-175** — Stage16 client storage is a dedicated account/device-scoped IndexedDB and must not contain password/session cookie/token/device private key.
-- **AD-176** — existing `content_revisions` / `content_tombstones` / `sync_checkpoints` are dormant schema until verified writers/API/client consumers exist; schema presence does not equal sync authority.
-- **AD-177** — large backward wall-clock movement invalidates local lease use; current client design allows 5-minute rollback tolerance and estimates server time from server-issued time + elapsed client time.
+- **AD-173** — offline entitlement lease is server-issued, profile/device-bound and uses PostgreSQL/server time; browser clock/cookie TTL is not authority.
+- **AD-174** — current maximum offline lease is 24h, clipped by session expiry; each grant is clipped by entitlement expiry.
+- **AD-175** — Stage16 offline DB is account/device scoped and must not contain password/session cookie/token/device private key.
+- **AD-176** — `content_revisions` / `content_tombstones` / `sync_checkpoints` are dormant until verified writers/API/client consumers exist.
+- **AD-177** — >5-minute backward wall-clock movement invalidates local lease use; server time is estimated from server-issued time + elapsed client time.
+- **AD-178** — authenticated online correctness must not depend on optional offline persistence; lease refresh/save is best-effort after successful online activation/login/restore.
+- **AD-179** — offline cleanup is exact-scope cleanup. Logout/session expiry remove only active `profileId:deviceId`; device rebind may remove stale devices only within the same profile.
+- **AD-180** — reload-safe cleanup may persist only a non-secret `{profileId,deviceId}` scope pointer in `sessionStorage`; no credential or lease payload is duplicated there.
+- **AD-181** — protected lesson bytes cannot be stored until an explicit server-authorized manifest defines stable IDs, revision/provenance, checksum, byte size and bounded storage/accounting/rollback/eviction semantics.
 
-## 5. Stage16 implementation completed so far
+## 5. Stage16 implementation
 
 ### 5.1 Safe PWA shell — VERIFIED
 
-Files include:
+Runtime `c1ae86036d4d302b8ca8c411227f41c37b4063ef`, run `34430284173` SUCCESS.
 
-- `apps/student-web/public/manifest.webmanifest`
-- `apps/student-web/public/sw.js`
-- `apps/student-web/src/pwa.ts`
-- `apps/student-web/src/pwa.test.ts`
-- `apps/student-web/e2e/pwa-shell.e2e.spec.mjs`
-- `apps/student-web/playwright.pwa.config.mjs`
-- `.github/workflows/stage16-student-pwa.yml`
-
-Verified behavior:
-
-- registration only HTTPS/loopback;
-- app-shell + static asset cache;
-- `/v1` excluded;
-- no protected API response cached;
-- no credential copied;
-- explicit waiting-worker activation only;
-- real Chromium offline reload.
-
-Runtime `c1ae86036d4d302b8ca8c411227f41c37b4063ef`.
-Run `34430284173` SUCCESS.
+Verified: HTTPS/loopback registration; app-shell/static caching; `/v1` exclusion; no protected API caching; no credentials; explicit worker activation; true Chromium offline reload.
 
 ### 5.2 Bounded server-issued lease — VERIFIED
 
-Files:
-
-- `apps/api/src/offline/service.ts`
-- `apps/api/src/offline/http.ts`
-- `apps/api/src/app.ts`
-- `apps/api/tests/integration/student-offline.integration.test.ts`
-
 Endpoint: `GET /v1/student/offline/lease`.
 
-Security/correctness:
+Runtime `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd`.
+Evidence: Stage16 `34430915847` + API Regression `34430915786` SUCCESS.
 
-- authenticated Student only;
-- current session token hash identifies same active session;
-- non-revoked bound device required;
-- PostgreSQL `now()` is lease time authority;
-- max 24h, clipped by session expiry;
-- entitlement grants clipped by entitlement expiry;
-- metadata only;
-- `private,no-store` / `Pragma:no-cache`;
-- no migration required.
+Rules: authenticated Student; non-revoked bound device; PostgreSQL time; max 24h clipped by session; grants clipped by entitlement; metadata only; `private,no-store`.
 
-Verified runtime: `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd`.
+### 5.3 Client lease storage/lifecycle — VERIFIED FOR IMPLEMENTED BOUNDARY
 
-Evidence:
+Runtime: `53aeb972c4c891c3eecafdde0716b544751d2711`.
 
-- Stage16 `34430915847` SUCCESS — PostgreSQL lease + PWA Chromium.
-- API Regression `34430915786` SUCCESS.
-
-### 5.3 Client lease store — IMPLEMENTED / NOT VERIFIED
-
-Code checkpoint: `2c44a363638221ee2985ecb6b8fb71c3e757a333`.
-
-Files:
+Relevant files:
 
 - `apps/student-web/src/offline-api.ts`
-- `apps/student-web/src/offline-api.test.ts`
 - `apps/student-web/src/offline-store.ts`
-- `apps/student-web/src/offline-store.test.ts`
+- `apps/student-web/src/offline-session.ts`
+- `apps/student-web/src/auth-api.ts`
+- `apps/student-web/src/App.tsx`
+- `apps/student-web/e2e/offline-lease.e2e.spec.mjs`
+- `.github/workflows/stage16-student-pwa.yml`
 
-Intended model:
+Model:
 
 - DB `alwaslh-student-offline` v1;
-- store `leases`;
+- store `leases` only;
 - key `profileId:deviceId`;
-- lease metadata + observed/last-seen client times only;
-- server-time estimate;
-- 5-minute clock rollback tolerance;
-- class grant evaluation.
+- metadata + observation timing only;
+- authenticated activation/login/restore triggers best-effort lease sync;
+- scoped logout/session-expiry/rebind cleanup;
+- `sessionStorage` contains only a non-secret active scope pointer to survive reload;
+- 5-minute clock rollback guard.
 
-No protected lesson/media bytes are stored.
+No protected lesson/media blob is stored yet.
 
-Current code is not wired into authenticated session lifecycle yet.
+## 6. Root-cause record
 
-## 6. Audit findings
+### STUDENT-016-QA-004 — FIXED / VERIFIED
 
-| ID | Sev | Area | Problem / evidence | Impact | Solution / next action | Status |
-|---|---:|---|---|---|---|---|
-| `STUDENT-014-API-001` | P1 | Curriculum | no safe Student Curriculum contract | access leak risk | entitlement-filtered API | FIXED / VERIFIED |
-| `STUDENT-014-READER-001` | P1 | Reader | no safe publication/media/OCR delivery | trust/storage risk | protected Reader + integrity | FIXED / VERIFIED |
-| `STUDENT-015-ASSESSMENT-001` | P1 | Assessment | Admin detail unsafe for Student | answer leak | purpose-built Student runtime | FIXED / VERIFIED |
-| `STUDENT-015-PUBLISH-002` | P1 | Publication | future-published direct paths | early exposure | enforce `published_at <= now()` | FIXED / VERIFIED |
-| `STUDENT-016-SYNC-001` | P1 | Sync | revision/tombstone/checkpoint schema not wired | false sync authority | build real writer/API/client later | OPEN / PROVEN |
-| `STUDENT-016-LEASE-002` | P1 | Offline access | bounded server lease absent | offline authorization gap | server-issued bounded lease | SERVER FIXED / VERIFIED; CLIENT NOT VERIFIED |
-| `STUDENT-016-CACHE-003` | P1 | Content | Reader is `no-store`; no explicit offline materialization | cannot safely store protected lessons | new explicit download contract | OPEN |
-| `STUDENT-016-QA-004` | P1 | Build | TS18047 at `offline-store.ts:85` | latest Student build red | fix narrowing, preserve strictness | OPEN / NEXT FIX |
-| `STUDENT-016-CLIENT-005` | P1 | Lifecycle | lease store not refreshed/saved/cleared by session lifecycle | dead/untrusted client state | wire restore/login/activation/logout/rebind | OPEN |
-| `STUDENT-016-DOWNLOAD-006` | P1 | Storage | no budget/checksum/eviction/download contract | unsafe/unbounded blobs | define explicit materialization | OPEN |
-| `STUDENT-016-REVOCATION-007` | P1 | Security | future protected cache has no purge/revalidation | stale entitlement risk | reconnect revalidate + purge | OPEN |
-| `STUDENT-016-OUTBOX-008` | P1 | Sync | no outbox/delta reconciliation | offline writes/sync incomplete | later after content boundary | OPEN |
-| `AI-012-019` | P2 | AI | live provider bootstrap not live-proven | production generation path unverified | separate future evidence | OPEN / nonblocking for published Student content |
+Problem: `offline-store.ts:85` strict TS18047 despite a preceding null guard.
 
-## 7. Current verification evidence
+Fix: bind the guarded non-null `estimatedServerTimeMs` to a local constant after the guard; preserve strictness and behavior.
 
-### Stage15 closure
+Initial repaired runtime `41fdcaeb...` passed exact-head Stage14 + Stage16.
 
-Runtime `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d`:
+### STUDENT-016-CLIENT-005 — FIXED / VERIFIED
 
-- API `34427900263` SUCCESS;
-- Stage15 Assessment `34427900257` SUCCESS;
-- Student Product `34427900209` SUCCESS.
+Problem: server-issued lease existed but client lifecycle did not refresh/persist/clean it around authenticated session state.
 
-### Stage16 verified boundary
+Fix: lifecycle integration with best-effort online lease sync and exact-scope cleanup.
 
-Runtime `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd`:
+### Reload cleanup defect found by real Chromium — FIXED / VERIFIED
 
-- Stage16 `34430915847` SUCCESS;
-- API Regression `34430915786` SUCCESS.
+First lifecycle acceptance on `95954b...` proved a real defect: active offline scope identity existed only in module memory, so after reload an offline logout could not remove its own lease scope.
 
-### Latest code checkpoint failure
+Fix in `53aeb972...`: persist only the non-secret active `{profileId,deviceId}` scope pointer in `sessionStorage`. Lease remains IndexedDB; no credential is copied. After fix the real Chromium lifecycle suite passed 3/3.
 
-`2c44a363638221ee2985ecb6b8fb71c3e757a333`:
+### Stage14 Assessment first-attempt failure — NON-REPRODUCIBLE / NO PRODUCT CHANGE
 
-- Student Product `34431220808` FAILURE at strict typecheck.
-- Stage16 `34431220827` overall FAILURE from same build error.
-- exact error: `src/offline-store.ts(85,38) TS18047` — `evaluation.estimatedServerTimeMs` possibly null.
-- ESLint PASS.
-- Vitest **22/22 PASS**.
-- Stage16 PostgreSQL lease job PASS.
-- browser jobs not evidence on this head because Student build stopped them.
+Stage14 `34551931610` attempt 1 failed one model-selection hint assertion in Assessment. Comparison showed no Assessment code changed from an earlier passing point. The unchanged failed browser job was rerun on exact `53aeb972...` and the full suite passed. No timeout/assertion/product change was made.
 
-## 8. Known issues / remaining work
+## 7. Audit findings
 
-- Fix strict TS narrowing before any new Stage16 feature code.
-- Wire lease lifecycle.
-- Browser-test IndexedDB account/device isolation and cleanup.
-- Define explicit protected lesson download + storage budgets/checksum/eviction.
-- Revalidate/purge on reconnect/revocation/expiry.
-- Wire revisions/tombstones/delta/outbox only after materialization contract.
-- Stage17 blocked until Stage16 closes.
+| ID | Sev | Area | Problem | Solution / next action | Status |
+|---|---:|---|---|---|---|
+| `STUDENT-014-API-001` | P1 | Curriculum | safe Student Curriculum contract absent | entitlement-filtered API | FIXED / VERIFIED |
+| `STUDENT-014-READER-001` | P1 | Reader | safe publication/media/OCR delivery absent | protected Reader + integrity | FIXED / VERIFIED |
+| `STUDENT-015-ASSESSMENT-001` | P1 | Assessment | Admin detail unsafe for Student | purpose-built Student runtime | FIXED / VERIFIED |
+| `STUDENT-015-PUBLISH-002` | P1 | Publication | future-published direct paths | enforce `published_at <= now()` | FIXED / VERIFIED |
+| `STUDENT-016-SYNC-001` | P1 | Sync | dormant revision/tombstone/checkpoint schema not wired | real writers/API/client later | OPEN / PROVEN |
+| `STUDENT-016-LEASE-002` | P1 | Offline access | bounded lease/lifecycle absent | server lease + scoped client persistence | FIXED / VERIFIED FOR LEASE BOUNDARY |
+| `STUDENT-016-CACHE-003` | P1 | Content | no explicit protected offline materialization | explicit authorized download contract | OPEN / NEXT DESIGN |
+| `STUDENT-016-QA-004` | P1 | Build | TS18047 blocked strict build | safe narrowing | FIXED / VERIFIED |
+| `STUDENT-016-CLIENT-005` | P1 | Lifecycle | lease not tied to session lifecycle | sync + scoped cleanup | FIXED / VERIFIED |
+| `STUDENT-016-DOWNLOAD-006` | P1 | Storage | no manifest/budget/checksum/accounting/rollback/eviction | define before blobs | OPEN / NEXT |
+| `STUDENT-016-REVOCATION-007` | P1 | Security | no protected-content reconnect purge | revalidate + purge | OPEN |
+| `STUDENT-016-OUTBOX-008` | P1 | Sync | no delta/outbox authority | later after materialization | OPEN |
+| `AI-012-019` | P2 | AI | live provider bootstrap not live-proven | separate future evidence | OPEN / nonblocking for published Student content |
+
+## 8. Verification evidence
+
+Current lease/lifecycle runtime `53aeb972...`:
+
+- Stage16 `34551931757` — SUCCESS: PostgreSQL lease, strict Student build, PWA Chromium, IndexedDB lifecycle Chromium 3/3.
+- Stage14 `34551931610`, attempt 2 — SUCCESS on same HEAD: lint, strict typecheck, Vitest 22/22, build, curriculum/Reader contracts, full real Chromium.
+
+Therefore `STUDENT-016-QA-004`, `STUDENT-016-CLIENT-005` and the client portion of `STUDENT-016-LEASE-002` are verified for the implemented lease boundary.
+
+## 9. Known issues / remaining work
+
+- explicit protected lesson download manifest/materialization;
+- stable content revision/provenance contract for downloaded bytes;
+- account/device storage budget + byte accounting + checksum + rollback + deterministic eviction/removal;
+- offline Reader from explicitly materialized bytes;
+- reconnect entitlement/publication/device revalidation + purge;
+- authoritative revision writers/tombstones/server cursor/delta client application;
+- outbox only for product-authorized offline writes;
+- Stage17 blocked until Stage16 closes;
 - deployment deferred.
 
-## 9. Exact next action
+## 10. Exact next action
 
-1. In `offline-store.ts`, after the existing `fresh` + non-null guard, assign the non-null estimated server time to a local constant or otherwise narrow it in a type-safe way; do not use non-null assertions as a shortcut unless proven necessary.
-2. Rerun exact-head Student Product + Stage16 PWA.
-3. If green, wire online authenticated lifecycle to fetch/save lease and scoped cleanup.
-4. Add real Chromium IndexedDB evidence.
-5. Continue explicit protected download design incrementally.
+Recheck live Student/main/Issue → inspect canonical Reader/content/publication/media code + migrations → define explicit protected lesson download manifest and bounded storage semantics before any blob write → implement smallest compatible server contract → add scoped materialization + Chromium → reconnect purge → delta/tombstone/outbox → Stage16 closure.
