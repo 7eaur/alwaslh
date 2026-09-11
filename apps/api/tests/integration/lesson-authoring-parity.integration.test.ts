@@ -86,7 +86,9 @@ test("lesson parity keeps summary revisions consistent and exports safe canonica
 
   const readRevision = async (): Promise<number> => {
     const value = (
-      await db.query<{ content_revision: string }>("select content_revision from lessons where id = $1", [lesson.id])
+      await db.query<{ content_revision: string }>("select content_revision from lessons where id = $1", [
+        lesson.id,
+      ])
     )[0]?.content_revision;
     const parsed = Number(value);
     assert.ok(Number.isSafeInteger(parsed) && parsed > 0);
