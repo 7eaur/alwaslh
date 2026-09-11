@@ -8,7 +8,7 @@ import {
 
 export type OfflineSessionSyncReason = "activation" | "login" | "device_rebind" | "restore";
 
-interface OfflineScope {
+export interface OfflineScope {
   profileId: string;
   deviceId: string;
 }
@@ -58,6 +58,11 @@ function readActiveOfflineScope(): OfflineScope | null {
     storage.removeItem(ACTIVE_SCOPE_SESSION_KEY);
     return null;
   }
+}
+
+export function getActiveOfflineScope(profileId: string): OfflineScope | null {
+  const scope = readActiveOfflineScope();
+  return scope?.profileId === profileId ? scope : null;
 }
 
 export async function syncOfflineLeaseForSession(
