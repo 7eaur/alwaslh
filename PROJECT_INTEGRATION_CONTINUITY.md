@@ -1,176 +1,133 @@
 # PROJECT INTEGRATION CONTINUITY — الوسيلة الذكية
 
-> ذاكرة تشغيلية لأي محادثة هندسية بديلة. Current code + PostgreSQL migrations + executable CI أعلى من هذا الملف. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
+> Operational continuity for replacement engineering conversations. Current code + migrations + executable CI outrank prose.
 
-Last synchronized: **2026-09-10 — Stage13F main integrated; Stage14 CLOSED / VERIFIED; Stage15 CLOSED / VERIFIED; Stage16 next by sequence.**
+Last synchronized: **2026-09-11**.
 
-## Resume Procedure
+## Resume procedure
 
 1. Confirm repo `7eaur/alwaslh` and branch `parallel/stage14-student-product`.
-2. Read README, Documentation Index, Student Track Status, Handoff, Status, Resume Snapshot, Engineering Log, this file and Execution Queue.
-3. Read latest Issue #16 body/comments.
-4. Live-check `main`, Student branch and Actions.
-5. Re-read Stage16 source-of-truth before any Stage16 edit.
+2. Read README + Documentation Index.
+3. Read `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`.
+4. Read `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`.
+5. Read `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
+6. Read Handoff/Status/Resume/Engineering Log/this file/Execution Queue.
+7. Read product overrides + roadmap Stage16 + latest Issue #16.
+8. Live-check Student branch, `main` and Actions before editing.
 
-## Operating Model
+## Operating model
 
-- Track A owns Backend/Admin/DB/AI/Question Bank/Quiz Builder and Stage13G follow-on.
-- Track B owns Student Product from Stage14 onward.
-- Issue #16 is the single shared execution ledger.
-- `main` is the canonical verified contract handoff point.
-- Track B consumes shared authority; it does not duplicate it.
-- Production deployment/cutover remains future-only.
+- Track A: Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G.
+- Track B: Student Product from Stage14 onward.
+- Track B branch: `parallel/stage14-student-product`.
+- Issue #16 is shared ledger.
+- Shared authority is consumed, not duplicated.
+- deployment remains deferred.
 
-## Stable Architecture
+## Canonical checkpoints
 
-- Browser is presentation/session UX, not durable authority.
-- Auth, devices, entitlements, curriculum publication and assessment publication are server/PostgreSQL owned.
-- Stage11 typed AI → Stage12 durable execution → Stage13E human review → Stage13F Question Bank/Quiz publication.
-- Stage13E approve never auto-publishes a Question Bank revision.
-- published Question Bank revisions are immutable.
-- published quiz versions snapshot exact published bank revision IDs and are structurally immutable.
-- Stage15 consumes published quiz snapshots only.
-- Student answer keys/scoring/finalization are server authority.
-- Student direct content/assessment access requires publication time to have arrived (`published_at <= now()`).
-- transient offline UI is not Stage16 durable offline-learning authority.
+- Stage14 Student `ac55f1435d232cadff334816407f1182125dda90` — CLOSED / VERIFIED.
+- Stage13F main `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
+- Stage13F→Student `4a476e1f29cb605fce294d7c34fd68e8218a32e8` — VERIFIED.
+- Stage15 Student `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d` — CLOSED / VERIFIED.
+- Stage16 PWA Batch 1 `c1ae86036d4d302b8ca8c411227f41c37b4063ef` — VERIFIED.
+- Stage16 bounded server lease/PWA `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd` — VERIFIED boundary.
+- Latest code checkpoint `2c44a363638221ee2985ecb6b8fb71c3e757a333` — NOT VERIFIED due one strict TS error.
 
-## Canonical Checkpoints
+## Stable integration boundaries
 
-- Stage13E verified runtime: `d5ebc7f25a369430387a758c7c0bb89350963d67`.
-- Stage13F canonical promoted main: `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
-- Stage14 Student verified runtime: `ac55f1435d232cadff334816407f1182125dda90`.
-- Stage13F→Student integration runtime: `4a476e1f29cb605fce294d7c34fd68e8218a32e8`.
-- **Stage15 Student verified runtime: `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d`.**
+- Browser is not Auth/Access/Curriculum/Question Bank/Assessment authority.
+- protected Reader/media stays server-authorized and `private,no-store`.
+- `/v1` must not enter SW cache.
+- offline lease is metadata authorization only; it is not downloaded content.
+- Student offline DB must remain account/device scoped and credential-free.
+- dormant sync tables are not authority until real writers/API/client flows are verified.
 
-Later documentation commits do not replace exact runtime evidence.
+## Shared files touched by Student Stage16
 
-## Stage13F → Student Integration
+Shared API additions that future Track A integration must preserve:
 
-A real two-parent merge commit integrated canonical Stage13F:
+- `apps/api/src/offline/service.ts`;
+- `apps/api/src/offline/http.ts`;
+- `apps/api/src/app.ts` Student offline route/service registration;
+- `apps/api/tests/integration/student-offline.integration.test.ts`.
 
-`4a476e1f29cb605fce294d7c34fd68e8218a32e8`
+No Stage16 DB migration has been added so far.
 
-The additive `apps/api/src/app.ts` conflict resolution retained both Student Reader wiring and Stage13F Question Bank/Quiz wiring. No force update, history rewrite, fake API or duplicate Quiz/Question Bank store was introduced.
+Potential manual conflict surfaces:
 
-## Stage14 Closed Boundary
+- `apps/api/src/app.ts` if Track A adds more registrations;
+- future offline/sync route namespace;
+- future migrations after current `0023` if protected offline materialization needs server persistence.
 
-Stage14 provides:
+Conflict policy: resolve additively and preserve canonical Track A services plus Student Reader/Assessment/Offline contracts. Never copy durable authorities into Student Web to avoid a merge conflict.
 
-- Auth/activation/recovery/device/session UX;
-- entitlements/class redemption;
-- class/subject/published lesson navigation;
-- protected Reader/media/OCR/search/TTS capability;
-- honest connectivity/session states;
-- learning-first RTL shell;
-- keyboard/focus and mobile/tablet/desktop evidence.
+## Stage16 verified server contract
 
-Stage14 does not own durable offline-learning/PWA authority.
+`GET /v1/student/offline/lease`
 
-## Stage15 Closed Boundary
+- authenticated Student;
+- current session bound to non-revoked device;
+- lease `profileId` + `deviceId`;
+- server time from DB;
+- maximum 24 hours;
+- clipped by session expiry;
+- entitlement grants clipped by entitlement expiry;
+- metadata only;
+- response `private,no-store`.
 
-### Canonical content authority
+Verified at `5b71aa2...`:
 
-Stage15 consumes Stage13F authority:
+- Stage16 `34430915847` SUCCESS;
+- API Regression `34430915786` SUCCESS.
 
-- stable Question Bank item UUIDs;
-- immutable published revisions;
-- Published + known-answer requirement for quiz materialization;
-- immutable QB-backed delivery snapshots;
-- exact item/revision provenance;
-- DB guards for scope/publication/answer state and post-publish mutation.
+## Stage16 client boundary in progress
 
-Admin Question Bank/Quiz HTTP remains Admin-only. `QuizBuilderService.detail()` remains unsafe as a Student payload because it includes correctness/direct-answer/admin detail.
+At code checkpoint `2c44a363...`:
 
-### Durable assessment runtime
+- `offline-api.ts` fetches server lease with credentials.
+- `offline-store.ts` defines DB `alwaslh-student-offline`, store `leases`, scope `profileId:deviceId`.
+- storage contains lease metadata + client observation times only.
+- clock rollback > current 5-minute tolerance invalidates local lease use.
+- no protected lesson/media bytes exist in offline DB.
+- lease store is not yet wired to authenticated lifecycle.
 
-Stage15 reuses:
+Current build blocker:
 
-- `practice_sessions`;
-- `practice_session_questions`;
-- `practice_session_options`;
-- `practice_answers`;
-- `quiz_attempts`.
+`offline-store.ts:85` TS18047 — `evaluation.estimatedServerTimeMs` possibly null.
 
-Migration `0023_student_assessment_runtime.sql` closes the direct-answer/runtime gap in the existing engine. No parallel attempt store was created.
+Same-head run facts:
 
-Runtime behavior:
+- Student Product `34431220808`: lint PASS, typecheck FAIL at TS18047, later jobs skipped.
+- Stage16 `34431220827`: PostgreSQL lease PASS; Student build FAIL at same TS18047; Chromium skipped.
+- Vitest 22/22 PASS.
 
-```text
-Student auth/device
-→ entitlement + publication check
-→ published immutable quiz/version
-→ create/resume practice_session
-→ persist question/option presentation order once
-→ safe answer-key-free payload
-→ server answer write
-→ Practice feedback OR Test withheld feedback
-→ idempotent server finalize/score
-→ quiz_attempt history
-```
+## Dormant sync schema warning
 
-Resume keeps the selected version and presented ordering. Restart abandons the previous in-progress session before creating a new one.
+Schema includes `content_revisions`, `content_tombstones`, `sync_checkpoints`, but no verified Student sync API/writers/consumers exist. Future work must prove mutation/revision source, cursor semantics, tombstone behavior and client application before using these tables as Stage16 authority.
 
-### Shared files touched by Student Stage15
+## Integration guidance for next batches
 
-Shared API/DB changes that future Track A integration work must preserve:
+1. Fix current Student type narrowing first; no new feature before green exact-head client build.
+2. Wire lease refresh/save only after authenticated online success.
+3. Cleanup must be scoped to the exact profile/device lease; logout/rebind must not wipe unrelated scopes.
+4. Explicit protected lesson download must use new authorization/materialization contract, not existing Reader response caching.
+5. Storage budgets/checksum/revision metadata must exist before binary blobs.
+6. Reconnect must revalidate current server entitlement/publication before retaining future protected offline content.
+7. Revision/tombstone/delta/outbox work comes after the content materialization security boundary.
+8. Any future Track A merge touching app registration or migrations requires Student API + Student Product + Stage16 regression reruns.
 
-- `database/migrations/0023_student_assessment_runtime.sql`;
-- `apps/api/src/student-assessment/**`;
-- `apps/api/src/app.ts` Student assessment registration;
-- `apps/api/src/curriculum/student-reader.ts` publication-time tightening.
+## Open boundaries
 
-Likely manual conflict surfaces if Track A evolves the same registration area:
+- `STUDENT-016-QA-004` current strict build blocker.
+- `STUDENT-016-CLIENT-005` lease lifecycle integration.
+- `STUDENT-016-CACHE-003` explicit protected content materialization.
+- `STUDENT-016-DOWNLOAD-006` budget/checksum/eviction.
+- `STUDENT-016-REVOCATION-007` reconnect purge.
+- `STUDENT-016-SYNC-001` + `STUDENT-016-OUTBOX-008` actual sync authority.
+- Stage17+ later.
+- deployment deferred.
 
-- `apps/api/src/app.ts`;
-- route/service registration around Student runtime;
-- future migrations after `0023`.
+## Exact continuation
 
-Conflict policy: resolve additively; preserve both canonical Track A services and Student Reader/Assessment services. Never replace Question Bank/Quiz authority with Student copies.
-
-### P1 correctness boundaries closed
-
-- Future-scheduled lesson bypass: Reader + Assessment now require `published_at <= now()`.
-- Active-session entitlement loss: backend 404 is treated by Student Web as unavailable assessment; workspace is removed and permitted catalog reloaded.
-- Student answer keys remain withheld according to Practice/Test policy.
-
-## Stage15 Exact Verification
-
-Runtime:
-
-`9a787b7c0f6bd3ed12f24de92546c33fcc21e26d`
-
-Same-head runs:
-
-- API Regression `34427900263` — SUCCESS — Biome 104 files, typecheck, API unit 46/46, build.
-- Stage15 Assessment `34427900257` — SUCCESS — migrations `0001`→`0023`, assessment/publication integration, Chromium 1/1.
-- Student Product `34427900209` — SUCCESS — Student 15/15, production build, migrations `0001`→`0023`, Curriculum/Reader integration 2/2, full Chromium 3/3.
-
-Production Student bundle: JS 200.16 kB raw / 60.78 gzip; CSS 30.84 / 5.71 gzip.
-
-## Integration Guidance After Stage15
-
-When Track A or `main` moves forward:
-
-1. inspect diff against Stage15 runtime `9a787b7...` before merging;
-2. preserve migration ordering and avoid duplicate Student assessment tables;
-3. preserve `app.ts` registrations for Reader + Assessment alongside new Track A registrations;
-4. rerun Student API Regression + Student Product + relevant Track A regression after any shared merge;
-5. treat documentation-only heads as documentation, not replacement runtime evidence.
-
-## Open Boundaries
-
-- Stage16 Service Worker / IndexedDB / durable offline content / sync authority — `NOT YET VERIFIED`.
-- Stage17 Notes/Favorites/Needs Review — later by sequence.
-- Stage18 Notifications — later.
-- Stage19 Progress/Statistics/Achievements — later.
-- `AI-012-019` live provider runtime remains `NOT YET VERIFIED`; it does not invalidate consumption of already-published assessment snapshots.
-- Stage26–29 release/deployment remain future-only.
-
-## Exact Continuation Action
-
-1. re-read `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`, Student Track Status and latest Issue #16;
-2. inspect actual Stage16 Service Worker / IndexedDB / sync code and contracts before edits;
-3. classify Stage16 work KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE;
-4. define entitlement-aware offline storage and revocation/sync behavior;
-5. implement Stage16 incrementally with real browser/SW/IndexedDB evidence;
-6. keep deployment deferred.
+Fix TS18047 → exact-head Student + Stage16 gates → wire lease lifecycle/cleanup → real IndexedDB browser acceptance → explicit lesson download/budget/checksum → reconnect purge → delta/tombstone/outbox → Stage16 closure. Do not skip sequence.

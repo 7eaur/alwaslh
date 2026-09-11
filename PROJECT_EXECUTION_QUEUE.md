@@ -1,177 +1,204 @@
 # PROJECT EXECUTION QUEUE — الوسيلة الذكية
 
-> Ordered execution authority. Always start from the first incomplete item after reading Source of Truth and Issue #16.
+> Ordered execution authority. Start from the first incomplete item after reading Source of Truth + Issue #16.
 
-Last synchronized: **2026-09-10 — Stage13F promoted + integrated to Student; Stage14 CLOSED; Stage15 discovery is the active Track B task.**
+Last synchronized: **2026-09-11 — Stage14/15 closed; Stage16 active.**
 
-## Operating Rules
+## Operating rules
 
-- Repository: `7eaur/alwaslh`.
-- Issue #16 is the sole cross-track execution ledger.
+- Repo: `7eaur/alwaslh`.
+- Student branch: `parallel/stage14-student-product`.
+- Issue #16 is shared execution ledger.
 - Code/migrations/executable evidence outrank prose.
-- Root-cause fixes only; no test weakening, auth bypass, fake API, sleep-based race masking or duplicate durable authority.
-- Parallel model: Track A Backend/Admin; Track B Student Product.
-- Production deployment/cutover remains future-only.
+- No test weakening/auth bypass/fake API/duplicate durable authority/random timeout masking.
+- Track A Backend/Admin; Track B Student Product.
+- deployment/cutover deferred.
 
-## Completed Shared / Track B Checkpoints
-
-### EXEC-006 — Stage13F Question Bank / Quiz Builder
-
-**DONE / VERIFIED / CLOSED / PROMOTED TO MAIN**
-
-Canonical main checkpoint:
-
-`3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
-
-Provides stable Question Bank items/revisions, Draft→Review→Published, provenance, immutable published quiz snapshots, direct-question delivery support, same-item regeneration and reviewed/published export.
+## Completed Track B checkpoints
 
 ### STUDENT-014 — Stage14 Student Product
 
 **DONE / VERIFIED / CLOSED**
 
-Verified runtime:
+Runtime `ac55f1435d232cadff334816407f1182125dda90`.
 
-`ac55f1435d232cadff334816407f1182125dda90`
-
-Evidence:
-
-- Student Product `34420993805` — SUCCESS.
-- API Regression `34420993840` — SUCCESS.
-- Student Auth/Access/Curriculum/Reader Chromium and responsive/a11y critical path PASS.
-
-### STUDENT-014I — Integrate canonical Stage13F main
+### STUDENT-014I — Integrate canonical Stage13F
 
 **DONE / VERIFIED**
 
-History-preserving merge runtime:
+Merge runtime `4a476e1f29cb605fce294d7c34fd68e8218a32e8` from canonical `main @ 3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
 
-`4a476e1f29cb605fce294d7c34fd68e8218a32e8`
+### STUDENT-015 — Practice / Assessment Engine
 
-- parents: Student `9ccfe1e6...` + main `3aeca598...`;
-- non-force branch update;
-- `behind_by=0` vs main;
-- Student API Regression `34422553459` — SUCCESS;
-- Student Product `34422553405` — SUCCESS;
-- clean migrations `0001`→`0022` PASS;
-- Curriculum/Reader integration + Chromium PASS.
+**DONE / VERIFIED / CLOSED**
 
-The Stage15 dependency block is resolved.
+Runtime `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d`.
 
-## Active Track B Queue
+Evidence: API `34427900263`, Assessment `34427900257`, Student Product `34427900209` — SUCCESS.
 
-### STUDENT-015A — Assessment runtime contract + persistence audit
+### STUDENT-016A — Safe PWA app shell
 
-**Priority: P1 · Status: ACTIVE**
+**DONE / VERIFIED**
 
-Verified facts:
+Runtime `c1ae86036d4d302b8ca8c411227f41c37b4063ef`.
 
-- Stage13F Admin HTTP is not a Student API.
-- `QuizBuilderService.detail()` contains answer correctness/direct answer/Admin audit and must not be exposed to Student.
-- existing durable runtime tables in `0003_learning.sql` are canonical:
-  - `practice_sessions`
-  - `practice_session_questions`
-  - `practice_session_options`
-  - `practice_answers`
-  - `quiz_attempts`
-- `0020_quiz_builder_enums.sql` adds `direct` delivery type.
-- `0021_quiz_builder.sql` materializes immutable Published+known-answer Question Bank snapshots and DB-blocks invalid scope/publication/mutation.
-- proven gap: `practice_answers` has option answer only, no direct-text answer representation.
+Run `34430284173` SUCCESS.
+
+Scope: manifest, safe SW registration/lifecycle, app-shell/static cache, `/v1` exclusion, real offline reload.
+
+### STUDENT-016B1 — Server-issued bounded offline lease
+
+**DONE / VERIFIED**
+
+Runtime `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd`.
+
+- Stage16 `34430915847` SUCCESS.
+- API Regression `34430915786` SUCCESS.
+
+Lease is profile/device/server-time/session/entitlement scoped, maximum 24h, metadata only.
+
+## Active Track B queue
+
+### STUDENT-016B2 — Client lease storage exact-head repair
+
+**Priority: P1 · Status: ACTIVE / BLOCKED BY ONE TYPE ERROR**
+
+Current code checkpoint:
+
+`2c44a363638221ee2985ecb6b8fb71c3e757a333`
+
+Implemented:
+
+- `offline-api.ts` typed lease fetch;
+- `offline-store.ts` account/device-scoped IndexedDB lease metadata;
+- server-time estimate;
+- 5-minute clock rollback guard;
+- unit tests.
+
+Current failure:
+
+`src/offline-store.ts(85,38) TS18047: evaluation.estimatedServerTimeMs is possibly null`.
+
+Evidence:
+
+- ESLint PASS.
+- Vitest 22/22 PASS.
+- Student Product `34431220808` FAIL at typecheck.
+- Stage16 `34431220827` overall FAIL from same Student build; PostgreSQL lease job PASS; Chromium skipped.
 
 Required completion:
 
-1. finish caller/constraint audit;
-2. define smallest additive direct-answer/finalization migration;
-3. document shared DB/API edit in Issue #16 before modifying shared areas;
-4. add PostgreSQL contracts for invariants;
-5. no second attempt store.
+1. fix strict narrowing only; preserve behavior;
+2. exact-head Student Product + Stage16 PWA PASS;
+3. record new runtime/run IDs in Issue #16 and docs.
 
 ---
 
-### STUDENT-015B — Student-safe assessment service/API
+### STUDENT-016C — Lease lifecycle integration
 
-**Priority: P1 · Status: NEXT**
+**Priority: P1 · Status: NEXT AFTER 016B2 GREEN**
 
 Required:
 
-- authenticated Student role + bound device/session;
-- entitlement-safe published quiz discovery;
-- immutable version/model selection;
-- create/resume/restart/abandon session rules;
-- one persisted question order and option order per session;
-- answer-key-free Student payload;
-- idempotent answer writes;
-- Practice feedback policy;
-- Test/Model withheld correctness before finalization;
-- transactional/idempotent finalization;
-- server-derived score and attempt history;
-- exact Question Bank/source provenance without answer leakage.
+- after successful authenticated online restore/login/activation, fetch current server lease;
+- save only metadata into scope `profileId:deviceId`;
+- refresh on reconnect/entitlement refresh where appropriate;
+- define exact cleanup on logout/session expiry/device rebind;
+- never wipe another account/device scope accidentally;
+- no auth token/password/session cookie/device private key in offline DB;
+- add real Chromium IndexedDB acceptance.
 
 ---
 
-### STUDENT-015C — Student Practice UI
+### STUDENT-016D — Explicit protected lesson download contract
 
-**Priority: P1 · Status: AFTER API CONTRACT**
+**Priority: P1 · Status: PENDING 016C**
 
-Learning-first Practice workspace with immediate server-authorized feedback, explanation/provenance where policy allows, keyboard/touch/mobile states, loading/error/offline/session expiry and resume.
+Required before storing protected bytes:
+
+- explicit server-authorized offline lesson materialization endpoint/manifest;
+- only currently entitled + published content;
+- stable lesson/asset IDs;
+- revision/checksum provenance;
+- byte sizes;
+- storage budget policy;
+- deterministic failure rollback;
+- removal/eviction semantics;
+- no caching of current Reader `/v1` endpoint.
 
 ---
 
-### STUDENT-015D — Student Test / Model UI
+### STUDENT-016E — Offline content store + revocation/revalidation
 
-**Priority: P1 · Status: AFTER API CONTRACT**
+**Priority: P1 · Status: PENDING 016D**
 
-No correctness leakage before finalization; stable progress, resume/restart, final score/result/history and version/model identity.
+Required:
+
+- account/device scoped content records;
+- checksum validation before commit;
+- budget enforcement;
+- offline Reader path from explicit local materialization;
+- lease enforcement using server-time estimate;
+- reconnect entitlement/publication revalidation;
+- purge/disable revoked/expired/unpublished material;
+- real Chromium offline learning acceptance.
 
 ---
 
-### STUDENT-015E — Stage15 verification/closure
+### STUDENT-016F — Revisions / tombstones / delta / outbox
+
+**Priority: P1 · Status: PENDING SAFE MATERIALIZATION**
+
+Known current state:
+
+`content_revisions`, `content_tombstones`, `sync_checkpoints` exist but are dormant/unwired. Do not treat them as sync authority.
+
+Required:
+
+- authoritative revision writers;
+- cursor semantics;
+- tombstone semantics;
+- bounded delta API;
+- client application rules;
+- outbox only for features that are actually allowed to mutate offline;
+- conflict/retry/idempotency rules;
+- reconnect reconciliation tests.
+
+---
+
+### STUDENT-016G — Stage16 closure
 
 **Priority: P0 process gate · Status: PENDING**
 
-Require exact-head:
+Require exact-head evidence:
 
 - Student lint/typecheck/unit/build;
-- API lint/typecheck/unit/build;
-- clean PostgreSQL migrations;
-- assessment PostgreSQL integration including races/idempotency;
-- Auth/Access/Curriculum/Reader regressions;
-- real Chromium Practice + Test/Model;
-- 390px/tablet/desktop responsive checks;
-- keyboard/focus/accessibility checks;
-- Issue #16 execution report + synchronized docs.
+- API regression where shared API changed;
+- clean PostgreSQL migrations/integration;
+- real Chromium SW lifecycle;
+- IndexedDB account/device isolation;
+- offline lease expiry/clock rollback;
+- explicit protected downloads;
+- checksum/storage-budget behavior;
+- revocation/reconnect purge;
+- sync/tombstone/outbox behavior if in scope;
+- responsive/accessibility regression;
+- synchronized docs + Issue #16 closure report.
 
 ## Parallel Track A
 
-### EXEC-007 — Stage13G Remaining Admin Product
+Stage13G remains Track A. Track B must not absorb Admin ownership. Any shared contract must be additive/minimal and documented.
 
-Track A follow-on. Track B must not absorb Admin ownership or block Student Stage15 on unrelated Stage13G work.
+`AI-012-019` live AI provider bootstrap remains separate and does not block Student use of already-published content.
 
-### EXEC-007A — `AI-012-019` live provider runtime
+## Later Student sequence
 
-**P2 · NOT YET VERIFIED**
-
-Does not block Stage15 consumption of already-published quiz snapshots.
-
-## Later Student Roadmap
-
-- Stage16 Offline/PWA — blocked until Stage15 closes.
-- Stage17 Personal Learning Data.
+- Stage17 Personal Learning Data — **BLOCKED UNTIL Stage16 CLOSES**.
 - Stage18 Notifications.
 - Stage19 Progress/Statistics/Achievements.
-- Stage20+ later roadmap/hardening.
-- Stage26–29 release/deployment only when explicitly active.
+- Stage20+ later roadmap.
+- release/deployment only when explicitly reopened.
 
-## Open Findings
+## Exact first item
 
-- `STUDENT-015-API-002` P1 — no Student-safe assessment runtime API.
-- `STUDENT-015-DIRECT-003` P1 — direct answer persistence gap.
-- `AI-012-019` P2 — live provider runtime `NOT YET VERIFIED`.
-- historical `CI-001` nonblocking.
-
-## Do Not Reopen / Do Not Do
-
-- do not merge obsolete integration PR #29; integration was completed manually with a verified two-parent merge;
-- do not duplicate Question Bank/Quiz models;
-- do not expose Admin authoring/detail endpoints to Student;
-- do not score canonically in browser;
-- do not begin Stage16 before Stage15 closes.
+`STUDENT-016B2`: fix `offline-store.ts:85` TS18047, then rerun exact-head Student Product + Stage16 PWA. Do nothing later in Stage16 before this gate is green.

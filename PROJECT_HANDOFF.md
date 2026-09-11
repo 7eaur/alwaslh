@@ -1,103 +1,129 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع بالكامل من GitHub بدون ذاكرة Chat سابقة.
+> أي محادثة هندسية بديلة يجب أن تستطيع استئناف المشروع من GitHub بدون ذاكرة Chat سابقة.
 
-Last synchronized: **2026-09-10 — Stage13F implementation VERIFIED/CLOSED; final closure checkpoint requires exact-head PR matrix then non-force fast-forward to main.**
+Last synchronized: **2026-09-11 — Stage14/15 closed; Student Stage16 active.**
 
 ## Mandatory startup
 
-1. Confirm repository `7eaur/alwaslh`.
-2. Read `README.md` and `DOCUMENTATION_INDEX.md`.
-3. Read this file, `PROJECT_STATUS.md`, `PROJECT_RESUME_SNAPSHOT.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_EXECUTION_QUEUE.md`.
-4. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` and the latest Issue #16 body/comments.
-5. If working Track B, also read `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md` and `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md` from its branch.
-6. Live-check `main`, current branch HEAD and Actions before any conclusion.
+1. Confirm repo `7eaur/alwaslh`.
+2. Confirm Student branch `parallel/stage14-student-product` when continuing Track B.
+3. Read `README.md` then `DOCUMENTATION_INDEX.md`.
+4. For Track B read, in order:
+   - `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`
+   - `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`
+   - `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`
+5. Read `PROJECT_STATUS.md`, `PROJECT_RESUME_SNAPSHOT.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_EXECUTION_QUEUE.md`.
+6. Read `docs/product/CURRENT_PRODUCT_OVERRIDES.md` and `MASTER_REBUILD_ROADMAP.md` for the current stage.
+7. Read latest Issue #16 body/comments.
+8. Live-check current branch, `main` and Actions before any conclusion.
 
-Code/migrations/executable evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
+Code/migrations/executable CI evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
 ## Operating model
 
-Issue #16 defines the current **parallel two-track** model:
-
-- Track A: Backend/Admin/AI/Question Bank/Quiz Builder; current next stage after promotion is Stage13G.
+- Track A: Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G.
 - Track B: Student Product on `parallel/stage14-student-product`.
-- Shared backend contracts become Student authority only after verified promotion through `main`.
-- No force-push/history rewrite, duplicate authority, auth bypass, fake API or test weakening.
-- Production deployment/cutover remains future-only. Stage13F required no deployment.
+- `main` is verified shared-contract handoff authority.
+- Track B may add a minimal shared API only when a missing Student contract is proven, documented and non-conflicting.
+- No duplicate durable authority, auth bypass, fake API or test weakening.
+- deployment/hosting remains deferred.
 
-## Stable architecture / business rules
+## Stable product/business rules
 
-- Browser does not own canonical durable state.
+- Browser does not own canonical durable business state.
 - Full Code = 6 digits; Class Code = 7 digits.
-- Returning Student requires password + registered P-256 device proof.
+- returning Student requires password + registered P-256 device proof.
 - Curriculum = Class → Subject Offering → optional Section → Lesson.
-- `media ready != published`; publication is Draft → Review → Published.
-- raw AI/provider output never becomes Student/Question Bank authority.
-- Stage11 owns typed AI contracts/validation.
-- Stage12 owns durable execution/jobs/units/attempts/outputs.
-- Stage13E owns append-only human AI review.
-- Stage13E `approve` is import eligibility, not Question Bank publication.
-- Stage13F Question Bank owns stable reusable item UUID + immutable revisions + Draft/Review/Published.
-- Quiz Builder selects published Question Bank revisions and materializes immutable delivery snapshots.
-- published snapshots are later Student Stage15 authority.
+- `media ready != published`; Student content requires publication time to have arrived.
+- raw provider/AI output never automatically becomes Student authority.
+- Question Bank published revisions + published Quiz versions are immutable delivery authority.
+- Student assessment scoring/finalization remains server-owned.
+- protected Reader media is server-authorized and does not expose raw storage keys.
 
-## Stage13F verified runtime authority
+## Verified Student checkpoints
 
-Runtime HEAD:
+- Stage14 runtime `ac55f1435d232cadff334816407f1182125dda90` — CLOSED / VERIFIED.
+- Canonical Stage13F main `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
+- Stage13F→Student integration `4a476e1f29cb605fce294d7c34fd68e8218a32e8` — VERIFIED.
+- Stage15 runtime `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d` — CLOSED / VERIFIED.
 
-`afbe552710b3f1cf79ee70594f691fa836c05a45`
+## Current Stage16 state
 
-Stage-specific evidence:
+Stage16 = **ACTIVE / PARTIALLY VERIFIED / NOT CLOSED**.
 
-- backend/PostgreSQL `34420441878` — SUCCESS;
-- Admin/PostgreSQL/real Chromium `34420441837` — SUCCESS.
+Detailed source: `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
 
-Wider verification-only PR `#27` ran **13/13 SUCCESS** on the same runtime HEAD and was closed unmerged:
+Verified runtime boundary:
 
-`34420900598`, `34420900550`, `34420900527`, `34420900592`, `34420900501`, `34420900492`, `34420900547`, `34420900488`, `34420900522`, `34420900503`, `34420900520`, `34420900476`, `34420900482`.
+`5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd`
 
-## Stage13F closed scope
+Evidence:
 
-- reusable canonical Question Bank separate from delivery rows;
-- immutable revisions and stable item identity;
-- MCQ / T-F / direct questions and typed answers;
-- source/page/checksum/OCR/content-source + AI review/prompt provenance;
-- latest-approve-only AI import as Draft with idempotent concurrency behavior;
-- manual authoring/edit/review/reject/publish;
-- dedicated Admin Question Bank UI;
-- Quiz Builder with class/subject/multi-lesson scope, multiple versions/models and published candidates;
-- immutable quiz delivery snapshots retaining Question Bank item/revision refs;
-- review/publish/archive lifecycle;
-- approved regenerate-one applied as a later Draft revision of the same item only;
-- reviewed/published exact-version Excel-compatible CSV and print/PDF template;
-- real Chromium lifecycle/session/responsive evidence.
+- Stage16 `34430915847` SUCCESS — PostgreSQL bounded lease + PWA real Chromium.
+- API Regression `34430915786` SUCCESS.
 
-## Important open boundaries
+Verified Stage16 capabilities:
 
-- `AI-012-019` — live provider benchmark/routes/credentials/bootstrap remains `NOT YET VERIFIED`.
-- Stage13F does **not** claim every legacy `QADMIN-001..033` row. Remaining direct generation orchestration and specialized export variants are explicit Stage13G/AI-authoring work in `LEGACY_FEATURE_COVERAGE_GATE.md`.
-- Track B Stage14: Access/Curriculum/Reader verified; final learning-first shell/copy/a11y closure still active in its branch.
-- Stage15 must not begin against stale main; Track B must first incorporate the exact Stage13F closure checkpoint after promotion.
+- PWA manifest + app-shell Service Worker;
+- `/v1` excluded from SW cache/interception;
+- no automatic `skipWaiting`;
+- real offline shell reload;
+- server-issued `GET /v1/student/offline/lease`;
+- lease requires valid Student session + non-revoked device;
+- server/PostgreSQL time authority;
+- max 24h, clipped by session expiry;
+- grants clipped by entitlement expiry;
+- metadata only, `private,no-store`.
 
-## Git / incident notes
+## Latest code checkpoint / exact blocker
 
-- Runtime verification PR #27 was verification-only and is closed unmerged.
-- The accidental `.noop` create/delete before Stage13F had no final tree/runtime effect. Cleanup `main @ 5fdb23030c77cae9bff5f8c33d4be466427eb6e5` restored exact tree `bcd433bd553b3e7eb539515cffd2a23a92f97192`. Treat as resolved P3 history noise; do not rewrite history.
+Latest code checkpoint before documentation:
+
+`2c44a363638221ee2985ecb6b8fb71c3e757a333`
+
+It adds typed lease client + dedicated IndexedDB lease metadata but is **NOT VERIFIED**.
+
+Exact failure:
+
+```text
+src/offline-store.ts(85,38): error TS18047:
+'evaluation.estimatedServerTimeMs' is possibly 'null'.
+```
+
+Runs:
+
+- Student Product `34431220808` — FAILURE at strict typecheck; Chromium skipped.
+- Stage16 `34431220827` — overall FAILURE due same Student build error; PostgreSQL lease job SUCCESS; Chromium skipped.
+- ESLint PASS.
+- Vitest 22/22 PASS.
+
+First continuation action: fix TypeScript narrowing only, preserve behavior/strictness, then rerun exact-head Student Product + Stage16 PWA.
+
+## Stage16 security boundary
+
+Do not violate these:
+
+- no `/v1` Cache API caching;
+- no password/session cookie/token/device private key in offline DB;
+- no browser-clock entitlement authority;
+- no raw media storage key exposure;
+- no protected lesson blobs before explicit download/budget/checksum contract;
+- no duplicate Auth/Access/Curriculum/Question Bank/Assessment authority;
+- no automatic forced SW update/reload during study;
+- no Stage17 before Stage16 closure.
+
+## Current open Stage16 work
+
+- wire lease fetch/save into authenticated lifecycle and exact scope cleanup;
+- real Chromium IndexedDB account/device isolation + persistence + rollback + cleanup;
+- explicit lesson offline download/materialization contract;
+- byte/checksum/storage budget + eviction/failure rollback;
+- reconnect entitlement/publication revalidation + purge;
+- authoritative revisions/tombstones/delta/outbox.
+
+Existing `content_revisions`, `content_tombstones`, `sync_checkpoints` are currently dormant/unwired; do not treat schema presence as verified sync.
 
 ## Exact continuation
 
-For the Stage13F closure owner:
-
-1. run the wider PR matrix on the documentation checkpoint containing this file;
-2. close that verification PR unmerged;
-3. re-check live `main` is still the Stage13F base;
-4. fast-forward `main` non-force to the exact verified closure checkpoint;
-5. post final Stage13F EXECUTION REPORT on Issue #16.
-
-Then:
-
-- Track A begins Stage13G from the new `main` authority;
-- Track B incorporates the new `main` before Stage15;
-- keep `AI-012-019` open until real provider evidence exists.
-
-Never infer completion from this prose alone; verify branch/main and Actions first.
+Fix `offline-store.ts:85` → exact-head green Student/Stage16 gates → wire lease lifecycle/cleanup → browser IndexedDB acceptance → explicit protected download/budget/checksum → reconnect purge → delta/tombstone/outbox → Stage16 closure. Deployment remains deferred.
