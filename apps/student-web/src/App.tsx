@@ -25,6 +25,7 @@ import {
   signDeviceProof,
   type StoredDeviceKey,
 } from "./device-key";
+import { clearActiveOfflineLease } from "./offline-session";
 import { StudentAccessSection } from "./student-access";
 
 type EntryMode = "activation" | "login" | "recovery";
@@ -767,6 +768,7 @@ export default function App() {
   }, []);
 
   function handleSessionExpired() {
+    void clearActiveOfflineLease().catch(() => undefined);
     setProfile(null);
     setNotice({
       message: "انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.",
@@ -788,6 +790,7 @@ export default function App() {
           online={online}
           onSessionExpired={handleSessionExpired}
           onLoggedOut={() => {
+            void clearActiveOfflineLease().catch(() => undefined);
             setProfile(null);
             setNotice(null);
             setMode("login");
