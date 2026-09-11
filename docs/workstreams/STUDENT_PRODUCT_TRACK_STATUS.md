@@ -2,7 +2,7 @@
 
 > Branch-specific status for Track B. Code/migrations + executable CI evidence outrank prose. Unexecuted work = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-11 — Stage14 CLOSED / VERIFIED; Stage15 CLOSED / VERIFIED; Stage16 ACTIVE.**
+Last synchronized: **2026-09-11 — Stage14 CLOSED / VERIFIED; Stage15 CLOSED / VERIFIED; Stage16 ACTIVE. Protected materialization VERIFIED; cold-offline authorization is the active security boundary.**
 
 ## Track identity
 
@@ -20,145 +20,113 @@ Last synchronized: **2026-09-11 — Stage14 CLOSED / VERIFIED; Stage15 CLOSED / 
 - Stage13F→Student merge: `4a476e1f29cb605fce294d7c34fd68e8218a32e8` — VERIFIED.
 - Stage15 runtime: `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d` — CLOSED / VERIFIED.
 - Stage16 safe PWA shell: `c1ae86036d4d302b8ca8c411227f41c37b4063ef` — VERIFIED.
-- Stage16 server lease + PWA runtime: `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd` — implemented boundary VERIFIED.
-- Stage16 client lease lifecycle runtime: `53aeb972c4c891c3eecafdde0716b544751d2711` — VERIFIED for the implemented lease persistence/lifecycle boundary.
+- Stage16 server lease + PWA runtime: `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd` — VERIFIED.
+- Stage16 client lease lifecycle runtime: `53aeb972c4c891c3eecafdde0716b544751d2711` — VERIFIED for the implemented lease lifecycle boundary.
+- Stage16 protected lesson materialization runtime: `d350206710003da311693834db90e348d1a89bc3` — VERIFIED for manifest/download/checksum/budget/atomic storage/delete/isolation boundary.
 
 Documentation commits after a runtime checkpoint do not replace runtime evidence.
 
 ## Stage14 boundary — CLOSED / VERIFIED
 
-Verified activation/login/recovery/device/session, entitlements/class redemption, entitled Curriculum, protected Reader/media/OCR, search/TTS capability, honest offline/session states, RTL/mobile-first hierarchy, keyboard focus and responsive 390/768/1366 behavior.
-
-Stage14 never claimed durable offline-learning authority.
+Verified activation/login/recovery/device/session, entitlements/class redemption, entitled Curriculum, protected Reader/media/OCR, search/TTS capability, honest offline/session states, RTL/mobile-first hierarchy, keyboard focus and responsive behavior.
 
 ## Stage15 boundary — CLOSED / VERIFIED
 
-Verified consumption of canonical immutable Stage13F quiz snapshots through one durable Student assessment runtime:
-
-- entitlement-filtered published quizzes;
-- immutable version/model selection;
-- create/resume/restart/abandon;
-- persisted question/option order;
-- Practice server feedback and answer locking after reveal;
-- Test correctness withheld until finalize;
-- server-owned direct/choice scoring;
-- idempotent finalization and durable attempt history;
-- publication/access rechecks;
-- Curriculum → Assessment → Access learning hierarchy;
-- responsive/Chromium regression evidence.
-
-Exact closure runtime: `9a787b7...` with API Regression `34427900263`, Stage15 Assessment `34427900257`, Student Product `34427900209` — all SUCCESS.
+Verified canonical published immutable quiz snapshots, create/resume/restart/abandon, persisted ordering, Practice feedback, Test withholding/finalization, server-owned scoring and history, publication/access rechecks and real Chromium regression.
 
 ## Stage16 — ACTIVE
 
 ### Batch 1 — safe PWA shell — VERIFIED
 
-Runtime `c1ae86036d4d302b8ca8c411227f41c37b4063ef`.
-
-Run `34430284173` — SUCCESS.
-
-Verified:
-
-- manifest + Service Worker registration;
-- registration only on HTTPS/loopback;
-- app-shell/static asset caching only;
+- app-shell/static assets only;
 - `/v1` excluded from Service Worker caching/interception;
-- no protected Reader/Assessment/API response cached;
-- no auth/device credential copied to Stage16 storage;
-- no automatic `skipWaiting`;
-- real Chromium true offline reload at 390px.
+- protected Reader/Assessment/API responses never become Cache API authority;
+- no automatic `skipWaiting`.
 
-### Batch 2A — server-issued bounded offline lease — VERIFIED
+### Batch 2A/2B — bounded lease + client lifecycle — VERIFIED FOR IMPLEMENTED BOUNDARY
 
-Runtime `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd`.
+- `GET /v1/student/offline/lease` is session/device/entitlement bounded and uses PostgreSQL time;
+- max lease 24h clipped by session and entitlement expiry;
+- IndexedDB scoped by `profileId:deviceId`;
+- login/activation/restore refresh is best-effort;
+- logout/session expiry/device rebind cleanup is exact-scope;
+- 5-minute backward-clock guard remains enabled;
+- no password/session cookie/token/device private key/raw storage key is copied to Stage16 offline DB.
 
-Evidence:
+### Batch 3 — explicit protected lesson materialization — VERIFIED
 
-- Stage16 `34430915847` — SUCCESS: PostgreSQL lease contract + PWA Chromium.
-- API Regression `34430915786` — SUCCESS.
+Runtime: `d350206710003da311693834db90e348d1a89bc3`.
 
-Contract:
+Implemented:
 
-- `GET /v1/student/offline/lease`;
-- valid Student session + non-revoked bound device;
-- profile/device scoped;
-- server time from PostgreSQL;
-- max lease 24h;
-- clipped by session expiry;
-- each entitlement grant clipped by entitlement expiry;
-- metadata only, `private,no-store`.
+- dedicated Student offline lesson manifest + asset endpoints; existing Reader `/v1` responses are not cached;
+- only currently entitled + Published Reader material is issued through the manifest path;
+- manifest includes stable lesson/asset IDs, `contentRevision`, publication provenance, SHA-256, exact byte sizes and authorization expiry;
+- IndexedDB upgraded to v2 with `lessonPackages` scoped by `profileId:deviceId`;
+- 64 MiB max lesson payload;
+- 256 MiB max payload per account/device scope;
+- replacement-aware accounting; no silent eviction;
+- WebCrypto SHA-256 + exact byte-size verification before commit;
+- package write is atomic after all assets verify; failed/tampered downloads do not replace a valid prior package;
+- manual removal supported;
+- scope cleanup removes both lease and packages;
+- UI supports select lesson → download/update/remove + usage display without disrupting learning hierarchy;
+- revision comparison is monotonic: a package newer than a stale catalog is not mislabeled as old;
+- API normalizes PostgreSQL `BIGINT` content revision to a safe number at the Student contract boundary.
 
-### Batch 2B — client lease store + lifecycle — VERIFIED
+Exact-head evidence for `d3502067...`:
 
-Runtime checkpoint: `53aeb972c4c891c3eecafdde0716b544751d2711`.
+- Stage16 Student PWA run `34557753480` — **SUCCESS**:
+  - PostgreSQL lease/download contract PASS;
+  - Student strict typecheck/build PASS;
+  - real Chromium lease lifecycle + protected materialization PASS;
+  - PWA shell PASS.
+- Stage14 Student Product run `34557753472` — **SUCCESS**:
+  - Student lint/typecheck/unit/build PASS;
+  - Reader/curriculum PostgreSQL contracts PASS;
+  - full real Chromium Student suite PASS.
+- API Regression run covering the `contentRevision` contract fix: `34557536412` — **SUCCESS**.
 
-Implemented and verified:
+Root causes closed during Batch 3:
 
-- `apps/student-web/src/offline-api.ts` consumes only the bounded server-issued lease contract;
-- IndexedDB `alwaslh-student-offline`, version `1`, store `leases`;
-- scope key remains `profileId:deviceId`;
-- lease metadata only; no lesson/media blobs yet;
-- authenticated activation/login/session restore performs best-effort lease refresh/persistence without making offline storage a requirement for online login correctness;
-- logout and server-side session expiry remove only the active account/device scope;
-- successful device rebind removes stale scopes only for the same `profileId`, preserving other accounts;
-- a non-secret `{profileId,deviceId}` pointer is kept in `sessionStorage` only so scoped cleanup survives page reload within the same browser session; no password/session cookie/token/private key/lease payload is placed there;
-- 5-minute clock rollback tolerance remains enforced;
-- server-time estimate is based on server-issued time plus observed elapsed client time rather than treating the device wall clock as entitlement authority.
+- tests opening IndexedDB v1 after runtime moved to v2 were made schema-version resilient rather than pinning an obsolete version;
+- PostgreSQL `BIGINT` content revision leaking as string caused `"1" !== 1` in browser state; fixed at API boundary;
+- lease browser acceptance previously compared renewable timestamps byte-for-byte; fixed to assert stable authority/scope while allowing intentional renewal;
+- download UI initially interrupted the learning order; final hierarchy remains **Curriculum → Assessment → Downloads → Access**.
 
-Executable evidence on exact runtime `53aeb972...`:
+## Active security finding before true cold-offline Reader
 
-- Stage16 Student PWA run `34551931757` — **SUCCESS**:
-  - PostgreSQL bounded offline lease contract — PASS;
-  - Student production build — PASS;
-  - PWA app-shell real Chromium — PASS;
-  - IndexedDB lease lifecycle real Chromium — **3/3 PASS**.
-- Stage14 Student Product run `34551931610`, attempt 2 — **SUCCESS** on the same exact HEAD:
-  - Student lint — PASS;
-  - strict TypeScript — PASS;
-  - Vitest — **22/22 PASS**;
-  - production build — PASS;
-  - curriculum/Reader PostgreSQL contracts — PASS;
-  - full real Chromium Student suite — PASS.
+### `STUDENT-016-OFFLINE-AUTH-009` — P1 — OPEN / PROVEN
 
-The first Stage14 browser attempt on this HEAD had one non-reproducible Assessment assertion failure after model selection. No Assessment code changed between a prior passing run and this HEAD. Re-running the unchanged failed browser job on the same commit produced a full PASS. It is recorded as flaky CI/test evidence, not as a product regression, and no test was weakened.
+The current IndexedDB lease and stored lesson package metadata are ordinary mutable browser records. `offlineLessonPackageAllowsUse()` currently trusts locally stored lease grants/timestamps after structural/time checks. This is sufficient for the verified online materialization/lifecycle boundary, but it is **not sufficient to promote a cold-start offline Reader to protected-content authority** because local mutation could extend/alter the unsigned authorization metadata.
 
-Root causes closed in this batch:
+Decision:
 
-- prior TS18047 narrowing blocker was fixed type-safely without weakening strictness;
-- first IndexedDB lifecycle acceptance exposed that in-memory-only active scope identity was lost after reload; the root fix uses the scoped non-secret session pointer described above, after which the same real Chromium acceptance passed.
+- do **not** make the cold-offline Reader consume the current unsigned lease/package as authoritative access proof;
+- add a server-authentic signed offline authorization/manifest envelope first;
+- offline Reader must verify the signature and exact signed profile/device/class/lesson/revision/expiry/asset checksum fields before rendering;
+- keep browser limitations explicit: a hostile user controlling their own browser is not a DRM-grade trusted execution environment; the goal is authentic server authorization + integrity + scoped expiry/purge, not impossible client-side content secrecy.
 
 ## Stage16 findings
 
 | ID | Sev | Finding | Status |
 |---|---:|---|---|
-| `STUDENT-016-SYNC-001` | P1 | `content_revisions` / `content_tombstones` / `sync_checkpoints` exist but are not verified wired authority | OPEN / PROVEN |
-| `STUDENT-016-LEASE-002` | P1 | bounded offline lease + client persistence/lifecycle | FIXED / VERIFIED FOR LEASE BOUNDARY |
-| `STUDENT-016-CACHE-003` | P1 | protected Reader is `no-store`; explicit offline content materialization still absent | OPEN / NEXT DESIGN |
-| `STUDENT-016-QA-004` | P1 | strict TS nullability blocked client lease build | FIXED / VERIFIED |
-| `STUDENT-016-CLIENT-005` | P1 | lease store was not connected to authenticated lifecycle/cleanup | FIXED / VERIFIED |
-| `STUDENT-016-DOWNLOAD-006` | P1 | no explicit lesson download/budget/checksum/eviction contract | OPEN / NEXT |
-| `STUDENT-016-REVOCATION-007` | P1 | protected offline purge/revalidation not implemented | OPEN |
-| `STUDENT-016-OUTBOX-008` | P1 | outbox/delta reconciliation not implemented | OPEN |
-
-## Current classification
-
-| Area | Classification |
-|---|---|
-| PWA app shell | KEEP / IMPROVE |
-| `/v1` Service Worker caching | REMOVE / FORBIDDEN |
-| server-issued offline lease | KEEP / VERIFIED FOUNDATION |
-| account/device IndexedDB lease metadata | KEEP / VERIFIED FOUNDATION |
-| existing sync tables | KEEP AS DORMANT SCHEMA / REFACTOR-WIRE LATER |
-| protected lesson offline materialization | REBUILD / NEW EXPLICIT CONTRACT |
-| browser credential storage | REMOVE / FORBIDDEN |
+| `STUDENT-016-SYNC-001` | P1 | revision/tombstone/checkpoint schema lacks verified writers/API/client flow | OPEN / PROVEN |
+| `STUDENT-016-LEASE-002` | P1 | bounded offline lease + client lifecycle | FIXED / VERIFIED FOR LEASE BOUNDARY |
+| `STUDENT-016-CACHE-003` | P1 | explicit protected offline materialization | FIXED / VERIFIED FOR DOWNLOAD/STORAGE BOUNDARY |
+| `STUDENT-016-QA-004` | P1 | strict TS nullability blocker | FIXED / VERIFIED |
+| `STUDENT-016-CLIENT-005` | P1 | authenticated lease lifecycle/cleanup | FIXED / VERIFIED |
+| `STUDENT-016-DOWNLOAD-006` | P1 | manifest/budget/checksum/accounting/rollback/removal | FIXED / VERIFIED |
+| `STUDENT-016-REVOCATION-007` | P1 | reconnect revalidation/purge | OPEN |
+| `STUDENT-016-OUTBOX-008` | P1 | delta/outbox authority | OPEN |
+| `STUDENT-016-OFFLINE-AUTH-009` | P1 | unsigned local authorization cannot become cold-offline protected Reader authority | OPEN / ACTIVE NEXT |
 
 ## Exact next action
 
-1. Design the explicit protected lesson offline download contract before writing any protected blob.
-2. Define server-authorized manifest fields: stable lesson/asset IDs, content revision, SHA-256/checksum and byte sizes; only Published and entitled content may be materialized.
-3. Define account/device storage budget, per-download byte accounting, atomic/failure rollback and deterministic eviction/removal policy.
-4. Implement the smallest shared API contract necessary without caching the existing Reader `/v1` response and without duplicating Track A authority.
-5. Add client materialization only after the contract is fixed, then real Chromium verification of checksum/budget/isolation/offline read behavior.
-6. Implement reconnect revalidation and revoked/expired/unpublished purge before claiming protected offline content complete.
-7. Only after protected materialization is safe, wire revision writers/tombstones/server cursor/delta sync and any bounded outbox required by product-authorized offline writes.
-8. Do not begin Stage17 until Stage16 closes on one exact HEAD with real Service Worker + IndexedDB + protected offline content + revocation/sync evidence.
+1. Define the smallest server-authentic signed authorization envelope for downloaded lesson manifests; pin/verify the server signing identity without introducing a browser-held signing secret.
+2. Add signature-tamper contract/unit/browser evidence before using stored bytes in a cold-start Reader.
+3. Persist only a non-secret durable active offline scope selector needed for browser-restart discovery; preserve account/device isolation and exact logout/rebind cleanup.
+4. Implement true cold-start PWA → verified signed package → Reader rendering with the network unavailable.
+5. Add reconnect revalidation against current session/device/entitlement/publication/revision and purge revoked/expired/unpublished/stale packages before claiming protected offline complete.
+6. Then wire authoritative revisions/tombstones/cursor/delta and any bounded outbox required by later product-authorized offline writes.
+7. Do not begin Stage17 until Stage16 closes on one exact HEAD with cold-offline + reconnect purge + sync evidence.
