@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { StudentOfflineLessonManifest } from "./offline-download-api";
+import type {
+  StudentOfflineLessonAssetManifest,
+  StudentOfflineLessonManifest,
+} from "./offline-download-api";
 import {
   OFFLINE_LESSON_PAYLOAD_BUDGET_BYTES,
   OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES,
@@ -13,6 +16,23 @@ import {
 import { createStoredOfflineLease } from "./offline-store";
 
 const emptySha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+function asset(overrides: Partial<StudentOfflineLessonAssetManifest> = {}): StudentOfflineLessonAssetManifest {
+  return {
+    id: "asset-1",
+    kind: "image",
+    position: 0,
+    mimeType: "image/png",
+    byteSize: 0,
+    width: 100,
+    height: 100,
+    checksumSha256: emptySha256,
+    sourcePageNumber: 1,
+    text: null,
+    downloadPath: "/v1/student/offline/lessons/lesson-1/assets/asset-1?revision=3",
+    ...overrides,
+  };
+}
 
 function manifest(overrides: Partial<StudentOfflineLessonManifest> = {}): StudentOfflineLessonManifest {
   return {
@@ -31,21 +51,7 @@ function manifest(overrides: Partial<StudentOfflineLessonManifest> = {}): Studen
       publishedAt: "2026-09-10T00:00:00.000Z",
     },
     totalByteSize: 0,
-    assets: [
-      {
-        id: "asset-1",
-        kind: "image",
-        position: 0,
-        mimeType: "image/png",
-        byteSize: 0,
-        width: 100,
-        height: 100,
-        checksumSha256: emptySha256,
-        sourcePageNumber: 1,
-        text: null,
-        downloadPath: "/v1/student/offline/lessons/lesson-1/assets/asset-1?revision=3",
-      },
-    ],
+    assets: [asset()],
     ...overrides,
   };
 }
@@ -76,17 +82,14 @@ describe("protected offline lesson policy", () => {
   it("accepts a canonical revision-bound manifest and rejects tampering", () => {
     expect(() => validateOfflineLessonManifest(manifest())).not.toThrow();
 
-    const invalidPath = manifest();
-    invalidPath.assets[0] = {
-      ...invalidPath.assets[0],
-      downloadPath: "/v1/student/lesson-assets/asset-1/content",
-    };
+    const invalidPath = manifest({
+      assets: [asset({ downloadPath: "/v1/student/lesson-assets/asset-1/content" })],
+    });
     expect(() => validateOfflineLessonManifest(invalidPath)).toThrowError(
       expect.objectContaining<Partial<OfflineContentError>>({ code: "manifest_invalid" }),
     );
 
-    const duplicate = manifest();
-    duplicate.assets = [duplicate.assets[0], duplicate.assets[0]];
+    const duplicate = manifest({ assets: [asset(), asset()] });
     expect(() => validateOfflineLessonManifest(duplicate)).toThrowError(
       expect.objectContaining<Partial<OfflineContentError>>({ code: "manifest_invalid" }),
     );
@@ -95,12 +98,7 @@ describe("protected offline lesson policy", () => {
   it("enforces the explicit per-lesson payload budget", () => {
     const oversized = manifest({
       totalByteSize: OFFLINE_LESSON_PAYLOAD_BUDGET_BYTES + 1,
-      assets: [
-        {
-          ...manifest().assets[0],
-          byteSize: OFFLINE_LESSON_PAYLOAD_BUDGET_BYTES + 1,
-        },
-      ],
+      assets: [asset({ byteSize: OFFLINE_LESSON_PAYLOAD_BUDGET_BYTES + 1 })],
     });
 
     expect(() => validateOfflineLessonManifest(oversized)).toThrowError(
