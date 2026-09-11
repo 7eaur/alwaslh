@@ -55,10 +55,9 @@ test("lesson parity keeps summary revisions consistent and exports safe canonica
   const studentSession = await auth.createStudentSession(studentId, deviceId, "parity-test");
 
   const classId = (
-    await db.query<{ id: string }>(
-      "insert into classes (slug, name) values ($1, 'صف parity') returning id",
-      [`stage13g-parity-class-${suffix}`],
-    )
+    await db.query<{ id: string }>("insert into classes (slug, name) values ($1, 'صف parity') returning id", [
+      `stage13g-parity-class-${suffix}`,
+    ])
   )[0]?.id;
   const subjectId = (
     await db.query<{ id: string }>(
@@ -67,7 +66,10 @@ test("lesson parity keeps summary revisions consistent and exports safe canonica
     )
   )[0]?.id;
   assert.ok(classId && subjectId);
-  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [classId, subjectId]);
+  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [
+    classId,
+    subjectId,
+  ]);
   const lesson = (
     await db.query<{ id: string; content_revision: number }>(
       `insert into lessons (class_id, subject_id, slug, title)
@@ -100,19 +102,29 @@ test("lesson parity keeps summary revisions consistent and exports safe canonica
 
     assert.equal((await patch("ملخص parity يدوي")).statusCode, 200);
     let revision = (
-      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [lesson.id])
+      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [
+        lesson.id,
+      ])
     )[0]?.content_revision;
     assert.equal(revision, lesson.content_revision + 1);
 
     assert.equal((await patch("ملخص parity يدوي")).statusCode, 200);
     revision = (
-      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [lesson.id])
+      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [
+        lesson.id,
+      ])
     )[0]?.content_revision;
-    assert.equal(revision, lesson.content_revision + 1, "saving the same summary must not create a content revision");
+    assert.equal(
+      revision,
+      lesson.content_revision + 1,
+      "saving the same summary must not create a content revision",
+    );
 
     assert.equal((await patch(null)).statusCode, 200);
     revision = (
-      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [lesson.id])
+      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [
+        lesson.id,
+      ])
     )[0]?.content_revision;
     assert.equal(revision, lesson.content_revision + 2);
     assert.equal((await patch("ملخص نهائي آمن")).statusCode, 200);
