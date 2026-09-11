@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">الوسيلة الذكية</title>
+  <rect width="512" height="512" rx="112" fill="#007f78"/>
+  <path d="M112 156c0-22 18-40 40-40h72c32 0 57 10 80 31 23-21 48-31 80-31h16c22 0 40 18 40 40v200c0 22-18 40-40 40h-56c-38 0-69 15-88 44-19-29-50-44-88-44h-16c-22 0-40-18-40-40V156Z" fill="#fff"/>
+  <path d="M256 151v234" fill="none" stroke="#007f78" stroke-width="20" stroke-linecap="round"/>
+</svg>

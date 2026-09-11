@@ -304,6 +304,7 @@ jobs:
       LOG_LEVEL: silent
       ALLOWED_ORIGINS: http://127.0.0.1:5174
       PGPASSWORD: postgres
+      VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE2FrUJV0pXSOuz0j98o48vPAnWIa9IBNVzBbWB5VxFWsunmwrSIc0D9clavqX4QFg1dPRq3vEkD21VNdpwpFflA
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -324,7 +325,7 @@ jobs:
       - name: Apply migrations and seed deterministic browser scenario
         run: |
           npm run db:migrate --prefix apps/api
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "insert into full_access_codes (code, entitlement_duration_days) values ('654321', 365);"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "insert into full_access_codes (code, entitlement_duration_days) values ('654321', 365), ('654322', 365), ('654323', 365);"
       - name: Create explicit E2E admin for recovery support flow
         env:
           ADMIN_BOOTSTRAP_IDENTIFIER: stage8-admin

@@ -46,11 +46,11 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
 }
 
 async function openIngestion(page) {
-  await page.getByRole("button", { name: "رفع المحتوى ونشره" }).click();
+  await page.getByRole("button", { name: "رفع المحتوى ونشره", exact: true }).click();
   await expect(page.getByRole("heading", { name: "الصور وPDF وسجل المعالجة" })).toBeVisible();
 }
 
@@ -89,7 +89,7 @@ test("admin preserves mixed file order, processes, reviews, publishes and keeps 
   await expect(page.locator(".publication-status")).toHaveText("منشور");
   await expect(page.getByText("تم نشر محتوى المهمة للطلاب بقرار صريح.")).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
   await openIngestion(page);
   const historyTask = page.locator(".history-task").filter({ hasText: lessonTitle }).first();
   await expect(historyTask).toBeVisible();

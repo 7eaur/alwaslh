@@ -1,124 +1,94 @@
 # PROJECT STATUS — الوسيلة الذكية
 
-> الحالة التنفيذية المختصرة. Code/migrations + executable CI evidence أعلى من prose. أي شيء غير مفحوص/غير منفذ = `NOT YET VERIFIED`.
+> Concise execution truth. Code/migrations/executable CI outrank prose. Anything not executed = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-10 — Stage13F Question Bank / Quiz Builder implementation VERIFIED; closure documentation checkpoint prepared for exact-head re-verification and non-force promotion.**
+Last synchronized: **2026-09-11**.
 
-## Current Position
+## Current position
 
 - Repository: `7eaur/alwaslh`.
-- Shared execution ledger: GitHub Issue `#16`.
-- Current operating model: **parallel two-track execution**.
-  - Track A: Backend/Admin/AI/Question Bank/Quiz Builder on `integration/stage13f-question-bank`.
-  - Track B: Student Product on `parallel/stage14-student-product`.
-- Production deployment/cutover remains future-only. No deployment was required or performed for Stage13F closure.
-- Stage13E runtime/application authority: `d5ebc7f25a369430387a758c7c0bb89350963d67` — VERIFIED / CLOSED.
-- Stage13F verified runtime checkpoint: `afbe552710b3f1cf79ee70594f691fa836c05a45`.
-- Stage13F runtime verification-only PR: `#27` — **13/13 SUCCESS, closed unmerged**.
-- Stage13F specialized same-head runs before the wider matrix:
-  - Backend/PostgreSQL: `34420441878` — SUCCESS.
-  - Admin/PostgreSQL/real Chromium: `34420441837` — SUCCESS.
+- Execution ledger: GitHub Issue #16.
+- Track A: Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G — closed on its branch, not promoted to `main` without Product Owner direction.
+- Track B: Student Product on `parallel/stage14-student-product`.
+- Production deployment/cutover remains deferred.
+- Shared `main` remains the Stage13F checkpoint until explicitly changed.
 
-## Stage13F — VERIFIED / CLOSED PRODUCT BOUNDARY
+## Verified Student checkpoints
 
-Stage13F now provides the reviewed assessment-authoring authority between Stage13E AI review and later Stage15 Student assessment consumption.
+- Stage14 `ac55f1435d232cadff334816407f1182125dda90` — CLOSED / VERIFIED.
+- Stage15 `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d` — CLOSED / VERIFIED.
+- Stage16 PWA shell `c1ae86036d4d302b8ca8c411227f41c37b4063ef` — VERIFIED.
+- Stage16 server lease `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd` — VERIFIED.
+- Stage16 client lease lifecycle `53aeb972c4c891c3eecafdde0716b544751d2711` — VERIFIED for that boundary.
+- Stage16 protected lesson materialization `d350206710003da311693834db90e348d1a89bc3` — VERIFIED for manifest/download/checksum/budget/atomic storage/delete/isolation boundary.
 
-Verified flow:
+## Current active stage
 
-```text
-Stage11 typed generation/validation
-→ Stage12 durable execution/output
-→ Stage13E human approve
-→ Stage13F Question Bank import as Draft
-→ Question Bank Review → Published
-→ Quiz Builder selects published immutable revisions
-→ immutable quiz-version delivery snapshots
-→ reviewed/published export
-→ Stage15 later consumes published snapshots
-```
+**Stage16 — Offline / PWA — ACTIVE / NOT CLOSED.**
 
-Verified capabilities:
+Detailed handoff: `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
 
-- canonical reusable Question Bank item UUID separate from delivery snapshots;
-- immutable Question Bank revisions and durable lifecycle/audit history;
-- `multiple_choice`, `true_false`, and `direct` question persistence;
-- answer-shape and publication invariants in PostgreSQL;
-- class/subject/lesson/source/page/checksum/OCR/content-source provenance;
-- only the latest Stage13E `approve` revision is import-eligible;
-- AI import is idempotent/concurrency-safe and always enters as Draft;
-- manual create/edit plus Draft → Review → Published;
-- published revision replacement without mutating historical authority;
-- dedicated Admin Question Bank workspace with real loading/error/empty/filter/search/detail/edit/review/publish/session-expiry/responsive states;
-- Quiz Builder with class/subject/multi-lesson scope, published Question Bank candidates, multiple models/versions, immutable snapshots, direct-question delivery support, review/publish/archive lifecycle;
-- one-question regeneration applies only an approved Stage11 `regenerate_question` output to a **new revision of the same stable item**;
-- regeneration replay is idempotent; generic AI import cannot create a standalone item from regeneration output;
-- reviewed/published exact-version export: UTF-8 Excel-compatible CSV and RTL print/PDF template; Draft export is rejected server-side;
-- real Chromium covers Question Bank pagination/lifecycle/manual direct/import/session-expiry/mobile and Quiz Builder create/select/model/review/publish/mobile flows.
+Verified through `d3502067...`:
 
-## Stage13F Runtime Matrix — 13/13 SUCCESS
+- Service Worker app shell only; `/v1` never cached/intercepted;
+- bounded server-issued profile/device lease;
+- scoped IndexedDB lease lifecycle and cleanup;
+- explicit protected lesson manifest + asset download path;
+- published/entitled content only at issuance;
+- IndexedDB v2 lesson packages scoped per profile/device;
+- 64 MiB lesson + 256 MiB scope budgets;
+- exact byte-size + SHA-256 verification before atomic write;
+- no silent eviction; explicit remove/update;
+- package cleanup on scoped logout/session expiry/rebind;
+- Download UI placed after Assessment, before Access;
+- PostgreSQL content revision normalized to safe numeric Student contract.
 
-Verification-only PR `#27` executed the wider matrix on exact runtime HEAD `afbe552710b3f1cf79ee70594f691fa836c05a45` and was closed unmerged.
+Exact-head executable evidence:
 
-| Gate | Run | Result |
-|---|---:|---|
-| Stage9 Content Import | `34420900598` | SUCCESS |
-| Stage10 Media Pipeline | `34420900550` | SUCCESS |
-| OCR Foundation | `34420900527` | SUCCESS |
-| Stage11 AI Contracts | `34420900592` | SUCCESS |
-| Stage12 AI Execution | `34420900501` | SUCCESS |
-| Stage13 Admin Product | `34420900492` | SUCCESS |
-| Stage13D Content Ingestion | `34420900547` | SUCCESS |
-| Stage13D Admin Upload UI | `34420900488` | SUCCESS |
-| Stage13E Frontend Preparation | `34420900522` | SUCCESS |
-| Stage13E Admin AI Operations | `34420900503` | SUCCESS |
-| Stage13F Question Bank / Quiz Builder authority | `34420900520` | SUCCESS |
-| Stage13F Admin + real Chromium | `34420900476` | SUCCESS |
-| Rebuild Stage Verification | `34420900482` | SUCCESS |
+- Stage16 Student PWA `34557753480` — SUCCESS.
+- Stage14 Student Product `34557753472` — SUCCESS.
+- API Regression `34557536412` — SUCCESS for `contentRevision` boundary fix.
 
-The Rebuild gate also passed clean PostgreSQL, Auth/Access/Activation regressions, Admin/Student builds and real Student activation/returning-login/recovery Chromium.
+## Current P1 Stage16 findings
 
-## Stage Ledger
+- `STUDENT-016-SYNC-001` — sync schema exists but writers/API/client delta flow remain OPEN / PROVEN absent.
+- `STUDENT-016-LEASE-002` — FIXED / VERIFIED for bounded lease + client lifecycle boundary.
+- `STUDENT-016-CACHE-003` — FIXED / VERIFIED for explicit materialization boundary.
+- `STUDENT-016-QA-004` — FIXED / VERIFIED.
+- `STUDENT-016-CLIENT-005` — FIXED / VERIFIED.
+- `STUDENT-016-DOWNLOAD-006` — FIXED / VERIFIED for manifest/budget/checksum/accounting/rollback/removal.
+- `STUDENT-016-REVOCATION-007` — reconnect revalidation/purge OPEN.
+- `STUDENT-016-OUTBOX-008` — durable delta/outbox reconciliation OPEN.
+- `STUDENT-016-OFFLINE-AUTH-009` — **OPEN / ACTIVE NEXT**: unsigned mutable local lease/package metadata cannot become true cold-offline protected Reader authority.
+
+## Security decision for cold-offline
+
+Do not render protected stored lesson bytes after a browser cold start using only the current unsigned IndexedDB lease/package metadata. The next batch must add a cryptographically signed server authorization envelope, client verification with a non-secret pinned public identity, read-time blob integrity checks and fail-closed tamper/expiry behavior.
+
+A browser is not a DRM-grade trusted execution environment; the security target is authentic server authorization, integrity, bounded expiry, account/device isolation and reconnect purge—not impossible secrecy from a hostile user controlling their own browser.
+
+## Stage ledger
 
 | Stage | State |
 |---|---|
-| Stage1–10 | VERIFIED |
-| OCR Foundation | VERIFIED |
-| Stage11 AI Contracts | VERIFIED |
-| Stage12 Durable AI Execution | VERIFIED backend/runtime; live provider bootstrap remains `NOT YET VERIFIED` |
-| Stage13A–D | VERIFIED |
-| Stage13E Admin AI Operations / Review | VERIFIED / CLOSED |
-| Stage13F Question Bank / Quiz Builder / Publish | **VERIFIED / CLOSED** |
-| Stage13G Remaining Admin Product | **NEXT Track A work** |
-| Stage14 Student Product | **parallel Track B: IN PROGRESS; Access/Curriculum/Reader verified, final shell/copy/a11y closure active** |
-| Stage15 Practice / Assessment | BLOCKED until Track B incorporates the Stage13F main checkpoint |
-| Stage16–25 | REQUIRED by roadmap |
-| Stage26–29 | future release/deployment track |
+| Stage1–10 + OCR | VERIFIED |
+| Stage11 | VERIFIED |
+| Stage12 | VERIFIED backend/runtime; live provider bootstrap still NOT YET VERIFIED |
+| Stage13A–F | VERIFIED / CLOSED; Stage13F promoted |
+| Stage13G | VERIFIED / CLOSED on Track A branch; not promoted |
+| Stage14 Student | CLOSED / VERIFIED |
+| Stage15 Practice/Assessment | CLOSED / VERIFIED |
+| Stage16 Offline/PWA | **ACTIVE / PARTIALLY VERIFIED** |
+| Stage17 Personal Learning | **BLOCKED BY Stage16** |
+| Stage18+ | later roadmap |
+| Release/deployment | future / deferred |
 
-## Findings State
+## Exact next work
 
-- `AI-011-005` P2 — **FIXED + VERIFIED in Stage13F** for reviewed `direct` Question Bank persistence and delivery snapshot authority; Student direct-answer interaction remains Stage15.
-- `QB-013F-IDENTITY-001` P1 — regeneration could break stable question identity — **FIXED + VERIFIED**.
-- `QB-013F-REPLAY-002` P1 — regeneration replay initially conflicted with its own open Draft — **FIXED + VERIFIED** by replay-before-open-draft ordering.
-- `QB-013F-EXPORT-003` P1 — Draft export could be mistaken for published authority — **FIXED + VERIFIED** by server status gate.
-- `QB-013F-UI-004` P2 — nested candidate-search form / ambiguous browser locators — **FIXED + VERIFIED** without weakening assertions.
-- `GIT-013F-005` P3 — accidental `.noop` create/delete before Stage13F branch — **RESOLVED / NO TREE OR RUNTIME EFFECT**. Cleanup `main @ 5fdb23030c77cae9bff5f8c33d4be466427eb6e5` restored tree `bcd433bd553b3e7eb539515cffd2a23a92f97192` exactly.
-- `AI-012-019` P2 — live provider benchmark/routes/credentials/bootstrap remains **OPEN / NOT YET VERIFIED**.
-
-## Legacy Coverage Boundary
-
-Stage13F closes only outcomes with executable evidence. It does **not** silently claim every `QADMIN-001..033` row. Verified Stage13F mappings and remaining Admin/AI-authoring gaps are recorded in `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`.
-
-In particular, remaining direct generation orchestration inside Quiz Builder and specialized legacy export variants remain explicit later work rather than fake completion.
-
-## Promotion Rule
-
-The final Stage13F closure documentation commit containing this file must itself pass the same pull-request regression matrix. Only then may `main` be moved **non-force / fast-forward** to that exact commit. Do not merge the verification PR and do not create a merge commit.
-
-Track B Stage15 must consume the exact promoted Stage13F authority from `main`; it must not duplicate Question Bank/Quiz authority locally.
-
-## Exact Next Work After Promotion
-
-1. Track A: Stage13G remaining Admin product and unresolved Admin parity/AI-authoring outcomes.
-2. Track A: keep `AI-012-019` explicitly `NOT YET VERIFIED` until real provider benchmark/config/runtime evidence exists.
-3. Track B: finish Stage14 closure, then incorporate the promoted Stage13F main checkpoint before Stage15.
-4. Continue Stage15–25 in roadmap order; no production cutover before explicit release/deployment work.
+1. Signed server-authentic offline lesson authorization envelope + client verification.
+2. Read-time stored-blob checksum verification against signed checksums.
+3. Durable non-secret active offline scope discovery across browser restart.
+4. True cold-start offline Reader in real Chromium with network unavailable and tamper/expiry rejection.
+5. Reconnect session/device/entitlement/publication/revision revalidation + purge.
+6. Revision/tombstone/cursor/delta/outbox wiring only after protected cold-offline is safe.
+7. Keep Stage17 and deployment blocked until Stage16 closes.

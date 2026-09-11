@@ -4,7 +4,8 @@ import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService, SessionProfile } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
-import type { CurriculumService } from "./service.js";
+import type { CurriculumService, StudentCurriculumCatalog } from "./service.js";
+import type { StudentReaderService } from "./student-reader.js";
 
 const RecordStatusSchema = z.enum(["active", "inactive", "archived"]);
 const SlugSchema = z.string().trim().min(1).max(120);
@@ -93,6 +94,31 @@ const SubjectParamsSchema = z.object({ subjectId: z.string().uuid() });
 const OfferingParamsSchema = z.object({ classId: z.string().uuid(), subjectId: z.string().uuid() });
 const SectionParamsSchema = z.object({ sectionId: z.string().uuid() });
 const LessonParamsSchema = z.object({ lessonId: z.string().uuid() });
+const LessonAssetParamsSchema = z.object({ assetId: z.string().uuid() });
+
+function safeContentRevision(value: number): number {
+  const revision = Number(value);
+  if (!Number.isSafeInteger(revision) || revision < 1) {
+    throw new AppError("SERVICE_UNAVAILABLE", "إصدار محتوى الدرس غير صالح", 503);
+  }
+  return revision;
+}
+
+function normalizeStudentCurriculumRevisions(catalog: StudentCurriculumCatalog): StudentCurriculumCatalog {
+  for (const classRecord of catalog.classes) {
+    for (const subject of classRecord.subjects) {
+      for (const lesson of subject.unsectionedLessons) {
+        lesson.contentRevision = safeContentRevision(lesson.contentRevision);
+      }
+      for (const section of subject.sections) {
+        for (const lesson of section.lessons) {
+          lesson.contentRevision = safeContentRevision(lesson.contentRevision);
+        }
+      }
+    }
+  }
+  return catalog;
+}
 
 async function adminActor(
   request: Parameters<typeof currentProfile>[0],
@@ -104,12 +130,48 @@ async function adminActor(
   return actor;
 }
 
+async function studentActor(
+  request: Parameters<typeof currentProfile>[0],
+  config: AppConfig,
+  auth: AuthService,
+): Promise<SessionProfile> {
+  const actor = await currentProfile(request, config, auth);
+  if (actor.role !== "student") throw new AppError("FORBIDDEN", "هذه العملية للطالب فقط", 403);
+  return actor;
+}
+
 export function registerCurriculumRoutes(
   app: FastifyInstance,
   config: AppConfig,
   auth: AuthService,
   curriculum: CurriculumService,
+  studentReader: StudentReaderService,
 ): void {
+  app.get("/v1/student/curriculum", async (request) => {
+    const actor = await studentActor(request, config, auth);
+    const catalog = await curriculum.studentCatalog(actor.id);
+    return { curriculum: normalizeStudentCurriculumRevisions(catalog) };
+  });
+
+  app.get("/v1/student/lessons/:lessonId/reader", async (request) => {
+    const actor = await studentActor(request, config, auth);
+    const params = parseBody(LessonParamsSchema, request.params);
+    return { reader: await studentReader.lesson(actor.id, params.lessonId) };
+  });
+
+  app.get("/v1/student/lesson-assets/:assetId/content", async (request, reply) => {
+    const actor = await studentActor(request, config, auth);
+    const params = parseBody(LessonAssetParamsSchema, request.params);
+    const content = await studentReader.assetContent(actor.id, params.assetId);
+    reply.header("Content-Type", content.mimeType);
+    reply.header("Content-Length", String(content.byteSize));
+    reply.header("Cache-Control", "private, no-store");
+    reply.header("Pragma", "no-cache");
+    reply.header("X-Content-Type-Options", "nosniff");
+    reply.header("ETag", `"${content.checksumSha256}"`);
+    return reply.send(content.bytes);
+  });
+
   app.get("/v1/admin/curriculum", async (request) => {
     await adminActor(request, config, auth);
     return { curriculum: await curriculum.snapshot() };

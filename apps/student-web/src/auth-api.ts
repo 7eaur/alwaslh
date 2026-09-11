@@ -1,12 +1,11 @@
-export type ApiErrorCode =
-  | "BAD_REQUEST"
-  | "UNAUTHORIZED"
-  | "FORBIDDEN"
-  | "NOT_FOUND"
-  | "CONFLICT"
-  | "RATE_LIMITED"
-  | "INTERNAL_ERROR"
-  | "SERVICE_UNAVAILABLE";
+import { ApiRequestError, type ApiErrorCode } from "./api-errors";
+import {
+  clearActiveOfflineLease,
+  syncOfflineLeaseForSession,
+  type OfflineSessionSyncReason,
+} from "./offline-session";
+
+export { ApiRequestError, type ApiErrorCode } from "./api-errors";
 
 export type StudentChallengePurpose =
   | "login"
@@ -27,6 +26,149 @@ export interface EntitlementView {
   status: "active" | "expired" | "revoked";
   startsAt: string;
   expiresAt: string | null;
+}
+
+export interface StudentCurriculumLesson {
+  id: string;
+  slug: string;
+  title: string;
+  summary: string | null;
+  position: number;
+  contentRevision: number;
+  publishedAt: string;
+}
+
+export interface StudentCurriculumSection {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  position: number;
+  lessons: StudentCurriculumLesson[];
+}
+
+export interface StudentCurriculumSubject {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  position: number;
+  unsectionedLessons: StudentCurriculumLesson[];
+  sections: StudentCurriculumSection[];
+}
+
+export interface StudentCurriculumClass {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  position: number;
+  subjects: StudentCurriculumSubject[];
+}
+
+export interface StudentCurriculumCatalog {
+  classes: StudentCurriculumClass[];
+}
+
+export interface StudentReaderAsset {
+  id: string;
+  kind: "image" | "pdf_page" | "document" | "audio" | "video";
+  position: number;
+  mimeType: string;
+  byteSize: number | null;
+  width: number | null;
+  height: number | null;
+  checksumSha256: string | null;
+  sourcePageNumber: number | null;
+  text: string | null;
+}
+
+export interface StudentLessonReader {
+  lesson: {
+    id: string;
+    title: string;
+    summary: string | null;
+    contentRevision: number;
+    publishedAt: string;
+  };
+  assets: StudentReaderAsset[];
+}
+
+export type StudentAssessmentMode = "practice" | "test";
+
+export interface StudentAssessmentCatalogItem {
+  id: string;
+  title: string;
+  description: string | null;
+  classId: string;
+  className: string;
+  subjectId: string;
+  subjectName: string;
+  shuffleVersions: boolean;
+  versions: Array<{ id: string; versionNumber: number; label: string }>;
+}
+
+export interface StudentAssessmentQuestion {
+  id: string;
+  position: number;
+  lessonId: string | null;
+  type: "multiple_choice" | "true_false" | "direct";
+  prompt: string;
+  options: Array<{ id: string; label: string; position: number }>;
+  sourcePage: number | null;
+  questionBankItemId: string | null;
+  questionBankRevisionId: string | null;
+  answer: null | { selectedOptionId: string | null; directAnswerText: string | null };
+  feedback: null | {
+    correct: boolean;
+    correctOptionId: string | null;
+    correctAnswerText: string | null;
+    explanation: string | null;
+    method: string | null;
+  };
+}
+
+export interface StudentAssessmentAttempt {
+  id: string;
+  sessionId: string;
+  quizId: string;
+  quizTitle: string;
+  versionId: string;
+  versionLabel: string;
+  mode: StudentAssessmentMode;
+  correctCount: number;
+  questionCount: number;
+  scorePercent: number;
+  completedAt: string;
+}
+
+export interface StudentAssessmentSession {
+  session: {
+    id: string;
+    mode: StudentAssessmentMode;
+    status: "in_progress" | "completed" | "abandoned";
+    currentQuestionId: string | null;
+    startedAt: string;
+    completedAt: string | null;
+  };
+  quiz: {
+    id: string;
+    title: string;
+    description: string | null;
+    classId: string;
+    subjectId: string;
+  };
+  version: {
+    id: string;
+    versionNumber: number;
+    label: string;
+  };
+  progress: {
+    questionCount: number;
+    answeredCount: number;
+  };
+  questions: StudentAssessmentQuestion[];
+  attempt: StudentAssessmentAttempt | null;
 }
 
 export interface ActivationVerificationResponse {
@@ -71,18 +213,47 @@ interface EntitlementsResponse {
   entitlements: EntitlementView[];
 }
 
-export class ApiRequestError extends Error {
-  constructor(
-    readonly code: ApiErrorCode,
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiRequestError";
-  }
+interface AccessRedemptionResponse {
+  entitlement: EntitlementView;
+}
+
+interface CurriculumResponse {
+  curriculum: StudentCurriculumCatalog;
+}
+
+interface ReaderResponse {
+  reader: StudentLessonReader;
+}
+
+interface AssessmentCatalogResponse {
+  quizzes: StudentAssessmentCatalogItem[];
+}
+
+interface AssessmentResponse {
+  assessment: StudentAssessmentSession;
+}
+
+interface AttemptsResponse {
+  attempts: StudentAssessmentAttempt[];
 }
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+let latestStudentLoginChallenge: Pick<StudentLoginChallenge, "challengeToken" | "purpose"> | null = null;
+
+function isSessionProtectedStudentPath(path: string): boolean {
+  return (
+    path.startsWith("/v1/student/") &&
+    !path.startsWith("/v1/student/activation/") &&
+    !path.startsWith("/v1/student/login/")
+  );
+}
+
+async function syncOfflineLeaseBestEffort(
+  profileId: string,
+  reason: OfflineSessionSyncReason,
+): Promise<void> {
+  await syncOfflineLeaseForSession(profileId, reason).catch(() => undefined);
+}
 
 async function parseResponseBody(response: Response): Promise<unknown> {
   const text = await response.text();
@@ -117,6 +288,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const payload = await parseResponseBody(response);
   if (!response.ok) {
+    if (response.status === 401 && isSessionProtectedStudentPath(path)) {
+      await clearActiveOfflineLease().catch(() => undefined);
+    }
     const publicError = payload as PublicErrorBody | undefined;
     const code = publicError?.error?.code ?? "INTERNAL_ERROR";
     const message = publicError?.error?.message ?? "تعذر إكمال الطلب";
@@ -140,14 +314,17 @@ export async function completeActivation(input: {
   devicePublicKeySpki: string;
   deviceProof: string;
 }): Promise<ActivationResponse> {
-  return request<ActivationResponse>("/v1/student/activation/complete", {
+  const result = await request<ActivationResponse>("/v1/student/activation/complete", {
     method: "POST",
     body: JSON.stringify(input),
   });
+  await syncOfflineLeaseBestEffort(result.profile.id, "activation");
+  return result;
 }
 
 export async function restoreStudentSession(): Promise<SessionProfile> {
   const result = await request<ProfileResponse>("/v1/student/me");
+  await syncOfflineLeaseBestEffort(result.profile.id, "restore");
   return result.profile;
 }
 
@@ -155,10 +332,15 @@ export async function startStudentLogin(
   identifier: string,
   password: string,
 ): Promise<StudentLoginChallenge> {
-  return request<StudentLoginChallenge>("/v1/student/login/start", {
+  const challenge = await request<StudentLoginChallenge>("/v1/student/login/start", {
     method: "POST",
     body: JSON.stringify({ identifier, password }),
   });
+  latestStudentLoginChallenge = {
+    challengeToken: challenge.challengeToken,
+    purpose: challenge.purpose,
+  };
+  return challenge;
 }
 
 export async function completeStudentLogin(input: {
@@ -167,19 +349,116 @@ export async function completeStudentLogin(input: {
   publicKeySpki?: string;
   newPassword?: string;
 }): Promise<StudentLoginResponse> {
-  return request<StudentLoginResponse>("/v1/student/login/complete", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  const purpose =
+    latestStudentLoginChallenge?.challengeToken === input.challengeToken
+      ? latestStudentLoginChallenge.purpose
+      : null;
+  try {
+    const result = await request<StudentLoginResponse>("/v1/student/login/complete", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    const syncReason: OfflineSessionSyncReason =
+      purpose === "device_rebind" || purpose === "password_change_rebind" ? "device_rebind" : "login";
+    await syncOfflineLeaseBestEffort(result.profile.id, syncReason);
+    return result;
+  } finally {
+    if (latestStudentLoginChallenge?.challengeToken === input.challengeToken) {
+      latestStudentLoginChallenge = null;
+    }
+  }
 }
 
 export async function logoutStudent(): Promise<void> {
-  await request<void>("/v1/auth/logout", { method: "POST" });
+  try {
+    await request<void>("/v1/auth/logout", { method: "POST" });
+  } finally {
+    await clearActiveOfflineLease().catch(() => undefined);
+  }
 }
 
 export async function listStudentEntitlements(): Promise<EntitlementView[]> {
   const result = await request<EntitlementsResponse>("/v1/student/access/entitlements");
   return result.entitlements;
+}
+
+export async function redeemStudentAccess(code: string, idempotencyKey: string): Promise<EntitlementView> {
+  const result = await request<AccessRedemptionResponse>("/v1/student/access/redeem", {
+    method: "POST",
+    body: JSON.stringify({ code, idempotencyKey }),
+  });
+  return result.entitlement;
+}
+
+export async function listStudentCurriculum(): Promise<StudentCurriculumCatalog> {
+  const result = await request<CurriculumResponse>("/v1/student/curriculum");
+  return result.curriculum;
+}
+
+export async function getStudentLessonReader(lessonId: string): Promise<StudentLessonReader> {
+  const result = await request<ReaderResponse>(`/v1/student/lessons/${encodeURIComponent(lessonId)}/reader`);
+  return result.reader;
+}
+
+export function studentAssetContentUrl(assetId: string): string {
+  return `${apiBaseUrl}/v1/student/lesson-assets/${encodeURIComponent(assetId)}/content`;
+}
+
+export async function listStudentQuizzes(): Promise<StudentAssessmentCatalogItem[]> {
+  const result = await request<AssessmentCatalogResponse>("/v1/student/quizzes");
+  return result.quizzes;
+}
+
+export async function startStudentAssessment(
+  quizId: string,
+  input: { mode: StudentAssessmentMode; versionId?: string; restart?: boolean },
+): Promise<StudentAssessmentSession> {
+  const result = await request<AssessmentResponse>(`/v1/student/quizzes/${encodeURIComponent(quizId)}/sessions`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return result.assessment;
+}
+
+export async function getStudentAssessmentSession(sessionId: string): Promise<StudentAssessmentSession> {
+  const result = await request<AssessmentResponse>(
+    `/v1/student/assessment-sessions/${encodeURIComponent(sessionId)}`,
+  );
+  return result.assessment;
+}
+
+export async function answerStudentAssessmentQuestion(
+  sessionId: string,
+  questionId: string,
+  input: { selectedOptionId?: string | null; directAnswerText?: string | null },
+): Promise<StudentAssessmentSession> {
+  const result = await request<AssessmentResponse>(
+    `/v1/student/assessment-sessions/${encodeURIComponent(sessionId)}/questions/${encodeURIComponent(questionId)}/answer`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
+  return result.assessment;
+}
+
+export async function finalizeStudentAssessment(sessionId: string): Promise<StudentAssessmentSession> {
+  const result = await request<AssessmentResponse>(
+    `/v1/student/assessment-sessions/${encodeURIComponent(sessionId)}/finalize`,
+    { method: "POST" },
+  );
+  return result.assessment;
+}
+
+export async function abandonStudentAssessment(sessionId: string): Promise<void> {
+  await request<void>(`/v1/student/assessment-sessions/${encodeURIComponent(sessionId)}/abandon`, {
+    method: "POST",
+  });
+}
+
+export async function listStudentAttempts(limit = 10): Promise<StudentAssessmentAttempt[]> {
+  const result = await request<AttemptsResponse>(`/v1/student/attempts?limit=${encodeURIComponent(String(limit))}`);
+  return result.attempts;
 }
 
 export function normalizeAccessCode(value: string): string {
@@ -198,7 +477,15 @@ export function isSixDigitAccessCode(value: string): boolean {
   return /^\d{6}$/.test(normalizeAccessCode(value));
 }
 
+export function isSevenDigitClassCode(value: string): boolean {
+  return /^\d{7}$/.test(normalizeAccessCode(value));
+}
+
 export function createActivationIdempotencyKey(): string {
+  return globalThis.crypto.randomUUID();
+}
+
+export function createAccessRedemptionIdempotencyKey(): string {
   return globalThis.crypto.randomUUID();
 }
 

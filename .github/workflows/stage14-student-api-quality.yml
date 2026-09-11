@@ -1,0 +1,48 @@
+# Student Track exact-head verification trigger 2
+name: Stage14 Student API Regression
+
+on:
+  push:
+    branches:
+      - parallel/stage14-student-product
+      - main
+    paths:
+      - "apps/api/**"
+      - "database/migrations/**"
+      - "packages/**"
+      - ".github/workflows/stage14-student-api-quality.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "apps/api/**"
+      - "database/migrations/**"
+      - "packages/**"
+      - ".github/workflows/stage14-student-api-quality.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage14-student-api-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-quality:
+    name: API lint · typecheck · unit · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install API dependencies
+        run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Run API regression gates
+        run: |
+          npm run lint --prefix apps/api
+          npm run typecheck --prefix apps/api
+          npm test --prefix apps/api
+          npm run build --prefix apps/api

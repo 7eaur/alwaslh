@@ -375,23 +375,31 @@ export class QuizBuilderService {
     quizId: string,
     input: CreateQuizVersionInput,
   ): Promise<{ versionId: string }> {
-    const label = normalizeText(input.label, "اسم النموذج");
+    const result = await this.addVersionInTransaction(actorProfileId, quizId, input, null);
+    return { versionId: result.versionId };
+  }
+
+  async addVersionOnce(
+    actorProfileId: string,
+    quizId: string,
+    input: CreateQuizVersionInput,
+    eventNote: string,
+  ): Promise<{ versionId: string; replayed: boolean }> {
+    const note = normalizeText(eventNote, "معرف تطبيق النموذج");
     return this.database.transaction(async (tx) => {
       const quiz = await this.lockDraftQuiz(tx, quizId);
-      const nextRows = await tx.query<{ next_number: number }>(
-        "select coalesce(max(version_number), 0)::int + 1 as next_number from quiz_versions where quiz_id = $1",
-        [quizId],
+      const existing = await tx.query<{ quiz_version_id: string | null }>(
+        `select quiz_version_id
+         from quiz_builder_events
+         where quiz_id = $1 and action = 'version_add' and note = $2
+         order by id desc
+         limit 1
+         for update`,
+        [quizId, note],
       );
-      const versionRows = await tx.query<{ id: string }>(
-        `insert into quiz_versions (quiz_id, version_number, label, shuffle_options)
-         values ($1, $2, $3, $4) returning id`,
-        [quizId, nextRows[0]?.next_number ?? 1, label, input.shuffleOptions ?? true],
-      );
-      const versionId = versionRows[0]?.id;
-      if (!versionId) throw new AppError("INTERNAL_ERROR", "تعذر إنشاء نموذج الاختبار", 500);
-      await this.materializeQuestions(tx, quiz, quizId, versionId, input.questions);
-      await this.event(tx, quizId, versionId, "version_add", actorProfileId, null);
-      return { versionId };
+      const versionId = existing[0]?.quiz_version_id;
+      if (versionId) return { versionId, replayed: true };
+      return this.insertVersion(tx, quiz, actorProfileId, quizId, input, note);
     });
   }
 
@@ -494,6 +502,44 @@ export class QuizBuilderService {
         throw new AppError("CONFLICT", "أعد الاختبار من المراجعة قبل أرشفته", 409);
       await tx.query("update quizzes set status = 'archived' where id = $1", [quizId]);
     });
+  }
+
+  private addVersionInTransaction(
+    actorProfileId: string,
+    quizId: string,
+    input: CreateQuizVersionInput,
+    eventNote: string | null,
+  ): Promise<{ versionId: string; replayed: boolean }> {
+    const label = normalizeText(input.label, "اسم النموذج");
+    return this.database.transaction(async (tx) => {
+      const quiz = await this.lockDraftQuiz(tx, quizId);
+      return this.insertVersion(tx, quiz, actorProfileId, quizId, { ...input, label }, eventNote);
+    });
+  }
+
+  private async insertVersion(
+    executor: QueryExecutor,
+    quiz: QuizRow,
+    actorProfileId: string,
+    quizId: string,
+    input: CreateQuizVersionInput,
+    eventNote: string | null,
+  ): Promise<{ versionId: string; replayed: false }> {
+    const label = normalizeText(input.label, "اسم النموذج");
+    const nextRows = await executor.query<{ next_number: number }>(
+      "select coalesce(max(version_number), 0)::int + 1 as next_number from quiz_versions where quiz_id = $1",
+      [quizId],
+    );
+    const versionRows = await executor.query<{ id: string }>(
+      `insert into quiz_versions (quiz_id, version_number, label, shuffle_options)
+       values ($1, $2, $3, $4) returning id`,
+      [quizId, nextRows[0]?.next_number ?? 1, label, input.shuffleOptions ?? true],
+    );
+    const versionId = versionRows[0]?.id;
+    if (!versionId) throw new AppError("INTERNAL_ERROR", "تعذر إنشاء نموذج الاختبار", 500);
+    await this.materializeQuestions(executor, quiz, quizId, versionId, input.questions);
+    await this.event(executor, quizId, versionId, "version_add", actorProfileId, eventNote);
+    return { versionId, replayed: false };
   }
 
   private async lockDraftQuiz(executor: QueryExecutor, quizId: string): Promise<QuizRow> {
