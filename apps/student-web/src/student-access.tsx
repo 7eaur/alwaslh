@@ -12,6 +12,7 @@ import {
 import type { EntitlementView } from "./auth-api";
 import { StudentAssessmentSection } from "./student-assessment";
 import { StudentCurriculumSection } from "./student-curriculum";
+import { StudentOfflineDownloadsSection } from "./student-offline-downloads";
 
 type AccessState =
   | { status: "loading" }
@@ -98,6 +99,12 @@ export function StudentAccessSection({
   return (
     <>
       <StudentCurriculumSection
+        online={online}
+        refreshKey={curriculumRefreshKey}
+        onSessionExpired={onSessionExpired}
+      />
+
+      <StudentOfflineDownloadsSection
         online={online}
         refreshKey={curriculumRefreshKey}
         onSessionExpired={onSessionExpired}
