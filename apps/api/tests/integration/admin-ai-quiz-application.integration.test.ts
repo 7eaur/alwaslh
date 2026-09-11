@@ -83,17 +83,22 @@ test("approved quiz AI output waits for Question Bank publication then materiali
   const identifier = `stage13g-gd-quiz-${suffix}`;
   await auth.createCredential(adminId, identifier, "Stage13gGdQuiz123!");
   const classId = (
-    await db.query<{ id: string }>("insert into classes (slug, name) values ($1, 'صف تطبيق G-D') returning id", [
-      `gd-quiz-class-${suffix}`,
-    ])
+    await db.query<{ id: string }>(
+      "insert into classes (slug, name) values ($1, 'صف تطبيق G-D') returning id",
+      [`gd-quiz-class-${suffix}`],
+    )
   )[0]?.id;
   const subjectId = (
-    await db.query<{ id: string }>("insert into subjects (slug, name) values ($1, 'مادة تطبيق G-D') returning id", [
-      `gd-quiz-subject-${suffix}`,
-    ])
+    await db.query<{ id: string }>(
+      "insert into subjects (slug, name) values ($1, 'مادة تطبيق G-D') returning id",
+      [`gd-quiz-subject-${suffix}`],
+    )
   )[0]?.id;
   assert.ok(classId && subjectId);
-  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [classId, subjectId]);
+  await db.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [
+    classId,
+    subjectId,
+  ]);
   const lessonId = (
     await db.query<{ id: string }>(
       `insert into lessons (class_id, subject_id, slug, title, position)
@@ -146,7 +151,9 @@ test("approved quiz AI output waits for Question Bank publication then materiali
       await db.query<{ id: string }>("select id from ai_job_units where job_id = $1", [plan.json().jobId])
     )[0];
     assert.ok(unit);
-    await db.query("update ai_job_units set status = 'completed', completed_at = now() where id = $1", [unit.id]);
+    await db.query("update ai_job_units set status = 'completed', completed_at = now() where id = $1", [
+      unit.id,
+    ]);
     const outputId = (
       await db.query<{ id: string }>(
         `insert into ai_outputs (job_unit_id, validation_status, normalized_output)
