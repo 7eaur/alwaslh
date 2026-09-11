@@ -7,6 +7,7 @@ import {
   logoutAdmin,
   restoreAdminSession,
 } from "./admin-api";
+import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
 import { AdminGovernanceWorkspace } from "./AdminGovernanceWorkspace";
 import { AdminOperationsWorkspace } from "./AdminOperationsWorkspace";
 import { AdminReportsWorkspace } from "./AdminReportsWorkspace";
@@ -27,9 +28,9 @@ function errorMessage(error: unknown): string {
 
 export function App() {
   const [session, setSession] = useState<AdminProfile | null>(null);
-  const [sessionState, setSessionState] = useState<"restoring" | "signed_out" | "signed_in" | "error">(
-    "restoring",
-  );
+  const [sessionState, setSessionState] = useState<
+    "restoring" | "signed_out" | "signed_in" | "error"
+  >("restoring");
   const [sessionError, setSessionError] = useState("");
 
   const restore = useCallback(async () => {
@@ -137,6 +138,7 @@ type AdminWorkspace =
   | "content-ingestion"
   | "content-operations"
   | "ai-operations"
+  | "ai-authoring"
   | "question-bank"
   | "quiz-builder"
   | "student-access"
@@ -207,6 +209,14 @@ function AdminShell({
             عمليات AI والمراجعة
           </button>
           <button
+            className={`nav-item nav-button${workspace === "ai-authoring" ? " is-active" : ""}`}
+            type="button"
+            aria-current={workspace === "ai-authoring" ? "page" : undefined}
+            onClick={() => setWorkspace("ai-authoring")}
+          >
+            توليد المحتوى بالذكاء الاصطناعي
+          </button>
+          <button
             className={`nav-item nav-button${workspace === "question-bank" ? " is-active" : ""}`}
             type="button"
             aria-current={workspace === "question-bank" ? "page" : undefined}
@@ -260,6 +270,8 @@ function AdminShell({
           <ContentOperationsWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "ai-operations" ? (
           <AiOperationsPage onSessionExpired={onSessionExpired} />
+        ) : workspace === "ai-authoring" ? (
+          <AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "question-bank" ? (
           <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "quiz-builder" ? (
