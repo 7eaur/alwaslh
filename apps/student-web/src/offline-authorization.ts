@@ -33,7 +33,7 @@ function base64UrlToBytes(value: string): Uint8Array {
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
-function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+function ownedArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.byteLength);
   copy.set(bytes);
   return copy.buffer;
@@ -102,7 +102,9 @@ export async function verifyOfflineLessonAuthorization(
 
   const publicKeyBytes = base64UrlToBytes(verificationKeySpki);
   const actualKeyId = bytesToHex(
-    new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", toArrayBuffer(publicKeyBytes))),
+    new Uint8Array(
+      await globalThis.crypto.subtle.digest("SHA-256", ownedArrayBuffer(publicKeyBytes)),
+    ),
   );
   if (actualKeyId !== envelope.keyId) {
     throw new OfflineAuthorizationError("verification_key_mismatch");
@@ -112,7 +114,7 @@ export async function verifyOfflineLessonAuthorization(
   try {
     publicKey = await globalThis.crypto.subtle.importKey(
       "spki",
-      toArrayBuffer(publicKeyBytes),
+      ownedArrayBuffer(publicKeyBytes),
       { name: "ECDSA", namedCurve: "P-256" },
       false,
       ["verify"],
@@ -128,8 +130,8 @@ export async function verifyOfflineLessonAuthorization(
   const verified = await globalThis.crypto.subtle.verify(
     { name: "ECDSA", hash: "SHA-256" },
     publicKey,
-    toArrayBuffer(signatureBytes),
-    toArrayBuffer(payloadBytes),
+    ownedArrayBuffer(signatureBytes),
+    ownedArrayBuffer(payloadBytes),
   );
   if (!verified) throw new OfflineAuthorizationError("signature_invalid");
 
