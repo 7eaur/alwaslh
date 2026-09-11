@@ -174,13 +174,20 @@ jobs:
         run: npm run auth:create-admin --prefix apps/api
       - name: Seed deterministic Stage13G browser fixtures
         working-directory: apps/api
-        run: node --import tsx tests/fixtures/stage13g-admin-access-e2e-seed.ts
+        run: |
+          node --import tsx tests/fixtures/stage13g-admin-access-e2e-seed.ts
+          node --import tsx tests/fixtures/stage13g-ai-authoring-e2e-seed.ts
       - name: Verify browser fixture invariants
         run: |
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from profiles p join auth_credentials c on c.profile_id=p.id where p.role='student' and c.normalized_identifier='stage13g-student-ui'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from full_access_codes")" = "3"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from class_access_codes")" = "3"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from student_entitlements where status='active'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from classes where slug='stage13g-ai-authoring-class'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from lessons where slug in ('stage13g-ai-authoring-lesson-one','stage13g-ai-authoring-lesson-two')")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from lesson_assets la join lessons l on l.id=la.lesson_id where l.slug in ('stage13g-ai-authoring-lesson-one','stage13g-ai-authoring-lesson-two') and la.publication_status='published'")" = "2"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from quizzes where title='اختبار التوليد G-D' and status='draft'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from quizzes where title='اختبار التصدير G-D' and status='review'")" = "1"
       - name: Install Chromium
         run: npx --prefix apps/admin-web playwright install --with-deps chromium
       - name: Run Stage13G real Admin Chromium suite
@@ -191,3 +198,4 @@ jobs:
           e2e/admin-operations.e2e.spec.mjs
           e2e/admin-reports.e2e.spec.mjs
           e2e/admin-governance.e2e.spec.mjs
+          e2e/admin-ai-authoring.e2e.spec.mjs
