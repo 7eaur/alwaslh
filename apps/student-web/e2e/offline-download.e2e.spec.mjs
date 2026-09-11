@@ -96,7 +96,7 @@ test("protected lesson download verifies bytes, commits atomically, rejects tamp
   const manifest = manifestPayload.manifest;
   expect(manifest.assets).toHaveLength(1);
   await expect(page.getByText("تم حفظ الدرس والتحقق من ملفاته.", { exact: true })).toBeVisible();
-  await expect(page.getByText(/هذه النسخة محفوظة ومطابقة للإصدار المنشور/)).toBeVisible();
+  await expect(page.getByText(/هذه النسخة محفوظة ومتحقق منها عند الإصدار المنشور/)).toBeVisible();
 
   let packages = await offlinePackageFacts(page);
   expect(packages).toHaveLength(1);
