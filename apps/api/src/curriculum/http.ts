@@ -4,7 +4,7 @@ import { currentProfile, parseBody } from "../auth/http.js";
 import type { AuthService, SessionProfile } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
-import type { CurriculumService } from "./service.js";
+import type { CurriculumService, StudentCurriculumCatalog } from "./service.js";
 import type { StudentReaderService } from "./student-reader.js";
 
 const RecordStatusSchema = z.enum(["active", "inactive", "archived"]);
@@ -96,6 +96,30 @@ const SectionParamsSchema = z.object({ sectionId: z.string().uuid() });
 const LessonParamsSchema = z.object({ lessonId: z.string().uuid() });
 const LessonAssetParamsSchema = z.object({ assetId: z.string().uuid() });
 
+function safeContentRevision(value: number): number {
+  const revision = Number(value);
+  if (!Number.isSafeInteger(revision) || revision < 1) {
+    throw new AppError("SERVICE_UNAVAILABLE", "إصدار محتوى الدرس غير صالح", 503);
+  }
+  return revision;
+}
+
+function normalizeStudentCurriculumRevisions(catalog: StudentCurriculumCatalog): StudentCurriculumCatalog {
+  for (const classRecord of catalog.classes) {
+    for (const subject of classRecord.subjects) {
+      for (const lesson of subject.unsectionedLessons) {
+        lesson.contentRevision = safeContentRevision(lesson.contentRevision);
+      }
+      for (const section of subject.sections) {
+        for (const lesson of section.lessons) {
+          lesson.contentRevision = safeContentRevision(lesson.contentRevision);
+        }
+      }
+    }
+  }
+  return catalog;
+}
+
 async function adminActor(
   request: Parameters<typeof currentProfile>[0],
   config: AppConfig,
@@ -125,7 +149,8 @@ export function registerCurriculumRoutes(
 ): void {
   app.get("/v1/student/curriculum", async (request) => {
     const actor = await studentActor(request, config, auth);
-    return { curriculum: await curriculum.studentCatalog(actor.id) };
+    const catalog = await curriculum.studentCatalog(actor.id);
+    return { curriculum: normalizeStudentCurriculumRevisions(catalog) };
   });
 
   app.get("/v1/student/lessons/:lessonId/reader", async (request) => {
