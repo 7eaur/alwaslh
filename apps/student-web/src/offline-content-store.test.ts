@@ -3,10 +3,10 @@ import type { StudentOfflineLessonManifest } from "./offline-download-api";
 import {
   OFFLINE_LESSON_PAYLOAD_BUDGET_BYTES,
   OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES,
-  OfflineContentError,
   offlineLessonPackageAllowsUse,
   offlineLessonPackageKey,
   projectedOfflineScopeUsageBytes,
+  type OfflineContentError,
   type StoredOfflineLessonPackage,
   validateOfflineLessonManifest,
 } from "./offline-content-store";
