@@ -33,17 +33,15 @@ async function openAuthoring(page) {
   ).toBeVisible();
 }
 
-function panelWithHeading(page, heading) {
-  return page.locator("section.authoring-panel").filter({
-    has: page.getByRole("heading", { name: heading, exact: true }),
-  });
+function panelByLabelledBy(page, titleId) {
+  return page.locator(`section.authoring-panel[aria-labelledby="${titleId}"]`);
 }
 
 test("G-D queues selected lessons and independent quiz versions through the real API", async ({ page }) => {
   await login(page);
   await openAuthoring(page);
 
-  const lessonPanel = panelWithHeading(page, "درس أو مجموعة دروس");
+  const lessonPanel = panelByLabelledBy(page, "lesson-authoring-title");
   await lessonPanel.getByLabel("الصف", { exact: true }).selectOption({ label: "صف التوليد G-D" });
   await lessonPanel.getByLabel("المادة", { exact: true }).selectOption({ label: "مادة التوليد G-D" });
   await lessonPanel.getByLabel("درس التوليد الأول", { exact: true }).check();
@@ -57,7 +55,7 @@ test("G-D queues selected lessons and independent quiz versions through the real
   expect(lessonBody.totalUnits).toBe(1);
   await expect(page.getByText(/راجع المخرجات في «عمليات AI والمراجعة»/)).toBeVisible();
 
-  const quizPanel = panelWithHeading(page, "توليد نماذج بإعدادات مستقلة");
+  const quizPanel = panelByLabelledBy(page, "quiz-authoring-title");
   const quizDetailResponse = page.waitForResponse(
     (response) =>
       response.request().method() === "GET" &&
@@ -99,7 +97,7 @@ test("G-D exports only selected versions and opens the authenticated print view"
   await login(page);
   await openAuthoring(page);
 
-  const exportPanel = panelWithHeading(page, "تصدير نماذج الاختبار");
+  const exportPanel = panelByLabelledBy(page, "special-export-title");
   const detailResponse = page.waitForResponse(
     (response) =>
       response.request().method() === "GET" &&
