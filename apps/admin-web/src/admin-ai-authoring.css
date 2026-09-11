@@ -1,0 +1,243 @@
+.authoring-workspace {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.authoring-header {
+  align-items: flex-start;
+}
+
+.authoring-step-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  color: var(--text-secondary);
+}
+
+.authoring-step-strip strong {
+  color: var(--text-primary);
+}
+
+.authoring-step-strip span {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--surface-canvas);
+  font-size: var(--font-size-sm);
+}
+
+.authoring-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.authoring-panel {
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-1);
+}
+
+.authoring-wide {
+  grid-column: 1 / -1;
+}
+
+.authoring-panel-heading,
+.authoring-version-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.authoring-panel-heading {
+  margin-bottom: var(--space-4);
+}
+
+.authoring-panel-heading h2 {
+  margin: var(--space-1) 0 0;
+}
+
+.authoring-form,
+.authoring-version-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.authoring-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.authoring-form label,
+.authoring-panel > label,
+.authoring-form-grid label,
+.authoring-targets label,
+.authoring-count-field {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.authoring-picker,
+.authoring-targets {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.authoring-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  max-height: 16rem;
+  overflow: auto;
+}
+
+.authoring-picker.compact {
+  max-height: 12rem;
+}
+
+.authoring-picker legend,
+.authoring-targets legend {
+  padding-inline: var(--space-1);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.authoring-picker > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.authoring-check {
+  display: flex !important;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.authoring-check input {
+  width: auto;
+  min-height: auto;
+  margin-top: var(--space-1);
+  flex: 0 0 auto;
+}
+
+.authoring-toggle {
+  align-content: center;
+  align-items: center;
+  min-height: var(--touch-target-min);
+}
+
+.authoring-targets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.authoring-count-field {
+  max-width: 18rem;
+}
+
+.authoring-note {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-canvas);
+  color: var(--text-secondary);
+  line-height: var(--line-normal);
+}
+
+.authoring-select-block {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.authoring-select-block + .authoring-actions {
+  margin-top: var(--space-3);
+}
+
+.authoring-actions,
+.authoring-selection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.authoring-actions {
+  margin-top: var(--space-4);
+}
+
+.authoring-selection-actions {
+  margin: var(--space-4) 0 var(--space-2);
+}
+
+.authoring-version-list {
+  padding-top: var(--space-1);
+}
+
+.authoring-version-card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-canvas);
+}
+
+.authoring-version-heading strong {
+  font-size: var(--font-size-lg);
+}
+
+.authoring-add-version {
+  justify-self: start;
+}
+
+@media (max-width: 900px) {
+  .authoring-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .authoring-wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .authoring-workspace {
+    gap: var(--space-4);
+  }
+
+  .authoring-panel {
+    padding: var(--space-4);
+  }
+
+  .authoring-form-grid,
+  .authoring-picker,
+  .authoring-targets {
+    grid-template-columns: 1fr;
+  }
+
+  .authoring-actions,
+  .authoring-selection-actions,
+  .authoring-panel-heading,
+  .authoring-version-heading {
+    align-items: stretch;
+  }
+
+  .authoring-actions > button,
+  .authoring-add-version,
+  .authoring-form > button {
+    width: 100%;
+  }
+}
