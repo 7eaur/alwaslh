@@ -8,12 +8,16 @@ RUN npm install --no-audit --no-fund --prefix apps/student-web
 
 COPY apps/student-web ./apps/student-web
 
+RUN npm run lint --prefix apps/student-web \
+  && npm test --prefix apps/student-web \
+  && npm run typecheck --prefix apps/student-web
+
 ARG VITE_API_BASE_URL
 ARG VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 ENV VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI=${VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI}
 
-RUN npm run build --prefix apps/student-web
+RUN npm run build --prefix apps/student-web --ignore-scripts
 
 FROM nginx:1.27-alpine AS runtime
 
