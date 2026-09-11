@@ -89,8 +89,11 @@ jobs:
           node --import tsx --test --test-concurrency=1
           tests/integration/student-curriculum.integration.test.ts
           tests/integration/student-reader.integration.test.ts
-      - name: Seed activation code
-        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "insert into full_access_codes (code, entitlement_duration_days) values ('654321', 365);"
+      - name: Seed activation codes
+        run: >-
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c
+          "insert into full_access_codes (code, entitlement_duration_days) values
+          ('654321', 365), ('654322', 365), ('654323', 365);"
       - name: Create recovery-support Admin fixture
         env:
           ADMIN_BOOTSTRAP_IDENTIFIER: stage14-admin
