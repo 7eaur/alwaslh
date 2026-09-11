@@ -104,13 +104,13 @@ export function StudentAccessSection({
         onSessionExpired={onSessionExpired}
       />
 
-      <StudentOfflineDownloadsSection
+      <StudentAssessmentSection
         online={online}
         refreshKey={curriculumRefreshKey}
         onSessionExpired={onSessionExpired}
       />
 
-      <StudentAssessmentSection
+      <StudentOfflineDownloadsSection
         online={online}
         refreshKey={curriculumRefreshKey}
         onSessionExpired={onSessionExpired}
