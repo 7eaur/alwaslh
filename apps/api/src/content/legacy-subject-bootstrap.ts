@@ -386,10 +386,10 @@ async function ensureIdBySlug(
   slug: string,
   name: string,
 ): Promise<string> {
-  await tx.query(`insert into ${table} (slug, name, status) values ($1,$2,'active') on conflict (slug) do nothing`, [
-    slug,
-    name,
-  ]);
+  await tx.query(
+    `insert into ${table} (slug, name, status) values ($1,$2,'active') on conflict (slug) do nothing`,
+    [slug, name],
+  );
   const rows = await tx.query<IdRow>(`select id from ${table} where slug = $1`, [slug]);
   const row = rows[0];
   if (!row) throw new Error(`legacy_curriculum_${table}_missing:${slug}`);
@@ -425,7 +425,8 @@ async function ensureLessons(
       );
       const row = rows[0];
       if (!row) throw new Error(`legacy_lesson_missing:${plan.slug}`);
-      if (row.published_at !== null) throw new Error(`legacy_bootstrap_refuses_published_lesson:${plan.slug}`);
+      if (row.published_at !== null)
+        throw new Error(`legacy_bootstrap_refuses_published_lesson:${plan.slug}`);
       lessons.push({ ...plan, lessonId: row.id });
     }
     return { classId, subjectId, lessons };
@@ -533,7 +534,10 @@ export async function bootstrapLegacySubject(input: {
   const manifestRaw = await fetchJson(rawUrl(manifestPath(config)));
   const manifest = validateLegacyManifest(manifestRaw, config.expectedImages);
   const listingRaw = await fetchJson(contentsApiUrl(imagesPath(config)));
-  const listing = z.array(githubContentEntrySchema).parse(listingRaw).filter((entry) => entry.type === "file");
+  const listing = z
+    .array(githubContentEntrySchema)
+    .parse(listingRaw)
+    .filter((entry) => entry.type === "file");
   const filesByName = new Map<string, GithubContentEntry>();
   for (const file of listing) {
     if (filesByName.has(file.name)) throw new Error(`legacy_source_duplicate_filename:${file.name}`);
@@ -544,7 +548,8 @@ export async function bootstrapLegacySubject(input: {
     const file = filesByName.get(entry.new_name);
     if (!file) throw new Error(`legacy_source_image_missing:${entry.new_name}`);
     const expectedPath = `${imagesPath(config)}/${entry.new_name}`;
-    if (file.path !== expectedPath) throw new Error(`legacy_source_image_path_mismatch:${file.path}:${expectedPath}`);
+    if (file.path !== expectedPath)
+      throw new Error(`legacy_source_image_path_mismatch:${file.path}:${expectedPath}`);
     return sum + file.size;
   }, 0);
   if (totalSourceBytes > MAX_SCOPED_SOURCE_BYTES) {
