@@ -158,7 +158,7 @@ export function StudentOfflineDownloadsSection({
       : null;
   const currentDownload =
     selectedLesson && selectedPackage
-      ? selectedLesson.contentRevision === selectedPackage.contentRevision
+      ? selectedPackage.contentRevision >= selectedLesson.contentRevision
       : false;
   const usedBytes = state.status === "ready" ? offlineScopeUsageBytes(state.packages) : 0;
   const downloadedCount = state.status === "ready" ? state.packages.length : 0;
@@ -174,6 +174,7 @@ export function StudentOfflineDownloadsSection({
     setActionError(null);
     setNotice(null);
     try {
+      const replacingExistingPackage = selectedPackage !== null;
       const record = await materializeStudentLessonForOffline(state.lease.profileId, selectedLesson.id);
       setState((current) => {
         if (current.status !== "ready") return current;
@@ -182,7 +183,11 @@ export function StudentOfflineDownloadsSection({
           packages: [record, ...current.packages.filter((stored) => stored.lessonId !== record.lessonId)],
         };
       });
-      setNotice(currentDownload ? "تم تحديث النسخة المحفوظة والتحقق من ملفاتها." : "تم حفظ الدرس والتحقق من ملفاته.");
+      setNotice(
+        replacingExistingPackage
+          ? "تم تحديث النسخة المحفوظة والتحقق من ملفاتها."
+          : "تم حفظ الدرس والتحقق من ملفاته.",
+      );
     } catch (error) {
       if (isMissingSessionError(error)) {
         onSessionExpired();
@@ -295,7 +300,7 @@ export function StudentOfflineDownloadsSection({
           {selectedPackage ? (
             <div className={`form-alert ${currentDownload ? "is-success" : "is-warning"}`} role="status">
               {currentDownload
-                ? `هذه النسخة محفوظة ومطابقة للإصدار المنشور ${selectedPackage.contentRevision}.`
+                ? `هذه النسخة محفوظة ومتحقق منها عند الإصدار المنشور ${selectedPackage.contentRevision}.`
                 : `يوجد إصدار محفوظ أقدم (${selectedPackage.contentRevision}). حدّث التنزيل قبل اعتباره النسخة الحالية.`}
             </div>
           ) : (
