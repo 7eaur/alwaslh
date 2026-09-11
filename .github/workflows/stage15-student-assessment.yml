@@ -5,6 +5,22 @@ on:
   push:
     branches:
       - parallel/stage14-student-product
+      - main
+    paths:
+      - "apps/api/src/student-assessment/**"
+      - "apps/api/src/curriculum/student-reader.ts"
+      - "apps/api/src/app.ts"
+      - "apps/api/tests/integration/student-assessment.integration.test.ts"
+      - "apps/api/tests/integration/student-publication-time.integration.test.ts"
+      - "apps/student-web/src/**"
+      - "apps/student-web/e2e/assessment-fixture.ts"
+      - "apps/student-web/e2e/assessment.e2e.spec.mjs"
+      - "apps/student-web/playwright.config.mjs"
+      - "database/migrations/0023_student_assessment_runtime.sql"
+      - ".github/workflows/stage15-student-assessment.yml"
+  pull_request:
+    branches:
+      - main
     paths:
       - "apps/api/src/student-assessment/**"
       - "apps/api/src/curriculum/student-reader.ts"

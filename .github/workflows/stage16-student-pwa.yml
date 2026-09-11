@@ -4,6 +4,20 @@ on:
   push:
     branches:
       - parallel/stage14-student-product
+      - main
+    paths:
+      - "apps/student-web/**"
+      - "apps/api/src/offline/**"
+      - "apps/api/src/config.ts"
+      - "apps/api/src/curriculum/student-reader.ts"
+      - "apps/api/src/app.ts"
+      - "apps/api/tests/offline-signing.test.ts"
+      - "apps/api/tests/integration/student-offline.integration.test.ts"
+      - "apps/api/tests/integration/student-offline-download.integration.test.ts"
+      - ".github/workflows/stage16-student-pwa.yml"
+  pull_request:
+    branches:
+      - main
     paths:
       - "apps/student-web/**"
       - "apps/api/src/offline/**"

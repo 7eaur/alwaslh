@@ -5,6 +5,16 @@ on:
   push:
     branches:
       - parallel/stage14-student-product
+      - main
+    paths:
+      - "apps/student-web/**"
+      - "apps/api/**"
+      - "database/migrations/**"
+      - "packages/**"
+      - ".github/workflows/stage14-student-product.yml"
+  pull_request:
+    branches:
+      - main
     paths:
       - "apps/student-web/**"
       - "apps/api/**"
