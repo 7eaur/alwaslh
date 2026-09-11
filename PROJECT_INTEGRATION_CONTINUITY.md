@@ -7,127 +7,109 @@ Last synchronized: **2026-09-11**.
 ## Resume procedure
 
 1. Confirm repo `7eaur/alwaslh` and branch `parallel/stage14-student-product`.
-2. Read README + Documentation Index.
-3. Read `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`.
-4. Read `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`.
-5. Read `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
-6. Read Handoff/Status/Resume/Engineering Log/this file/Execution Queue.
-7. Read product overrides + roadmap Stage16 + latest Issue #16.
-8. Live-check Student branch, `main` and Actions before editing.
+2. Read README + Documentation Index + Student Track docs + Stage16 handoff.
+3. Read Handoff/Status/Resume/Engineering Log/this file/Execution Queue.
+4. Read product overrides + roadmap Stage16 + latest Issue #16.
+5. Live-check Student branch, `main` and Actions before editing.
+6. Before shared API changes inspect actual Track A/main contracts and Reader/content/media implementation.
 
 ## Operating model
 
 - Track A: Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G.
-- Track B: Student Product from Stage14 onward.
-- Track B branch: `parallel/stage14-student-product`.
-- Issue #16 is shared ledger.
-- Shared authority is consumed, not duplicated.
+- Track B: Student Product on `parallel/stage14-student-product`.
+- Issue #16 is the shared ledger.
+- Shared authority is consumed, never duplicated.
 - deployment remains deferred.
 
 ## Canonical checkpoints
 
-- Stage14 Student `ac55f1435d232cadff334816407f1182125dda90` — CLOSED / VERIFIED.
-- Stage13F main `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
+- Stage14 `ac55f1435d232cadff334816407f1182125dda90` — CLOSED / VERIFIED.
+- Stage13F main baseline `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
 - Stage13F→Student `4a476e1f29cb605fce294d7c34fd68e8218a32e8` — VERIFIED.
-- Stage15 Student `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d` — CLOSED / VERIFIED.
-- Stage16 PWA Batch 1 `c1ae86036d4d302b8ca8c411227f41c37b4063ef` — VERIFIED.
-- Stage16 bounded server lease/PWA `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd` — VERIFIED boundary.
-- Latest code checkpoint `2c44a363638221ee2985ecb6b8fb71c3e757a333` — NOT VERIFIED due one strict TS error.
+- Stage15 `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d` — CLOSED / VERIFIED.
+- Stage16 PWA `c1ae86036d4d302b8ca8c411227f41c37b4063ef` — VERIFIED.
+- Stage16 bounded server lease `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd` — VERIFIED.
+- Stage16 client lease lifecycle runtime `53aeb972c4c891c3eecafdde0716b544751d2711` — VERIFIED for current lease boundary.
+
+Runtime evidence:
+
+- Stage16 `34551931757` SUCCESS, including real Chromium IndexedDB lifecycle 3/3.
+- Stage14 `34551931610` attempt 2 SUCCESS on the same runtime, full quality + browser suite.
 
 ## Stable integration boundaries
 
 - Browser is not Auth/Access/Curriculum/Question Bank/Assessment authority.
-- protected Reader/media stays server-authorized and `private,no-store`.
-- `/v1` must not enter SW cache.
-- offline lease is metadata authorization only; it is not downloaded content.
-- Student offline DB must remain account/device scoped and credential-free.
-- dormant sync tables are not authority until real writers/API/client flows are verified.
+- protected Reader/media remains server-authorized and `private,no-store`.
+- `/v1` must not enter SW Cache API.
+- offline lease is metadata authorization, not downloaded content.
+- offline DB remains account/device-scoped and credential-free.
+- `content_revisions`, `content_tombstones`, `sync_checkpoints` remain dormant until verified writers/API/client flows exist.
 
-## Shared files touched by Student Stage16
+## Shared API already added by Student Stage16
 
-Shared API additions that future Track A integration must preserve:
+- `apps/api/src/offline/service.ts`
+- `apps/api/src/offline/http.ts`
+- `apps/api/src/app.ts` Student offline registration
+- `apps/api/tests/integration/student-offline.integration.test.ts`
 
-- `apps/api/src/offline/service.ts`;
-- `apps/api/src/offline/http.ts`;
-- `apps/api/src/app.ts` Student offline route/service registration;
-- `apps/api/tests/integration/student-offline.integration.test.ts`.
-
-No Stage16 DB migration has been added so far.
+No Stage16 DB migration has been required so far.
 
 Potential manual conflict surfaces:
 
-- `apps/api/src/app.ts` if Track A adds more registrations;
-- future offline/sync route namespace;
-- future migrations after current `0023` if protected offline materialization needs server persistence.
+- `apps/api/src/app.ts` registrations;
+- Reader/media/offline route namespaces;
+- migrations after current integrated schema if future sync persistence is required.
 
-Conflict policy: resolve additively and preserve canonical Track A services plus Student Reader/Assessment/Offline contracts. Never copy durable authorities into Student Web to avoid a merge conflict.
+Conflict policy: preserve canonical Track A services and resolve additively. Never copy durable authority into Student Web merely to avoid a shared-file conflict.
 
-## Stage16 verified server contract
+## Verified lease lifecycle boundary
 
-`GET /v1/student/offline/lease`
+`GET /v1/student/offline/lease` remains the lease authority.
 
-- authenticated Student;
-- current session bound to non-revoked device;
-- lease `profileId` + `deviceId`;
-- server time from DB;
-- maximum 24 hours;
-- clipped by session expiry;
-- entitlement grants clipped by entitlement expiry;
-- metadata only;
-- response `private,no-store`.
+Client behavior verified at `53aeb972...`:
 
-Verified at `5b71aa2...`:
+- activation/login/restore refreshes and saves lease metadata best-effort;
+- DB `alwaslh-student-offline` v1 store `leases`, key `profileId:deviceId`;
+- logout/session-expiry deletes only active scope;
+- device rebind removes stale scopes only within the same profile;
+- another account scope survives;
+- reload-safe cleanup uses only non-secret `{profileId,deviceId}` session pointer;
+- clock rollback beyond 5-minute tolerance rejects offline lease use.
 
-- Stage16 `34430915847` SUCCESS;
-- API Regression `34430915786` SUCCESS.
+No protected lesson/media bytes exist yet.
 
-## Stage16 client boundary in progress
+## Current shared-contract next boundary
 
-At code checkpoint `2c44a363...`:
+`STUDENT-016-CACHE-003` + `STUDENT-016-DOWNLOAD-006` require an explicit protected lesson download contract before any blob storage.
 
-- `offline-api.ts` fetches server lease with credentials.
-- `offline-store.ts` defines DB `alwaslh-student-offline`, store `leases`, scope `profileId:deviceId`.
-- storage contains lease metadata + client observation times only.
-- clock rollback > current 5-minute tolerance invalidates local lease use.
-- no protected lesson/media bytes exist in offline DB.
-- lease store is not yet wired to authenticated lifecycle.
+Do not invent the contract from dormant sync tables. First inspect actual canonical Reader/content/publication/media schema and services. The contract must reuse canonical lesson/content/media IDs where stable and expose only safe manifest data required for offline materialization:
 
-Current build blocker:
+- stable lesson/asset identity;
+- explicit content revision/provenance;
+- SHA-256/checksum;
+- exact byte size;
+- current Published + entitlement authorization;
+- no raw storage key;
+- no current Reader endpoint caching.
 
-`offline-store.ts:85` TS18047 — `evaluation.estimatedServerTimeMs` possibly null.
-
-Same-head run facts:
-
-- Student Product `34431220808`: lint PASS, typecheck FAIL at TS18047, later jobs skipped.
-- Stage16 `34431220827`: PostgreSQL lease PASS; Student build FAIL at same TS18047; Chromium skipped.
-- Vitest 22/22 PASS.
-
-## Dormant sync schema warning
-
-Schema includes `content_revisions`, `content_tombstones`, `sync_checkpoints`, but no verified Student sync API/writers/consumers exist. Future work must prove mutation/revision source, cursor semantics, tombstone behavior and client application before using these tables as Stage16 authority.
-
-## Integration guidance for next batches
-
-1. Fix current Student type narrowing first; no new feature before green exact-head client build.
-2. Wire lease refresh/save only after authenticated online success.
-3. Cleanup must be scoped to the exact profile/device lease; logout/rebind must not wipe unrelated scopes.
-4. Explicit protected lesson download must use new authorization/materialization contract, not existing Reader response caching.
-5. Storage budgets/checksum/revision metadata must exist before binary blobs.
-6. Reconnect must revalidate current server entitlement/publication before retaining future protected offline content.
-7. Revision/tombstone/delta/outbox work comes after the content materialization security boundary.
-8. Any future Track A merge touching app registration or migrations requires Student API + Student Product + Stage16 regression reruns.
+Client storage design must define account/device budget, exact byte accounting, failure rollback and deterministic eviction/removal before adding blob stores.
 
 ## Open boundaries
 
-- `STUDENT-016-QA-004` current strict build blocker.
-- `STUDENT-016-CLIENT-005` lease lifecycle integration.
-- `STUDENT-016-CACHE-003` explicit protected content materialization.
-- `STUDENT-016-DOWNLOAD-006` budget/checksum/eviction.
-- `STUDENT-016-REVOCATION-007` reconnect purge.
-- `STUDENT-016-SYNC-001` + `STUDENT-016-OUTBOX-008` actual sync authority.
-- Stage17+ later.
+- `STUDENT-016-CACHE-003` — explicit protected materialization OPEN / next design.
+- `STUDENT-016-DOWNLOAD-006` — manifest/budget/checksum/accounting/rollback/eviction OPEN / next.
+- `STUDENT-016-REVOCATION-007` — reconnect revalidation/purge OPEN.
+- `STUDENT-016-SYNC-001` — revision/tombstone/cursor authority OPEN / PROVEN absent.
+- `STUDENT-016-OUTBOX-008` — delta/outbox OPEN.
+- Stage17+ blocked/later.
 - deployment deferred.
+
+Closed in current runtime boundary:
+
+- `STUDENT-016-QA-004` FIXED / VERIFIED.
+- `STUDENT-016-CLIENT-005` FIXED / VERIFIED.
+- `STUDENT-016-LEASE-002` FIXED / VERIFIED for lease server+client lifecycle.
 
 ## Exact continuation
 
-Fix TS18047 → exact-head Student + Stage16 gates → wire lease lifecycle/cleanup → real IndexedDB browser acceptance → explicit lesson download/budget/checksum → reconnect purge → delta/tombstone/outbox → Stage16 closure. Do not skip sequence.
+Live shared-state recheck → inspect Reader/content/media → explicit manifest + bounded storage contract → smallest compatible shared API → account/device materialization + real Chromium → reconnect revalidation/purge → authoritative revisions/tombstones/cursor/delta/outbox → Stage16 closure. Do not start Stage17 or deployment.
