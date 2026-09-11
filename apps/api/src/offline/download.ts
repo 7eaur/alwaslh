@@ -1,9 +1,9 @@
-import { AppError } from "../errors.js";
 import type {
   StudentAssetContent,
   StudentReaderAssetView,
   StudentReaderService,
 } from "../curriculum/student-reader.js";
+import { AppError } from "../errors.js";
 import type { StudentOfflineLease, StudentOfflineService } from "./service.js";
 
 export interface StudentOfflineLessonAssetManifest {
@@ -42,7 +42,8 @@ export interface StudentOfflineLessonManifest {
 function authorizationExpiry(lease: StudentOfflineLease, classId: string): Date | null {
   let latest: Date | null = null;
   for (const grant of lease.grants) {
-    const coversClass = grant.scope === "all_content" || (grant.scope === "class" && grant.classId === classId);
+    const coversClass =
+      grant.scope === "all_content" || (grant.scope === "class" && grant.classId === classId);
     if (!coversClass) continue;
     if (!latest || grant.expiresAt.getTime() > latest.getTime()) latest = grant.expiresAt;
   }
@@ -129,11 +130,6 @@ export class StudentOfflineDownloadService {
     },
   ): Promise<StudentAssetContent> {
     await this.offline.lease(profileId, sessionToken);
-    return this.reader.offlineAssetContent(
-      profileId,
-      input.lessonId,
-      input.assetId,
-      input.contentRevision,
-    );
+    return this.reader.offlineAssetContent(profileId, input.lessonId, input.assetId, input.contentRevision);
   }
 }
