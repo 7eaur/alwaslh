@@ -45,11 +45,11 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
 }
 
 async function openAiWorkspace(page) {
-  await page.getByRole("button", { name: "عمليات AI والمراجعة" }).click();
+  await page.getByRole("button", { name: "عمليات AI والمراجعة", exact: true }).click();
   await expect(page.getByRole("heading", { name: "عمليات AI", exact: true })).toBeVisible();
 }
 
@@ -129,7 +129,7 @@ test("Admin AI operations keep canonical review authority while navigating the f
   await expect(reviewPagination).toContainText("101–102 من 102");
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
   await openAiWorkspace(page);
   await openSeededJob(page);
   await page.locator(".ai-unit-card").first().click();
