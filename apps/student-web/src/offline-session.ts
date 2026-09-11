@@ -65,20 +65,24 @@ export function getActiveOfflineScope(profileId: string): OfflineScope | null {
   return scope?.profileId === profileId ? scope : null;
 }
 
+export async function refreshOfflineLeaseForCurrentSession(): Promise<StoredOfflineLease> {
+  const lease = await getStudentOfflineLease();
+  const record = await saveOfflineLease(lease);
+  persistActiveOfflineScope({ profileId: lease.profileId, deviceId: lease.deviceId });
+  return record;
+}
+
 export async function syncOfflineLeaseForSession(
   profileId: string,
   reason: OfflineSessionSyncReason,
 ): Promise<StoredOfflineLease> {
-  const lease = await getStudentOfflineLease();
-  if (lease.profileId !== profileId) throw new Error("offline_lease_profile_mismatch");
-
-  const record = await saveOfflineLease(lease);
-  persistActiveOfflineScope({ profileId: lease.profileId, deviceId: lease.deviceId });
+  const record = await refreshOfflineLeaseForCurrentSession();
+  if (record.profileId !== profileId) throw new Error("offline_lease_profile_mismatch");
 
   if (reason === "device_rebind") {
     const records = await listOfflineLeases();
     for (const stored of records) {
-      if (stored.profileId === lease.profileId && stored.deviceId !== lease.deviceId) {
+      if (stored.profileId === record.profileId && stored.deviceId !== record.deviceId) {
         await deleteOfflineScope(stored.profileId, stored.deviceId);
       }
     }
