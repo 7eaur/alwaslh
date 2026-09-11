@@ -20,8 +20,8 @@ import { registerAdminContentOperationsRoutes } from "./content/admin-operations
 import { registerAdminContentIngestionRoutes } from "./content/ingestion-http.js";
 import { AdminContentIngestionService } from "./content/ingestion-service.js";
 import { registerCurriculumRoutes } from "./curriculum/http.js";
-import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authoring-export-http.js";
 import { LessonAuthoringExportService } from "./curriculum/lesson-authoring-export.js";
+import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authoring-export-http.js";
 import { CurriculumService } from "./curriculum/service.js";
 import type { Database } from "./db.js";
 import { AppError, toPublicError } from "./errors.js";

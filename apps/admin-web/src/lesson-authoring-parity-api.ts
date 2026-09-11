@@ -23,10 +23,10 @@ export async function updateLessonSummary(lessonId: string, summary: string | nu
 
 export function exportLessonAuthoring(input: {
   lessonIds: string[];
-  historySource?: LessonHistorySource;
-  eventType?: string;
-  from?: string;
-  to?: string;
+  historySource?: LessonHistorySource | undefined;
+  eventType?: string | undefined;
+  from?: string | undefined;
+  to?: string | undefined;
 }): Promise<LessonAuthoringExportBundle> {
   return adminApiRequest<LessonAuthoringExportBundle>("/v1/admin/curriculum/lesson-authoring-export", {
     method: "POST",

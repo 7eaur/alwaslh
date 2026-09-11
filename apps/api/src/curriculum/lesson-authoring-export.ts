@@ -80,7 +80,8 @@ function filenameDate(): string {
 }
 
 function withinRange(row: HistoryRow, input: LessonAuthoringExportInput): boolean {
-  if (input.historySource && input.historySource !== "all" && row.source !== input.historySource) return false;
+  if (input.historySource && input.historySource !== "all" && row.source !== input.historySource)
+    return false;
   if (input.eventType && row.event_type !== input.eventType.trim()) return false;
   if (input.from && row.created_at < input.from) return false;
   if (input.to && row.created_at > input.to) return false;
@@ -131,25 +132,27 @@ export class LessonAuthoringExportService {
 
     const history = (await this.history(lessonIds)).filter((row) => withinRange(row, input));
     const lessonById = new Map(lessons.map((lesson) => [lesson.id, lesson]));
-    const contentRows: unknown[][] = [[
-      "row_type",
-      "class",
-      "subject",
-      "lesson_id",
-      "lesson",
-      "lesson_status",
-      "content_revision",
-      "question_item_id",
-      "question_revision",
-      "question_status",
-      "question_type",
-      "difficulty",
-      "prompt",
-      "answer",
-      "explanation",
-      "summary",
-      "lesson_updated_at",
-    ]];
+    const contentRows: unknown[][] = [
+      [
+        "row_type",
+        "class",
+        "subject",
+        "lesson_id",
+        "lesson",
+        "lesson_status",
+        "content_revision",
+        "question_item_id",
+        "question_revision",
+        "question_status",
+        "question_type",
+        "difficulty",
+        "prompt",
+        "answer",
+        "explanation",
+        "summary",
+        "lesson_updated_at",
+      ],
+    ];
     for (const lesson of lessons) {
       contentRows.push([
         "lesson_summary",
@@ -195,15 +198,9 @@ export class LessonAuthoringExportService {
       ]);
     }
 
-    const historyRows: unknown[][] = [[
-      "source",
-      "event_type",
-      "status",
-      "resource_type",
-      "resource_id",
-      "actor_profile_id",
-      "created_at",
-    ]];
+    const historyRows: unknown[][] = [
+      ["source", "event_type", "status", "resource_type", "resource_id", "actor_profile_id", "created_at"],
+    ];
     for (const event of history) {
       historyRows.push([
         event.source,
