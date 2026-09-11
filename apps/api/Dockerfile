@@ -2,8 +2,8 @@ FROM node:22.22.0-bookworm-slim AS build
 
 WORKDIR /app
 
-COPY apps/api/package.json apps/api/package-lock.json ./apps/api/
-RUN npm ci --no-audit --no-fund --prefix apps/api
+COPY apps/api/package.json ./apps/api/
+RUN npm install --no-audit --no-fund --prefix apps/api
 
 COPY apps/api ./apps/api
 RUN npm run build --prefix apps/api
@@ -17,8 +17,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates gosu poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-COPY apps/api/package.json apps/api/package-lock.json ./apps/api/
-RUN npm ci --omit=dev --no-audit --no-fund --prefix apps/api
+COPY apps/api/package.json ./apps/api/
+RUN npm install --omit=dev --no-audit --no-fund --prefix apps/api
 
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY database/migrations ./database/migrations
