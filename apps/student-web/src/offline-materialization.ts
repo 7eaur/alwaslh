@@ -1,3 +1,4 @@
+import { verifyOfflineLessonAuthorization } from "./offline-authorization";
 import {
   getStudentOfflineLessonAsset,
   getStudentOfflineLessonManifest,
@@ -56,7 +57,8 @@ export async function materializeStudentLessonForOffline(
   lessonId: string,
 ): Promise<StoredOfflineLessonPackage> {
   const scope = activeScope(profileId);
-  const manifest = await getStudentOfflineLessonManifest(lessonId);
+  const envelope = await getStudentOfflineLessonManifest(lessonId);
+  const manifest = await verifyOfflineLessonAuthorization(envelope.authorization, envelope.manifest);
   validateOfflineLessonManifest(manifest);
 
   if (manifest.profileId !== profileId) {
@@ -85,5 +87,5 @@ export async function materializeStudentLessonForOffline(
     });
   }
 
-  return saveOfflineLessonPackage(manifest, payloads);
+  return saveOfflineLessonPackage(manifest, payloads, envelope.authorization);
 }

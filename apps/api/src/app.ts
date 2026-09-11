@@ -20,6 +20,7 @@ import { AppError, toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
 import { StudentOfflineDownloadService } from "./offline/download.js";
 import { registerStudentOfflineRoutes } from "./offline/http.js";
+import { createOfflineAuthorizationSigner } from "./offline/signing.js";
 import { StudentOfflineService } from "./offline/service.js";
 import { registerQuestionBankRoutes } from "./question-bank/http.js";
 import { QuestionBankRegenerationService } from "./question-bank/regeneration.js";
@@ -62,7 +63,12 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const studentReader = new StudentReaderService(database, mediaStorage);
   const studentAssessment = new StudentAssessmentService(database);
   const studentOffline = new StudentOfflineService(database);
-  const studentOfflineDownloads = new StudentOfflineDownloadService(studentOffline, studentReader);
+  const offlineAuthorizationSigner = createOfflineAuthorizationSigner(config);
+  const studentOfflineDownloads = new StudentOfflineDownloadService(
+    studentOffline,
+    studentReader,
+    offlineAuthorizationSigner,
+  );
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
 
   app.addHook("onRequest", async (request, reply) => {

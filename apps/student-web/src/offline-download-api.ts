@@ -33,8 +33,17 @@ export interface StudentOfflineLessonManifest {
   assets: StudentOfflineLessonAssetManifest[];
 }
 
-interface OfflineLessonManifestResponse {
+export interface StudentOfflineAuthorizationEnvelope {
+  version: 1;
+  algorithm: "ES256";
+  keyId: string;
+  payload: string;
+  signature: string;
+}
+
+export interface StudentOfflineLessonManifestEnvelope {
   manifest: StudentOfflineLessonManifest;
+  authorization: StudentOfflineAuthorizationEnvelope;
 }
 
 interface PublicErrorBody {
@@ -63,7 +72,7 @@ async function publicError(response: Response, fallback: string): Promise<ApiReq
 
 export async function getStudentOfflineLessonManifest(
   lessonId: string,
-): Promise<StudentOfflineLessonManifest> {
+): Promise<StudentOfflineLessonManifestEnvelope> {
   let response: Response;
   try {
     response = await fetch(
@@ -82,7 +91,7 @@ export async function getStudentOfflineLessonManifest(
     throw await publicError(response, "تعذر تجهيز الدرس للاستخدام دون اتصال");
   }
 
-  return (await response.json() as OfflineLessonManifestResponse).manifest;
+  return (await response.json()) as StudentOfflineLessonManifestEnvelope;
 }
 
 export async function getStudentOfflineLessonAsset(downloadPath: string): Promise<Blob> {

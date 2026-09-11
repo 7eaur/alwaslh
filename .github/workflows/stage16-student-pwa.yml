@@ -7,8 +7,10 @@ on:
     paths:
       - "apps/student-web/**"
       - "apps/api/src/offline/**"
+      - "apps/api/src/config.ts"
       - "apps/api/src/curriculum/student-reader.ts"
       - "apps/api/src/app.ts"
+      - "apps/api/tests/offline-signing.test.ts"
       - "apps/api/tests/integration/student-offline.integration.test.ts"
       - "apps/api/tests/integration/student-offline-download.integration.test.ts"
       - ".github/workflows/stage16-student-pwa.yml"
@@ -37,6 +39,7 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
+      NODE_ENV: test
       DATABASE_URL: postgresql://postgres@127.0.0.1:5432/alwaslh_stage16_student
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +48,9 @@ jobs:
           node-version: 22
       - name: Install API dependencies
         run: npm install --prefix apps/api --ignore-scripts --no-audit --no-fund
+      - name: Verify API signing unit policy
+        working-directory: apps/api
+        run: node --import tsx --test tests/offline-signing.test.ts
       - name: Apply clean PostgreSQL migrations
         run: npm run db:migrate --prefix apps/api
       - name: Verify bounded Student offline lease and protected download contracts
@@ -79,6 +85,7 @@ jobs:
       DATABASE_URL: postgresql://postgres@127.0.0.1:5432/alwaslh_stage16_client
       LOG_LEVEL: silent
       ALLOWED_ORIGINS: http://127.0.0.1:5174
+      VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI: MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE2FrUJV0pXSOuz0j98o48vPAnWIa9IBNVzBbWB5VxFWsunmwrSIc0D9clavqX4QFg1dPRq3vEkD21VNdpwpFflA
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

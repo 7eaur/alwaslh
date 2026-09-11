@@ -5,6 +5,7 @@ import {
   listStudentCurriculum,
   type StudentCurriculumCatalog,
 } from "./auth-api";
+import { OfflineAuthorizationError } from "./offline-authorization";
 import {
   listOfflineLessonPackages,
   OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES,
@@ -76,6 +77,9 @@ function formatBytes(value: number): string {
 
 function materializationMessage(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
+  if (error instanceof OfflineAuthorizationError) {
+    return "تعذر التحقق من تصريح التنزيل الصادر من الخادم. لم نحفظ محتوى غير موثوق على هذا الجهاز.";
+  }
   if (error instanceof OfflineContentError) {
     switch (error.code) {
       case "lesson_budget_exceeded":
@@ -185,8 +189,8 @@ export function StudentOfflineDownloadsSection({
       });
       setNotice(
         replacingExistingPackage
-          ? "تم تحديث النسخة المحفوظة والتحقق من ملفاتها."
-          : "تم حفظ الدرس والتحقق من ملفاته.",
+          ? "تم تحديث النسخة المحفوظة والتحقق من ملفاتها وتصريحها الصادر من الخادم."
+          : "تم حفظ الدرس والتحقق من ملفاته وتصريحه الصادر من الخادم.",
       );
     } catch (error) {
       if (isMissingSessionError(error)) {
@@ -236,7 +240,7 @@ export function StudentOfflineDownloadsSection({
       </div>
 
       <p className="field-hint">
-        نحفظ فقط النسخة المنشورة الحالية بعد التحقق من الحجم وبصمة SHA-256. لا نحذف تنزيلات قديمة تلقائيًا لتوفير المساحة.
+        نحفظ فقط النسخة المنشورة الحالية بعد التحقق من تصريح الخادم والحجم وبصمة SHA-256. لا نحذف تنزيلات قديمة تلقائيًا لتوفير المساحة.
       </p>
 
       {state.status === "loading" ? (

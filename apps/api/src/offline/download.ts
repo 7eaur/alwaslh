@@ -4,6 +4,7 @@ import type {
   StudentReaderService,
 } from "../curriculum/student-reader.js";
 import { AppError } from "../errors.js";
+import type { OfflineAuthorizationSigner, StudentOfflineAuthorizationEnvelope } from "./signing.js";
 import type { StudentOfflineLease, StudentOfflineService } from "./service.js";
 
 export interface StudentOfflineLessonAssetManifest {
@@ -24,19 +25,24 @@ export interface StudentOfflineLessonManifest {
   version: 1;
   profileId: string;
   deviceId: string;
-  issuedAt: Date;
-  leaseExpiresAt: Date;
-  authorizationExpiresAt: Date;
+  issuedAt: string;
+  leaseExpiresAt: string;
+  authorizationExpiresAt: string;
   lesson: {
     id: string;
     classId: string;
     title: string;
     summary: string | null;
     contentRevision: number;
-    publishedAt: Date;
+    publishedAt: string;
   };
   totalByteSize: number;
   assets: StudentOfflineLessonAssetManifest[];
+}
+
+export interface StudentOfflineLessonManifestEnvelope {
+  manifest: StudentOfflineLessonManifest;
+  authorization: StudentOfflineAuthorizationEnvelope;
 }
 
 function authorizationExpiry(lease: StudentOfflineLease, classId: string): Date | null {
@@ -82,13 +88,22 @@ export class StudentOfflineDownloadService {
   constructor(
     private readonly offline: StudentOfflineService,
     private readonly reader: StudentReaderService,
+    private readonly authorizationSigner: OfflineAuthorizationSigner | null,
   ) {}
 
   async lessonManifest(
     profileId: string,
     sessionToken: string | undefined,
     lessonId: string,
-  ): Promise<StudentOfflineLessonManifest> {
+  ): Promise<StudentOfflineLessonManifestEnvelope> {
+    if (!this.authorizationSigner) {
+      throw new AppError(
+        "SERVICE_UNAVAILABLE",
+        "التنزيل دون اتصال غير متاح حتى يتم تهيئة مفتاح التوقيع الآمن",
+        503,
+      );
+    }
+
     const lease = await this.offline.lease(profileId, sessionToken);
     const reader = await this.reader.lesson(profileId, lessonId);
     const authorizationExpiresAt = authorizationExpiry(lease, reader.lesson.classId);
@@ -107,16 +122,28 @@ export class StudentOfflineDownloadService {
       }
     }
 
-    return {
+    const manifest: StudentOfflineLessonManifest = {
       version: 1,
       profileId: lease.profileId,
       deviceId: lease.deviceId,
-      issuedAt: lease.issuedAt,
-      leaseExpiresAt: lease.expiresAt,
-      authorizationExpiresAt,
-      lesson: reader.lesson,
+      issuedAt: lease.issuedAt.toISOString(),
+      leaseExpiresAt: lease.expiresAt.toISOString(),
+      authorizationExpiresAt: authorizationExpiresAt.toISOString(),
+      lesson: {
+        id: reader.lesson.id,
+        classId: reader.lesson.classId,
+        title: reader.lesson.title,
+        summary: reader.lesson.summary,
+        contentRevision: reader.lesson.contentRevision,
+        publishedAt: reader.lesson.publishedAt.toISOString(),
+      },
       totalByteSize,
       assets,
+    };
+
+    return {
+      manifest,
+      authorization: this.authorizationSigner.signManifest(manifest),
     };
   }
 

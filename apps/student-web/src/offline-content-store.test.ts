@@ -71,6 +71,13 @@ function storedPackage(overrides: Partial<StoredOfflineLessonPackage> = {}): Sto
     issuedAt: "2026-09-11T00:00:00.000Z",
     leaseExpiresAt: "2026-09-12T00:00:00.000Z",
     authorizationExpiresAt: "2026-09-12T00:00:00.000Z",
+    authorization: {
+      version: 1,
+      algorithm: "ES256",
+      keyId: "a".repeat(64),
+      payload: "eyJ0ZXN0Ijp0cnVlfQ",
+      signature: "AA",
+    },
     totalByteSize: 10,
     downloadedAtClientMs: Date.parse("2026-09-11T00:00:00.000Z"),
     assets: [],

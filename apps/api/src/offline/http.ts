@@ -37,14 +37,14 @@ export function registerStudentOfflineRoutes(
     const profile = await currentProfile(request, config, auth);
     if (profile.role !== "student") throw new AppError("FORBIDDEN", "هذه العملية للطالب فقط", 403);
     const params = parseBody(OfflineLessonParamsSchema, request.params);
-    const manifest = await downloads.lessonManifest(
+    const envelope = await downloads.lessonManifest(
       profile.id,
       sessionToken(request, config),
       params.lessonId,
     );
     reply.header("Cache-Control", "private, no-store");
     reply.header("Pragma", "no-cache");
-    return { manifest };
+    return envelope;
   });
 
   app.get("/v1/student/offline/lessons/:lessonId/assets/:assetId", async (request, reply) => {

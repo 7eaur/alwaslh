@@ -1,4 +1,5 @@
 import type {
+  StudentOfflineAuthorizationEnvelope,
   StudentOfflineLessonAssetManifest,
   StudentOfflineLessonManifest,
 } from "./offline-download-api";
@@ -63,6 +64,7 @@ export interface StoredOfflineLessonPackage {
   issuedAt: string;
   leaseExpiresAt: string;
   authorizationExpiresAt: string;
+  authorization: StudentOfflineAuthorizationEnvelope;
   totalByteSize: number;
   downloadedAtClientMs: number;
   assets: StoredOfflineLessonAsset[];
@@ -206,6 +208,7 @@ function isQuotaExceeded(error: unknown): boolean {
 export async function saveOfflineLessonPackage(
   manifest: StudentOfflineLessonManifest,
   payloads: OfflineAssetPayload[],
+  authorization: StudentOfflineAuthorizationEnvelope,
   downloadedAtClientMs = Date.now(),
 ): Promise<StoredOfflineLessonPackage> {
   validateOfflineLessonManifest(manifest);
@@ -230,6 +233,7 @@ export async function saveOfflineLessonPackage(
     issuedAt: manifest.issuedAt,
     leaseExpiresAt: manifest.leaseExpiresAt,
     authorizationExpiresAt: manifest.authorizationExpiresAt,
+    authorization,
     totalByteSize: manifest.totalByteSize,
     downloadedAtClientMs,
     assets,
