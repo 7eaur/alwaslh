@@ -19,6 +19,7 @@ export interface StudentReaderAssetView {
 export interface StudentLessonReaderView {
   lesson: {
     id: string;
+    classId: string;
     title: string;
     summary: string | null;
     contentRevision: number;
@@ -36,6 +37,7 @@ export interface StudentAssetContent {
 
 interface AccessibleLessonRow {
   id: string;
+  class_id: string;
   title: string;
   summary: string | null;
   content_revision: number;
@@ -100,7 +102,7 @@ export class StudentReaderService {
 
   private async accessibleLesson(profileId: string, lessonId: string): Promise<AccessibleLessonRow> {
     const rows = await this.db.query<AccessibleLessonRow>(
-      `select l.id, l.title, l.summary, l.content_revision, l.published_at
+      `select l.id, l.class_id, l.title, l.summary, l.content_revision, l.published_at
        ${ACCESSIBLE_LESSON_SQL}`,
       [profileId, lessonId],
     );
@@ -141,6 +143,7 @@ export class StudentReaderService {
     return {
       lesson: {
         id: lesson.id,
+        classId: lesson.class_id,
         title: lesson.title,
         summary: lesson.summary,
         contentRevision: Number(lesson.content_revision),
@@ -161,7 +164,12 @@ export class StudentReaderService {
     };
   }
 
-  async assetContent(profileId: string, assetId: string): Promise<StudentAssetContent> {
+  private async readAssetContent(
+    profileId: string,
+    assetId: string,
+    lessonId: string | null,
+    contentRevision: number | null,
+  ): Promise<StudentAssetContent> {
     const rows = await this.db.query<AssetContentRow>(
       `select la.storage_key, la.mime_type, la.byte_size::text, la.checksum_sha256
        from lesson_assets la
@@ -178,6 +186,8 @@ export class StudentReaderService {
         and cs.subject_id = l.subject_id
        join media_assets ma on ma.id = la.media_asset_id and ma.status = 'ready'
        where la.id = $2
+         and ($3::uuid is null or l.id = $3::uuid)
+         and ($4::bigint is null or l.content_revision = $4::bigint)
          and la.publication_status = 'published'
          and l.status = 'active'
          and l.published_at is not null
@@ -196,7 +206,7 @@ export class StudentReaderService {
              )
          )
        limit 1`,
-      [profileId, assetId],
+      [profileId, assetId, lessonId, contentRevision],
     );
     const asset = rows[0];
     if (!asset) throw new AppError("NOT_FOUND", "محتوى الدرس غير متاح", 404);
@@ -227,5 +237,21 @@ export class StudentReaderService {
       byteSize,
       checksumSha256,
     };
+  }
+
+  async assetContent(profileId: string, assetId: string): Promise<StudentAssetContent> {
+    return this.readAssetContent(profileId, assetId, null, null);
+  }
+
+  async offlineAssetContent(
+    profileId: string,
+    lessonId: string,
+    assetId: string,
+    contentRevision: number,
+  ): Promise<StudentAssetContent> {
+    if (!Number.isSafeInteger(contentRevision) || contentRevision < 1) {
+      throw new AppError("BAD_REQUEST", "إصدار محتوى الدرس غير صالح", 400);
+    }
+    return this.readAssetContent(profileId, assetId, lessonId, contentRevision);
   }
 }
