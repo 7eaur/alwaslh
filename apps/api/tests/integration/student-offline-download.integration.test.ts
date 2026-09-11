@@ -32,11 +32,7 @@ async function createStudentDevice(db: TestDatabase, profileId: string): Promise
   return deviceId;
 }
 
-async function createSession(
-  db: TestDatabase,
-  profileId: string,
-  deviceId: string,
-): Promise<string> {
+async function createSession(db: TestDatabase, profileId: string, deviceId: string): Promise<string> {
   const token = `stage16-download-${crypto.randomUUID()}-${crypto.randomUUID()}`;
   await db.query(
     `insert into auth_sessions (profile_id, token_hash_sha256, device_id, expires_at)
