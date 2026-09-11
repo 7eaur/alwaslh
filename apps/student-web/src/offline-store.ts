@@ -1,8 +1,10 @@
 import type { StudentOfflineLease } from "./offline-api";
 
 const OFFLINE_DB_NAME = "alwaslh-student-offline";
-const OFFLINE_DB_VERSION = 1;
-const LEASE_STORE = "leases";
+const OFFLINE_DB_VERSION = 2;
+export const OFFLINE_LEASE_STORE = "leases";
+export const OFFLINE_LESSON_PACKAGE_STORE = "lessonPackages";
+export const OFFLINE_LESSON_SCOPE_INDEX = "scopeKey";
 export const OFFLINE_CLOCK_ROLLBACK_TOLERANCE_MS = 5 * 60 * 1000;
 
 export interface StoredOfflineLease {
@@ -88,14 +90,14 @@ export function storedLeaseAllowsClass(
   });
 }
 
-function requestResult<T>(request: IDBRequest<T>): Promise<T> {
+export function requestOfflineResult<T>(request: IDBRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error("offline_storage_request_failed"));
   });
 }
 
-function transactionDone(transaction: IDBTransaction): Promise<void> {
+export function offlineTransactionDone(transaction: IDBTransaction): Promise<void> {
   return new Promise((resolve, reject) => {
     transaction.oncomplete = () => resolve();
     transaction.onerror = () => reject(transaction.error ?? new Error("offline_storage_transaction_failed"));
@@ -103,15 +105,27 @@ function transactionDone(transaction: IDBTransaction): Promise<void> {
   });
 }
 
-function openOfflineDatabase(): Promise<IDBDatabase> {
+export function openOfflineDatabase(): Promise<IDBDatabase> {
   if (typeof indexedDB === "undefined") return Promise.reject(new Error("offline_storage_unavailable"));
 
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VERSION);
     request.onupgradeneeded = () => {
       const database = request.result;
-      if (!database.objectStoreNames.contains(LEASE_STORE)) {
-        database.createObjectStore(LEASE_STORE, { keyPath: "scopeKey" });
+      if (!database.objectStoreNames.contains(OFFLINE_LEASE_STORE)) {
+        database.createObjectStore(OFFLINE_LEASE_STORE, { keyPath: "scopeKey" });
+      }
+
+      let packageStore: IDBObjectStore | null = null;
+      if (!database.objectStoreNames.contains(OFFLINE_LESSON_PACKAGE_STORE)) {
+        packageStore = database.createObjectStore(OFFLINE_LESSON_PACKAGE_STORE, {
+          keyPath: "packageKey",
+        });
+      } else if (request.transaction) {
+        packageStore = request.transaction.objectStore(OFFLINE_LESSON_PACKAGE_STORE);
+      }
+      if (packageStore && !packageStore.indexNames.contains(OFFLINE_LESSON_SCOPE_INDEX)) {
+        packageStore.createIndex(OFFLINE_LESSON_SCOPE_INDEX, "scopeKey", { unique: false });
       }
     };
     request.onsuccess = () => resolve(request.result);
@@ -126,9 +140,9 @@ export async function saveOfflineLease(
   const record = createStoredOfflineLease(lease, observedAtClientMs);
   const database = await openOfflineDatabase();
   try {
-    const transaction = database.transaction(LEASE_STORE, "readwrite");
-    transaction.objectStore(LEASE_STORE).put(record);
-    await transactionDone(transaction);
+    const transaction = database.transaction(OFFLINE_LEASE_STORE, "readwrite");
+    transaction.objectStore(OFFLINE_LEASE_STORE).put(record);
+    await offlineTransactionDone(transaction);
     return record;
   } finally {
     database.close();
@@ -142,14 +156,16 @@ export async function loadOfflineLease(
 ): Promise<StoredOfflineLease | null> {
   const database = await openOfflineDatabase();
   try {
-    const transaction = database.transaction(LEASE_STORE, "readwrite");
-    const store = transaction.objectStore(LEASE_STORE);
-    const record = await requestResult(store.get(offlineScopeKey(profileId, deviceId))) as StoredOfflineLease | undefined;
+    const transaction = database.transaction(OFFLINE_LEASE_STORE, "readwrite");
+    const store = transaction.objectStore(OFFLINE_LEASE_STORE);
+    const record = (await requestOfflineResult(
+      store.get(offlineScopeKey(profileId, deviceId)),
+    )) as StoredOfflineLease | undefined;
     if (record) {
       record.lastSeenClientMs = Math.max(record.lastSeenClientMs, clientNowMs);
       store.put(record);
     }
-    await transactionDone(transaction);
+    await offlineTransactionDone(transaction);
     return record ?? null;
   } finally {
     database.close();
@@ -159,9 +175,11 @@ export async function loadOfflineLease(
 export async function listOfflineLeases(): Promise<StoredOfflineLease[]> {
   const database = await openOfflineDatabase();
   try {
-    const transaction = database.transaction(LEASE_STORE, "readonly");
-    const records = await requestResult(transaction.objectStore(LEASE_STORE).getAll()) as StoredOfflineLease[];
-    await transactionDone(transaction);
+    const transaction = database.transaction(OFFLINE_LEASE_STORE, "readonly");
+    const records = (await requestOfflineResult(
+      transaction.objectStore(OFFLINE_LEASE_STORE).getAll(),
+    )) as StoredOfflineLease[];
+    await offlineTransactionDone(transaction);
     return records;
   } finally {
     database.close();
@@ -169,11 +187,20 @@ export async function listOfflineLeases(): Promise<StoredOfflineLease[]> {
 }
 
 export async function deleteOfflineScope(profileId: string, deviceId: string): Promise<void> {
+  const scopeKey = offlineScopeKey(profileId, deviceId);
   const database = await openOfflineDatabase();
   try {
-    const transaction = database.transaction(LEASE_STORE, "readwrite");
-    transaction.objectStore(LEASE_STORE).delete(offlineScopeKey(profileId, deviceId));
-    await transactionDone(transaction);
+    const transaction = database.transaction(
+      [OFFLINE_LEASE_STORE, OFFLINE_LESSON_PACKAGE_STORE],
+      "readwrite",
+    );
+    transaction.objectStore(OFFLINE_LEASE_STORE).delete(scopeKey);
+    const packageStore = transaction.objectStore(OFFLINE_LESSON_PACKAGE_STORE);
+    const packageKeys = await requestOfflineResult(
+      packageStore.index(OFFLINE_LESSON_SCOPE_INDEX).getAllKeys(IDBKeyRange.only(scopeKey)),
+    );
+    for (const packageKey of packageKeys) packageStore.delete(packageKey);
+    await offlineTransactionDone(transaction);
   } finally {
     database.close();
   }
