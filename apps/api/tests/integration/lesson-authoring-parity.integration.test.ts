@@ -43,7 +43,9 @@ test("lesson parity keeps summary revisions consistent and exports safe canonica
   assert.ok(adminId && studentId);
 
   const adminIdentifier = `stage13g-parity-admin-${suffix}`;
+  const studentIdentifier = `stage13g-parity-student-${suffix}`;
   await auth.createCredential(adminId, adminIdentifier, "Stage13gParityAdmin123!");
+  await auth.createCredential(studentId, studentIdentifier, "Stage13gParityStudent123!");
   const deviceId = (
     await db.query<{ id: string }>(
       `insert into student_devices (profile_id, public_key_spki, public_key_sha256, label)
