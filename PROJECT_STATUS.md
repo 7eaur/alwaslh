@@ -10,8 +10,23 @@ Last synchronized: **2026-09-11**.
 - Execution ledger: GitHub Issue #16.
 - Track A: Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G — closed on its branch, not promoted to `main` without Product Owner direction.
 - Track B: Student Product on `parallel/stage14-student-product`.
-- Production deployment/cutover remains deferred.
-- Shared `main` remains the Stage13F checkpoint until explicitly changed.
+- Final production release/cutover is not declared; a Railway inspection/dev stack is live for product verification.
+- Shared `main` now includes the Stage13F checkpoint plus the scoped Grade 9 English legacy-media bootstrap proof merged in `ce36c0843bc7e6918afb1260ac21639cefc457cb`.
+
+## Live content proof — Grade 9 English
+
+A bounded production content proof was executed against the live Railway API/PostgreSQL/media volume without bypassing curriculum publication authority.
+
+- Canonical source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
+- Scope: `grade-9 / english`, source document `تاسع انجليزي/الانجليزي_تاسع`.
+- Source images materialized: **75** (`8,390,689` bytes).
+- Ready media assets: **75**.
+- Media variants: **300** (`source/display/thumbnail/ai`).
+- Draft lesson assets: **75** across **10** source-authored lessons.
+- Bootstrap execution evidence: Railway deployment `8428981b-aa6d-4927-b1f9-31545265e3f9`, `legacy_subject_bootstrap_complete` with exact counts above.
+- Stable post-bootstrap API: Railway deployment `5b889f87-24a5-4fc4-b061-9aeea3f5bea6` — **SUCCESS**, `/ready` returned **200**.
+- Publication state: **Draft only**. No automatic review/publish occurred, and the imported media is not Student-visible until the normal Admin review/publish flow is completed.
+- Full 5,552-image source materialization is **NOT YET VERIFIED / NOT EXECUTED**; this proof intentionally covered one allow-listed subject only.
 
 ## Verified Student checkpoints
 
@@ -81,7 +96,8 @@ A browser is not a DRM-grade trusted execution environment; the security target 
 | Stage16 Offline/PWA | **ACTIVE / PARTIALLY VERIFIED** |
 | Stage17 Personal Learning | **BLOCKED BY Stage16** |
 | Stage18+ | later roadmap |
-| Release/deployment | future / deferred |
+| Railway inspection/dev deployment | **LIVE / VERIFIED** for current API/Admin/Student inspection stack and the scoped Grade 9 English content proof |
+| Final release/cutover | NOT DECLARED / future product decision |
 
 ## Exact next work
 
@@ -91,4 +107,5 @@ A browser is not a DRM-grade trusted execution environment; the security target 
 4. True cold-start offline Reader in real Chromium with network unavailable and tamper/expiry rejection.
 5. Reconnect session/device/entitlement/publication/revision revalidation + purge.
 6. Revision/tombstone/cursor/delta/outbox wiring only after protected cold-offline is safe.
-7. Keep Stage17 and deployment blocked until Stage16 closes.
+7. Review and publish the 75 Grade 9 English draft lesson assets through the normal Admin publication flow only when approved for Student visibility.
+8. Keep Stage17 blocked until Stage16 closes; full source media materialization remains a separate controlled batch after this one-subject proof.
