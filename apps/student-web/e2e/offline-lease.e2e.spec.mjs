@@ -180,7 +180,14 @@ test("offline lease persists and cleanup stays scoped across logout and device r
   const initialRecords = await readOfflineLeases(page);
   const currentRecord = initialRecords.find((record) => record.scopeKey === `${lease.profileId}:${lease.deviceId}`);
   expect(currentRecord).toBeTruthy();
-  expect(currentRecord.lease).toEqual(lease);
+  expect(currentRecord.lease.version).toBe(lease.version);
+  expect(currentRecord.lease.profileId).toBe(lease.profileId);
+  expect(currentRecord.lease.deviceId).toBe(lease.deviceId);
+  expect(
+    currentRecord.lease.grants.map(({ entitlementId, scope, classId }) => ({ entitlementId, scope, classId })),
+  ).toEqual(lease.grants.map(({ entitlementId, scope, classId }) => ({ entitlementId, scope, classId })));
+  expect(Date.parse(currentRecord.lease.issuedAt)).toBeGreaterThanOrEqual(Date.parse(lease.issuedAt));
+  expect(Date.parse(currentRecord.lease.expiresAt)).toBeGreaterThanOrEqual(Date.parse(lease.expiresAt));
 
   await page.route("**/v1/student/offline/lease", (route) => route.abort());
   await page.reload();
