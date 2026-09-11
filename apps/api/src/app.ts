@@ -20,6 +20,8 @@ import { registerAdminContentOperationsRoutes } from "./content/admin-operations
 import { registerAdminContentIngestionRoutes } from "./content/ingestion-http.js";
 import { AdminContentIngestionService } from "./content/ingestion-service.js";
 import { registerCurriculumRoutes } from "./curriculum/http.js";
+import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authoring-export-http.js";
+import { LessonAuthoringExportService } from "./curriculum/lesson-authoring-export.js";
 import { CurriculumService } from "./curriculum/service.js";
 import type { Database } from "./db.js";
 import { AppError, toPublicError } from "./errors.js";
@@ -60,6 +62,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const adminOperations = new AdminOperationsService(database);
   const notifications = new NotificationService(database);
   const curriculum = new CurriculumService(database);
+  const lessonAuthoringExports = new LessonAuthoringExportService(database);
   const contentOperations = new AdminContentOperationsService(database);
   const aiOperations = new AdminAiOperationsService(database);
   const questionBank = new QuestionBankService(database);
@@ -97,6 +100,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAdminOperationsRoutes(app, config, auth, adminOperations);
   registerNotificationRoutes(app, config, auth, notifications);
   registerCurriculumRoutes(app, config, auth, curriculum);
+  registerLessonAuthoringExportRoutes(app, config, auth, lessonAuthoringExports);
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);

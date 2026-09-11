@@ -17,9 +17,11 @@ import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
+import { LessonAuthoringParityPanel } from "./LessonAuthoringParityPanel";
 import { LoginScreen } from "./LoginScreen";
 import { QuestionBankWorkspace } from "./QuestionBankWorkspace";
 import { QuizBuilderWorkspace } from "./QuizBuilderWorkspace";
+import { QuizMetadataPanel } from "./QuizMetadataPanel";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
@@ -271,11 +273,17 @@ function AdminShell({
         ) : workspace === "ai-operations" ? (
           <AiOperationsPage onSessionExpired={onSessionExpired} />
         ) : workspace === "ai-authoring" ? (
-          <AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />
+          <>
+            <AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />
+            <LessonAuthoringParityPanel onSessionExpired={onSessionExpired} />
+          </>
         ) : workspace === "question-bank" ? (
           <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
         ) : workspace === "quiz-builder" ? (
-          <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
+          <>
+            <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
+            <QuizMetadataPanel onSessionExpired={onSessionExpired} />
+          </>
         ) : workspace === "reports" ? (
           <AdminReportsWorkspace onSessionExpired={onSessionExpired} />
         ) : (
