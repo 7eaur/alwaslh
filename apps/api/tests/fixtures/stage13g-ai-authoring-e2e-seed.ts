@@ -85,8 +85,8 @@ try {
   )[0]?.id;
   const subjectId = (
     await db.query<{ id: string }>(
-      `insert into subjects (slug, name, position)
-       values ('stage13g-ai-authoring-subject', 'مادة التوليد G-D', 20)
+      `insert into subjects (slug, name)
+       values ('stage13g-ai-authoring-subject', 'مادة التوليد G-D')
        returning id`,
     )
   )[0]?.id;
