@@ -1,8 +1,8 @@
 # PROJECT EXECUTION QUEUE — الوسيلة الذكية
 
-> Ordered execution authority. Start from the first incomplete Track A item after reading Source of Truth + Issue #16.
+> Ordered execution authority. Start from the first incomplete item only after reading current Source of Truth + Issue #16 and checking live repository state.
 
-Last synchronized: **2026-09-10 — Stage13G G-A/G-B/G-C1 VERIFIED; G-C2 ACTIVE.**
+Last synchronized: **2026-09-11 — Stage13G CLOSED/VERIFIED on Track A; promotion decision pending.**
 
 ## Operating Rules
 
@@ -11,7 +11,7 @@ Last synchronized: **2026-09-10 — Stage13G G-A/G-B/G-C1 VERIFIED; G-C2 ACTIVE.
 - Issue #16 is the shared ledger.
 - Code/migrations/executable evidence outrank prose.
 - No test weakening, fake API, auth bypass, duplicate authority, force push or history rewrite.
-- Production deployment/cutover remains future-only.
+- Production deployment/cutover remains future-only unless separately approved.
 
 ## Completed Track A Checkpoints
 
@@ -19,7 +19,7 @@ Last synchronized: **2026-09-10 — Stage13G G-A/G-B/G-C1 VERIFIED; G-C2 ACTIVE.
 
 **DONE / VERIFIED / CLOSED / PROMOTED**
 
-Shared main checkpoint: `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
+Shared `main`: `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
 
 ### EXEC-007A — Stage13G G-A Accounts + Access
 
@@ -27,99 +27,93 @@ Shared main checkpoint: `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
 
 Runtime `4822f87d60ab7a467c4708b5f75bb24cb90e7738`, run `34425317912`, Chromium 4/4.
 
-Closed: Student account operations, recovery/device UX, entitlement operations, Full/Class code inventory/generation/revoke, session/mobile evidence.
-
-### EXEC-007B — Stage13G G-B Notifications + Operations Dashboard
+### EXEC-007B — Stage13G G-B Notifications + Operations
 
 **DONE / VERIFIED**
 
-Runtime `bc19f6e198c8cfede62e9f1b7a7eb1b0fed121cb`, run `34428052472`, Chromium 7/7 total G-A+G-B.
-
-Closed:
-
-- real Admin operations home;
-- curriculum/account/access/notification metrics;
-- latest notification + Auth/Access activity;
-- one canonical Admin/Student notification authority;
-- Admin create/list/search/page/delete;
-- Student API visibility/read state;
-- real session + 390px evidence.
-
-Student notification UI remains later Student work.
+Runtime `bc19f6e198c8cfede62e9f1b7a7eb1b0fed121cb`, run `34428052472`, Chromium 7/7 total.
 
 ### EXEC-007C1 — Code Import / Export / Print
 
 **DONE / VERIFIED**
 
-Runtime/code HEAD: `345e0712c45e9e4c0479dc65d96efc3fb7da33cd`.
-Run `34430915626` — all jobs SUCCESS.
-Admin unit: 57/57.
-Real Chromium: 10/10 total Stage13G scenarios.
-
-Closed outcomes:
-
-- strict bounded Full Access CSV import over existing Access authority;
-- Arabic digit normalization + exact 6-digit validation;
-- row-level invalid/duplicate handling;
-- durable Access audit for accepted import rows;
-- import template;
-- canonical Full/Class code export with pagination consistency checks;
-- UTF-8 BOM CSV compatible with Excel + spreadsheet formula-injection protection;
-- all/filtered/used/selected scopes where supported;
-- RTL printable code cards with explicit selected/filtered scope;
-- browser Print / Save-as-PDF;
-- session/mobile evidence.
-
-Not claimed: binary `.xlsx` generation or server-generated binary PDF.
-
-## Active Queue
+Runtime `345e0712c45e9e4c0479dc65d96efc3fb7da33cd`, run `34430915626`, Chromium 10/10 total.
 
 ### EXEC-007C2 — Reports / Settings / Security / Audit
 
-**Priority: P1 · Status: ACTIVE / FIRST INCOMPLETE TRACK A ITEM**
+**DONE / VERIFIED**
 
-Start with Repository Discovery, not UI guessing.
+Runtime `77350523f111398e2e008280938e60a4ad87130d`, run `34529871808`, all three jobs SUCCESS.
 
-Inspect:
+Closed outcomes:
 
-1. Auth security/audit authority: `auth_events`, sessions, login guards, reset/recovery/device/challenge state.
-2. Access audit authority: `access_events`, redemptions, entitlements and code lifecycle.
-3. Content/media/OCR/AI/review/question-bank/quiz history/event authorities.
-4. API runtime configuration/environment ownership and any existing settings contracts.
-5. Legacy Coverage rows for reports/settings/security/audit and specialized export requirements.
-
-Architecture constraints:
-
-- prefer bounded read projections/search/filter/page/export over existing canonical authorities;
-- do not create a second generic audit store without evidence;
-- do not make browser state authoritative for runtime/security configuration;
-- never expose password hashes, token hashes, raw device key material, provider credentials or secret config;
-- classify each gap KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE before implementation;
-- add executable API/PostgreSQL/Admin/real Chromium evidence before closure.
+- safe operational reports;
+- settings/security posture without secret values;
+- bounded canonical audit projection across Auth, Access, Curriculum, AI review, Question Bank and Quiz Builder;
+- no duplicate generic audit/settings store.
 
 ### EXEC-007D — Remaining Lesson / Quiz AI Authoring Parity
 
-**Priority: P1 · Status: REQUIRED after G-C2**
+**DONE / VERIFIED**
 
-Open outcomes include lesson generation trigger/orchestration, selected-lesson bulk generation, direct generation inside Quiz Builder, version generation settings/orchestration, per-version source scope where still required, archive/delete semantics and specialized exports not closed by G-C.
+Dedicated closure runtime `80115ce27984a6f9098ab7e227f4b81e1f8aad39`, run `34554764124`, all jobs SUCCESS, Chromium 17/17.
+
+Closed outcomes:
+
+- selected-lesson summary/question/comprehensive/exact/replica generation;
+- bounded/idempotent reuse of Stage12 durable execution;
+- per-version Quiz lesson/source selection and typed generation settings;
+- one/all-version orchestration;
+- review-gated apply through canonical Question Bank/Quiz authority;
+- one-question regeneration preserving provenance;
+- audited non-destructive archive semantics;
+- summary edit/clear + content revision consistency;
+- Lesson content/history export;
+- Quiz metadata edit + selected-version specialized exports.
 
 ### EXEC-007E — Stage13G Closure
 
-**Priority: P0 process gate · Status: BLOCKED on G-C2/G-D**
+**DONE / VERIFIED / CLOSED ON TRACK A / NOT PROMOTED**
 
-- update Legacy Coverage row by row;
-- synchronize all Source of Truth;
-- adapt earlier Stage13D/E/F Admin E2E helpers to the Operations default home without weakening feature assertions;
-- run wider exact-head regression matrix;
-- verification-only PR if needed;
-- integrate/promote to main only after evidence.
+Wider-regression head: `dbb67a52c813aaf8b8d1af0faeacec65edde716b`.
+
+Verification-only PR #30 against current Stage13F `main`:
+
+- **15/15 workflows SUCCESS**;
+- 0 failures;
+- older Stage13D/E/F browser helpers adapted only to Operations default home;
+- Stage13E Combined real-browser gate enabled for PR verification;
+- PR closed unmerged;
+- `main` unchanged.
+
+## First Incomplete Track A Item
+
+### EXEC-008 — Stage13G Promotion / Integration Decision
+
+**Priority: P0 process gate · Status: WAITING FOR EXPLICIT PRODUCT OWNER DIRECTION**
+
+Stage13G code is closed on Track A. Do not promote automatically.
+
+If Product Owner requests promotion:
+
+1. live-check current `main`, Track A and relevant Track B divergence;
+2. preserve canonical Auth/Access/Notification/AI/Question Bank/Quiz contracts;
+3. prepare promotion candidate without force/history rewrite;
+4. run required integration/regression evidence on that candidate;
+5. update Issue #16 and central docs after promotion.
+
+If Product Owner instead assigns another Track A stage, begin only from that explicit scope and re-read its current code/tests.
 
 ## Open Runtime Boundary
 
 ### AI-012-019
 
-**NOT YET VERIFIED** — live provider/model/routes/credentials/bootstrap. Provider-neutral contracts do not prove production generation readiness.
+**NOT YET VERIFIED** — live provider/model benchmark/routes/credentials/bootstrap. Provider-neutral contracts and fixture-backed authoring do not prove production generation readiness.
+
+## Deferred Quality Boundary
+
+Admin bundle currently triggers Vite’s >500 kB chunk warning. Treat as P3 measured performance debt; do not add speculative code splitting inside Stage13G closure.
 
 ## Parallel Track B
 
-Student Product proceeds independently on `parallel/stage14-student-product`. Before Stage15 consumption it must incorporate verified shared Stage13F+later main authority. Never duplicate Auth/Access/Question Bank/Quiz/Notification backend authority locally.
+Track B proceeds independently on `parallel/stage14-student-product`. Until Stage13G is explicitly promoted, shared `main` remains Stage13F. Track B must consume only contracts actually present on its integrated baseline and must never duplicate backend authority to work around an unpromoted Track A branch.

@@ -2,129 +2,96 @@
 
 > Operational continuity for any replacement engineering conversation. Current code + migrations + executable CI outrank this file.
 
-Last synchronized: **2026-09-10 — Stage13G G-A/G-B/G-C1 VERIFIED; G-C2 CURRENT.**
+Last synchronized: **2026-09-11 — Stage13G VERIFIED/CLOSED on Track A; NOT PROMOTED to main.**
 
 ## Resume Procedure
 
-1. Confirm repo and exact branch/main HEADs.
+1. Confirm repo and exact live branch/main HEADs.
 2. Read README/Index/Handoff/Status/Resume/Engineering Log/this file/Execution Queue.
-3. Read current Product Overrides, Parallel Two-Track model and latest Issue #16 comments.
-4. Read current-stage code/tests; anything not inspected is `NOT YET VERIFIED`.
-5. Distinguish documentation-only HEAD from last executable runtime HEAD.
+3. Read current Product Overrides, Parallel Two-Track model, Legacy Coverage and latest Issue #16.
+4. Read current code/tests for any new assigned stage; anything not inspected is `NOT YET VERIFIED`.
+5. Distinguish executable runtime/wider-regression head from later documentation-only commits.
 
 ## Cross-Track Model
 
-- Track A owns Backend/Admin/DB/AI Stage13G.
-- Track B owns Student Product Stage14+.
+- Track A owns Backend/Admin/DB/AI and has closed Stage13G on `integration/stage13g-admin-product`.
+- Track B owns Student Product Stage14+ on `parallel/stage14-student-product`.
 - `main` is the only verified shared-contract handoff point.
-- no local duplicate Auth/Access/Notification/Question Bank/Quiz authority to avoid integration.
+- no duplicate Auth/Access/Notification/Question Bank/Quiz/AI authority to avoid integration.
 
 ## Stable Shared Authority
 
-Main remains Stage13F closure checkpoint:
+`main` remains Stage13F closure checkpoint:
 
 `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
 
-Stage13F continues to own canonical Question Bank stable identity/revisions and immutable published Quiz snapshots.
+Track A Stage13G has **not** been promoted. Student or other tracks must not assume Stage13G APIs are on `main` until explicit promotion occurs.
 
-## Track A Stage13G Verified Chain
+## Track A Stage13G Closed Chain
 
 ```text
 existing Auth + Access authority
-→ G-A bounded Admin accounts/access projection + maintenance UX
-→ existing notification tables
-→ G-B shared NotificationService + Operations read model
-→ G-C1 strict code import + safe CSV export + explicit printable-card scopes
-→ G-C2 reports/settings/security/audit read-product work  ← CURRENT
+→ G-A Admin accounts/access
+→ G-B shared Notifications + Operations home
+→ G-C1 strict code import + safe export/print
+→ G-C2 safe reports/settings/security + canonical audit projection
+→ G-D feature-specific Lesson/Quiz AI authoring + parity closure
+→ older D/E/F navigation helpers aligned to Operations default
+→ wider PR matrix 15/15 SUCCESS
+→ CLOSED on Track A / NOT PROMOTED
 ```
 
-### G-A
+### Runtime checkpoints
 
-Runtime: `4822f87d60ab7a467c4708b5f75bb24cb90e7738`.
-Run `34425317912` — SUCCESS; Chromium 4/4.
+- G-A: `4822f87d60ab7a467c4708b5f75bb24cb90e7738`, run `34425317912`.
+- G-B: `bc19f6e198c8cfede62e9f1b7a7eb1b0fed121cb`, run `34428052472`.
+- G-C1: `345e0712c45e9e4c0479dc65d96efc3fb7da33cd`, run `34430915626`.
+- G-C2: `77350523f111398e2e008280938e60a4ad87130d`, run `34529871808`.
+- G-D/parity dedicated runtime: `80115ce27984a6f9098ab7e227f4b81e1f8aad39`, run `34554764124`, Chromium 17/17.
+- final wider-regression code/workflow head: `dbb67a52c813aaf8b8d1af0faeacec65edde716b`.
 
-No credential reveal or device-secret exposure. Code deletion semantics are non-destructive revoke for unused codes; redeemed access is a separate entitlement/account operation.
+Verification-only PR #30 against `main` executed **15/15 workflows SUCCESS** and was closed unmerged. `main` remained unchanged.
 
-### G-B
+## Integration Rules Preserved
 
-Runtime: `bc19f6e198c8cfede62e9f1b7a7eb1b0fed121cb`.
-Run `34428052472` — SUCCESS; Chromium 7/7 total.
+### Auth / Access / Notifications
 
-Notification rules:
+G-A/G-B are projections/product layers over canonical authorities, not replacements. Student recovery/device operations remain Auth-owned; entitlements/code lifecycle remain Access-owned; Notifications use `notifications` + `notification_reads` for Admin and Student API state.
 
-- `notifications` + `notification_reads` are durable canonical store;
-- Admin global create/list/delete and server pagination;
-- backend supports global/profile/class targeting;
-- Student feed sees global/direct/entitled-class notifications only while active/not expired;
-- read state is idempotent;
-- Student UI/sync remains later work.
+### Reports / Audit / Settings
 
-Operations rules:
+G-C2 reads canonical authorities. Audit projects Auth, Access, Curriculum, AI review, Question Bank and Quiz Builder event tables. Runtime/security settings are safe posture only; private connection/storage/origin/provider values are not browser contracts.
 
-- dashboard metrics query canonical tables live;
-- recent activity is read from Auth/Access events;
-- no secondary analytics/event persistence;
-- Operations is the authenticated Admin default home.
+### AI Authoring
 
-### G-C1
+G-D reuses Stage12 durable execution and Stage13E human review:
 
-Verified runtime/code HEAD: `345e0712c45e9e4c0479dc65d96efc3fb7da33cd`.
-Run `34430915626` — SUCCESS across backend, Admin quality and real API/PostgreSQL/Chromium.
-Chromium total: 10/10.
+- no second queue or general AI assistant;
+- sources are resolved server-side from canonical published lesson media/OCR provenance;
+- selected Lesson plans and per-version Quiz plans are bounded/idempotent;
+- AI approval is required before apply;
+- generated questions enter Question Bank before Quiz versions and require Question Bank publication before materialization;
+- version materialization is idempotent;
+- published Question Bank revisions/Quiz snapshots remain delivery authority.
 
-Import rules:
+### Export / History
 
-- import is Admin-only and bounded;
-- Full Access import normalizes Arabic digits then requires exact 6-digit codes;
-- duplicate rows and already-existing codes produce explicit per-row rejection rather than silent coercion;
-- accepted rows use existing Access tables/lifecycle and emit Access audit events;
-- no separate import store becomes redemption authority.
+Lesson export/history is a read projection over Lessons, Question Bank events/content and AI authoring jobs; no parallel history store. Quiz specialized export works against canonical reviewed/published versions and authenticated lesson assets. Dynamic CSV output is formula-sanitized.
 
-Export/print rules:
+## Regression Compatibility
 
-- export reads canonical Admin access projection with bounded pagination;
-- if inventory total changes mid-export, fail rather than silently emit an incomplete file;
-- UTF-8 BOM CSV is Excel-compatible and protects formula-leading cells;
-- Full/Class/filter/used/selected scopes are explicit in product flow where supported;
-- printable cards are RTL and selection-aware;
-- browser Print / Save-as-PDF is verified; server binary PDF is not claimed;
-- binary `.xlsx` generation is not claimed.
+Operations is intentionally the authenticated Admin default home. Historical Stage13D/E/F browser tests now authenticate into the shell and explicitly navigate to their target workspace. Their feature assertions were not weakened.
 
-A prose-only handoff commit may sit above the verified runtime HEAD and does not invalidate its executable evidence.
-
-## Current Integration Hazard
-
-Earlier Admin browser specs (Stage13D/E/F) often assert Curriculum heading immediately after login. Since G-B intentionally makes Operations the Admin home, those helpers must be updated before the wider Stage13G regression to authenticate via the shell and then explicitly open their target workspace. Feature assertions remain unchanged.
-
-## G-C2 Current Boundary
-
-Inspect before implementation:
-
-- `auth_events` and security-relevant Auth state;
-- `access_events` and access lifecycle evidence;
-- content/media/OCR/AI/review/question-bank/quiz event/history authorities;
-- current runtime configuration and environment ownership;
-- legacy report/settings/security/audit acceptance rows.
-
-Preferred architecture:
-
-- bounded read projections;
-- server pagination/filter/search;
-- safe export only where the business outcome requires it;
-- no duplicate generic audit persistence;
-- no browser-owned security/runtime config;
-- no secret exposure.
-
-Do not expose password hashes, session/reset/challenge token hashes, raw device public keys, provider credentials or secret environment/storage configuration.
-
-Any new G-C2 capability must pass API/PostgreSQL/Admin quality + real Chromium before being marked verified.
-
-G-D remains separate for lesson/quiz AI generation orchestration and remaining specialized authoring/export parity.
+`stage13e-integration.yml` now also triggers on Pull Requests, so its combined real-browser gate participates in repository-wide verification.
 
 ## Open Boundary
 
-`AI-012-019` live provider bootstrap/model/routes/credentials = NOT YET VERIFIED.
+`AI-012-019` live provider bootstrap/model/routes/credentials = **NOT YET VERIFIED**. This remains independent from Stage13G fixture-backed authoring acceptance.
 
-## Future Promotion Rule
+Admin bundle-size warning remains deferred P3 performance work; no correctness failure is attached to it.
 
-Do not move Stage13G to `main` until G-C2/G-D are complete, Legacy Coverage is synchronized, older Admin browser helpers are adapted to Operations default, and the wider exact-head regression matrix is green. No force update or history rewrite.
+## Promotion Rule / Next Action
+
+Stage13G has met Track A implementation/verification closure. Promotion to `main` is a separate integration decision requiring explicit Product Owner direction. Do not merge, force-update, or rewrite history autonomously.
+
+When promotion is requested, live-check Track B/main divergence first, preserve canonical authorities, run the required integration matrix on the actual promotion candidate, then update Issue #16.

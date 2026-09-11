@@ -16,29 +16,31 @@
 
 الملفات القديمة في root و`supabase/` تبقى parity/failure evidence فقط؛ الـruntime الجديد هو `apps/* + database/migrations/*`.
 
-## الحالة الحالية — 2026-09-10
+## الحالة الحالية — 2026-09-11
 
-`main` integration baseline:
+Shared `main` ما زال عند Stage13F promoted checkpoint:
 
 `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`
 
-- Stage1–10: VERIFIED.
-- OCR Foundation: VERIFIED.
-- Stage11 AI contracts: VERIFIED.
-- Stage12 durable AI execution: VERIFIED backend/runtime؛ live provider bootstrap ما زال `NOT YET VERIFIED`.
-- Stage13A–D: VERIFIED.
-- Stage13E Admin AI Operations / Review: VERIFIED / CLOSED.
-- Stage13F Question Bank / Quiz Builder / Publish: **VERIFIED / CLOSED / PROMOTED TO MAIN**.
-- Stage13G Remaining Admin Product: **ACTIVE على Track A**.
-- Stage14 Student Product: **IN PROGRESS على Track B**.
+Track A Stage13G closure/wider-regression code HEAD:
 
-Stage13F أُغلق على runtime `afbe552710b3f1cf79ee70594f691fa836c05a45` ثم closure checkpoint `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`؛ كلاهما اجتاز wider matrix **13/13 SUCCESS** عبر PRs #27/#28 verification-only المغلقة دون دمج.
+`dbb67a52c813aaf8b8d1af0faeacec65edde716b`
+
+- Stage1–10 + OCR: VERIFIED.
+- Stage11 AI contracts: VERIFIED.
+- Stage12 durable AI execution: VERIFIED backend/runtime؛ live provider bootstrap `AI-012-019` ما زال `NOT YET VERIFIED`.
+- Stage13A–E: VERIFIED / CLOSED.
+- Stage13F Question Bank / Quiz Builder: VERIFIED / CLOSED / PROMOTED TO `main`.
+- Stage13G Remaining Admin Product: **VERIFIED / CLOSED على Track A، NOT PROMOTED إلى `main`**.
+- Stage14 Student Product: مسار مستقل على Track B؛ راجع Source of Truth الخاص به live.
+
+Stage13G اجتاز البوابة المخصصة مع Backend/Admin/PostgreSQL/Chromium، ثم verification-only PR #30 شغّل wider regression على رأس Track A: **15/15 workflows SUCCESS، 0 failures**، وأُغلق PR دون دمج. `main` لم يتحرك.
 
 ## نموذج التنفيذ الحالي
 
 المشروع يعمل بنموذج **Parallel Two-Track Execution**:
 
-- **Track A** — Backend / Admin / DB / AI / generation / Question Bank / Quiz Builder / Stage13G؛ الفرع الحالي `integration/stage13g-admin-product`.
+- **Track A** — Backend / Admin / DB / AI / generation / Question Bank / Quiz Builder؛ فرع Stage13G الحالي `integration/stage13g-admin-product` مغلق وظيفيًا وينتظر قرار Product Owner بخصوص promotion/integration.
 - **Track B** — Student Product Stage14+؛ الفرع `parallel/stage14-student-product`.
 - Issue #16 هو execution ledger المشترك.
 - `main` هو نقطة دمج العقود المتحققة بين المسارين.
@@ -60,7 +62,7 @@ Stage13F أُغلق على runtime `afbe552710b3f1cf79ee70594f691fa836c05a45` ث
 10. provider/network calls خارج long DB transactions؛ durable worker هو سلطة التنفيذ.
 11. Build وحده لا يساوي PASS؛ استخدم lint/typecheck/unit/integration/PostgreSQL/browser حسب المرحلة.
 12. أي شيء غير مفحوص أو غير منفذ = `NOT YET VERIFIED`.
-13. Production deployment/cutover ليس عملًا حاليًا. أي preview/staging يحتاج أمر Product Owner صريح مستقل ولا يستبدل CI.
+13. Production deployment/cutover ليس عملًا حاليًا إلا بتوجيه مستقل وصريح.
 
 ## البداية الإلزامية
 
@@ -74,7 +76,8 @@ Stage13F أُغلق على runtime `afbe552710b3f1cf79ee70594f691fa836c05a45` ث
 8. `PROJECT_EXECUTION_QUEUE.md`
 9. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
 10. `docs/workstreams/PARALLEL_TWO_TRACK_OPERATING_MODEL.md`
-11. latest Issue #16 comments/body
-12. current `main`, current track branch, Actions, code/tests
+11. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
+12. latest Issue #16 comments/body
+13. live `main`, current track branch, Actions, code/tests
 
 `NEXT_CONVERSATION_PROMPT.md` launcher فقط وليس Source of Truth مستقلًا.
