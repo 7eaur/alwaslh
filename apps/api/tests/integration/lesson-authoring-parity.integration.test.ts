@@ -73,7 +73,7 @@ test("lesson parity keeps summary revisions consistent and exports safe canonica
     subjectId,
   ]);
   const lesson = (
-    await db.query<{ id: string; content_revision: number }>(
+    await db.query<{ id: string; content_revision: string }>(
       `insert into lessons (class_id, subject_id, slug, title)
        values ($1, $2, $3, 'درس parity')
        returning id, content_revision`,
@@ -81,6 +81,17 @@ test("lesson parity keeps summary revisions consistent and exports safe canonica
     )
   )[0];
   assert.ok(lesson);
+  const baselineRevision = Number(lesson.content_revision);
+  assert.ok(Number.isSafeInteger(baselineRevision) && baselineRevision > 0);
+
+  const readRevision = async (): Promise<number> => {
+    const value = (
+      await db.query<{ content_revision: string }>("select content_revision from lessons where id = $1", [lesson.id])
+    )[0]?.content_revision;
+    const parsed = Number(value);
+    assert.ok(Number.isSafeInteger(parsed) && parsed > 0);
+    return parsed;
+  };
 
   const app = buildApp({ config, database: db });
   try {
@@ -103,32 +114,17 @@ test("lesson parity keeps summary revisions consistent and exports safe canonica
       });
 
     assert.equal((await patch("ملخص parity يدوي")).statusCode, 200);
-    let revision = (
-      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [
-        lesson.id,
-      ])
-    )[0]?.content_revision;
-    assert.equal(revision, lesson.content_revision + 1);
+    assert.equal(await readRevision(), baselineRevision + 1);
 
     assert.equal((await patch("ملخص parity يدوي")).statusCode, 200);
-    revision = (
-      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [
-        lesson.id,
-      ])
-    )[0]?.content_revision;
     assert.equal(
-      revision,
-      lesson.content_revision + 1,
+      await readRevision(),
+      baselineRevision + 1,
       "saving the same summary must not create a content revision",
     );
 
     assert.equal((await patch(null)).statusCode, 200);
-    revision = (
-      await db.query<{ content_revision: number }>("select content_revision from lessons where id = $1", [
-        lesson.id,
-      ])
-    )[0]?.content_revision;
-    assert.equal(revision, lesson.content_revision + 2);
+    assert.equal(await readRevision(), baselineRevision + 2);
     assert.equal((await patch("ملخص نهائي آمن")).statusCode, 200);
 
     const itemId = (
