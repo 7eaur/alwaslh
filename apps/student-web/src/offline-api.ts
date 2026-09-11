@@ -1,4 +1,4 @@
-import { ApiRequestError, type ApiErrorCode } from "./auth-api";
+import { ApiRequestError, type ApiErrorCode } from "./api-errors";
 
 export interface StudentOfflineLeaseGrant {
   entitlementId: string;

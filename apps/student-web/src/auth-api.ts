@@ -1,12 +1,11 @@
-export type ApiErrorCode =
-  | "BAD_REQUEST"
-  | "UNAUTHORIZED"
-  | "FORBIDDEN"
-  | "NOT_FOUND"
-  | "CONFLICT"
-  | "RATE_LIMITED"
-  | "INTERNAL_ERROR"
-  | "SERVICE_UNAVAILABLE";
+import { ApiRequestError, type ApiErrorCode } from "./api-errors";
+import {
+  clearActiveOfflineLease,
+  syncOfflineLeaseForSession,
+  type OfflineSessionSyncReason,
+} from "./offline-session";
+
+export { ApiRequestError, type ApiErrorCode } from "./api-errors";
 
 export type StudentChallengePurpose =
   | "login"
@@ -238,18 +237,23 @@ interface AttemptsResponse {
   attempts: StudentAssessmentAttempt[];
 }
 
-export class ApiRequestError extends Error {
-  constructor(
-    readonly code: ApiErrorCode,
-    message: string,
-    readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiRequestError";
-  }
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+let latestStudentLoginChallenge: Pick<StudentLoginChallenge, "challengeToken" | "purpose"> | null = null;
+
+function isSessionProtectedStudentPath(path: string): boolean {
+  return (
+    path.startsWith("/v1/student/") &&
+    !path.startsWith("/v1/student/activation/") &&
+    !path.startsWith("/v1/student/login/")
+  );
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
+async function syncOfflineLeaseBestEffort(
+  profileId: string,
+  reason: OfflineSessionSyncReason,
+): Promise<void> {
+  await syncOfflineLeaseForSession(profileId, reason).catch(() => undefined);
+}
 
 async function parseResponseBody(response: Response): Promise<unknown> {
   const text = await response.text();
@@ -284,6 +288,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   const payload = await parseResponseBody(response);
   if (!response.ok) {
+    if (response.status === 401 && isSessionProtectedStudentPath(path)) {
+      await clearActiveOfflineLease().catch(() => undefined);
+    }
     const publicError = payload as PublicErrorBody | undefined;
     const code = publicError?.error?.code ?? "INTERNAL_ERROR";
     const message = publicError?.error?.message ?? "تعذر إكمال الطلب";
@@ -307,14 +314,17 @@ export async function completeActivation(input: {
   devicePublicKeySpki: string;
   deviceProof: string;
 }): Promise<ActivationResponse> {
-  return request<ActivationResponse>("/v1/student/activation/complete", {
+  const result = await request<ActivationResponse>("/v1/student/activation/complete", {
     method: "POST",
     body: JSON.stringify(input),
   });
+  await syncOfflineLeaseBestEffort(result.profile.id, "activation");
+  return result;
 }
 
 export async function restoreStudentSession(): Promise<SessionProfile> {
   const result = await request<ProfileResponse>("/v1/student/me");
+  await syncOfflineLeaseBestEffort(result.profile.id, "restore");
   return result.profile;
 }
 
@@ -322,10 +332,15 @@ export async function startStudentLogin(
   identifier: string,
   password: string,
 ): Promise<StudentLoginChallenge> {
-  return request<StudentLoginChallenge>("/v1/student/login/start", {
+  const challenge = await request<StudentLoginChallenge>("/v1/student/login/start", {
     method: "POST",
     body: JSON.stringify({ identifier, password }),
   });
+  latestStudentLoginChallenge = {
+    challengeToken: challenge.challengeToken,
+    purpose: challenge.purpose,
+  };
+  return challenge;
 }
 
 export async function completeStudentLogin(input: {
@@ -334,14 +349,32 @@ export async function completeStudentLogin(input: {
   publicKeySpki?: string;
   newPassword?: string;
 }): Promise<StudentLoginResponse> {
-  return request<StudentLoginResponse>("/v1/student/login/complete", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+  const purpose =
+    latestStudentLoginChallenge?.challengeToken === input.challengeToken
+      ? latestStudentLoginChallenge.purpose
+      : null;
+  try {
+    const result = await request<StudentLoginResponse>("/v1/student/login/complete", {
+      method: "POST",
+      body: JSON.stringify(input),
+    });
+    const syncReason: OfflineSessionSyncReason =
+      purpose === "device_rebind" || purpose === "password_change_rebind" ? "device_rebind" : "login";
+    await syncOfflineLeaseBestEffort(result.profile.id, syncReason);
+    return result;
+  } finally {
+    if (latestStudentLoginChallenge?.challengeToken === input.challengeToken) {
+      latestStudentLoginChallenge = null;
+    }
+  }
 }
 
 export async function logoutStudent(): Promise<void> {
-  await request<void>("/v1/auth/logout", { method: "POST" });
+  try {
+    await request<void>("/v1/auth/logout", { method: "POST" });
+  } finally {
+    await clearActiveOfflineLease().catch(() => undefined);
+  }
 }
 
 export async function listStudentEntitlements(): Promise<EntitlementView[]> {
