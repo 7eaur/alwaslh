@@ -2,9 +2,9 @@ import {
   createHash,
   createPrivateKey,
   createPublicKey,
+  type KeyObject,
   sign as nodeSign,
   verify as nodeVerify,
-  type KeyObject,
 } from "node:crypto";
 import type { AppConfig } from "../config.js";
 import type { StudentOfflineLessonManifest } from "./download.js";
@@ -15,8 +15,7 @@ const TEST_OFFLINE_AUTH_PRIVATE_KEY_PEM_B64 =
 export const TEST_OFFLINE_AUTH_PUBLIC_KEY_SPKI =
   "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE2FrUJV0pXSOuz0j98o48vPAnWIa9IBNVzBbWB5VxFWsunmwrSIc0D9clavqX4QFg1dPRq3vEkD21VNdpwpFflA";
 
-export const TEST_OFFLINE_AUTH_KEY_ID =
-  "74c59568f7f704fa20017ef844ad3d31a76701afa83dcd73e33e85fa482bd266";
+export const TEST_OFFLINE_AUTH_KEY_ID = "74c59568f7f704fa20017ef844ad3d31a76701afa83dcd73e33e85fa482bd266";
 
 export interface StudentOfflineAuthorizationEnvelope {
   version: 1;
@@ -127,10 +126,15 @@ export function verifyOfflineAuthorizationEnvelope(
     assertP256Key(publicKey);
     const signature = Buffer.from(envelope.signature, "base64url");
     if (signature.byteLength !== 64) return false;
-    return nodeVerify("sha256", Buffer.from(envelope.payload, "base64url"), {
-      key: publicKey,
-      dsaEncoding: "ieee-p1363",
-    }, signature);
+    return nodeVerify(
+      "sha256",
+      Buffer.from(envelope.payload, "base64url"),
+      {
+        key: publicKey,
+        dsaEncoding: "ieee-p1363",
+      },
+      signature,
+    );
   } catch {
     return false;
   }

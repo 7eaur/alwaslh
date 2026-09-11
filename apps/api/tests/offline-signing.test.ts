@@ -44,7 +44,10 @@ test("offline authorization signer is test-only by default and emits verifiable 
   const value = manifest();
   const envelope = signer.signManifest(value);
   assert.equal(verifyOfflineAuthorizationEnvelope(TEST_OFFLINE_AUTH_PUBLIC_KEY_SPKI, envelope), true);
-  assert.equal(Buffer.from(envelope.payload, "base64url").toString("utf8"), canonicalOfflineLessonManifest(value));
+  assert.equal(
+    Buffer.from(envelope.payload, "base64url").toString("utf8"),
+    canonicalOfflineLessonManifest(value),
+  );
 
   const tamperedPayload = Buffer.from(
     canonicalOfflineLessonManifest({ ...value, lesson: { ...value.lesson, title: "tampered" } }),

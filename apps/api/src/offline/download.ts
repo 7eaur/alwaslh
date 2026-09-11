@@ -4,8 +4,8 @@ import type {
   StudentReaderService,
 } from "../curriculum/student-reader.js";
 import { AppError } from "../errors.js";
-import type { OfflineAuthorizationSigner, StudentOfflineAuthorizationEnvelope } from "./signing.js";
 import type { StudentOfflineLease, StudentOfflineService } from "./service.js";
+import type { OfflineAuthorizationSigner, StudentOfflineAuthorizationEnvelope } from "./signing.js";
 
 export interface StudentOfflineLessonAssetManifest {
   id: string;
