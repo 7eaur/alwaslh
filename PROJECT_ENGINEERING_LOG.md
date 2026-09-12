@@ -2,17 +2,19 @@
 
 > Current consolidated engineering truth. Code, PostgreSQL migrations, executable CI and live runtime evidence outrank prose. Historical detail remains in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-12 — UX-B01 verified/merged; UX-B02 Student Shell and Navigation implemented and code-head verified.**
+Last consolidated: **2026-09-12 — UX-B02 verified/merged; UX-B03 Student Learning Hierarchy and Reader Shell active from refreshed live main.**
 
 ## Project Understanding
 
 الوسيلة الذكية منصة تعليمية عربية تتكون من Student Web/PWA + Super Admin Web فوق Fastify/PostgreSQL.
 
-Student is an **installed educational app experience**, not a long responsive webpage. Implemented-era flow now has a stable authenticated shell:
+Student is an **installed educational app experience**. Current target learning flow is now implemented incrementally as:
 
-`Activation/Login → Home → Learn/Curriculum → Lesson/Reader → Practice/Test → Downloads/Offline learning → Account`
+`Activation/Login → Home → Learn → Subject → Lesson/Reader`
 
-UX-B02 establishes only the top-level Student shell/navigation and splits the prior aggregate composition. Reader, Assessment and Account/Downloads cleanup remain deliberately incremental in B03–B05. Admin remains untouched until B06.
+with separate `Practice`, `Downloads`, and `Account` destinations.
+
+B03 owns the Learn/Subject/Reader hierarchy only. Assessment remains B04, Downloads/Account cleanup B05, Admin B06+.
 
 ## Architecture
 
@@ -22,9 +24,9 @@ UX-B02 establishes only the top-level Student shell/navigation and splits the pr
 - `database/migrations` — PostgreSQL schema/integrity authority.
 - `packages/brand` — canonical brand/design tokens.
 - `packages/ui` — framework-neutral shared presentation semantics/styles from B01.
-- `apps/*/src/presentation-foundation.tsx` — thin app-local React adapters.
+- `apps/*/src/presentation-foundation.tsx` — thin app-local React presentation adapters.
 
-Stable contracts preserved:
+Stable authority contracts:
 
 - browser is not canonical business authority;
 - API + PostgreSQL own canonical state;
@@ -33,25 +35,19 @@ Stable contracts preserved:
 - protected Reader/media remain publication + entitlement controlled;
 - AI output never auto-publishes Student content/questions;
 - human review remains mandatory;
-- Question Bank publication and immutable Quiz versions remain authoritative;
 - assessment scoring/finalization remains server-owned;
 - `/v1` is never Service Worker Cache API authority;
-- offline learning does not persist password/session token/device private key;
-- signed offline authorization, integrity and device/session rules are unchanged.
+- signed offline authorization, integrity and device/session rules remain unchanged.
 
 ## User Flows
 
-### Student top-level shell — B02
+### Student shell — B02 integrated
 
-Authenticated stable learning destinations:
+Stable destinations:
 
-`Home | Learn | Practice | Downloads`
+`Home | Learn | Practice | Downloads` + `Account`
 
-Separate utility destination:
-
-`Account`
-
-Route contract:
+Top-level routes:
 
 - `/app/home`
 - `/app/learn`
@@ -59,59 +55,64 @@ Route contract:
 - `/app/downloads`
 - `/app/account`
 
-Current feature ownership remains intentionally incremental:
+### Student learning hierarchy — B03
 
-- Learn mounts the existing Curriculum/Reader implementation; Reader route/shell migration is B03.
-- Practice mounts the existing Assessment implementation; focused assessment route/shell redesign is B04.
-- Downloads mounts the current verified offline-download implementation; full Downloads/Account/technical-copy cleanup is B05.
-- access/class-code management remains temporarily reachable during migration and is finalized in B05.
+Binding route ownership:
 
-No fake Personal Learning or Progress destination was introduced.
+- `/app/learn` — choose an entitled subject, grouped by class context;
+- `/app/learn/subjects/:subjectId` — one subject curriculum/lesson sequence;
+- `/app/learn/lessons/:lessonId` — focused Reader.
+
+A route identifier is not trusted as authorization. Subject/lesson context is first resolved from `/v1/student/curriculum`, which is already entitlement/publication filtered by server authority. Only then does the Reader call `/v1/student/lessons/:lessonId/reader`.
+
+The Reader suppresses global Student navigation while active, preserves a clear subject back target, and keeps a controlled reading width across phone/tablet/desktop.
 
 ### Admin target hierarchy
 
 `Overview → Curriculum → Content/Ingestion/OCR → AI Jobs/Human Review → Question Bank/Quizzes → Students/Access → Operations/Audit`
 
-Admin migration begins at B06 and is untouched by B02.
+Admin migration starts at B06 and is untouched by B03.
 
 ## Architecture Decisions
 
-Critical retained decisions:
+Retained decisions:
 
 - **AD-170** — Service Worker caches shell/static assets only; `/v1` excluded.
 - **AD-175** — no password/session token/device private key in offline storage.
 - **AD-185/186/188** — cold-offline authorization/integrity remains server-signed and browser-verified.
 - **AD-190** — new work starts from refreshed live `main` on short-lived branches.
 - **AD-194/215** — browser API authority remains same-origin `/v1`.
-- **AD-195** — normal roadmap paused before `STUDENT-016I` for refoundation.
+- **AD-195** — normal roadmap paused before `STUDENT-016I` for UX refoundation.
 - **AD-202** — route/history is a product contract.
-- **AD-203** — Student navigation contains implemented capabilities only.
-- **AD-204** — Reader and active Assessment become focused screens only in B03/B04.
+- **AD-203** — Student navigation exposes implemented capabilities only.
+- **AD-204** — Reader and active Assessment become focused screens in B03/B04.
 - **AD-211** — BrowserRouter is the shared routing base.
 - **AD-213** — shared UI package remains framework-neutral and owns no domain authority.
-- **AD-214** — route changes explicitly focus the labeled content region.
+- **AD-214** — route changes focus the labeled route-content region.
+- **AD-217..223** — B02 Student shell/navigation, adaptive composition, connectivity state, and access-state reuse remain binding.
 
-B02 decisions:
+B03 decisions:
 
-- **AD-217 — `/app/home` is the authenticated Student landing route.** `/` and `/app` canonicalize to Home; top-level Student destinations receive real history entries.
-- **AD-218 — four learning destinations + Account only.** Home/Learn/Practice/Downloads are stable learning navigation; Account is a separate utility entry. No unimplemented Progress/Personal Learning destination is exposed.
-- **AD-219 — Student shell is adaptive, not a scaled desktop navbar.** Phone uses bottom navigation with safe-area padding; tablet uses horizontal navigation; desktop uses a sticky rail.
-- **AD-220 — B02 splits composition without rewriting feature authority.** Existing Curriculum/Reader, Assessment and Offline Downloads components keep their current security/API contracts.
-- **AD-221 — global connectivity state belongs to the authenticated shell.** It is informational and does not create offline authority.
-- **AD-222 — migration compatibility is executable.** Existing Stage14/15/16 browser suites enter behavior through the new shell; feature tests were not weakened to obtain green CI.
-- **AD-223 — reuse loaded access state across Student destinations.** Moving from Home to Account/Learn does not issue a redundant entitlements request when access state is already loaded; direct entry still loads canonical server state. This prevents navigation from consuming a server-session-expiry signal before the user action that owns it and reduces unnecessary network work.
+- **AD-224 — Learn selection state becomes URL state.** Subject and lesson selection are real browser routes, not `selectedSubjectId` / `selectedLesson` component state.
+- **AD-225 — authorized catalog resolves deep links.** A direct subject/lesson route must exist in the canonical Student curriculum response before its page can render; URL knowledge alone grants nothing.
+- **AD-226 — Reader is a focused product screen.** Bottom/rail navigation is suppressed during reading; only learning context, connectivity status, back target and reader controls remain.
+- **AD-227 — Reader capability parity is preserved without legacy copy.** Protected media, retry, speech, search, loading/error/session behavior stay functional while Student-facing publication/review/MIME implementation language is removed.
+- **AD-228 — B03 does not implement cold-start offline Reader.** Offline Reader states remain honest and direct students to Downloads; `STUDENT-016I` remains paused until UX-B17 closes.
+- **AD-229 — legacy giant curriculum composition is removed.** The old `student-curriculum.tsx` local-state browser/Reader surface is deleted rather than retained beneath new routes.
 
 ## Audit Findings
 
 | ID | Severity | Area | Problem | Solution / Evidence | Status |
 |---|---:|---|---|---|
 | `UX-IA-101` | P1 | Routing | apps lacked route-based navigation | BrowserRouter + route foundation | FIXED / B01 VERIFIED+MERGED |
-| `UX-IA-102` | P1 | Student | authenticated Student was one aggregate surface | B02 stable app shell + destination-owned mounting | FIXED AT TOP LEVEL / B03–B05 descendants remain |
-| `UX-A11Y-101` | P2 | Student navigation | state-only navigation weakened history/focus | semantic nav + route focus + browser history | VERIFIED IN B02 |
-| `UX-RESP-102` | P1 | Student | no installed-app mobile navigation | safe-area bottom nav + tablet nav + desktop rail | VERIFIED IN B02 |
-| `UX-STATE-101` | P2 | Student | connectivity feedback was page-local | authenticated shell online/offline indicator | VERIFIED IN B02 |
-| `UX-PERF-101` | P2 | Student access | navigation could refetch already-loaded entitlement state | reuse loaded access state, direct-entry load retained | FIXED / VERIFIED via Stage16 regression |
-| `UX-COPY-101` | P1 | Student | technical offline/device copy remains in legacy feature surfaces | full cleanup belongs to B05 | OPEN / PARTIAL |
+| `UX-IA-102` | P1 | Student shell | authenticated Student was one aggregate surface | B02 stable shell + destination-owned mounting | FIXED / B02 VERIFIED+MERGED |
+| `UX-IA-104` | P1 | Learn | subject/lesson navigation lived in component state | real Learn/Subject/Lesson routes | IMPLEMENTED / VERIFYING B03 |
+| `UX-IA-105` | P1 | Reader | Reader embedded inside curriculum surface | dedicated focused Reader shell | IMPLEMENTED / VERIFYING B03 |
+| `UX-COPY-102` | P1 | Reader | Student saw publication/review/MIME internals | learner-facing Reader copy | IMPLEMENTED / VERIFYING B03 |
+| `UX-A11Y-101` | P2 | Student navigation | state-only navigation weakened history/focus | semantic links + route focus/history | B02 VERIFIED; B03 descendants VERIFYING |
+| `UX-RESP-102` | P1 | Student | no installed-app adaptive navigation | phone bottom nav + tablet/desktop adaptation | VERIFIED B02 |
+| `UX-PERF-101` | P2 | Student access | navigation could refetch loaded entitlements | reuse access state, direct-entry load retained | FIXED / VERIFIED B02 |
+| `UX-COPY-101` | P1 | Student offline/account | technical offline/device copy remains elsewhere | B05 | OPEN / PARTIAL |
 | `UX-IA-103` | P1 | Admin | flat/mixed Admin workspace | B06+ | OPEN |
 | `STUDENT-016I` | P1 | Offline/PWA | true cold-start offline Reader not closed | resume only after B17 | PAUSED / NOT TOUCHED |
 | `AI-012..AI-019` | P2 | AI | live provider readiness not proven | separate live verification | NOT YET VERIFIED |
@@ -124,100 +125,84 @@ PR #42 final head `203882a934dfcb68df4a1e1e4f972583317cabf1`; **15/15 SUCCESS**;
 
 ### UX-B01 — DONE / VERIFIED / MERGED
 
-PR #43 final exact head `781e70eb31a48b76e50a1bad490f7aa947d2d7ce`; **20/20 SUCCESS**; merge commit/live main `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`.
+PR #43 final exact head `781e70eb31a48b76e50a1bad490f7aa947d2d7ce`; **20/20 SUCCESS**; merge/live main `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`.
 
-### UX-B02 — Student Shell and Navigation
+### UX-B02 — DONE / VERIFIED / MERGED
 
-PR #44 / branch `ux/student-shell-navigation`.
+PR #44:
 
-Base: `main@9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`.
+- final head `b956248418303618120d02cda562bf179cd7071b`;
+- exact-head workflows **20/20 SUCCESS**;
+- B02 run `34711941779` — SUCCESS;
+- Stage14 `34711941781` — SUCCESS after rerunning one transient timed-out Chromium job only;
+- Stage15 `34711941813` — SUCCESS;
+- Stage16 `34711941769` — SUCCESS;
+- Admin Product `34711941728` — SUCCESS;
+- Admin Operations `34711941761` — SUCCESS;
+- Rebuild `34711941790` — SUCCESS;
+- merge/live main `ced57cb4dd45daedbe9a95c4897d1b073ec9e4e9`.
 
-Verified implementation code head before final documentation synchronization:
+### UX-B03 — Student Learning Hierarchy and Reader Shell
 
-`3cc44b1bb9b44de3cb99a18c6cf5b2d29439c8f3`
+Branch: `ux/student-learning`
 
-Delivered:
+Base: `main@ced57cb4dd45daedbe9a95c4897d1b073ec9e4e9`.
 
-- canonical authenticated Home `/app/home`;
-- stable Home/Learn/Practice/Downloads + Account route-aware composition;
-- mobile safe-area bottom navigation;
-- tablet horizontal navigation;
-- desktop sticky navigation rail;
-- global authenticated online/offline indicator;
-- Home overview cards and installed-app information hierarchy;
-- Curriculum, Assessment and Downloads no longer render together as the old default giant Student surface;
-- production-facing Arabic shell copy and RTL behavior;
-- route focus, `aria-current`, browser back/history and no-overflow handling;
-- existing Reader/Assessment/Offline authority preserved while E2E enters through new destinations;
-- dedicated `student-shell-navigation.e2e.spec.mjs` and `.github/workflows/ux-b02-student-shell.yml`.
+Implemented before CI acceptance:
 
-No Reader migration, Assessment redesign, full Downloads/Account cleanup, Admin refoundation, API/PostgreSQL/Railway change or new Stage16 implementation was performed.
+- `student-learning-model.ts` — curriculum-derived route/view lookup helpers;
+- `student-learning-model.test.ts` — unit coverage for authorized subject/lesson resolution;
+- `student-learning.tsx` — Learn landing + Subject page + lesson-route composition;
+- `student-reader.tsx` — focused Reader shell preserving protected media/search/speech/retry/session behavior;
+- `student-learning.css` — hierarchy/Reader responsive layouts;
+- `student-access.tsx` — mounts learning hierarchy by URL and suppresses global nav during Reader;
+- deleted legacy `student-curriculum.tsx` giant local-state surface;
+- updated Reader and activation Playwright contracts for real semantic links/routes;
+- added `.github/workflows/ux-b03-student-learning.yml` direct B03 quality + Chromium gate.
+
+Explicitly unchanged:
+
+- Reader backend/API/publication/entitlement contracts;
+- Stage16 signed offline authorization/materialization/Service Worker authority;
+- Assessment internals/routes — B04;
+- Downloads/Account cleanup — B05;
+- Admin — B06+.
 
 ## Tests & Verification
 
-### B02 exact code-head acceptance
+### B02 final acceptance
 
-On exact code head `3cc44b1bb9b44de3cb99a18c6cf5b2d29439c8f3`:
+Final PR #44 head `b956248418303618120d02cda562bf179cd7071b`: **20/20 SUCCESS**, then merged as `ced57cb4dd45daedbe9a95c4897d1b073ec9e4e9`.
 
-**20/20 workflows SUCCESS.**
+### B03 required acceptance
 
-Key runs:
+Pending exact-head CI:
 
-- `34711657358` — UX B02 Student Shell and Navigation — SUCCESS;
-- `34711657422` — Stage14 Student Product — SUCCESS;
-- `34711657321` — Stage15 Student Assessment — SUCCESS;
-- `34711657335` — Stage16 Student PWA — SUCCESS;
-- `34711657347` — UX B01 Shared Frontend Foundation — SUCCESS;
-- `34711657393` — Rebuild Stage Verification — SUCCESS.
-
-Direct B02 gate proved:
-
-- API typecheck/build and clean migrations;
 - Student lint/typecheck/unit/build;
-- real Chromium at phone 390px;
-- representative tablet viewport;
-- desktop rail viewport;
-- RTL;
-- route focus + browser history;
-- global offline/online indicator;
-- no horizontal overflow.
+- B03 model unit tests;
+- clean API build/migrations;
+- real Chromium Learn → Subject → Reader hierarchy;
+- authorized direct Reader deep link;
+- protected media response/security parity;
+- search/speech/error/offline honesty;
+- Reader global-nav suppression;
+- browser route focus/back/history;
+- phone/tablet/desktop overflow checks;
+- Stage14/15/16 + Rebuild regressions;
+- full path-triggered workflow matrix.
 
-Regression matrix proved:
+Current B03 state: **IMPLEMENTED / VERIFICATION PENDING**.
 
-- Stage14 activation/login/recovery/access/curriculum + Reader parity through Learn;
-- Stage15 server-owned Assessment parity through Practice;
-- Stage16 PostgreSQL lease/download contracts, PWA shell and IndexedDB lifecycle/materialization;
-- Rebuild activation/returning-login/recovery browser flow;
-- all Admin/backend path-triggered suites remain green.
+Local container checkout is unavailable because this execution environment cannot resolve `github.com`; GitHub Actions is the executable verification source.
 
-### Stage16 regression found during B02
-
-An intermediate B02 head failed the Stage16 browser lifecycle because entering Account performed a redundant entitlements reload after the server session had already been invalidated. That request consumed the 401 before the explicit refresh action expected by the lifecycle flow.
-
-Root cause was B02 navigation request timing, not Stage16 storage/signing/authorization.
-
-Fix:
-
-- reuse already-loaded access state across Home → Account/Learn navigation;
-- preserve canonical load on direct entry;
-- do not alter offline lease/signature/materialization logic.
-
-Proof after fix: Stage16 run `34711657335` is fully SUCCESS across PostgreSQL, PWA Chromium and lifecycle/materialization Chromium jobs.
-
-### Final documentation head
-
-This documentation synchronization changes the PR head after the proven code-head matrix. One final exact-head workflow pass is required before PR #44 is marked ready for review/merge.
-
-Local container checkout remains unavailable because the execution environment cannot resolve `github.com`; repository CI is the executable source of truth.
-
-Manual screenshot/art-direction closure is `NOT YET VERIFIED` here; B16/B17 own final visual/device closure. B02 responsive behavior itself is executable-browser verified.
+Manual screenshot/art-direction closure remains assigned to B16/B17; B03 requires executable responsive/browser evidence now.
 
 ## Known Issues / Remaining Work
 
-- final exact-head CI after docs synchronization;
-- Reader dedicated hierarchy/shell — B03;
-- Assessment focused route/shell — B04;
-- full Downloads/Account/offline technical-copy cleanup — B05;
+- verify B03 exact-head CI and fix real regressions at root cause;
+- remove any obsolete legacy curriculum CSS during final cleanup if no longer referenced — B15 unless required earlier by evidence;
+- Assessment focused routes/shell — B04;
+- Downloads/Account/offline technical-copy cleanup — B05;
 - Admin refoundation — B06+;
 - `AI-012..AI-019` live provider readiness — `NOT YET VERIFIED`;
 - Stage28 Production Cutover — not complete.
