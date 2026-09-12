@@ -9,6 +9,7 @@ import "./student-shell.css";
 import "./student-learning.css";
 import "./foundation.css";
 import "./assessment-polish.css";
+import "./student-b05.css";
 import { registerStudentServiceWorker } from "./pwa";
 import { StudentRouter } from "./router";
 
