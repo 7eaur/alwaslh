@@ -61,7 +61,8 @@ function publicationCount(panel, label) {
 test("admin preserves mixed file order, processes, reviews, publishes and keeps durable history", async ({ page }) => {
   await login(page);
   await openIngestion(page);
-  await page.getByLabel("الدرس").selectOption({ label: lessonOption });
+  const uploadPanel = page.locator('section[aria-labelledby="new-ingestion-title"]');
+  await uploadPanel.getByLabel("الدرس").selectOption({ label: lessonOption });
   await page.locator('input[type="file"]').setInputFiles([
     { name: "01-cover.png", mimeType: "image/png", buffer: png },
     { name: "02-pages.pdf", mimeType: "application/pdf", buffer: buildPdf() },
