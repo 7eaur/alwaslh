@@ -227,9 +227,7 @@ function StudentHomeOverview() {
                 <strong>{item.label}</strong>
                 <small>{item.description}</small>
               </span>
-              <span className="student-home-card__arrow" aria-hidden="true">
-                ←
-              </span>
+              <span className="student-home-card__arrow" aria-hidden="true">←</span>
             </Link>
           ))}
       </div>
@@ -290,7 +288,10 @@ export function StudentAccessSection({
   }
 
   useEffect(() => {
-    if (destination === "home" || destination === "learn" || destination === "account") void loadAccess();
+    const needsInitialAccess =
+      destination === "home" ||
+      ((destination === "learn" || destination === "account") && access.status === "loading");
+    if (needsInitialAccess) void loadAccess();
   }, [online, destination]);
 
   useEffect(() => {
