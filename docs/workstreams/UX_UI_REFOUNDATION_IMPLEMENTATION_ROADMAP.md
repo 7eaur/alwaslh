@@ -15,7 +15,7 @@ Refactor the current frontend foundations into:
 - route-based screen boundaries;
 - preserved backend/security/business contracts.
 
-This is **incremental refoundation**, not a rewrite.
+This is **incremental refoundation**, not a blind code rewrite. Visual composition itself may be rebuilt whenever that is the simplest way to reach product quality.
 
 ## 2. Execution rules
 
@@ -31,6 +31,37 @@ Each batch must:
 8. update `PROJECT_ENGINEERING_LOG.md`, `PROJECT_STATUS.md` and Issue #16;
 9. record exact branch/commit/PR/run IDs;
 10. mark unavailable evidence `NOT YET VERIFIED`.
+
+### 2.1 Product-quality design ownership — binding from UX-B04 onward
+
+The engineer/designer executing a batch owns the **final product quality**, not merely functional parity.
+
+Binding rules:
+
+- the current UI is evidence for features, flows, contracts, edge cases and data — **not a visual reference that must be preserved**;
+- keep the approved Alwaslh identity, product logic and authority contracts, but freely rethink layout, composition, hierarchy, spacing, typography, navigation, density, component patterns, data presentation, interaction patterns and responsive behavior;
+- do not default to incremental cosmetic improvement when the current composition is structurally weak;
+- prefer the best pattern for the task: focused screen, list, table, split view, details page, tabs, drawer, dialog, action bar or another justified pattern instead of repeating card layouts;
+- Student must feel like a focused educational app, not a dashboard or a desktop website compressed onto mobile;
+- Admin may be dense but must remain clear, grouped and fast; **dense != crowded**;
+- consistency comes from the system while page composition may vary by job-to-be-done;
+- visual polish must not add heavy animation libraries, excessive DOM, unnecessary effects/assets, over-rendering or extra network traffic;
+- external references such as Mobbin/Figma/Product Design are supporting research/prototyping tools only; Alwaslh code, contracts, product rules and approved identity remain source of truth.
+
+Before any changed screen is accepted, explicitly judge:
+
+1. Is this the best organization for the task?
+2. Can the user understand what to do within seconds?
+3. Can anything nonessential be removed?
+4. Is hierarchy clear and content production-ready?
+5. Does it look like a real professional product rather than a template, developer tool or AI-generated UI?
+6. Does it work at the target phone/tablet/desktop sizes with correct RTL?
+7. Are keyboard/focus/contrast/state semantics accessible?
+8. Does it follow the design system without forcing every page into the same composition?
+9. Is it performant and maintainable?
+10. Would the responsible engineer approve shipping this screen to real users?
+
+If any relevant answer is **no**, the screen is not complete even when it is functional.
 
 No Stage17 work and no `016I/R/S/O/G` implementation is allowed inside this track.
 
@@ -131,14 +162,18 @@ Scope:
 - Practice list route;
 - quiz/attempt route boundaries;
 - focused active assessment shell;
-- remove server/version/developer-roadmap copy;
+- redesign Practice/Assessment composition from the learner task outward rather than preserving the legacy card-grid/workspace layout;
+- remove server/version/developer-roadmap copy from normal Student presentation;
 - preserve server scoring/finalization.
 
 Acceptance:
 
 - current Stage15 E2E scenarios pass through new navigation;
 - attempt actions/results unchanged in authority;
-- leaving/returning behavior explicit.
+- leaving/returning behavior explicit;
+- Practice library, quiz choice, active attempt and result each have a clear single purpose and product-grade hierarchy;
+- active assessment suppresses distracting global navigation and works as a focused phone-first learning task;
+- changed screens pass the Product-quality design ownership gate in §2.1.
 
 ## UX-B05 — Student Downloads / Account / Copy closure
 
