@@ -102,7 +102,10 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
 
   let lessonRow = unsectioned.getByText("الدرس الإداري الأول", { exact: true }).locator("xpath=ancestor::li");
   await openLessonManagement(lessonRow, "الدرس الإداري الأول");
-  await lessonRow.getByText("تعديل اسم الدرس الدرس الإداري الأول", { exact: true }).click();
+  await lessonRow
+    .locator("summary")
+    .filter({ hasText: "تعديل اسم الدرس الدرس الإداري الأول" })
+    .click();
   const renameInput = lessonRow.getByLabel("تعديل اسم الدرس الدرس الإداري الأول");
   await renameInput.fill("الدرس الإداري المحدّث");
   await renameInput.locator("xpath=ancestor::form").getByRole("button", { name: "حفظ" }).click();
