@@ -2,7 +2,7 @@
 
 > Official project memory map. A replacement engineering conversation starts here and must be able to continue from GitHub without prior chat memory.
 
-Last synchronized: **2026-09-12 — unified `main`; Stage16 ACTIVE; Railway inspection/dev live.**
+Last synchronized: **2026-09-12 — UX/UI Refoundation active; normal Stage16 roadmap paused after verified `STUDENT-016H`; exact return point `STUDENT-016I`.**
 
 ## 1. Source-of-truth precedence
 
@@ -11,7 +11,7 @@ When sources conflict, use this precedence:
 1. current `main` code + PostgreSQL migrations + executable CI/test evidence;
 2. live Railway state when the question is about the hosted runtime;
 3. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`;
-4. current-stage handoff/status (`docs/workstreams/STAGE16_STUDENT_HANDOFF.md`);
+4. active workstream authority, currently UX/UI refoundation documents listed below;
 5. `PROJECT_HANDOFF.md` + `PROJECT_STATUS.md`;
 6. `PROJECT_RESUME_SNAPSHOT.md`;
 7. `PROJECT_ENGINEERING_LOG.md`;
@@ -22,190 +22,216 @@ When sources conflict, use this precedence:
 
 Anything not inspected/executed = `NOT YET VERIFIED`.
 
-## 2. Mandatory startup order for the next conversation
+## 2. Mandatory startup order while UX/UI Refoundation is active
 
 Read in this order:
 
 1. `README.md`
 2. `DOCUMENTATION_INDEX.md`
-3. **`docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`** — full product/repository recovery + staged gap-audit protocol
-4. `PROJECT_HANDOFF.md`
-5. `PROJECT_STATUS.md`
-6. `PROJECT_RESUME_SNAPSHOT.md`
-7. `PROJECT_ENGINEERING_LOG.md`
-8. `PROJECT_INTEGRATION_CONTINUITY.md`
-9. `PROJECT_EXECUTION_QUEUE.md`
-10. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-11. **`docs/workstreams/STAGE16_STUDENT_HANDOFF.md`**
-12. `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`
-13. `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`
-14. `docs/operations/RAILWAY_LIVE_STATE.md`
-15. `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
-16. `MASTER_REBUILD_ROADMAP.md`
-17. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
-18. `PRODUCT_FEATURE_PARITY_MATRIX.md`
-19. latest GitHub Issue #16 body/comments
-20. live `main` HEAD + Actions + Railway service state
-21. actual current Stage16 API/Student code/tests/workflow before coding.
+3. **`docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`**
+4. `PROJECT_STATUS.md`
+5. `PROJECT_ENGINEERING_LOG.md`
+6. **`docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md`**
+7. **`docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md`**
+8. **`docs/product/TARGET_INFORMATION_ARCHITECTURE.md`**
+9. **`docs/product/DESIGN_SYSTEM_SPEC.md`**
+10. **`docs/product/CONTENT_LANGUAGE_RULES.md`**
+11. **`docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`**
+12. `.agents/skills/alwaslh-product-engineering/SKILL.md` and only the focused references needed for the task
+13. `PROJECT_HANDOFF.md`
+14. `PROJECT_RESUME_SNAPSHOT.md`
+15. `PROJECT_INTEGRATION_CONTINUITY.md`
+16. `PROJECT_EXECUTION_QUEUE.md`
+17. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+18. `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`
+19. `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`
+20. `docs/operations/RAILWAY_LIVE_STATE.md`
+21. `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
+22. `MASTER_REBUILD_ROADMAP.md`
+23. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
+24. `PRODUCT_FEATURE_PARITY_MATRIX.md`
+25. latest GitHub Issue #16 body/comments
+26. live `main` HEAD + Actions + Railway state only where runtime evidence is relevant
+27. actual Student/Admin/API code/tests for the batch before coding.
 
-`NEXT_CONVERSATION_PROMPT.md` is the copy/paste launcher. It must send the new conversation through `UNIFIED_PROJECT_RESUME_PROTOCOL.md` before implementation. Live evidence wins if anything differs.
+Live evidence wins if anything differs.
 
 ## 3. Current operating model
 
-The old parallel Track A/Track B model is **historical for new work**.
+The old parallel Track A/Track B model is historical for new work.
 
-Product Owner direction after Stage13G closure:
+Normal roadmap work is temporarily paused for a source-backed frontend/product refoundation because the current Student/Admin information architecture would create additional product debt if more features were built on top of it.
 
-- Stage13G + latest Student Product were integrated into `main` through PR #33;
-- PR #33 verification head `dcdae7579a40878c71f64593280a0df2f8363ee2` passed **19/19 workflows**;
-- merge commit: `5e22c3ff157b42b6da47febe205dd91fcb264eed`;
-- all remaining work after Stage13 is owned as one continuation;
-- new batches start from live `main` using short-lived branches;
-- old long-lived Stage13G/Student branches are historical/reference, not the integration baseline.
+This pause does **not** reset backend/domain work and does **not** authorize a blind rewrite.
 
-Detailed authority: `docs/product/CURRENT_PRODUCT_OVERRIDES.md` PO-OVR-009.
+Current exact normal-roadmap boundary:
 
-## 4. Central state files
+- `STUDENT-016H` — **DONE / VERIFIED / MERGED**;
+- `STUDENT-016I` — **PAUSED / exact return point after UX/UI refoundation**;
+- then `016R → 016S → conditional 016O → 016G → Stage17`.
+
+Stage17 or later feature implementation is not allowed inside the refoundation track.
+
+## 4. Current UX/UI refoundation authority
 
 | File | Purpose |
 |---|---|
-| `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md` | mandatory full product/repository understanding, historical-stage verification, gap-audit and execution protocol for replacement conversations |
-| `PROJECT_HANDOFF.md` | detailed replacement-engineer startup, current architecture, hosting/content status and exact continuation |
-| `PROJECT_STATUS.md` | concise current state and open gates |
-| `PROJECT_RESUME_SNAPSHOT.md` | compact exact restart snapshot |
-| `PROJECT_ENGINEERING_LOG.md` | architecture decisions, findings, root fixes, verification and remaining work |
+| `docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md` | why normal roadmap is paused and which contracts/roadmap boundary must be preserved |
+| `docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md` | full Student/Admin source-backed UI inventory, evidence, severity and KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE classification |
+| `docs/product/TARGET_INFORMATION_ARCHITECTURE.md` | target Student navigation/screen tree and Admin work-area/page hierarchy |
+| `docs/product/DESIGN_SYSTEM_SPEC.md` | preserved identity, semantic design tokens, component/state/responsive/RTL/a11y rules |
+| `docs/product/CONTENT_LANGUAGE_RULES.md` | Student/Admin product-language, status/error mappings and forbidden implementation copy |
+| `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md` | UX-B00..UX-B17 incremental execution order, branch/testing/closure gates |
+| `.agents/skills/alwaslh-product-engineering/SKILL.md` | repository-scoped engineering/product/design operating skill; code/contracts remain higher authority |
+
+External Product Design, Mobbin and Figma may support research/prototyping but cannot override these project sources.
+
+## 5. Central state files
+
+| File | Purpose |
+|---|---|
+| `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md` | mandatory full product/repository recovery + gap-audit protocol |
+| `PROJECT_STATUS.md` | concise current track, verified state, open gates and exact next action |
+| `PROJECT_ENGINEERING_LOG.md` | architecture decisions, findings, changes, tests/evidence and remaining work |
+| `PROJECT_HANDOFF.md` | detailed replacement-engineer startup and architecture/runtime context |
+| `PROJECT_RESUME_SNAPSHOT.md` | compact restart snapshot |
 | `PROJECT_INTEGRATION_CONTINUITY.md` | unified-main/shared-contract/deployment continuity |
-| `PROJECT_EXECUTION_QUEUE.md` | ordered remaining work through Stage29 |
+| `PROJECT_EXECUTION_QUEUE.md` | normal roadmap queue; currently paused by the UX/UI workstream |
 | `docs/product/CURRENT_PRODUCT_OVERRIDES.md` | latest Product Owner execution decisions |
-| `docs/workstreams/STAGE16_STUDENT_HANDOFF.md` | detailed active Stage16 implementation/security boundary |
-| `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md` | Student/runtime stage status |
-| `docs/operations/RAILWAY_LIVE_STATE.md` | Railway project/services/domains/build/deploy/volume/runbook |
-| `docs/content/LIVE_CONTENT_IMPORT_STATUS.md` | canonical content source, Grade9 English proof, publication/bulk-import rules |
+| `docs/workstreams/STAGE16_STUDENT_HANDOFF.md` | detailed Stage16 implementation/security boundary; still relevant as a preserved contract source |
+| `docs/operations/RAILWAY_LIVE_STATE.md` | Railway services/domains/build/deploy/volume/runbook |
+| `docs/content/LIVE_CONTENT_IMPORT_STATUS.md` | canonical content source and publication/bulk-import rules |
 | `MASTER_REBUILD_ROADMAP.md` | Stage1–29 product sequence |
 | `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` | legacy capability acceptance |
-| `NEXT_CONVERSATION_PROMPT.md` | copy/paste master resume launcher |
+| `NEXT_CONVERSATION_PROMPT.md` | launcher; must not override newer status/refoundation authority |
 
-## 5. Current integrated baseline
+## 6. Current integrated baseline before the refoundation foundation PR
 
-Master handoff checkpoint after PR #36:
+PR #41 integrated the repository-scoped Alwaslh product engineering skill after successful PR-head CI.
 
-`6ee5ad9d0bde8faa690b9eb7a923a1c8a12687b4`
-
-PR #36 documentation/handoff verification passed **15/15 workflows SUCCESS** before merge.
-
-This baseline includes:
-
-- PR #33 integrated Stage13G + Student Stage14/15/current Stage16;
-- Railway Docker/runtime fixes for API/Admin/Student;
-- PR #34 Grade 9 English scoped canonical content bootstrap;
-- PR #35 live-content documentation proof;
-- synchronized unified project handoff in PR #36.
+- PR #41 final head: `25f876d3cfe2af95a8a27319c289f102db3e6db0`
+- merge commit: `c3ddef04933772116c3bd9cdf29eb5a973c527fd`
 
 Always re-read live `main`; do not assume this SHA remains HEAD forever.
 
-## 6. Verified stage state
+The active refoundation foundation work is developed on short-lived branch/PR evidence recorded in `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and Issue #16.
+
+## 7. Verified stage state
 
 - Stage1–10 + OCR — VERIFIED.
 - Stage11 provider-neutral AI contracts — VERIFIED.
 - Stage12 durable AI runtime — VERIFIED backend/runtime; `AI-012..AI-019` live provider readiness remains open.
-- Stage13A–G — VERIFIED / CLOSED and integrated into `main`.
+- Stage13A–G — VERIFIED / CLOSED and integrated.
 - Stage14 Student Product — CLOSED / VERIFIED.
 - Stage15 Practice/Assessment — CLOSED / VERIFIED.
-- **Stage16 Offline/PWA — ACTIVE / PARTIALLY VERIFIED.**
-- Stage17+ — pending Stage16 closure.
+- **Stage16 Offline/PWA — OPEN / PARTIALLY VERIFIED / NORMAL ROADMAP PAUSED.**
+- Stage17+ — pending Stage16 closure after UX/UI refoundation.
 
-### Stage16 current verified boundary
+### Stage16 security boundary the refoundation must preserve
 
-Current `main` contains and CI has verified:
+Current integrated work includes executable evidence for:
 
-- safe Service Worker shell; `/v1` excluded;
-- bounded server lease;
-- account/device IndexedDB lifecycle;
-- protected lesson manifest/assets;
-- exact bytes + SHA-256 verification;
-- 64 MiB lesson / 256 MiB scope budget;
-- atomic package storage/replacement/removal;
-- ES256 server-signed offline authorization envelope;
-- Student-side key-ID/signature/canonical-manifest verification before storage.
+- safe Service Worker shell with `/v1` excluded from Cache API authority;
+- profile/device-bound offline lease;
+- protected Published+entitled lesson packages;
+- bounded offline storage;
+- server-signed P-256/ES256 authorization;
+- durable non-secret active scope selection;
+- read-time signature/metadata/key/scope/expiry verification;
+- read-time size + SHA-256 blob integrity verification;
+- logout/late-refresh lifecycle protection.
 
-PR #33 head Stage16 run `34560999667` — all three Stage16 jobs SUCCESS, including API signing policy + PostgreSQL offline contracts + real Chromium protected materialization.
+The UX track may change how this state is explained to a learner, but must not weaken these contracts.
 
-### Stage16 not yet closed because
+### Stage16 still open after refoundation because
 
-- durable active offline scope still uses `sessionStorage` and disappears on a true browser restart;
-- cold-start offline Reader is not implemented/accepted;
-- stored signed authorization is not yet re-verified as read-time authority before rendering;
-- stored blobs are not yet re-hashed at every offline use;
-- reconnect revocation/publication/revision purge remains open;
-- revision/tombstone/cursor/delta/outbox flow remains unwired.
+- true cold-start offline Reader is `STUDENT-016I` and remains intentionally unimplemented by the design track;
+- reconnect revalidation/purge is `016R`;
+- revision/tombstone/cursor/delta synchronization is `016S`;
+- bounded outbox is conditional `016O` only if later offline writes require it;
+- Stage16 closure matrix is `016G`.
 
-## 7. Hosted runtime
+## 8. UX/UI foundation decisions
 
-Railway inspection/dev stack is live:
+Source-backed audit established:
 
-- Student: `https://alwaslh-dev-student-7eaur-production.up.railway.app`
-- Admin: `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
-- API: `https://alwaslh-dev-api-7eaur-production.up.railway.app`
-- PostgreSQL: Railway private service.
+- neither Student nor Admin currently has route-based product navigation;
+- authenticated Student currently stacks Curriculum + Assessment + Offline Downloads + Access in one aggregate surface;
+- Reader is embedded in curriculum instead of being a focused learning screen;
+- Admin currently has 11 flat state-switched workspaces and multiple multi-workflow giant pages;
+- Student exposes storage/crypto/offline implementation terms that should be learner-facing meanings;
+- Admin exposes Stage/parity/config/cache/revision implementation language beyond normal operator need;
+- existing API/security/publication/assessment/offline contracts remain valuable and should be preserved;
+- `packages/brand` identity/tokens are canonical and should be extended, not replaced.
 
-Latest known statuses at this sync: API/Admin/Student/PostgreSQL **SUCCESS**.
+Target Student stable implemented-era destinations:
 
-This is not Stage28 final cutover. Read `docs/operations/RAILWAY_LIVE_STATE.md` before changing deployment settings.
+- Home
+- Learn
+- Practice
+- Downloads
+- Account access
+- dedicated Reader and active Assessment screens
 
-## 8. Content state
+Do not expose future Personal Learning/Progress as finished navigation before those roadmap stages exist.
+
+Target Admin global work areas:
+
+- Overview
+- Curriculum
+- Content / Ingestion / OCR
+- AI Jobs / Human Review
+- Question Bank / Quizzes
+- Students / Access Codes
+- Operations / Notifications / Audit / constrained System Status
+
+Dashboard remains overview/attention/shortcuts only.
+
+## 9. Hosted runtime
+
+Railway inspection/dev stack is documented under `docs/operations/RAILWAY_LIVE_STATE.md`.
+
+Known public inspection surfaces historically include Student/Admin/API services plus PostgreSQL private service. Treat the document/live Railway connector evidence as authority before making runtime claims.
+
+The Railway environment label `production` does **not** mean Stage28 final production cutover is complete.
+
+## 10. Content state
 
 Canonical source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
 
-- full Stage9 inventory: 48 documents / 5,552 images;
-- live byte materialized sample: Grade 9 English only;
-- sample result: 75 source images, 75 ready media assets, 300 variants, 75 Draft lesson assets, 10 lessons;
-- Student visibility: **NO** until normal Admin review/publication;
-- old Supabase content import: **OUT OF CURRENT SCOPE**.
+- full inventory: 48 documents / 5,552 images;
+- bounded Grade 9 English proof: 75 source images / 75 ready media assets / 300 variants / 75 Draft lesson assets / 10 lessons;
+- Student visibility remains NO until normal Admin review/publication;
+- do not bulk-materialize the full inventory during UX/UI refoundation.
 
-Read `docs/content/LIVE_CONTENT_IMPORT_STATUS.md` before importing/publishing more content.
+Read `docs/content/LIVE_CONTENT_IMPORT_STATUS.md` before content import/publication work.
 
-## 9. Remaining roadmap summary
+## 11. Refoundation execution order
 
-Exact sequence after current work:
+Canonical details live in `UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
 
-1. Stage16 closure.
-2. Stage17 Personal Learning Data.
-3. Stage18 Notifications.
-4. Stage19 Progress / Statistics / Achievements.
-5. Stage20 Import / Export / Reporting closure.
-6. Stage21 Performance Engineering.
-7. Stage22 Security Hardening.
-8. Stage23 Tests & CI Expansion.
-9. Stage24 Accessibility / Device QA.
-10. Stage25 Initial Data / Content Load.
-11. Stage26 Staging.
-12. Stage27 Release Gate.
-13. Stage28 Production Cutover.
-14. Stage29 Monitoring & Operations.
+High-level sequence:
 
-`AI-012..AI-019` remains a cross-cutting open requirement before final release if live AI is part of the release candidate.
+1. `UX-B00` audit/IA/design-system/content-language/roadmap foundation.
+2. `UX-B01` shared routing/shell/presentation foundation.
+3. `UX-B02..B05` Student shell, learning/Reader, assessment, downloads/account/copy.
+4. `UX-B06..B14` Admin shell and operational workflow families.
+5. `UX-B15` legacy/copy/shared-pattern cleanup.
+6. `UX-B16` responsive/RTL/accessibility closure.
+7. `UX-B17` browser/visual/regression refoundation closure.
+8. Resume normal roadmap at **`STUDENT-016I`** only after closure.
 
-## 10. Exact first engineering action
+Each implementation batch requires applicable lint/typecheck/tests/build/browser/responsive/RTL/a11y evidence and exact SHA/PR/run IDs.
 
-Do **not** redesign or bulk-import content first, and do not trust historical CLOSED labels blindly.
+## 12. Exact first action for a replacement conversation
 
-First run the recovery/audit protocol in `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`:
+Do not jump to Stage16/17 work or redesign from imagination.
 
-- reconstruct product/users/flows/architecture/DB/API/frontend/deployment/content map from actual source;
-- live-check current evidence;
-- verify adjacent closed-stage contracts and executable coverage;
-- open/fix any proven correctness/security/integrity gap in the owning layer;
-- then finish the first incomplete `PROJECT_EXECUTION_QUEUE.md` item for Stage16.
-
-Current expected Stage16 continuation:
-
-- durable non-secret offline scope discovery;
-- verify stored signed authorization at use time;
-- re-hash stored blobs at use time;
-- cold-start offline Reader with network unavailable;
-- tamper/expiry/clock-rollback fail-closed behavior;
-- reconnect revalidation/purge;
-- revision/tombstone/cursor/delta/outbox;
-- one exact-head Stage16 closure matrix + synchronized docs.
-
-A separate controlled content task may review/publish the already imported Grade 9 English Draft sample without changing the Stage16 architecture.
+1. recover live `main` and PR/Issue #16 state;
+2. read the current UX/UI refoundation authority in Section 4;
+3. determine the first unmerged/incomplete UX-Bxx batch from `PROJECT_STATUS.md` and the refoundation roadmap;
+4. inspect the actual callers/contracts/tests for that batch;
+5. work on a short-lived branch from refreshed `main`;
+6. update status/log/Issue #16 during the batch;
+7. merge only after exact-head green evidence;
+8. keep `STUDENT-016I` paused until the refoundation exit gate is closed.
