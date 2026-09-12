@@ -85,10 +85,9 @@ function StudentHomeOverview() {
   );
 }
 
-function DestinationHeading({ destination }: { destination: "learn" | "practice" }) {
-  const item = learningDestinations.find((candidate) => candidate.key === destination);
-  if (!item) return null;
-  return <header className="student-page-heading"><p className="eyebrow">{item.label}</p><h1>{destination === "learn" ? "موادك ودروسك" : "تدرّب واختبر نفسك"}</h1><p>{item.description}</p></header>;
+function LearnHeading() {
+  const item = learningDestinations.find((candidate) => candidate.key === "learn")!;
+  return <header className="student-page-heading"><p className="eyebrow">{item.label}</p><h1>موادك ودروسك</h1><p>{item.description}</p></header>;
 }
 
 export function StudentAccessSection({ profile, online, onSessionExpired, onLoggedOut }: {
@@ -113,12 +112,12 @@ export function StudentAccessSection({ profile, online, onSessionExpired, onLogg
         {destination === "home" ? <StudentHomeOverview /> : null}
         {destination === "learn" ? (
           <>
-            {atLearnRoot ? <DestinationHeading destination="learn" /> : null}
+            {atLearnRoot ? <LearnHeading /> : null}
             {atLearnRoot && activatedAccess ? <div className="form-alert is-success student-route-notice" role="status"><strong>تم تفعيل الصف. أصبح محتواه متاحًا في التعلّم.</strong></div> : null}
             <StudentLearningExperience online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} />
           </>
         ) : null}
-        {destination === "practice" ? <><DestinationHeading destination="practice" /><StudentAssessmentSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /></> : null}
+        {destination === "practice" ? <StudentAssessmentSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /> : null}
         {destination === "downloads" ? <StudentOfflineDownloadsSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /> : null}
         {destination === "account" ? <StudentAccountExperience profile={profile} online={online} onSessionExpired={onSessionExpired} onAccessChanged={() => setCurriculumRefreshKey((current) => current + 1)} onLoggedOut={onLoggedOut} /> : null}
       </div>
