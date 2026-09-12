@@ -2,7 +2,7 @@
 
 > Current consolidated engineering truth. Code, PostgreSQL migrations, executable CI and live runtime evidence outrank prose. Historical detail remains in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-12 — UX-B03 verified/merged; UX-B04 Student Practice / Assessment active from refreshed live main.**
+Last consolidated: **2026-09-12 — UX-B04 Student Practice / Assessment code + visual acceptance complete; final documentation-head CI pending before merge.**
 
 ## Project Understanding
 
@@ -12,9 +12,11 @@ Student is an **installed educational app experience**, not a dashboard. Current
 
 `Activation/Login → Home → Learn → Subject → Lesson/Reader`
 
-with separate `Practice`, `Downloads`, and `Account` destinations. B04 now owns `Practice → Quiz choice → Focused Attempt → Result/Review`.
+with separate `Practice`, `Downloads`, and `Account` destinations. B04 owns:
 
-The current visual UI is evidence for behavior and product contracts only. From B04 onward the implementing engineer/designer owns final ship quality and may rebuild visual composition when needed while preserving approved identity and domain authority.
+`Practice Library → Quiz Decision → Focused Attempt → Result/Review`.
+
+The legacy visual UI is evidence for behavior and product contracts only. From B04 onward the implementing engineer/designer owns final ship quality and may rebuild visual composition when needed while preserving approved identity and domain authority.
 
 ## Architecture
 
@@ -43,8 +45,6 @@ Stable authority contracts:
 
 ### Student shell — B02 integrated
 
-Stable destinations:
-
 `Home | Learn | Practice | Downloads` + `Account`
 
 Top-level routes:
@@ -61,17 +61,13 @@ Top-level routes:
 - `/app/learn/subjects/:subjectId` — one subject curriculum/lesson sequence;
 - `/app/learn/lessons/:lessonId` — focused Reader.
 
-A route identifier is not trusted as authorization. Subject/lesson context is first resolved from the canonical server-filtered curriculum before Reader access.
+### Student Practice / Assessment — B04 accepted
 
-### Student Practice / Assessment — B04 active
-
-Target route ownership:
-
-- `/app/practice` — Practice library and recent attempts;
-- `/app/practice/quizzes/:quizId` — one quiz detail, learner-facing question-set choice and Practice/Test mode choice;
+- `/app/practice` — Practice library, filters and recent attempts;
+- `/app/practice/quizzes/:quizId` — quiz detail, learner-facing question-set choice and Practice/Test mode choice;
 - `/app/practice/attempts/:sessionId` — focused in-progress attempt or completed result/review.
 
-Navigation state is URL state. `sessionId` is not trusted as scoring authority: attempt state is restored through `/v1/student/assessment-sessions/:sessionId` and all answer/finalize behavior remains API-owned.
+Navigation state is URL state. `sessionId` is never trusted as scoring authority: attempt state is restored through `/v1/student/assessment-sessions/:sessionId`, while answer/finalize/score remain API-owned.
 
 ### Admin target hierarchy
 
@@ -95,42 +91,44 @@ Retained decisions:
 - **AD-211** — BrowserRouter is the shared routing base.
 - **AD-213** — shared UI package remains framework-neutral and owns no domain authority.
 - **AD-214** — route changes focus the labeled route-content region.
-- **AD-217..223** — B02 Student shell/navigation, adaptive composition, connectivity state, and access-state reuse remain binding.
-- **AD-224..229** — B03 URL-owned learning hierarchy, catalog-authorized deep links, focused Reader, parity-preserving copy cleanup, no cold-offline scope expansion, and legacy curriculum removal remain binding.
+- **AD-217..223** — B02 Student shell/navigation and adaptive composition decisions remain binding.
+- **AD-224..229** — B03 URL-owned learning hierarchy, catalog-authorized deep links and focused Reader remain binding.
 
 B04 decisions:
 
-- **AD-230 — existing visuals are not a preservation contract.** Starting B04, current screens are functional evidence only; layout/composition may be rebuilt to product quality while approved identity and product contracts remain fixed.
-- **AD-231 — Practice is a route hierarchy, not one dashboard surface.** Catalog, quiz decision, attempt and result/review have separate responsibilities and URLs.
+- **AD-230 — existing visuals are not a preservation contract.** Current screens are functional evidence only; layout/composition may be rebuilt to product quality while identity and product contracts remain fixed.
+- **AD-231 — Practice is a route hierarchy, not one dashboard surface.** Catalog, quiz decision, attempt and result/review own separate responsibilities and URLs.
 - **AD-232 — explicit question-set choice is retained but humanized.** Stage15 proves version selection is a real behavior contract; Student UI presents it as “مجموعة الأسئلة” and removes server/version implementation language.
-- **AD-233 — active Assessment is a focused learning task.** Global Student navigation is visually suppressed while solving/reviewing an attempt; the attempt uses a constrained single-column composition with visible progress and strong answer ergonomics.
-- **AD-234 — Practice/Test feedback timing is preserved.** Practice shows immediate answer feedback; Test defers feedback until server finalize.
-- **AD-235 — attempt deep links restore from API authority.** React `activeAssessment` is removed as navigation authority; refresh/direct attempt routes call the canonical session endpoint.
-- **AD-236 — no decorative performance debt.** B04 uses existing React/CSS/router primitives and design tokens; no animation library, large asset, extra polling system or new network endpoint is introduced.
+- **AD-233 — active Assessment is a focused learning task.** Global Student navigation is suppressed while solving/reviewing an attempt; the attempt uses a constrained task composition with visible progress and strong answer ergonomics.
+- **AD-234 — Practice/Test feedback timing is preserved.** Practice shows immediate feedback; Test defers feedback until server finalize.
+- **AD-235 — attempt deep links restore from API authority.** React local `activeAssessment` is removed as navigation authority.
+- **AD-236 — no decorative performance debt.** B04 introduces no animation library, large visual asset, polling system or product endpoint.
+- **AD-237 — focused Assessment removes redundant global skip chrome only while global navigation is itself suppressed.** The general product skip link remains elsewhere; focused attempt/review does not expose a misleading floating action.
+- **AD-238 — completion is a real interaction transition.** When finalize changes the same route from active attempt to result/review, viewport resets to the result start and focus moves programmatically to the result heading so visual and assistive-technology users enter the new state coherently.
 
 ## Design Research / Tool Evidence
 
 - repository skill `alwaslh-product-engineering` remains binding source-backed product guidance;
-- Product Design installed skill states full Product Design workflows are not supported in standard chat mode, so no unsupported workflow was claimed;
-- Mobbin flow research was attempted but connector returned a paid-plan requirement; no Mobbin result was treated as evidence;
-- Figma FigJam flow `Alwaslh Student Practice Flow — UX-B04`, diagram ID `48e1f36b-f638-45d5-8b79-aa03ea0c2eaa`, was created to validate Practice library → quiz choice → focused Practice/Test → result/review → leave/resume structure;
-- external educational products were used only as pattern references for one-task-at-a-time focus, progress visibility and feedback timing; Alwaslh contracts remain source of truth.
+- Product Design full workflows are not supported in this standard chat mode, so no unsupported execution was claimed;
+- Mobbin research was attempted but the connector required a paid plan; no Mobbin result was treated as evidence;
+- Figma FigJam flow `Alwaslh Student Practice Flow — UX-B04`, diagram ID `48e1f36b-f638-45d5-8b79-aa03ea0c2eaa`, was created before implementation;
+- external educational products were pattern references only; Alwaslh code/contracts remained source of truth.
 
 ## Audit Findings
 
 | ID | Severity | Area | Problem | Solution / Evidence | Status |
 |---|---:|---|---|---|
-| `UX-IA-101` | P1 | Routing | apps lacked route-based navigation | BrowserRouter + route foundation | FIXED / B01 VERIFIED+MERGED |
-| `UX-IA-102` | P1 | Student shell | authenticated Student was one aggregate surface | stable shell + destination-owned mounting | FIXED / B02 VERIFIED+MERGED |
-| `UX-IA-104` | P1 | Learn | subject/lesson navigation lived in component state | real Learn/Subject/Lesson routes | FIXED / B03 VERIFIED+MERGED |
-| `UX-IA-105` | P1 | Reader | Reader embedded inside curriculum surface | dedicated focused Reader shell | FIXED / B03 VERIFIED+MERGED |
-| `UX-IA-106` | P1 | Practice | quiz catalog, version choice, attempt, result and history shared one state-driven surface | routed library/detail/attempt hierarchy | IMPLEMENTED / VERIFYING B04 |
-| `UX-VIS-101` | P1 | Product quality | legacy UI risked being treated as required visual baseline | product-quality ownership gate in roadmap §2.1 | ACTIVE / BINDING B04+ |
-| `UX-COPY-103` | P1 | Assessment | Student saw server/version/roadmap language | learner-facing question-set/offline/result copy | IMPLEMENTED / VERIFYING B04 |
-| `UX-A11Y-102` | P2 | Assessment | active attempt competed with global navigation | focused attempt composition + route semantics | IMPLEMENTED / VERIFYING B04 |
+| `UX-IA-101` | P1 | Routing | apps lacked route-based navigation | BrowserRouter + route foundation | FIXED / B01 MERGED |
+| `UX-IA-102` | P1 | Student shell | authenticated Student was one aggregate surface | stable shell + destination ownership | FIXED / B02 MERGED |
+| `UX-IA-104` | P1 | Learn | subject/lesson navigation lived in component state | real Learn/Subject/Lesson routes | FIXED / B03 MERGED |
+| `UX-IA-105` | P1 | Reader | Reader embedded inside curriculum surface | dedicated focused Reader | FIXED / B03 MERGED |
+| `UX-IA-106` | P1 | Practice | catalog/version/attempt/result/history shared one state-driven surface | routed library/detail/attempt hierarchy | FIXED / B04 ACCEPTED |
+| `UX-VIS-101` | P1 | Product quality | legacy UI risked becoming visual baseline | binding ship-quality gate | ACTIVE / BINDING B04+ |
+| `UX-COPY-103` | P1 | Assessment | server/version language leaked to Student | learner-facing copy | FIXED / B04 ACCEPTED |
+| `UX-A11Y-102` | P2 | Assessment | active attempt competed with global navigation / result transition | focused composition + semantic headings + result focus | FIXED / B04 ACCEPTED |
 | `UX-COPY-101` | P1 | Student offline/account | technical offline/device copy remains elsewhere | B05 | OPEN / PARTIAL |
 | `UX-IA-103` | P1 | Admin | flat/mixed Admin workspace | B06+ | OPEN |
-| `STUDENT-016I` | P1 | Offline/PWA | true cold-start offline Reader not closed | resume only after B17 | PAUSED / NOT TOUCHED |
+| `STUDENT-016I` | P1 | Offline/PWA | true cold-start offline Reader not closed | resume only after B17 | PAUSED |
 | `AI-012..AI-019` | P2 | AI | live provider readiness not proven | separate live verification | NOT YET VERIFIED |
 
 ## Changes Made — 2026-09-12
@@ -141,7 +139,7 @@ PR #42 final head `203882a934dfcb68df4a1e1e4f972583317cabf1`; **15/15 SUCCESS**;
 
 ### UX-B01 — DONE / VERIFIED / MERGED
 
-PR #43 final exact head `781e70eb31a48b76e50a1bad490f7aa947d2d7ce`; **20/20 SUCCESS**; merge/live main `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`.
+PR #43 final exact head `781e70eb31a48b76e50a1bad490f7aa947d2d7ce`; **20/20 SUCCESS**; merge `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`.
 
 ### UX-B02 — DONE / VERIFIED / MERGED
 
@@ -149,81 +147,92 @@ PR #44 final head `b956248418303618120d02cda562bf179cd7071b`; **20/20 SUCCESS**;
 
 ### UX-B03 — DONE / VERIFIED / MERGED
 
-PR #46:
+PR #46 final head `42bf4e28b448ee27dff628c43e6db8ce564db805`; **21/21 SUCCESS**; merge/live main `56ee51ab0d5669b4a38f9efec991ea79971d3503`.
 
-- final head `42bf4e28b448ee27dff628c43e6db8ce564db805`;
-- exact-head workflows **21/21 SUCCESS**;
-- direct B03 gate `34713062100` — SUCCESS;
-- Stage14 `34713062118` — SUCCESS;
-- Stage15 `34713062147` — SUCCESS;
-- Stage16 `34713062156` — SUCCESS;
-- B02 regression `34713062114` — SUCCESS;
-- Admin Product `34713062178` — SUCCESS;
-- Admin Operations `34713062137` — SUCCESS;
-- Rebuild `34713062125` — SUCCESS after rerunning the one transient failed browser job only; rerun job `103606082888` — SUCCESS;
-- merge/live main `56ee51ab0d5669b4a38f9efec991ea79971d3503`.
-
-### UX-B04 — Student Practice / Assessment
+### UX-B04 — IMPLEMENTED / CODE+VISUAL ACCEPTED / FINAL DOCS-HEAD CI PENDING
 
 Branch: `ux/student-practice`
 
-Base: `main@56ee51ab0d5669b4a38f9efec991ea79971d3503`.
+PR: #47
 
-Implemented before CI acceptance:
+Live-main synchronization:
 
-- roadmap §2.1 product-quality visual ownership gate;
-- route-driven `StudentAssessmentExperience` for Practice library / quiz detail / attempt;
-- direct session restoration from API on attempt URLs;
-- learner-facing “مجموعة الأسئلة” instead of implementation-oriented version/server copy;
-- focused Practice/Test attempt layout with progress, touch-friendly choices and quiet chrome;
+- PR #48 Legacy Content moved `main` to `d113dc02212884b93fa0cd2ac8f75aae6bdb7258` during B04;
+- safe merge commit `3082984ce5b4fa02bad98eb91d73d0a206342c6d` was constructed with prior B04 head + new live main as parents;
+- comparison `d113dc... → 3082984...` contained only B04 files;
+- comparison `597f363... → 3082984...` contained only Legacy Content files;
+- `apps/api/src/server.ts`, guarded Legacy startup runtime, tests and runbooks were therefore preserved.
+
+B04 product implementation:
+
+- route-driven `StudentAssessmentExperience` for library / quiz detail / attempt;
+- canonical API session restore on direct attempt URL;
+- learner-facing question-set choice;
+- Practice immediate feedback / Test deferred feedback;
+- focused attempt progress and touch-friendly answer choices;
 - dedicated result/review composition;
-- Practice immediate feedback and Test deferred feedback preserved;
-- CSS rebuilt from list/detail/task composition rather than two-column card grid;
-- focused attempt/review suppresses Student global navigation through existing `:has()` shell architecture;
-- Stage15 E2E migrated to new routes, direct completed-attempt reload, same-session resume, offline/reconnect and unavailable-session recovery;
-- `.github/workflows/ux-b04-student-practice.yml` direct B04 gate added.
+- same-session resume and reconnect refresh;
+- unavailable-session recovery;
+- Arabic option markers;
+- duplicate Practice heading/network chrome removed;
+- safe mobile clearance above fixed bottom navigation;
+- attempt title and result title use real heading semantics;
+- result transition resets scroll and focuses its heading;
+- dedicated visual QA matrix for four states on phone and desktop.
 
-Explicitly unchanged:
+Visual QA findings fixed during acceptance:
 
-- Assessment API/database/scoring/finalization/publication rules;
-- Stage16 offline/PWA capability;
-- Downloads/Account — B05;
-- Admin — B06+.
+1. duplicate Practice heading + duplicate connectivity state;
+2. mobile content clearance around fixed navigation;
+3. ambiguous question-set accessible naming in browser test;
+4. non-semantic attempt title;
+5. direct-attempt reconnect path;
+6. focused result exposing the global skip-link as a floating pill;
+7. same-route result opening at the previous question scroll position.
+
+No backend Assessment authority or Stage16 capability was changed.
 
 ## Tests & Verification
 
-### B03 final acceptance
+### UX-B04 accepted code head
 
-Final PR #46 head `42bf4e28b448ee27dff628c43e6db8ce564db805`: **21/21 SUCCESS**, then merged as `56ee51ab0d5669b4a38f9efec991ea79971d3503`.
+Accepted functional/visual code head before documentation sync:
 
-### B04 required acceptance
+`6bef406fdc00f0c3e127e6d5b418b18a8561b28e`
 
-Pending exact-head CI:
+Exact-head result: **22/22 SUCCESS**.
 
-- Student lint/typecheck/unit/build;
-- clean API typecheck/build/migrations;
-- Practice → quiz detail → attempt in real Chromium;
-- explicit question-set binding;
-- Practice immediate feedback / Test deferred feedback;
-- direct completed-attempt refresh;
-- server-owned finalize/result;
-- same-session resume;
-- offline write block + reconnect refresh;
-- unavailable-session recovery;
-- focused navigation suppression;
-- phone/tablet/desktop no horizontal overflow;
-- Stage14/15/16 and B02/B03 regressions;
-- Rebuild regression;
-- full path-triggered exact-head matrix.
+Key runs:
 
-Current B04 state: **IMPLEMENTED / VERIFICATION PENDING**.
+- `34716757907` — UX B04 Student Practice and Assessment — SUCCESS;
+- `34716757865` — Stage14 Student Product — SUCCESS;
+- `34716757890` — Stage15 Student Assessment — SUCCESS, including PostgreSQL contracts + real Chromium 390px;
+- `34716757918` — Stage16 Student PWA — SUCCESS;
+- `34716757874` — UX B03 Student Learning and Reader — SUCCESS;
+- `34716757979` — UX B02 Student Shell and Navigation — SUCCESS;
+- `34716757924` — UX B01 Shared Frontend Foundation — SUCCESS;
+- `34716757929` — Rebuild Stage Verification — SUCCESS;
+- `34716757904` — Stage 9 Content Import Verification — SUCCESS;
+- all remaining Admin/AI/OCR/Media/Question Bank/combined-integration workflows on this exact head — SUCCESS.
 
-Local container checkout remains unavailable because this execution environment cannot resolve `github.com`; GitHub Actions is the executable verification source.
+B04 visual evidence:
+
+- run `34716757907`;
+- artifact `10305050307` (`ux-b04-visual-qa`);
+- eight viewport screenshots inspected manually:
+  - Library phone + desktop;
+  - Quiz detail phone + desktop;
+  - Active attempt phone + desktop;
+  - Result/review phone + desktop.
+
+Final visual result meets the B04 acceptance bar: **Functional + Clear + Elegant + Consistent + Fast + Maintainable + Professional** for the changed flow. Result phone begins from score/title after finalize; no duplicate chrome or floating skip action remains; focused attempt stays focused; RTL and density are coherent; no horizontal overflow is present.
+
+This documentation synchronization changes the PR head. The resulting docs-synchronized head must pass its own triggered exact-head CI before merge. The `6bef406...` executable evidence remains the accepted code/visual baseline because the subsequent changes are documentation-only.
 
 ## Known Issues / Remaining Work
 
-- verify B04 exact-head CI and fix real regressions at root cause;
-- Downloads/Account/offline technical-copy cleanup — B05;
+- final docs-head CI + PR #47 merge — current B04 closure step;
+- UX-B05 Downloads/Account/offline technical-copy cleanup — **NOT STARTED until B04 merge**;
 - Admin refoundation — B06+;
 - cross-product cleanup — B15;
 - responsive/RTL/accessibility closure — B16;
