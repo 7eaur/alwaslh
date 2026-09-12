@@ -142,7 +142,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
       return { status: "ready" };
     } catch (error) {
       app.log.error({ err: error }, "database readiness check failed");
-      return reply.code(503).send({ status: "not_ready" };
+      return reply.code(503).send({ status: "not_ready" });
     }
   });
 
