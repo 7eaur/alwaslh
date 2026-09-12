@@ -5,40 +5,24 @@ import { expect, test } from "@playwright/test";
 function createStudentFixture() {
   const apiDirectory = resolve(process.cwd(), "../api");
   const fixture = resolve(process.cwd(), "e2e/reader-fixture.ts");
-  const output = execFileSync(process.execPath, ["--import", "tsx", fixture], {
-    cwd: apiDirectory,
-    env: process.env,
-    encoding: "utf8",
-  });
-  return JSON.parse(output);
+  return JSON.parse(execFileSync(process.execPath, ["--import", "tsx", fixture], { cwd: apiDirectory, env: process.env, encoding: "utf8" }));
 }
 
 async function expectNoHorizontalOverflow(page) {
-  const metrics = await page.locator("body").evaluate((body) => ({
-    scrollWidth: body.scrollWidth,
-    clientWidth: body.clientWidth,
-  }));
+  const metrics = await page.locator("body").evaluate((body) => ({ scrollWidth: body.scrollWidth, clientWidth: body.clientWidth }));
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
 }
 
 async function openAuthenticatedStudent(page) {
   const fixture = createStudentFixture();
-  await page.context().addCookies([
-    {
-      name: fixture.sessionCookieName,
-      value: fixture.sessionToken,
-      url: "http://127.0.0.1:5174",
-      httpOnly: true,
-      sameSite: "Lax",
-    },
-  ]);
+  await page.context().addCookies([{ name: fixture.sessionCookieName, value: fixture.sessionToken, url: "http://127.0.0.1:5174", httpOnly: true, sameSite: "Lax" }]);
   await page.goto("/");
   await expect(page).toHaveURL(/\/app\/home$/);
-  await expect(page.getByRole("heading", { name: "ماذا تريد أن تتعلم اليوم؟" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
   return fixture;
 }
 
-test("Student shell provides stable mobile destinations, focus, history and offline status", async ({ page }) => {
+test("Student shell provides stable mobile destinations, focus, history and actionable offline state", async ({ page }) => {
   await openAuthenticatedStudent(page);
 
   await expect(page.locator(".aw-product-shell")).toHaveAttribute("dir", "rtl");
@@ -47,26 +31,26 @@ test("Student shell provides stable mobile destinations, focus, history and offl
   await expect(phoneNav.getByRole("link")).toHaveCount(4);
   await expect(phoneNav.getByRole("link", { name: "الرئيسية" })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "حسابي", exact: true })).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: "متصل" }).first()).toBeVisible();
+  await expect(page.locator(".student-network-warning")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
-  await phoneNav.getByRole("link", { name: "التعلم" }).click();
+  await phoneNav.getByRole("link", { name: "التعلّم" }).click();
   await expect(page).toHaveURL(/\/app\/learn$/);
   await expect(page.locator("#route-content")).toBeFocused();
-  await expect(page.getByRole("heading", { name: "التعلم" })).toBeVisible();
-  await expect(phoneNav.getByRole("link", { name: "التعلم" })).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("heading", { name: "موادك ودروسك" })).toBeVisible();
+  await expect(phoneNav.getByRole("link", { name: "التعلّم" })).toHaveAttribute("aria-current", "page");
 
   await page.goBack();
   await expect(page).toHaveURL(/\/app\/home$/);
   await expect(page.locator("#route-content")).toBeFocused();
-  await expect(page.getByRole("heading", { name: "ماذا تريد أن تتعلم اليوم؟" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
 
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await expect(page.getByRole("status").filter({ hasText: "غير متصل — يمكنك فتح ما سبق تنزيله" })).toBeVisible();
+  await expect(page.locator(".student-network-warning")).toHaveText("غير متصل");
   await page.context().setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
-  await expect(page.getByRole("status").filter({ hasText: "متصل" }).first()).toBeVisible();
+  await expect(page.locator(".student-network-warning")).toHaveCount(0);
 });
 
 test("Student shell adapts navigation for tablet and desktop without overflow", async ({ page }) => {
