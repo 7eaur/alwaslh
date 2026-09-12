@@ -21,7 +21,7 @@ async function expectNoHorizontalOverflow(page) {
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
 }
 
-test("protected Reader serves published media, approved OCR, search and honest offline state", async ({ page }) => {
+test("authorized Learn hierarchy opens a focused protected Reader with direct-route parity", async ({ page }) => {
   const fixture = createReaderFixture();
   await page.context().addCookies([
     {
@@ -42,11 +42,15 @@ test("protected Reader serves published media, approved OCR, search and honest o
   await expect(page.locator("body")).not.toContainText(/Stage16|PWA|authority/);
 
   await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
-  await expect(page.getByRole("button", { name: new RegExp(fixture.subjectName) })).toBeVisible();
+  const subjectLink = page.getByRole("link", { name: new RegExp(fixture.subjectName) });
+  await expect(subjectLink).toBeVisible();
+  await subjectLink.click();
+  await expect(page).toHaveURL(/\/app\/learn\/subjects\/[^/]+$/);
+  await expect(page.getByRole("heading", { name: fixture.subjectName })).toBeVisible();
 
-  const lessonButton = page.getByRole("button", { name: new RegExp(fixture.lessonTitle) });
-  await lessonButton.focus();
-  await expect(lessonButton).toBeFocused();
+  const lessonLink = page.getByRole("link", { name: new RegExp(fixture.lessonTitle) });
+  await lessonLink.focus();
+  await expect(lessonLink).toBeFocused();
 
   const readerResponsePromise = page.waitForResponse(
     (response) =>
@@ -59,6 +63,8 @@ test("protected Reader serves published media, approved OCR, search and honest o
       response.url().includes(`/v1/student/lesson-assets/${fixture.assetId}/content`) && response.status() === 200,
   );
   await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/app\/learn\/lessons\/[^/]+$/);
+  const directReaderUrl = page.url();
 
   const readerResponse = await readerResponsePromise;
   const readerPayload = await readerResponse.json();
@@ -73,18 +79,20 @@ test("protected Reader serves published media, approved OCR, search and honest o
   await expect(page.getByRole("heading", { name: fixture.lessonTitle })).toBeVisible();
   await expect(page.getByText(fixture.approvedText, { exact: true })).toBeVisible();
   await expect(page.getByText(fixture.pendingText, { exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /استماع للنص|الاستماع غير مدعوم/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /استماع للدرس|الاستماع غير متاح/ })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "التنقل الرئيسي للطالب على الهاتف" })).toHaveCount(0);
+  await expect(page.getByRole("navigation", { name: "التنقل الرئيسي للطالب" })).toHaveCount(0);
 
   const image = page.locator(".reader-media img");
   await expect(image).toBeVisible();
   expect(await image.evaluate((element) => element.naturalWidth)).toBeGreaterThan(0);
   await expectNoHorizontalOverflow(page);
 
-  const search = page.getByLabel("بحث داخل النص المعتمد");
+  const search = page.getByLabel("بحث داخل الدرس");
   await search.fill("الحركة");
   await expect(page.getByText(fixture.approvedText, { exact: true })).toBeVisible();
-  await search.fill("عبارة غير موجودة في النص المعتمد");
-  await expect(page.getByText("لا توجد نتيجة في النص المعتمد", { exact: true })).toBeVisible();
+  await search.fill("عبارة غير موجودة داخل الدرس");
+  await expect(page.getByText("لا توجد نتيجة داخل الدرس", { exact: true })).toBeVisible();
   await search.fill("");
 
   await page.setViewportSize({ width: 768, height: 1024 });
@@ -100,7 +108,8 @@ test("protected Reader serves published media, approved OCR, search and honest o
 
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await expect(page.getByText(/يلزم اتصال للتحقق من صلاحية الدرس ووسائطه/)).toBeVisible();
+  await expect(page.getByText("أنت غير متصل", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "فتح التنزيلات" })).toBeVisible();
 
   const restoredReader = page.waitForResponse(
     (response) => response.url().includes("/v1/student/lessons/") && response.url().endsWith("/reader") && response.status() === 200,
@@ -110,8 +119,22 @@ test("protected Reader serves published media, approved OCR, search and honest o
   await restoredReader;
   await expect(page.getByText(fixture.approvedText, { exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "العودة إلى دروس المادة" }).click();
-  const returnedLessonButton = page.getByRole("button", { name: new RegExp(fixture.lessonTitle) });
-  await expect(returnedLessonButton).toBeVisible();
-  await expect(returnedLessonButton).toBeFocused();
+  const subjectUrl = await page.getByRole("link", { name: new RegExp(`العودة إلى ${fixture.subjectName}`) }).getAttribute("href");
+  await page.getByRole("link", { name: new RegExp(`العودة إلى ${fixture.subjectName}`) }).click();
+  await expect(page).toHaveURL(new RegExp(`${subjectUrl}$`));
+  const returnedLessonLink = page.getByRole("link", { name: new RegExp(fixture.lessonTitle) });
+  await expect(returnedLessonLink).toBeVisible();
+
+  const directReaderPromise = page.waitForResponse(
+    (response) => response.url().includes("/v1/student/lessons/") && response.url().endsWith("/reader") && response.status() === 200,
+  );
+  await page.goto(directReaderUrl);
+  await directReaderPromise;
+  await expect(page.getByRole("heading", { name: fixture.lessonTitle })).toBeVisible();
+  await expect(page.getByText(fixture.approvedText, { exact: true })).toBeVisible();
+  await expect(page.locator("#route-content")).toBeFocused();
+
+  await page.goBack();
+  await expect(page).toHaveURL(new RegExp(`${subjectUrl}$`));
+  await expect(page.getByRole("heading", { name: fixture.subjectName })).toBeVisible();
 });
