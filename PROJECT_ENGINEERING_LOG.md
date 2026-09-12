@@ -48,7 +48,9 @@ Stable authority contracts:
 - **AD-244 — installed Welcome.** Welcome is a first-launch experience for installed/standalone PWA, not a forced extra page on every anonymous web visit.
 - **AD-245 — Account ownership.** Account is the sole normal visible owner of class access, logout and account help links; access panels must not be duplicated on Home/Learn.
 - **AD-246 — shell ownership.** One Student shell owns global chrome. Account wrappers around every route and permanently visible online-status chrome are removed.
-- **AD-247 — tests assert outcomes, not obsolete copy.** Browser tests must verify successful auth/access/navigation/device behavior rather than force redundant UI text such as persistent “تم تسجيل الدخول”.
+- **AD-247 — tests assert outcomes, not obsolete copy.** Browser tests verify successful auth/access/navigation/device behavior rather than force redundant UI text such as persistent “تم تسجيل الدخول”.
+- **AD-248 — learner error boundary.** API/PostgreSQL own error truth/codes, but Student presentation owns the explanation. Raw backend messages are never a UI contract; Student maps code/status/context to a clear explanation plus a realistic next action.
+- **AD-249 — predictable-failure acceptance.** Expected invalid/offline/expired/unavailable/storage scenarios are first-class product states and must be tested, not left to a generic catch-all.
 
 Binding design order:
 
@@ -83,91 +85,120 @@ Acceptance:
 - UX-B01 — DONE / VERIFIED / MERGED — PR #43, final head `781e70eb31a48b76e50a1bad490f7aa947d2d7ce`, 20/20 SUCCESS.
 - UX-B02 — DONE / VERIFIED / MERGED — PR #44, final head `b956248418303618120d02cda562bf179cd7071b`, 20/20 SUCCESS.
 - UX-B03 — DONE / VERIFIED / MERGED — PR #46, accepted head `42bf4e28b448ee27dff628c43e6db8ce564db805`, 21/21 SUCCESS; merge `56ee51ab0d5669b4a38f9efec991ea79971d3503`.
-- UX-B04 — DONE / VERIFIED / MERGED — final synchronized head `56f19b88169160c8edd90c9cad8cf129a834b76e`; 23/23 SUCCESS after one same-SHA transient Chromium focus rerun; PR #47 merged; branch for current work started from live main `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
+- UX-B04 — DONE / VERIFIED / MERGED — final synchronized head `56f19b88169160c8edd90c9cad8cf129a834b76e`; 23/23 SUCCESS after one same-SHA transient Chromium focus rerun; PR #47 merged; current work started from live main `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
 
-Parallel audit/security work preserved in that baseline includes the Full Product Architecture Audit and `FPA-002` Assessment authorization repair. `FPA-013` Reader active-search-match DOM focus finding remains OPEN unless current Reader work proves/fixes it separately.
+Parallel audit/security work preserved in that baseline includes the Full Product Architecture Audit and `FPA-002` Assessment authorization repair.
 
 ## Active Work — PR #53 Student Experience Rebuild
 
-PR #53 began as UX-B05 Downloads/Account/Copy Closure. Product Owner explicitly expanded it into an end-to-end learner experience rebuild while retaining the B05 offline/account responsibilities.
+PR #53 began as UX-B05 Downloads/Account/Copy Closure. Product Owner expanded it into an end-to-end learner experience rebuild while retaining the B05 offline/account responsibilities.
 
-Implemented/refactored so far:
+Implemented/refactored:
 
-- Downloads rebuilt from single-selector UI into saved + available library while preserving materialization, signed authorization, checksum/storage limits and cleanup contracts.
-- Account is the only normal visible owner of entitlement/class-code management.
+- Downloads rebuilt into saved + available learner library while preserving signed authorization, checksum/storage limits, materialization and cleanup contracts.
+- Account is the only normal visible owner of entitlement/class-code management, logout and help/support links.
 - access panel duplication removed from Home and Learn.
 - `App.tsx` reduced to session orchestration.
-- old authenticated `AccountPage` wrapper removed.
+- old authenticated Account wrapper removed.
 - first installed-app Welcome created.
-- activation/login/recovery rebuilt into `student-entry.tsx` with learner-facing language.
-- public `/help` and `/support` routes added.
-- support copy intentionally does not invent contact details.
-- unified Student app bar / adaptive desktop navigation / four-item mobile bottom navigation.
+- activation/login/recovery rebuilt into `student-entry.tsx`.
+- public `/help` and `/support` routes added without invented support contact details.
+- unified Student app bar / adaptive desktop navigation / four-item mobile navigation.
 - persistent “online” chrome removed; network state appears only when degraded/actionable.
 - Home simplified around real destinations.
-- Learn/Subject presentation rebuilt with calmer hierarchy.
-- focused Reader presentation decoupled from removed AccountPage CSS and rebuilt around controlled reading width.
-- B05 visual/copy Chromium test expanded to Welcome/Auth/Help/Support/Downloads/Account on phone+desktop where fixtures permit.
-- production-copy test blocks implementation/stage/roadmap vocabulary.
-- Stage14 activation E2E changed from obsolete copy assertions to learner outcome assertions while keeping Arabic digit normalization, device key continuity/rebind, recovery, class redemption and curriculum behavior.
-- `stage14.css` removed from production architecture.
-- historical `assessment-polish.css` removed; live integration rules moved to `assessment-integration.css`.
-- generic Practice heading is no longer rendered only to be hidden by CSS; Practice owns its own hierarchy.
+- Learn/Subject presentation rebuilt with calmer hierarchy and actionable unavailable-route states.
+- focused Reader presentation rebuilt; search exposes result count and can move DOM focus to the first result using button or Enter, closing `FPA-013` behavior.
+- Practice/Assessment preserves server-owned scoring/finalization while unavailable sessions and write/finalize errors use learner-safe messages.
+- Downloads distinguish storage budget, device quota, integrity/incomplete download, device verification and network failures with specific next actions.
+- centralized `student-error-copy.ts` maps API error code/status/context to Student copy and is unit-tested against raw backend leakage.
+- activation/access browser tests now cover incomplete codes and password mismatch before requests are sent.
+- Stage14/15/16 and B03/B04 browser suites are being migrated from obsolete copy selectors to real user outcomes.
+- production-realistic Reader fixture data replaces Student-visible Stage/Reader test wording.
+- `stage14.css` removed.
+- `assessment-polish.css` removed; live integration rules separated.
+
+## Predictable Error Scenario Matrix
+
+| Area | Expected scenario | Learner response / action | Verification |
+|---|---|---|---|
+| Activation | code shorter than 6 digits | submit disabled + 6-digit hint | browser |
+| Activation | invalid/expired code | explain invalid/expired; verify/request new | browser + unit mapper |
+| Activation | password mismatch | inline mismatch + submit disabled | browser |
+| Login | invalid credentials | verify account ID/password | mapper unit + auth contracts |
+| Login | temporary password | require private replacement password | browser |
+| Login | device verification/rebind | open Support/request re-link; no crypto jargon | mapper unit + browser contract |
+| Entry | offline/service unavailable/rate limit | connect/retry or wait/retry | PWA + mapper unit |
+| Session | expired | login again | browser |
+| Account | malformed class code | submit disabled + 7-digit instruction | browser |
+| Account | invalid/expired/changed access | contextual access message + retry/support | mapper |
+| Learn | no authorized content | explain class-code route to Account | browser/UI |
+| Learn | unavailable subject/lesson | return to available Learn route | UI |
+| Reader | media fail | verify connection + reload page | UI |
+| Reader | no search result | explicit no-result state | browser |
+| Reader | search result | count + focus first result | browser / FPA-013 closure |
+| Practice | no quiz | clear empty state | UI |
+| Assessment | offline | answer writes/finalize blocked until reconnect | browser |
+| Assessment | session unavailable | return to Practice; raw API detail hidden | browser |
+| Downloads | scope/device storage full | remove content/free device space then retry | UI + contracts |
+| Downloads | integrity/incomplete asset | discard incomplete download + retry | browser/contracts |
+| Downloads | offline | manage saved content only | browser |
 
 ## Findings Register
 
 | ID | Severity | Area | Problem | Evidence / Solution | Status |
 |---|---:|---|---|---|
 | `UX-IA-101` | P1 | Routing | apps lacked route navigation | BrowserRouter + route foundation | FIXED / B01 |
-| `UX-IA-102` | P1 | Student shell | Student was aggregate/account-wrapped surface | stable shell, current rebuild removed AccountPage wrapper | FIXED / REVALIDATING |
+| `UX-IA-102` | P1 | Student shell | Student was aggregate/account-wrapped surface | stable single shell | FIXED / REVALIDATING |
 | `UX-IA-104` | P1 | Learn | subject/lesson local navigation | routed hierarchy | FIXED / B03 |
-| `UX-IA-105` | P1 | Reader | Reader embedded/visually coupled to browser shell | focused route; CSS ownership rebuilt | FIXED / REVALIDATING |
+| `UX-IA-105` | P1 | Reader | Reader embedded/visually coupled | focused Reader | FIXED / REVALIDATING |
 | `UX-IA-106` | P1 | Practice | dashboard-like catalog/detail/attempt/result | routed hierarchy | FIXED / B04 |
 | `UX-COPY-103` | P1 | Assessment | implementation/version language exposed | learner language | FIXED / B04 |
-| `UX-COPY-104` | P1 | Entry | cryptography/device/storage/internal language was shown to learner | rebuilt Entry copy + production-copy scan | FIXED / REVALIDATING |
-| `UX-IA-107` | P1 | Entry | Welcome/Auth/Help/Support lacked one coherent experience | new Student Entry Experience + public Help/Support | FIXED / REVALIDATING |
-| `UX-IA-108` | P1 | Shell | duplicate brand/account/network chrome from layered batches | single shell; account wrapper removed | FIXED / REVALIDATING |
-| `UX-ARCH-104` | P2 | CSS | stage/polish styles override newer features | removed `stage14.css`; replaced `assessment-polish.css`; further `styles.css` cleanup after parity | IN PROGRESS |
-| `UX-ARCH-105` | P2 | Future IA | Notes/Saved/Notifications/Progress had no final placement in current 5-route IA | `STUDENT_PRODUCT_ARCHITECTURE.md` | FIXED / ARCHITECTURE |
-| `UX-OFFLINE-104` | P1 | Reader | Downloads promise cannot yet guarantee true cold-start offline Reader | do not fake completion; return to `STUDENT-016I` after refoundation | OPEN / PAUSED CONTRACT |
-| `FPA-002` | P1 | Assessment authz | abandoned-session authorization omission | independent repair + DB/Chromium proof | FIXED / MERGED |
-| `FPA-013` | P2 | Reader a11y | active search match does not move DOM focus | audit evidence | OPEN |
+| `UX-COPY-104` | P1 | Entry | technical device/storage/internal language | learner-safe Entry copy + scan | FIXED / REVALIDATING |
+| `UX-COPY-105` | P1 | Error UX | Student components could surface `ApiRequestError.message` directly | centralized contextual error mapper + tests | FIXED / FINAL CI PENDING |
+| `UX-IA-107` | P1 | Entry | Welcome/Auth/Help/Support lacked coherent flow | Student Entry Experience | FIXED / REVALIDATING |
+| `UX-IA-108` | P1 | Shell | duplicate brand/account/network chrome | single shell | FIXED / REVALIDATING |
+| `UX-ARCH-104` | P2 | CSS | historical stage/polish overrides | stage14/polish removed; remaining dead CSS is non-blocking cleanup only if parity proves safe | IMPROVED / P3 RESIDUAL |
+| `UX-ARCH-105` | P2 | Future IA | future features lacked placement | Student architecture doc | FIXED / ARCHITECTURE |
+| `UX-OFFLINE-104` | P1 | Reader | true cold-start offline Reader not yet closed | return to `STUDENT-016I`; do not fake completion | OPEN / PAUSED CONTRACT |
+| `FPA-002` | P1 | Assessment authz | abandoned-session authorization omission | independent server repair | FIXED / MERGED |
+| `FPA-013` | P2 | Reader a11y | active search match did not move DOM focus | focusable first result + explicit jump / Enter | FIXED / FINAL CI PENDING |
 | `UX-IA-103` | P1 | Admin | Admin needs dedicated architecture/rebuild | Super Admin Product Rebuild | DELEGATED |
 | `AI-012..AI-019` | P2 | AI | live provider readiness not proven | separate verification | NOT YET VERIFIED |
 
-## Current Verification Evidence
+## Verification Policy / Current Evidence
 
-During the expanded rebuild, Student lint/typecheck/unit/build has already passed on an intermediate refoundation head after the large Entry/Shell/Reader restructuring. Intermediate browser runs were frequently cancelled because newer commits superseded them; this is expected CI concurrency behavior and is not acceptance evidence.
+The large Entry/Shell/Reader refactor passed Student lint/typecheck/unit/build on an intermediate head. A previous exact-head matrix showed non-Student backend/Admin workflows green while Student browser failures were localized to obsolete presentation assertions and a fixture that leaked “Stage14” into Student-visible text; those causes were explicitly corrected rather than reintroducing obsolete UI.
 
-Final acceptance requires one stable exact head with:
+The current implementation is now frozen for final verification unless CI identifies a real regression. Final acceptance requires one stable exact head with:
 
 - lint;
 - strict typecheck;
-- unit tests;
+- unit tests including Student error-copy boundary;
 - production build;
 - clean PostgreSQL contracts where triggered;
-- Stage14 real Chromium activation/access/curriculum;
+- Stage14 activation/access/curriculum browser flow;
 - B01/B02/B03/B04/B05 browser regressions;
 - Stage15 Assessment;
 - Stage16 offline/PWA;
 - Rebuild workflow;
-- all other triggered repository workflows;
+- all other triggered workflows;
 - responsive/no-overflow checks;
-- manual Visual QA artifact inspection.
+- production-copy scan;
+- manual phone/desktop Visual QA artifact inspection.
 
 A green build alone is not product acceptance.
 
-## Known Remaining Work in Current Refoundation
+## Known Remaining Work Before PR #53 Merge
 
-- wait for a stable final head instead of accepting superseded intermediate runs;
-- root-cause any browser regression found by Stage14/B02/B03/B04/B05/Stage15/Stage16;
-- finish Assessment integration cleanup where `assessment.css` still contains historical shell selectors;
-- inspect and then remove dead Entry/Account/Curriculum selectors from `styles.css` only after executable parity confirms no caller;
-- verify/resolve `FPA-013` during Reader/a11y closure;
-- evaluate route-level code splitting after structure stabilizes; historical bundle exceeded 500 kB;
-- inspect phone/desktop visual artifacts and correct actual composition problems rather than only DOM failures;
-- synchronize branch with live `main` before merge if main moves;
-- final status/log/Issue #16 update and exact-head guarded merge.
+- complete stable exact-head CI;
+- fix only evidence-backed regressions discovered by that matrix;
+- manually inspect final visual artifacts for Welcome/Auth/Help/Support/Home/Learn/Reader/Practice/Downloads/Account where fixture coverage exists;
+- keep implementation/stage/roadmap language blocked in Student production copy;
+- synchronize with live `main` if it moved materially;
+- update PR #53 / Issue #16 with final evidence;
+- merge only with exact expected-head guard.
+
+Potential dead selectors in legacy `styles.css` / historical Assessment shell rules are classified as low-risk cleanup after executable parity; they are not justification to destabilize a functionally accepted Student product. Bundle size >500 kB remains a performance debt for later route-level code-splitting evaluation after structural closure.
 
 ## Admin Governance
 
@@ -179,4 +210,4 @@ After UX refoundation closes, normal roadmap resumes exactly at:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
 
-Stage17–19 must follow the placements defined in `STUDENT_PRODUCT_ARCHITECTURE.md` rather than inventing new top-level navigation.
+Stage17–19 must follow `STUDENT_PRODUCT_ARCHITECTURE.md` rather than inventing new top-level navigation.
