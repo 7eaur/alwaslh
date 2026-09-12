@@ -1,0 +1,23 @@
+/* UX-B04 shell integration polish.
+   Practice owns its own route hierarchy and page headings, so the generic B02
+   destination heading must not compete with the task-specific composition. */
+.student-shell.student-destination--practice .student-destination > .student-page-heading {
+  display: none;
+}
+
+/* AccountPage predates the B02 Student shell and exposes a second online label.
+   Keep one connection state in the Student shell for Practice instead of
+   repeating the same status in adjacent chrome. */
+.account-page:has(.student-destination--practice) > .account-header .account-status {
+  display: none;
+}
+
+/* Give scrollable Practice screens enough real mobile space to clear the fixed
+   bottom navigation and the device safe area. Active attempts already suppress
+   global navigation through assessment.css. */
+@media (max-width: 42rem) {
+  .practice-library,
+  .quiz-detail {
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
+  }
+}
