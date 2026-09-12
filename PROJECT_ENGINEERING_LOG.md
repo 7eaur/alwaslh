@@ -1,246 +1,295 @@
 # PROJECT ENGINEERING LOG — الوسيلة الذكية
 
-> Engineering source of truth for project understanding, architecture decisions, findings, changes, verification and remaining work. Code/migrations/executable CI outrank prose.
+> Engineering source of truth for project understanding, architecture decisions, findings, changes, verification and remaining work. Current code/migrations/executable CI/live runtime evidence outrank prose.
 
-Last consolidated: **2026-09-11 — Stage14/15 closed; Stage16 active; protected materialization verified; scoped Grade 9 English live media proof verified.**
+Last consolidated: **2026-09-12 — unified `main`; Stage13G+Student integrated; Stage16 active; Railway live inspection/dev; Grade 9 English Draft media proof verified.**
 
-Historical detail remains in Git history and specialized docs. Current Student continuation lives in `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
+Historical detail remains in Git history, Issue #16 and specialized stage docs. Current continuation is `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
 
 ## 1. Project understanding
 
-**الوسيلة الذكية** منصة تعليمية عربية ذات Student Web + Super Admin Web فوق Fastify/PostgreSQL. Browser surfaces are presentation/resilience layers; canonical Auth, devices, entitlements, curriculum publication, Question Bank/Quiz publication and assessment scoring/history remain server/PostgreSQL authority.
+**الوسيلة الذكية** منصة تعليمية عربية تتكون من Student Web/PWA + Super Admin Web فوق Fastify/PostgreSQL. Browser surfaces are presentation/resilience layers; canonical durable authority remains server/PostgreSQL.
 
 Primary runtime surfaces:
 
-- `apps/student-web` — Student product / PWA.
-- `apps/admin-web` — Super Admin.
-- `apps/api` — authoritative API.
-- `database/migrations` — PostgreSQL integrity authority.
+- `apps/student-web` — Student Web/PWA;
+- `apps/admin-web` — Super Admin;
+- `apps/api` — Fastify/TypeScript authoritative API;
+- `database/migrations` — PostgreSQL integrity/schema authority;
+- `packages/*` — shared domain/design/validation primitives.
 
-Track A owns Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G by default. Track B owns Student Product. Issue #16 is the shared ledger. Final release/cutover is not declared; a Railway inspection/dev stack is live and was used for the scoped Grade 9 English production-content proof recorded below.
+Canonical durable authorities:
 
-## 2. Stable architecture
+- Auth / Device / Session;
+- Access / Entitlements;
+- Curriculum / Publication;
+- Media / OCR;
+- AI execution/review;
+- Question Bank immutable revisions/publication;
+- Quiz Builder immutable published versions;
+- Student assessment scoring/finalization/history.
+
+## 2. Current execution model
+
+The parallel Track A / Track B model is historical after full integration.
+
+PR #33 integrated Stage13G + current Student Product:
+
+- verification head `dcdae7579a40878c71f64593280a0df2f8363ee2`;
+- **19/19 workflows SUCCESS**;
+- merge commit `5e22c3ff157b42b6da47febe205dd91fcb264eed`.
+
+Product Owner direction now assigns the remaining product after Stage13 to one continuation owner. New work starts from live `main` using short-lived branches. One owner does not mean one layer: backend/DB/frontend/Admin responsibilities still live in their correct modules.
+
+Before this documentation sync, live `main` was `8006a7c4b2fa66bcac9cfb3addcd52fa831c42df`.
+
+## 3. Stable architecture
 
 ```text
-Student Web ─┐
-             ├── Fastify API ── PostgreSQL
-Admin Web ───┘       │
-                     ├── Auth / Device / Session
-                     ├── Access / Entitlements
-                     ├── Curriculum / Publication
-                     ├── Media / OCR
-                     ├── AI / Question Bank / Quiz
-                     ├── Student Assessment Runtime
-                     └── Stage16 Offline Lease + Explicit Materialization + future signed cold-offline/sync
+Student Web/PWA ─┐
+                 ├── Fastify API ── Railway PostgreSQL
+Admin Web ───────┘       │
+                         ├── Auth / Device / Session
+                         ├── Access / Entitlements
+                         ├── Curriculum / Publication
+                         ├── Media / OCR
+                         ├── AI / Question Bank / Quiz
+                         ├── Student Assessment
+                         └── Offline authorization/materialization/sync
 ```
 
 Stable rules:
 
-- Browser is not durable canonical business authority.
+- Browser is never durable canonical business authority.
 - returning Student uses password + bound P-256 device proof.
-- `media ready != published`; Student direct content requires `published_at <= now()`.
-- Reader protected media is server-authorized; raw storage keys stay private.
+- `media ready != published`.
+- protected Reader/media remains server-authorized; raw storage keys stay private.
+- AI output never auto-publishes Student questions/content.
 - assessment scoring/finalization remains server-owned.
-- `/v1` is never Service Worker Cache API authority.
-- transient offline UX is not equivalent to protected cold-offline authority.
-- legacy/source media bootstrap may materialize bytes and create curriculum drafts, but may not auto-publish to Student.
+- `/v1` never becomes Service Worker Cache API authority.
+- hosting provider configuration does not become product business logic.
+- source inventory, uploaded media, lesson draft, reviewed lesson and published Student content are distinct states.
 
-## 3. Stage ledger
+## 4. Current stage ledger
 
 | Stage / Area | State |
 |---|---|
 | Stage1–10 + OCR | VERIFIED |
 | Stage11 AI contracts | VERIFIED |
-| Stage12 durable AI runtime | VERIFIED backend/runtime; live provider bootstrap still open |
-| Stage13A–F | VERIFIED / CLOSED; Stage13F promoted |
-| Stage13G | VERIFIED / CLOSED on Track A branch; not promoted |
-| Stage14 Student | CLOSED / VERIFIED @ `ac55f143...` |
-| Stage15 Student assessment | CLOSED / VERIFIED @ `9a787b7...` |
-| Stage16 Offline/PWA | **ACTIVE / PARTIALLY VERIFIED** |
-| Stage17+ | blocked/later by sequence |
-| Railway inspection/dev deployment | **LIVE / VERIFIED** for current inspection stack and scoped Grade 9 English proof |
-| Final release/cutover | NOT DECLARED / future product decision |
+| Stage12 durable AI runtime | VERIFIED backend/runtime; `AI-012..AI-019` open |
+| Stage13A–G | VERIFIED / CLOSED / integrated into `main` |
+| Stage14 Student | CLOSED / VERIFIED |
+| Stage15 Student assessment | CLOSED / VERIFIED |
+| **Stage16 Offline/PWA** | **ACTIVE / PARTIALLY VERIFIED** |
+| Stage17–25 | pending sequentially |
+| Railway inspection/dev hosting | LIVE / VERIFIED for current stack |
+| Stage27/28 final release/cutover | NOT DECLARED |
 
-## 4. Relevant architecture decisions
+## 5. Architecture decisions
 
-- **AD-170** — Stage16 Service Worker caches app shell/static assets only; `/v1` excluded.
-- **AD-171** — no automatic `skipWaiting` / forced lesson reload.
+- **AD-170** — Service Worker caches app shell/static assets only; `/v1` excluded.
+- **AD-171** — no automatic `skipWaiting` / forced study reload.
 - **AD-172** — protected Reader responses remain `private,no-store`; offline learning uses explicit materialization.
 - **AD-173** — offline lease is server-issued, profile/device-bound and uses PostgreSQL time.
 - **AD-174** — max offline lease 24h, clipped by session; grants clipped by entitlement expiry.
-- **AD-175** — Stage16 offline DB must not contain password/session cookie/token/device private key.
-- **AD-176** — revision/tombstone/checkpoint schema remains dormant until proven wired.
-- **AD-177** — >5-minute backward wall-clock movement invalidates local lease use.
+- **AD-175** — offline DB must never contain password/session cookie/token/device private key.
+- **AD-176** — revision/tombstone/checkpoint schema is not authority until real writers/API/client flow is proven.
+- **AD-177** — >5-minute backward client-clock movement invalidates local lease use.
 - **AD-178** — online login correctness does not depend on optional offline persistence.
-- **AD-179** — offline cleanup is exact-scope; rebind removes stale devices only within same profile.
-- **AD-180** — session-scoped reload cleanup pointer may contain only non-secret `{profileId,deviceId}`.
-- **AD-181** — protected bytes require explicit manifest with stable IDs/revision/provenance/checksum/byte size and bounded storage semantics.
-- **AD-182** — no silent offline-content eviction. User removal/update is explicit; a new package replaces an old one only after complete verification.
-- **AD-183** — Student `contentRevision` is a safe numeric API contract; PostgreSQL `BIGINT` representation must not leak into browser comparison semantics.
-- **AD-184** — package freshness is monotonic relative to possibly stale catalog state: `storedRevision >= catalogRevision` is acceptable; only lower stored revision is stale.
-- **AD-185** — **true cold-offline protected Reader requires server-authentic signed authorization. Unsigned mutable IndexedDB lease/package metadata may not be promoted to access authority.**
-- **AD-186** — offline blob integrity must be rechecked against signed checksums at use/read time, not only at initial materialization.
-- **AD-187** — browser security claim is authorization/integrity/expiry/isolation, not DRM against a hostile user controlling the browser.
-- **AD-188** — legacy media bootstrap must be source-revision pinned, explicitly allow-listed, bounded, idempotent, preserve canonical order/provenance, use the existing Media Pipeline, and link lesson assets as **Draft only**. It may never bypass Admin review/publication authority.
-- **AD-189** — for the API monorepo deployment, accepted Railway builds must load `apps/api/Dockerfile`. A manual redeploy that falls back to root Railpack is not equivalent and must not be used as acceptance evidence. Commit-based source deployment is the verified fallback when Railway manual redeploy selects the wrong builder path.
+- **AD-179** — cleanup is exact-scope; rebind removes stale devices only within the same profile.
+- **AD-180** — session-scoped pointer may contain only non-secret `{profileId,deviceId}`.
+- **AD-181** — protected bytes require explicit manifest with stable IDs/revision/provenance/checksum/byte size and bounded storage.
+- **AD-182** — no silent offline-content eviction; replacement is atomic after complete verification.
+- **AD-183** — Student `contentRevision` is a safe numeric API contract; PostgreSQL `BIGINT` representation must not leak to browser comparison semantics.
+- **AD-184** — package freshness is monotonic against possibly stale catalog state: `storedRevision >= catalogRevision` is acceptable.
+- **AD-185** — protected cold-offline Reader requires server-authentic signed authorization; mutable IndexedDB records cannot become authority by themselves.
+- **AD-186** — blob integrity must be checked against signed checksums at use/read time, not only at initial materialization.
+- **AD-187** — browser security goal is authorization/integrity/expiry/isolation, not DRM against a hostile local user.
+- **AD-188** — server signs canonical offline lesson manifests using P-256/ES256; Student verifies only with a public SPKI identity. Private signing material remains API-only.
+- **AD-189** — download-time signature verification is necessary but does not close cold-start authority; stored authorization must be re-verified at use time and stored blobs rehashed before render.
+- **AD-190** — post-Stage13 work uses unified `main` as baseline; old long-lived track branches are historical.
+- **AD-191** — Railway deployment must build monorepo apps from repository-root Docker contexts; adapting application dependencies to an accidentally selected root Railpack build is not an acceptable fix.
+- **AD-192** — canonical content bootstrap is source-revision-pinned, allow-listed, bounded, idempotent, uses existing Media Pipeline and creates Draft links only; it never auto-publishes Student content.
+- **AD-193** — old Supabase is not current runtime DB/content source; Railway PostgreSQL + repository source inventory are current authorities unless Product Owner explicitly reopens legacy import.
 
-## 5. Stage16 implementation
+## 6. Stage16 implemented boundary
 
-### 5.1 Safe PWA shell — VERIFIED
+### 6.1 PWA shell — VERIFIED
 
-Runtime `c1ae86036d4d302b8ca8c411227f41c37b4063ef`, run `34430284173` SUCCESS.
+- app shell/static assets only;
+- `/v1` excluded;
+- offline shell acceptance in real Chromium;
+- no forced `skipWaiting`.
 
-### 5.2 Bounded server-issued lease — VERIFIED
+### 6.2 Bounded lease/lifecycle — VERIFIED
 
-Runtime `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd`; Stage16 `34430915847` + API Regression `34430915786` SUCCESS.
+- server-issued session/device/entitlement-bound lease;
+- PostgreSQL time;
+- max 24h and clipped expiries;
+- account/device IndexedDB scope;
+- activation/login/restore refresh;
+- exact logout/session/rebind cleanup;
+- backward-clock rejection.
 
-### 5.3 Client lease storage/lifecycle — VERIFIED FOR IMPLEMENTED BOUNDARY
+### 6.3 Protected materialization — VERIFIED for download/storage
 
-Runtime `53aeb972c4c891c3eecafdde0716b544751d2711`; Stage16 `34551931757` and Stage14 `34551931610` attempt 2 SUCCESS.
+- explicit manifest + revision-pinned asset route;
+- Published + entitled only;
+- stable IDs/revision/provenance/checksum/byte size;
+- IndexedDB v2 `lessonPackages`;
+- 64 MiB lesson / 256 MiB scope budgets;
+- exact byte/checksum before atomic commit;
+- failed/tampered package cannot replace valid prior package;
+- manual removal and exact-scope cleanup.
 
-### 5.4 Explicit protected lesson materialization — VERIFIED FOR DOWNLOAD/STORAGE BOUNDARY
-
-Runtime `d350206710003da311693834db90e348d1a89bc3`.
+### 6.4 Signed authorization — VERIFIED at issuance/download boundary
 
 Server:
 
-- dedicated offline lesson manifest + revision-pinned asset route;
-- manifest issued only through current Student session/device/entitlement/published Reader authority;
-- stable lesson/asset IDs, numeric content revision, publication provenance, SHA-256 and exact byte sizes;
-- responses remain `private,no-store`.
+- `apps/api/src/offline/signing.ts` canonicalizes the full manifest and signs with ES256/P-256;
+- key ID is SHA-256 of public SPKI;
+- production manifest issuance fails closed without signing config.
 
-Client:
+Student:
 
-- `alwaslh-student-offline` upgraded to v2;
-- `lessonPackages` keyed by account/device/lesson and indexed by scope;
-- 64 MiB per lesson, 256 MiB per profile/device scope;
-- replacement-aware accounting;
-- no silent eviction;
-- WebCrypto SHA-256 + byte-size verification before atomic commit;
-- manual remove/update;
-- scoped logout/session/rebind cleanup removes package bytes;
-- Download UI follows Assessment and precedes Access.
+- `apps/student-web/src/offline-authorization.ts` checks configured public key identity;
+- verifies WebCrypto ES256 signature;
+- decodes and re-canonicalizes signed payload;
+- requires outer manifest equality;
+- rejects malformed/key/signature/payload/mismatch states.
 
 Evidence:
 
-- Stage16 `34557753480` — SUCCESS.
-- Stage14 `34557753472` — SUCCESS on exact `d3502067...`.
-- API Regression `34557536412` — SUCCESS for numeric Student revision fix.
+- PR #33 Stage16 run `34560999667` — all three jobs SUCCESS;
+- wider integration matrix — 19/19 workflows SUCCESS.
 
-## 6. Production content proof — Grade 9 English — VERIFIED
+## 7. Stage16 open findings
 
-### 6.1 Scope and safety boundary
+| ID | Sev | Problem | Status / next action |
+|---|---:|---|---|
+| `STUDENT-016-OFFLINE-AUTH-009` | P1 | cold-start still cannot trust mutable local lease/package fields | **PARTIAL FIX** — signing/download verification done; durable scope + read-time signature/field authority remains OPEN |
+| `STUDENT-016-REVOCATION-007` | P1 | no full reconnect session/device/entitlement/publication/revision purge | OPEN |
+| `STUDENT-016-SYNC-001` | P1 | revision/tombstone/checkpoint schema lacks proven writers/API/client delta flow | OPEN / PROVEN |
+| `STUDENT-016-OUTBOX-008` | P1 | no bounded durable outbox authority | OPEN |
+| `AI-012..AI-019` | P2 | live AI provider/model/routes/credentials/bootstrap not proven | OPEN / NOT YET VERIFIED |
 
-The first live media materialization was intentionally limited to one canonical subject rather than bulk-importing all 5,552 source images.
+Additional exact gaps:
 
-- source repository: `7eaur/alwaslh-go`;
-- pinned source revision: `f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`;
-- allow-listed scope: `grade-9 / english`;
-- source document: `تاسع انجليزي/الانجليزي_تاسع`;
-- manifest contract: exactly 75 ordered source entries;
-- runtime feature merged through PR #34; `main` bootstrap checkpoint `ce36c0843bc7e6918afb1260ac21639cefc457cb`;
-- source bytes pass through the existing `MediaPipelineService` / mounted media storage; no direct storage-key bypass;
-- curriculum links are created with `publication_status='draft'`; no Student publication is implied by `media_assets.status='ready'`.
+- current active offline scope uses `sessionStorage` and does not survive real browser restart;
+- stored signed authorization is not re-verified at render/use time;
+- stored blobs are not re-hashed on every offline use;
+- no complete real Chromium `restart + network unavailable + offline Reader` acceptance exists.
 
-### 6.2 Executed result
+## 8. Railway live inspection/dev state
 
-Railway bootstrap execution `8428981b-aa6d-4927-b1f9-31545265e3f9` emitted `legacy_subject_bootstrap_complete` with the following exact values:
+Railway project `charming-peace` hosts:
 
-- source images: **75**;
-- source bytes: **8,390,689**;
-- ready media assets: **75**;
-- media variants: **300** (`source/display/thumbnail/ai`);
-- draft lesson assets: **75**;
-- source-authored lessons: **10**;
-- replayed media assets during first execution: **0**.
+- API — SUCCESS; deployment `5b889f87-24a5-4fc4-b061-9aeea3f5bea6`; `/ready` returned 200;
+- Admin — SUCCESS;
+- Student — SUCCESS;
+- PostgreSQL — SUCCESS.
 
-The temporary bootstrap execution did not constitute Student publication. Human review/publish remains required before these assets become Student-visible.
+Public domains:
 
-### 6.3 Stable runtime restoration
+- `https://alwaslh-dev-api-7eaur-production.up.railway.app`
+- `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
+- `https://alwaslh-dev-student-7eaur-production.up.railway.app`
 
-After the one-shot bootstrap, the API service was restored to its normal runtime contract:
+API uses repository-root `apps/api/Dockerfile`, pre-deploy migrations, normal server start and persistent media volume `/app/runtime-data/media`.
 
-- start command: `node apps/api/dist/server.js`;
-- pre-deploy migration command retained;
-- healthcheck: `/ready`, 120 seconds;
-- restart policy: `ON_FAILURE`, max 5;
-- build source: `apps/api/Dockerfile`;
-- media volume remains mounted at `/app/runtime-data/media`.
+Root deployment fixes:
 
-Final stable deployment: `5b889f87-24a5-4fc4-b061-9aeea3f5bea6` — **SUCCESS**. Runtime log confirmed the server listening and Railway `/ready` healthcheck returned **HTTP 200**.
+- API app-only build context was wrong because Dockerfile needs repository root + migrations;
+- Admin/Student Railpack build could not safely consume shared packages; repo-root Docker builds fixed it;
+- frontend quality gates were separated from production Vite env injection;
+- a Railway manual redeploy was observed incorrectly selecting root Railpack despite Dockerfile configuration; commit-based deploy respected Dockerfile. Do not modify app dependencies to satisfy the wrong builder.
 
-Full-source byte materialization remains **NOT YET VERIFIED / NOT EXECUTED**. Stage9 still proves the complete 5,552-image inventory/import metadata contract, while this live proof materialized bytes for only the allow-listed Grade 9 English subject.
+This hosted stack is inspection/development evidence, not Stage28 final production completion.
 
-## 7. Root-cause record
+See `docs/operations/RAILWAY_LIVE_STATE.md`.
 
-### Railway manual redeploy builder mismatch — MITIGATED / VERIFIED
+## 9. Canonical content proof
 
-After changing the API start command for the one-shot bootstrap, Railway manual redeploys `9b09e001-dcb8-4a54-b228-34da284b1cf4` and `2a3c6cf3-9657-43d6-b013-e0b04675a591` incorrectly built the repository root with Railpack even though service configuration exposed `dockerfilePath=apps/api/Dockerfile`. Root Railpack failed at `pnpm install --frozen-lockfile --prefer-offline` with `packages field missing or empty`.
+Approved content source:
 
-This was not a product-code failure. A commit-based deployment of the same `ce36c084...` source through Railway used `apps/api/Dockerfile` correctly and executed the bootstrap. The final normal API deployment used the same verified Dockerfile path and succeeded.
+`7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
 
-### Railway start-command shell chaining assumption — CORRECTED
+Stage9 inventory: **48 documents / 5,552 images**.
 
-The temporary command included `&& node apps/api/dist/server.js`. The bootstrap completed, but Railway did not transition to the server process as expected. The CLI itself was verified to close PostgreSQL in a `finally` block, so no database connection leak existed. The runtime was restored with a single direct server start command. Future one-shot operations must not depend on implicit shell semantics in Railway start-command parsing; use a dedicated entrypoint or an explicitly invoked shell when chaining is actually required.
+Grade 9 English live materialization proof:
 
-### IndexedDB v2 browser helper defect — FIXED / VERIFIED
+- source document `تاسع انجليزي/الانجليزي_تاسع`;
+- 75 images / 8,390,689 bytes;
+- 75 ready media assets;
+- 300 `source/display/thumbnail/ai` variants;
+- 75 Draft lesson assets;
+- 10 lessons;
+- bootstrap deployment `8428981b-aa6d-4927-b1f9-31545265e3f9`;
+- stable API restored afterward.
 
-Browser tests opened DB explicitly at v1 after runtime upgraded to v2, causing a version error unrelated to product behavior. Helpers now open the installed schema and create required legacy store only for a new DB.
+Publication boundary:
 
-### Student `contentRevision` BIGINT contract defect — FIXED / VERIFIED
+- imported lesson assets remain **Draft**;
+- no Student visibility until normal Admin review/publication;
+- no automatic question generation/publication;
+- full 5,552-image byte materialization is NOT YET EXECUTED.
 
-PostgreSQL returned `BIGINT` as a string while Reader/browser code used numeric revision state. Result: `"1" !== 1` and a freshly downloaded package appeared stale. Fixed at API boundary by normalizing to a safe numeric value; API Regression passed.
+Old Supabase import was explicitly cancelled and is out of current scope.
 
-### Renewable lease assertion defect — FIXED / VERIFIED
+See `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`.
 
-Download UI refreshes the lease. Acceptance previously required byte-for-byte timestamp equality. It now verifies stable profile/device/grant authority while allowing expected issue/expiry renewal.
+## 10. Root-cause record
 
-### Learning hierarchy regression — FIXED / VERIFIED
+### API/PostgreSQL BIGINT Student revision mismatch — FIXED
 
-Download management was initially placed between Curriculum and Assessment. Final order preserves the core learning flow: **Curriculum → Assessment → Downloads → Access**.
+PostgreSQL `BIGINT` leaked as string while browser compared numeric revision. Fixed at API boundary.
 
-## 8. Audit findings
+### IndexedDB browser helper pinned old schema — FIXED
 
-| ID | Sev | Area | Problem | Solution / next action | Status |
-|---|---:|---|---|---|---|
-| `CONTENT-PROD-001` | P1 | Media / Curriculum | canonical source inventory existed but no live bounded source-byte materialization proof existed | source-pinned allow-listed Grade 9 English bootstrap through existing Media Pipeline; Draft-only curriculum links | FIXED / VERIFIED FOR ONE-SUBJECT PROOF |
-| `STUDENT-014-API-001` | P1 | Curriculum | safe Student Curriculum contract absent | entitlement-filtered API | FIXED / VERIFIED |
-| `STUDENT-014-READER-001` | P1 | Reader | safe publication/media/OCR delivery absent | protected Reader + integrity | FIXED / VERIFIED |
-| `STUDENT-015-ASSESSMENT-001` | P1 | Assessment | Admin detail unsafe for Student | purpose-built Student runtime | FIXED / VERIFIED |
-| `STUDENT-016-SYNC-001` | P1 | Sync | dormant revision/tombstone/checkpoint schema not wired | real writers/API/client later | OPEN / PROVEN |
-| `STUDENT-016-LEASE-002` | P1 | Offline access | bounded lease/lifecycle | server lease + scoped client persistence | FIXED / VERIFIED FOR LEASE BOUNDARY |
-| `STUDENT-016-CACHE-003` | P1 | Content | protected materialization absent | explicit manifest/materialization | FIXED / VERIFIED FOR DOWNLOAD/STORAGE BOUNDARY |
-| `STUDENT-016-QA-004` | P1 | Build | strict TypeScript blocker | safe narrowing | FIXED / VERIFIED |
-| `STUDENT-016-CLIENT-005` | P1 | Lifecycle | lease not tied to session lifecycle | sync + scoped cleanup | FIXED / VERIFIED |
-| `STUDENT-016-DOWNLOAD-006` | P1 | Storage | manifest/budget/checksum/accounting/rollback/removal absent | explicit bounded atomic store | FIXED / VERIFIED |
-| `STUDENT-016-REVOCATION-007` | P1 | Security | no protected-content reconnect purge | revalidate + purge | OPEN |
-| `STUDENT-016-OUTBOX-008` | P1 | Sync | no delta/outbox authority | later after materialization | OPEN |
-| `STUDENT-016-OFFLINE-AUTH-009` | P1 | Security | unsigned mutable local authorization cannot safely authorize cold-start Reader | signed server envelope + client verification + read-time integrity | OPEN / ACTIVE NEXT |
-| `AI-012-019` | P2 | AI | live provider bootstrap not live-proven | separate future evidence | OPEN / nonblocking for published Student content |
+Tests opening v1 after runtime upgraded to v2 caused version errors. Helpers now open installed schema.
 
-## 9. Security analysis for cold-offline
+### Lease renewal assertion expected immutable timestamps — FIXED
 
-Current package bytes are integrity-verified at write time, but the persisted authorization metadata is not cryptographically authenticated. `offlineLessonPackageAllowsUse()` consumes locally stored lease grants/timestamps. Therefore the current package must **not** be rendered as protected content after a cold browser restart solely from that mutable local metadata.
+Download activity intentionally renews lease. Acceptance asserts stable authority/scope, not identical issue/expiry timestamps.
 
-The next authority must be a server-signed canonical envelope covering profile/device/class/lesson/revision/publication/issued/expiry plus asset IDs/checksums/sizes. Student Web verifies with a known public verification key and fails closed on any mismatch. Stored blobs are rehashed before use.
+### Download UI disrupted learning hierarchy — FIXED
 
-Important limitation: web clients are not trusted execution environments against a hostile user who controls DevTools/browser storage. The product security goal is authentic server authorization, tamper detection in normal application operation, bounded expiry, account/device isolation and reconnect revocation—not DRM.
+Final order remains **Curriculum → Assessment → Downloads → Access**.
 
-## 10. Known issues / remaining work
+### Railway wrong build context / Railpack path — FIXED / DOCUMENTED
 
-- Grade 9 English imported media remains Draft and requires normal Admin review/publish before Student visibility;
-- full 5,552-image source byte materialization remains a separate controlled batch and is NOT YET VERIFIED;
-- signed offline authorization + key lifecycle;
-- durable non-secret active scope discovery across browser restart;
-- true cold-start offline Reader from signed materialized bytes;
-- reconnect session/device/entitlement/publication/revision revalidation + purge;
-- authoritative revision writers/tombstones/server cursor/delta client application;
-- bounded outbox only for later product-authorized offline writes;
-- Stage17 blocked until Stage16 closes;
-- final release/cutover is not declared even though the Railway inspection/dev stack is live.
+Repository-root Docker builds are the accepted deployment path. Manual redeploy that chooses root Railpack is a platform-path mismatch, not reason to change product architecture.
 
-## 11. Exact next action
+### Content bootstrap server chaining assumption — FIXED / DOCUMENTED
 
-For Student engineering: implement signed server-authentic lesson authorization → client signature + signed-field verification → read-time blob checksum → durable non-secret scope selector → real Chromium cold browser restart with network unavailable → reconnect purge → delta/tombstone/outbox → Stage16 closure.
+One-shot bootstrap successfully completed, but chained start behavior was not used as final runtime. API was restored to direct normal server start and health verified.
 
-For imported content: perform human review of the 75 Grade 9 English Draft assets and publish only approved content through the existing Admin publication flow. Expand media materialization to additional subjects only as separate bounded, verified batches after this proof.
+## 11. Remaining roadmap
+
+### Immediate Stage16
+
+1. durable non-secret scope selector;
+2. read-time stored-signature verification + signed-field consistency;
+3. read-time blob checksum verification;
+4. true cold-start offline Reader;
+5. real Chromium restart/network-off/tamper/expiry/clock-rollback/account isolation;
+6. reconnect revalidation/purge;
+7. authoritative revisions/tombstones/cursor/delta;
+8. bounded outbox only when later offline writes require it;
+9. exact-head Stage16 closure matrix + docs/Issue #16.
+
+### Content
+
+- human-review Grade 9 English Draft mappings/order/rendering;
+- publish only approved content through Admin;
+- Student Reader hosted smoke;
+- then another bounded subject;
+- measure/resize media capacity before full-source import.
+
+### Later stages
+
+Stage17 Personal Learning → Stage18 Notifications → Stage19 Progress/Statistics/Achievements → Stage20 Import/Export/Reporting closure → Stage21 Performance → Stage22 Security → Stage23 Tests/CI → Stage24 Accessibility/Device QA → Stage25 Initial Content Load → Stage26 Staging → Stage27 Release Gate → Stage28 Production Cutover → Stage29 Monitoring/Operations.
+
+## 12. Exact next engineering action
+
+Start from live `main`, create a short-lived Stage16 completion branch, inspect current signed offline code/tests, then implement **durable scope + read-time signed authorization + read-time blob integrity + cold-start Reader** before reconnect/sync closure. Do not begin Stage17 until Stage16 closes on one executable-proven HEAD.

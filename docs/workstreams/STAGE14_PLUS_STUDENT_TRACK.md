@@ -1,299 +1,186 @@
-# Stage14+ Student Product Parallel Track
+# Stage14+ Unified Product Continuation
 
-> Active Product Owner execution override for `parallel/stage14-student-product`.
-> This document is branch-specific operating authority for the Student track and must be read together with latest Issue #16.
+> Current post-Stage13 execution contract. Historical parallel-branch ownership has been superseded; new work starts from live `main`.
 
-Last synchronized: 2026-09-10.
+Last synchronized: **2026-09-12**.
 
 ## 1. Mission
 
-Build the Student-facing product from Stage14 onward as the best version of the same **الوسيلة الذكية** product while preserving valuable legacy outcomes, business rules and user flows.
+Own and complete the remaining **الوسيلة الذكية** product after Stage13, preserving the existing product/business rules and verified authorities while progressing sequentially through Stage14–29.
 
-This track starts at **Stage14 — Student Web/PWA Product** and proceeds sequentially through later Student/Product/Hardening stages, one verified batch/stage at a time.
+The responsibility is no longer “Student frontend only”. After Product Owner-directed integration, the continuation owner is responsible for the **whole remaining product scope** needed by later stages, including Student UI, shared API/DB changes, Admin support, deployment/hardening and release work—while still editing each concern in its correct architectural layer.
 
-The goal is not a visual rewrite only. The owner must understand actual code, contracts, data, flows, tests and dependencies before modifying them.
-
-## 2. Branch / baseline
+## 2. Baseline and branching
 
 - Repository: `7eaur/alwaslh`
-- Branch: `parallel/stage14-student-product`
-- Initial baseline: stable `main @ 5fdb23030c77cae9bff5f8c33d4be466427eb6e5`
-- Do not reset this branch onto unverified Stage13F work.
-- When Track A promotes verified shared contracts to `main`, inspect and integrate them deliberately before implementing dependent Student features.
-- No force-push or shared-history rewrite.
+- Canonical baseline: **live `main`**
+- Old branch `parallel/stage14-student-product`: historical/reference after PR #33 integration.
+- Old Stage13G branch: historical/reference after PR #33 integration.
+- New work: create a **short-lived branch from current `main`** for each coherent batch.
+- Never force-push/rewrite shared history.
 
-## 3. Shared execution ledger
+PR #33 integrated Stage13G + Student Product into `main` after **19/19 workflows SUCCESS** on head `dcdae7579a40878c71f64593280a0df2f8363ee2`; merge commit `5e22c3ff157b42b6da47febe205dd91fcb264eed`.
 
-GitHub Issue **#16** is the single shared cross-chat execution ledger.
-
-Every meaningful batch must post an `EXECUTION REPORT` containing:
-
-```md
-### EXECUTION REPORT
-Track: Student Stage14+
-Stage/Feature:
-Branch/HEAD:
-Inspected:
-Implemented:
-Architecture/contracts/schema/UI changed:
-Root causes/fixes:
-Tests executed + exact results:
-Security/performance/UX review:
-Dependencies on Track A:
-Known issues:
-NOT YET VERIFIED:
-Documentation updated:
-Decision:
-Exact next action:
-```
-
-Do not leave continuation-critical state only in chat.
-
-## 4. Mandatory startup for any new conversation
-
-Read actual files/code in this order before changing code:
+## 3. Mandatory startup
 
 1. `README.md`
 2. `DOCUMENTATION_INDEX.md`
-3. this file: `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`
-4. `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`
-5. `PROJECT_HANDOFF.md`
-6. `PROJECT_STATUS.md`
-7. `PROJECT_RESUME_SNAPSHOT.md`
-8. `PROJECT_ENGINEERING_LOG.md`
-9. `PROJECT_INTEGRATION_CONTINUITY.md`
-10. `PROJECT_EXECUTION_QUEUE.md`
-11. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-12. latest Issue #16 body/comments
+3. `PROJECT_HANDOFF.md`
+4. `PROJECT_STATUS.md`
+5. `PROJECT_RESUME_SNAPSHOT.md`
+6. `PROJECT_ENGINEERING_LOG.md`
+7. `PROJECT_INTEGRATION_CONTINUITY.md`
+8. `PROJECT_EXECUTION_QUEUE.md`
+9. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+10. `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`
+11. `docs/operations/RAILWAY_LIVE_STATE.md`
+12. `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
 13. `MASTER_REBUILD_ROADMAP.md`
-14. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
-15. `PRODUCT_FEATURE_PARITY_MATRIX.md`
-16. actual `apps/student-web` source/tests/config/build
-17. relevant API/contracts currently on the branch/main
-18. current GitHub Actions for Student/rebuild gates
+14. latest Issue #16
+15. live `main`, Actions and Railway state
+16. actual current-stage code/tests/workflows.
 
-Code/migrations/executable evidence outrank prose. Anything not inspected/executed is `NOT YET VERIFIED`.
+Anything not inspected/executed = `NOT YET VERIFIED`.
 
-## 5. Ownership boundaries
+## 4. Current stage state
 
-### Track B owns by default
+- Stage14 Student Product — **CLOSED / VERIFIED**.
+- Stage15 Practice/Assessment — **CLOSED / VERIFIED**.
+- **Stage16 Offline/PWA — ACTIVE / NOT CLOSED**.
+- Stage17+ — pending Stage16 closure.
 
-- `apps/student-web`
-- Student routing/navigation/session UX
-- Student dashboard
-- entitled curriculum browsing
-- Lesson Reader/media/text/search/TTS UX
-- Practice/Test/Model Student experience once canonical backend authority is available
-- Offline/PWA
-- Notes/Favorites/Needs Review
-- Student notifications UX
-- Student progress/statistics/private achievements
-- Student-specific frontend tests/E2E/accessibility/responsive behavior
-- Student design-system application and product polish
+Detailed Stage16 continuation: `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
 
-### Track A owns by default
+## 5. Architectural ownership under unified continuation
 
-- `apps/api`
-- `apps/admin-web`
-- `database/migrations`
-- Auth/Access canonical backend rules
-- Content/Media/OCR backend/admin operations
-- AI generation/runtime/provider routing
-- Question Bank persistence/review/publication
-- Quiz Builder/versioning/regeneration/export authority
-- shared DB/security/backend integration
+One owner does **not** mean one layer.
 
-Track B must not create a second backend authority because a shared API is missing.
+### Student-facing work
 
-If a missing shared contract blocks work:
+Use `apps/student-web` for:
 
-1. inspect whether an existing contract/API already solves it;
-2. record the dependency in Issue #16;
-3. if a tiny non-conflicting shared change is genuinely needed and safe, document it before editing shared areas;
-4. otherwise consume Track A's verified integration when it lands.
+- navigation/session/student UX;
+- Reader/Assessment/Offline/PWA;
+- later Notes/Favorites/Needs Review;
+- Student notifications/progress;
+- responsive/RTL/a11y/device behavior.
 
-## 6. Critical dependency rule
+### Backend/shared authority
 
-Stage14 may proceed in parallel because curriculum/content/auth foundations already exist on stable main.
+Use `apps/api` + `database/migrations` for:
 
-**Stage15 assessment consumption depends on Track A closing and integrating Stage13F Question Bank / Quiz Builder authority.**
+- Auth/Access/session/device authority;
+- Curriculum/publication/media authority;
+- Assessment scoring/finalization;
+- offline authorization/sync/revocation;
+- later server-derived progress/notification/sync contracts.
 
-Do not implement Stage15 with mocks/fake Question Bank persistence/duplicate quiz models. If Track A is not integrated when Stage15 is reached, stop at the dependency boundary, document it in Issue #16 and continue only work that does not violate sequence/authority.
+### Admin support
 
-## 7. Product / UX quality bar
+Use `apps/admin-web` only when later stages need Admin configuration/review/operations. Do not reimplement server authority inside Admin.
 
-Treat Student Web as a production learning product, not a generic dashboard.
+### Existing durable authorities to preserve
 
-Priorities:
+- Auth/device/session;
+- entitlements/access codes;
+- curriculum/publication;
+- media/OCR;
+- AI execution/review;
+- Question Bank revisions/publication;
+- Quiz Builder immutable published versions;
+- Student assessment server scoring/history.
 
-`Function → Clarity → Learning UX → Hierarchy → Consistency → Accessibility → Visual polish`
+Do not create substitutes to avoid touching shared code.
 
-Mandatory qualities:
+## 6. Current Stage16 verified boundary
 
-- Arabic-first RTL
-- mobile-first
-- responsive tablet/desktop
-- keyboard/focus accessibility
-- semantic labels and screen-reader-friendly structure
-- strong touch targets
-- coherent typography/spacing/radius/grid
-- restrained motion and reduced-motion support
-- consistent loading / skeleton / empty / error / offline / stale / sync / session-expired states
-- clear entitlement/locked-content behavior reflecting server authority
-- no decorative card overload
-- no gratuitous gradients/glow/glassmorphism
-- fast navigation and content reading
-- preserve student context when moving between class/subject/lesson/practice
-- offline state must be explicit, not pretend-online
+Already implemented and executable-proven on the integrated code:
 
-Design should feel purpose-built for Arabic students and study sessions, not like an admin panel recolored for students.
+- installable PWA app shell;
+- `/v1` excluded from Service Worker caching/interception;
+- bounded server-issued profile/device lease;
+- IndexedDB account/device scope and cleanup;
+- explicit protected lesson manifest/assets;
+- checksum + exact byte-size verification;
+- 64 MiB lesson / 256 MiB scope budgets;
+- atomic package storage/replacement/removal;
+- ES256 server-signed authorization envelope;
+- Student verifies configured public-key identity, signature and canonical signed manifest before storing package.
 
-## 8. Stage sequence
+PR #33 verification Stage16 run: `34560999667` — all three Stage16 jobs SUCCESS.
 
-### Stage14 — Student Web/PWA Product
+## 7. Stage16 remaining security/product boundary
 
-Required product outcomes:
+The signed envelope improved issuance/download security, but Stage16 remains open because the cold-start Reader does not yet promote stored content through a fully verified read-time authority chain.
 
-- entitled Classes / Subjects / Lessons browsing
-- Student dashboard focused on continuing learning
-- Reader workspace for lesson media/text
-- search/TTS where supported by existing contracts
-- Notes/Favorite/Needs Review entry points as appropriate to verified scope
-- Practice/Tests/Models entry architecture without inventing Stage15 authority
-- progress/private achievements/notifications surfaces where backed by current contracts
-- RTL mobile-first UX
-- loading/error/empty/offline/session-expiry states
-- accessibility and real browser evidence
+Required:
 
-Before coding, audit actual Student Web and classify components `KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE`; uninspected = `NOT YET VERIFIED`.
+1. durable **non-secret** active offline scope across browser restart; current scope discovery uses `sessionStorage` and is not durable;
+2. re-verify stored signed authorization/key ID/canonical payload at offline use time;
+3. re-hash stored blobs against signed checksums before rendering, not only at download time;
+4. cold-start app shell → offline library/Reader with network unavailable;
+5. fail closed on signature/key/field/tamper/expiry/clock-rollback failure;
+6. reconnect revalidation of session/device/entitlement/publication/revision;
+7. purge/disable revoked, expired, unpublished or invalid packages;
+8. authoritative revision writers + tombstones + cursor/delta + client application;
+9. bounded outbox only for later product-authorized offline writes;
+10. exact-head API/DB/Student/Chromium/a11y/responsive closure.
 
-### Stage15 — Practice / Assessment Engine
+## 8. Current hosted environment
 
-Only after canonical published Question Bank/Quiz authority from Track A is available:
+Railway inspection/dev stack is live and should be used for real product inspection after CI—not as a replacement for CI.
 
-- Practice feedback
-- Test/Model finalization
-- stable question/version identities
-- option shuffle/randomization using stable IDs
-- resume/restart/history
-- deterministic scoring
-- exact lesson/page/source provenance
-- published authority only
+- Student: `https://alwaslh-dev-student-7eaur-production.up.railway.app`
+- Admin: `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
+- API: `https://alwaslh-dev-api-7eaur-production.up.railway.app`
 
-### Stage16 — Offline / PWA
+Read `docs/operations/RAILWAY_LIVE_STATE.md` before deployment changes.
 
-- account/device-scoped IndexedDB
-- explicit downloads
-- bounded entitlement lease
-- storage budgets
-- revisions/tombstones/outbox/delta sync
-- safe Service Worker update lifecycle
+## 9. Current content proof
 
-### Stage17 — Personal Learning Data
+Grade 9 English canonical source bytes were materialized as a controlled proof:
 
-- Notes
-- Favorites
-- Needs Review
-- stable provenance
-- explicit local/server sync rule
+- 75 images;
+- 75 ready media assets;
+- 300 variants;
+- 75 Draft lesson assets;
+- 10 lessons.
 
-### Stage18 — Notifications
+They remain Draft and are not Student-visible until Admin review/publication. Full 5,552-image byte materialization is not complete.
 
-- In-App
-- Web Push where supported
-- secure subscription lifecycle
-- quiet hours / opt-out
+Read `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`.
 
-### Stage19 — Progress / Statistics / Achievements
+## 10. Later stage sequence
 
-- trusted metrics
-- sufficient-sample recommendations
-- private achievements
-- no unapproved global leaderboard
+After Stage16 closure:
 
-### Stage20 — Import / Export / Reporting
+- Stage17 — Personal Learning Data;
+- Stage18 — Notifications;
+- Stage19 — Progress / Statistics / Achievements;
+- Stage20 — Import / Export / Reporting closure;
+- Stage21 — Performance Engineering;
+- Stage22 — Security Hardening;
+- Stage23 — Automated Tests & CI Expansion;
+- Stage24 — Accessibility / Device QA;
+- Stage25 — Initial Data / Content Load;
+- Stage26 — Staging;
+- Stage27 — Release Gate;
+- Stage28 — Production Cutover;
+- Stage29 — Monitoring & Operations.
 
-Student-facing behavior only where applicable; do not duplicate Admin exports owned by Track A.
+`AI-012..AI-019` live-provider readiness remains open and must be resolved before final release if production AI is required.
 
-### Stage21–25 — Product hardening
+## 11. Quality rules
 
-Proceed sequentially using `MASTER_REBUILD_ROADMAP.md`:
+- root-cause fixes only;
+- no fake APIs/test weakening/auth bypass;
+- no browser-owned canonical business state;
+- no duplicate durable authority;
+- no random sleeps/timeouts to hide races;
+- Arabic-first RTL/mobile-first/accessibility;
+- exact-head lint/typecheck/unit/integration/DB/build/browser evidence appropriate to each batch;
+- documentation + Issue #16 after meaningful work.
 
-- performance engineering
-- security hardening
-- automated test/CI expansion
-- accessibility/device QA
-- initial production content/load verification as applicable
+## 12. Exact first action
 
-Production deployment remains separately approved work.
-
-## 9. Engineering rules
-
-- Understand actual callers, inputs, outputs, state and side effects before changes.
-- Preserve contracts where possible.
-- No blind rewrite.
-- No fake API data for acceptance.
-- No browser-owned canonical business state.
-- No direct DB authority from frontend.
-- No auth bypass.
-- No test weakening.
-- No hidden localStorage duplication where a canonical repository exists.
-- No random sleeps/timeouts to hide races.
-- Root-cause fixes only.
-- Prefer simplest maintainable architecture.
-
-## 10. Verification rules
-
-After each meaningful batch run relevant available gates such as:
-
-- Student lint
-- strict typecheck
-- unit tests
-- build
-- API contract/integration tests when Student behavior depends on them
-- real Chromium/Playwright for critical flows
-- responsive 390px / tablet / desktop checks
-- keyboard/focus/accessibility checks
-- offline/PWA tests when relevant
-- wider regressions before stage closure
-
-A build passing alone does not make a stage verified.
-
-## 11. Documentation rules
-
-During work, keep updated:
-
-- `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`
-- specialized Stage14+ docs as created
-- `PROJECT_ENGINEERING_LOG.md` when architecture/findings materially change
-- `PROJECT_STATUS.md` / `PROJECT_RESUME_SNAPSHOT.md` when branch-level truth changes
-- `LEGACY_FEATURE_COVERAGE_GATE.md` only when executable evidence justifies promotion of rows
-- Issue #16 after every meaningful batch
-
-Record exact HEAD and run IDs.
-
-## 12. Integration discipline with Track A
-
-Before consuming newly promoted Track A work:
-
-1. inspect latest `main` and Track A closure report;
-2. compare branch divergence;
-3. integrate only verified shared contracts;
-4. resolve conflicts by preserving canonical backend/business rules;
-5. rerun Student quality + dependent E2E on the integrated head;
-6. record the integration checkpoint in Issue #16 and Student Track Status.
-
-Do not merge unfinished Stage13F branch merely to gain an API early.
-
-## 13. Current first action
-
-Start **Stage14 Repository Discovery** on `parallel/stage14-student-product`:
-
-- inspect `apps/student-web` actual source, routes, components, state, APIs, styling and tests;
-- inspect verified Auth/Entitlement/Curriculum/Content contracts it must consume;
-- map Stage14 legacy Student rows to current implementation;
-- classify `KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE`;
-- create/update Stage14 execution plan based on evidence;
-- then implement incrementally with tests and real browser verification.
-
-Do not begin by redesigning screens before understanding current flows and contracts.
+Start from live `main`, create a short-lived Stage16 completion branch, inspect current signed offline implementation, then close the cold-start/read-time integrity/reconnect/sync boundary. Do not start Stage17 until Stage16 is executable-proven closed.
