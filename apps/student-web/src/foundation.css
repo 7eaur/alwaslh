@@ -22,12 +22,3 @@
 .brand-mark svg {
   visibility: hidden;
 }
-
-@supports (padding: max(0px)) {
-  .aw-product-shell--student {
-    padding-block-start: var(--safe-area-top);
-    padding-inline-end: var(--safe-area-inline-end);
-    padding-block-end: var(--safe-area-bottom);
-    padding-inline-start: var(--safe-area-inline-start);
-  }
-}
