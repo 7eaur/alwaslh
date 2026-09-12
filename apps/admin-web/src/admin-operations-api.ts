@@ -132,6 +132,27 @@ export interface OperationsAuditPage {
   page: { total: number; limit: number; offset: number };
 }
 
+export interface OperationsAttentionSummary {
+  review: {
+    contentAssets: number;
+    ocr: number;
+    ai: number;
+    questions: number;
+    quizzes: number;
+  };
+  failures: {
+    ingestion: number;
+    ocr: number;
+    ai: number;
+  };
+  support: {
+    lockedLogins: number;
+    pendingRecovery: number;
+    forcedPasswordChanges: number;
+  };
+  recentActivity: OperationsAuditEntry[];
+}
+
 function queryString(values: Record<string, string | number | undefined>): string {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(values)) {
@@ -148,8 +169,18 @@ export function fetchAdminOperationsOverview(recentLimit = 8): Promise<Operation
   );
 }
 
+export function fetchAdminOperationsAttention(recentLimit = 8): Promise<OperationsAttentionSummary> {
+  return adminApiRequest<OperationsAttentionSummary>(
+    `/v1/admin/operations/attention${queryString({ recentLimit })}`,
+  );
+}
+
 export function fetchAdminOperationsGovernance(): Promise<OperationsGovernanceOverview> {
   return adminApiRequest<OperationsGovernanceOverview>("/v1/admin/operations/governance");
+}
+
+export function fetchAdminOperationsDiagnostics(): Promise<OperationsGovernanceOverview> {
+  return adminApiRequest<OperationsGovernanceOverview>("/v1/admin/operations/diagnostics");
 }
 
 export function fetchAdminOperationsAudit(input: {
