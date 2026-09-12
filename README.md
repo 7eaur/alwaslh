@@ -1,110 +1,135 @@
 # الوسيلة الذكية — Alwaseela Smart
 
-> **المستودع هو ذاكرة المشروع الرسمية.** لا تعتمد على ذاكرة محادثات سابقة. ابدأ دائمًا من `DOCUMENTATION_INDEX.md` ثم اتبع ترتيب Source of Truth المذكور فيه.
+> **المستودع هو ذاكرة المشروع الرسمية.** لا تعتمد على ذاكرة محادثات سابقة. ابدأ دائمًا من `DOCUMENTATION_INDEX.md` واتبع Source of Truth الموجود هناك.
 
 ## فكرة المنتج
 
-**الوسيلة الذكية** منصة تعليمية عربية هدفها تحويل المحتوى الدراسي الموثوق إلى تجربة تعلم ومراجعة واختبار منظمة، مع إدارة كاملة للمحتوى والوصول من جهة الإدارة.
+**الوسيلة الذكية** منصة تعليمية عربية لتحويل محتوى دراسي موثوق إلى تجربة تعلم، قراءة، مراجعة، تدريب واختبار منظمة، مع Super Admin لإدارة المنهج والمحتوى والوصول والذكاء الاصطناعي وبنك الأسئلة والتقارير والتدقيق.
 
-المنتج يحافظ على مخرجات التطبيق القديم ذات القيمة، لكنه لا يكرر معماريته القديمة. التطبيق القديم ومستنداته مرجع للميزات والسيناريوهات والمشكلات، وليس مواصفة تقنية ملزمة.
+المنتج الحالي مبني حول:
 
-المنتج المستهدف يتكون من:
+- `apps/student-web` — Student Web/PWA؛
+- `apps/admin-web` — Super Admin؛
+- `apps/api` — Fastify/TypeScript API والسلطة التجارية؛
+- `database/migrations` — PostgreSQL source of truth؛
+- `packages/*` — shared domain/design/validation primitives.
 
-- **Student Web/PWA** — تفعيل ودخول آمن، صفوف ومواد ودروس، Reader، ملخصات، بحث، TTS، تدريب واختبارات ونماذج، ملاحظات ومفضلة وNeeds Review، تقدم وإشعارات وOffline/PWA.
-- **Admin Web** — Super Admin مستقل لإدارة المنهج والمحتوى والوسائط وOCR والذكاء الاصطناعي وبنك الأسئلة والطلاب والأكواد والاسترداد والإشعارات والاستيراد/التصدير والتقارير والتدقيق.
-- **Backend API** — السلطة الوحيدة للهوية والصلاحيات والبيانات والمنطق التجاري فوق PostgreSQL خاصة، مع Media/OCR/AI workers خلف الخادم.
+ملفات legacy في root/Supabase ليست runtime authority للمنتج الجديد إلا كمرجع تاريخي/parity evidence.
 
-## المعمارية الحالية
+## الوضع الحالي — 2026-09-12
 
-```text
-Student PWA ─┐
-             ├── apps/api ── private PostgreSQL
-Admin Web ───┘      │
-                    ├── Stage9 source/provenance inventory
-                    ├── Stage10 media pipeline
-                    ├── reviewed OCR
-                    ├── provider-neutral AI contracts
-                    ├── durable AI jobs/workers/controls
-                    └── later TTS / notifications / offline sync
-```
+### التكامل
 
-أسطح الـrebuild الحالية:
+Stage13G Admin/Backend/AI + Student Stage14/15/current Stage16 تم دمجها في `main` عبر PR #33 بعد **19/19 workflows SUCCESS** على head `dcdae7579a40878c71f64593280a0df2f8363ee2`.
 
-```text
-apps/student-web   Student Web/PWA
-apps/admin-web     Super Admin Web
-apps/api           Fastify + TypeScript Backend API
-packages/brand     shared brand/design primitives
-packages/contracts shared contracts where applicable
-database/migrations PostgreSQL source of truth
-```
+Merge commit:
 
-**مهم:** ما زالت بعض ملفات التطبيق القديم موجودة في root (`src/`, `supabase/`, ملفات legacy أخرى) كمرجع تاريخي/Parity evidence. لا تفترض أنها runtime المعتمد للمنتج الجديد. الـrebuild الحالي هو `apps/* + database/migrations/*` والعقود الموثقة.
+`5e22c3ff157b42b6da47febe205dd91fcb264eed`
 
-## الحالة الحالية
+الفروع الطويلة القديمة `integration/stage13g-admin-product` و`parallel/stage14-student-product` أصبحت historical/reference بعد الدمج. **أي عمل جديد يبدأ من live `main` على short-lived branch.**
 
-الفرع التنفيذي/التوثيقي الحالي:
+### المرحلة النشطة
 
-`planning/product-evolution-review` — Draft PR #12.
+- Stage14 Student — CLOSED / VERIFIED.
+- Stage15 Practice/Assessment — CLOSED / VERIFIED.
+- **Stage16 Offline/PWA — ACTIVE / NOT CLOSED.**
+- Stage17+ ينتظر إغلاق Stage16.
 
-آخر **executable baseline** متحقق بالكامل:
+Stage16 الحالي يتضمن بالفعل:
 
-`260cfef1c48d1290611103f8443d222f8cd041b6`
+- safe PWA shell؛
+- server-issued bounded offline lease؛
+- account/device-scoped IndexedDB؛
+- protected lesson download manifest/assets؛
+- checksum + exact byte-size verification؛
+- 64 MiB lesson / 256 MiB scope budgets؛
+- atomic replacement/cleanup؛
+- server-signed ES256 offline authorization envelope؛
+- client verification of key ID/signature/canonical signed manifest before storage.
 
-على هذا الرأس نجحت بوابات Stage9 وStage10 وOCR وStage11 وStage12 وStage13 وFull Rebuild، بما فيها Chromium الفعلي للطالب والإدارة.
+ما يزال غير مكتمل في Stage16:
 
-تم التحقق حتى الآن من:
+- durable non-secret active scope across a real browser restart؛
+- cold-start offline Reader من stored package؛
+- re-verification of signed authorization + blob checksum **at read/use time**؛
+- reconnect session/device/entitlement/publication/revision revalidation + purge؛
+- authoritative revision/tombstone/cursor/delta/outbox wiring؛
+- exact-head Stage16 closure gate.
 
-- Stages 1–10؛
-- OCR Foundation؛
-- Stage11 provider-neutral AI contracts؛
-- Stage12 durable AI execution + distributed capacity/controls + pause/resume/progress + dedicated worker runtime؛
-- Stage13 Curriculum backend؛
-- Stage13 Admin Curriculum Web؛
-- Stage13 Admin Content / Media / OCR Operations.
+التفاصيل: `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
 
-العمل التالي الموثق يبدأ من **Stage13 Upload / Processing History / Publication Linking** ثم بقية Admin Product وفق `MASTER_REBUILD_ROADMAP.md` وLegacy Coverage Gate.
+## Railway — live inspection/dev stack
+
+النسخة المدمجة تعمل حاليًا على Railway:
+
+- Student: `https://alwaslh-dev-student-7eaur-production.up.railway.app`
+- Admin: `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
+- API: `https://alwaslh-dev-api-7eaur-production.up.railway.app`
+
+API/Admin/Student/PostgreSQL كلها آخر حالة معروفة **SUCCESS**. API يستخدم PostgreSQL وmedia volume دائم، و`/ready` اجتاز HTTP 200 بعد تجربة استيراد المحتوى.
+
+هذه بيئة inspection/dev حية وليست إعلان Stage28 final production cutover.
+
+التفاصيل: `docs/operations/RAILWAY_LIVE_STATE.md`.
+
+## المحتوى الحالي
+
+المصدر الكانوني الحالي للمحتوى هو:
+
+`7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
+
+Stage9 يثبت inventory كاملًا: **48 documents / 5,552 images**، لكنه لا يعني أن جميع bytes تم نشرها.
+
+تم تنفيذ proof حي لمادة **إنجليزي الصف التاسع** فقط:
+
+- 75 source images؛
+- 8,390,689 bytes؛
+- 75 ready media assets؛
+- 300 media variants؛
+- 75 lesson assets؛
+- 10 lessons؛
+- كلها **Draft** ولم تُنشر للطالب تلقائيًا.
+
+Supabase القديمة ليست مصدر المحتوى الحالي ولم يتم استيرادها بعد قرار Product Owner بإيقاف ذلك المسار.
+
+التفاصيل: `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`.
 
 ## قواعد لا يجوز كسرها
 
-1. Correctness > Cleverness، Evidence > Assumptions.
-2. لا ترقيع كحل نهائي؛ أصلح السبب الجذري.
-3. لا تُحذف Feature قديمة ذات قيمة بدون قرار Product Owner صريح.
-4. Browser لا يتصل مباشرة بPostgreSQL ولا يملك auth/progress/publish authority.
-5. Upload/Media مستقل عن OCR/AI/TTS.
-6. OCR/AI/TTS طبقات مشتقة؛ failure فيها لا يفسد الأصل.
-7. Student يستهلك محتوى وأسئلة منشورة ومراجعة فقط.
-8. Stage9 source folders = provenance evidence، وليست Curriculum hierarchy.
-9. Stage10 media/OCR لا يصبح Published Lesson Content تلقائيًا؛ الربط يحتاج عقدًا صريحًا.
-10. AI provider/model-neutral، ولا تُدّعى جودة provider أو production readiness بدون benchmark فعلي.
-11. أي شيء لم يُنفذ ويُختبر = `NOT YET VERIFIED`.
-12. Deployment/Preview حاليًا **`DEFERRED BY PRODUCT OWNER`**؛ لا تعِد تفعيله أو نشره بدون أمر صريح لاحق.
-13. قاعدة البيانات القديمة ليست dependency حالية؛ repository migrations/tests/current PostgreSQL contracts هي السلطة التنفيذية.
+1. Correctness > Cleverness؛ Evidence > Assumptions.
+2. `main` المدمج هو baseline؛ لا تبدأ من branch تاريخي دون سبب موثق.
+3. Browser لا يملك canonical Auth/Access/Curriculum/Question Bank/Assessment authority.
+4. `media ready != published`؛ Student يرى Published + entitled فقط.
+5. AI output لا يصبح سؤالًا منشورًا تلقائيًا؛ المسار الآمن: AI review → Question Bank review/publish → immutable Quiz snapshot.
+6. `/v1` لا يدخل Service Worker Cache API.
+7. لا secrets/private signing keys في Student frontend أو docs.
+8. لا test weakening/auth bypass/fake API/duplicate authority/random sleeps.
+9. old Supabase ليست runtime dependency أو content source حاليًا.
+10. أي شيء غير منفذ/مختبر = `NOT YET VERIFIED`.
+11. Railway hosting لا يعني اكتمال Stage27/28 release gates.
+
+## ما بقي من المنتج
+
+الترتيب الحالي:
+
+`Stage16 closure → Stage17 Personal Learning → Stage18 Notifications → Stage19 Progress/Statistics/Achievements → Stage20 Import/Export/Reporting closure → Stage21 Performance → Stage22 Security → Stage23 Tests/CI → Stage24 Accessibility/Device QA → Stage25 Initial Content Load → Stage26 Staging → Stage27 Release Gate → Stage28 Production Cutover → Stage29 Monitoring/Operations`
+
+`AI-012..AI-019` live AI provider/model/routes/credentials/bootstrap ما زالت `NOT YET VERIFIED` ويجب إثباتها قبل release إذا كان AI live behavior ضمن النسخة النهائية.
 
 ## ابدأ من هنا
 
-اقرأ بالترتيب:
+1. `DOCUMENTATION_INDEX.md`
+2. `PROJECT_HANDOFF.md`
+3. `PROJECT_STATUS.md`
+4. `PROJECT_RESUME_SNAPSHOT.md`
+5. `PROJECT_ENGINEERING_LOG.md`
+6. `PROJECT_INTEGRATION_CONTINUITY.md`
+7. `PROJECT_EXECUTION_QUEUE.md`
+8. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+9. `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`
+10. `docs/operations/RAILWAY_LIVE_STATE.md`
+11. `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
+12. latest Issue #16 comments
+13. live `main`, GitHub Actions and Railway state before any modification.
 
-1. `DOCUMENTATION_INDEX.md` — خريطة التوثيق وSource of Truth precedence.
-2. `PROJECT_HANDOFF.md` — الاستئناف العملي والمراحل والحدود والرأس الحالي.
-3. `PROJECT_STATUS.md` — الحالة المختصرة والمتبقي.
-4. `PROJECT_ENGINEERING_LOG.md` — السجل الزمني، Architecture Decisions، Findings، CI evidence.
-5. `docs/product/CURRENT_PRODUCT_OVERRIDES.md` — قرارات Product Owner الحالية التي تتقدم على قرارات تشغيلية أقدم.
-6. Product Decisions + parity/coverage + roadmap حسب `DOCUMENTATION_INDEX.md`.
-
-لإطلاق محادثة جديدة استخدم `NEXT_CONVERSATION_PROMPT.md` فقط كبوابة قصيرة؛ لا تعتبره بديلًا عن قراءة المستندات.
-
-## التحقق والتطوير
-
-كل Stage لها GitHub Actions executable gate. لا تعتبر Build وحده دليلاً كافيًا؛ اعتمد lint/typecheck/unit/integration/PostgreSQL/browser evidence حسب المجال.
-
-بعد كل دفعة مهمة يجب تحديث:
-
-- `PROJECT_STATUS.md`؛
-- `PROJECT_ENGINEERING_LOG.md`؛
-- `PROJECT_HANDOFF.md`؛
-- الوثيقة المتخصصة؛
-- Legacy coverage evidence عندما تنفذ capability قديمة؛
-- exact commit/run IDs.
-
-التفاصيل الكاملة موجودة في `DOCUMENTATION_INDEX.md`.
+`NEXT_CONVERSATION_PROMPT.md` هو launcher جاهز للمحادثة الجديدة، لكنه لا يتقدم على live repository/CI evidence.
