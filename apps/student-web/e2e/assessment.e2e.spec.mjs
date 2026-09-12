@@ -32,7 +32,7 @@ async function openQuizDetail(page, fixture) {
 }
 
 async function startVersionA(page, fixture, mode) {
-  await page.getByLabel("مجموعة الأسئلة").selectOption({ label: fixture.versionALabel });
+  await page.getByRole("combobox", { name: "مجموعة الأسئلة" }).selectOption({ label: fixture.versionALabel });
   await expect(page.getByText(`المجموعة المختارة: ${fixture.versionALabel}`, { exact: true })).toBeVisible();
 
   const responsePromise = page.waitForResponse(
@@ -77,8 +77,10 @@ test("Student Practice/Test uses routed focused attempts, published snapshots, s
   await expect(page).toHaveURL(/\/app\/practice$/);
   await expect(page.getByRole("heading", { name: "التدريب والاختبارات" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
+  await page.screenshot({ path: "test-results/ux-b04-library-phone.png", fullPage: true });
 
   await openQuizDetail(page, fixture);
+  await page.screenshot({ path: "test-results/ux-b04-quiz-detail-phone.png", fullPage: true });
   const practicePayload = await startVersionA(page, fixture, "practice");
   expect(practicePayload.assessment.version.id).toBe(fixture.versionAId);
   expect(practicePayload.assessment.session.mode).toBe("practice");
@@ -90,6 +92,7 @@ test("Student Practice/Test uses routed focused attempts, published snapshots, s
   await expect(page.locator(".student-bottom-nav")).not.toBeVisible();
   await expect(page.locator(".student-adaptive-nav")).not.toBeVisible();
   await expect(page.getByText(fixture.mcqPrompt, { exact: true })).toBeVisible();
+  await page.screenshot({ path: "test-results/ux-b04-attempt-phone.png", fullPage: true });
   await page.getByRole("radio", { name: fixture.mcqCorrect }).check();
   await page.getByRole("button", { name: "تحقق من إجابتي" }).click();
   await expect(page.getByText("إجابة صحيحة", { exact: true })).toBeVisible();
@@ -107,6 +110,7 @@ test("Student Practice/Test uses routed focused attempts, published snapshots, s
   await expect(page.getByText(/(?:١٠٠|100)٪/, { exact: true })).toBeVisible();
   await expect(page.getByText(/2 صحيحة من 2 سؤال/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "راجع ما أجبت عنه" })).toBeVisible();
+  await page.screenshot({ path: "test-results/ux-b04-result-phone.png", fullPage: true });
 
   const completedUrl = page.url();
   await page.reload();
@@ -150,6 +154,7 @@ test("Student Practice/Test uses routed focused attempts, published snapshots, s
   await expect(page.getByRole("heading", { name: fixture.quizTitle })).toBeVisible();
   await page.setViewportSize({ width: 1366, height: 900 });
   await expectNoHorizontalOverflow(page);
+  await page.screenshot({ path: "test-results/ux-b04-result-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await expectNoHorizontalOverflow(page);
 
