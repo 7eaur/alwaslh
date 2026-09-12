@@ -1,18 +1,18 @@
-import { PageState, ProductShell, RouteFocus } from "@alwaslh/ui";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import App from "./App";
+import { PageState, RouteFocus, StudentProductShell } from "./presentation-foundation";
 
 function StudentAppRoute() {
   return (
-    <ProductShell surface="student">
+    <StudentProductShell>
       <App />
-    </ProductShell>
+    </StudentProductShell>
   );
 }
 
 function StudentNotFoundRoute() {
   return (
-    <ProductShell surface="student">
+    <StudentProductShell>
       <PageState
         kind="empty"
         eyebrow="مساحة الطالب"
@@ -24,7 +24,7 @@ function StudentNotFoundRoute() {
           </Link>
         }
       />
-    </ProductShell>
+    </StudentProductShell>
   );
 }
 
