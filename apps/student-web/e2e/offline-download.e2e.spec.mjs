@@ -55,7 +55,8 @@ test("protected lesson download preserves integrity contracts behind learner-fac
   await page.context().addCookies([{ name: fixture.sessionCookieName, value: fixture.sessionToken, url: "http://127.0.0.1:5174", httpOnly: true, sameSite: "Lax" }]);
 
   await page.goto("/");
-  await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/home$/);
+  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
   await page.getByRole("link", { name: "التنزيلات", exact: true }).first().click();
   await expect(page).toHaveURL(/\/app\/downloads$/);
   await expect(page.getByRole("heading", { name: "التنزيلات", exact: true })).toBeVisible();
