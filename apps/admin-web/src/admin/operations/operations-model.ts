@@ -30,7 +30,7 @@ export function formatAdminDate(value: string | null): string {
 }
 
 export function buildAttentionItems(summary: OperationsAttentionSummary): AttentionItem[] {
-  return [
+  const items: AttentionItem[] = [
     {
       key: "content-review",
       category: "review",
@@ -119,7 +119,9 @@ export function buildAttentionItems(summary: OperationsAttentionSummary): Attent
       count: summary.support.forcedPasswordChanges,
       to: "/app/students",
     },
-  ].filter((item) => item.count > 0);
+  ];
+
+  return items.filter((item) => item.count > 0);
 }
 
 export function attentionTotal(summary: OperationsAttentionSummary): number {

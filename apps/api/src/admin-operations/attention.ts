@@ -1,7 +1,4 @@
-import type {
-  OperationsAuditEntry,
-  OperationsGovernanceOverview,
-} from "./service.js";
+import type { OperationsAuditEntry, OperationsGovernanceOverview } from "./service.js";
 
 export interface OperationsAttentionSummary {
   review: {

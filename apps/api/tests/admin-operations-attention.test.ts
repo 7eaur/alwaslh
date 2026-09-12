@@ -1,10 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildOperationsAttention } from "../src/admin-operations/attention.js";
-import type {
-  OperationsAuditEntry,
-  OperationsGovernanceOverview,
-} from "../src/admin-operations/service.js";
+import type { OperationsAuditEntry, OperationsGovernanceOverview } from "../src/admin-operations/service.js";
 
 const governance: OperationsGovernanceOverview = {
   reports: {
