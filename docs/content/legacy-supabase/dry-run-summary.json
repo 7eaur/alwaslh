@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-12",
+  "source": {
+    "kind": "supabase_legacy",
+    "projectRef": "zhbgbmqhonqmzpqfiehs",
+    "sourceNamespace": "supabase:zhbgbmqhonqmzpqfiehs",
+    "readOnly": true
+  },
+  "target": {
+    "repository": "7eaur/alwaslh",
+    "baselineCommit": "c3ddef04933772116c3bd9cdf29eb5a973c527fd",
+    "runtime": "Railway PostgreSQL",
+    "rowInventoryState": "NOT_YET_VERIFIED"
+  },
+  "counts": {
+    "classes": 15,
+    "subjects": 58,
+    "subjectsWithoutPageRows": 2,
+    "subjectExtraClasses": 0,
+    "pageRecords": 5273,
+    "candidateLogicalLessons": 3148,
+    "imageReferences": 5273,
+    "questions": 25715,
+    "quizzes": 0,
+    "savedQuestions": 0
+  },
+  "lessonAnalysis": {
+    "groupingRule": "legacy subject + conservatively normalized title + contiguous page-number run",
+    "nullPageNumbers": 0,
+    "duplicateSubjectPagePositions": 6,
+    "blankTitles": 0,
+    "repeatedNoncontiguousTitleScopes": 18,
+    "logicalGroupsInRepeatedTitleScopes": 66
+  },
+  "storage": {
+    "lessonContentBucket": {
+      "public": true,
+      "objectCount": 9075,
+      "totalBytesFromMetadata": 1495150104,
+      "jpegObjects": 7105,
+      "webpObjects": 1970
+    },
+    "referencedObjects": {
+      "references": 5273,
+      "distinctUrls": 5273,
+      "matchedObjects": 5273,
+      "missingObjects": 0,
+      "referencedBytesFromMetadata": 1041164935,
+      "sha256State": "NOT_YET_VERIFIED_RAW_BYTES_UNAVAILABLE",
+      "nearDuplicateState": "NOT_YET_VERIFIED_RAW_BYTES_UNAVAILABLE"
+    }
+  },
+  "questions": {
+    "types": {
+      "mcq": 15230,
+      "true_false": 10466,
+      "direct": 10,
+      "malformed_medium_as_type": 4,
+      "malformed_easy_as_type": 3,
+      "malformed_hard_as_type": 2
+    },
+    "difficulty": {
+      "medium": 23179,
+      "easy": 1790,
+      "hard": 746
+    },
+    "mcq": {
+      "fourOptions": 15224,
+      "twoOptions": 6
+    },
+    "trueFalseOptions": {
+      "arabicCanonical": 6145,
+      "arabicReversed": 4246,
+      "englishCanonical": 65,
+      "englishReversed": 6,
+      "yesNoArabic": 2,
+      "noYesArabic": 1,
+      "sentencePair": 1
+    },
+    "directMissingTrustedAnswerText": 10,
+    "missingExplanation": 3,
+    "rawFingerprint": {
+      "total": 25715,
+      "unique": 25713,
+      "duplicateGroups": 2,
+      "duplicateExtraRows": 2,
+      "maxCopies": 2
+    }
+  },
+  "writeGates": {
+    "legacyImageBytesAndSha256": "BLOCKED",
+    "targetRowInventory": "BLOCKED",
+    "backupRollback": "BLOCKED",
+    "nonGitSourceProvenance": "BLOCKED_FOR_IMPLEMENTATION",
+    "legacyAiQuestionImportPath": "OPEN"
+  },
+  "writeDecision": "BLOCKED_FOR_WRITE"
+}
