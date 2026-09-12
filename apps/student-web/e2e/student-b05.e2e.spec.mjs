@@ -73,6 +73,19 @@ test("Student entry, installed welcome, help and support are learner-facing", as
   await installed.close();
 });
 
+test("Student motion respects reduced-motion preference", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/app/home");
+  await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
+  const durationMs = await page.locator(".student-auth-surface").evaluate((element) => {
+    const raw = getComputedStyle(element).animationDuration.trim();
+    if (raw.endsWith("ms")) return Number.parseFloat(raw);
+    if (raw.endsWith("s")) return Number.parseFloat(raw) * 1000;
+    return Number.POSITIVE_INFINITY;
+  });
+  expect(durationMs).toBeLessThanOrEqual(0.01);
+});
+
 test("B05 Downloads and Account are learner-facing, responsive and honest offline", async ({ page, context }) => {
   const fixture = createReaderFixture();
   await page.context().addCookies([{ name: fixture.sessionCookieName, value: fixture.sessionToken, url: "http://127.0.0.1:5174", httpOnly: true, sameSite: "Lax" }]);
