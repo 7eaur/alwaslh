@@ -1,55 +1,75 @@
-# Frontend Engineering
+# Frontend Engineering — React/Vite
 
-Applies to `apps/student-web`, `apps/admin-web`, and shared frontend primitives.
+Use for Student/Admin frontend implementation after product/UX decisions are understood.
 
-## Architecture
+## Component architecture
 
-- Keep route/page composition separate from low-level reusable primitives.
-- Keep business authority in API contracts, not duplicated in UI state.
-- Avoid global state for data that belongs to a route/component or server cache.
-- Prefer explicit state machines/finite states when a flow has meaningful transitions such as upload/review/download/offline/revalidation.
-- Preserve existing API contracts unless evidence supports a change.
-- Reuse a component when behavior and semantics match; do not force reuse across Student/Admin when only visual similarity exists.
+- Prefer components with one clear responsibility.
+- Extract shared primitives when repetition is real, not speculative.
+- Keep domain-heavy composition near the owning feature/route.
+- Avoid giant route components that contain unrelated product areas.
+- Avoid generic abstractions whose API is harder to understand than the repeated code they replace.
+- Keep Student/Admin shared primitives at the visual/semantic layer; do not force shared page layouts when the products need different density.
 
-## React/Vite quality
+## Routing and page boundaries
 
-- Keep render paths pure.
-- Avoid effect chains for derivable state.
-- Cancel/ignore stale async work where navigation/session changes can race.
-- Make loading/error/empty states explicit.
-- Avoid unnecessary re-renders from unstable context/object values.
-- Lazy-load only where bundle/user-flow benefit is real.
-- Keep environment/runtime configuration boundaries explicit.
-- Do not expose server secrets/private keys through Vite variables.
+Frontend structure should reflect the product IA.
+
+- major workflow = dedicated route/page;
+- object/detail task = focused child route/page where useful;
+- tabs only for tightly related views;
+- dialogs/drawers for short focused work;
+- dashboard/home remains overview/entry, not a giant composition of all features.
+
+If one route component grows into multiple independent workflows, split the route before adding more UI.
+
+## State
+
+Separate:
+- server/canonical state;
+- transient UI state;
+- form state;
+- offline/resilience state.
+
+Do not duplicate canonical business authority into client state.
+
+Make loading/error/empty/offline/permission states explicit rather than encoding them through ambiguous booleans.
+
+## API integration
+
+- Reuse established API client patterns.
+- Do not invent unverified endpoints.
+- Preserve same-origin `/v1` production behavior.
+- Treat authorization/session failures distinctly from connectivity/server failures.
+- Do not expose raw backend errors directly in UI.
+- Map API/domain state into presentation-ready user-facing models rather than rendering raw response objects.
 
 ## Forms
 
-- Model validation rules consistently with server contracts.
-- Server remains authoritative.
-- Preserve entered data after recoverable errors.
-- Disable duplicate submissions when the operation is not idempotent.
-- Communicate pending/success/error states without hiding server errors behind generic messages.
-
-## PWA boundary
-
-Service Worker behavior must preserve project rules:
-- static/app shell caching only as currently authorized
-- `/v1` is not Cache API authority
-- protected learning material uses explicit project offline mechanisms
-- UI refactors must not silently expand cache scope
+- Use stable controlled/uncontrolled patterns consistently.
+- Validate at appropriate client boundaries for feedback while preserving server validation as authority.
+- Preserve user input after recoverable errors.
+- Disable duplicate submissions while pending.
+- Announce validation failures accessibly.
 
 ## Performance
 
-Measure before complex optimization.
+Optimize based on evidence:
+- avoid unnecessary app-wide state/subscriptions;
+- avoid repeated requests caused by unstable effects;
+- lazy-load route/feature code when it materially reduces initial cost;
+- keep heavy admin data rendering bounded/paginated/virtualized only when needed;
+- size images/media appropriately;
+- avoid large animation libraries for trivial effects.
 
-Prioritize:
-- route/bundle size
-- expensive list/table rendering
-- image/media sizing
-- unnecessary network requests
-- duplicate fetching
-- layout shift
-- long main-thread work
-- avoidable context-wide rerenders
+Do not add caching or memoization without a real performance reason.
 
-Prefer simple fixes with measurable impact.
+## Content rendering
+
+Visible UI text must follow `product-content-copy.md`.
+
+Do not render every response field simply because it is available. Create view models or mapping helpers where they improve clarity and prevent backend implementation details from leaking into components.
+
+## Error boundaries and recovery
+
+Changed flows should provide a path to recover when possible. Avoid white-screen failures and generic `Something went wrong` when a more actionable state is available.
