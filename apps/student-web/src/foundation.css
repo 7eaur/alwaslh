@@ -1,0 +1,33 @@
+.aw-route-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--control-height);
+  border-radius: var(--radius-md);
+  background: var(--brand-teal-700);
+  color: var(--text-inverse);
+  padding-inline: var(--space-4);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.aw-route-action:hover {
+  background: var(--brand-teal-600);
+}
+
+.brand-mark {
+  background: url("/app-icon.svg") center / cover no-repeat;
+}
+
+.brand-mark svg {
+  visibility: hidden;
+}
+
+@supports (padding: max(0px)) {
+  .aw-product-shell--student {
+    padding-block-start: var(--safe-area-top);
+    padding-inline-end: var(--safe-area-inline-end);
+    padding-block-end: var(--safe-area-bottom);
+    padding-inline-start: var(--safe-area-inline-start);
+  }
+}
