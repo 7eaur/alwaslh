@@ -14,6 +14,9 @@
   --surface-subtle: #f2f4f7;
   --surface-panel: #ffffff;
   --surface-raised: #ffffff;
+  --surface-app: var(--surface-canvas);
+  --surface-workspace: #f5f8f7;
+  --surface-overlay: rgb(11 40 45 / 0.52);
   --border-subtle: #dce5e4;
   --border-strong: #9fb3b1;
   --text-primary: #1f2937;
@@ -64,8 +67,22 @@
   --shadow-dialog: 0 18px 50px rgb(18 60 67 / 0.16);
   --content-max: 76rem;
   --reader-max: 52rem;
+  --app-content-max: 72rem;
+  --admin-content-max: 96rem;
+  --state-content-max: 38rem;
   --admin-sidebar-width: 17rem;
+  --control-height: 2.75rem;
   --touch-target-min: 2.75rem;
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-inline-end: env(safe-area-inset-right, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-inline-start: env(safe-area-inset-left, 0px);
+  --z-shell: 10;
+  --z-navigation: 30;
+  --z-overlay: 60;
+  --z-dialog: 80;
+  --z-toast: 90;
+  --z-skip-link: 1000;
   --motion-fast: 120ms;
   --motion-normal: 180ms;
   --motion-slow: 260ms;
@@ -76,6 +93,9 @@
   --surface-subtle: #102126;
   --surface-panel: #14292d;
   --surface-raised: #193237;
+  --surface-app: var(--surface-canvas);
+  --surface-workspace: #0f1d20;
+  --surface-overlay: rgb(0 0 0 / 0.64);
   --border-subtle: #29454a;
   --border-strong: #527077;
   --text-primary: #f4f8f7;
@@ -85,8 +105,16 @@
   --text-link: #55d5ce;
   --focus-offset: #0b1719;
 }
-html { font-family: var(--font-arabic); text-rendering: optimizeLegibility; }
-:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+html {
+  font-family: var(--font-arabic);
+  text-rendering: optimizeLegibility;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     scroll-behavior: auto !important;
