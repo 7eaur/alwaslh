@@ -1,52 +1,66 @@
 # Product Design, Mobbin and Figma Routing
 
-External design tools are supporting evidence, not project authority.
+These tools support design work. They do not define the product or override repository evidence.
+
+## Before using any external design reference
+
+Read the approved Alwaslh identity and current product flows first.
+
+Mandatory identity sources for redesign work include:
+
+- `packages/brand/BRAND_FOUNDATION.md`;
+- `packages/brand/BRAND_GUIDELINES.md`;
+- `packages/brand/identity.json`;
+- relevant `packages/brand/src/*` tokens;
+- current production logo/app-icon assets.
+
+Use external references to improve usability, hierarchy, interaction patterns, and composition while preserving the product's identity.
 
 ## Product Design
 
 Use for:
-- mapping current/target user flows
-- identifying friction and unnecessary steps
-- exploring information architecture
-- comparing alternative interaction models
-- creating reviewable prototype directions
+- clarifying product outcomes and user jobs;
+- auditing flows and information architecture;
+- exploring alternatives before implementation;
+- prototyping high-impact flows.
 
-Do not use it to override verified business/security contracts.
+Do not let an exploratory prototype silently become a new business rule.
 
 ## Mobbin
 
-Use for targeted reference research such as:
-- educational app navigation
-- lesson/reader patterns
-- assessment flows
-- onboarding/activation
-- download/offline states
-- progress presentation
-- admin data-workspace patterns
+Use to study real product patterns for:
+- educational/mobile navigation;
+- onboarding/activation;
+- home/continue-learning surfaces;
+- course/lesson hierarchy;
+- assessment flows;
+- offline/download states;
+- admin tables, filters, review queues, and workflow layouts.
 
-Extract principles, not pixels. Never copy a competitor's visual identity or interaction blindly. Prefer 2–4 relevant references for a specific problem rather than browsing indefinitely.
+Do not copy a screen literally. Extract the interaction principle and test whether it fits Alwaslh's product, Arabic RTL behavior, and identity.
 
 ## Figma
 
-Use when a design needs a durable specification before code:
-- design tokens
-- component anatomy/variants/states
-- responsive frames
-- Student navigation/Reader flows
-- Admin navigation/table/form patterns
-- interaction/prototype review
+Use when a formal visual/design artifact materially improves implementation or review:
+- design-system tokens/components;
+- reusable component variants/states;
+- key Student app flows;
+- Admin shell/navigation/workspace hierarchy;
+- responsive layouts;
+- interaction/prototype review.
 
-Code remains the executable implementation. When Figma and live code diverge, determine which is current before changing either.
+Figma is a design artifact, not runtime authority. Code/contracts remain authoritative where they differ.
 
-## Tool sequence
+## Tool order
 
-For a meaningful redesign:
-1. inspect current code and actual flow
-2. define the problem
-3. use Mobbin only if external pattern evidence would help
-4. use Product Design to explore the flow/IA when needed
-5. use Figma for approved system/spec work when useful
-6. implement in code
-7. verify in real browser
+For a redesign task, prefer:
 
-Do not block engineering on a tool that is unavailable if the required decision can be made from evidence and project rules.
+`Repository/product evidence → Alwaslh identity → flow/IA reasoning → Mobbin research where useful → Product Design exploration → Figma formalization where useful → implementation → browser verification`
+
+Do not add a design-tool step when it does not improve the decision or implementation.
+
+## Copy/data caution
+
+External screenshots may contain labels, metrics, navigation names, or content that do not belong in Alwaslh. Never copy their text blindly.
+
+All final visible copy/data must be written for Alwaslh users and follow `product-content-copy.md`.
