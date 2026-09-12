@@ -72,7 +72,8 @@ test("Student Practice/Test uses routed focused attempts, published snapshots, s
   ]);
 
   await page.goto("/");
-  await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/home$/);
+  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
   await page.getByRole("link", { name: "التدريب", exact: true }).first().click();
   await expect(page).toHaveURL(/\/app\/practice$/);
   await expect(page.getByRole("heading", { name: "التدريب والاختبارات" })).toBeVisible();
