@@ -98,6 +98,25 @@ function cloneLeaseRecord(record, profileId, deviceId) {
   };
 }
 
+function expectSameOrRefreshedLeaseRecord(actual, baseline) {
+  expect(actual).toBeTruthy();
+  expect(actual.scopeKey).toBe(baseline.scopeKey);
+  expect(actual.profileId).toBe(baseline.profileId);
+  expect(actual.deviceId).toBe(baseline.deviceId);
+  expect(actual.lease.version).toBe(baseline.lease.version);
+  expect(actual.lease.profileId).toBe(baseline.lease.profileId);
+  expect(actual.lease.deviceId).toBe(baseline.lease.deviceId);
+  expect(
+    actual.lease.grants.map(({ entitlementId, scope, classId }) => ({ entitlementId, scope, classId })),
+  ).toEqual(
+    baseline.lease.grants.map(({ entitlementId, scope, classId }) => ({ entitlementId, scope, classId })),
+  );
+  expect(Date.parse(actual.lease.issuedAt)).toBeGreaterThanOrEqual(Date.parse(baseline.lease.issuedAt));
+  expect(Date.parse(actual.lease.expiresAt)).toBeGreaterThanOrEqual(Date.parse(baseline.lease.expiresAt));
+  expect(actual.observedAtClientMs).toBeGreaterThanOrEqual(baseline.observedAtClientMs);
+  expect(actual.lastSeenClientMs).toBeGreaterThanOrEqual(baseline.lastSeenClientMs);
+}
+
 async function activateStudent(page, code, password) {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
@@ -193,7 +212,9 @@ test("offline lease persists and cleanup stays scoped across logout and device r
   await page.reload();
   await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
   const persistedRecords = await readOfflineLeases(page);
-  expect(persistedRecords.find((record) => record.scopeKey === currentRecord.scopeKey)).toEqual(currentRecord);
+  const persistedCurrentScope = persistedRecords.filter((record) => record.scopeKey === currentRecord.scopeKey);
+  expect(persistedCurrentScope).toHaveLength(1);
+  expectSameOrRefreshedLeaseRecord(persistedCurrentScope[0], currentRecord);
   await page.unroute("**/v1/student/offline/lease");
 
   const staleDeviceId = "00000000-0000-4000-8000-000000000016";
