@@ -18,7 +18,8 @@
     "db:migrate": "tsx src/migrate.ts",
     "auth:create-admin": "tsx src/auth/create-admin.ts",
     "content:import-source": "tsx src/content/import-source-cli.ts",
-    "content:bootstrap-legacy-subject": "tsx src/content/bootstrap-legacy-subject-cli.ts"
+    "content:bootstrap-legacy-subject": "tsx src/content/bootstrap-legacy-subject-cli.ts",
+    "content:legacy-supabase": "tsx src/content/legacy-supabase-import-cli.ts"
   },
   "dependencies": {
     "fastify": "5.6.1",
