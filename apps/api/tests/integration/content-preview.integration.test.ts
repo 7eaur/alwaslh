@@ -1,8 +1,8 @@
+import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import assert from "node:assert/strict";
 import test from "node:test";
 import sharp from "sharp";
 import { buildApp } from "../../src/app.js";

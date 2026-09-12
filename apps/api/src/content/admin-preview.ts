@@ -54,7 +54,12 @@ export class AdminContentPreviewService {
     const byteSize = Number(preview.byte_size);
     const checksumSha256 = preview.checksum_sha256.toLowerCase();
     const actualChecksum = createHash("sha256").update(bytes).digest("hex");
-    if (!Number.isSafeInteger(byteSize) || byteSize < 1 || bytes.byteLength !== byteSize || actualChecksum !== checksumSha256) {
+    if (
+      !Number.isSafeInteger(byteSize) ||
+      byteSize < 1 ||
+      bytes.byteLength !== byteSize ||
+      actualChecksum !== checksumSha256
+    ) {
       throw new AppError("SERVICE_UNAVAILABLE", "تعذر التحقق من سلامة معاينة المصدر", 503);
     }
 

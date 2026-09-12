@@ -15,14 +15,14 @@ import { registerAdminAiOperationsRoutes } from "./ai/admin-operations-http.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
 import { type AppConfig, allowedOrigins } from "./config.js";
-import { registerAdminContentOperationsRoutes } from "./content/admin-operations-http.js";
 import { AdminContentOperationsService } from "./content/admin-operations.js";
+import { registerAdminContentOperationsRoutes } from "./content/admin-operations-http.js";
 import { AdminContentPreviewService } from "./content/admin-preview.js";
 import { registerAdminContentIngestionRoutes } from "./content/ingestion-http.js";
 import { AdminContentIngestionService } from "./content/ingestion-service.js";
 import { registerCurriculumRoutes } from "./curriculum/http.js";
-import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authoring-export-http.js";
 import { LessonAuthoringExportService } from "./curriculum/lesson-authoring-export.js";
+import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authoring-export-http.js";
 import { CurriculumService } from "./curriculum/service.js";
 import { StudentReaderService } from "./curriculum/student-reader.js";
 import type { Database } from "./db.js";
@@ -35,16 +35,16 @@ import { registerStudentOfflineRoutes } from "./offline/http.js";
 import { StudentOfflineService } from "./offline/service.js";
 import { createOfflineAuthorizationSigner } from "./offline/signing.js";
 import { registerQuestionBankRoutes } from "./question-bank/http.js";
-import { registerQuestionBankRegenerationRoutes } from "./question-bank/regeneration-http.js";
 import { QuestionBankRegenerationService } from "./question-bank/regeneration.js";
+import { registerQuestionBankRegenerationRoutes } from "./question-bank/regeneration-http.js";
 import { QuestionBankService } from "./question-bank/service.js";
 import { QuizQuestionCandidateService } from "./quiz-builder/candidates.js";
-import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
 import { QuizVersionExportService } from "./quiz-builder/export.js";
+import { registerQuizVersionExportRoutes } from "./quiz-builder/export-http.js";
 import { registerQuizBuilderRoutes } from "./quiz-builder/http.js";
 import { QuizBuilderService } from "./quiz-builder/service.js";
-import { registerQuizSpecializedExportRoutes } from "./quiz-builder/specialized-export-http.js";
 import { QuizSpecializedExportService } from "./quiz-builder/specialized-export.js";
+import { registerQuizSpecializedExportRoutes } from "./quiz-builder/specialized-export-http.js";
 import { registerStudentAssessmentRoutes } from "./student-assessment/http.js";
 import { StudentAssessmentService } from "./student-assessment/service.js";
 
@@ -71,15 +71,15 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const notifications = new NotificationService(database);
   const curriculum = new CurriculumService(database);
   const lessonAuthoringExports = new LessonAuthoringExportService(database);
+  const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const contentOperations = new AdminContentOperationsService(database);
+  const contentPreview = new AdminContentPreviewService(database, mediaStorage);
   const aiOperations = new AdminAiOperationsService(database);
   const questionBank = new QuestionBankService(database);
   const questionBankRegeneration = new QuestionBankRegenerationService(database);
   const quizBuilder = new QuizBuilderService(database);
   const quizCandidates = new QuizQuestionCandidateService(database);
   const quizExports = new QuizVersionExportService(quizBuilder);
-  const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
-  const contentPreview = new AdminContentPreviewService(database, mediaStorage);
   const studentReader = new StudentReaderService(database, mediaStorage);
   const studentAssessment = new StudentAssessmentService(database);
   const studentOffline = new StudentOfflineService(database);
@@ -142,7 +142,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
       return { status: "ready" };
     } catch (error) {
       app.log.error({ err: error }, "database readiness check failed");
-      return reply.code(503).send({ status: "not_ready" });
+      return reply.code(503).send({ status: "not_ready" };
     }
   });
 
