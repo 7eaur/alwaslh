@@ -2,101 +2,140 @@
 
 > Ordered execution authority. Start from the first incomplete item after reading Source of Truth + Issue #16.
 
-Last synchronized: **2026-09-11 — Stage14/15 closed; Stage16 active.**
+Last synchronized: **2026-09-12 — unified `main`; Stage16 active; Railway inspection/dev live.**
 
 ## Operating rules
 
 - Repo: `7eaur/alwaslh`.
-- Student branch: `parallel/stage14-student-product`.
-- Issue #16 is shared execution ledger.
+- Baseline: live `main`.
+- Issue #16 is the execution ledger.
+- New work uses short-lived branches from `main`.
+- Old Stage13G/Student long-lived branches are historical/reference after PR #33.
 - Code/migrations/executable evidence outrank prose.
 - No test weakening/auth bypass/fake API/duplicate durable authority/random timeout masking.
-- Track A owns Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G; Track B owns Student Product.
-- deployment/cutover deferred.
+- Hosted Railway is inspection/dev evidence, not a substitute for CI or Stage27/28 release gates.
 
-## Completed Track B checkpoints
+## Completed checkpoints
 
-- `STUDENT-014` Stage14 — DONE / VERIFIED / CLOSED @ `ac55f1435d232cadff334816407f1182125dda90`.
-- `STUDENT-014I` Stage13F integration — DONE / VERIFIED @ `4a476e1f29cb605fce294d7c34fd68e8218a32e8` from canonical Stage13F main baseline `3aeca598...`.
-- `STUDENT-015` Assessment — DONE / VERIFIED / CLOSED @ `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d`.
-- `STUDENT-016A` Safe PWA shell — DONE / VERIFIED @ `c1ae86036d4d302b8ca8c411227f41c37b4063ef`, run `34430284173`.
-- `STUDENT-016B1` Server-issued bounded lease — DONE / VERIFIED @ `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd`, Stage16 `34430915847` + API `34430915786`.
-- `STUDENT-016B2` Client lease strict-build repair — DONE / VERIFIED. TS18047 fixed without weakening strictness.
-- `STUDENT-016C` Lease lifecycle integration — DONE / VERIFIED for current boundary @ runtime `53aeb972c4c891c3eecafdde0716b544751d2711`.
+- Stage1–10 + OCR — DONE / VERIFIED.
+- Stage11 — DONE / VERIFIED.
+- Stage12 backend/runtime — DONE / VERIFIED; live provider items `AI-012..AI-019` remain open.
+- Stage13A–G — DONE / VERIFIED / integrated into `main`.
+- Stage14 — DONE / VERIFIED.
+- Stage15 — DONE / VERIFIED.
+- Stage16 PWA shell — DONE / VERIFIED.
+- Stage16 bounded lease/lifecycle — DONE / VERIFIED.
+- Stage16 protected lesson materialization — DONE / VERIFIED for download/storage boundary.
+- Stage16 ES256 signed manifest + Student verification before storage — DONE / VERIFIED for issuance/download boundary.
+- Full integration PR #33 — 19/19 workflows SUCCESS; merged.
+- Railway API/Admin/Student/PostgreSQL inspection stack — LIVE / latest known SUCCESS.
+- Grade 9 English canonical media proof — DONE / VERIFIED as Draft-only bounded content proof.
 
-`STUDENT-016C` evidence:
+## ACTIVE QUEUE
 
-- Stage16 `34551931757` — SUCCESS: lease PostgreSQL + Student build + PWA Chromium + IndexedDB lifecycle 3/3.
-- Stage14 `34551931610`, attempt 2 — SUCCESS on exact same runtime: lint/typecheck/Vitest 22/22/build/contracts/full Chromium.
-- activation/login/restore lease sync, scoped logout/session-expiry/rebind cleanup, account/device isolation and clock rollback are executable-proven.
-- no protected lesson/media blobs are stored yet.
-
-## Active Track B queue
-
-### STUDENT-016D — Explicit protected lesson download contract
+### STUDENT-016H — Durable offline scope + read-time signed authority
 
 **Priority: P1 · Status: ACTIVE / EXACT NEXT ITEM**
 
-Required before storing protected bytes:
+Required:
 
-1. live-check Student HEAD, `main`, Issue #16 and Track A shared changes;
-2. inspect actual canonical Reader/content/publication/media code + migrations;
-3. define smallest server-authorized offline lesson manifest using existing authority;
-4. manifest must provide stable lesson/asset IDs, explicit revision/provenance, SHA-256/checksum and exact byte sizes;
-5. issue material only when content is currently Published + entitled and device/session authority is valid;
-6. expose no raw storage key and never cache current Reader `/v1` response in Service Worker Cache API;
-7. define account/device storage budget before blobs;
-8. define exact per-download accounting, atomic/failure rollback and deterministic eviction/removal policy;
-9. add server integration/contract evidence before client blob storage.
+1. live-check `main`, Issue #16, Actions and Railway;
+2. create a short-lived Stage16 branch from `main`;
+3. replace session-only scope discovery with a durable **non-secret** active profile/device selector;
+4. preserve exact logout/rebind/session cleanup semantics;
+5. reconstruct trusted manifest from stored signed envelope at use time;
+6. verify configured public key identity, ES256 signature, canonical signed payload and stored-field equality;
+7. fail closed on missing key, malformed data, key mismatch, signature failure, payload mismatch or expiry;
+8. never place private signing material in Student code/storage.
+
+Acceptance:
+
+- unit tests for durable scope and signature/field mismatch;
+- browser storage isolation;
+- no regression of online login/session flows.
 
 ---
 
-### STUDENT-016E — Offline content store + protected Reader path
+### STUDENT-016I — Read-time blob integrity + cold-start offline Reader
 
-**Priority: P1 · Status: PENDING 016D**
+**Priority: P1 · Status: PENDING 016H**
 
 Required:
 
-- account/device-scoped content records;
-- checksum validation before commit;
-- budget enforcement and exact byte accounting;
-- failure leaves no partial durable materialization;
-- deterministic eviction/removal;
-- offline Reader uses only explicitly materialized authorized content;
-- lease enforced using server-time estimate;
-- real Chromium isolation/checksum/budget/offline-read acceptance.
+- hash stored blobs at offline use/read time;
+- compare size + SHA-256 against **signed** manifest fields;
+- explicit offline library/Reader state;
+- app shell works after real browser restart with network unavailable;
+- only valid signed/verified packages render;
+- online-only Assessment/actions are hidden/disabled honestly offline;
+- invalid/tampered/expired package fails closed.
+
+Real Chromium acceptance must cover:
+
+`download online → close/restart context → network unavailable → app loads → package discovered → signature verified → blobs verified → Reader renders`.
+
+Also test:
+
+- signature tamper;
+- manifest/stored-field mismatch;
+- blob tamper;
+- authorization expiry;
+- backward clock;
+- account/device isolation;
+- offline-empty state.
 
 ---
 
 ### STUDENT-016R — Reconnect revalidation / revocation purge
 
-**Priority: P1 · Status: PENDING 016E**
+**Priority: P1 · Status: PENDING 016I**
 
 Required:
 
-- recheck lease/device/session-derived authority when online;
-- recheck entitlement and publication state;
-- disable/delete revoked, expired or unpublished material;
-- never continue showing protected bytes merely because they exist locally;
-- real reconnect/revocation Chromium regression.
+- recheck current Student session/device when online;
+- recheck entitlement;
+- recheck publication/unpublication;
+- recheck content revision;
+- define stale/revoked/expired/unpublished behavior;
+- purge/disable invalid packages deterministically;
+- never keep showing protected bytes merely because they exist locally;
+- real Chromium reconnect/revocation regression.
 
 ---
 
-### STUDENT-016F — Revisions / tombstones / delta / outbox
+### STUDENT-016S — Revision / tombstone / cursor / delta
 
-**Priority: P1 · Status: PENDING SAFE MATERIALIZATION**
+**Priority: P1 · Status: PENDING SAFE COLD-OFFLINE**
 
-Current state: `content_revisions`, `content_tombstones`, `sync_checkpoints` are dormant/unwired, not authority.
+Current schema presence is not enough. Required:
 
-Required:
-
-- authoritative revision writers;
+- authoritative content revision writers;
 - tombstone semantics;
 - bounded server cursor/delta API;
 - client delta application;
-- outbox only for product-authorized offline writes;
-- retry/idempotency/conflict behavior;
-- reconnect reconciliation tests.
+- idempotency/retry behavior;
+- explicit relation to downloaded package revision/publication state;
+- integration + browser reconnect evidence.
+
+---
+
+### STUDENT-016O — Bounded outbox
+
+**Priority: P1 · Status: PENDING PRODUCT NEED**
+
+Only implement an outbox for later product-authorized offline writes such as Stage17 personal learning data if those writes are explicitly supported offline.
+
+Required before use:
+
+- stable operation IDs;
+- bounded retry;
+- idempotent server handling;
+- conflict rule;
+- account/device isolation;
+- cleanup after acknowledgement;
+- no auth/session secrets in outbox.
+
+Do not invent an outbox merely because a table name exists.
 
 ---
 
@@ -107,30 +146,127 @@ Required:
 Require one exact runtime HEAD with:
 
 - Student lint/typecheck/unit/build;
-- API regression if shared API changed;
-- clean PostgreSQL integration;
-- real Chromium SW lifecycle;
-- IndexedDB account/device isolation;
-- lease expiry/clock rollback;
-- explicit protected downloads;
-- checksum/storage-budget/rollback/eviction evidence;
-- revocation/reconnect purge;
-- revisions/tombstones/delta/outbox behavior where Stage16 contract requires it;
+- API lint/typecheck/unit/build when shared code changed;
+- clean PostgreSQL migrations/contracts;
+- PWA shell real Chromium;
+- account/device offline isolation;
+- signed authorization issuance + read-time verification;
+- read-time blob integrity;
+- true cold-start offline Reader;
+- tamper/expiry/clock-rollback rejection;
+- reconnect revalidation/purge;
+- revision/tombstone/delta behavior required by Stage16;
 - responsive/accessibility regression;
+- wider regression matrix;
 - synchronized docs + Issue #16 closure report.
 
-## Parallel Track A
+Stage17 remains blocked until this gate passes.
 
-Stage13G remains Track A. Track B must not absorb Admin/AI/Question Bank authority. Any shared API must be the smallest additive contract required for Student offline materialization and documented in Issue #16.
+## CONTROLLED CONTENT QUEUE — may run separately from Stage16 architecture
 
-## Later Student sequence
+### CONTENT-PROD-002 — Review/publish Grade 9 English proof
 
-- Stage17 Personal Learning Data — **BLOCKED UNTIL Stage16 CLOSES**.
-- Stage18 Notifications.
-- Stage19 Progress/Statistics/Achievements.
-- Stage20+ later roadmap.
-- release/deployment only when explicitly reopened.
+**Priority: P1 product verification · Status: READY / NOT YET EXECUTED**
+
+Current live Draft sample:
+
+- 75 source images;
+- 75 ready media assets;
+- 300 variants;
+- 75 Draft lesson assets;
+- 10 lessons.
+
+Required:
+
+1. inspect class/subject/lesson titles/grouping/order in Admin;
+2. inspect representative source/display/thumbnail rendering;
+3. correct mapping if necessary before publication;
+4. move only approved lessons/assets through normal Review/Published authority;
+5. verify Student entitlement + Reader on Railway;
+6. record exact published sample and browser evidence.
+
+No automatic AI question publication.
+
+### CONTENT-PROD-003 — Next bounded canonical subject
+
+**Status: PENDING CONTENT-PROD-002**
+
+Before import:
+
+- choose a small representative subject with deterministic manifest/grouping;
+- estimate raw + variant storage;
+- verify media-volume capacity;
+- import through current idempotent pipeline;
+- review before publishing.
+
+### CONTENT-PROD-004 — Full canonical media load
+
+**Status: NOT YET STARTED**
+
+Stage9 inventory = 48 documents / 5,552 images. Full byte materialization requires proven mapping across representative subjects, capacity sizing and controlled batches. Do not bulk-import blindly.
+
+## CROSS-CUTTING OPEN ITEM
+
+### AI-012..AI-019 — Live AI provider readiness
+
+**Priority: P2 until release dependency becomes active · Status: NOT YET VERIFIED**
+
+Need real evidence for provider/model benchmark, routes, credentials/bootstrap, limits/failures and production runtime. Existing test fixtures do not close this.
+
+## LATER PRODUCT SEQUENCE
+
+### Stage17 — Personal Learning Data
+
+Notes / Favorites / Needs Review, stable provenance, local/server ownership and offline/sync behavior.
+
+### Stage18 — Notifications
+
+In-App + Web Push where supported, secure subscription lifecycle, quiet hours/opt-out.
+
+### Stage19 — Progress / Statistics / Achievements
+
+Server-derived trusted metrics, sufficient-sample recommendations, private achievements, no unapproved global leaderboard.
+
+### Stage20 — Import / Export / Reporting closure
+
+Reuse Stage13G/Admin capabilities; close remaining validated module/reporting gaps rather than rebuilding parallel exports.
+
+### Stage21 — Performance Engineering
+
+Measure first; optimize evidenced bottlenecks.
+
+### Stage22 — Security Hardening
+
+Authorization/IDOR/rates/session/CSRF/CORS/CSP/device abuse/upload/storage/secrets/dependencies/audit/backups.
+
+### Stage23 — Tests & CI Expansion
+
+Complete cross-surface unit/DB/integration/browser/concurrency/regression coverage.
+
+### Stage24 — Accessibility / Device QA
+
+RTL, keyboard/focus/screen reader, zoom/contrast/reduced motion, touch targets, mobile/tablet/desktop/PWA/offline/device-reset.
+
+### Stage25 — Initial Data / Content Load
+
+Complete canonical production curriculum/content through verified pipelines.
+
+### Stage26 — Staging
+
+Formal release-candidate staging. Current Railway inspection/dev stack does not automatically close Stage26.
+
+### Stage27 — Release Gate
+
+No unresolved/unaccepted P0/P1, backup restore, real-host evidence, security/performance/a11y, Admin/Student E2E, Offline/PWA, complete content/legacy coverage.
+
+### Stage28 — Production Cutover
+
+Provision → migrations → content → backend/workers → Admin → Student → smoke → rollback readiness → explicit Product Owner declaration.
+
+### Stage29 — Monitoring & Operations
+
+Auth/access/device resets, DB/backups, media/OCR/AI, offline sync, Push, storage/PWA/runtime health and incident runbooks.
 
 ## Exact first item
 
-`STUDENT-016D`: inspect canonical Reader/content/media authority, then fix the explicit protected download manifest + budget/checksum/accounting/rollback/eviction contract **before any protected blob is written**.
+`STUDENT-016H`: durable non-secret active scope + read-time signed authorization verification on a short-lived branch from live `main`.
