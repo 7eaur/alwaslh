@@ -1,10 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "@alwaslh/brand/tokens.css";
+import "@alwaslh/ui/styles.css";
+import { BrowserRouter } from "react-router-dom";
 import "./styles.css";
 import "./stage14.css";
-import App from "./App";
+import "./foundation.css";
 import { registerStudentServiceWorker } from "./pwa";
+import { StudentRouter } from "./router";
 
 const root = document.getElementById("root");
 
@@ -14,7 +17,9 @@ if (!root) {
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+      <StudentRouter />
+    </BrowserRouter>
   </React.StrictMode>,
 );
 
