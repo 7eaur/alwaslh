@@ -1,0 +1,13 @@
+/* Assessment integration with the shared Student shell.
+   Assessment owns its hierarchy; focused attempts intentionally suppress global chrome. */
+.aw-product-shell:has(.attempt-shell) .aw-skip-link,
+.aw-product-shell:has(.attempt-review-shell) .aw-skip-link {
+  display: none;
+}
+
+@media (max-width: 42rem) {
+  .practice-library,
+  .quiz-detail {
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
+  }
+}
