@@ -1,18 +1,18 @@
-import { PageState, ProductShell, RouteFocus } from "@alwaslh/ui";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { App } from "./App";
+import { AdminProductShell, PageState, RouteFocus } from "./presentation-foundation";
 
 function AdminAppRoute() {
   return (
-    <ProductShell surface="admin">
+    <AdminProductShell>
       <App />
-    </ProductShell>
+    </AdminProductShell>
   );
 }
 
 function AdminNotFoundRoute() {
   return (
-    <ProductShell surface="admin">
+    <AdminProductShell>
       <PageState
         kind="empty"
         eyebrow="مساحة الإدارة"
@@ -24,7 +24,7 @@ function AdminNotFoundRoute() {
           </Link>
         }
       />
-    </ProductShell>
+    </AdminProductShell>
   );
 }
 
