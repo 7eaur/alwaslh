@@ -51,6 +51,7 @@ Stable authority contracts:
 - **AD-247 — tests assert outcomes, not obsolete copy.** Browser tests verify successful auth/access/navigation/device behavior rather than force redundant UI text such as persistent “تم تسجيل الدخول”.
 - **AD-248 — learner error boundary.** API/PostgreSQL own error truth/codes, but Student presentation owns the explanation. Raw backend messages are never a UI contract; Student maps code/status/context to a clear explanation plus a realistic next action.
 - **AD-249 — predictable-failure acceptance.** Expected invalid/offline/expired/unavailable/storage scenarios are first-class product states and must be tested, not left to a generic catch-all.
+- **AD-250 — motion as affordance, not decoration.** Student motion must make navigation, press, feedback and interactive surfaces feel alive without becoming a visual effect layer. Use short opacity/transform/box-shadow transitions, no animation framework or continuous decorative motion, and always honor `prefers-reduced-motion`.
 
 Binding design order:
 
@@ -116,6 +117,8 @@ Implemented/refactored:
 - production-realistic Reader fixture data replaces Student-visible Stage/Reader test wording.
 - `stage14.css` removed.
 - `assessment-polish.css` removed; live integration rules separated.
+- `student-motion.css` adds restrained surface-entry motion, inserted-state feedback, hover/press response and light depth to interactive surfaces without adding JavaScript animation dependencies.
+- motion is short and transform/opacity-oriented; hover elevation is pointer-capability gated; reduced-motion collapses animation/transition duration and is covered by B05 Chromium acceptance.
 
 ## Predictable Error Scenario Matrix
 
@@ -157,6 +160,7 @@ Implemented/refactored:
 | `UX-COPY-105` | P1 | Error UX | Student components could surface `ApiRequestError.message` directly | centralized contextual error mapper + tests | FIXED / FINAL CI PENDING |
 | `UX-IA-107` | P1 | Entry | Welcome/Auth/Help/Support lacked coherent flow | Student Entry Experience | FIXED / REVALIDATING |
 | `UX-IA-108` | P1 | Shell | duplicate brand/account/network chrome | single shell | FIXED / REVALIDATING |
+| `UX-MOTION-101` | P2 | Interaction UX | screens felt static and interactive surfaces lacked tactile feedback | `student-motion.css`: short surface/feedback entrance, hover/press depth, reduced-motion override | FIXED / FINAL VISUAL+CI PENDING |
 | `UX-ARCH-104` | P2 | CSS | historical stage/polish overrides | stage14/polish removed; remaining dead CSS is non-blocking cleanup only if parity proves safe | IMPROVED / P3 RESIDUAL |
 | `UX-ARCH-105` | P2 | Future IA | future features lacked placement | Student architecture doc | FIXED / ARCHITECTURE |
 | `UX-OFFLINE-104` | P1 | Reader | true cold-start offline Reader not yet closed | return to `STUDENT-016I`; do not fake completion | OPEN / PAUSED CONTRACT |
@@ -167,9 +171,26 @@ Implemented/refactored:
 
 ## Verification Policy / Current Evidence
 
-The large Entry/Shell/Reader refactor passed Student lint/typecheck/unit/build on an intermediate head. A previous exact-head matrix showed non-Student backend/Admin workflows green while Student browser failures were localized to obsolete presentation assertions and a fixture that leaked “Stage14” into Student-visible text; those causes were explicitly corrected rather than reintroducing obsolete UI.
+The large Entry/Shell/Reader refactor passed Student lint/typecheck/unit/build on the previous exact-head attempt. On exact head `efc4a8900ba8340dc413c2682ef3a09d7f723ccf`, the following evidence was established before the motion request:
 
-The current implementation is now frozen for final verification unless CI identifies a real regression. Final acceptance requires one stable exact head with:
+- B01 and B02 succeeded;
+- Stage15 succeeded;
+- Stage16 PostgreSQL offline contracts succeeded;
+- Stage16 PWA shell Chromium succeeded;
+- B03/B04/B05 and one Stage16 lifecycle/materialization job failed only in browser assertions after quality/build/migrations had passed;
+- B03 failure was an obsolete `التعلم` selector while production label is `التعلّم`;
+- B04 resume test blindly clicked “السؤال التالي” even when the restored session already had the last question active;
+- Stage16 lifecycle test targeted the obsolete Auth switch label and manually searched for an Account refresh button after the current Account load had already detected server-side expiry;
+- B05/Stage16 asset-corruption test used a brittle URL/body fixture rather than proving corruption of the actual returned asset.
+
+The browser tests were corrected at root cause without changing backend/security/business authority:
+
+- Reader navigation now targets the production label;
+- resumed Assessment selects the intended direct-answer question by question identity;
+- offline lifecycle uses the current Auth switch and waits for the real entitlements 401 that drives session-expiry cleanup;
+- offline integrity test fetches the real asset, mutates one byte while preserving size, proves the request was intercepted, then expects checksum rejection and zero persisted package.
+
+After the user requested interaction liveliness, the motion layer and reduced-motion acceptance were added. Therefore the previous exact-head matrix is evidence about root causes only, not final acceptance. Final acceptance requires one newer stable exact head with:
 
 - lint;
 - strict typecheck;
@@ -184,15 +205,17 @@ The current implementation is now frozen for final verification unless CI identi
 - all other triggered workflows;
 - responsive/no-overflow checks;
 - production-copy scan;
-- manual phone/desktop Visual QA artifact inspection.
+- reduced-motion browser acceptance;
+- manual phone/desktop Visual QA artifact inspection after motion settles.
 
 A green build alone is not product acceptance.
 
 ## Known Remaining Work Before PR #53 Merge
 
-- complete stable exact-head CI;
+- complete the new stable exact-head CI after motion + regression-test repairs;
 - fix only evidence-backed regressions discovered by that matrix;
 - manually inspect final visual artifacts for Welcome/Auth/Help/Support/Home/Learn/Reader/Practice/Downloads/Account where fixture coverage exists;
+- ensure the new depth/motion improves affordance without visual noise or layout instability;
 - keep implementation/stage/roadmap language blocked in Student production copy;
 - synchronize with live `main` if it moved materially;
 - update PR #53 / Issue #16 with final evidence;
