@@ -12,6 +12,14 @@ function message(error: unknown): string {
   return error instanceof ApiRequestError ? error.message : "تعذر إكمال العملية. حاول مرة أخرى.";
 }
 
+function statusLabel(status: QuizBuilderListItem["status"] | undefined): string {
+  if (status === "draft") return "مسودة";
+  if (status === "review") return "قيد المراجعة";
+  if (status === "published") return "منشور";
+  if (status === "archived") return "مؤرشف";
+  return "—";
+}
+
 export function QuizMetadataPanel({ onSessionExpired }: { onSessionExpired: () => void }) {
   const [quizzes, setQuizzes] = useState<QuizBuilderListItem[]>([]);
   const [quizId, setQuizId] = useState("");
@@ -71,7 +79,7 @@ export function QuizMetadataPanel({ onSessionExpired }: { onSessionExpired: () =
       });
       const detail = await fetchQuiz(selected.id);
       setQuizzes((current) => current.map((quiz) => (quiz.id === selected.id ? detail.quiz : quiz)));
-      setNotice("تم تحديث بيانات الاختبار دون تغيير النماذج أو دورة المراجعة.");
+      setNotice("تم تحديث بيانات الاختبار دون تغيير النماذج أو حالة المراجعة والنشر.");
       setState("ready");
     } catch (error) {
       if (isMissingSessionError(error)) {
@@ -90,9 +98,9 @@ export function QuizMetadataPanel({ onSessionExpired }: { onSessionExpired: () =
     <section className="parity-panel" aria-labelledby="quiz-metadata-title">
       <div className="parity-panel-heading">
         <div>
-          <p className="parity-eyebrow">Quiz parity</p>
+          <p className="parity-eyebrow">إعدادات الاختبار</p>
           <h2 id="quiz-metadata-title">بيانات الاختبار</h2>
-          <p>تحرير العنوان والوصف وسياسة ترتيب النماذج للاختبارات المسودة فقط، مع الحفاظ على lifecycle الحالي.</p>
+          <p>حرّر العنوان والوصف وسياسة ترتيب النماذج للاختبارات المسودة فقط.</p>
         </div>
         <button type="button" className="secondary-button" onClick={() => void loadList()} disabled={busy}>
           تحديث
@@ -110,13 +118,13 @@ export function QuizMetadataPanel({ onSessionExpired }: { onSessionExpired: () =
               <span>الاختبار</span>
               <select value={quizId} onChange={(event) => setQuizId(event.target.value)} disabled={busy}>
                 {quizzes.map((quiz) => (
-                  <option key={quiz.id} value={quiz.id}>{quiz.title} — {quiz.status}</option>
+                  <option key={quiz.id} value={quiz.id}>{quiz.title} — {statusLabel(quiz.status)}</option>
                 ))}
               </select>
             </label>
             <div className="parity-metric">
               <span>الحالة</span>
-              <strong>{selected?.status ?? "—"}</strong>
+              <strong>{statusLabel(selected?.status)}</strong>
             </div>
           </div>
 
@@ -140,7 +148,7 @@ export function QuizMetadataPanel({ onSessionExpired }: { onSessionExpired: () =
             <span>السماح بترتيب/توزيع النماذج وفق إعداد الاختبار</span>
           </label>
           {!editable && selected ? (
-            <p className="parity-hint">التعديل متاح في حالة المسودة فقط. أعد الاختبار للمسودة عبر lifecycle المعتمد قبل تغيير بياناته.</p>
+            <p className="parity-hint">التعديل متاح في حالة المسودة فقط. أعد الاختبار للمسودة عبر دورة العمل المعتمدة قبل تغيير بياناته.</p>
           ) : null}
           <div className="parity-actions">
             <button type="button" className="primary-button" disabled={!editable || busy || !title.trim()} onClick={() => void save()}>
