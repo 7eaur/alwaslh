@@ -153,7 +153,10 @@ export function stableUuid(seed: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-export function buildLogicalLessonPlan(legacySubjectId: string, input: readonly LegacyPage[]): LogicalLessonPlan {
+export function buildLogicalLessonPlan(
+  legacySubjectId: string,
+  input: readonly LegacyPage[],
+): LogicalLessonPlan {
   const pages = [...input].sort((left, right) => {
     const leftPage = left.page_number ?? Number.MAX_SAFE_INTEGER;
     const rightPage = right.page_number ?? Number.MAX_SAFE_INTEGER;
@@ -250,11 +253,7 @@ function normalizeTrueFalse(
     return { state: "unresolved", reason: "invalid_shape", sourceType };
   }
   const semantics = parsed.options.map(booleanSemantic);
-  if (
-    semantics[0] === null ||
-    semantics[1] === null ||
-    semantics[0] === semantics[1]
-  ) {
+  if (semantics[0] === null || semantics[1] === null || semantics[0] === semantics[1]) {
     return { state: "unresolved", reason: "invalid_shape", sourceType };
   }
   const resolvedDifficulty = difficulty(parsed.difficulty);
@@ -348,7 +347,7 @@ export function normalizeLegacyQuestion(input: unknown): QuestionNormalizationRe
         type: "multiple_choice",
         options: parsed.options.map((option) => option.trim()),
         correctOptionIndex: known ? index : null,
-        answerText: known ? parsed.options[index]?.trim() ?? null : null,
+        answerText: known ? (parsed.options[index]?.trim() ?? null) : null,
         answerStatus: known ? "known" : "review_required",
         difficulty: resolvedDifficulty,
         explanation: cleanExplanation(parsed.explanation),

@@ -3,15 +3,15 @@ import type { Database, QueryExecutor } from "../db.js";
 import type { ProcessedMediaAsset } from "../media/media-types.js";
 import { MediaPipelineService } from "../media/service.js";
 import type { MediaStorage } from "../media/storage.js";
-import { LegacySupabaseClient, type LegacyImageBytes } from "./legacy-supabase-client.js";
+import type { LegacyImageBytes, LegacySupabaseClient } from "./legacy-supabase-client.js";
 import {
   buildLogicalLessonPlan,
   canonicalDigest,
+  type LegacyPage,
+  type LogicalLesson,
   normalizeLegacyQuestion,
   questionFingerprint,
   stableUuid,
-  type LegacyPage,
-  type LogicalLesson,
   type TargetQuestion,
 } from "./legacy-supabase-model.js";
 
@@ -291,7 +291,8 @@ export async function dryRunLegacySubject(
   const images = await mapWithConcurrency(eligiblePages, 4, async (page) => {
     const url = page.image_urls[0];
     const lesson = byPage.get(page.id);
-    if (!url || !lesson || page.page_number === null) throw new Error(`legacy_page_not_importable:${page.id}`);
+    if (!url || !lesson || page.page_number === null)
+      throw new Error(`legacy_page_not_importable:${page.id}`);
     const image = await client.imageBytes(url);
     return {
       legacyPageId: page.id,
@@ -396,10 +397,7 @@ async function importActor(database: Database): Promise<string> {
   return row.id;
 }
 
-async function ensureRun(
-  tx: QueryExecutor,
-  dryRun: LegacySubjectDryRun,
-): Promise<string> {
+async function ensureRun(tx: QueryExecutor, dryRun: LegacySubjectDryRun): Promise<string> {
   const rows = await tx.query<IdRow>(
     `insert into content_import_runs (
        source_repository, source_revision, manifest_sha256,
@@ -638,7 +636,8 @@ async function verifiedVariants(
   const expected = ["source", "display", "thumbnail", "ai"] as const;
   for (let index = 0; index < rows.length; index += 1) {
     const variant = rows[index];
-    if (!variant || variant.kind !== expected[index]) throw new Error(`legacy_media_variant_order_invalid:${mediaAssetId}`);
+    if (!variant || variant.kind !== expected[index])
+      throw new Error(`legacy_media_variant_order_invalid:${mediaAssetId}`);
     const bytes = await storage.read(variant.storage_key);
     if (bytes.byteLength !== Number(variant.byte_size) || sha256(bytes) !== variant.checksum_sha256) {
       throw new Error(`legacy_media_variant_integrity_failed:${mediaAssetId}:${variant.kind}`);
@@ -698,7 +697,10 @@ async function ensureLessonAsset(
       "select id from lesson_assets where lesson_id = $1 and media_asset_id = $2",
       [input.lessonId, input.mediaAssetId],
     );
-    if (sameMedia[0]) throw new Error(`legacy_same_lesson_duplicate_media_not_supported:${input.lessonId}:${input.mediaAssetId}`);
+    if (sameMedia[0])
+      throw new Error(
+        `legacy_same_lesson_duplicate_media_not_supported:${input.lessonId}:${input.mediaAssetId}`,
+      );
 
     await tx.query(
       `insert into lesson_assets (
@@ -954,7 +956,8 @@ export async function importLegacySubject(input: {
     if (!lesson) continue;
     const imageUrl = page.image_urls[0];
     const dryImage = dryRunImages.get(page.id);
-    if (!imageUrl || !dryImage || page.page_number === null) throw new Error(`legacy_page_dry_run_missing:${page.id}`);
+    if (!imageUrl || !dryImage || page.page_number === null)
+      throw new Error(`legacy_page_dry_run_missing:${page.id}`);
     const image = await input.client.imageBytes(imageUrl);
     if (
       image.checksumSha256 !== dryImage.checksumSha256 ||
@@ -1137,7 +1140,9 @@ export async function importLegacySubject(input: {
     throw new Error(`legacy_import_asset_verification_failed:${sourceAssets}:${lessonAssets}`);
   }
   if (importedQuestionCount !== input.dryRun.importableQuestions) {
-    throw new Error(`legacy_import_question_verification_failed:${importedQuestionCount}:${input.dryRun.importableQuestions}`);
+    throw new Error(
+      `legacy_import_question_verification_failed:${importedQuestionCount}:${input.dryRun.importableQuestions}`,
+    );
   }
   if (nonDraftAssets !== 0 || nonDraftQuestions !== 0) {
     throw new Error(`legacy_import_publication_safety_failed:${nonDraftAssets}:${nonDraftQuestions}`);

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { legacyPageSchema, type LegacyPage } from "./legacy-supabase-model.js";
+import { type LegacyPage, legacyPageSchema } from "./legacy-supabase-model.js";
 
 const legacySubjectSchema = z.object({
   id: z.string().uuid(),

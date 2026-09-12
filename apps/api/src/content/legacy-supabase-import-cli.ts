@@ -20,7 +20,11 @@ const commandSchema = z.enum([
 ]);
 
 const uuidSchema = z.string().uuid();
-const slugSchema = z.string().trim().min(1).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+const slugSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
@@ -70,9 +74,7 @@ async function main(): Promise<void> {
     if (command === "reset-experimental") {
       const confirmation = args[0];
       if (confirmation !== "DELETE_EXPERIMENTAL_CONTENT") {
-        throw new Error(
-          "reset_requires_confirmation:DELETE_EXPERIMENTAL_CONTENT",
-        );
+        throw new Error("reset_requires_confirmation:DELETE_EXPERIMENTAL_CONTENT");
       }
       const result = await resetExperimentalContent(database, config.MEDIA_STORAGE_ROOT);
       log("legacy_experimental_content_reset_complete", result as unknown as Record<string, unknown>);

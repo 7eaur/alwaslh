@@ -1,17 +1,17 @@
 import { createHash } from "node:crypto";
 import type { Database } from "../db.js";
 import type { MediaStorage } from "../media/storage.js";
-import { LegacySupabaseClient } from "./legacy-supabase-client.js";
+import type { LegacySupabaseClient } from "./legacy-supabase-client.js";
+import type { LegacySubjectDryRun, LegacySubjectMapping } from "./legacy-supabase-importer.js";
 import {
   buildLogicalLessonPlan,
   canonicalDigest,
+  type LogicalLesson,
   normalizeLegacyQuestion,
   questionFingerprint,
   stableUuid,
-  type LogicalLesson,
   type TargetQuestion,
 } from "./legacy-supabase-model.js";
-import type { LegacySubjectDryRun, LegacySubjectMapping } from "./legacy-supabase-importer.js";
 
 interface OfferingRow {
   class_id: string;
@@ -151,11 +151,13 @@ export async function verifyLegacySubjectImport(input: {
     target: input.mapping,
     pages,
   });
-  if (manifestSha256 !== input.dryRun.manifestSha256) throw new Error("legacy_verify_source_manifest_changed");
+  if (manifestSha256 !== input.dryRun.manifestSha256)
+    throw new Error("legacy_verify_source_manifest_changed");
 
   const plan = buildLogicalLessonPlan(input.mapping.legacySubjectId, pages);
   if (plan.unresolvedPages.length > 0) throw new Error("legacy_verify_unresolved_source_pages");
-  if (plan.lessons.length !== input.dryRun.logicalLessons) throw new Error("legacy_verify_lesson_plan_changed");
+  if (plan.lessons.length !== input.dryRun.logicalLessons)
+    throw new Error("legacy_verify_lesson_plan_changed");
 
   const offerings = await input.database.query<OfferingRow>(
     `select c.id as class_id, s.id as subject_id
@@ -275,7 +277,9 @@ export async function verifyLegacySubjectImport(input: {
 
   const expected = expectedQuestions(plan.lessons, input.client.projectRef);
   if (expected.length !== input.dryRun.importableQuestions) {
-    throw new Error(`legacy_verify_expected_question_count:${expected.length}:${input.dryRun.importableQuestions}`);
+    throw new Error(
+      `legacy_verify_expected_question_count:${expected.length}:${input.dryRun.importableQuestions}`,
+    );
   }
   const itemIds = expected.map((entry) => entry.itemId);
   const questionRows = itemIds.length
@@ -338,14 +342,17 @@ export async function verifyLegacySubjectImport(input: {
   for (const entry of expected) {
     const actualSources = sourcesByRevision.get(entry.revisionId) ?? [];
     if (actualSources.length !== entry.sources.length) {
-      throw new Error(`legacy_verify_question_source_count:${entry.itemId}:${actualSources.length}:${entry.sources.length}`);
+      throw new Error(
+        `legacy_verify_question_source_count:${entry.itemId}:${actualSources.length}:${entry.sources.length}`,
+      );
     }
     for (let position = 0; position < entry.sources.length; position += 1) {
       const expectedSource = entry.sources[position];
       const actual = actualSources[position];
       if (!expectedSource || !actual) throw new Error("legacy_verify_question_source_missing");
       const pageAsset = assetByLegacyPage.get(expectedSource.legacyPageId);
-      if (!pageAsset) throw new Error(`legacy_verify_question_page_asset_missing:${expectedSource.legacyPageId}`);
+      if (!pageAsset)
+        throw new Error(`legacy_verify_question_page_asset_missing:${expectedSource.legacyPageId}`);
       if (
         actual.position !== position ||
         actual.media_asset_id !== pageAsset.media_asset_id ||
@@ -361,7 +368,9 @@ export async function verifyLegacySubjectImport(input: {
 
   const publishedLessonCount = lessons.filter((lesson) => lesson.published_at !== null).length;
   const nonDraftLessonAssetCount = assets.filter((asset) => asset.publication_status !== "draft").length;
-  const publishedQuestionRevisionCount = questionRows.filter((question) => question.status === "published").length;
+  const publishedQuestionRevisionCount = questionRows.filter(
+    (question) => question.status === "published",
+  ).length;
   if (publishedLessonCount !== 0 || nonDraftLessonAssetCount !== 0 || publishedQuestionRevisionCount !== 0) {
     throw new Error("legacy_verify_publication_safety_failed");
   }

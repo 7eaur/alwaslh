@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildLogicalLessonPlan,
+  type LegacyPage,
   normalizeFingerprintText,
   normalizeLegacyQuestion,
   questionFingerprint,
   stableUuid,
-  type LegacyPage,
 } from "../src/content/legacy-supabase-model.js";
 
 function page(id: string, pageNumber: number, title: string): LegacyPage {
@@ -14,7 +14,9 @@ function page(id: string, pageNumber: number, title: string): LegacyPage {
     id,
     subject_id: "1794eea5-4772-4c94-bd2b-b08e5815e733",
     title,
-    image_urls: [`https://zhbgbmqhonqmzpqfiehs.supabase.co/storage/v1/object/public/lesson_content/${id}.jpg`],
+    image_urls: [
+      `https://zhbgbmqhonqmzpqfiehs.supabase.co/storage/v1/object/public/lesson_content/${id}.jpg`,
+    ],
     ai_questions: [],
     page_number: pageNumber,
     created_at: `2026-01-01T00:00:${String(pageNumber).padStart(2, "0")}.000Z`,
@@ -35,7 +37,12 @@ test("legacy Supabase pages form logical lessons by title and contiguous page se
   assert.equal(plan.unresolvedPages.length, 0);
   assert.equal(plan.lessons.length, 3);
   assert.deepEqual(
-    plan.lessons.map((lesson) => [lesson.title, lesson.firstPageNumber, lesson.lastPageNumber, lesson.pages.length]),
+    plan.lessons.map((lesson) => [
+      lesson.title,
+      lesson.firstPageNumber,
+      lesson.lastPageNumber,
+      lesson.pages.length,
+    ]),
     [
       ["Lesson A", 1, 2, 2],
       ["Lesson B", 3, 3, 1],

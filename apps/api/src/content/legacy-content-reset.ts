@@ -96,7 +96,8 @@ async function classAndSubject(tx: QueryExecutor): Promise<{ classId: string; su
   const classId = classes[0]?.id;
   const subjectId = subjects[0]?.id;
   if (!classId || classes.length !== 1) throw new Error("experimental_cleanup_grade9_missing_or_ambiguous");
-  if (!subjectId || subjects.length !== 1) throw new Error("experimental_cleanup_english_missing_or_ambiguous");
+  if (!subjectId || subjects.length !== 1)
+    throw new Error("experimental_cleanup_english_missing_or_ambiguous");
   const links = await count(
     tx,
     "select count(*) from subject_class_links where class_id = $1 and subject_id = $2",
@@ -167,10 +168,16 @@ export async function inspectExperimentalContent(database: Database): Promise<Ex
       [run.id],
     ),
     lessons: lessonIds.length,
-    lessonAssets: await count(database, "select count(*) from lesson_assets where lesson_id = any($1::uuid[])", [lessonIds]),
+    lessonAssets: await count(
+      database,
+      "select count(*) from lesson_assets where lesson_id = any($1::uuid[])",
+      [lessonIds],
+    ),
     mediaAssets: mediaAssetIds.length,
     mediaVariants: mediaAssetIds.length
-      ? await count(database, "select count(*) from media_variants where media_asset_id = any($1::uuid[])", [mediaAssetIds])
+      ? await count(database, "select count(*) from media_variants where media_asset_id = any($1::uuid[])", [
+          mediaAssetIds,
+        ])
       : 0,
     curriculumEvents: await count(
       database,
@@ -194,8 +201,16 @@ export async function inspectExperimentalContent(database: Database): Promise<Ex
           [mediaAssetIds],
         )
       : 0,
-    quizLessonLinks: await count(database, "select count(*) from quiz_lessons where lesson_id = any($1::uuid[])", [lessonIds]),
-    legacyQuestions: await count(database, "select count(*) from questions where lesson_id = any($1::uuid[])", [lessonIds]),
+    quizLessonLinks: await count(
+      database,
+      "select count(*) from quiz_lessons where lesson_id = any($1::uuid[])",
+      [lessonIds],
+    ),
+    legacyQuestions: await count(
+      database,
+      "select count(*) from questions where lesson_id = any($1::uuid[])",
+      [lessonIds],
+    ),
     practiceSessions: await count(
       database,
       "select count(*) from practice_sessions where lesson_id = any($1::uuid[])",
@@ -203,7 +218,8 @@ export async function inspectExperimentalContent(database: Database): Promise<Ex
     ),
   };
 
-  if (counts.contentIngestionTasks !== 0) throw new Error("experimental_cleanup_ingestion_dependency_present");
+  if (counts.contentIngestionTasks !== 0)
+    throw new Error("experimental_cleanup_ingestion_dependency_present");
   if (counts.questionBankLessonLinks !== 0 || counts.questionBankSourceLinks !== 0) {
     throw new Error("experimental_cleanup_question_bank_dependency_present");
   }
@@ -222,7 +238,9 @@ export async function inspectExperimentalContent(database: Database): Promise<Ex
   } as const;
   for (const [key, value] of Object.entries(expected)) {
     if (counts[key as keyof typeof counts] !== value) {
-      throw new Error(`experimental_cleanup_expected_count_mismatch:${key}:${counts[key as keyof typeof counts]}:${value}`);
+      throw new Error(
+        `experimental_cleanup_expected_count_mismatch:${key}:${counts[key as keyof typeof counts]}:${value}`,
+      );
     }
   }
 
@@ -256,7 +274,10 @@ async function jsonRows(tx: QueryExecutor, text: string, values: readonly unknow
   return rows.map((entry) => entry.row);
 }
 
-async function buildBackup(database: Database, inspection: ExperimentalContentInspection): Promise<Record<string, unknown>> {
+async function buildBackup(
+  database: Database,
+  inspection: ExperimentalContentInspection,
+): Promise<Record<string, unknown>> {
   const { lessonIds, mediaAssetIds, importRunId } = inspection;
   return {
     schemaVersion: 1,
@@ -265,7 +286,11 @@ async function buildBackup(database: Database, inspection: ExperimentalContentIn
     sourceRevision: EXPERIMENTAL_SOURCE_REVISION,
     inspection,
     rows: {
-      content_import_runs: await jsonRows(database, "select to_jsonb(t) as row from content_import_runs t where id = $1", [importRunId]),
+      content_import_runs: await jsonRows(
+        database,
+        "select to_jsonb(t) as row from content_import_runs t where id = $1",
+        [importRunId],
+      ),
       content_source_documents: await jsonRows(
         database,
         "select to_jsonb(t) as row from content_source_documents t where first_seen_import_run_id = $1 or last_seen_import_run_id = $1 order by id",
@@ -276,13 +301,21 @@ async function buildBackup(database: Database, inspection: ExperimentalContentIn
         "select to_jsonb(t) as row from content_source_assets t where first_seen_import_run_id = $1 or last_seen_import_run_id = $1 order by position,id",
         [importRunId],
       ),
-      lessons: await jsonRows(database, "select to_jsonb(t) as row from lessons t where id = any($1::uuid[]) order by position,id", [lessonIds]),
+      lessons: await jsonRows(
+        database,
+        "select to_jsonb(t) as row from lessons t where id = any($1::uuid[]) order by position,id",
+        [lessonIds],
+      ),
       lesson_assets: await jsonRows(
         database,
         "select to_jsonb(t) as row from lesson_assets t where lesson_id = any($1::uuid[]) order by lesson_id,position,id",
         [lessonIds],
       ),
-      media_assets: await jsonRows(database, "select to_jsonb(t) as row from media_assets t where id = any($1::uuid[]) order by id", [mediaAssetIds]),
+      media_assets: await jsonRows(
+        database,
+        "select to_jsonb(t) as row from media_assets t where id = any($1::uuid[]) order by id",
+        [mediaAssetIds],
+      ),
       media_variants: await jsonRows(
         database,
         "select to_jsonb(t) as row from media_variants t where media_asset_id = any($1::uuid[]) order by media_asset_id,kind",
@@ -307,7 +340,10 @@ export async function resetExperimentalContent(
   const backupSha256 = sha256(backupJson);
   const backupDir = path.resolve(mediaStorageRoot, "backups", "experimental-content-reset");
   await mkdir(backupDir, { recursive: true });
-  const backupPath = path.join(backupDir, `${new Date().toISOString().replace(/[:.]/g, "-")}-${backupSha256.slice(0, 12)}.json`);
+  const backupPath = path.join(
+    backupDir,
+    `${new Date().toISOString().replace(/[:.]/g, "-")}-${backupSha256.slice(0, 12)}.json`,
+  );
   await writeFile(backupPath, backupJson, { encoding: "utf8", flag: "wx" });
 
   const beforeAuth = inspection.authCounts;
