@@ -18,24 +18,49 @@ Canonical pause document:
 
 `docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md`
 
-## Frozen baseline
+## Unified repository skill package
+
+The project now has one project-scoped Codex skill entry point:
+
+`.agents/skills/alwaslh-product-engineering/SKILL.md`
+
+It intentionally uses **one triggerable skill** plus focused `references/` rather than multiple overlapping skills. This avoids competing trigger instructions and keeps context loading progressive.
+
+Specialized references cover:
+
+- Student PWA / installed-app UX;
+- Super Admin workspace UX;
+- Design System + Arabic RTL + responsive + accessibility;
+- React/Vite frontend engineering;
+- Backend/API/database/security/performance;
+- educational product logic;
+- browser/Playwright QA and regression verification;
+- Product Design + Mobbin + Figma routing;
+- project architecture/change guardrails.
+
+Conflict priority is explicit: Product Owner direction and verified project authority/contracts outrank project references; project references outrank external plugins, generic skills and visual inspiration. Product Design, Mobbin and Figma are supporting tools, never canonical product authority.
+
+## Frozen baseline before skill-package batch
 
 Repository: `7eaur/alwaslh`
 
-Live `main` at the recovery/pause decision:
+Live `main` before the skill-package branch:
 
-`e2344d22820a972b6a29f7d5cca16a94b670cd10`
+`5513d7ba7f3aac11231479c99d656cbffe458a9d`
 
-This is PR #39 merge commit.
+This includes PR #40, which froze the roadmap for UX/UI refoundation and recorded `STUDENT-016I` as the exact continuation point.
 
-PR #39:
+Earlier verified integration evidence remains:
 
-- title: `Fix hosted session persistence with same-origin API proxy`
+### PR #39
+
 - tested head: `8659414259fef83183aafa3204883281750491ad`
 - tested head workflows: **17/17 SUCCESS**
-- merge/main tree was verified equal to the tested-head tree during project recovery.
+- merge commit: `e2344d22820a972b6a29f7d5cca16a94b670cd10`
+- tested-head and merge tree equality verified during project recovery
+- hosted Admin same-origin authenticated persistence verified live
 
-PR #38 — Stage16 read-time authority:
+### PR #38 — Stage16 read-time authority
 
 - tested head: `407d9992c91d95081147fc104e13b69addef5eb8`
 - workflows: **18/18 SUCCESS**
@@ -99,7 +124,7 @@ Security/business boundaries must not be weakened to simplify interface work.
 
 ## Current UX/UI refoundation objective
 
-The upcoming design track must first audit real code and flows, then establish a coherent product system for both surfaces.
+The design track must first audit real code and flows, then establish a coherent product system for both surfaces.
 
 Student target flow:
 
@@ -115,7 +140,7 @@ Required outcome:
 - lower cognitive load;
 - unified tokens/components/states;
 - strong Arabic RTL hierarchy;
-- responsive/mobile-first Student UX;
+- responsive/mobile-first Student installed-app UX;
 - efficient dense Admin workspace patterns;
 - loading/empty/error/offline/permission states;
 - accessibility baseline;
@@ -214,4 +239,4 @@ Normal roadmap execution resumes only after:
 
 ## Next management action
 
-Before changing the UI code, establish the skills/instructions/tooling package that will govern the redesign, then perform structured Student/Admin UX discovery and design-system audit.
+Use the unified skill package to perform a structured Student/Admin source-and-flow inventory audit. Do not begin broad visual implementation before the audit, IA and design-system decisions are evidence-backed.
