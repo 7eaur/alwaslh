@@ -10,82 +10,137 @@ Last synchronized: **2026-09-12**.
 
 **ACTIVE TRACK: UX/UI REFOUNDATION + DESIGN SYSTEM + STUDENT/ADMIN EXPERIENCE REMEDIATION**
 
-**CURRENT UX BATCH: `UX-B04 — Student Practice / Assessment`**
+**CURRENT UX BATCH: `UX-B04 — Student Practice / Assessment` — CODE + VISUAL ACCEPTED; FINAL DOCS-HEAD CI PENDING**
 
-**EXACT RETURN POINT AFTER THIS TRACK: `STUDENT-016I — True cold-start offline Reader`**
+**NEXT BATCH: `UX-B05 — Student Downloads / Account / copy closure` — NOT STARTED; MUST WAIT FOR B04 MERGE**
+
+**EXACT RETURN POINT AFTER UX-B17: `STUDENT-016I — True cold-start offline Reader`**
 
 Canonical roadmap: `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
 
 ## Live main baseline
 
-UX-B00, UX-B01, UX-B02 and UX-B03 are closed and integrated. Do not redo them unless a real regression is proven.
+Current live `main` before B04 merge:
 
-### UX-B03 final acceptance
+`d113dc02212884b93fa0cd2ac8f75aae6bdb7258`
 
-- PR #46 final head: `42bf4e28b448ee27dff628c43e6db8ce564db805`
-- exact-head workflows: **21/21 SUCCESS**
-- key runs:
-  - `UX B03 Student Learning and Reader` `34713062100` — SUCCESS
-  - `Stage14 Student Product` `34713062118` — SUCCESS
-  - `Stage15 Student Assessment` `34713062147` — SUCCESS
-  - `Stage16 Student PWA` `34713062156` — SUCCESS
-  - `UX B02 Student Shell and Navigation` `34713062114` — SUCCESS
-  - `Stage 13 Admin Product Verification` `34713062178` — SUCCESS
-  - `Stage 13G Admin Operations Verification` `34713062137` — SUCCESS
-  - `Rebuild Stage Verification` `34713062125` — SUCCESS after rerunning only the transient failed browser job; rerun job `103606082888` — SUCCESS
-- PR #46 merge commit: `56ee51ab0d5669b4a38f9efec991ea79971d3503`
-- verified live `main`: `56ee51ab0d5669b4a38f9efec991ea79971d3503`
+This includes merged PR #48 Legacy Content. UX-B04 was safely synchronized with that live main without dropping either workstream.
 
-The initial Rebuild browser failure was one Assessment assertion while Stage14 and Stage15 passed the same Assessment behavior on the same exact head. Rerunning only that browser job passed without code changes, so it is recorded as transient timing rather than a product regression.
+### Legacy Content preservation during B04 sync
+
+PR #48 changed only its API/Legacy Content scope. The B04 file set was disjoint.
+
+Safe merge commit on `ux/student-practice`:
+
+`3082984ce5b4fa02bad98eb91d73d0a206342c6d`
+
+Parents:
+
+- prior B04 head `597f363877e6dee63b87732b449a3c51e8602e2a`;
+- live main `d113dc02212884b93fa0cd2ac8f75aae6bdb7258`.
+
+Verification by exact comparison:
+
+- `d113dc... → 3082984...` contained B04 files only;
+- `597f363... → 3082984...` contained PR #48 Legacy Content files only.
+
+Therefore the guarded legacy startup path, `apps/api/src/server.ts` integration, tests and Legacy Content runbooks were preserved.
+
+## Closed refoundation batches
+
+| Batch | State | Merge / evidence |
+|---|---|---|
+| UX-B00 | DONE / VERIFIED / MERGED | PR #42 → `3997ac94b47100bc1557b7622ae3c6d47058d25d` |
+| UX-B01 | DONE / VERIFIED / MERGED | PR #43 → `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b` |
+| UX-B02 | DONE / VERIFIED / MERGED | PR #44 → `ced57cb4dd45daedbe9a95c4897d1b073ec9e4e9` |
+| UX-B03 | DONE / VERIFIED / MERGED | PR #46, 21/21 SUCCESS → `56ee51ab0d5669b4a38f9efec991ea79971d3503` |
+
+Do not redo closed batches unless a real regression is proven.
 
 ## Binding design-quality rule from UX-B04 onward
 
-The current UI is **functional evidence, not a required visual reference**. The responsible engineer/designer owns the final ship quality and may rebuild composition, hierarchy, spacing, typography, navigation, density, component patterns, data presentation and interaction patterns when that produces a better Alwaslh product while preserving identity and contracts.
+The existing UI is **functional evidence, not a required visual reference**. The responsible engineer/designer owns final ship quality and may rebuild composition, hierarchy, spacing, typography, navigation, density, component patterns, data presentation and interaction patterns when that produces a better Alwaslh product while preserving identity and contracts.
 
 A batch is not complete at “functional”. Changed screens must be:
 
 **Functional + Clear + Elegant + Consistent + Fast + Maintainable + Professional**.
 
-Student must feel like a modern Arabic educational app, not a dashboard. Admin may be dense, but dense must not become crowded. See §2.1 of the UX/UI refoundation roadmap for the binding design gate.
+Student must feel like a modern Arabic educational app, not a dashboard. Admin may be dense, but dense must not become crowded.
 
-## UX-B04 current state
+## UX-B04 — accepted code/visual state
 
 Branch: `ux/student-practice`
 
-Base: `main@56ee51ab0d5669b4a38f9efec991ea79971d3503`
+PR: **#47 — `feat(student): rebuild Practice and Assessment as focused routed flow`**
 
-Status: **IMPLEMENTATION IN PROGRESS / EXACT-HEAD VERIFICATION NOT YET RUN**.
+Synchronized base: `main@d113dc02212884b93fa0cd2ac8f75aae6bdb7258`
 
-Target route boundaries:
+Accepted code head before this documentation sync:
 
-- `/app/practice` — focused Practice library;
-- `/app/practice/quizzes/:quizId` — one quiz detail with learner-facing question-set choice and Practice/Test mode decision;
-- `/app/practice/attempts/:sessionId` — focused active attempt or completed result/review.
+`6bef406fdc00f0c3e127e6d5b418b18a8561b28e`
 
-Implemented on the branch so far:
+### Product structure
 
-- roadmap updated with binding product-quality design ownership gate;
-- FigJam flow established for Practice library → quiz choice → focused attempt → result/review → resume/back;
-- Mobbin research attempted but connector is blocked by paid-plan requirement; no Mobbin result was treated as evidence;
-- current Assessment card-grid + embedded workspace replaced with route-driven `StudentAssessmentExperience`;
-- active attempt state is no longer the navigation authority: direct attempt URLs restore the session from the API;
-- quiz detail keeps explicit question-set selection because Stage15 proves it is a real current contract, but learner copy no longer exposes server/version implementation language;
-- Practice and Test remain distinct: Practice gives immediate feedback, Test defers feedback until finalize;
-- result/review becomes a dedicated completion composition;
-- active assessment uses a focused phone-first layout and suppresses distracting Student global navigation through the existing `:has()` shell architecture;
-- Assessment CSS rebuilt around list/detail/focused-attempt/result composition rather than repeating cards;
-- Stage15 Playwright contract migrated to real quiz/attempt routes, direct completed-attempt refresh, resume by same session, offline/reconnect and unavailable-session states;
-- dedicated `UX B04 Student Practice and Assessment` CI workflow added.
+- `/app/practice` — focused Practice library + filters + recent attempts;
+- `/app/practice/quizzes/:quizId` — quiz detail + learner-facing question-set choice + Practice/Test decision;
+- `/app/practice/attempts/:sessionId` — focused in-progress attempt or completed result/review.
 
-## UX-B04 explicit non-goals
+Implemented behavior:
 
-Not part of this batch:
+- URL/session route replaces local `activeAssessment` as navigation authority;
+- direct attempt refresh/deep-link restores from canonical API session state;
+- explicit question-set choice remains because Stage15 proves it is a real contract, while server/version jargon is removed;
+- Practice immediate feedback and Test deferred feedback preserved;
+- server-owned answer/finalize/score authority unchanged;
+- same-session resume preserved;
+- offline writes blocked and reconnect refreshes the attempt;
+- unavailable sessions expose a clear recovery path;
+- active attempt/review suppresses distracting global Student navigation;
+- result completion resets viewport to the result top and programmatically focuses the result heading;
+- B04 uses existing React/CSS/router primitives; no heavy animation library, polling system or new product endpoint was introduced.
 
-- new Assessment backend/scoring/publication rules;
-- offline assessment support;
-- `STUDENT-016I` or any new Stage16 capability;
-- Downloads/Account cleanup — UX-B05;
-- Admin refoundation — UX-B06+.
+### Visual acceptance
+
+Dedicated visual QA covers **Library / Quiz detail / Active attempt / Result** on:
+
+- phone `390×844`;
+- desktop `1366×900`.
+
+Final accepted visual artifact for code head `6bef406...`:
+
+- B04 run `34716757907` — SUCCESS;
+- artifact `10305050307` — `ux-b04-visual-qa`;
+- all eight screenshots were inspected manually.
+
+Visual findings found and fixed before acceptance:
+
+- duplicate Practice heading and duplicate online state;
+- insufficient mobile clearance above bottom navigation;
+- floating skip-link chrome appearing in focused result state;
+- result remaining at the previous question scroll position after finalize;
+- non-semantic attempt title;
+- Latin option markers in Arabic flow.
+
+Final inspection confirms coherent RTL hierarchy, focused attempt composition, correct result entry position, no duplicate chrome, no horizontal overflow and acceptable phone/desktop density.
+
+### Exact-head executable acceptance for `6bef406...`
+
+**22/22 workflows SUCCESS**.
+
+Key runs:
+
+- UX B04 Student Practice and Assessment `34716757907` — SUCCESS;
+- Stage14 Student Product `34716757865` — SUCCESS;
+- Stage15 Student Assessment `34716757890` — SUCCESS, including PostgreSQL contracts + real Chromium 390px;
+- Stage16 Student PWA `34716757918` — SUCCESS;
+- UX B03 Student Learning and Reader `34716757874` — SUCCESS;
+- UX B02 Student Shell and Navigation `34716757979` — SUCCESS;
+- UX B01 Shared Frontend Foundation `34716757924` — SUCCESS;
+- Rebuild Stage Verification `34716757929` — SUCCESS;
+- Stage 9 Content Import Verification `34716757904` — SUCCESS, covering the synchronized content path;
+- all remaining Admin/AI/OCR/Media/Question Bank/Integration workflows on the same head — SUCCESS.
+
+Because this documentation synchronization changes the PR head, **the new docs-synchronized exact head must pass its own triggered CI before PR #47 is merged**. No functional B04 code change is intended after `6bef406...` unless that final CI exposes a real regression.
 
 ## Product contracts preserved
 
@@ -94,11 +149,12 @@ Not part of this batch:
 - Entitlements remain authoritative;
 - `media ready != published`;
 - AI never auto-publishes;
-- human review chain remains mandatory;
+- human review remains mandatory;
 - Assessment scoring/finalization remains server-owned;
 - published quiz/version snapshot behavior remains server-owned;
 - `/v1` is not Service Worker Cache API authority;
-- signed offline authorization/integrity/device/session rules remain unchanged.
+- signed offline authorization/integrity/device/session rules remain unchanged;
+- PR #48 Legacy Content startup gate remains preserved exactly through the B04 synchronization.
 
 ## Stage ledger
 
@@ -109,51 +165,27 @@ Not part of this batch:
 | Stage12 | VERIFIED backend/runtime; `AI-012..AI-019` live provider readiness OPEN |
 | Stage13A–G | VERIFIED / CLOSED / integrated |
 | Stage14 Student | CLOSED / VERIFIED |
-| Stage15 Practice/Assessment | CLOSED / VERIFIED baseline; UX-B04 presentation migration active |
+| Stage15 Practice/Assessment | CLOSED / VERIFIED baseline; B04 UX migration accepted pending final merge |
 | **Stage16 Offline/PWA** | **OPEN / PARTIALLY VERIFIED — paused during UX refoundation** |
 | Stage17 | BLOCKED BY Stage16 closure |
 | Stage18–29 | pending in roadmap order |
 
 `STUDENT-016H`: **DONE / VERIFIED / MERGED**.
 
-Exact normal-roadmap continuation after UX-B17 remains:
+Normal-roadmap continuation after UX-B17 remains:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
 
-## UX-B04 verification required before acceptance
-
-- Student lint;
-- strict typecheck;
-- unit tests;
-- production build;
-- clean API build + PostgreSQL migrations;
-- Practice library → quiz detail → attempt route in real Chromium;
-- direct authorized attempt refresh/deep-link;
-- explicit question-set selection remains bound to the server-created session;
-- Practice immediate feedback and Test deferred feedback;
-- server-owned finalize/result parity;
-- leave → restart same quiz/mode/version resumes the same in-progress session;
-- offline disables writes and reconnect refreshes the session;
-- unavailable session produces a clear recovery path;
-- focused attempt hides distracting global navigation;
-- phone/tablet/desktop no-overflow;
-- RTL/keyboard/focus checks for changed flow;
-- Stage14/15/16 + B02/B03 regressions;
-- Rebuild regression;
-- exact-head full path-triggered GitHub Actions matrix.
-
-Current result: **NOT YET VERIFIED — implementation branch exists; PR/exact-head CI pending.**
-
 ## Known open items outside B04
 
-- Student hosted live authenticated same-origin E2E after PR #39 — `NOT YET VERIFIED` as a hosted-runtime item.
-- `AI-012..AI-019` live provider readiness — `NOT YET VERIFIED`.
-- Downloads/Account and technical offline-copy closure — B05.
-- Admin grouped IA/workflow migration — B06–B15.
-- final responsive/RTL/accessibility closure — B16.
-- final visual/regression/refoundation closure — B17.
+- Student hosted live authenticated same-origin E2E after PR #39 — `NOT YET VERIFIED` as a hosted-runtime item;
+- `AI-012..AI-019` live provider readiness — `NOT YET VERIFIED`;
+- Downloads/Account and remaining Student copy/state closure — UX-B05;
+- Admin grouped IA/workflow migration — UX-B06–B15;
+- final responsive/RTL/accessibility closure — UX-B16;
+- final visual/regression/refoundation closure — UX-B17;
 - Stage28 Production Cutover — not complete.
 
 ## Next action
 
-Open the independent UX-B04 PR, run exact-head quality + Chromium + full regression matrix, fix any real failure at root cause, and do not start UX-B05 until B04 is accepted and integrated.
+Run exact-head CI on the documentation-synchronized PR #47 head. If green, update PR #47 / Issue #16 with final evidence, merge B04, verify the new live-main SHA, and **only then** branch UX-B05 from that new live main.
