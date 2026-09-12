@@ -609,7 +609,7 @@ function AssessmentWorkspace({
         </Link>
         <div className="attempt-topbar__title">
           <span>{modeLabel(assessment.session.mode)}</span>
-          <strong id="attempt-title">{assessment.quiz.title}</strong>
+          <h1 id="attempt-title">{assessment.quiz.title}</h1>
         </div>
         <span className="attempt-count">{currentIndex + 1}/{assessment.questions.length}</span>
       </header>
