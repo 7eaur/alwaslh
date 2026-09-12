@@ -64,10 +64,11 @@ test("legacy Supabase grouping refuses ambiguous image/page shapes", () => {
     },
   ]);
   assert.equal(plan.lessons.length, 0);
-  assert.deepEqual(
-    plan.unresolvedPages.map((entry) => entry.reason).sort(),
-    ["missing_image", "missing_page_number", "multiple_images"],
-  );
+  assert.deepEqual(plan.unresolvedPages.map((entry) => entry.reason).sort(), [
+    "missing_image",
+    "missing_page_number",
+    "multiple_images",
+  ]);
 });
 
 test("legacy true/false normalization canonicalizes order and recalculates answer index", () => {
