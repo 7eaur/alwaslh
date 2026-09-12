@@ -1,7 +1,6 @@
 import { useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import {
-  ApiRequestError,
   completeActivation,
   completeStudentLogin,
   createActivationIdempotencyKey,
@@ -20,6 +19,7 @@ import {
   signDeviceProof,
   type StoredDeviceKey,
 } from "./device-key";
+import { studentErrorMessage } from "./student-error-copy";
 
 export type StudentEntryMode = "welcome" | "activation" | "login" | "recovery" | "help" | "support";
 export type StudentEntryNotice = { message: string; tone: "success" | "info" };
@@ -45,13 +45,6 @@ export function StudentBrand() {
 function Spinner() { return <span className="spinner" aria-hidden="true" />; }
 function Alert({ tone, children }: { tone: "danger" | "warning" | "success" | "info"; children: ReactNode }) {
   return <div className={`form-alert is-${tone}`} role={tone === "danger" ? "alert" : "status"}>{children}</div>;
-}
-
-function learnerError(error: unknown): string {
-  if (error instanceof ApiRequestError) return error.message;
-  if (error instanceof Error && error.message === "device_key_missing") return "تعذر التعرف على هذا الجهاز. اطلب من الدعم إعادة ربط الجهاز ثم جرّب مرة أخرى.";
-  if (error instanceof Error && error.message === "device_crypto_unavailable") return "تعذر تسجيل الدخول من هذا المتصفح. حدّث المتصفح أو استخدم متصفحًا حديثًا.";
-  return "تعذر إكمال العملية الآن. حاول مرة أخرى.";
 }
 
 function PasswordFields({ password, confirmation, onPassword, onConfirmation, prefix }: {
@@ -94,7 +87,7 @@ function ActivationForm({ online, onAuthenticated, onLogin }: {
     if (!online) { setError("اتصل بالإنترنت للتحقق من رمز التفعيل."); return; }
     setBusy(true); setError(null);
     try { setVerification(await verifyActivation(normalizedCode)); setIdempotencyKey(createActivationIdempotencyKey()); }
-    catch (requestError) { setError(learnerError(requestError)); }
+    catch (requestError) { setError(studentErrorMessage(requestError, "activation")); }
     finally { setBusy(false); }
   }
 
@@ -109,7 +102,7 @@ function ActivationForm({ online, onAuthenticated, onLogin }: {
       const result = await completeActivation({ activationTicket: verification.activationTicket, password, idempotencyKey, devicePublicKeySpki: key.publicKeySpki, deviceProof });
       if (result.profile.role !== "student") throw new Error("invalid_student_session");
       onAuthenticated(result.profile, result.accountIdentifier);
-    } catch (requestError) { setError(learnerError(requestError)); }
+    } catch (requestError) { setError(studentErrorMessage(requestError, "activation")); }
     finally { setBusy(false); }
   }
 
@@ -168,7 +161,7 @@ function LoginForm({ online, notice, onAuthenticated, onRecovery }: {
       const result = await completeStudentLogin({ challengeToken: challenge.challengeToken, signature, ...(challenge.requiresDeviceRegistration ? { publicKeySpki: key.publicKeySpki } : {}) });
       if (result.profile.role !== "student") throw new Error("invalid_student_session");
       onAuthenticated(result.profile);
-    } catch (requestError) { setError(learnerError(requestError)); }
+    } catch (requestError) { setError(studentErrorMessage(requestError, "login")); }
     finally { setBusy(false); }
   }
 
@@ -182,7 +175,7 @@ function LoginForm({ online, notice, onAuthenticated, onRecovery }: {
       const result = await completeStudentLogin({ challengeToken: pending.challenge.challengeToken, signature, newPassword, ...(pending.challenge.requiresDeviceRegistration ? { publicKeySpki: pending.key.publicKeySpki } : {}) });
       if (result.profile.role !== "student") throw new Error("invalid_student_session");
       onAuthenticated(result.profile);
-    } catch (requestError) { setError(learnerError(requestError)); }
+    } catch (requestError) { setError(studentErrorMessage(requestError, "login")); }
     finally { setBusy(false); }
   }
 
