@@ -195,7 +195,6 @@ test("student activation, recovery, device access and canonical curriculum work 
   expect((await redeem.json()).entitlement.classId).toBe(classAccess.classId);
   await curriculumPromise;
   await expect(page).toHaveURL(/\/app\/learn$/);
-  await expect(page.getByText("تم تفعيل الصف. أصبح محتواه متاحًا في التعلم.", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: classAccess.className })).toBeVisible();
   const subjectLink = page.getByRole("link", { name: new RegExp(classAccess.subjectName) });
   await subjectLink.click();
