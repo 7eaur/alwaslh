@@ -60,6 +60,14 @@ Do not turn every section into a generic Card component.
 
 Components should make screens feel like one product without forcing every screen into the same layout.
 
+## Content hierarchy in components
+
+Reusable components must not force internal implementation data into the interface.
+
+Prefer component APIs around user/domain meaning rather than raw backend field names. For example, a status component receives a presentation status/label/semantic role instead of requiring callers to expose internal enum keys.
+
+Keep helper text concise and purposeful. Component defaults should never contain developer explanations or placeholder production copy.
+
 ## Arabic RTL
 
 Arabic is first-class.
