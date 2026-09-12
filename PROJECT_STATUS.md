@@ -10,78 +10,112 @@ Last synchronized: **2026-09-12**.
 
 **ACTIVE TRACK: UX/UI REFOUNDATION + DESIGN SYSTEM + STUDENT/ADMIN EXPERIENCE REMEDIATION**
 
+**CURRENT UX BATCH: `UX-B00 — Foundation documentation and audit`**
+
 **EXACT RETURN POINT AFTER THIS TRACK: `STUDENT-016I — True cold-start offline Reader`**
 
-Reason for the temporary pause: the current Student and Super Admin interface foundations have material usability, hierarchy, navigation, consistency and cognitive-load problems. Continuing Stage16/17+ feature work on top of that foundation would increase product debt. The product/backend/domain architecture remains intact; this is not a restart or blind rewrite.
+Reason: continuing Stage16/17+ feature work on top of the current Student/Admin UX foundation would increase product debt. Backend/domain/security architecture remains intact; this is a structural frontend refoundation, not a restart or blind rewrite.
 
 Canonical pause document:
 
 `docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md`
 
-## Unified repository skill package
+Canonical refoundation foundation documents:
 
-The project now has one project-scoped Codex skill entry point:
+- `docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md`
+- `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
+- `docs/product/DESIGN_SYSTEM_SPEC.md`
+- `docs/product/CONTENT_LANGUAGE_RULES.md`
+- `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`
+
+## Live baseline and branch
+
+PR #41 — unified Alwaslh product engineering skill package — was verified mergeable with successful PR-head CI and merged before refoundation implementation work.
+
+- PR #41 tested/final head: `25f876d3cfe2af95a8a27319c289f102db3e6db0`
+- merge commit: `c3ddef04933772116c3bd9cdf29eb5a973c527fd`
+- refoundation foundation branch: `ux/refoundation-foundation`
+- branch start: `c3ddef04933772116c3bd9cdf29eb5a973c527fd`
+
+The project-scoped engineering/design skill is now integrated at:
 
 `.agents/skills/alwaslh-product-engineering/SKILL.md`
 
-It intentionally uses **one triggerable skill** plus focused `references/` rather than multiple overlapping skills. This avoids competing trigger instructions and keeps context loading progressive.
+External Product Design/Mobbin/Figma references remain supporting tools only; no external reference can override code/contracts/approved identity.
 
-Specialized references cover:
+## Foundation audit decision
 
-- Student PWA / installed-app UX;
-- Super Admin workspace UX;
-- Design System + Arabic RTL + responsive + accessibility;
-- production-ready visible content/copy and data presentation;
-- React/Vite frontend engineering;
-- Backend/API/database/security/performance;
-- educational product logic;
-- browser/Playwright QA and regression verification;
-- Product Design + Mobbin + Figma routing;
-- project architecture/change guardrails.
+The source-backed UX audit is no longer `NOT YET VERIFIED` at the structural inventory level.
 
-Conflict priority is explicit: Product Owner direction and verified project authority/contracts outrank project references; project references outrank external plugins, generic skills and visual inspiration. Product Design, Mobbin and Figma are supporting tools, never canonical product authority.
+Verified high-impact findings:
 
-## Product Owner UX clarification — binding for refoundation
+1. **Routing/navigation foundation:** neither Student nor Admin currently has route-based application navigation; both rely on component/state switching.
+2. **Student:** authenticated experience stacks Curriculum + Assessment + Offline Downloads + Access in one aggregate surface; there is no true Home destination and Reader is nested inside curriculum UI.
+3. **Admin:** global navigation is 11 flat state-switched workspaces; multiple pages combine independent create/list/detail/review/config/export workflows.
+4. **Copy/data:** Student exposes crypto/storage/offline implementation details; Admin exposes Stage/parity/cache/revision/config implementation language and identifiers beyond normal operator need.
+5. **Legacy UI:** Lesson/Quiz parity panels duplicate capabilities and should be migrated into canonical detail pages, then removed only after executable parity proof.
+6. **Responsive Admin:** current narrow layout moves the full sidebar above content rather than providing a task-focused mobile/narrow workspace shell.
+7. **Identity/design foundation:** `packages/brand` tokens/identity are valuable and remain canonical; Student/Admin production lockups should use approved assets consistently.
+8. **A11y foundation:** focus styles, touch targets, RTL logical properties and reduced motion exist and should be preserved; full changed-flow keyboard/contrast/device verification remains implementation-gated.
 
-Before redesigning, the owner must understand and preserve the original Alwaslh product idea, approved identity, Student/Admin mental models, business rules, and real flows. The approved identity sources under `packages/brand/` are mandatory evidence, including `BRAND_FOUNDATION.md`, `BRAND_GUIDELINES.md`, identity/tokens and production assets.
+Audit classification and evidence are recorded in `UX_UI_MASTER_AUDIT_2026-09-12.md`.
 
-Visible production UI must contain **display-ready human content**, not backend/process commentary. Internal API/database/cache/signature/revision/sync concepts remain hidden unless a dedicated Admin operations task genuinely needs them. Student wording must be simple educational Arabic; Admin wording should use real domain language, not code language. No raw enums, developer notes, fake metrics, or invented claims.
+## Target product IA
 
-Navigation/layout rule:
+### Student
 
-- Dashboard is an overview/entry point, not the whole product in one long page.
-- Major Admin workflows get clear routes/pages and meaningful sub-pages; unrelated tables/forms/queues/actions must not be stacked into one scrolling wall.
-- Student is structured like an installed educational app: few stable destinations, deliberate drill-down, focused Reader and Assessment screens, and separate task boundaries instead of one long website page.
-- Student and Admin remain visually unified by identity/tokens/components/state semantics, but not by identical layout or density.
+Treat as an installed educational app, not a long responsive webpage.
 
-## Frozen baseline before skill-package batch
+Stable implemented-era destinations:
 
-Repository: `7eaur/alwaslh`
+- Home
+- Learn / Subjects
+- Practice
+- Downloads / Offline learning
+- Account access
 
-Live `main` before the skill-package branch:
+Dedicated focused destinations:
 
-`5513d7ba7f3aac11231479c99d656cbffe458a9d`
+- Subject / lesson navigation
+- Reader
+- active Assessment
 
-This includes PR #40, which froze the roadmap for UX/UI refoundation and recorded `STUDENT-016I` as the exact continuation point.
+Do **not** add Personal Learning or Progress as fake destinations before their roadmap stages exist.
 
-Earlier verified integration evidence remains:
+### Super Admin
 
-### PR #39
+Treat as an operational workspace grouped by lifecycle:
 
-- tested head: `8659414259fef83183aafa3204883281750491ad`
-- tested head workflows: **17/17 SUCCESS**
-- merge commit: `e2344d22820a972b6a29f7d5cca16a94b670cd10`
-- tested-head and merge tree equality verified during project recovery
-- hosted Admin same-origin authenticated persistence verified live
+- Overview
+- Curriculum
+- Content / Ingestion / OCR
+- AI Jobs / Human Review
+- Question Bank / Quizzes
+- Students / Access Codes
+- Operations / Notifications / Audit / constrained System Status
 
-### PR #38 — Stage16 read-time authority
+Dashboard remains an overview/attention surface, not the entire product.
 
-- tested head: `407d9992c91d95081147fc104e13b69addef5eb8`
-- workflows: **18/18 SUCCESS**
-- merge commit: `a6f220c74e46852a8b2e6667271acc41b3fb8c79`
-- `STUDENT-016H`: **DONE / VERIFIED / MERGED**
+Detailed route hierarchy and parent/child relationships are canonicalized in `TARGET_INFORMATION_ARCHITECTURE.md`.
 
-Do **not** redo 016H after the UI maintenance track.
+## Design/content foundation
+
+Approved identity remains:
+
+- Arabic-first / RTL-first;
+- calm modern educational product;
+- teal/open-book direction;
+- Cairo typography;
+- Student touch-first;
+- Admin dense but readable.
+
+Existing semantic tokens are **KEEP/EXTEND**, not replace.
+
+Production copy rule:
+
+- Student sees learning/action/recovery meaning, never storage/crypto/cache/revision mechanics;
+- Admin sees real domain terminology, not implementation/stage/parity language;
+- raw IDs/enums/errors become secondary diagnostics only when a real operational decision needs them.
 
 ## Stage ledger
 
@@ -98,161 +132,110 @@ Do **not** redo 016H after the UI maintenance track.
 | Stage18–25 | pending in roadmap order |
 | Stage26–29 | pending release/operations sequence |
 
-## Exact Stage16 continuation after UX/UI maintenance
+`STUDENT-016H`: **DONE / VERIFIED / MERGED**. Do not redo it.
 
-First unfinished engineering item:
+## Exact Stage16 continuation after UX/UI refoundation
 
-### `STUDENT-016I — True cold-start offline Reader`
-
-Required acceptance:
-
-`online download → close real browser/context → restart → network unavailable → PWA shell → durable scope discovery → signed authorization verification → stored blob integrity verification → Reader renders`
-
-Then continue in this order:
-
-1. `STUDENT-016I` — cold-start offline Reader.
-2. `STUDENT-016R` — reconnect session/device/entitlement/publication/revision revalidation + purge.
-3. `STUDENT-016S` — authoritative revision/tombstone/cursor/delta synchronization.
-4. `STUDENT-016O` — only if later authorized offline writes require a bounded durable outbox.
-5. `STUDENT-016G` — Stage16 final closure matrix/gate.
+1. `STUDENT-016I` — true cold-start offline Reader.
+2. `STUDENT-016R` — reconnect revalidation + purge.
+3. `STUDENT-016S` — revision/tombstone/cursor/delta synchronization.
+4. `STUDENT-016O` — only if later authorized offline writes require bounded durable outbox.
+5. `STUDENT-016G` — Stage16 closure matrix/gate.
 6. Stage17 only after Stage16 closure.
 
-## Stage16 verified boundary that UI work must preserve
+Verified Stage16 security boundary that UI work must preserve:
 
-Current integrated implementation already includes:
-
-- safe PWA app shell;
+- safe PWA shell;
 - `/v1` excluded from Service Worker Cache API authority;
-- server-issued profile/device-bound offline lease;
-- protected lesson manifest + revision-pinned assets;
-- Published + entitled material only;
-- bounded offline package storage;
-- server-signed P-256/ES256 offline authorization;
+- profile/device-bound offline lease;
+- protected Published+entitled lesson packages;
+- bounded offline storage;
+- server-signed P-256/ES256 authorization;
 - durable non-secret active scope selector;
 - read-time signature/metadata/key/scope/expiry verification;
-- read-time exact blob-size + SHA-256 integrity verification;
-- logout/late-refresh lifecycle protection;
-- real-browser tamper rejection coverage from the Stage16 authority batch.
+- read-time size + SHA-256 blob integrity verification;
+- logout/late-refresh lifecycle protection.
 
-Security/business boundaries must not be weakened to simplify interface work.
+## Relevant prior verification evidence
 
-## Current UX/UI refoundation objective
+### PR #39
 
-The design track must first audit real code and flows, then establish a coherent product system for both surfaces.
+- tested head `8659414259fef83183aafa3204883281750491ad`
+- 17/17 workflows SUCCESS
+- merge `e2344d22820a972b6a29f7d5cca16a94b670cd10`
+- hosted Admin same-origin authenticated persistence verified live
 
-Student target flow:
+### PR #38
 
-`Activation / Login → Home → Subjects → Curriculum → Lesson / Reader → Practice / Test → Offline learning → Personal learning → Progress`
+- tested head `407d9992c91d95081147fc104e13b69addef5eb8`
+- 18/18 workflows SUCCESS
+- merge `a6f220c74e46852a8b2e6667271acc41b3fb8c79`
+- `STUDENT-016H` DONE / VERIFIED / MERGED
 
-Super Admin operational chain:
+Student authenticated hosted same-origin E2E after PR #39: `NOT YET VERIFIED`.
 
-`Curriculum → Content/Ingestion → Media/OCR → AI → Human Review → Question Bank → Quiz Builder → Students/Access → Operations/Audit`
+## Railway/content/AI state
 
-Required outcome:
+Hosted inspection stack remains API/Admin/Student/PostgreSQL on Railway project `charming-peace`; environment name `production` does **not** imply Stage28 Production Cutover.
 
-- correct information architecture;
-- lower cognitive load;
-- unified tokens/components/states;
-- strong Arabic RTL hierarchy;
-- responsive/mobile-first Student installed-app UX;
-- efficient dense Admin workspace patterns;
-- production-ready visible copy and meaningful data presentation;
-- loading/empty/error/offline/permission states;
-- accessibility baseline;
-- visual consistency without forcing Student and Admin into identical layouts;
-- no unnecessary gradients/glass/glow/repetitive-card/AI-looking decoration.
+Public inspection surfaces remain documented in `docs/operations/RAILWAY_LIVE_STATE.md`.
 
-Quality order:
+Canonical content source remains `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
 
-`Function → Clarity → UX → Hierarchy → Consistency → Visual polish`
+- inventory: 48 documents / 5,552 images;
+- bounded Grade 9 English proof: 75 source images / 75 ready media assets / 300 variants / 75 lesson assets / 10 lessons;
+- bounded proof remains Draft;
+- no automatic Student publication;
+- no automatic AI question publication;
+- do not bulk-materialize full inventory during refoundation.
 
-## Railway live inspection state
+`AI-012..AI-019` live provider readiness remains `NOT YET VERIFIED`.
 
-Railway project: `charming-peace`
+## UX/UI execution roadmap
 
-Environment: `production` — this is the current hosted inspection environment name and **does not mean Stage28 Production Cutover is complete**.
+Refoundation batches are defined in `UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
 
-Services observed successful during recovery:
+Current order begins:
 
-- API
-- Admin
-- Student
-- PostgreSQL
+- `UX-B00` foundation audit/docs;
+- `UX-B01` shared route/shell/presentation foundation;
+- `UX-B02` Student shell/navigation;
+- `UX-B03..B05` Student learning/assessment/offline/account;
+- `UX-B06` Admin shell/grouped navigation;
+- `UX-B07..B14` Admin workflow families;
+- `UX-B15` cross-product cleanup;
+- `UX-B16` responsive/RTL/accessibility closure;
+- `UX-B17` visual/regression/refoundation closure.
 
-Public surfaces:
+No Stage16 continuation is allowed inside these batches.
 
-- API: `https://alwaslh-dev-api-7eaur-production.up.railway.app`
-- Admin: `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
-- Student: `https://alwaslh-dev-student-7eaur-production.up.railway.app`
+## UX-B00 verification state
 
-PR #39 same-origin hosted Admin login/session persistence was verified live.
+Completed:
 
-Student authenticated live same-origin E2E after PR #39:
+- live `main`/PR #41 state verified before branching;
+- PR #41 merged cleanly;
+- approved brand sources/tokens/assets inspected;
+- actual Student UI/source tree inventoried;
+- actual Admin UI/source tree inventoried;
+- API composition inspected to validate domain families;
+- Student/Admin E2E inventories inspected;
+- structural UX audit + target IA + design system + content language + roadmap created;
+- Issue #16 updated during work.
 
-`NOT YET VERIFIED`
+Not applicable yet:
 
-## Content state
+- application lint/typecheck/build/browser checks, because UX-B00 is documentation/audit only.
 
-Canonical source:
+Still required before UX-B00 closure:
 
-`7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
+- central engineering log sync;
+- foundation PR;
+- exact-head PR CI review;
+- merge only after green evidence.
 
-Inventory:
+Visual/device inspection of redesigned screens: `NOT YET VERIFIED` because implementation has not started.
 
-- 48 documents
-- 5,552 images
+## Next action
 
-Bounded Grade 9 English proof:
-
-- 75 source images
-- 8,390,689 source bytes
-- 75 ready media assets
-- 300 variants
-- 75 lesson assets
-- 10 lessons
-- **Draft only**
-
-No automatic Student publication and no automatic AI question publication.
-
-Do not bulk-materialize the 5,552-image inventory during the UX/UI refoundation.
-
-## AI / Question Bank state
-
-The safe chain remains:
-
-`AI output → human AI review → Question Bank Draft → QB Review/Published → immutable Quiz version`
-
-`AI-012..AI-019` live provider/model/routes/credentials/bootstrap:
-
-`NOT YET VERIFIED`
-
-Do not infer production AI readiness from fixtures/tests.
-
-## Parallel open work — intentionally not the active focus
-
-- `CONTENT-PROD-002` — controlled review/publication of the bounded Grade 9 English proof.
-- Student authenticated hosted E2E after PR #39.
-- `AI-012..AI-019` production provider readiness.
-- Stage17–29 roadmap.
-
-## UX/UI refoundation completion gate
-
-Normal roadmap execution resumes only after:
-
-1. Student + Admin UX/code inventory audit;
-2. approved information architecture;
-3. unified design-system rules/tokens/primitives grounded in approved identity;
-4. corrected navigation/layout foundations;
-5. production-ready visible text/data language for changed flows;
-6. high-impact Student/Admin flows remediated;
-7. responsive behavior verified;
-8. accessibility baseline verified for changed components;
-9. changed loading/empty/error/offline/permission states verified;
-10. lint/typecheck/tests/build pass for changed apps;
-11. no backend/security/business-contract regression;
-12. `PROJECT_ENGINEERING_LOG.md` and `PROJECT_STATUS.md` synchronized;
-13. return marker remains `STUDENT-016I` unless new evidence proves a dependency/order change.
-
-## Next management action
-
-Use the unified skill package to perform a structured Student/Admin source-and-flow inventory audit. The audit must begin from the real product idea and approved brand sources, then map current/target IA, content language and screen boundaries before broad visual implementation.
+Close `UX-B00` through a reviewable PR and exact-head CI. Then begin **`UX-B01 — Shared frontend foundation`** from refreshed `main`, introducing route/shell foundations and presentation primitives before migrating major workflows.
