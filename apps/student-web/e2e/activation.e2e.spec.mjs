@@ -218,16 +218,23 @@ test("student activation, recovery, device access and canonical curriculum work 
   await expect(page.getByText("وصول إلى صف", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("heading", { name: classAccess.className })).toBeVisible();
-  await expect(page.getByRole("button", { name: new RegExp(classAccess.subjectName) })).toBeVisible();
+  const subjectLink = page.getByRole("link", { name: new RegExp(classAccess.subjectName) });
+  await expect(subjectLink).toBeVisible();
+  await subjectLink.click();
+  await expect(page).toHaveURL(/\/app\/learn\/subjects\/[^/]+$/);
+  await expect(page.getByRole("heading", { name: classAccess.subjectName })).toBeVisible();
   await expect(page.getByRole("heading", { name: classAccess.sectionTitle })).toBeVisible();
   await expect(page.getByText("درس غير منشور يجب ألا يظهر", { exact: true })).toHaveCount(0);
-  await expect(page.locator(".lesson-row .lesson-copy strong")).toHaveText(classAccess.lessonTitles);
+  await expect(page.locator(".lesson-link .lesson-copy strong")).toHaveText(classAccess.lessonTitles);
 
   const bodyMetrics = await page.locator("body").evaluate((body) => ({
     scrollWidth: body.scrollWidth,
     clientWidth: body.clientWidth,
   }));
   expect(bodyMetrics.scrollWidth).toBeLessThanOrEqual(bodyMetrics.clientWidth + 1);
+
+  await page.getByRole("link", { name: "التعلم", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/app\/learn$/);
 
   await page.evaluate(async () => {
     await fetch("/v1/auth/logout", { method: "POST", credentials: "include" });
