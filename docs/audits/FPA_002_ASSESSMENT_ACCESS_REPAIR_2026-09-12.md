@@ -23,3 +23,11 @@ Status: RED PHASE — exact-head CI pending. No claim of PostgreSQL reproduction
 ## Additional QA observation
 
 The red job's container logs also show existing fixture cleanup statements failing foreign-key checks (quiz/question audit-event references), with errors swallowed by the test cleanup. This did not cause the regression assertion and is not a production failure. Track under audit FPA-011: isolate test databases or repair scoped fixture teardown without disabling production integrity constraints. This repair deliberately does not combine unrelated teardown changes.
+
+## Green verification and merge
+
+Fixed head `b68bc9bac05102635b57a04668a065c0f5598e7a` passed **18/18** triggered workflows. Stage15 run `34717938903`: PostgreSQL job `103618425531`, Chromium job `103618510565`, both PASS. PR #50 merged as `f60f263f9fecfa33a3876ef7df6334c222c7cf3a`.
+
+Stage14 run `34717939005` passed one targeted retry (browser job `103619012849`) after an independent Reader focus failure in job `103618589353`. That finding remains OPEN as FPA-013; no test or UI was changed to obtain the retry result. Full workflow IDs, deployment metadata and remaining verification boundaries are in [the execution addendum](AUDIT_EXECUTION_EVIDENCE_2026-09-12.md).
+
+Status: **FIXED / POSTGRESQL + CHROMIUM + REGRESSION CI VERIFIED**. Production authenticated-path verification is separately `NOT YET VERIFIED`.

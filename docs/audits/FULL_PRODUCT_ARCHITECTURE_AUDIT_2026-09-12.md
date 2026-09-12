@@ -1,5 +1,7 @@
 # Full Product and Architecture Audit — 2026-09-12
 
+Latest verification and the subsequent FPA-013 finding: [execution addendum](AUDIT_EXECUTION_EVIDENCE_2026-09-12.md). Initial evidence below is retained as an anchored snapshot.
+
 ## Evidence boundary and recovery
 
 Baseline: **`3eb6b18ac5f403cb10463864c3c4b9e86f68b249`**, recovered from live `main` and rechecked through GitHub during this audit. Audit branch: `audit/full-product-architecture-20260912`. This is an audit-first workstream, not the owner of UX implementation or Legacy Content import. The unfinished local STUDENT-016I experiment is excluded. No application, migration, access, publication or production data changes are made by this documentation batch.
