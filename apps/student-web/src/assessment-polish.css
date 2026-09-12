@@ -12,6 +12,15 @@
   display: none;
 }
 
+/* Active attempts and completed review deliberately suppress global Student
+   navigation. There is no repetitive chrome to skip in those focused states,
+   so the product-level skip link is also removed instead of surfacing as an
+   unrelated floating action when the focused DOM changes. */
+.aw-product-shell:has(.attempt-shell) .aw-skip-link,
+.aw-product-shell:has(.attempt-review-shell) .aw-skip-link {
+  display: none;
+}
+
 /* Give scrollable Practice screens enough real mobile space to clear the fixed
    bottom navigation and the device safe area. Active attempts already suppress
    global navigation through assessment.css. */
