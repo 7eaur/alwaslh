@@ -35,8 +35,11 @@ async function openAdvanced(form) {
 }
 
 async function openLessonManagement(row, title) {
-  const summary = row.getByText(`إدارة الدرس: ${title}`, { exact: true });
-  if ((await summary.getAttribute("aria-expanded")) !== "true") await summary.click();
+  const details = row.locator("details.curriculum-lesson-manage");
+  if ((await details.getAttribute("open")) === null) {
+    await details.locator("summary").filter({ hasText: `إدارة الدرس: ${title}` }).click();
+  }
+  await expect(details).toHaveAttribute("open", "");
 }
 
 test("admin signs in and manages the curriculum hierarchy without destructive deletes", async ({ page }) => {
