@@ -50,6 +50,11 @@ async function saveLesson(page, lessonTitle) {
   await row.getByRole("button", { name: "حفظ بدون إنترنت" }).click();
 }
 
+function downloadPathPattern(downloadPath) {
+  const escaped = downloadPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`${escaped}(?:\\?.*)?$`);
+}
+
 test("protected lesson download preserves integrity contracts behind learner-facing Downloads UX", async ({ page }) => {
   const fixture = createReaderFixture();
   await page.context().addCookies([{ name: fixture.sessionCookieName, value: fixture.sessionToken, url: "http://127.0.0.1:5174", httpOnly: true, sameSite: "Lax" }]);
@@ -70,6 +75,7 @@ test("protected lesson download preserves integrity contracts behind learner-fac
   expect(manifestPayload.authorization.algorithm).toBe("ES256");
   expect(manifestPayload.authorization.keyId).toBe(TEST_OFFLINE_AUTH_KEY_ID);
   expect(manifest.assets).toHaveLength(1);
+  expect(manifest.assets[0].downloadPath).toMatch(/^\/v1\/student\/offline\/lessons\//);
   await expect(page.getByText("تم حفظ الدرس للتعلم بدون إنترنت.", { exact: true })).toBeVisible();
   const savedRow = page.locator(`[data-downloaded-lesson-id="${manifest.lesson.id}"]`);
   await expect(savedRow.getByText("متاح بدون إنترنت", { exact: true })).toBeVisible();
@@ -99,7 +105,7 @@ test("protected lesson download preserves integrity contracts behind learner-fac
   await page.unroute(offlineManifestPattern);
 
   let corruptedAssetRequestObserved = false;
-  const offlineAssetPattern = "**/v1/student/offline/lessons/**/assets/**";
+  const offlineAssetPattern = downloadPathPattern(manifest.assets[0].downloadPath);
   await page.route(offlineAssetPattern, async (route) => {
     const response = await route.fetch();
     const body = Buffer.from(await response.body());
