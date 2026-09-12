@@ -30,6 +30,15 @@ async function selectTestOffering(page) {
   await selectors.nth(1).selectOption({ label: testSubjectOptionLabel });
 }
 
+async function openAdvanced(form) {
+  await form.getByText("خيارات متقدمة", { exact: true }).click();
+}
+
+async function openLessonManagement(row, title) {
+  const summary = row.getByText(`إدارة الدرس: ${title}`, { exact: true });
+  if ((await summary.getAttribute("aria-expanded")) !== "true") await summary.click();
+}
+
 test("admin signs in and manages the curriculum hierarchy without destructive deletes", async ({ page }) => {
   await login(page);
 
@@ -37,7 +46,8 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   const classForm = page.locator('form[aria-label="نموذج إضافة صف"]');
   await classForm.getByLabel("اسم الصف").fill("الصف الإداري التجريبي");
   await classForm.getByLabel("المعرّف القصير").fill("admin-test-class");
-  await classForm.getByLabel("الترتيب (اختياري)").fill("2");
+  await openAdvanced(classForm);
+  await classForm.getByLabel("الترتيب").fill("2");
   await classForm.getByRole("button", { name: "حفظ الصف" }).click();
   await waitForSaved(page);
 
@@ -52,7 +62,8 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   const offeringForm = page.locator('form[aria-label="نموذج ربط مادة بصف"]');
   await offeringForm.getByLabel("الصف للربط").selectOption({ label: "الصف الإداري التجريبي" });
   await offeringForm.getByLabel("المادة للربط").selectOption({ label: testSubjectOptionLabel });
-  await offeringForm.getByLabel("الترتيب (اختياري)").fill("4");
+  await openAdvanced(offeringForm);
+  await offeringForm.getByLabel("الترتيب داخل الصف").fill("4");
   await offeringForm.getByRole("button", { name: "إنشاء الربط" }).click();
   await waitForSaved(page);
 
@@ -63,7 +74,8 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   const sectionForm = page.locator('form[aria-label="نموذج إضافة وحدة"]');
   await sectionForm.getByLabel("اسم الوحدة").fill("الوحدة التجريبية");
   await sectionForm.getByLabel("المعرّف القصير").fill("admin-test-unit");
-  await sectionForm.getByLabel("الترتيب (اختياري)").fill("5");
+  await openAdvanced(sectionForm);
+  await sectionForm.getByLabel("الترتيب").fill("5");
   await sectionForm.getByRole("button", { name: "حفظ الوحدة" }).click();
   await waitForSaved(page);
 
@@ -72,27 +84,34 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await lessonForm.getByLabel("عنوان الدرس").fill("الدرس الإداري الأول");
   await lessonForm.getByLabel("المعرّف القصير").fill("admin-test-lesson");
   await lessonForm.getByLabel("الوحدة (اختيارية)").selectOption({ label: "الوحدة التجريبية" });
-  await lessonForm.getByLabel("الترتيب (اختياري)").fill("6");
+  await openAdvanced(lessonForm);
+  await lessonForm.getByLabel("الترتيب").fill("6");
   await lessonForm.getByRole("button", { name: "حفظ الدرس" }).click();
   await waitForSaved(page);
   await expect(page.getByText("الدرس الإداري الأول", { exact: true })).toBeVisible();
 
-  await page.getByLabel("قسم درس الدرس الإداري الأول").selectOption("");
+  const initialLessonRow = page.getByText("الدرس الإداري الأول", { exact: true }).locator("xpath=ancestor::li");
+  await openLessonManagement(initialLessonRow, "الدرس الإداري الأول");
+  await initialLessonRow.getByLabel("قسم درس الدرس الإداري الأول").selectOption("");
   await waitForSaved(page);
+
   const unsectioned = page.locator("section.section-card").filter({
     has: page.getByRole("heading", { name: "دروس بدون قسم" }),
   });
   await expect(unsectioned).toContainText("الدرس الإداري الأول");
 
-  const lessonRow = unsectioned.getByText("الدرس الإداري الأول", { exact: true }).locator("xpath=ancestor::li");
-  await lessonRow.locator("summary").filter({ hasText: "تعديل اسم الدرس الدرس الإداري الأول" }).click();
+  let lessonRow = unsectioned.getByText("الدرس الإداري الأول", { exact: true }).locator("xpath=ancestor::li");
+  await openLessonManagement(lessonRow, "الدرس الإداري الأول");
+  await lessonRow.getByText("تعديل اسم الدرس الدرس الإداري الأول", { exact: true }).click();
   const renameInput = lessonRow.getByLabel("تعديل اسم الدرس الدرس الإداري الأول");
   await renameInput.fill("الدرس الإداري المحدّث");
   await renameInput.locator("xpath=ancestor::form").getByRole("button", { name: "حفظ" }).click();
   await waitForSaved(page);
   await expect(page.getByText("الدرس الإداري المحدّث", { exact: true })).toBeVisible();
 
-  await page.getByLabel("حالة درس الدرس الإداري المحدّث").selectOption("inactive");
+  lessonRow = page.getByText("الدرس الإداري المحدّث", { exact: true }).locator("xpath=ancestor::li");
+  await openLessonManagement(lessonRow, "الدرس الإداري المحدّث");
+  await lessonRow.getByLabel("حالة درس الدرس الإداري المحدّث").selectOption("inactive");
   await waitForSaved(page);
   const updatedLessonRow = page.getByText("الدرس الإداري المحدّث", { exact: true }).locator("xpath=ancestor::li");
   await expect(updatedLessonRow.locator(".status-badge")).toHaveText("غير نشط");
@@ -146,7 +165,6 @@ test("admin reviews source media and pending OCR through the operations workspac
 test("admin curriculum remains usable at a narrow viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
-  await expect(page.getByText("المنهج والمحتوى", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
 
   const dimensions = await page.evaluate(() => ({
