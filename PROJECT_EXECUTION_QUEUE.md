@@ -35,7 +35,9 @@ Last synchronized: **2026-09-12 — unified `main`; Stage16 active; Railway insp
 
 ### STUDENT-016H — Durable offline scope + read-time signed authority
 
-**Priority: P1 · Status: ACTIVE / EXACT NEXT ITEM**
+**Priority: P1 · Status: ACTIVE / EXACT NEXT ITEM — candidate implemented, acceptance pending**
+
+Candidate branch `fix/stage16-read-time-authority` starts at live `main@dee9ebda9c56900421754228ad0db34a4b6a40e7`. Durable scope and read-time signature/field/blob checks implemented; Student local lint/typecheck/build + 34/34 tests PASS. CI/browser acceptance and merge remain pending. 016I Reader is still unimplemented.
 
 Required:
 

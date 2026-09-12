@@ -6,6 +6,28 @@ Last consolidated: **2026-09-12 — unified `main`; Stage13G+Student integrated;
 
 Historical detail remains in Git history, Issue #16 and specialized stage docs. Current continuation is `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
 
+## Resume batch 2026-09-12 — STUDENT-016H (candidate; not merged)
+
+Baseline: live `main@dee9ebda9c56900421754228ad0db34a4b6a40e7`.
+Branch: `fix/stage16-read-time-authority`.
+
+Source inspected: mandatory resume documents and Issue #16 current reports; API composition/migration runner; offline lease/download/http/signing; canonical Student Reader publication/access/media queries; Student Auth callers/device key/session/content stores/materialization/signature and tests; executable Stage16 workflow. Full repository audit remains progressive, **NOT YET COMPLETE**. Adjacent Auth/Assessment-wide source review and remaining migrations are NOT YET VERIFIED in this session.
+
+Live CI rechecked: PR #37 head `ebdef4809d0664a748eaf514c0b199e7a841b819`, 15/15 SUCCESS; PR #33 head `dcdae7579a40878c71f64593280a0df2f8363ee2`, 19/19 SUCCESS including Stage16 `34560999667`. These are baseline evidence, not acceptance for this candidate.
+Railway live rechecked: all four services SUCCESS; IDs/config agree with runbook, root Docker contexts/main/pre-deploy migrations/media volume confirmed; variable names only inspected. No hosting or content mutation.
+
+| ID | Severity / Area | Evidence / root cause / impact | Change / status |
+|---|---|---|---|
+| STUDENT-016-OFFLINE-AUTH-009 | P1 / offline read | `offlineLessonPackageAllowsUse` trusted mutable duplicated fields without signature or read-time blob verification | REFACTOR: asynchronous predicate re-verifies canonical ES256 envelope, exact stored metadata/key/scope, signed deadline, size and hash on each use. Candidate; UI cold-start remains open. |
+| STUDENT-016-LIFECYCLE-010 | P1 / session persistence | `refreshOfflineLeaseForCurrentSession` could persist a late response after logout; profile mismatch was checked after persistence | IMPROVE: validate expected profile before writes, invalidate delayed refreshes and serialize local writes/cleanup; pointer removed before deletion. Candidate with regression. |
+| RESUME-DOC-001 | P3 / continuity | Legacy Coverage Gate still says Stage13G is unpromoted and Student has separate Track B ownership after PR #33 | Correct superseded prose without changing parity acceptance. |
+
+Implementation: active selector uses durable localStorage containing exactly profileId/deviceId; no cached module identity that survives another tab's selector removal; malformed/extra-field/denied storage fails closed. Existing tab-only selector removed on lifecycle writes. Lease/package IndexedDB schema and online authority unchanged. Signed expiry cannot be extended by editing unsigned lease issue time. Browser wall clock is not a secure hardware clock; no DRM claim.
+
+Local validation: Student lint PASS; Vitest 34/34 PASS; production build PASS; strict typecheck PASS. Regression includes valid cryptographic proof, metadata/signature/blob/key/expiry/rollback/scope failures, durable selector/module restart, profile mismatch before writes and logout versus delayed lease response. Browser/clean PostgreSQL/remote exact-head matrix pending. Local PostgreSQL installation was unavailable because the runtime denied package-manager identity switching; CI PostgreSQL services remain the verification path.
+
+Next: exact-head CI for candidate, real browser isolation/lifecycle; only then advance 016H. 016I cold-start Reader, 016R reconnect, 016S delta, conditional 016O and Stage16 closure remain OPEN. No Stage17 work or release claim.
+
 ## 1. Project understanding
 
 **الوسيلة الذكية** منصة تعليمية عربية تتكون من Student Web/PWA + Super Admin Web فوق Fastify/PostgreSQL. Browser surfaces are presentation/resilience layers; canonical durable authority remains server/PostgreSQL.

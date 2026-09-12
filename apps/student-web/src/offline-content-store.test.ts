@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { canonicalOfflineLessonManifest } from "./offline-authorization";
 import type {
   StudentOfflineLessonAssetManifest,
   StudentOfflineLessonManifest,
@@ -126,7 +127,7 @@ describe("protected offline lesson policy", () => {
     expect(OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES).toBe(256 * 1024 * 1024);
   });
 
-  it("allows protected content only while the same device lease and class authorization are fresh", () => {
+  it("allows protected content only while the same device lease and class authorization are fresh", async () => {
     const observedAtClientMs = Date.parse("2026-09-11T00:00:00.000Z");
     const lease = createStoredOfflineLease(
       {
@@ -146,16 +147,43 @@ describe("protected offline lesson policy", () => {
       },
       observedAtClientMs,
     );
-    const record = storedPackage({ authorizationExpiresAt: "2026-09-11T10:00:00.000Z" });
+    const value = manifest({ authorizationExpiresAt: "2026-09-11T10:00:00.000Z" });
+    const pair = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+    const publicBytes = await crypto.subtle.exportKey("spki", pair.publicKey);
+    const encode = (buffer: ArrayBuffer) => btoa(String.fromCharCode(...new Uint8Array(buffer)))
+      .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    const payload = new TextEncoder().encode(canonicalOfflineLessonManifest(value));
+    const keyId = [...new Uint8Array(await crypto.subtle.digest("SHA-256", publicBytes))]
+      .map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    const signature = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, pair.privateKey, payload);
+    const publicKey = encode(publicBytes);
+    const record = storedPackage({
+      authorizationExpiresAt: value.authorizationExpiresAt,
+      totalByteSize: 0,
+      assets: [{ ...asset(), blob: new Blob([]) }],
+      authorization: { version: 1, algorithm: "ES256", keyId, payload: encode(payload.buffer), signature: encode(signature) },
+    });
+    const allows = (candidate = record, now = observedAtClientMs + 60 * 60 * 1000) =>
+      offlineLessonPackageAllowsUse(candidate, lease, now, publicKey);
 
-    expect(offlineLessonPackageAllowsUse(record, lease, observedAtClientMs + 60 * 60 * 1000)).toBe(true);
-    expect(
-      offlineLessonPackageAllowsUse(
-        { ...record, deviceId: "device-2" },
-        lease,
-        observedAtClientMs + 60 * 60 * 1000,
-      ),
-    ).toBe(false);
-    expect(offlineLessonPackageAllowsUse(record, lease, observedAtClientMs + 11 * 60 * 60 * 1000)).toBe(false);
+    await expect(allows()).resolves.toBe(true);
+    await expect(allows({ ...record, deviceId: "device-2" })).resolves.toBe(false);
+    await expect(allows(record, observedAtClientMs + 11 * 60 * 60 * 1000)).resolves.toBe(false);
+    for (const changed of [
+      { title: "tampered" }, { classId: "class-2" }, { summary: "tampered" },
+      { contentRevision: 5 }, { publishedAt: "2026-09-09T00:00:00.000Z" },
+      { authorizationExpiresAt: "2027-01-01T00:00:00.000Z" },
+      { packageKey: "wrong-key" }, { scopeKey: "wrong-scope" },
+      { assets: [{ ...record.assets[0]!, text: "tampered" }] },
+      { assets: [{ ...record.assets[0]!, blob: new Blob(["tampered"]) }] },
+      { authorization: { ...record.authorization, signature: "AA" } },
+    ]) await expect(allows({ ...record, ...changed })).resolves.toBe(false);
+    await expect(offlineLessonPackageAllowsUse(record, lease, observedAtClientMs, "")).resolves.toBe(false);
+    await expect(allows(record, Number.NaN)).resolves.toBe(false);
+    await expect(allows(record, observedAtClientMs - 6 * 60 * 1000)).resolves.toBe(false);
+    // A modified unsigned lease cannot extend the signed expiry.
+    lease.lease.expiresAt = "2027-01-01T00:00:00.000Z";
+    lease.lease.issuedAt = "2026-09-10T00:00:00.000Z";
+    await expect(allows(record, observedAtClientMs + 11 * 60 * 60 * 1000)).resolves.toBe(false);
   });
 });

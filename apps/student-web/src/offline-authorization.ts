@@ -91,6 +91,7 @@ export async function verifyOfflineLessonAuthorization(
   if (!globalThis.crypto?.subtle) throw new OfflineAuthorizationError("authorization_invalid");
   if (!verificationKeySpki) throw new OfflineAuthorizationError("verification_key_unavailable");
   if (
+    !envelope ||
     envelope.version !== 1 ||
     envelope.algorithm !== "ES256" ||
     !/^[0-9a-f]{64}$/.test(envelope.keyId) ||
