@@ -130,7 +130,10 @@ test("Student Practice/Test uses routed focused attempts, published snapshots, s
   expect(secondResumeStart.assessment.progress.answeredCount).toBe(1);
 
   const directInput = page.getByLabel("إجابتك");
-  if (!(await directInput.isVisible())) await page.getByRole("button", { name: "السؤال التالي" }).click();
+  if (!(await directInput.isVisible())) {
+    await page.getByRole("button", { name: "السؤال 2", exact: true }).click();
+  }
+  await expect(directInput).toBeVisible();
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   await expect(page.getByText(/انقطع الاتصال.*الحفظ والإنهاء متوقفان/)).toBeVisible();
