@@ -678,7 +678,8 @@ export class StudentAssessmentService {
     recheckAccess: boolean,
   ): Promise<StudentAssessmentSessionView> {
     const session = await this.sessionRow(executor, profileId, sessionId, false);
-    if (recheckAccess && session.status === "in_progress") {
+    // Completed results remain historical; leaving unfinished work must not restore access.
+    if (recheckAccess && session.status !== "completed") {
       await this.accessibleQuiz(executor, profileId, session.quiz_id);
     }
 
