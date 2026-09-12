@@ -10,6 +10,24 @@ Primary journey:
 
 `Activation/Login → Home → Subjects → Curriculum → Lesson/Reader → Practice/Test → Offline learning → Progress`
 
+## App information architecture
+
+Do not build Student as one long responsive webpage.
+
+Use a clear app hierarchy:
+
+- top-level destinations are few and stable;
+- subjects are a deliberate destination, not mixed with unrelated account/system data;
+- curriculum is drilled into from the selected subject;
+- Reader is a focused lesson experience;
+- Practice/Test is a separate focused task surface;
+- offline/download management appears only where the student can understand and act on it;
+- profile/settings/access details stay outside the learning flow unless needed.
+
+Each screen should have one obvious purpose. Split unrelated tasks into routes/screens instead of stacking sections endlessly.
+
+Use tabs only for closely related subviews of the same task/object. Do not use tabs to hide an entire product sitemap inside one page.
+
 ## Mobile app behavior
 
 Design mobile-first and verify real narrow widths before desktop.
@@ -34,6 +52,8 @@ Home should answer:
 
 Do not make Home a dashboard of internal system modules or low-value metrics.
 
+Home is an overview/continue surface, not a place to dump curriculum, downloads, progress, access details, account controls, and every feature into one scrolling page.
+
 ## Curriculum and Reader
 
 - Make subject → section → lesson hierarchy obvious.
@@ -41,6 +61,7 @@ Do not make Home a dashboard of internal system modules or low-value metrics.
 - Reader controls should prioritize content, navigation, zoom/readability, and next learning action.
 - Media states must distinguish loading, unavailable, access denied, expired, and offline-local availability without technical jargon.
 - Offline availability should be understandable before disconnecting.
+- Keep Reader visually focused; account/system/technical controls do not compete with lesson content.
 
 ## Assessment
 
@@ -50,6 +71,27 @@ Do not make Home a dashboard of internal system modules or low-value metrics.
 - Preserve server-owned scoring/finalization semantics.
 - Distinguish practice feedback from test/finalized behavior.
 - Resume/restart actions must communicate consequences.
+
+## Student-facing copy
+
+All visible text must be production-ready Arabic written for the student.
+
+Do not show:
+- API/database terminology;
+- cryptographic/signature terminology;
+- cache/IndexedDB/Service Worker details;
+- sync/revision identifiers;
+- raw errors or internal codes;
+- developer notes or background-process explanations.
+
+Translate internal states into plain meaning and next action. Examples:
+
+- `متاح بدون إنترنت`
+- `تعذر الاتصال. تحقق من الإنترنت وحاول مجددًا.`
+- `يحتاج هذا الدرس إلى الاتصال بالإنترنت قبل فتحه.`
+- `انتهت صلاحية الوصول. اتصل بالإنترنت للتحقق من حسابك.`
+
+Only use messages that map to real supported behavior.
 
 ## Offline and connectivity UX
 
