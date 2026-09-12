@@ -1,24 +1,48 @@
 # PROJECT STATUS — الوسيلة الذكية
 
-> Concise execution truth. Code/migrations/executable CI and live runtime evidence outrank prose. Anything not executed = `NOT YET VERIFIED`.
+> Concise execution truth. Code, PostgreSQL migrations, executable CI and live runtime evidence outrank prose. Anything not executed or inspected is `NOT YET VERIFIED`.
 
 Last synchronized: **2026-09-12**.
 
-## Active candidate batch — 2026-09-12
+## Current management state
 
-`fix/stage16-read-time-authority` from live `main@dee9ebda9c56900421754228ad0db34a4b6a40e7`: STUDENT-016H durable selector + asynchronous read-time ES256/metadata/blob verification + late-refresh/logout guard implemented locally. Student lint/typecheck/build and 34/34 unit tests PASS. Exact-head CI/browser gate pending; **not merged, Stage16 still OPEN**. Full audit remains progressive. See latest batch in `PROJECT_ENGINEERING_LOG.md`.
+**NORMAL ROADMAP: PAUSED**
 
-## Current position
+**ACTIVE TRACK: UX/UI REFOUNDATION + DESIGN SYSTEM + STUDENT/ADMIN EXPERIENCE REMEDIATION**
 
-- Repository: `7eaur/alwaslh`.
-- Execution ledger: GitHub Issue #16.
-- Canonical baseline: **live `main`**.
-- Old Track A / Track B long-lived branches are historical after full integration.
-- Stage13G + current Student Product integrated through PR #33.
-- PR #33 verification head `dcdae7579a40878c71f64593280a0df2f8363ee2`: **19/19 workflows SUCCESS**.
-- PR #33 merge commit: `5e22c3ff157b42b6da47febe205dd91fcb264eed`.
-- Before this docs sync, live `main`: `8006a7c4b2fa66bcac9cfb3addcd52fa831c42df`.
-- Railway inspection/dev stack is live; final Stage28 production cutover is not declared.
+**EXACT RETURN POINT AFTER THIS TRACK: `STUDENT-016I — True cold-start offline Reader`**
+
+Reason for the temporary pause: the current Student and Super Admin interface foundations have material usability, hierarchy, navigation, consistency and cognitive-load problems. Continuing Stage16/17+ feature work on top of that foundation would increase product debt. The product/backend/domain architecture remains intact; this is not a restart or blind rewrite.
+
+Canonical pause document:
+
+`docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md`
+
+## Frozen baseline
+
+Repository: `7eaur/alwaslh`
+
+Live `main` at the recovery/pause decision:
+
+`e2344d22820a972b6a29f7d5cca16a94b670cd10`
+
+This is PR #39 merge commit.
+
+PR #39:
+
+- title: `Fix hosted session persistence with same-origin API proxy`
+- tested head: `8659414259fef83183aafa3204883281750491ad`
+- tested head workflows: **17/17 SUCCESS**
+- merge/main tree was verified equal to the tested-head tree during project recovery.
+
+PR #38 — Stage16 read-time authority:
+
+- tested head: `407d9992c91d95081147fc104e13b69addef5eb8`
+- workflows: **18/18 SUCCESS**
+- merge commit: `a6f220c74e46852a8b2e6667271acc41b3fb8c79`
+- `STUDENT-016H`: **DONE / VERIFIED / MERGED**
+
+Do **not** redo 016H after the UI maintenance track.
 
 ## Stage ledger
 
@@ -27,135 +51,167 @@ Last synchronized: **2026-09-12**.
 | Stage1–10 + OCR | VERIFIED |
 | Stage11 | VERIFIED |
 | Stage12 | VERIFIED backend/runtime; `AI-012..AI-019` live provider readiness OPEN |
-| Stage13A–G | VERIFIED / CLOSED / integrated into `main` |
+| Stage13A–G | VERIFIED / CLOSED / integrated |
 | Stage14 Student | CLOSED / VERIFIED |
 | Stage15 Practice/Assessment | CLOSED / VERIFIED |
-| **Stage16 Offline/PWA** | **ACTIVE / PARTIALLY VERIFIED** |
-| Stage17 Personal Learning | BLOCKED BY Stage16 closure |
+| **Stage16 Offline/PWA** | **OPEN / PARTIALLY VERIFIED — roadmap execution temporarily paused** |
+| Stage17 | BLOCKED BY Stage16 closure |
 | Stage18–25 | pending in roadmap order |
-| Stage26–29 release/ops | pending; hosted inspection stack exists |
+| Stage26–29 | pending release/operations sequence |
 
-## Stage16 current verified boundary
+## Exact Stage16 continuation after UX/UI maintenance
 
-Integrated code currently verifies:
+First unfinished engineering item:
 
-- safe PWA app shell; `/v1` never cached/intercepted;
-- bounded server-issued profile/device lease;
-- account/device IndexedDB lifecycle and exact-scope cleanup;
-- protected lesson manifest + revision-pinned asset download;
+### `STUDENT-016I — True cold-start offline Reader`
+
+Required acceptance:
+
+`online download → close real browser/context → restart → network unavailable → PWA shell → durable scope discovery → signed authorization verification → stored blob integrity verification → Reader renders`
+
+Then continue in this order:
+
+1. `STUDENT-016I` — cold-start offline Reader.
+2. `STUDENT-016R` — reconnect session/device/entitlement/publication/revision revalidation + purge.
+3. `STUDENT-016S` — authoritative revision/tombstone/cursor/delta synchronization.
+4. `STUDENT-016O` — only if later authorized offline writes require a bounded durable outbox.
+5. `STUDENT-016G` — Stage16 final closure matrix/gate.
+6. Stage17 only after Stage16 closure.
+
+## Stage16 verified boundary that UI work must preserve
+
+Current integrated implementation already includes:
+
+- safe PWA app shell;
+- `/v1` excluded from Service Worker Cache API authority;
+- server-issued profile/device-bound offline lease;
+- protected lesson manifest + revision-pinned assets;
 - Published + entitled material only;
-- numeric content revision at Student boundary;
-- SHA-256 + exact byte-size validation;
-- 64 MiB lesson / 256 MiB scope budgets;
-- atomic package commit/replacement/removal;
-- server-signed P-256/ES256 offline authorization envelope;
-- Student-side key-ID/signature/canonical signed-manifest verification before storage;
-- signed-manifest tamper rejection and asset-byte tamper rejection in real Chromium.
+- bounded offline package storage;
+- server-signed P-256/ES256 offline authorization;
+- durable non-secret active scope selector;
+- read-time signature/metadata/key/scope/expiry verification;
+- read-time exact blob-size + SHA-256 integrity verification;
+- logout/late-refresh lifecycle protection;
+- real-browser tamper rejection coverage from the Stage16 authority batch.
 
-Exact integrated evidence:
+Security/business boundaries must not be weakened to simplify interface work.
 
-- PR #33 Stage16 workflow `34560999667` — all three Stage16 jobs SUCCESS.
-- PR #33 wider matrix — 19/19 workflows SUCCESS.
+## Current UX/UI refoundation objective
 
-## Stage16 open P1 boundaries
+The upcoming design track must first audit real code and flows, then establish a coherent product system for both surfaces.
 
-- `STUDENT-016-OFFLINE-AUTH-009` — **PARTIAL FIX**: signing + download verification done; cold-start/read-time authority still OPEN.
-- durable non-secret active scope across real browser restart — OPEN; current selector uses `sessionStorage`.
-- read-time re-verification of stored signed authorization — OPEN.
-- read-time SHA-256 verification of stored blobs against signed checksums — OPEN.
-- true cold-start offline Reader with network unavailable — OPEN.
-- `STUDENT-016-REVOCATION-007` reconnect session/device/entitlement/publication/revision revalidation + purge — OPEN.
-- `STUDENT-016-SYNC-001` authoritative revision/tombstone/cursor/delta flow — OPEN.
-- `STUDENT-016-OUTBOX-008` bounded durable outbox for future authorized offline writes — OPEN.
+Student target flow:
 
-Detailed source: `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`.
+`Activation / Login → Home → Subjects → Curriculum → Lesson / Reader → Practice / Test → Offline learning → Personal learning → Progress`
 
-## Railway live inspection/dev state
+Super Admin operational chain:
 
-Current public surfaces:
+`Curriculum → Content/Ingestion → Media/OCR → AI → Human Review → Question Bank → Quiz Builder → Students/Access → Operations/Audit`
 
-- Student: `https://alwaslh-dev-student-7eaur-production.up.railway.app`
-- Admin: `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
+Required outcome:
+
+- correct information architecture;
+- lower cognitive load;
+- unified tokens/components/states;
+- strong Arabic RTL hierarchy;
+- responsive/mobile-first Student UX;
+- efficient dense Admin workspace patterns;
+- loading/empty/error/offline/permission states;
+- accessibility baseline;
+- visual consistency without forcing Student and Admin into identical layouts;
+- no unnecessary gradients/glass/glow/repetitive-card/AI-looking decoration.
+
+Quality order:
+
+`Function → Clarity → UX → Hierarchy → Consistency → Visual polish`
+
+## Railway live inspection state
+
+Railway project: `charming-peace`
+
+Environment: `production` — this is the current hosted inspection environment name and **does not mean Stage28 Production Cutover is complete**.
+
+Services observed successful during recovery:
+
+- API
+- Admin
+- Student
+- PostgreSQL
+
+Public surfaces:
+
 - API: `https://alwaslh-dev-api-7eaur-production.up.railway.app`
+- Admin: `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
+- Student: `https://alwaslh-dev-student-7eaur-production.up.railway.app`
 
-Latest known status at this sync:
+PR #39 same-origin hosted Admin login/session persistence was verified live.
 
-- API `5b889f87-24a5-4fc4-b061-9aeea3f5bea6` — **SUCCESS**, `/ready` = 200.
-- Admin — **SUCCESS**.
-- Student — **SUCCESS**.
-- PostgreSQL — **SUCCESS**.
-- API media volume is mounted persistently at `/app/runtime-data/media`.
+Student authenticated live same-origin E2E after PR #39:
 
-Hosting details: `docs/operations/RAILWAY_LIVE_STATE.md`.
+`NOT YET VERIFIED`
 
-The Railway environment is useful for inspection and controlled content proofs, but Stage27/28 final release/cutover remains uncompleted.
-
-## Live content state
+## Content state
 
 Canonical source:
 
 `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
 
-Full Stage9 inventory:
+Inventory:
 
-- **48 documents**;
-- **5,552 images**.
+- 48 documents
+- 5,552 images
 
-Live Grade 9 English proof:
+Bounded Grade 9 English proof:
 
-- source document: `تاسع انجليزي/الانجليزي_تاسع`;
-- source images: **75**;
-- source bytes: **8,390,689**;
-- ready media assets: **75**;
-- variants: **300**;
-- lesson assets: **75**;
-- lessons: **10**;
-- publication state: **Draft only**;
-- bootstrap deployment: `8428981b-aa6d-4927-b1f9-31545265e3f9`.
+- 75 source images
+- 8,390,689 source bytes
+- 75 ready media assets
+- 300 variants
+- 75 lesson assets
+- 10 lessons
+- **Draft only**
 
-No automatic Student publication and no automatic question generation occurred.
+No automatic Student publication and no automatic AI question publication.
 
-Old Supabase content/database import is out of current scope by Product Owner direction.
+Do not bulk-materialize the 5,552-image inventory during the UX/UI refoundation.
 
-Content details: `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`.
+## AI / Question Bank state
 
-## AI / Question Bank status
+The safe chain remains:
 
-Stage13G G-D authoring is integrated and verified, including lesson/quiz generation orchestration, question regeneration, reviewed-output application and specialized exports.
+`AI output → human AI review → Question Bank Draft → QB Review/Published → immutable Quiz version`
 
-Safe chain remains:
+`AI-012..AI-019` live provider/model/routes/credentials/bootstrap:
 
-`AI output → human AI review → Question Bank Draft → QB Review/Published → immutable Quiz version`.
+`NOT YET VERIFIED`
 
-`AI-012..AI-019` live provider/model/routes/credentials/bootstrap remains `NOT YET VERIFIED` and must not be inferred from test fixtures.
+Do not infer production AI readiness from fixtures/tests.
 
-## Exact next work
+## Parallel open work — intentionally not the active focus
 
-### Stage16 code closure
+- `CONTENT-PROD-002` — controlled review/publication of the bounded Grade 9 English proof.
+- Student authenticated hosted E2E after PR #39.
+- `AI-012..AI-019` production provider readiness.
+- Stage17–29 roadmap.
 
-1. Durable non-secret active offline scope selector.
-2. Re-verify stored signed authorization at use/render time.
-3. Re-hash stored blobs against signed checksums at use time.
-4. Implement explicit cold-start offline library/Reader.
-5. Real Chromium: browser restart + network unavailable + valid render + tamper/expiry/clock rollback/account isolation rejection.
-6. Reconnect session/device/entitlement/publication/revision revalidation + purge.
-7. Authoritative revision/tombstone/server cursor/delta/client application.
-8. Bounded outbox only where later offline writes require it.
-9. One exact-head Stage16 closure matrix + docs/Issue #16.
-10. Begin Stage17 only after closure.
+## UX/UI refoundation completion gate
 
-### Content review batch
+Normal roadmap execution resumes only after:
 
-Separately from Stage16 architecture:
+1. Student + Admin UX/code inventory audit;
+2. approved information architecture;
+3. unified design-system rules/tokens/primitives;
+4. corrected navigation/layout foundations;
+5. high-impact Student/Admin flows remediated;
+6. responsive behavior verified;
+7. accessibility baseline verified for changed components;
+8. changed loading/empty/error/offline/permission states verified;
+9. lint/typecheck/tests/build pass for changed apps;
+10. no backend/security/business-contract regression;
+11. `PROJECT_ENGINEERING_LOG.md` and `PROJECT_STATUS.md` synchronized;
+12. return marker remains `STUDENT-016I` unless new evidence proves a dependency/order change.
 
-1. inspect Grade 9 English Draft mapping/order/rendering in Admin;
-2. publish only approved lessons/assets through normal Admin publication;
-3. smoke-test published content in Student Reader on Railway;
-4. only then choose another bounded subject;
-5. measure/provision media capacity before attempting the full 5,552-image materialization.
+## Next management action
 
-## Later roadmap
-
-After Stage16:
-
-`Stage17 Personal Learning → Stage18 Notifications → Stage19 Progress/Statistics/Achievements → Stage20 Import/Export/Reporting closure → Stage21 Performance → Stage22 Security → Stage23 Tests/CI → Stage24 Accessibility/Device QA → Stage25 Initial Content Load → Stage26 Staging → Stage27 Release Gate → Stage28 Production Cutover → Stage29 Monitoring/Operations`.
+Before changing the UI code, establish the skills/instructions/tooling package that will govern the redesign, then perform structured Student/Admin UX discovery and design-system audit.
