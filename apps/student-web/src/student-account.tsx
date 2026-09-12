@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ApiRequestError,
   createAccessRedemptionIdempotencyKey,
@@ -10,6 +10,7 @@ import {
   normalizeAccessCode,
   redeemStudentAccess,
   type EntitlementView,
+  type SessionProfile,
 } from "./auth-api";
 
 type AccountAccessState =
@@ -28,16 +29,25 @@ function expiryLabel(expiresAt: string | null): string {
   return `حتى ${new Intl.DateTimeFormat("ar-YE", { dateStyle: "medium" }).format(new Date(expiresAt))}`;
 }
 
-export function StudentAccountExperience({ online, onSessionExpired, onAccessChanged }: {
+export function StudentAccountExperience({
+  profile,
+  online,
+  onSessionExpired,
+  onAccessChanged,
+  onLoggedOut,
+}: {
+  profile: SessionProfile;
   online: boolean;
   onSessionExpired: () => void;
   onAccessChanged: () => void;
+  onLoggedOut: () => void;
 }) {
   const navigate = useNavigate();
   const [state, setState] = useState<AccountAccessState>({ status: online ? "loading" : "offline" });
   const [classCode, setClassCode] = useState("");
   const [redemptionKey, setRedemptionKey] = useState(createAccessRedemptionIdempotencyKey);
   const [redeemBusy, setRedeemBusy] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
   const [redeemError, setRedeemError] = useState<string | null>(null);
 
   const normalizedClassCode = normalizeAccessCode(classCode).slice(0, 7);
@@ -88,11 +98,30 @@ export function StudentAccountExperience({ online, onSessionExpired, onAccessCha
     }
   }
 
+  async function handleLogout() {
+    if (logoutBusy) return;
+    setLogoutBusy(true);
+    try {
+      onLoggedOut();
+    } finally {
+      setLogoutBusy(false);
+    }
+  }
+
   return (
-    <div className="student-account-experience">
+    <main className="student-account-experience" aria-labelledby="student-account-title">
+      <header className="student-account-overview">
+        <div>
+          <p className="eyebrow">حسابي</p>
+          <h1 id="student-account-title">{profile.displayName ? profile.displayName : "حساب الطالب"}</h1>
+          <p>أدر وصولك إلى الصفوف، وافتح التعليمات أو الدعم عندما تحتاج مساعدة.</p>
+        </div>
+        <button className="secondary-button" type="button" onClick={() => void handleLogout()} disabled={logoutBusy}>{logoutBusy ? "جاري الخروج" : "تسجيل الخروج"}</button>
+      </header>
+
       <section className="student-account-section access-section" aria-labelledby="active-access-title">
         <div className="student-account-section__heading">
-          <div><p className="eyebrow">المحتوى المتاح</p><h2 id="active-access-title">وصولك الحالي</h2><p>هنا ترى ما هو متاح لحسابك الآن.</p></div>
+          <div><p className="eyebrow">المحتوى المتاح</p><h2 id="active-access-title">وصولك الحالي</h2><p>يعرض هذا القسم الصفوف والمحتوى المتاح لحسابك الآن.</p></div>
           <button className="text-button" type="button" onClick={() => void loadAccess()} disabled={!online || state.status === "loading"}>تحديث</button>
         </div>
         {state.status === "loading" ? (
@@ -102,7 +131,7 @@ export function StudentAccountExperience({ online, onSessionExpired, onAccessCha
         ) : state.status === "error" ? (
           <div className="student-b05-state is-error" role="alert"><strong>تعذر تحميل الوصول</strong><p>{state.message}</p><button className="secondary-button" type="button" onClick={() => void loadAccess()} disabled={!online}>إعادة المحاولة</button></div>
         ) : entitlements.length === 0 ? (
-          <div className="student-b05-state is-empty"><strong>لا توجد صفوف مفعّلة لحسابك الآن</strong><p>إذا حصلت على رمز صف، أضفه من القسم التالي ليظهر محتواه في التعلم.</p></div>
+          <div className="student-b05-state is-empty"><strong>لا توجد صفوف مفعّلة لحسابك الآن</strong><p>إذا حصلت على رمز صف، أضفه من القسم التالي ليظهر محتواه في التعلّم.</p></div>
         ) : (
           <ul className="student-access-list" aria-label="الوصول الحالي">
             {entitlements.map((entitlement) => (
@@ -131,6 +160,14 @@ export function StudentAccountExperience({ online, onSessionExpired, onAccessCha
           </form>
         )}
       </section>
-    </div>
+
+      <section className="student-account-section student-account-help" aria-labelledby="account-help-title">
+        <div className="student-account-section__heading"><div><p className="eyebrow">المساعدة</p><h2 id="account-help-title">تحتاج مساعدة؟</h2><p>التعليمات والدعم منفصلان عن إعدادات الحساب حتى يبقى كل شيء واضحًا.</p></div></div>
+        <div className="student-account-help-links">
+          <Link className="secondary-button" to="/help">التعليمات والمساعدة</Link>
+          <Link className="secondary-button" to="/support">الدعم والتواصل</Link>
+        </div>
+      </section>
+    </main>
   );
 }

@@ -9,15 +9,14 @@ import "./student-shell.css";
 import "./student-learning.css";
 import "./foundation.css";
 import "./assessment-polish.css";
-import "./student-b05.css";
+import "./student-entry.css";
+import "./student-session.css";
+import "./student-library-account.css";
 import { registerStudentServiceWorker } from "./pwa";
 import { StudentRouter } from "./router";
 
 const root = document.getElementById("root");
-
-if (!root) {
-  throw new Error("Student root element was not found");
-}
+if (!root) throw new Error("Student root element was not found");
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>

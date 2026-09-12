@@ -1,0 +1,285 @@
+.student-downloads-experience,
+.student-account-experience {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.student-downloads-hero,
+.student-account-overview {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.student-downloads-hero h1,
+.student-account-overview h1 {
+  margin: 0 0 .45rem;
+  color: var(--text-heading);
+  font-size: clamp(1.8rem, 5vw, 2.55rem);
+  font-weight: 760;
+  letter-spacing: -.025em;
+}
+
+.student-downloads-hero p:last-child,
+.student-account-overview p:last-child {
+  max-width: 44rem;
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.downloads-usage {
+  display: grid;
+  justify-items: end;
+  flex: 0 0 auto;
+  min-width: 8.5rem;
+  padding: .8rem 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+}
+
+.downloads-usage strong {
+  color: var(--brand-teal-800);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.downloads-usage span {
+  margin-top: .25rem;
+  color: var(--text-heading);
+  font-weight: 740;
+}
+
+.downloads-usage small {
+  margin-top: .2rem;
+  color: var(--text-muted);
+  font-size: .76rem;
+}
+
+.downloads-section,
+.student-account-section {
+  min-width: 0;
+}
+
+.downloads-section + .downloads-section {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.downloads-section__heading,
+.student-account-section__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.downloads-section__heading h2,
+.student-account-section__heading h2 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: clamp(1.2rem, 3vw, 1.55rem);
+  font-weight: 740;
+}
+
+.downloads-section__heading p:last-child,
+.student-account-section__heading p:last-child {
+  margin: .25rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+
+.downloads-list,
+.student-access-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.downloads-list {
+  border-block: 1px solid var(--border-subtle);
+}
+
+.downloads-list > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.25rem;
+  min-height: 6rem;
+  padding: 1rem 0;
+}
+
+.downloads-list > li + li {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.downloads-list__copy,
+.downloads-list__copy strong,
+.downloads-list__copy small,
+.downloads-list__copy span {
+  display: block;
+}
+
+.downloads-list__copy strong {
+  margin-top: .25rem;
+  color: var(--text-heading);
+  font-size: 1rem;
+  font-weight: 730;
+}
+
+.downloads-list__copy small,
+.downloads-context {
+  margin-top: .2rem;
+  color: var(--text-muted);
+  font-size: .84rem;
+}
+
+.downloads-status {
+  width: fit-content;
+  font-size: .76rem;
+  font-weight: 750;
+}
+
+.downloads-status.is-ready { color: var(--success-700); }
+.downloads-status.is-update { color: var(--warning-700); }
+
+.downloads-list__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .5rem;
+}
+
+.student-b05-state {
+  padding: 1.1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+}
+
+.student-b05-state strong,
+.student-b05-state p { display: block; }
+.student-b05-state strong { color: var(--text-heading); font-weight: 730; }
+.student-b05-state p { max-width: 42rem; margin: .25rem 0 0; color: var(--text-secondary); line-height: 1.75; }
+.student-b05-state .secondary-button { margin-top: 1rem; }
+.student-b05-state.is-warning { border-color: color-mix(in srgb, var(--warning-700) 25%, var(--border-subtle)); background: color-mix(in srgb, var(--warning-100) 55%, var(--surface-panel)); }
+.student-b05-state.is-error { border-color: color-mix(in srgb, var(--danger-700) 22%, var(--border-subtle)); }
+.student-b05-state.is-info { border-color: color-mix(in srgb, var(--brand-teal-600) 20%, var(--border-subtle)); background: var(--brand-teal-50); }
+
+.student-b05-skeleton {
+  display: grid;
+  gap: .75rem;
+}
+
+.student-b05-skeleton > span:not(.sr-only) {
+  display: block;
+  min-height: 4.25rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface-subtle);
+}
+
+.student-account-experience {
+  grid-template-columns: minmax(0, 1.15fr) minmax(16rem, .85fr);
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.student-account-overview {
+  grid-column: 1 / -1;
+}
+
+.student-account-section {
+  padding: 1.15rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-panel);
+}
+
+.student-account-help {
+  grid-column: 1 / -1;
+}
+
+.student-account-help-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+
+.student-account-help-links a {
+  text-decoration: none;
+}
+
+.student-access-list {
+  display: grid;
+  gap: .4rem;
+}
+
+.student-access-list li {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem 0;
+}
+
+.student-access-list li + li { border-top: 1px solid var(--border-subtle); }
+
+.student-access-list__mark {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--brand-teal-50);
+  color: var(--brand-teal-800);
+  font-weight: 800;
+}
+
+.student-access-list strong,
+.student-access-list small { display: block; }
+.student-access-list strong { color: var(--text-heading); font-weight: 730; }
+.student-access-list small { margin-top: .15rem; color: var(--text-muted); }
+
+.student-account-code-form { margin-top: .75rem; }
+.student-account-code-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem; }
+
+@media (max-width: 47.99rem) {
+  .student-downloads-hero,
+  .student-account-overview {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .downloads-usage {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    justify-items: start;
+    gap: 0 .5rem;
+    width: 100%;
+  }
+
+  .downloads-usage strong { grid-row: 1 / span 2; }
+  .downloads-usage small { grid-column: 2; }
+
+  .downloads-list > li,
+  .student-account-experience,
+  .student-account-code-row {
+    grid-template-columns: 1fr;
+  }
+
+  .downloads-list > li { gap: .75rem; }
+  .downloads-list__actions { justify-content: stretch; }
+  .downloads-list__actions > *,
+  .downloads-list--available > li > .primary-button,
+  .student-account-code-row .primary-button { flex: 1; width: 100%; }
+
+  .student-account-section { padding: 1rem; }
+  .student-account-help-links { display: grid; grid-template-columns: 1fr; }
+  .student-account-help-links a { width: 100%; text-align: center; }
+}

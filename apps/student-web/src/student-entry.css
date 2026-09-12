@@ -1,0 +1,379 @@
+/* Student entry, first-run guidance and public help/support.
+   Owned feature styles: no dependency on stage-named layout selectors. */
+.student-entry-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--surface-canvas);
+  color: var(--text-primary);
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.student-entry-shell {
+  width: min(100%, 70rem);
+  min-height: calc(100vh - 2rem);
+  min-height: calc(100dvh - 2rem);
+  margin-inline: auto;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.student-entry-topbar,
+.student-entry-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.student-entry-footer {
+  justify-content: center;
+  flex-wrap: wrap;
+  padding-block: .5rem;
+}
+
+.student-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .75rem;
+}
+
+.student-brand__mark {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: var(--brand-teal-700);
+  color: var(--text-inverse);
+}
+
+.student-brand__mark svg {
+  width: 1.9rem;
+  height: 1.9rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.student-brand__copy,
+.student-brand__copy strong,
+.student-brand__copy small {
+  display: block;
+}
+
+.student-brand__copy strong {
+  color: var(--text-heading);
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.student-brand__copy small {
+  margin-top: .1rem;
+  color: var(--text-muted);
+  font-size: .76rem;
+}
+
+.student-entry-offline {
+  padding: .45rem .7rem;
+  border-radius: 999px;
+  background: var(--warning-100);
+  color: var(--warning-700);
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.student-entry-main {
+  align-self: center;
+  width: 100%;
+}
+
+.student-entry-main.is-auth {
+  width: min(100%, 31rem);
+  margin-inline: auto;
+}
+
+.student-entry-main.is-info {
+  width: min(100%, 50rem);
+  margin-inline: auto;
+}
+
+.student-welcome-panel,
+.student-guidance {
+  width: min(100%, 48rem);
+  margin-inline: auto;
+}
+
+.student-welcome-panel > h1,
+.student-guidance > header h1 {
+  margin-bottom: .8rem;
+  font-size: clamp(2rem, 6vw, 3.45rem);
+  line-height: 1.18;
+  letter-spacing: -.025em;
+  max-width: 14ch;
+}
+
+.student-welcome-panel > p,
+.student-guidance > header p {
+  color: var(--text-secondary);
+  max-width: 44rem;
+  line-height: 1.9;
+}
+
+.student-welcome-points,
+.student-guidance-steps,
+.student-support-list {
+  margin: 2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.student-welcome-points {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .9rem;
+}
+
+.student-welcome-points li {
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.student-welcome-points strong,
+.student-welcome-points span {
+  display: block;
+}
+
+.student-welcome-points strong {
+  color: var(--text-heading);
+  font-size: .95rem;
+}
+
+.student-welcome-points span {
+  margin-top: .3rem;
+  color: var(--text-secondary);
+  font-size: .86rem;
+  line-height: 1.75;
+}
+
+.student-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 2rem;
+}
+
+.student-entry-actions .primary-button,
+.student-entry-actions .secondary-button {
+  min-width: 9.5rem;
+}
+
+.student-entry-help-link {
+  margin-top: .6rem;
+}
+
+.student-auth-surface {
+  padding: clamp(1.1rem, 4vw, 1.8rem);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-1);
+}
+
+.student-auth-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .3rem;
+  padding: .3rem;
+  margin-bottom: 1.6rem;
+  border-radius: var(--radius-lg);
+  background: var(--surface-subtle);
+}
+
+.student-auth-switch button {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.student-auth-switch button.is-active {
+  background: var(--surface-panel);
+  color: var(--brand-teal-700);
+  box-shadow: var(--shadow-1);
+}
+
+.student-auth-heading {
+  margin-bottom: 1.4rem;
+}
+
+.student-auth-heading h1 {
+  margin-bottom: .45rem;
+  font-size: clamp(1.65rem, 4.5vw, 2.25rem);
+}
+
+.student-auth-heading > p:last-child {
+  margin-bottom: 0;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+
+.student-entry-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.student-guidance-steps {
+  display: grid;
+  gap: .4rem;
+}
+
+.student-guidance-steps li {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr);
+  gap: .85rem;
+  align-items: start;
+  padding-block: 1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.student-guidance-steps li > span {
+  width: 2.1rem;
+  height: 2.1rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-teal-50);
+  color: var(--brand-teal-700);
+  font-weight: 750;
+}
+
+.student-guidance-steps strong,
+.student-support-list strong {
+  color: var(--text-heading);
+  font-weight: 750;
+}
+
+.student-guidance-steps p,
+.student-support-list p,
+.student-support-contact p {
+  margin: .25rem 0 0;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.student-support-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.5rem;
+}
+
+.student-support-list section {
+  padding-block: 1.15rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.student-support-contact {
+  margin-top: 1.5rem;
+  padding: 1rem 1.1rem;
+  border-inline-start: 3px solid var(--brand-teal-600);
+  background: var(--surface-subtle);
+  border-radius: var(--radius-md);
+}
+
+.student-public-back {
+  text-decoration: none;
+}
+
+.student-entry-page .field-group {
+  display: grid;
+  gap: .45rem;
+}
+
+.student-entry-page .field-group label,
+.student-entry-page .label-row label {
+  color: var(--text-heading);
+  font-size: .9rem;
+  font-weight: 700;
+}
+
+.student-entry-page .field-hint,
+.student-entry-page .field-error {
+  margin: 0;
+  font-size: .8rem;
+  line-height: 1.65;
+}
+
+.student-entry-page .field-hint {
+  color: var(--text-muted);
+}
+
+.student-entry-page .field-error {
+  color: var(--danger-700);
+  font-weight: 700;
+}
+
+.student-entry-page .label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+}
+
+.student-entry-page .text-input {
+  width: 100%;
+}
+
+@media (max-width: 700px) {
+  .student-entry-page {
+    padding: 1rem;
+  }
+
+  .student-entry-shell {
+    min-height: calc(100vh - 2rem);
+    min-height: calc(100dvh - 2rem);
+  }
+
+  .student-brand__copy small {
+    display: none;
+  }
+
+  .student-welcome-points,
+  .student-support-list {
+    grid-template-columns: 1fr;
+  }
+
+  .student-welcome-panel > h1,
+  .student-guidance > header h1 {
+    max-width: none;
+  }
+
+  .student-entry-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .student-entry-actions .primary-button,
+  .student-entry-actions .secondary-button {
+    width: 100%;
+  }
+
+  .student-entry-topbar {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-entry-page *,
+  .student-entry-page *::before,
+  .student-entry-page *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
+import type { SessionProfile } from "./auth-api";
 import { StudentAccountExperience } from "./student-account";
 import { StudentAssessmentSection } from "./student-assessment";
 import { StudentLearningExperience } from "./student-learning";
@@ -18,10 +19,10 @@ interface StudentDestinationDefinition {
 }
 
 const learningDestinations: StudentDestinationDefinition[] = [
-  { key: "home", href: "/app/home", label: "الرئيسية", shortLabel: "الرئيسية", description: "ابدأ من هنا وانتقل بسرعة إلى دروسك وتدريباتك وما حفظته على الجهاز.", icon: "home" },
-  { key: "learn", href: "/app/learn", label: "التعلم", shortLabel: "التعلم", description: "اختر مادة، ثم انتقل إلى الدرس الذي تريد تعلمه.", icon: "learn" },
-  { key: "practice", href: "/app/practice", label: "التدريب", shortLabel: "التدريب", description: "اختر تدريبًا أو اختبارًا متاحًا لك وابدأ عندما تكون جاهزًا.", icon: "practice" },
-  { key: "downloads", href: "/app/downloads", label: "التنزيلات", shortLabel: "التنزيلات", description: "احفظ الدروس التي تحتاجها لتكون جاهزة عندما ينقطع الإنترنت.", icon: "downloads" },
+  { key: "home", href: "/app/home", label: "الرئيسية", shortLabel: "الرئيسية", description: "ابدأ من هنا وانتقل إلى أهم ما تحتاجه في التطبيق.", icon: "home" },
+  { key: "learn", href: "/app/learn", label: "التعلّم", shortLabel: "التعلّم", description: "اختر المادة ثم افتح الدرس الذي تريد تعلمه.", icon: "learn" },
+  { key: "practice", href: "/app/practice", label: "التدريب", shortLabel: "التدريب", description: "راجع ما تعلمته من خلال التدريب والاختبارات المتاحة.", icon: "practice" },
+  { key: "downloads", href: "/app/downloads", label: "التنزيلات", shortLabel: "التنزيلات", description: "أدر الدروس المحفوظة على هذا الجهاز.", icon: "downloads" },
 ];
 
 function destinationFromPath(pathname: string): StudentDestination | null {
@@ -46,20 +47,19 @@ function DestinationIcon({ kind }: { kind: StudentDestinationIcon }) {
   return <svg {...common}><circle cx="12" cy="8" r="3.2" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></svg>;
 }
 
-function StudentNetworkState({ online }: { online: boolean }) {
-  return <div className={`student-network-state ${online ? "is-online" : "is-offline"}`} role="status" aria-live="polite"><span aria-hidden="true" />{online ? "متصل" : "غير متصل — يمكنك فتح ما سبق تنزيله"}</div>;
-}
-
 function StudentShellNavigation({ destination, online, focused = false }: { destination: StudentDestination; online: boolean; focused?: boolean }) {
-  if (focused) return <div className="student-shell-toolbar student-shell-toolbar--focused"><StudentNetworkState online={online} /></div>;
+  if (focused) return !online ? <div className="student-focused-offline" role="status">غير متصل</div> : null;
   return (
     <>
-      <div className="student-shell-toolbar">
-        <StudentNetworkState online={online} />
-        <Link className={`student-account-entry ${destination === "account" ? "is-active" : ""}`} to="/app/account" aria-current={destination === "account" ? "page" : undefined}><DestinationIcon kind="account" /><span>حسابي</span></Link>
-      </div>
+      <header className="student-appbar">
+        <Link className="student-appbar__brand" to="/app/home" aria-label="الوسيلة الذكية — الرئيسية"><span aria-hidden="true">و</span><strong>الوسيلة الذكية</strong></Link>
+        <div className="student-appbar__actions">
+          {!online ? <span className="student-network-warning" role="status">غير متصل</span> : null}
+          <Link className={`student-account-entry ${destination === "account" ? "is-active" : ""}`} to="/app/account" aria-current={destination === "account" ? "page" : undefined} aria-label="حسابي"><DestinationIcon kind="account" /><span>حسابي</span></Link>
+        </div>
+      </header>
       <nav className="student-adaptive-nav" aria-label="التنقل الرئيسي للطالب">
-        <div className="student-adaptive-nav__brand"><span>مساحة التعلم</span><small>الوسيلة الذكية</small></div>
+        <Link className="student-adaptive-nav__brand" to="/app/home"><span>الوسيلة الذكية</span><small>مساحة الطالب</small></Link>
         <div className="student-adaptive-nav__links">
           {learningDestinations.map((item) => <Link key={item.key} className={`student-nav-link ${destination === item.key ? "is-active" : ""}`} to={item.href} aria-current={destination === item.key ? "page" : undefined}><DestinationIcon kind={item.icon} /><span>{item.label}</span></Link>)}
         </div>
@@ -75,8 +75,8 @@ function StudentShellNavigation({ destination, online, focused = false }: { dest
 function StudentHomeOverview() {
   return (
     <section className="student-home" aria-labelledby="student-home-title">
-      <div className="student-page-heading student-page-heading--home"><p className="eyebrow">مساحة التعلم</p><h2 id="student-home-title">ماذا تريد أن تتعلم اليوم؟</h2><p>اختر وجهتك، وسنُبقي كل مهمة في مكان واضح بدل جمع كل شيء في صفحة واحدة.</p></div>
-      <div className="student-home-grid" aria-label="وجهات التعلم">
+      <header className="student-page-heading student-page-heading--home"><p className="eyebrow">الرئيسية</p><h1 id="student-home-title">ماذا تريد أن تفعل الآن؟</h1><p>اختر التعلّم لفتح موادك، أو التدريب للمراجعة، أو التنزيلات لإدارة ما حفظته على جهازك.</p></header>
+      <div className="student-home-grid" aria-label="وجهات الطالب">
         {learningDestinations.filter((item) => item.key !== "home").map((item) => (
           <Link className="student-home-card" key={item.key} to={item.href}><span className="student-home-card__icon" aria-hidden="true"><DestinationIcon kind={item.icon} /></span><span className="student-home-card__copy"><strong>{item.label}</strong><small>{item.description}</small></span><span className="student-home-card__arrow" aria-hidden="true">←</span></Link>
         ))}
@@ -88,10 +88,15 @@ function StudentHomeOverview() {
 function DestinationHeading({ destination }: { destination: "learn" | "practice" }) {
   const item = learningDestinations.find((candidate) => candidate.key === destination);
   if (!item) return null;
-  return <header className="student-page-heading"><p className="eyebrow">مساحة الطالب</p><h1>{item.label}</h1><p>{item.description}</p></header>;
+  return <header className="student-page-heading"><p className="eyebrow">{item.label}</p><h1>{destination === "learn" ? "موادك ودروسك" : "تدرّب واختبر نفسك"}</h1><p>{item.description}</p></header>;
 }
 
-export function StudentAccessSection({ online, onSessionExpired }: { online: boolean; onSessionExpired: () => void }) {
+export function StudentAccessSection({ profile, online, onSessionExpired, onLoggedOut }: {
+  profile: SessionProfile;
+  online: boolean;
+  onSessionExpired: () => void;
+  onLoggedOut: () => void;
+}) {
   const location = useLocation();
   const destination = destinationFromPath(location.pathname);
   const focusedReader = isReaderPath(location.pathname);
@@ -109,13 +114,13 @@ export function StudentAccessSection({ online, onSessionExpired }: { online: boo
         {destination === "learn" ? (
           <>
             {atLearnRoot ? <DestinationHeading destination="learn" /> : null}
-            {atLearnRoot && activatedAccess ? <div className="form-alert is-success student-route-notice" role="status"><strong>تم تفعيل الصف. أصبح محتواه متاحًا في التعلم.</strong></div> : null}
+            {atLearnRoot && activatedAccess ? <div className="form-alert is-success student-route-notice" role="status"><strong>تم تفعيل الصف. أصبح محتواه متاحًا في التعلّم.</strong></div> : null}
             <StudentLearningExperience online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} />
           </>
         ) : null}
         {destination === "practice" ? <><DestinationHeading destination="practice" /><StudentAssessmentSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /></> : null}
         {destination === "downloads" ? <StudentOfflineDownloadsSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /> : null}
-        {destination === "account" ? <StudentAccountExperience online={online} onSessionExpired={onSessionExpired} onAccessChanged={() => setCurriculumRefreshKey((current) => current + 1)} /> : null}
+        {destination === "account" ? <StudentAccountExperience profile={profile} online={online} onSessionExpired={onSessionExpired} onAccessChanged={() => setCurriculumRefreshKey((current) => current + 1)} onLoggedOut={onLoggedOut} /> : null}
       </div>
     </div>
   );

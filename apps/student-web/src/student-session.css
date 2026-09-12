@@ -1,0 +1,36 @@
+.student-session-state {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 1.75rem;
+  padding: 1.25rem;
+  text-align: center;
+  background: var(--surface-canvas);
+}
+
+.student-session-state > div,
+.student-session-state > section {
+  width: min(100%, 30rem);
+  padding: 1.2rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--surface-panel);
+}
+
+.student-session-state h1 {
+  margin: .55rem 0 .35rem;
+  font-size: clamp(1.55rem, 5vw, 2rem);
+  font-weight: 750;
+}
+
+.student-session-state p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.student-session-state .primary-button {
+  margin-top: 1rem;
+}
