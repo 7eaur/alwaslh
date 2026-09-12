@@ -12,9 +12,9 @@ Last synchronized: **2026-09-13**.
 
 **ACTIVE PR: #53 — `refactor(student): rebuild the learner experience end to end`**
 
-**ADMIN B06–B14: DEFERRED / SUPERSEDED PENDING ARCHITECTURE DECISION.** The dedicated **Super Admin Product Rebuild** workstream owns Admin product responsibilities, backend workflows, IA, navigation, frontend architecture and UX/UI. Do not patch or execute the old Admin batches in parallel.
+**ADMIN B06–B14: DEFERRED.** The dedicated **Super Admin Product Rebuild** workstream owns Admin product architecture/IA/backend workflows/frontend/UX. Do not patch the old Admin batches from this branch.
 
-Exact normal-roadmap return after Student/shared refoundation closes remains:
+Exact normal-roadmap return after Student/shared refoundation closes:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
 
@@ -25,79 +25,72 @@ UX-B04 Student Practice / Assessment is **CLOSED / VERIFIED / MERGED**.
 - final synchronized B04 head: `56f19b88169160c8edd90c9cad8cf129a834b76e`;
 - final B04 matrix: **23/23 SUCCESS** after one same-SHA transient Chromium focus rerun;
 - PR #47 merged;
-- live `main` used to start the current Student branch: `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
+- current Student branch started from live main `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
 
-Existing verified backend/domain/security contracts remain preserved, including the Full Product Architecture Audit / FPA-002 authorization repair and Legacy Content work already present on the baseline.
+The Full Product Architecture Audit / FPA-002 authorization repair, Legacy Content work and verified backend/security contracts on that baseline remain preserved.
 
-## Current Student product architecture
+## Binding Student product quality
 
-Canonical Student architecture:
+Canonical architecture: `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
 
-`docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
-
-Binding design order:
+Design order:
 
 **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
 
-Acceptance bar:
+Acceptance:
 
 **Functional + Clear + Easy + Comfortable + Consistent + Fast + Maintainable + Professional**
 
-Future-complete mobile navigation is intentionally limited to four primary destinations:
+Student production UI must expose learner concepts only. It must not expose crypto/cache/session/stage/roadmap/internal API language.
 
-- الرئيسية
-- التعلّم
-- التدريب
-- مكتبتي
+## Current implementation on PR #53
 
-`مكتبتي` is the future owner of Downloads + Stage17 Notes/Saved/Needs Review. Notifications remain an app-bar secondary action when Stage18 exists. Progress/Statistics/Achievements receive their own route when Stage19 exists. Unimplemented destinations must remain hidden until real contracts and behavior exist.
+Implemented/refactored:
 
-## Current implementation state on PR #53
+- first installed-app Welcome / first-run experience;
+- activation, returning login and temporary-password recovery;
+- `/help` instructions and `/support` support guidance;
+- `App.tsx` reduced to session orchestration;
+- old authenticated Account wrapper removed;
+- unified Student shell/app-bar/adaptive navigation/mobile bottom navigation;
+- normal online state no longer wastes space with permanent “متصل” chrome;
+- Home simplified around real learner destinations;
+- Learn → Subject → focused Reader hierarchy retained and visually rebuilt;
+- Reader search now exposes result count and moves keyboard/screen-reader focus to the first result on request / Enter, closing the previous FPA-013 behavior;
+- Practice/Assessment remains routed and focused while removing raw API-error presentation;
+- Downloads rebuilt as learner-facing saved/available library while retaining Stage16 integrity/storage authority;
+- Account is the visible owner of access/class-code/logout/help/support;
+- `stage14.css` removed;
+- obsolete `assessment-polish.css` removed and live integration rules separated;
+- production-realistic browser fixtures replace Student-visible Stage/Reader fixture wording.
 
-Implemented/refactored in the active branch:
+## Error / instruction architecture — active acceptance rule
 
-- first installed-app launch / Welcome experience;
-- activation and returning login rebuilt around learner-facing copy;
-- recovery guidance;
-- reusable Help / Instructions route (`/help`);
-- reusable Support / Contact guidance route (`/support`) without invented contact details;
-- removal of normal Student-visible cryptography/cache/session/roadmap jargon;
-- `App.tsx` reduced to session orchestration rather than owning every screen;
-- account wrapper removed from all authenticated destinations;
-- unified Student app bar / adaptive navigation / four-item mobile bottom navigation;
-- connection state shown only when degraded/actionable;
-- Home simplified around real available destinations rather than fake metrics;
-- Learn / Subject hierarchy preserved with calmer presentation;
-- focused Reader presentation rebuilt without obsolete AccountPage CSS coupling;
-- Downloads rebuilt as saved + available learner library while preserving current Stage16 materialization/integrity authority;
-- Account is the single visible owner for access/class-code/logout/help tasks;
-- Stage14 stale presentation stylesheet removed;
-- historical `assessment-polish.css` removed and replaced with owned Assessment integration styling;
-- Stage14 browser assertions updated to verify real learner outcomes instead of legacy copy/chrome.
+A centralized Student error-copy layer now maps backend error **codes/status/context** to learner-facing guidance. Raw backend messages are not presentation contracts.
 
-## Not yet closed
+Every expected failure must answer:
 
-The Student rebuild is **NOT YET COMPLETE / NOT YET MERGED**.
+1. **What happened?** in learner language.
+2. **What can I do now?** with one realistic next action.
+3. **What must not happen?** no technical/internal/admin detail leakage.
 
-Still required before closure:
+Covered scenarios include:
 
-1. finish exact-head regression feedback for Stage14/B01/B02/B03/B04/B05/Stage15/Stage16/Rebuild and all triggered workflows;
-2. correct any real browser regressions at root cause;
-3. finish Practice/Assessment integration cleanup where old shell selectors remain;
-4. continue removal/consolidation of dead legacy CSS in `styles.css` only after executable parity proves it safe;
-5. inspect phone + desktop Visual QA artifacts for Welcome/Auth/Help/Support/Home/Learn/Reader/Practice/Downloads/Account where fixtures permit;
-6. keep production-copy scan blocking implementation/stage/roadmap terminology;
-7. update `PROJECT_ENGINEERING_LOG.md` with final findings/decisions/tests;
-8. synchronize with any movement of live `main` before merge;
-9. merge PR #53 only with exact-head guard after functional + visual acceptance.
+- incomplete/invalid/expired activation code;
+- password mismatch;
+- invalid login credentials;
+- temporary-password change;
+- device verification/rebind guidance;
+- rate limit / service unavailable / offline entry;
+- expired session;
+- malformed/invalid class code;
+- unavailable subject/lesson/quiz/attempt;
+- Reader media/search/no-result states;
+- offline Assessment write/finalize blocking and reconnect;
+- storage budget/device quota/incomplete or untrusted download;
+- empty/loading/error/offline states across Student destinations.
 
-## Explicit non-goals in this refoundation
-
-- do not implement Stage17 Notes/Favorites/Needs Review prematurely;
-- do not implement Stage18 Notifications prematurely;
-- do not implement Stage19 Progress/Statistics/Achievements prematurely;
-- do not silently implement remaining Stage16 cold-start offline Reader authority inside presentation work;
-- do not modify the dedicated Super Admin rebuild.
+Unit tests protect the error mapper from leaking raw backend text. Browser tests verify important user outcomes rather than legacy banners/selectors.
 
 ## Preserved authority
 
@@ -111,6 +104,29 @@ Still required before closure:
 - signed offline authorization/integrity/device/session contracts unchanged;
 - no password/session token/device private key stored as offline product data.
 
+## Current closure state
+
+**NOT YET MERGED.** The implementation phase is now frozen for final verification unless CI identifies a real regression.
+
+Before merge:
+
+1. run exact-head lint/typecheck/unit/build and the complete triggered workflow matrix;
+2. inspect any failure and distinguish real contract regression from stale browser expectation;
+3. require Stage14/15/16 + B01–B05 + Rebuild browser coverage to pass;
+4. inspect final phone + desktop Visual QA artifacts for changed Student surfaces;
+5. keep production-copy scanner blocking implementation/stage/roadmap terminology;
+6. update final engineering evidence and PR/Issue acceptance;
+7. refresh live main and resync only if it moved materially;
+8. merge PR #53 with exact expected-head guard.
+
+## Explicit non-goals
+
+- no premature Stage17 Notes/Favorites/Needs Review UI;
+- no premature Stage18 Notifications UI;
+- no premature Stage19 Progress/Statistics/Achievements UI;
+- no silent implementation of remaining Stage16 cold-start offline Reader authority;
+- no Admin rebuild from this branch.
+
 ## Immediate next action
 
-Stabilize the current Student experience head through real Chromium regression + Visual QA, finish the remaining presentation-debt cleanup without changing deferred business contracts, then close/merge PR #53. After that, synchronize with the dedicated Super Admin rebuild before shared final responsive/RTL/a11y/visual-regression closure and return to `STUDENT-016I`.
+Hold the current code steady, run the exact-head matrix, fix only evidence-backed regressions, inspect final Visual QA, then merge PR #53. After merge, synchronize with the dedicated Super Admin rebuild before shared final responsive/RTL/a11y/visual closure and return to `STUDENT-016I`.
