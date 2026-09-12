@@ -55,6 +55,8 @@ test("Student app shell installs safely and reloads offline without caching prot
   await context.setOffline(true);
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page).toHaveTitle("الوسيلة الذكية — مساحة الطالب");
-  await expect(page.getByRole("heading", { name: "نحتاج اتصالًا للتحقق من الحساب" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "اتصل بالإنترنت للمتابعة" })).toBeVisible();
+  await expect(page.getByText(/نحتاج اتصالًا عند فتح الحساب/)).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/Service Worker|Cache API|session|authority|مفتاح الجهاز/i);
   await context.setOffline(false);
 });
