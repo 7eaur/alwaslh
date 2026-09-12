@@ -1,57 +1,110 @@
 # Project Guardrails
 
-## Source of truth
+Use this reference for changes that span multiple layers, affect architecture, or risk changing product behavior.
 
-Use this precedence when deciding what is true:
+## Preserve the same product
 
-1. live `main`
-2. actual repository code
-3. PostgreSQL migrations and integrity constraints
-4. executable GitHub Actions/tests
-5. merged PRs and exact commits
-6. verified Railway runtime/log evidence
-7. Issue #16
-8. project prose/docs
+The goal is to build a stronger version of **الوسيلة الذكية**, not a different product.
 
-Treat lower-priority disagreement as documentation drift until reconciled.
+Preserve unless concrete evidence proves a defect or Product Owner explicitly changes them:
 
-## Stable product contracts
+- original education-first product idea;
+- canonical business rules;
+- Student/Admin role separation;
+- curriculum/publication/access semantics;
+- assessment authority;
+- offline security model;
+- approved identity foundation and brand assets;
+- roadmap continuation point.
 
-Preserve unless a concrete defect is proven:
+A redesign may change navigation, composition, component architecture, spacing, typography implementation, copy quality, state presentation, and page boundaries when those changes improve the same product.
 
-- API + PostgreSQL are canonical durable business authority.
-- Browser state is presentation/resilience state, not canonical authority.
-- Returning Student authentication remains password + registered device proof where the current contract requires it.
-- `media ready != published`.
-- Student content visibility requires publication plus entitlement.
-- Protected Reader/media must not expose raw storage authority.
-- AI output does not auto-publish content or Student questions.
-- Assessment scoring/finalization remains server-owned.
-- `/v1` must not become Service Worker Cache API authority.
-- Offline browser storage must not contain password, session token, private signing key, or device private key.
-- Hosting configuration must not become business logic.
+## Understand before modifying
 
-## Current project position
+Inspect:
+- inputs/outputs;
+- callers;
+- side effects;
+- dependencies;
+- authorization boundaries;
+- persistence behavior;
+- tests;
+- migrations/contracts;
+- affected user flow;
+- visible content/copy;
+- approved brand source when UI/identity is touched.
 
-Normal roadmap execution is intentionally paused while Student/Admin UX foundations are remediated.
+Anything not inspected is `NOT YET VERIFIED`.
 
-Preserve all verified Stage1–15 work and completed Stage16 authority work.
+## Classification
 
-Do not redo `STUDENT-016H`.
+Classify each affected area:
 
-After UX/UI refoundation, resume normal roadmap from `STUDENT-016I`, then 016R, 016S, conditional 016O, Stage16 closure, then Stage17.
+- `KEEP` — sound and consistent;
+- `IMPROVE` — limited refinement;
+- `REFACTOR` — internal restructuring while preserving behavior;
+- `REBUILD` — current structure is genuinely unsuitable;
+- `REMOVE` — unused, duplicated, misleading, or harmful.
 
-## Change discipline
+Do not use `REBUILD` simply because a screen looks unattractive.
 
-Before changing a subsystem, identify inputs, outputs, callers, dependencies, side effects, edge cases, tests, and persistence/security boundaries.
+## UX/product boundary
 
-Prefer:
-- KEEP when behavior and structure are already strong.
-- IMPROVE for small localized fixes.
-- REFACTOR when structure is weak but behavior/contracts are correct.
-- REBUILD only when evidence shows the current foundation blocks correctness or maintainability.
-- REMOVE only when unused, duplicated, harmful, or superseded.
+Do not change backend/business contracts only to make a UI mockup easier.
 
-Do not perform a cross-layer rewrite merely because the UI is being redesigned.
+If UX work reveals a real contract flaw:
+1. record evidence;
+2. describe impact;
+3. separate the contract fix from visual work where possible;
+4. verify callers/tests/migrations;
+5. update project documentation.
 
-For contract changes, create an explicit architecture decision and verify all affected clients/tests.
+## Identity boundary
+
+Do not replace Alwaslh's identity with an external template or reference product.
+
+Product Design, Mobbin, Figma, screenshots, generic skills, and design trends are advisory. Approved repository identity and Product Owner direction outrank them.
+
+## Content boundary
+
+Internal implementation state is not automatically user-facing information.
+
+Production UI must use final human-readable product copy and only display data useful to the current task. Do not leak API/database/cache/signature/revision/sync internals into Student or ordinary Admin screens.
+
+## Page/IA boundary
+
+Do not solve complexity by placing every feature in one page.
+
+- dashboard = overview/entry point;
+- major workflow = route/page;
+- deeper object/task = focused sub-page where justified;
+- tabs = closely related views only;
+- dialogs/drawers = short focused interactions, not a replacement for navigation architecture.
+
+## Batch discipline
+
+Prefer small coherent batches:
+- design-system foundation;
+- app shell/navigation;
+- one flow or related screen family;
+- state/copy cleanup;
+- accessibility correction;
+- backend contract correction;
+- regression tests.
+
+Do not mix unrelated cleanup into one batch.
+
+## Verification
+
+After changes run applicable:
+- lint;
+- typecheck;
+- unit tests;
+- integration tests;
+- build;
+- browser/Playwright flows;
+- responsive checks;
+- accessibility checks;
+- security/authorization regressions.
+
+Success means the user flow works and the contracts remain correct, not merely that compilation passes.
