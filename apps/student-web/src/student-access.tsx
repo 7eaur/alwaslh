@@ -12,7 +12,7 @@ import {
 } from "./auth-api";
 import type { EntitlementView } from "./auth-api";
 import { StudentAssessmentSection } from "./student-assessment";
-import { StudentCurriculumSection } from "./student-curriculum";
+import { StudentLearningExperience } from "./student-learning";
 import { StudentOfflineDownloadsSection } from "./student-offline-downloads";
 
 type AccessState =
@@ -47,7 +47,7 @@ const learningDestinations: StudentDestinationDefinition[] = [
     href: "/app/learn",
     label: "التعلم",
     shortLabel: "التعلم",
-    description: "تصفح المواد والدروس المتاحة لك وافتح ما تريد تعلمه.",
+    description: "اختر مادة، ثم انتقل إلى الدرس الذي تريد تعلمه.",
     icon: "learn",
   },
   {
@@ -55,7 +55,7 @@ const learningDestinations: StudentDestinationDefinition[] = [
     href: "/app/practice",
     label: "التدريب",
     shortLabel: "التدريب",
-    description: "اختر تدريبًا أو اختبارًا من المحتوى المنشور المتاح لك.",
+    description: "اختر تدريبًا أو اختبارًا متاحًا لك وابدأ عندما تكون جاهزًا.",
     icon: "practice",
   },
   {
@@ -85,6 +85,10 @@ function destinationFromPath(pathname: string): StudentDestination | null {
     if (pathname === destination.href || pathname.startsWith(`${destination.href}/`)) return destination.key;
   }
   return null;
+}
+
+function isReaderPath(pathname: string): boolean {
+  return /^\/app\/learn\/lessons\/[^/]+\/?$/.test(pathname);
 }
 
 function DestinationIcon({ kind }: { kind: StudentDestinationIcon }) {
@@ -143,14 +147,36 @@ function DestinationIcon({ kind }: { kind: StudentDestinationIcon }) {
   );
 }
 
-function StudentShellNavigation({ destination, online }: { destination: StudentDestination; online: boolean }) {
+function StudentNetworkState({ online }: { online: boolean }) {
+  return (
+    <div className={`student-network-state ${online ? "is-online" : "is-offline"}`} role="status" aria-live="polite">
+      <span aria-hidden="true" />
+      {online ? "متصل" : "غير متصل — يمكنك فتح ما سبق تنزيله"}
+    </div>
+  );
+}
+
+function StudentShellNavigation({
+  destination,
+  online,
+  focused = false,
+}: {
+  destination: StudentDestination;
+  online: boolean;
+  focused?: boolean;
+}) {
+  if (focused) {
+    return (
+      <div className="student-shell-toolbar student-shell-toolbar--focused">
+        <StudentNetworkState online={online} />
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="student-shell-toolbar">
-        <div className={`student-network-state ${online ? "is-online" : "is-offline"}`} role="status" aria-live="polite">
-          <span aria-hidden="true" />
-          {online ? "متصل" : "غير متصل — يمكنك فتح ما سبق تنزيله"}
-        </div>
+        <StudentNetworkState online={online} />
         <Link
           className={`student-account-entry ${destination === "account" ? "is-active" : ""}`}
           to="/app/account"
@@ -257,6 +283,8 @@ export function StudentAccessSection({
   const location = useLocation();
   const navigate = useNavigate();
   const destination = destinationFromPath(location.pathname);
+  const focusedReader = isReaderPath(location.pathname);
+  const atLearnRoot = location.pathname === "/app/learn" || location.pathname === "/app/learn/";
   const [access, setAccess] = useState<AccessState>({ status: "loading" });
   const [classCode, setClassCode] = useState("");
   const [redemptionKey, setRedemptionKey] = useState(createAccessRedemptionIdempotencyKey);
@@ -290,9 +318,9 @@ export function StudentAccessSection({
   useEffect(() => {
     const needsInitialAccess =
       destination === "home" ||
-      ((destination === "learn" || destination === "account") && access.status === "loading");
+      ((atLearnRoot || destination === "account") && access.status === "loading");
     if (needsInitialAccess) void loadAccess();
-  }, [online, destination]);
+  }, [online, destination, atLearnRoot]);
 
   useEffect(() => {
     if (destination !== "learn") setRedeemSuccess(null);
@@ -439,8 +467,12 @@ export function StudentAccessSection({
   );
 
   return (
-    <div className={`student-shell student-destination--${destination}`} data-student-destination={destination}>
-      <StudentShellNavigation destination={destination} online={online} />
+    <div
+      className={`student-shell student-destination--${destination}${focusedReader ? " is-focused-reader" : ""}`}
+      data-student-destination={destination}
+      data-reader-focused={focusedReader || undefined}
+    >
+      <StudentShellNavigation destination={destination} online={online} focused={focusedReader} />
       <div className="student-destination">
         {destination === "home" ? (
           <>
@@ -451,14 +483,18 @@ export function StudentAccessSection({
 
         {destination === "learn" ? (
           <>
-            <DestinationHeading destination="learn" />
-            {redeemSuccess ? (
+            {atLearnRoot ? <DestinationHeading destination="learn" /> : null}
+            {atLearnRoot && redeemSuccess ? (
               <div className="form-alert is-success student-route-notice" role="status">
                 <strong>{redeemSuccess}</strong>
               </div>
             ) : null}
-            <StudentCurriculumSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} />
-            {accessManagement}
+            <StudentLearningExperience
+              online={online}
+              refreshKey={curriculumRefreshKey}
+              onSessionExpired={onSessionExpired}
+            />
+            {atLearnRoot ? accessManagement : null}
           </>
         ) : null}
 
