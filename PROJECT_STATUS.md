@@ -43,9 +43,9 @@ Acceptance:
 
 Student production UI must expose learner concepts only. It must not expose crypto/cache/session/stage/roadmap/internal API language.
 
-Motion is now also a launch-quality requirement: interaction should feel alive without becoming decorative or distracting. Transitions must be short, restrained and accessibility-safe.
+Motion is a launch-quality requirement: interaction should feel alive without becoming decorative or distracting. Transitions are short, restrained and accessibility-safe.
 
-## Current implementation on PR #53
+## PR #53 implementation
 
 Implemented/refactored:
 
@@ -58,44 +58,28 @@ Implemented/refactored:
 - normal online state no longer wastes space with permanent “متصل” chrome;
 - Home simplified around real learner destinations;
 - Learn → Subject → focused Reader hierarchy retained and visually rebuilt;
-- Reader search now exposes result count and moves keyboard/screen-reader focus to the first result on request / Enter, closing the previous FPA-013 behavior;
+- Reader search exposes result count and moves keyboard/screen-reader focus to the first result on request / Enter, closing FPA-013 behavior;
 - Practice/Assessment remains routed and focused while removing raw API-error presentation;
 - Downloads rebuilt as learner-facing saved/available library while retaining Stage16 integrity/storage authority;
 - Account is the visible owner of access/class-code/logout/help/support;
 - `stage14.css` removed;
 - obsolete `assessment-polish.css` removed and live integration rules separated;
 - production-realistic browser fixtures replace Student-visible Stage/Reader fixture wording;
-- new `student-motion.css` adds subtle surface-entry motion, feedback appearance, press/hover affordances and lightweight depth/borders without adding an animation library;
+- `student-motion.css` adds subtle surface-entry motion, feedback appearance, press/hover affordances and lightweight depth/borders without an animation library;
 - motion uses short opacity/transform transitions and honors `prefers-reduced-motion`;
-- B05 now includes browser verification that reduced-motion effectively collapses animation duration.
+- B05 browser acceptance verifies reduced-motion behavior.
 
-## Error / instruction architecture — active acceptance rule
+## Error / instruction architecture
 
-A centralized Student error-copy layer now maps backend error **codes/status/context** to learner-facing guidance. Raw backend messages are not presentation contracts.
+A centralized Student error-copy layer maps backend error **codes/status/context** to learner-facing guidance. Raw backend messages are not presentation contracts.
 
-Every expected failure must answer:
+Every expected failure answers:
 
 1. **What happened?** in learner language.
 2. **What can I do now?** with one realistic next action.
 3. **What must not happen?** no technical/internal/admin detail leakage.
 
-Covered scenarios include:
-
-- incomplete/invalid/expired activation code;
-- password mismatch;
-- invalid login credentials;
-- temporary-password change;
-- device verification/rebind guidance;
-- rate limit / service unavailable / offline entry;
-- expired session;
-- malformed/invalid class code;
-- unavailable subject/lesson/quiz/attempt;
-- Reader media/search/no-result states;
-- offline Assessment write/finalize blocking and reconnect;
-- storage budget/device quota/incomplete or untrusted download;
-- empty/loading/error/offline states across Student destinations.
-
-Unit tests protect the error mapper from leaking raw backend text. Browser tests verify important user outcomes rather than legacy banners/selectors.
+Covered scenarios include invalid/expired activation, password mismatch, invalid login, temporary password, device verification/rebind, rate limit/service unavailable/offline entry, expired session, invalid class code, unavailable subject/lesson/quiz/attempt, Reader media/search/no-result states, offline Assessment write/finalize blocking, storage/device quota, incomplete/untrusted download, and empty/loading/error/offline states.
 
 ## Preserved authority
 
@@ -109,28 +93,45 @@ Unit tests protect the error mapper from leaking raw backend text. Browser tests
 - signed offline authorization/integrity/device/session contracts unchanged;
 - no password/session token/device private key stored as offline product data.
 
+## Final verification evidence before documentation head
+
+On code head `17b1c43915eb5b3c279b91727fc8f1c3bc4e1ca8`:
+
+- UX B01 — SUCCESS;
+- UX B02 — SUCCESS;
+- UX B03 — SUCCESS;
+- UX B04 — SUCCESS;
+- UX B05 — SUCCESS;
+- Stage15 Student Assessment — SUCCESS;
+- Stage16 PWA shell — SUCCESS;
+- Stage16 PostgreSQL offline contracts — SUCCESS;
+- Stage16 lifecycle/materialization Chromium — SUCCESS;
+- B05 quality/migrations/Chromium/visual artifact — SUCCESS;
+- B05 Visual QA artifact `10307419204`, digest `sha256:4fb6af5dd071d7dbf30bdfeea7704db9917a9185766ea8288aba526f6313405d`;
+- 16 B05 screenshots were manually inspected across Activation, Welcome, Help, Support, Downloads library/saved/offline and Account on phone + desktop; no launch-blocking visual issue was found;
+- Stage14 quality/build/migrations/contracts passed, while its browser suite exposed one final stale timing assumption around session expiry detection; that test was corrected to observe the entitlements `401` before entering Account instead of waiting for a refresh control after the app had already handled expiry.
+
+No backend/security/business contract was weakened by the browser-test corrections.
+
 ## Current closure state
 
-**NOT YET MERGED.** Previous exact-head verification exposed stale/brittle Student browser expectations rather than backend-contract failures:
-
-- B03 looked for the obsolete spelling `التعلم` instead of the production label `التعلّم`;
-- B04 resumed an Assessment by blindly clicking “next” instead of selecting the intended question identity;
-- Stage16 offline lifecycle still targeted the old Auth switch label and expected manual Account refresh after server-side expiry even though current Account load detects expiry immediately;
-- B05/Stage16 integrity test used a brittle asset URL interception; it now corrupts the actual returned asset bytes while preserving byte size and proves checksum rejection.
-
-Those tests have been corrected without weakening the security/business contracts. A new exact-head matrix is required after the motion layer and these regression fixes.
+**NOT YET MERGED.** The branch now contains the final Stage14 timing correction plus this documentation. The next branch head is the intended final acceptance head and must pass its own exact-head workflow matrix before merge.
 
 Before merge:
 
-1. run exact-head lint/typecheck/unit/build and the complete triggered workflow matrix;
-2. inspect any failure and distinguish real contract regression from stale browser expectation;
-3. require Stage14/15/16 + B01–B05 + Rebuild browser coverage to pass;
-4. inspect final phone + desktop Visual QA artifacts for changed Student surfaces, including interactive depth after motion settles;
-5. keep production-copy scanner blocking implementation/stage/roadmap terminology;
-6. verify reduced-motion acceptance;
-7. update final engineering evidence and PR/Issue acceptance;
-8. refresh live main and resync only if it moved materially;
-9. merge PR #53 with exact expected-head guard.
+1. require the complete exact-head workflow matrix to finish SUCCESS;
+2. require Stage14/15/16 + B01–B05 + Rebuild browser coverage to pass;
+3. keep production-copy scanner blocking implementation/stage/roadmap terminology;
+4. retain `prefers-reduced-motion` browser acceptance;
+5. preserve B05 manual Visual QA acceptance;
+6. verify live `main` has not moved materially;
+7. update PR #53 / Issue #16 with final evidence;
+8. merge PR #53 only with the exact expected-head guard.
+
+## Known non-blocking debt
+
+- Student production JS bundle remains approximately `568.80 kB` minified / `144.88 kB` gzip and Vite warns above 500 kB. This is a real performance debt for later route-level code-splitting evaluation, but current browser acceptance does not show it as a launch blocker for this refoundation batch.
+- true cold-start offline Reader authority remains intentionally deferred to `STUDENT-016I`; do not fake completion here.
 
 ## Explicit non-goals
 
@@ -143,4 +144,4 @@ Before merge:
 
 ## Immediate next action
 
-Freeze the next documentation-complete head, run the exact-head matrix, fix only evidence-backed regressions, inspect final phone/desktop Visual QA, then merge PR #53. After merge, synchronize with the dedicated Super Admin rebuild before shared final responsive/RTL/a11y/visual closure and return to `STUDENT-016I`.
+Run the complete exact-head CI matrix on the documentation-complete branch head. If all workflows are green, verify PR head/base/mergeability, record final acceptance in PR #53 and Issue #16, merge with exact expected-head guard, verify live main, then synchronize with the dedicated Super Admin rebuild before returning to `STUDENT-016I`.
