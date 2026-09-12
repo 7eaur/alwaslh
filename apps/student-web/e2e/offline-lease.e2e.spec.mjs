@@ -117,6 +117,11 @@ function expectSameOrRefreshedLeaseRecord(actual, baseline) {
   expect(actual.lastSeenClientMs).toBeGreaterThanOrEqual(baseline.lastSeenClientMs);
 }
 
+async function expectAuthenticatedHome(page) {
+  await expect(page).toHaveURL(/\/app\/home$/);
+  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+}
+
 async function activateStudent(page, code, password) {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
@@ -136,11 +141,11 @@ async function activateStudent(page, code, password) {
   const leasePromise = page.waitForResponse(
     (response) => response.url().includes("/v1/student/offline/lease") && response.request().method() === "GET",
   );
-  await page.getByRole("button", { name: "إنشاء الحساب وتسجيل هذا الجهاز" }).click();
+  await page.getByRole("button", { name: "إنشاء الحساب والمتابعة" }).click();
   const [completeResponse, leaseResponse] = await Promise.all([completePromise, leasePromise]);
   expect(completeResponse.status()).toBe(201);
   expect(leaseResponse.status()).toBe(200);
-  await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
+  await expectAuthenticatedHome(page);
 
   return {
     activation: await completeResponse.json(),
@@ -149,7 +154,7 @@ async function activateStudent(page, code, password) {
 }
 
 async function switchToLogin(page) {
-  await page.locator(".mode-switch").getByRole("button", { name: "لدي حساب بالفعل" }).click();
+  await page.locator(".student-auth-switch").getByRole("button", { name: "لدي حساب بالفعل" }).click();
   await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
 }
 
@@ -167,7 +172,7 @@ async function loginStudent(page, code, password, expectedPurpose) {
   const leasePromise = page.waitForResponse(
     (response) => response.url().includes("/v1/student/offline/lease") && response.request().method() === "GET",
   );
-  await page.getByRole("button", { name: "تسجيل الدخول" }).click();
+  await page.locator(".student-entry-form").getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
   const [startResponse, completeResponse, leaseResponse] = await Promise.all([
     startPromise,
     completePromise,
@@ -177,7 +182,7 @@ async function loginStudent(page, code, password, expectedPurpose) {
   expect((await startResponse.json()).purpose).toBe(expectedPurpose);
   expect(completeResponse.status()).toBe(200);
   expect(leaseResponse.status()).toBe(200);
-  await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
+  await expectAuthenticatedHome(page);
 
   return {
     login: await completeResponse.json(),
@@ -190,7 +195,7 @@ async function openAccount(page) {
     await page.getByRole("link", { name: "حسابي", exact: true }).click();
   }
   await expect(page).toHaveURL(/\/app\/account$/);
-  await expect(page.getByRole("heading", { name: "الحساب والوصول" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
 }
 
 async function refreshAccess(page) {
@@ -219,7 +224,7 @@ test("offline lease persists and cleanup stays scoped across logout and device r
 
   await page.route("**/v1/student/offline/lease", (route) => route.abort());
   await page.reload();
-  await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
+  await expectAuthenticatedHome(page);
   const persistedRecords = await readOfflineLeases(page);
   const persistedCurrentScope = persistedRecords.filter((record) => record.scopeKey === currentRecord.scopeKey);
   expect(persistedCurrentScope).toHaveLength(1);
@@ -236,7 +241,8 @@ test("offline lease persists and cleanup stays scoped across logout and device r
 
   await openAccount(page);
   await context.setOffline(true);
-  await expect(page.getByText("غير متصل — يمكنك فتح ما سبق تنزيله", { exact: true })).toBeVisible();
+  await page.evaluate(() => window.dispatchEvent(new Event("offline")));
+  await expect(page.getByText("أنت غير متصل الآن", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "تسجيل الخروج" }).click();
   await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
   await expect.poll(async () => (await readOfflineLeases(page)).some((record) => record.scopeKey === currentRecord.scopeKey)).toBe(false);
@@ -245,6 +251,7 @@ test("offline lease persists and cleanup stays scoped across logout and device r
   expect(afterOfflineLogout.some((record) => record.scopeKey === otherAccount.scopeKey)).toBe(true);
 
   await context.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
   await page.evaluate(async () => {
     await fetch("/v1/auth/logout", { method: "POST", credentials: "include" });
   });
@@ -255,7 +262,7 @@ test("offline lease persists and cleanup stays scoped across logout and device r
   const reset = runAuthFixture("device-rebind", lease.profileId);
   expect(reset.status).toBe("device_rebind_allowed");
   await refreshAccess(page);
-  await expect(page.getByText("انتهت جلستك.", { exact: false })).toBeVisible();
+  await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.", { exact: true })).toBeVisible();
   await expect.poll(async () => (await readOfflineLeases(page)).some((record) => record.scopeKey === currentRecord.scopeKey)).toBe(false);
   afterOfflineLogout = await readOfflineLeases(page);
   expect(afterOfflineLogout.some((record) => record.scopeKey === staleSameProfile.scopeKey)).toBe(true);
@@ -286,7 +293,7 @@ test("server-side session expiry removes only the active lease scope", async ({ 
   const recovery = runAuthFixture("temporary-password", activation.profile.id);
   expect(recovery.temporaryPassword).toEqual(expect.any(String));
   await refreshAccess(page);
-  await expect(page.getByText("انتهت جلستك.", { exact: false })).toBeVisible();
+  await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.", { exact: true })).toBeVisible();
 
   await expect.poll(async () => (await readOfflineLeases(page)).some((record) => record.scopeKey === currentRecord.scopeKey)).toBe(false);
   const afterExpiry = await readOfflineLeases(page);
