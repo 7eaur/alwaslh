@@ -1,5 +1,3 @@
-import { useEffect, type ReactNode } from "react";
-
 export type ProductSurface = "student" | "admin";
 export type PageStateKind = "loading" | "empty" | "error" | "offline" | "permission" | "info";
 export type ProductErrorKind = "session" | "permission" | "offline" | "unavailable" | "validation" | "unknown";
@@ -11,88 +9,16 @@ export interface ProductErrorPresentation {
   actionLabel?: string;
 }
 
-interface ProductShellProps {
-  surface: ProductSurface;
-  children: ReactNode;
-  contentId?: string;
-  contentLabel?: string;
-  skipLabel?: string;
-}
-
-export function ProductShell({
-  surface,
-  children,
-  contentId = "route-content",
-  contentLabel = "محتوى الصفحة",
-  skipLabel = "انتقل إلى المحتوى",
-}: ProductShellProps) {
-  return (
-    <div className={`aw-product-shell aw-product-shell--${surface}`} dir="rtl">
-      <a className="aw-skip-link" href={`#${contentId}`}>
-        {skipLabel}
-      </a>
-      <div
-        id={contentId}
-        className="aw-route-content"
-        data-route-focus
-        role="region"
-        aria-label={contentLabel}
-        tabIndex={-1}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-export function RouteFocus({ routeKey, targetId = "route-content" }: { routeKey: string; targetId?: string }) {
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      document.getElementById(targetId)?.focus({ preventScroll: true });
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [routeKey, targetId]);
-
-  return null;
-}
-
-interface PageStateProps {
-  kind: PageStateKind;
-  title: string;
-  description: string;
-  action?: ReactNode;
-  eyebrow?: string;
-}
-
-export function PageState({ kind, title, description, action, eyebrow }: PageStateProps) {
-  const isAssertive = kind === "error" || kind === "permission";
-  const isBusy = kind === "loading";
-
-  return (
-    <section
-      className={`aw-page-state aw-page-state--${kind}`}
-      aria-live={isAssertive ? "assertive" : "polite"}
-      aria-busy={isBusy || undefined}
-    >
-      <span className="aw-page-state__icon" aria-hidden="true">
-        {kind === "loading" ? <span className="aw-spinner" /> : stateSymbol(kind)}
-      </span>
-      <div className="aw-page-state__body">
-        {eyebrow ? <p className="aw-page-state__eyebrow">{eyebrow}</p> : null}
-        <h1>{title}</h1>
-        <p>{description}</p>
-        {action ? <div className="aw-page-state__action">{action}</div> : null}
-      </div>
-    </section>
-  );
-}
-
-function stateSymbol(kind: PageStateKind): string {
+export function pageStateSymbol(kind: PageStateKind): string {
   if (kind === "error") return "!";
   if (kind === "offline") return "↕";
   if (kind === "permission") return "×";
   if (kind === "empty") return "–";
   return "i";
+}
+
+export function isAssertivePageState(kind: PageStateKind): boolean {
+  return kind === "error" || kind === "permission";
 }
 
 function errorCode(error: unknown): string | null {
