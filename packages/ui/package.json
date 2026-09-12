@@ -6,8 +6,5 @@
   "exports": {
     ".": "./src/index.tsx",
     "./styles.css": "./src/styles.css"
-  },
-  "peerDependencies": {
-    "react": "18.3.1"
   }
 }
