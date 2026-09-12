@@ -70,7 +70,11 @@ describe("student learning route model", () => {
     expect(findStudentLesson(catalog, "lesson-a")?.subject.id).toBe("subject-1");
     expect(findStudentLesson(catalog, "lesson-b")?.classRecord.id).toBe("class-1");
     expect(findStudentLesson(catalog, "missing")).toBeNull();
-    expect(lessonCount(catalog.classes[0].subjects[0])).toBe(2);
+
+    const subject = findStudentSubject(catalog, "subject-1")?.subject;
+    expect(subject).toBeDefined();
+    if (!subject) throw new Error("expected subject fixture");
+    expect(lessonCount(subject)).toBe(2);
   });
 
   it("encodes learning route identifiers", () => {
