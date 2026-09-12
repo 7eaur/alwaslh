@@ -43,6 +43,8 @@ Acceptance:
 
 Student production UI must expose learner concepts only. It must not expose crypto/cache/session/stage/roadmap/internal API language.
 
+Motion is now also a launch-quality requirement: interaction should feel alive without becoming decorative or distracting. Transitions must be short, restrained and accessibility-safe.
+
 ## Current implementation on PR #53
 
 Implemented/refactored:
@@ -62,7 +64,10 @@ Implemented/refactored:
 - Account is the visible owner of access/class-code/logout/help/support;
 - `stage14.css` removed;
 - obsolete `assessment-polish.css` removed and live integration rules separated;
-- production-realistic browser fixtures replace Student-visible Stage/Reader fixture wording.
+- production-realistic browser fixtures replace Student-visible Stage/Reader fixture wording;
+- new `student-motion.css` adds subtle surface-entry motion, feedback appearance, press/hover affordances and lightweight depth/borders without adding an animation library;
+- motion uses short opacity/transform transitions and honors `prefers-reduced-motion`;
+- B05 now includes browser verification that reduced-motion effectively collapses animation duration.
 
 ## Error / instruction architecture — active acceptance rule
 
@@ -106,18 +111,26 @@ Unit tests protect the error mapper from leaking raw backend text. Browser tests
 
 ## Current closure state
 
-**NOT YET MERGED.** The implementation phase is now frozen for final verification unless CI identifies a real regression.
+**NOT YET MERGED.** Previous exact-head verification exposed stale/brittle Student browser expectations rather than backend-contract failures:
+
+- B03 looked for the obsolete spelling `التعلم` instead of the production label `التعلّم`;
+- B04 resumed an Assessment by blindly clicking “next” instead of selecting the intended question identity;
+- Stage16 offline lifecycle still targeted the old Auth switch label and expected manual Account refresh after server-side expiry even though current Account load detects expiry immediately;
+- B05/Stage16 integrity test used a brittle asset URL interception; it now corrupts the actual returned asset bytes while preserving byte size and proves checksum rejection.
+
+Those tests have been corrected without weakening the security/business contracts. A new exact-head matrix is required after the motion layer and these regression fixes.
 
 Before merge:
 
 1. run exact-head lint/typecheck/unit/build and the complete triggered workflow matrix;
 2. inspect any failure and distinguish real contract regression from stale browser expectation;
 3. require Stage14/15/16 + B01–B05 + Rebuild browser coverage to pass;
-4. inspect final phone + desktop Visual QA artifacts for changed Student surfaces;
+4. inspect final phone + desktop Visual QA artifacts for changed Student surfaces, including interactive depth after motion settles;
 5. keep production-copy scanner blocking implementation/stage/roadmap terminology;
-6. update final engineering evidence and PR/Issue acceptance;
-7. refresh live main and resync only if it moved materially;
-8. merge PR #53 with exact expected-head guard.
+6. verify reduced-motion acceptance;
+7. update final engineering evidence and PR/Issue acceptance;
+8. refresh live main and resync only if it moved materially;
+9. merge PR #53 with exact expected-head guard.
 
 ## Explicit non-goals
 
@@ -125,8 +138,9 @@ Before merge:
 - no premature Stage18 Notifications UI;
 - no premature Stage19 Progress/Statistics/Achievements UI;
 - no silent implementation of remaining Stage16 cold-start offline Reader authority;
-- no Admin rebuild from this branch.
+- no Admin rebuild from this branch;
+- no heavy animation framework, continuous decorative motion, bounce/glow effects or motion that obscures state/focus.
 
 ## Immediate next action
 
-Hold the current code steady, run the exact-head matrix, fix only evidence-backed regressions, inspect final Visual QA, then merge PR #53. After merge, synchronize with the dedicated Super Admin rebuild before shared final responsive/RTL/a11y/visual closure and return to `STUDENT-016I`.
+Freeze the next documentation-complete head, run the exact-head matrix, fix only evidence-backed regressions, inspect final phone/desktop Visual QA, then merge PR #53. After merge, synchronize with the dedicated Super Admin rebuild before shared final responsive/RTL/a11y/visual closure and return to `STUDENT-016I`.
