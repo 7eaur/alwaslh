@@ -28,7 +28,7 @@ async function capture(page, name) {
     expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
     await page.screenshot({
       path: `test-results/ux-b04-${name}-${viewport.suffix}.png`,
-      fullPage: true,
+      fullPage: false,
     });
   }
 
@@ -81,6 +81,7 @@ test("B04 visual QA covers Library, Quiz detail, Attempt and Result on phone and
   await startPractice(page, fixture);
   await expect(page.locator(".student-bottom-nav")).not.toBeVisible();
   await expect(page.locator(".student-adaptive-nav")).not.toBeVisible();
+  await expect(page.locator(".aw-skip-link")).not.toBeVisible();
   await expect(page.getByText(fixture.mcqPrompt, { exact: true })).toBeVisible();
   await capture(page, "attempt");
 
@@ -96,5 +97,6 @@ test("B04 visual QA covers Library, Quiz detail, Attempt and Result on phone and
   await page.getByRole("button", { name: "إنهاء تدريب" }).click();
   await expect(page.getByRole("heading", { name: "راجع ما أجبت عنه" })).toBeVisible();
   await expect(page.getByText(/(?:١٠٠|100)٪/, { exact: true })).toBeVisible();
+  await expect(page.locator(".aw-skip-link")).not.toBeVisible();
   await capture(page, "result");
 });
