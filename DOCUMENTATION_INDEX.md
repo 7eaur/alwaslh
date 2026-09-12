@@ -28,26 +28,27 @@ Read in this order:
 
 1. `README.md`
 2. `DOCUMENTATION_INDEX.md`
-3. `PROJECT_HANDOFF.md`
-4. `PROJECT_STATUS.md`
-5. `PROJECT_RESUME_SNAPSHOT.md`
-6. `PROJECT_ENGINEERING_LOG.md`
-7. `PROJECT_INTEGRATION_CONTINUITY.md`
-8. `PROJECT_EXECUTION_QUEUE.md`
-9. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-10. **`docs/workstreams/STAGE16_STUDENT_HANDOFF.md`**
-11. `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`
-12. `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`
-13. `docs/operations/RAILWAY_LIVE_STATE.md`
-14. `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
-15. `MASTER_REBUILD_ROADMAP.md`
-16. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
-17. `PRODUCT_FEATURE_PARITY_MATRIX.md`
-18. latest GitHub Issue #16 body/comments
-19. live `main` HEAD + Actions + Railway service state
-20. actual current Stage16 API/Student code/tests/workflow before coding.
+3. **`docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`** — full product/repository recovery + staged gap-audit protocol
+4. `PROJECT_HANDOFF.md`
+5. `PROJECT_STATUS.md`
+6. `PROJECT_RESUME_SNAPSHOT.md`
+7. `PROJECT_ENGINEERING_LOG.md`
+8. `PROJECT_INTEGRATION_CONTINUITY.md`
+9. `PROJECT_EXECUTION_QUEUE.md`
+10. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+11. **`docs/workstreams/STAGE16_STUDENT_HANDOFF.md`**
+12. `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`
+13. `docs/workstreams/STAGE14_PLUS_STUDENT_TRACK.md`
+14. `docs/operations/RAILWAY_LIVE_STATE.md`
+15. `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
+16. `MASTER_REBUILD_ROADMAP.md`
+17. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
+18. `PRODUCT_FEATURE_PARITY_MATRIX.md`
+19. latest GitHub Issue #16 body/comments
+20. live `main` HEAD + Actions + Railway service state
+21. actual current Stage16 API/Student code/tests/workflow before coding.
 
-`NEXT_CONVERSATION_PROMPT.md` is a launcher only. Live evidence wins if anything differs.
+`NEXT_CONVERSATION_PROMPT.md` is the copy/paste launcher. It must send the new conversation through `UNIFIED_PROJECT_RESUME_PROTOCOL.md` before implementation. Live evidence wins if anything differs.
 
 ## 3. Current operating model
 
@@ -68,6 +69,7 @@ Detailed authority: `docs/product/CURRENT_PRODUCT_OVERRIDES.md` PO-OVR-009.
 
 | File | Purpose |
 |---|---|
+| `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md` | mandatory full product/repository understanding, historical-stage verification, gap-audit and execution protocol for replacement conversations |
 | `PROJECT_HANDOFF.md` | detailed replacement-engineer startup, current architecture, hosting/content status and exact continuation |
 | `PROJECT_STATUS.md` | concise current state and open gates |
 | `PROJECT_RESUME_SNAPSHOT.md` | compact exact restart snapshot |
@@ -81,22 +83,25 @@ Detailed authority: `docs/product/CURRENT_PRODUCT_OVERRIDES.md` PO-OVR-009.
 | `docs/content/LIVE_CONTENT_IMPORT_STATUS.md` | canonical content source, Grade9 English proof, publication/bulk-import rules |
 | `MASTER_REBUILD_ROADMAP.md` | Stage1–29 product sequence |
 | `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md` | legacy capability acceptance |
-| `NEXT_CONVERSATION_PROMPT.md` | copy/paste launcher |
+| `NEXT_CONVERSATION_PROMPT.md` | copy/paste master resume launcher |
 
 ## 5. Current integrated baseline
 
-Before this documentation synchronization, live `main` was:
+Master handoff checkpoint after PR #36:
 
-`8006a7c4b2fa66bcac9cfb3addcd52fa831c42df`
+`6ee5ad9d0bde8faa690b9eb7a923a1c8a12687b4`
 
-This includes:
+PR #36 documentation/handoff verification passed **15/15 workflows SUCCESS** before merge.
+
+This baseline includes:
 
 - PR #33 integrated Stage13G + Student Stage14/15/current Stage16;
 - Railway Docker/runtime fixes for API/Admin/Student;
 - PR #34 Grade 9 English scoped canonical content bootstrap;
-- PR #35 live-content documentation proof.
+- PR #35 live-content documentation proof;
+- synchronized unified project handoff in PR #36.
 
-Always re-read live `main` after this documentation PR merges; do not assume the SHA above remains HEAD.
+Always re-read live `main`; do not assume this SHA remains HEAD forever.
 
 ## 6. Verified stage state
 
@@ -182,9 +187,17 @@ Exact sequence after current work:
 
 ## 10. Exact first engineering action
 
-Do **not** redesign or bulk-import content first.
+Do **not** redesign or bulk-import content first, and do not trust historical CLOSED labels blindly.
 
-Start by live-checking `main`/Issue #16/Actions, then finish the Stage16 cold-offline authority boundary:
+First run the recovery/audit protocol in `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`:
+
+- reconstruct product/users/flows/architecture/DB/API/frontend/deployment/content map from actual source;
+- live-check current evidence;
+- verify adjacent closed-stage contracts and executable coverage;
+- open/fix any proven correctness/security/integrity gap in the owning layer;
+- then finish the first incomplete `PROJECT_EXECUTION_QUEUE.md` item for Stage16.
+
+Current expected Stage16 continuation:
 
 - durable non-secret offline scope discovery;
 - verify stored signed authorization at use time;
