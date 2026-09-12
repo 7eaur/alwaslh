@@ -115,7 +115,7 @@ test("protected lesson download preserves integrity contracts behind learner-fac
     await route.fulfill({ response, body });
   });
   await saveLesson(page, fixture.lessonTitle);
-  expect(corruptedAssetRequestObserved).toBe(true);
+  await expect.poll(() => corruptedAssetRequestObserved).toBe(true);
   await expect(page.getByText("تعذر حفظ الدرس بأمان. لم يتم الاحتفاظ بتنزيل غير مكتمل.", { exact: true })).toBeVisible();
   expect(await offlinePackageFacts(page)).toHaveLength(0);
   await page.unroute(offlineAssetPattern);
