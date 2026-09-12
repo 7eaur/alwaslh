@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  ApiRequestError,
   createAccessRedemptionIdempotencyKey,
   isMissingSessionError,
   isSevenDigitClassCode,
@@ -12,6 +11,7 @@ import {
   type EntitlementView,
   type SessionProfile,
 } from "./auth-api";
+import { studentErrorMessage } from "./student-error-copy";
 
 type AccountAccessState =
   | { status: "loading" }
@@ -20,8 +20,7 @@ type AccountAccessState =
   | { status: "error"; message: string };
 
 function requestMessage(error: unknown): string {
-  if (error instanceof ApiRequestError) return error.message;
-  return "تعذر إكمال العملية الآن. حاول مرة أخرى.";
+  return studentErrorMessage(error, "access");
 }
 
 function expiryLabel(expiresAt: string | null): string {
