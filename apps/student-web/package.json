@@ -19,9 +19,11 @@
   "dependencies": {
     "@alwaslh/brand": "file:../../packages/brand",
     "@alwaslh/domain": "file:../../packages/domain",
+    "@alwaslh/ui": "file:../../packages/ui",
     "@alwaslh/validation": "file:../../packages/validation",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "react-router-dom": "7.9.5"
   },
   "devDependencies": {
     "@playwright/test": "1.55.0",
