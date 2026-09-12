@@ -22,48 +22,78 @@ UX-B01 is closed and integrated.
 
 - PR #43 final head: `781e70eb31a48b76e50a1bad490f7aa947d2d7ce`
 - exact-head workflows: **20/20 SUCCESS**
-- key acceptance runs:
-  - `UX B01 Shared Frontend Foundation` `34709990523` — SUCCESS
-  - `Stage14 Student Product` `34709990570` — SUCCESS
-  - `Stage 13E Frontend Preparation Verification` `34709990527` — SUCCESS
-  - `Stage 13 Admin Product Verification` `34709990477` — SUCCESS
-  - `Stage16 Student PWA` `34709990577` — SUCCESS
-  - `Rebuild Stage Verification` `34709990489` — SUCCESS
-- PR #43 merge commit: `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`
-- verified live `main`: `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`
+- PR #43 merge commit / verified live `main`: `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`
 
 UX-B00 and UX-B01 must not be redone.
 
 ## UX-B02 current state
 
+PR: **#44** — `feat(student): establish installed-app shell and navigation`
+
 Branch: `ux/student-shell-navigation`
 
 Base: `main@9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`
 
-Status: **IMPLEMENTED IN PROGRESS / VERIFICATION PENDING**.
+Verified implementation head before this documentation synchronization:
 
-Implemented so far:
+`3cc44b1bb9b44de3cb99a18c6cf5b2d29439c8f3`
+
+Result on that exact code head: **20/20 workflows SUCCESS**.
+
+Key runs:
+
+- `UX B02 Student Shell and Navigation` — `34711657358` — SUCCESS;
+- `Stage14 Student Product` — `34711657422` — SUCCESS;
+- `Stage15 Student Assessment` — `34711657321` — SUCCESS;
+- `Stage16 Student PWA` — `34711657335` — SUCCESS;
+- `UX B01 Shared Frontend Foundation` — `34711657347` — SUCCESS;
+- `Rebuild Stage Verification` — `34711657393` — SUCCESS.
+
+The documentation synchronization commit creates the final PR head and therefore requires one final exact-head workflow pass before PR #44 can be marked acceptance-ready.
+
+## UX-B02 delivered scope
 
 - canonical authenticated Student entry at `/app/home`;
-- stable destinations:
+- stable top-level destinations:
   - `/app/home`
   - `/app/learn`
   - `/app/practice`
-  - `/app/downloads`
-  - `/app/account`;
+  - `/app/downloads`;
+- separate `/app/account` entry;
 - mobile bottom navigation with safe-area handling;
-- tablet horizontal navigation and desktop rail composition;
-- global authenticated connection/offline status;
-- Account entry separated from the four learning destinations;
-- Home overview with clear entry cards instead of the old single long learning surface;
-- existing Curriculum, Assessment and Downloads components mounted only in their owning destination;
-- access/class-code management retained temporarily for lifecycle compatibility and Account migration work in B05;
-- route focus/history/RTL foundation preserved from B01;
-- Reader remains inside the current Curriculum component and Assessment remains inside the current Assessment component — their redesign/migration is deliberately deferred to B03/B04;
-- Stage14/15/16 browser contracts are being migrated to reach existing behavior through the new shell routes, not weakened;
-- dedicated `UX B02 Student Shell and Navigation` CI gate added for Student lint/typecheck/unit/build plus real Chromium phone/tablet/desktop shell verification.
+- tablet horizontal adaptive navigation;
+- desktop sticky navigation rail;
+- authenticated global connection/offline indicator;
+- Home overview with clear learning entry points instead of the old giant default surface;
+- Curriculum mounted only under Learn;
+- Assessment mounted only under Practice;
+- current verified Offline Downloads mounted only under Downloads;
+- access/class-code management retained temporarily for migration compatibility and final Account cleanup in B05;
+- RTL, route focus, browser history/back and no-overflow contracts;
+- production-facing Arabic shell copy;
+- dedicated phone/tablet/desktop Chromium verification.
 
-## UX-B02 explicit non-goals
+The old `StudentAccessSection` no longer acts as one giant visible surface containing Curriculum + Assessment + Downloads together. Its current file remains a migration orchestrator only until B03–B05 move descendant concerns into their final boundaries.
+
+## UX-B02 regression found and fixed
+
+During exact-head verification, Stage16 initially exposed a B02 navigation timing regression: opening Account after the server invalidated a session caused an unnecessary automatic entitlements reload to consume the 401 before the explicit access refresh action.
+
+Root-cause fix:
+
+- reuse already-loaded access state when moving from Home to Account/Learn;
+- avoid redundant entitlements request;
+- preserve direct-entry loading behavior;
+- do not alter Stage16 signed offline authorization, IndexedDB lifecycle, materialization or Service Worker authority.
+
+Verification after the fix:
+
+- `Stage16 Student PWA` run `34711657335` — **SUCCESS**;
+- PostgreSQL lease/download contracts — SUCCESS;
+- PWA app-shell Chromium — SUCCESS;
+- lifecycle/materialization Chromium — SUCCESS.
+
+## UX-B02 explicit non-goals preserved
 
 Not part of this batch:
 
@@ -106,24 +136,29 @@ Exact normal-roadmap continuation after UX-B17 remains:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
 
-## UX-B02 verification required before acceptance
+## UX-B02 verification evidence
 
-- Student lint;
-- strict typecheck;
-- unit tests;
-- production build;
-- real Chromium at 390px;
-- representative tablet verification;
-- desktop adaptive navigation verification;
-- RTL;
-- route focus and browser back/history;
-- activation/login/recovery regression;
-- Reader behavior parity through Learn navigation, without Reader migration;
-- Stage15 assessment behavior parity through Practice navigation, without Assessment redesign;
-- Stage16 current offline/PWA/download/lease regression gates;
-- exact-head GitHub Actions.
+Verified on code head `3cc44b1bb9b44de3cb99a18c6cf5b2d29439c8f3`:
 
-Current result: **NOT YET VERIFIED — implementation branch exists; PR/exact-head CI pending.**
+- Student lint — PASS;
+- strict typecheck — PASS;
+- unit tests — PASS;
+- production build — PASS;
+- API build/migrations in dedicated B02 gate — PASS;
+- real Chromium at 390px — PASS;
+- representative tablet navigation — PASS;
+- desktop rail navigation — PASS;
+- RTL — PASS;
+- route focus + browser back/history — PASS;
+- no horizontal overflow — PASS;
+- global online/offline state — PASS;
+- Stage14 activation/login/recovery/access/curriculum + Reader parity — PASS;
+- Stage15 assessment parity through Practice — PASS;
+- Stage16 PWA/download/lease/lifecycle regression — PASS;
+- Rebuild activation browser regression — PASS;
+- complete workflow matrix — **20/20 SUCCESS**.
+
+Manual screenshot/art-direction closure remains `NOT YET VERIFIED` here and belongs to the later visual/device closure batches B16/B17; executable responsive browser evidence is complete for B02 acceptance.
 
 ## Known open items outside B02
 
@@ -138,4 +173,4 @@ Current result: **NOT YET VERIFIED — implementation branch exists; PR/exact-he
 
 ## Next action
 
-Finish UX-B02 browser-compatible implementation, run exact-head CI and device/browser verification, fix real regressions at root cause, open the independent B02 PR, record exact head/run evidence in PR + Issue #16, and do **not** begin UX-B03 until B02 is accepted and integrated.
+Run one final exact-head CI pass after this documentation synchronization. If green, record the final SHA/run IDs in PR #44 and Issue #16 and leave UX-B02 ready for review/merge. Do **not** start UX-B03 in this batch.
