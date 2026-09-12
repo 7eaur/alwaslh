@@ -9,6 +9,29 @@ This document defines the future-complete Student product structure so current U
 
 The current UI is evidence for behavior and contracts, not a visual preservation target. The architecture must accommodate verified legacy/product capabilities without exposing unfinished destinations prematurely.
 
+### Binding design priority
+
+Every Student screen must be judged in this order:
+
+**Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish.**
+
+The interface must feel calm, obvious and comfortable for sustained study. A visually attractive screen that is harder to understand or use is a design failure.
+
+Acceptance rules:
+
+- the learner should understand the screen purpose and next action within seconds;
+- hierarchy must be clear without relying on excessive bold text, borders, cards or decoration;
+- spacing, line length, contrast and typography must support long reading sessions without visual fatigue;
+- navigation and actions must feel predictable between screens;
+- primary actions are obvious, secondary actions are quieter, destructive actions are clearly separated;
+- mobile touch targets and one-handed use are first-class requirements;
+- RTL composition must feel native rather than mirrored mechanically;
+- visual density must match the task: calm for learning/reading, focused for assessment, compact but clear for personal libraries;
+- avoid card walls, duplicated headings, persistent status chrome, decorative metrics, excessive shadows, gradients, glow and animation;
+- remove anything that does not help orientation, learning, decision-making or a real action;
+- loading, empty, error, offline, denied, success and recovery states must preserve the same calm visual system;
+- no screen is accepted only because it is functional; final acceptance is **Functional + Clear + Easy + Comfortable + Consistent + Fast + Maintainable + Professional**.
+
 Source-of-truth precedence remains:
 
 1. current Product Owner direction;
