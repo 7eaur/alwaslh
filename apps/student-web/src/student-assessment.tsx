@@ -439,7 +439,7 @@ function AttemptResult({ assessment }: { assessment: StudentAssessmentSession })
     <section className="attempt-result" aria-labelledby="attempt-result-title" role="status" aria-live="polite">
       <p className="eyebrow">اكتملت المحاولة</p>
       <div className="attempt-result__score">{scoreLabel(assessment.attempt.scorePercent)}</div>
-      <h1 id="attempt-result-title">{assessment.quiz.title}</h1>
+      <h1 id="attempt-result-title" tabIndex={-1}>{assessment.quiz.title}</h1>
       <p>
         {assessment.attempt.correctCount} صحيحة من {assessment.attempt.questionCount} سؤال.
         يمكنك مراجعة الأسئلة والتصحيح قبل العودة إلى قائمة التدريب.
@@ -493,6 +493,15 @@ function AssessmentWorkspace({
   useEffect(() => {
     if (assessment.session.currentQuestionId && !questionId) setQuestionId(assessment.session.currentQuestionId);
   }, [assessment.session.currentQuestionId, questionId]);
+
+  useEffect(() => {
+    if (!completed) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById("attempt-result-title")?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [completed]);
 
   async function run(action: () => Promise<StudentAssessmentSession>) {
     if (busy || !online) return;
