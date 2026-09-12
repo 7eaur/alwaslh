@@ -1,6 +1,6 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> هذه الوثيقة يجب أن تمكّن أي محادثة هندسية جديدة من استئناف المشروع من GitHub بدون ذاكرة Chat سابقة.
+> هذه الوثيقة يجب أن تمكّن أي محادثة هندسية جديدة من استئناف المشروع من GitHub بدون ذاكرة Chat سابقة، مع فهم المشروع كاملًا ومراجعة ما سبق قبل الاستمرار.
 
 Last synchronized: **2026-09-12 — unified `main`, Stage16 active, Railway inspection/dev live, Grade 9 English proof imported as Draft.**
 
@@ -11,7 +11,8 @@ Last synchronized: **2026-09-12 — unified `main`, Stage16 active, Railway insp
 1. Confirm repository `7eaur/alwaslh`.
 2. Confirm live `main` HEAD; do **not** assume an old Track branch is newer.
 3. Read `README.md` then `DOCUMENTATION_INDEX.md`.
-4. Read this file, then:
+4. Read **`docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`** بالكامل. هذا البروتوكول إلزامي لفهم المنتج/المستودع/المراحل السابقة وإجراء gap audit منظم قبل الاستمرار.
+5. Read this file, then:
    - `PROJECT_STATUS.md`
    - `PROJECT_RESUME_SNAPSHOT.md`
    - `PROJECT_ENGINEERING_LOG.md`
@@ -23,11 +24,16 @@ Last synchronized: **2026-09-12 — unified `main`, Stage16 active, Railway insp
    - `docs/operations/RAILWAY_LIVE_STATE.md`
    - `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
    - `MASTER_REBUILD_ROADMAP.md`
-5. Read latest GitHub Issue #16 body/comments.
-6. Live-check GitHub Actions and Railway status before claiming current health.
-7. Inspect actual current-stage source/tests/workflows before editing.
+   - `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
+   - `PRODUCT_FEATURE_PARITY_MATRIX.md`
+6. Read latest GitHub Issue #16 body/comments.
+7. Live-check GitHub Actions and Railway status before claiming current health.
+8. Reconstruct the actual project map from source: product → users → flows → architecture → DB → API → frontends → deployment/content → stage ledger.
+9. Inspect actual current-stage source/tests/workflows plus adjacent closed-stage contracts before editing.
 
 Code/migrations/executable CI/live runtime evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
+
+Do not stop after producing an audit report. Proven P0/P1 correctness/security/integrity gaps must be fixed in the owning layer, tested and documented before/while continuing the queue.
 
 ## 2. Current operating model
 
@@ -46,9 +52,10 @@ Integration evidence:
 - PR #33 head: `dcdae7579a40878c71f64593280a0df2f8363ee2`
 - PR #33 wider matrix: **19/19 workflows SUCCESS**
 - PR #33 merge commit: `5e22c3ff157b42b6da47febe205dd91fcb264eed`
-- before this docs sync, live `main`: `8006a7c4b2fa66bcac9cfb3addcd52fa831c42df`
+- master handoff PR #36 passed **15/15 workflows SUCCESS** before merge
+- documented post-PR#36 `main`: `6ee5ad9d0bde8faa690b9eb7a923a1c8a12687b4`
 
-Always live-check `main` after this documentation PR merges.
+Always live-check `main` because it may move after this document.
 
 ## 3. Product architecture / durable authorities
 
@@ -94,6 +101,8 @@ Stable authority rules:
 | **Stage16 Offline / PWA** | **ACTIVE / PARTIALLY VERIFIED** |
 | Stage17–25 | pending in sequence |
 | Stage26–29 release/ops | pending; hosted inspection stack exists but final cutover not declared |
+
+The CLOSED labels above are historical state summaries, not permission to skip inspection forever. `UNIFIED_PROJECT_RESUME_PROTOCOL.md` defines how to revalidate them efficiently from current-main code/contracts/CI and how to reopen findings if a real regression or coverage gap is proven.
 
 ## 5. Stage16 — current verified implementation
 
@@ -310,17 +319,20 @@ Before large import:
 
 For the next engineering conversation:
 
-1. live-check `main`, Issue #16, Actions and Railway;
-2. create a short-lived branch from `main`;
-3. inspect current offline signing/session/content-store/App/E2E code;
-4. implement durable non-secret scope;
-5. implement read-time signature + signed-field + blob-integrity verification;
-6. implement cold-start offline library/Reader;
-7. add real Chromium restart/network-off/tamper/expiry/rollback/account isolation evidence;
-8. implement reconnect revalidation/purge;
-9. wire revision/tombstone/cursor/delta/outbox only from real backend authority;
-10. run exact-head Stage16 + wider regressions;
-11. synchronize docs + Issue #16 and close Stage16 only with evidence;
-12. begin Stage17 only after closure.
+1. execute the full recovery sequence from `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`;
+2. live-check `main`, Issue #16, Actions and Railway;
+3. reconstruct the current product/repository map from actual code rather than trusting prose only;
+4. perform targeted gap audit on current and adjacent closed stages; fix any proven P0/P1 issue in its owning layer;
+5. create a short-lived branch from `main`;
+6. inspect current offline signing/session/content-store/App/E2E code;
+7. implement durable non-secret scope;
+8. implement read-time signature + signed-field + blob-integrity verification;
+9. implement cold-start offline library/Reader;
+10. add real Chromium restart/network-off/tamper/expiry/rollback/account isolation evidence;
+11. implement reconnect revalidation/purge;
+12. wire revision/tombstone/cursor/delta/outbox only from real backend authority;
+13. run exact-head Stage16 + wider regressions;
+14. synchronize docs + Issue #16 and close Stage16 only with evidence;
+15. continue into Stage17 and later roadmap without losing the full-project audit discipline.
 
 Do not restart from an old Track branch and do not re-open Supabase import without a new Product Owner instruction.
