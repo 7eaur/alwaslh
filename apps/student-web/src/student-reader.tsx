@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ApiRequestError,
@@ -32,53 +32,27 @@ function ReaderMedia({ asset }: { asset: StudentReaderAsset }) {
   const pageLabel = asset.sourcePageNumber ? `صفحة ${asset.sourcePageNumber}` : `محتوى ${asset.position + 1}`;
 
   if (!isImage) {
-    return (
-      <div className="reader-media-unsupported" role="status">
-        <strong>{pageLabel}</strong>
-        <p>لا يمكن عرض هذا المحتوى داخل القارئ حاليًا.</p>
-      </div>
-    );
+    return <div className="reader-media-unsupported" role="status"><strong>{pageLabel}</strong><p>لا يمكن عرض هذا المحتوى داخل القارئ حاليًا.</p></div>;
   }
 
   if (failed) {
     return (
       <div className="reader-media-error" role="alert">
-        <strong>تعذر عرض {pageLabel}</strong>
-        <p>تحقق من اتصالك ثم أعد المحاولة.</p>
-        <button
-          className="secondary-button"
-          type="button"
-          onClick={() => {
-            setFailed(false);
-            setRetryVersion((current) => current + 1);
-          }}
-        >
-          إعادة تحميل الصفحة
-        </button>
+        <strong>تعذر عرض {pageLabel}</strong><p>تحقق من اتصالك ثم أعد المحاولة.</p>
+        <button className="secondary-button" type="button" onClick={() => { setFailed(false); setRetryVersion((current) => current + 1); }}>إعادة تحميل الصفحة</button>
       </div>
     );
   }
 
   return (
     <figure className="reader-media">
-      <img
-        src={`${studentAssetContentUrl(asset.id)}?retry=${retryVersion}`}
-        alt={pageLabel}
-        width={asset.width ?? undefined}
-        height={asset.height ?? undefined}
-        loading="lazy"
-        onError={() => setFailed(true)}
-      />
+      <img src={`${studentAssetContentUrl(asset.id)}?retry=${retryVersion}`} alt={pageLabel} width={asset.width ?? undefined} height={asset.height ?? undefined} loading="lazy" onError={() => setFailed(true)} />
       <figcaption>{pageLabel}</figcaption>
     </figure>
   );
 }
 
-export function StudentLessonReaderPage({
-  context,
-  online,
-  onSessionExpired,
-}: {
+export function StudentLessonReaderPage({ context, online, onSessionExpired }: {
   context: StudentLessonContext;
   online: boolean;
   onSessionExpired: () => void;
@@ -87,62 +61,31 @@ export function StudentLessonReaderPage({
   const [state, setState] = useState<ReaderState>({ status: "loading" });
   const [query, setQuery] = useState("");
   const [speaking, setSpeaking] = useState(false);
+  const firstSearchResultRef = useRef<HTMLElement | null>(null);
 
   async function loadReader() {
-    if (!online) {
-      setState({ status: "offline" });
-      return;
-    }
-
+    if (!online) { setState({ status: "offline" }); return; }
     setState({ status: "loading" });
     try {
       setState({ status: "ready", reader: await getStudentLessonReader(lesson.id) });
     } catch (error) {
-      if (isMissingSessionError(error)) {
-        onSessionExpired();
-        return;
-      }
+      if (isMissingSessionError(error)) { onSessionExpired(); return; }
       setState({ status: "error", message: requestMessage(error) });
     }
   }
 
-  useEffect(() => {
-    setQuery("");
-    void loadReader();
-  }, [lesson.id, online]);
-
-  useEffect(
-    () => () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
-    },
-    [],
-  );
+  useEffect(() => { setQuery(""); void loadReader(); }, [lesson.id, online]);
+  useEffect(() => () => { if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel(); }, []);
 
   const reader = state.status === "ready" ? state.reader : null;
   const normalizedQuery = normalizeSearch(query);
-  const readableText = reader
-    ? [reader.lesson.summary, ...reader.assets.map((asset) => asset.text)].filter(
-        (value): value is string => Boolean(value?.trim()),
-      )
-    : [];
-  const speechSupported =
-    typeof window !== "undefined" &&
-    "speechSynthesis" in window &&
-    typeof window.SpeechSynthesisUtterance === "function";
-  const visibleAssets = reader
-    ? normalizedQuery
-      ? reader.assets.filter((asset) => normalizeSearch(asset.text ?? "").includes(normalizedQuery))
-      : reader.assets
-    : [];
+  const readableText = reader ? [reader.lesson.summary, ...reader.assets.map((asset) => asset.text)].filter((value): value is string => Boolean(value?.trim())) : [];
+  const speechSupported = typeof window !== "undefined" && "speechSynthesis" in window && typeof window.SpeechSynthesisUtterance === "function";
+  const visibleAssets = reader ? normalizedQuery ? reader.assets.filter((asset) => normalizeSearch(asset.text ?? "").includes(normalizedQuery)) : reader.assets : [];
 
   function toggleSpeech() {
     if (!speechSupported || readableText.length === 0) return;
-    if (speaking) {
-      window.speechSynthesis.cancel();
-      setSpeaking(false);
-      return;
-    }
-
+    if (speaking) { window.speechSynthesis.cancel(); setSpeaking(false); return; }
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(readableText.join("\n\n"));
     utterance.lang = "ar";
@@ -152,94 +95,54 @@ export function StudentLessonReaderPage({
     window.speechSynthesis.speak(utterance);
   }
 
+  function focusFirstSearchResult() {
+    if (!normalizedQuery || visibleAssets.length === 0) return;
+    firstSearchResultRef.current?.focus();
+  }
+
   return (
     <article className="reader-shell" aria-labelledby="reader-title">
       <header className="reader-shell__header">
         <div className="reader-shell__context">
-          <Link className="reader-back-link" to={studentSubjectHref(subject.id)}>
-            <span aria-hidden="true">→</span>
-            العودة إلى {subject.name}
-          </Link>
+          <Link className="reader-back-link" to={studentSubjectHref(subject.id)}><span aria-hidden="true">→</span>العودة إلى {subject.name}</Link>
           <p>{classRecord.name} · {subject.name}</p>
           <h1 id="reader-title">{lesson.title}</h1>
           {lesson.summary ? <p className="reader-shell__summary">{lesson.summary}</p> : null}
         </div>
-
-        {state.status === "ready" ? (
-          <button
-            className="secondary-button reader-speech-button"
-            type="button"
-            onClick={toggleSpeech}
-            disabled={!speechSupported || readableText.length === 0}
-            aria-pressed={speaking}
-          >
-            {speaking ? "إيقاف الاستماع" : speechSupported ? "استماع للدرس" : "الاستماع غير متاح"}
-          </button>
-        ) : null}
+        {state.status === "ready" ? <button className="secondary-button reader-speech-button" type="button" onClick={toggleSpeech} disabled={!speechSupported || readableText.length === 0} aria-pressed={speaking}>{speaking ? "إيقاف الاستماع" : speechSupported ? "استماع للدرس" : "الاستماع غير متاح"}</button> : null}
       </header>
 
       {state.status === "loading" ? (
-        <div className="reader-skeleton" role="status" aria-live="polite" aria-busy="true">
-          <span className="sr-only">جاري فتح الدرس</span>
-          <span />
-          <span />
-        </div>
+        <div className="reader-skeleton" role="status" aria-live="polite" aria-busy="true"><span className="sr-only">جاري فتح الدرس</span><span /><span /></div>
       ) : state.status === "offline" ? (
-        <div className="reader-state reader-state--offline" role="status">
-          <strong>أنت غير متصل</strong>
-          <p>يحتاج هذا الدرس اتصالًا الآن. يمكنك فتح قسم التنزيلات للمحتوى المحفوظ على هذا الجهاز.</p>
-          <Link className="secondary-button reader-state__action" to="/app/downloads">
-            فتح التنزيلات
-          </Link>
-        </div>
+        <div className="reader-state reader-state--offline" role="status"><strong>أنت غير متصل</strong><p>يحتاج هذا الدرس اتصالًا الآن. يمكنك فتح التنزيلات لإدارة المحتوى المحفوظ على هذا الجهاز.</p><Link className="secondary-button reader-state__action" to="/app/downloads">فتح التنزيلات</Link></div>
       ) : state.status === "error" ? (
-        <div className="reader-state reader-state--error" role="alert">
-          <strong>تعذر فتح الدرس</strong>
-          <p>{state.message}</p>
-          <button className="secondary-button" type="button" onClick={() => void loadReader()} disabled={!online}>
-            إعادة المحاولة
-          </button>
-        </div>
+        <div className="reader-state reader-state--error" role="alert"><strong>تعذر فتح الدرس</strong><p>{state.message}</p><button className="secondary-button" type="button" onClick={() => void loadReader()} disabled={!online}>إعادة المحاولة</button></div>
       ) : (
         <div className="reader-shell__body">
           {state.reader.assets.length > 0 && readableText.length > 0 ? (
             <div className="reader-search">
               <label htmlFor={`reader-search-${lesson.id}`}>بحث داخل الدرس</label>
-              <input
-                id={`reader-search-${lesson.id}`}
-                className="text-input"
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="اكتب كلمة أو عبارة"
-              />
+              <input id={`reader-search-${lesson.id}`} className="text-input" type="search" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); focusFirstSearchResult(); } }} placeholder="اكتب كلمة أو عبارة" aria-describedby={normalizedQuery ? `reader-search-status-${lesson.id}` : undefined} />
+              {normalizedQuery ? (
+                <div className="reader-search__status" id={`reader-search-status-${lesson.id}`} aria-live="polite">
+                  <span>{visibleAssets.length === 0 ? "لا توجد نتائج" : `${visibleAssets.length} نتيجة`}</span>
+                  {visibleAssets.length > 0 ? <button className="text-button" type="button" onClick={focusFirstSearchResult}>الانتقال إلى أول نتيجة</button> : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
 
           {state.reader.assets.length === 0 ? (
-            <div className="empty-state">
-              <strong>لا يوجد محتوى للدرس بعد</strong>
-              <p>ارجع إلى المادة واختر درسًا آخر.</p>
-            </div>
+            <div className="empty-state"><strong>لا يوجد محتوى للدرس بعد</strong><p>ارجع إلى المادة واختر درسًا آخر.</p></div>
           ) : normalizedQuery && visibleAssets.length === 0 ? (
-            <div className="empty-state" role="status">
-              <strong>لا توجد نتيجة داخل الدرس</strong>
-              <p>جرّب كلمة أخرى أو امسح البحث لعرض جميع الصفحات.</p>
-            </div>
+            <div className="empty-state" role="status"><strong>لا توجد نتيجة داخل الدرس</strong><p>جرّب كلمة أخرى أو امسح البحث لعرض جميع الصفحات.</p></div>
           ) : (
             <div className="reader-pages" aria-label={`محتوى ${lesson.title}`}>
-              {visibleAssets.map((asset) => (
-                <article className="reader-page" key={asset.id} data-reader-asset-id={asset.id}>
+              {visibleAssets.map((asset, index) => (
+                <article className="reader-page" key={asset.id} data-reader-asset-id={asset.id} tabIndex={normalizedQuery && index === 0 ? -1 : undefined} ref={normalizedQuery && index === 0 ? firstSearchResultRef : undefined}>
                   <ReaderMedia asset={asset} />
-                  {asset.text ? (
-                    <div className="reader-text">
-                      <p>{asset.text}</p>
-                    </div>
-                  ) : (
-                    <div className="reader-text is-muted" role="status">
-                      لا يوجد نص لهذه الصفحة.
-                    </div>
-                  )}
+                  {asset.text ? <div className="reader-text"><p>{asset.text}</p></div> : <div className="reader-text is-muted" role="status">لا يوجد نص لهذه الصفحة.</div>}
                 </article>
               ))}
             </div>
