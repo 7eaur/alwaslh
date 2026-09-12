@@ -146,3 +146,10 @@ Current result: **NOT YET VERIFIED — implementation branch exists; PR/exact-he
 ## Next action
 
 Open the independent UX-B03 PR, run exact-head CI and Chromium verification, fix any real regression at root cause, and do not start UX-B04 until B03 is accepted and integrated.
+
+
+## Parallel audit checkpoint — 2026-09-12 (AUDIT-01)
+
+Audit-only baseline `3eb6b18ac5f403cb10463864c3c4b9e86f68b249`; UX #47 and Legacy Content ownership preserved. See [full product/architecture audit](docs/audits/FULL_PRODUCT_ARCHITECTURE_AUDIT_2026-09-12.md) and [complete surface/route/test inventory](docs/audits/FULL_PRODUCT_ARCHITECTURE_INVENTORY_2026-09-12.md). Scoped decision C: partial rebuild of Admin task composition/source review, retain backend/domain with targeted refactors (B). This does **not** stop UX Refoundation or mark the product complete.
+
+Fresh baseline checks: API 62 unit tests, Student 37, Admin 63 passed; all three builds passed; API lint passed with one unused importer-variable warning. FPA-001 shared-subject/class navigation was reproduced in the actual module; FPA-002 abandoned-session access omission was reproduced in the actual service with a query double, not PostgreSQL. Real production journeys and the exact new PostgreSQL scenario remain `NOT YET VERIFIED` in this initial batch. Audit findings are separate from normal roadmap completion. Issue #16 kickoff: `5648443655`; FPA-001 notice: `5648464422`. Publication SHA and Actions runs are recorded in the audit execution addendum/Issue #16 after publication.
