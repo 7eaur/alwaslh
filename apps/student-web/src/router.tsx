@@ -19,7 +19,7 @@ function StudentNotFoundRoute() {
         title="هذه الصفحة غير متاحة"
         description="ارجع إلى مساحة الطالب للمتابعة من الوجهة الصحيحة."
         action={
-          <Link className="aw-route-action" to="/app">
+          <Link className="aw-route-action" to="/app/home">
             العودة إلى مساحة الطالب
           </Link>
         }
@@ -35,7 +35,8 @@ export function StudentRouter() {
     <>
       <RouteFocus routeKey={location.pathname} />
       <Routes>
-        <Route path="/" element={<Navigate replace to="/app" />} />
+        <Route path="/" element={<Navigate replace to="/app/home" />} />
+        <Route path="/app" element={<Navigate replace to="/app/home" />} />
         <Route path="/app/*" element={<StudentAppRoute />} />
         <Route path="*" element={<StudentNotFoundRoute />} />
       </Routes>
