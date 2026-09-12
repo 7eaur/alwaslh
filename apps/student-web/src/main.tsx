@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import "./styles.css";
 import "./stage14.css";
 import "./foundation.css";
+import "./student-shell.css";
 import { registerStudentServiceWorker } from "./pwa";
 import { StudentRouter } from "./router";
 
