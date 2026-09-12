@@ -8,6 +8,8 @@ import { registerAdminStudentAccessRoutes } from "./admin-access/http.js";
 import { AdminStudentAccessService } from "./admin-access/service.js";
 import { registerAdminOperationsRoutes } from "./admin-operations/http.js";
 import { AdminOperationsService } from "./admin-operations/service.js";
+import { AdminAiApplicationService } from "./ai/admin-application.js";
+import { registerAdminAiApplicationRoutes } from "./ai/admin-application-http.js";
 import { AdminAiAuthoringService } from "./ai/admin-authoring.js";
 import { registerAdminAiAuthoringRoutes } from "./ai/admin-authoring-http.js";
 import { AdminAiOperationsService } from "./ai/admin-operations.js";
@@ -79,6 +81,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
   const lessonContent = new AdminLessonContentService(database);
   const aiOperations = new AdminAiOperationsService(database);
+  const aiApplications = new AdminAiApplicationService(database);
   const questionBank = new QuestionBankService(database);
   const questionBankRegeneration = new QuestionBankRegenerationService(database);
   const quizBuilder = new QuizBuilderService(database);
@@ -128,6 +131,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminLessonContentRoutes(app, config, auth, lessonContent);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
+  registerAdminAiApplicationRoutes(app, config, auth, aiApplications);
   registerAdminAiAuthoringRoutes(app, config, auth, aiAuthoring);
   registerQuestionBankRoutes(app, config, auth, questionBank);
   registerQuestionBankRegenerationRoutes(app, config, auth, questionBankRegeneration);
