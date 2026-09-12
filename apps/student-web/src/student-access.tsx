@@ -290,7 +290,7 @@ export function StudentAccessSection({
   }
 
   useEffect(() => {
-    if (destination === "home" || destination === "account") void loadAccess();
+    if (destination === "home" || destination === "learn" || destination === "account") void loadAccess();
   }, [online, destination]);
 
   useEffect(() => {
@@ -308,7 +308,7 @@ export function StudentAccessSection({
       await redeemStudentAccess(normalizedClassCode, redemptionKey);
       setClassCode("");
       setRedemptionKey(createAccessRedemptionIdempotencyKey());
-      setRedeemSuccess("تم تفعيل الصف بنجاح. يمكنك البدء بالتعلم الآن.");
+      setRedeemSuccess("تم تفعيل وصول الصف بنجاح.");
       await loadAccess();
       setCurriculumRefreshKey((current) => current + 1);
       navigate("/app/learn");
@@ -326,11 +326,11 @@ export function StudentAccessSection({
   if (!destination) return <Navigate replace to="/app/home" />;
 
   const accessManagement = (
-    <section className="access-section student-access-management" aria-labelledby="access-title">
+    <section className="access-section student-access-management" aria-labelledby="access-title" aria-label="صلاحياتك ورموز الصفوف">
       <div className="section-heading">
         <div>
           <p className="eyebrow">الوصول إلى المحتوى</p>
-          <h2 id="access-title">صفوفك وصلاحية الوصول</h2>
+          <h2 id="access-title">صلاحياتك ورموز الصفوف</h2>
         </div>
         <button
           className="text-button"
@@ -364,16 +364,14 @@ export function StudentAccessSection({
         <>
           {entitlements.length === 0 ? (
             <div className="empty-state">
-              <strong>لا يوجد صف مفعّل حاليًا</strong>
+              <strong>لا توجد صلاحيات فعالة الآن</strong>
               <p>إذا استلمت رمز صف من 7 أرقام، أضفه هنا ليظهر محتوى الصف المتاح لك.</p>
             </div>
           ) : (
             <ul className="entitlement-list" aria-label="صلاحيات الوصول الفعالة">
               {entitlements.map((entitlement) => (
                 <li key={entitlement.id}>
-                  <span className="entitlement-icon" aria-hidden="true">
-                    ✓
-                  </span>
+                  <span className="entitlement-icon" aria-hidden="true">✓</span>
                   <div>
                     <strong>{entitlement.scope === "all_content" ? "وصول كامل" : "وصول إلى صف"}</strong>
                     <small>{expiryLabel(entitlement.expiresAt)}</small>
@@ -393,15 +391,11 @@ export function StudentAccessSection({
 
             {hasFullAccess ? (
               <div className="form-alert is-info" role="status">
-                لديك وصول كامل فعّال، ولا تحتاج إلى إضافة رمز صف الآن.
+                لديك وصول كامل فعّال، لذلك لا تحتاج إلى استخدام رمز صف الآن.
               </div>
             ) : (
               <form className="access-redeem-form" onSubmit={handleRedeem} noValidate>
-                {redeemError ? (
-                  <div className="form-alert is-danger" role="alert">
-                    {redeemError}
-                  </div>
-                ) : null}
+                {redeemError ? <div className="form-alert is-danger" role="alert">{redeemError}</div> : null}
                 <div className="field-group">
                   <label htmlFor="class-access-code">رمز الصف</label>
                   <div className="access-code-row">
@@ -432,15 +426,9 @@ export function StudentAccessSection({
                       {redeemBusy ? "جاري التفعيل" : "تفعيل الصف"}
                     </button>
                   </div>
-                  <p className="field-hint" id="class-access-code-hint">
-                    يمكنك استخدام الأرقام العربية أو الإنجليزية.
-                  </p>
+                  <p className="field-hint" id="class-access-code-hint">يمكنك استخدام الأرقام العربية أو الإنجليزية.</p>
                 </div>
-                {!online ? (
-                  <div className="form-alert is-warning" role="status">
-                    يلزم اتصال بالشبكة لتفعيل رمز الصف.
-                  </div>
-                ) : null}
+                {!online ? <div className="form-alert is-warning" role="status">يلزم اتصال بالشبكة لتفعيل رمز الصف.</div> : null}
               </form>
             )}
           </div>
@@ -452,7 +440,6 @@ export function StudentAccessSection({
   return (
     <div className={`student-shell student-destination--${destination}`} data-student-destination={destination}>
       <StudentShellNavigation destination={destination} online={online} />
-
       <div className="student-destination">
         {destination === "home" ? (
           <>
@@ -467,36 +454,24 @@ export function StudentAccessSection({
             {redeemSuccess ? (
               <div className="form-alert is-success student-route-notice" role="status">
                 <strong>{redeemSuccess}</strong>
-                <span>وصول إلى صف</span>
               </div>
             ) : null}
-            <StudentCurriculumSection
-              online={online}
-              refreshKey={curriculumRefreshKey}
-              onSessionExpired={onSessionExpired}
-            />
+            <StudentCurriculumSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} />
+            {accessManagement}
           </>
         ) : null}
 
         {destination === "practice" ? (
           <>
             <DestinationHeading destination="practice" />
-            <StudentAssessmentSection
-              online={online}
-              refreshKey={curriculumRefreshKey}
-              onSessionExpired={onSessionExpired}
-            />
+            <StudentAssessmentSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} />
           </>
         ) : null}
 
         {destination === "downloads" ? (
           <>
             <DestinationHeading destination="downloads" />
-            <StudentOfflineDownloadsSection
-              online={online}
-              refreshKey={curriculumRefreshKey}
-              onSessionExpired={onSessionExpired}
-            />
+            <StudentOfflineDownloadsSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} />
           </>
         ) : null}
 
