@@ -66,6 +66,8 @@ jobs:
           node --test --import tsx
           tests/integration/curriculum.integration.test.ts
           tests/integration/content-operations.integration.test.ts
+          tests/integration/content-preview.integration.test.ts
+          tests/integration/lesson-content.integration.test.ts
         working-directory: apps/api
 
   stage13-admin-browser:
