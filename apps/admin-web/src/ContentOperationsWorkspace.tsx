@@ -12,6 +12,7 @@ import {
   reviewOcrExtraction,
 } from "./content-operations-api";
 import "./content-operations.css";
+import { OcrSourcePreview } from "./OcrSourcePreview";
 
 interface Props {
   onSessionExpired: () => void;
@@ -38,9 +39,9 @@ function formatBytes(value: number): string {
 }
 
 function mediaLabel(status: "processing" | "ready" | "failed"): string {
-  if (status === "ready") return "جاهز";
-  if (status === "failed") return "فشل";
-  return "قيد المعالجة";
+  if (status === "ready") return "جاهزة";
+  if (status === "failed") return "تعذر تجهيزها";
+  return "قيد التجهيز";
 }
 
 function reviewLabel(status: string): string {
@@ -48,6 +49,12 @@ function reviewLabel(status: string): string {
   if (status === "approved") return "معتمد";
   if (status === "rejected") return "مرفوض";
   return "لا يحتاج مراجعة";
+}
+
+function reviewReasonLabel(reason: string): string {
+  if (reason === "low_confidence") return "دقة الاستخراج منخفضة وتحتاج تحققًا بشريًا.";
+  if (reason === "empty_text") return "لم يُستخرج نص واضح من الصفحة.";
+  return "هذه النتيجة تحتاج مراجعة بشرية قبل اعتمادها.";
 }
 
 export function ContentOperationsWorkspace({ onSessionExpired }: Props) {
@@ -189,10 +196,10 @@ export function ContentOperationsWorkspace({ onSessionExpired }: Props) {
     <section className="content-ops" aria-labelledby="content-ops-title">
       <header className="page-header">
         <div>
-          <p className="eyebrow">تشغيل المحتوى</p>
-          <h1 id="content-ops-title">الوسائط وOCR</h1>
+          <p className="eyebrow">مراجعات المحتوى</p>
+          <h1 id="content-ops-title">مراجعة النصوص من الصفحات</h1>
           <p className="page-description">
-            متابعة مصادر المحتوى، حالة معالجة الوسائط، ونتائج OCR التي تحتاج مراجعة. هذه الشاشة لا تنشر محتوى الدروس تلقائيًا.
+            راجع الصفحة الأصلية بجانب النص المستخرج، صحح النص عند الحاجة، ثم اعتمد النتيجة أو ارفضها. النشر للطلاب يبقى قرارًا مستقلًا.
           </p>
         </div>
         <button className="secondary-button" type="button" onClick={() => void loadOverview()} disabled={state === "loading"}>
@@ -201,88 +208,158 @@ export function ContentOperationsWorkspace({ onSessionExpired }: Props) {
       </header>
 
       {overview ? (
-        <div className="metric-grid content-metrics" aria-label="ملخص تشغيل المحتوى">
-          <Metric label="المستندات" value={overview.summary.documentCount} />
-          <Metric label="الصفحات/الأصول" value={overview.summary.assetCount} />
-          <Metric label="وسائط جاهزة" value={overview.summary.readyMediaCount} />
-          <Metric label="وسائط فاشلة" value={overview.summary.failedMediaCount} />
-          <Metric label="OCR للمراجعة" value={overview.summary.pendingOcrCount} />
+        <div className="metric-grid content-metrics" aria-label="ملخص مراجعة المحتوى">
+          <Metric label="المصادر" value={overview.summary.documentCount} />
+          <Metric label="الصفحات" value={overview.summary.assetCount} />
+          <Metric label="جاهزة" value={overview.summary.readyMediaCount} />
+          <Metric label="تعذر تجهيزها" value={overview.summary.failedMediaCount} />
+          <Metric label="نصوص للمراجعة" value={overview.summary.pendingOcrCount} />
         </div>
       ) : null}
 
       <form className="content-filter-bar" onSubmit={submitFilters} aria-label="فلترة مصادر المحتوى">
         <label>
           <span>بحث</span>
-          <input value={filters.query} onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))} placeholder="عنوان أو مسار المصدر" />
+          <input
+            value={filters.query}
+            onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))}
+            placeholder="عنوان المصدر أو الصف أو المادة"
+          />
         </label>
         <label>
           <span>الصف</span>
-          <select value={filters.classSlug} onChange={(event) => setFilters((current) => ({ ...current, classSlug: event.target.value }))}>
+          <select
+            value={filters.classSlug}
+            onChange={(event) => setFilters((current) => ({ ...current, classSlug: event.target.value }))}
+          >
             <option value="">الكل</option>
-            {overview?.facets.classes.map((facet) => <option key={facet.slug} value={facet.slug}>{facet.name}</option>)}
+            {overview?.facets.classes.map((facet) => (
+              <option key={facet.slug} value={facet.slug}>
+                {facet.name}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           <span>المادة</span>
-          <select value={filters.subjectSlug} onChange={(event) => setFilters((current) => ({ ...current, subjectSlug: event.target.value }))}>
+          <select
+            value={filters.subjectSlug}
+            onChange={(event) => setFilters((current) => ({ ...current, subjectSlug: event.target.value }))}
+          >
             <option value="">الكل</option>
-            {overview?.facets.subjects.map((facet) => <option key={facet.slug} value={facet.slug}>{facet.name}</option>)}
+            {overview?.facets.subjects.map((facet) => (
+              <option key={facet.slug} value={facet.slug}>
+                {facet.name}
+              </option>
+            ))}
           </select>
         </label>
         <label>
           <span>نوع المصدر</span>
-          <select value={filters.kind} onChange={(event) => setFilters((current) => ({ ...current, kind: event.target.value as Filters["kind"] }))}>
+          <select
+            value={filters.kind}
+            onChange={(event) => setFilters((current) => ({ ...current, kind: event.target.value as Filters["kind"] }))}
+          >
             <option value="">الكل</option>
             <option value="textbook">كتاب</option>
             <option value="government_exam">اختبار وزاري</option>
           </select>
         </label>
-        <button className="primary-button" type="submit">تطبيق</button>
+        <button className="primary-button" type="submit">
+          تطبيق
+        </button>
       </form>
 
-      {state === "loading" ? <StatePanel title="جارٍ تحميل حالة المحتوى" body="نقرأ الحالة الفعلية من الخادم." /> : null}
+      {state === "loading" ? <StatePanel title="جارٍ تحميل المحتوى" body="نقرأ حالة المصادر والمراجعات من الخادم." /> : null}
       {state === "error" ? <StatePanel title="تعذر تحميل المحتوى" body={error} /> : null}
-      {state === "ready" && overview?.documents.length === 0 ? <StatePanel title="لا توجد نتائج" body="غيّر الفلاتر أو البحث لعرض مصادر أخرى." /> : null}
+      {state === "ready" && overview?.documents.length === 0 ? (
+        <StatePanel title="لا توجد نتائج" body="غيّر الفلاتر أو البحث لعرض مصادر أخرى." />
+      ) : null}
 
       {state === "ready" && overview && overview.documents.length > 0 ? (
-        <div className="content-documents" aria-label="مستندات المصدر">
+        <div className="content-documents" aria-label="مصادر المحتوى">
           {overview.documents.map((document) => (
             <article className="content-document-card" key={document.id}>
               <div>
                 <div className="content-document-meta">
-                  <span>{document.className}</span><span>•</span><span>{document.subjectName}</span>
+                  <span>{document.className}</span>
+                  <span>•</span>
+                  <span>{document.subjectName}</span>
                   <span className="status-badge">{document.kind === "textbook" ? "كتاب" : "اختبار وزاري"}</span>
                 </div>
                 <h2>{document.title}</h2>
-                <p className="content-path"><code>{document.sourcePath}</code></p>
               </div>
               <dl className="content-counts">
-                <div><dt>الأصول</dt><dd>{document.assetCount}</dd></div>
-                <div><dt>جاهز</dt><dd>{document.readyMediaCount}</dd></div>
-                <div><dt>فشل</dt><dd>{document.failedMediaCount}</dd></div>
-                <div><dt>OCR</dt><dd>{document.pendingOcrCount}</dd></div>
+                <div>
+                  <dt>الصفحات</dt>
+                  <dd>{document.assetCount}</dd>
+                </div>
+                <div>
+                  <dt>جاهز</dt>
+                  <dd>{document.readyMediaCount}</dd>
+                </div>
+                <div>
+                  <dt>فشل</dt>
+                  <dd>{document.failedMediaCount}</dd>
+                </div>
+                <div>
+                  <dt>للمراجعة</dt>
+                  <dd>{document.pendingOcrCount}</dd>
+                </div>
               </dl>
               <button className="secondary-button small-button" type="button" onClick={() => void openDocument(document.id)}>
-                فتح التفاصيل
+                فتح الصفحات
               </button>
             </article>
           ))}
           <div className="pagination-actions">
-            <button className="secondary-button" type="button" disabled={offset === 0} onClick={() => setOffset((value) => Math.max(0, value - PAGE_SIZE))}>السابق</button>
-            <span>{overview.pagination.offset + 1}–{overview.pagination.offset + overview.documents.length} من {overview.pagination.total}</span>
-            <button className="secondary-button" type="button" disabled={!canGoNext} onClick={() => setOffset((value) => value + PAGE_SIZE)}>التالي</button>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={offset === 0}
+              onClick={() => setOffset((value) => Math.max(0, value - PAGE_SIZE))}
+            >
+              السابق
+            </button>
+            <span>
+              {overview.pagination.offset + 1}–{overview.pagination.offset + overview.documents.length} من {overview.pagination.total}
+            </span>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={!canGoNext}
+              onClick={() => setOffset((value) => value + PAGE_SIZE)}
+            >
+              التالي
+            </button>
           </div>
         </div>
       ) : null}
 
       <section className="content-detail-panel" aria-live="polite">
-        {detailState === "loading" ? <StatePanel title="جارٍ تحميل الصفحات" body="نقرأ ترتيب المصدر وحالة الوسائط وOCR." /> : null}
+        {detailState === "loading" ? (
+          <StatePanel title="جارٍ تحميل الصفحات" body="نقرأ ترتيب الصفحات وحالة تجهيزها والنصوص التي تحتاج مراجعة." />
+        ) : null}
         {detailState === "error" ? <StatePanel title="تعذر تحميل التفاصيل" body={detailError} /> : null}
         {detailState === "ready" && detail ? (
           <>
             <div className="content-detail-heading">
-              <div><p className="section-kicker">تفاصيل المصدر</p><h2>{detail.document.title}</h2></div>
-              <button className="secondary-button small-button" type="button" onClick={() => { setDetail(null); setDetailState("idle"); setOcr(null); setOcrState("idle"); }}>إغلاق</button>
+              <div>
+                <p className="section-kicker">صفحات المصدر</p>
+                <h2>{detail.document.title}</h2>
+              </div>
+              <button
+                className="secondary-button small-button"
+                type="button"
+                onClick={() => {
+                  setDetail(null);
+                  setDetailState("idle");
+                  setOcr(null);
+                  setOcrState("idle");
+                }}
+              >
+                إغلاق
+              </button>
             </div>
             <div className="asset-list">
               {detail.assets.map((asset) => (
@@ -290,21 +367,29 @@ export function ContentOperationsWorkspace({ onSessionExpired }: Props) {
                   <div className="asset-order">{asset.position + 1}</div>
                   <div className="asset-main">
                     <strong>{asset.filename}</strong>
-                    <small>{formatBytes(asset.byteSize)} · {asset.mimeType}</small>
+                    <small>{formatBytes(asset.byteSize)}</small>
                     {asset.media ? (
                       <div className="asset-status-line">
                         <span className={`status-badge media-${asset.media.status}`}>{mediaLabel(asset.media.status)}</span>
-                        <span>{asset.media.variants.length} نسخ معالجة</span>
                         {asset.media.sourcePageNumber ? <span>صفحة {asset.media.sourcePageNumber}</span> : null}
                       </div>
-                    ) : <span className="status-badge">لم تدخل خط المعالجة</span>}
-                    {asset.media?.lastErrorMessage ? <p className="asset-error">{asset.media.lastErrorCode}: {asset.media.lastErrorMessage}</p> : null}
+                    ) : (
+                      <span className="status-badge">لم تُجهز بعد</span>
+                    )}
+                    {asset.media?.lastErrorMessage ? <p className="asset-error">{asset.media.lastErrorMessage}</p> : null}
                   </div>
                   <div className="ocr-list">
                     {asset.media?.ocrExtractions.map((entry) => (
-                      <button key={entry.id} type="button" className={`ocr-chip review-${entry.reviewStatus}`} onClick={() => void openOcr(entry.id)}>
+                      <button
+                        key={entry.id}
+                        type="button"
+                        className={`ocr-chip review-${entry.reviewStatus}`}
+                        onClick={() => void openOcr(entry.id)}
+                      >
                         <span>{reviewLabel(entry.reviewStatus)}</span>
-                        <small>{entry.meanConfidence === null ? "بدون ثقة" : `ثقة ${entry.meanConfidence.toFixed(1)}%`}</small>
+                        <small>
+                          {entry.meanConfidence === null ? "تحتاج تحققًا" : `دقة تقريبية ${entry.meanConfidence.toFixed(1)}%`}
+                        </small>
                       </button>
                     ))}
                   </div>
@@ -317,30 +402,62 @@ export function ContentOperationsWorkspace({ onSessionExpired }: Props) {
 
       {ocrState !== "idle" ? (
         <section className="ocr-review-panel" aria-live="polite" aria-labelledby="ocr-review-title">
-          {ocrState === "loading" ? <StatePanel title="جارٍ تحميل نص OCR" body="نحمّل النص فقط عند فتح المراجعة." /> : null}
-          {ocrState === "error" && !ocr ? <StatePanel title="تعذر فتح OCR" body={ocrError} /> : null}
+          {ocrState === "loading" ? (
+            <StatePanel title="جارٍ فتح المراجعة" body="نحمّل النص وبيانات الصفحة التي ستراجعها." />
+          ) : null}
+          {ocrState === "error" && !ocr ? <StatePanel title="تعذر فتح المراجعة" body={ocrError} /> : null}
           {ocr ? (
             <>
               <div className="content-detail-heading">
-                <div><p className="section-kicker">مراجعة OCR</p><h2 id="ocr-review-title">{ocr.source.filename ?? "استخراج OCR"}</h2></div>
+                <div>
+                  <p className="section-kicker">مراجعة النص</p>
+                  <h2 id="ocr-review-title">{ocr.source.filename ?? "صفحة المحتوى"}</h2>
+                </div>
                 <span className={`status-badge review-${ocr.reviewStatus}`}>{reviewLabel(ocr.reviewStatus)}</span>
               </div>
               <div className="ocr-review-grid">
-                <div>
-                  <h3>النص الخام</h3>
-                  <pre className="ocr-source-text">{ocr.rawText || "لا يوجد نص خام"}</pre>
+                <OcrSourcePreview
+                  extractionId={ocr.id}
+                  filename={ocr.source.filename}
+                  pageNumber={ocr.source.sourcePageNumber}
+                  onSessionExpired={onSessionExpired}
+                />
+                <div className="ocr-text-review">
+                  <div>
+                    <h3>النص المستخرج</h3>
+                    <pre className="ocr-source-text">{ocr.rawText || "لا يوجد نص مستخرج"}</pre>
+                  </div>
+                  <label>
+                    <span>النص بعد المراجعة</span>
+                    <textarea
+                      rows={12}
+                      value={replacementText}
+                      onChange={(event) => setReplacementText(event.target.value)}
+                      disabled={ocr.reviewStatus !== "pending" || ocrState === "saving"}
+                    />
+                  </label>
                 </div>
-                <label>
-                  <span>النص بعد المراجعة</span>
-                  <textarea rows={12} value={replacementText} onChange={(event) => setReplacementText(event.target.value)} disabled={ocr.reviewStatus !== "pending" || ocrState === "saving"} />
-                </label>
               </div>
-              {ocr.reviewReason ? <p className="ocr-review-reason">سبب المراجعة: {ocr.reviewReason}</p> : null}
+              {ocr.reviewReason ? <p className="ocr-review-reason">{reviewReasonLabel(ocr.reviewReason)}</p> : null}
               {ocrError ? <p className="form-error">{ocrError}</p> : null}
               {ocr.reviewStatus === "pending" ? (
                 <div className="ocr-review-actions">
-                  <button className="primary-button" type="button" disabled={ocrState === "saving"} onClick={() => void review("approved")}>اعتماد النص</button>
-                  <button className="secondary-button" type="button" disabled={ocrState === "saving"} onClick={() => void review("rejected")}>رفض الاستخراج</button>
+                  <button
+                    className="primary-button"
+                    type="button"
+                    disabled={ocrState === "saving"}
+                    onClick={() => void review("approved")}
+                  >
+                    اعتماد النص
+                  </button>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    disabled={ocrState === "saving"}
+                    onClick={() => void review("rejected")}
+                  >
+                    رفض النتيجة
+                  </button>
                 </div>
               ) : null}
             </>
@@ -352,9 +469,19 @@ export function ContentOperationsWorkspace({ onSessionExpired }: Props) {
 }
 
 function Metric({ label, value }: { label: string; value: number }) {
-  return <div className="metric-card"><span>{label}</span><strong>{value}</strong></div>;
+  return (
+    <div className="metric-card">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
 }
 
 function StatePanel({ title, body }: { title: string; body: string }) {
-  return <div className="content-state"><strong>{title}</strong><p>{body}</p></div>;
+  return (
+    <div className="content-state">
+      <strong>{title}</strong>
+      <p>{body}</p>
+    </div>
+  );
 }

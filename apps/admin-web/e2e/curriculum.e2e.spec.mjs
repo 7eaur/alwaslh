@@ -105,10 +105,7 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
 
   let lessonRow = unsectioned.getByText("الدرس الإداري الأول", { exact: true }).locator("xpath=ancestor::li");
   await openLessonManagement(lessonRow, "الدرس الإداري الأول");
-  await lessonRow
-    .locator("summary")
-    .filter({ hasText: "تعديل اسم الدرس الدرس الإداري الأول" })
-    .click();
+  await lessonRow.locator("summary").filter({ hasText: "تعديل اسم الدرس الدرس الإداري الأول" }).click();
   const renameInput = lessonRow.getByLabel("تعديل اسم الدرس الدرس الإداري الأول");
   await renameInput.fill("الدرس الإداري المحدّث");
   await renameInput.locator("xpath=ancestor::form").getByRole("button", { name: "حفظ" }).click();
@@ -133,31 +130,35 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
 });
 
-test("admin reviews source media and pending OCR through the operations workspace", async ({ page }) => {
+test("admin reviews source media and pending OCR beside the verified source page", async ({ page }) => {
   await login(page);
   await page.goto("/app/reviews/content");
 
-  await expect(page.getByRole("heading", { name: "الوسائط وOCR" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مراجعة النصوص من الصفحات" })).toBeVisible();
   await expect(page.getByText("كتاب تشغيل الوسائط التجريبي", { exact: true })).toBeVisible();
 
   const metrics = page.locator(".content-metrics");
-  await expect(metrics.locator(".metric-card").filter({ hasText: "المستندات" })).toContainText("1");
-  await expect(metrics.locator(".metric-card").filter({ hasText: "OCR للمراجعة" })).toContainText("1");
+  await expect(metrics.locator(".metric-card").filter({ hasText: "المصادر" })).toContainText("1");
+  await expect(metrics.locator(".metric-card").filter({ hasText: "نصوص للمراجعة" })).toContainText("1");
 
   const documentCard = page.locator("article.content-document-card").filter({
     has: page.getByText("كتاب تشغيل الوسائط التجريبي", { exact: true }),
   });
-  await documentCard.getByRole("button", { name: "فتح التفاصيل" }).click();
+  await expect(documentCard.locator("code")).toHaveCount(0);
+  await documentCard.getByRole("button", { name: "فتح الصفحات" }).click();
 
   const assetRow = page.locator("article.asset-row").filter({
     has: page.getByText("001.jpg", { exact: true }),
   });
-  await expect(assetRow.getByText("4 نسخ معالجة", { exact: true })).toBeVisible();
-  await expect(assetRow.locator(".status-badge.media-ready")).toHaveText("جاهز");
+  await expect(assetRow.locator(".status-badge.media-ready")).toHaveText("جاهزة");
+  await expect(assetRow.getByText(/image\/webp|image\/jpeg/)).toHaveCount(0);
 
   await assetRow.getByRole("button", { name: /بانتظار المراجعة/ }).click();
   await expect(page.getByRole("heading", { name: "001.jpg" })).toBeVisible();
+  await expect(page.getByTestId("ocr-source-preview")).toBeVisible();
+  await expect(page.getByTestId("ocr-source-preview")).toHaveJSProperty("complete", true);
   await expect(page.locator("pre.ocr-source-text")).toHaveText("نص خام يحتاج المراجعة");
+  await expect(page.getByText("دقة الاستخراج منخفضة وتحتاج تحققًا بشريًا.")).toBeVisible();
 
   const reviewedText = page.getByLabel("النص بعد المراجعة");
   await reviewedText.fill("نص مصحح ومعتمد من الإدارة");
@@ -165,7 +166,7 @@ test("admin reviews source media and pending OCR through the operations workspac
 
   await expect(page.locator(".ocr-review-panel .status-badge")).toHaveText("معتمد");
   await expect(reviewedText).toHaveValue("نص مصحح ومعتمد من الإدارة");
-  await expect(metrics.locator(".metric-card").filter({ hasText: "OCR للمراجعة" })).toContainText("0");
+  await expect(metrics.locator(".metric-card").filter({ hasText: "نصوص للمراجعة" })).toContainText("0");
 });
 
 test("admin curriculum remains usable at a narrow viewport", async ({ page }) => {
