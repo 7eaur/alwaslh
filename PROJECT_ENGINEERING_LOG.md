@@ -2,223 +2,325 @@
 
 > Current consolidated engineering truth. Code, PostgreSQL migrations, executable CI and live runtime evidence outrank prose. Historical detail remains in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-12 — normal roadmap paused for UX/UI refoundation; unified repository skill package prepared and refined with identity/content/IA rules; return point remains STUDENT-016I.**
+Last consolidated: **2026-09-12 — UX/UI refoundation foundation audit completed on source; target IA/design/copy/implementation plan recorded; normal roadmap remains paused at STUDENT-016I.**
 
 ## Project Understanding
 
 الوسيلة الذكية منصة تعليمية عربية تتكون من Student Web/PWA + Super Admin Web فوق Fastify/PostgreSQL.
 
-Student flow:
+Student is an **installed educational app experience**, not a small responsive website.
 
-`Activation/Login → Home → Subjects → Curriculum → Lesson/Reader → Practice/Test → Offline learning → Personal learning → Progress`
+Current implemented-era Student flow:
 
-Admin flow:
+`Activation/Login → Home target → Subjects/Curriculum → Lesson/Reader → Practice/Test → Offline learning`
+
+Personal Learning and Progress are later roadmap capabilities and must not be represented as already implemented product destinations.
+
+Admin is an **operational workspace** around:
 
 `Curriculum → Content/Ingestion → Media/OCR → AI → Human Review → Question Bank → Quiz Builder → Students/Access → Operations/Audit`
 
-The Student surface should hide infrastructure complexity and optimize the learning journey. The Admin surface should be an operational workspace, not a flat collection of equally weighted modules.
-
-Approved identity evidence exists under `packages/brand/`. Current baseline is an Arabic educational Yemeni product with a calm/trustworthy visual language, teal/open-book identity direction, RTL-first behavior, touch-first Student surface, and dense-but-readable Admin surface. UI refoundation improves this identity rather than replacing it.
+Approved identity evidence exists under `packages/brand/`: Arabic/Yemeni educational context, calm/trustworthy visual language, teal/open-book identity, Cairo typography, RTL-first, touch-first Student and dense-but-readable Admin.
 
 ## Architecture
 
 - `apps/student-web` — Student Web/PWA.
 - `apps/admin-web` — Super Admin.
-- `apps/api` — authoritative API.
+- `apps/api` — authoritative Fastify API.
 - `database/migrations` — PostgreSQL schema/integrity authority.
 - `packages/*` — shared domain/validation/brand primitives.
 
-Stable rules:
+Stable contracts:
 
 - browser is not canonical business authority;
 - API + PostgreSQL own canonical state;
 - `media ready != published`;
 - protected Reader/media remain publication + entitlement controlled;
 - AI output never auto-publishes Student content/questions;
-- assessment scoring/finalization remains server-owned;
-- `/v1` never becomes Service Worker Cache API authority;
+- human review chain remains mandatory;
+- Question Bank publication and immutable Quiz versions remain authoritative;
+- assessment scoring/finalization is server-owned;
+- `/v1` is not Service Worker Cache API authority;
 - offline learning must not persist password/session token/device private key.
+
+`apps/api/src/app.ts` confirms separate runtime domain families for Auth, Activation/Access, Admin Access, Admin Operations, Notifications, Curriculum/Reader, Content Ingestion/Operations, AI Operations/Authoring, Question Bank, Quiz Builder, Student Assessment and Offline.
 
 ## Current Position
 
-Live `main` before the skill-package batch:
+PR #41 — unified project skill package — was green/mergeable and merged before refoundation implementation work.
 
-`5513d7ba7f3aac11231479c99d656cbffe458a9d`
+- PR #41 final head: `25f876d3cfe2af95a8a27319c289f102db3e6db0`
+- merge commit: `c3ddef04933772116c3bd9cdf29eb5a973c527fd`
+- active foundation branch: `ux/refoundation-foundation`
+- branch base: `c3ddef04933772116c3bd9cdf29eb5a973c527fd`
 
-This includes PR #40 and the formal UX/UI pause/resume checkpoint.
+Normal roadmap remains paused.
 
 Stage state:
 
 - Stage1–10 + OCR — VERIFIED.
-- Stage11 AI contracts — VERIFIED.
-- Stage12 durable AI runtime — VERIFIED backend/runtime; `AI-012..AI-019` live provider readiness OPEN.
+- Stage11 — VERIFIED.
+- Stage12 — VERIFIED backend/runtime; `AI-012..AI-019` live provider readiness OPEN.
 - Stage13A–G — VERIFIED / CLOSED / integrated.
 - Stage14 Student — CLOSED / VERIFIED.
 - Stage15 Practice/Assessment — CLOSED / VERIFIED.
-- Stage16 Offline/PWA — OPEN / PARTIALLY VERIFIED.
+- Stage16 Offline/PWA — OPEN / PARTIALLY VERIFIED / PAUSED FOR UX.
 - Stage17+ — not started in normal roadmap order.
 
 `STUDENT-016H` is **DONE / VERIFIED / MERGED**.
 
-PR #38 evidence:
-
-- tested head `407d9992c91d95081147fc104e13b69addef5eb8`;
-- 18/18 workflows SUCCESS;
-- merge `a6f220c74e46852a8b2e6667271acc41b3fb8c79`.
-
-PR #39 evidence:
-
-- tested head `8659414259fef83183aafa3204883281750491ad`;
-- 17/17 workflows SUCCESS;
-- merge/main `e2344d22820a972b6a29f7d5cca16a94b670cd10`;
-- tested-head and merge tree equality verified during recovery;
-- hosted Admin same-origin authenticated persistence verified live.
-
-Student authenticated hosted same-origin E2E after PR #39: `NOT YET VERIFIED`.
-
-## Architecture Decisions
-
-- **AD-170** — Service Worker caches shell/static assets only; `/v1` excluded.
-- **AD-175** — no password/session token/device private key in offline learning storage.
-- **AD-185** — cold-offline Reader requires server-authentic signed authorization.
-- **AD-186** — stored protected blobs are verified at use time against signed integrity metadata.
-- **AD-188** — API signs offline manifests with P-256/ES256; Student receives public verification material only.
-- **AD-190** — post-integration work starts from live `main` using short-lived branches.
-- **AD-192** — content bootstrap is bounded, idempotent, Draft-only and never auto-publishes.
-- **AD-194** — production browser API traffic uses same-origin `/v1` proxying.
-- **AD-195** — normal roadmap pauses before 016I while UX/UI foundations are remediated.
-- **AD-196** — Student and Admin share one design foundation/state language but retain different density and interaction models.
-- **AD-197** — project capability guidance uses one repository-scoped skill entry point plus progressive-disclosure references; do not install overlapping project-specific skills that compete for the same tasks.
-- **AD-198** — external design tools/references such as Product Design, Mobbin and Figma are subordinate to Product Owner direction, live project evidence, security/business contracts and project-specific skill rules.
-- **AD-199** — UX/UI refoundation preserves the approved Alwaslh product identity and original product model; `packages/brand/*` is mandatory design evidence before visual-system changes.
-- **AD-200** — production UI copy/data is presentation-ready and user-facing; backend/API/database/cache/signature/revision/sync implementation details stay hidden unless a dedicated operator task genuinely requires them.
-- **AD-201** — dashboards are overview/entry surfaces, not monolithic product pages; major Student/Admin workflows use deliberate routes/pages/sub-pages with one clear purpose instead of unrelated content stacked into a long scrolling wall.
-
-## Audit Findings
-
-| ID | Severity | Area | Problem | Solution | Status |
-|---|---:|---|---|---|---|
-| `DOC-PAUSE-001` | P2 | Continuity | stale docs described 016H as open after PR #38 | synchronize status/log and add explicit pause/resume document | FIXED |
-| `UX-FOUNDATION-001` | P1 | UX/UI | Admin is cognitively heavy and Student UI foundation is structurally weak/inconsistent | structured source/flow audit, IA redesign and unified design system before more features | ACTIVE |
-| `UX-COPY-002` | P1 | Product content | UI can leak internal/process terminology or display data with no user value | dedicated presentation-copy/data rules; domain/user language only | GOVERNED IN SKILL PACKAGE |
-| `UX-IA-003` | P1 | Information architecture | dashboard/app surfaces risk becoming long mixed pages instead of clear task hierarchy | route/page/sub-page boundaries; dashboard as overview only | GOVERNED IN SKILL PACKAGE |
-| `SKILL-FOUNDATION-001` | P2 | Engineering governance | multiple generic design/frontend skills could conflict or override project contracts | one project router skill with task-specific references and explicit conflict order | IMPLEMENTED in current branch |
-| `STUDENT-016I` | P1 | Offline/PWA | true browser-close/restart/network-unavailable Reader is not closed | resume after UX/UI refoundation | PAUSED / NEXT ROADMAP ITEM |
-| `STUDENT-016R` | P1 | Reconnect | full revalidation/purge is incomplete | revalidate server authority and purge invalid local content | OPEN |
-| `STUDENT-016S` | P1 | Sync | schema primitives exist but full delta flow is not proven | implement writers/cursor/delta/client application | OPEN |
-| `AI-012..AI-019` | P2 | AI | live provider/model/routes/credentials/bootstrap not proven | separate live-readiness verification | NOT YET VERIFIED |
-
-## Changes Made — 2026-09-12
-
-### UX/UI pause batch
-
-- created `docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md`;
-- synchronized status/log with PR #38/#39 reality;
-- recorded exact return point as `STUDENT-016I`.
-
-### Unified skill-package batch
-
-Branch: `chore/alwaslh-skill-package`.
-
-Initial skill commit: `832a0c66b150dfb198be3b5f42a5792ac687f0b2`.
-
-Created one triggerable repository skill:
-
-`.agents/skills/alwaslh-product-engineering/SKILL.md`
-
-Created focused progressive-disclosure references:
-
-- `references/project-guardrails.md`
-- `references/student-pwa-app-ux.md`
-- `references/admin-workspace-ux.md`
-- `references/design-system-rtl-a11y.md`
-- `references/product-content-copy.md`
-- `references/frontend-engineering.md`
-- `references/backend-security-performance.md`
-- `references/educational-product-logic.md`
-- `references/qa-browser-verification.md`
-- `references/research-design-tools.md`
-
-Design rationale:
-
-- one skill name/trigger avoids competing project-specific skills;
-- references are loaded only when the task needs them;
-- Student PWA is explicitly treated as an installed educational app experience, not a small website;
-- Admin is explicitly treated as a dense operational workspace, not a Student-like UI;
-- shared Design System/RTL/accessibility rules do not force identical layout/density;
-- external design tools remain advisory and cannot override verified contracts;
-- approved brand foundation is mandatory context before redesign;
-- visible copy/data must be final-quality and user-meaningful rather than exposing backend/process internals;
-- Admin and Student navigation must be intentionally divided into pages/sub-pages instead of one long mixed surface;
-- backend/security/performance guidance is included without turning the UX refoundation into a backend rewrite.
-
-No application code, migrations, Railway configuration, PostgreSQL data, content publication or AI provider configuration changed in this skill-package batch.
-
-## Tests & Verification
-
-Skill-package structural checks completed in the working session:
-
-- baseline recursive tree contained no existing `.agents/skills` path — no repository skill-name collision found;
-- `SKILL.md` frontmatter contains one valid lower-case hyphenated name and a task-specific description;
-- YAML frontmatter parse check — PASS;
-- all skill references are under the same package directory;
-- no second project-specific triggerable skill was introduced;
-- no product source code changed;
-- approved identity sources `packages/brand/BRAND_FOUNDATION.md` and `packages/brand/BRAND_GUIDELINES.md` were re-read before adding identity-preservation rules.
-
-PR #41 was opened for this batch. Its CI must be re-evaluated on the final updated branch head before merge; earlier in-progress runs on older branch heads are not final acceptance evidence.
-
-Relevant existing product evidence remains:
-
-- PR #38: 18/18 workflows SUCCESS;
-- PR #39: 17/17 workflows SUCCESS;
-- hosted Admin same-origin authenticated persistence verified live.
-
-## Content State
-
-Canonical source:
-
-`7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
-
-Inventory: 48 documents / 5,552 images.
-
-Bounded Grade 9 English proof: 75 source images, 75 ready media assets, 300 variants, 75 lesson assets, 10 lessons, Draft only.
-
-Do not bulk-materialize the full inventory during UX/UI maintenance.
-
-## Known Issues
-
-- Student live authenticated E2E after PR #39 — `NOT YET VERIFIED`.
-- `AI-012..AI-019` live AI provider readiness — `NOT YET VERIFIED`.
-- Stage21 performance, Stage22 security, Stage24 accessibility/device final closure — pending roadmap.
-- Stage28 Production Cutover — not complete.
-- detailed UX/UI findings beyond the currently observed foundation problems — `NOT YET VERIFIED` until the dedicated source/flow audit.
-
-## Remaining Work
-
-### Active management track
-
-**UX/UI REFOUNDATION + DESIGN SYSTEM + STUDENT/ADMIN EXPERIENCE REMEDIATION**
-
-The unified project skill package is the governing capability layer for the upcoming audit and redesign work.
-
-Next sequence:
-
-1. merge/verify the unified skill package;
-2. inventory approved identity assets/tokens and current Student/Admin visual usage;
-3. inventory Student routes/screens/components/states/copy;
-4. inventory Admin routes/workflows/components/states/copy;
-5. map current and target information architecture and screen boundaries;
-6. audit tokens/components/RTL/responsiveness/accessibility/state handling;
-7. classify areas as KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE;
-8. define the target shared design foundation and presentation-copy language;
-9. implement in small reviewable batches with lint/typecheck/tests/build/browser verification;
-10. update status/log before closing the refoundation.
-
-### Exact resume point after refoundation
+Exact post-refoundation resume sequence remains:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
 
-Canonical pause/resume document:
+## Architecture Decisions
 
-`docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md`
+Existing decisions retained:
+
+- **AD-170** — Service Worker caches shell/static assets only; `/v1` excluded.
+- **AD-175** — no password/session token/device private key in offline storage.
+- **AD-185** — cold-offline Reader requires server-authentic signed authorization.
+- **AD-186** — protected blobs verified at use time against signed integrity metadata.
+- **AD-188** — API signs offline manifests with P-256/ES256; Student receives verification material only.
+- **AD-190** — new work starts from live `main` on short-lived branches.
+- **AD-192** — content bootstrap bounded/idempotent/Draft-only and never auto-publishes.
+- **AD-194** — hosted browser API traffic uses same-origin `/v1` proxying.
+- **AD-195** — normal roadmap pauses before 016I for UX/UI refoundation.
+- **AD-196** — Student/Admin share identity/tokens/state language but retain different density/interaction models.
+- **AD-197** — one repository-scoped Alwaslh skill plus focused references.
+- **AD-198** — Product Design/Mobbin/Figma remain subordinate to product evidence/contracts.
+- **AD-199** — refoundation preserves approved Alwaslh identity and product model.
+- **AD-200** — visible production UI uses user/domain language; implementation internals stay hidden unless dedicated diagnostics require them.
+- **AD-201** — dashboards are overview/entry surfaces; major workflows use deliberate route/page boundaries.
+
+New refoundation decisions:
+
+- **AD-202 — Route/history is a product contract:** Student and Admin will migrate from state-switched pseudo-navigation to real route-based navigation so deep links, browser back, route focus and page ownership are explicit.
+- **AD-203 — Student stable navigation remains bounded to implemented capabilities:** initial authenticated shell exposes Home, Learn, Practice, Downloads and Account access; Personal Learning/Progress are not shown until their roadmap stages exist.
+- **AD-204 — Reader and active Assessment are focused task screens:** neither remains embedded in an aggregate Student page; their authority/data contracts stay unchanged.
+- **AD-205 — Admin global IA follows operator lifecycle:** Curriculum, Content, AI/Review, Questions/Tests, Students/Access and Operations are grouped work areas; backend modules are not automatically top-level destinations.
+- **AD-206 — Context owns authoring actions:** Lesson AI generation belongs to Lesson detail, Quiz generation to Quiz flow, Question regeneration to Question detail; AI Operations/Review owns jobs/review rather than one catch-all authoring page.
+- **AD-207 — Parity surfaces are temporary migration debt:** valid Lesson/Quiz capabilities move into canonical detail pages and parity UI is removed only after executable behavior parity is proven.
+- **AD-208 — Access-code file utilities are not a global Reports module:** current CSV import/export/print capability moves under Access Codes.
+- **AD-209 — Technical metadata uses progressive disclosure:** IDs, storage paths, prompt keys, raw event codes and runtime config are secondary diagnostics only when they enable an operator decision.
+- **AD-210 — Existing brand tokens are KEEP/EXTEND:** the refoundation does not replace the palette/type system; it adds only evidence-backed layout/state/component semantics.
+
+## Audit Findings
+
+| ID | Severity | Area | Problem | Evidence / Impact | Solution | Status |
+|---|---:|---|---|---|---|---|
+| `DOC-PAUSE-001` | P2 | Continuity | stale docs described 016H as open after merge | contradicted merged PR #38 | synchronized status/log/pause docs | FIXED |
+| `UX-FOUNDATION-001` | P1 | UX/UI | Student/Admin foundations create high cognitive load and product debt | actual source inventory | structural refoundation before more roadmap features | ACTIVE |
+| `UX-IA-101` | P1 | Routing | neither app has route-based application navigation | package dependencies + App sources | shared routing foundation | OPEN / UX-B01 |
+| `UX-IA-102` | P1 | Student | authenticated Student stacks Curriculum + Assessment + Downloads + Access | `StudentAccessSection` | Student app shell + dedicated routes | OPEN / UX-B02-B05 |
+| `UX-IA-103` | P1 | Admin | 11 flat state-switched sidebar workspaces | Admin `App.tsx` | grouped route-based workspace shell | OPEN / UX-B06 |
+| `UX-IA-104` | P1 | Admin | curriculum/ingestion/content/AI/QB/quiz/governance pages combine independent workflows | inspected workspace sources | list/detail/review route decomposition | OPEN / UX-B07-B14 |
+| `UX-COPY-101` | P1 | Student copy | visible device/server/SHA-256/SW/Cache/revision/sync language | Student App/Reader/Assessment/Downloads | product-language mappings | OPEN / UX-B02-B05 |
+| `UX-COPY-102` | P1 | Admin copy | Stage/parity/cache/repository/config/revision implementation language visible | Admin Dashboard/Governance/AI/Parity | domain-language + diagnostics disclosure | OPEN / UX-B06-B15 |
+| `UX-LEGACY-101` | P1 | Admin legacy UI | Lesson/Quiz parity panels duplicate canonical product operations | parity components embedded beside workspaces | migrate capability, verify, remove | OPEN / UX-B07/B12/B15 |
+| `UX-RESP-101` | P2 | Admin responsive | <=820px stacks entire sidebar above content | Admin CSS | responsive drawer/compact shell | OPEN / UX-B06/B16 |
+| `UX-BRAND-101` | P2 | Identity | production brand lockups differ from approved asset system | Student local SVG/Admin letter mark | official assets | OPEN / UX-B01 |
+| `UX-DS-101` | P2 | UI system | duplicated status/date/error/state/metric patterns | repeated local workspace helpers/styles | small stable shared primitives | OPEN / UX-B01/B15 |
+| `UX-A11Y-101` | P2 | Accessibility | focus/touch/RTL foundations exist but pseudo-navigation weakens route focus/history | CSS + manual focus restoration | preserve foundations + route-level semantics | OPEN / UX-B01-B16 |
+| `UX-DATA-101` | P2 | Data display | IDs/revisions/source paths/config values often first-class content | Admin/Student workspace inspection | human primary identity + advanced diagnostics | OPEN / UX-B02-B15 |
+| `STUDENT-016I` | P1 | Offline/PWA | true browser-close/restart/network-unavailable Reader not closed | Stage16 source/queue | resume after refoundation | PAUSED / NEXT NORMAL ROADMAP |
+| `STUDENT-016R` | P1 | Reconnect | full revalidation/purge incomplete | Stage16 queue | post-016I | OPEN |
+| `STUDENT-016S` | P1 | Sync | full delta flow not proven | Stage16 queue | post-016R | OPEN |
+| `AI-012..AI-019` | P2 | AI | live provider readiness not proven | project status | separate live verification later | NOT YET VERIFIED |
+
+Detailed evidence/classification:
+
+`docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md`
+
+## Target Information Architecture
+
+Canonical document:
+
+`docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
+
+### Student target
+
+Unauthenticated:
+
+- `/activate`
+- `/login`
+- `/recover`
+
+Authenticated stable destinations:
+
+- Home
+- Learn / Subjects
+- Practice
+- Downloads
+- Account
+
+Focused descendants:
+
+- Subject
+- Lesson / Reader
+- Quiz/Attempt / Assessment
+
+No fake Personal Learning/Progress destinations before their roadmap stages.
+
+### Admin target groups
+
+- Overview
+- Curriculum
+- Content / Ingestion / OCR
+- AI Jobs / AI Review
+- Question Bank / Quizzes
+- Students / Access Codes
+- Operations / Notifications / Audit / System Status
+
+Valid authoring actions migrate into entity context rather than a catch-all page.
+
+## Design System
+
+Canonical spec:
+
+`docs/product/DESIGN_SYSTEM_SPEC.md`
+
+KEEP:
+
+- shared `packages/brand` semantic tokens;
+- approved teal/open-book/Cairo identity;
+- focus/touch/radius/spacing/motion foundations;
+- RTL logical property direction;
+- Reader width constraints;
+- reduced motion.
+
+IMPROVE:
+
+- app/admin layout roles;
+- safe areas;
+- Button/Field/Status/PageState/Search/Filter/Table/Dialog/Drawer primitives where repetition is proven;
+- Student shell/Reader/Assessment patterns;
+- Admin master/detail/review/long-running-operation patterns;
+- official brand asset usage.
+
+No “everything is a card” abstraction.
+
+## Content Language
+
+Canonical rules:
+
+`docs/product/CONTENT_LANGUAGE_RULES.md`
+
+Student must not see raw crypto/storage/cache/revision/sync/server mechanics. Example meanings:
+
+- valid saved package → `متاح بدون إنترنت`;
+- stale saved lesson → `يوجد تحديث للدرس`;
+- network failure → `تعذر الاتصال. تحقق من الإنترنت وحاول مجددًا.`
+
+Admin may use domain terms such as OCR, AI Review, Question Bank and publication, but Stage numbers, parity, DB pool/SSL/cookie config, raw UUID/event keys and implementation commentary are not default product copy.
+
+## Refoundation Implementation Roadmap
+
+Canonical plan:
+
+`docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`
+
+Sequence:
+
+- UX-B00 foundation audit/docs;
+- UX-B01 shared routing/shell/presentation foundation;
+- UX-B02-B05 Student shell/learning/assessment/offline-account;
+- UX-B06-B14 Admin shell/workflow families;
+- UX-B15 shared cleanup/legacy removal;
+- UX-B16 responsive/RTL/a11y closure;
+- UX-B17 browser/visual/regression closure.
+
+## Changes Made — 2026-09-12
+
+### PR #41 skill-package integration
+
+Merged required project-scoped skill and focused references before UX implementation.
+
+Merge: `c3ddef04933772116c3bd9cdf29eb5a973c527fd`.
+
+### UX-B00 foundation branch
+
+Branch: `ux/refoundation-foundation`.
+
+Created:
+
+- `docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md`
+- `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
+- `docs/product/DESIGN_SYSTEM_SPEC.md`
+- `docs/product/CONTENT_LANGUAGE_RULES.md`
+- `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`
+
+Central `PROJECT_STATUS.md` and this log synchronized during the batch.
+
+Issue #16 updated during work; comment ID `5647502620` records the audit branch/head and findings.
+
+No application code, API, database, Railway configuration, content publication or AI provider configuration changed in UX-B00.
+
+## Tests & Verification
+
+### PR #41
+
+Before merge:
+
+- PR state open/mergeable was verified;
+- final head `25f876d...` had all returned PR workflows completed successfully;
+- merge was performed with expected-head protection;
+- merge commit `c3ddef04933772116c3bd9cdf29eb5a973c527fd`.
+
+No separate merge-commit workflow runs were returned immediately after merge; this does not invalidate the already-green PR-head evidence.
+
+### UX-B00
+
+Source verification completed:
+
+- actual Student UI tree and primary flows inspected;
+- actual Admin UI tree/workspace families inspected;
+- package dependencies checked: no current routing dependency in either app;
+- brand tokens/assets inspected;
+- API composition inspected;
+- Student/Admin E2E inventories inspected;
+- current responsive CSS behavior inspected.
+
+Application lint/typecheck/build/browser runs are **not applicable to documentation-only UX-B00**. Exact-head PR CI is still required before merge.
+
+Redesigned browser/device/visual screenshots: **NOT YET VERIFIED** because implementation has not started.
+
+Relevant prior runtime evidence remains:
+
+- PR #38: 18/18 workflows SUCCESS; `STUDENT-016H` merged;
+- PR #39: 17/17 workflows SUCCESS; hosted Admin same-origin session continuity verified.
+
+## Content State
+
+Canonical source: `7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`.
+
+Inventory: 48 documents / 5,552 images.
+
+Bounded Grade 9 English proof remains 75 source images / 75 ready media assets / 300 variants / 75 Draft lesson assets / 10 lessons.
+
+Do not bulk-materialize full inventory during UX/UI refoundation.
+
+## Known Issues
+
+- Student live authenticated same-origin E2E after PR #39 — `NOT YET VERIFIED`.
+- visual/device inspection of redesigned UI — `NOT YET VERIFIED` until changed code exists.
+- exact icon library choice — `NOT YET VERIFIED / not needed for UX-B00`.
+- `AI-012..AI-019` live provider readiness — `NOT YET VERIFIED`.
+- Stage21 performance, Stage22 security, Stage24 final accessibility/device closure — later roadmap gates.
+- Stage28 Production Cutover — not complete.
+
+## Remaining Work
+
+Current batch closure:
+
+1. open foundation PR;
+2. verify exact-head CI;
+3. merge only after green evidence;
+4. refresh `main`;
+5. begin `UX-B01 — Shared frontend foundation`.
+
+Refoundation then follows the documented B01–B17 sequence.
+
+Exact normal-roadmap resume point remains:
+
+`STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`.
