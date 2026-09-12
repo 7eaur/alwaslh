@@ -2,118 +2,115 @@
 
 > Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not executed or inspected is `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-12**.
+Last synchronized: **2026-09-13**.
 
 ## Current management state
 
 **NORMAL ROADMAP: PAUSED**
 
-**ACTIVE TRACK: UX/UI REFOUNDATION**
+**ACTIVE TRACK: STUDENT UX/UI REFOUNDATION / EXPERIENCE REBUILD**
 
-**CURRENT BATCH: `UX-B04 — Student Practice / Assessment` — FINAL RESYNC / EXACT-HEAD REVERIFICATION**
+**ACTIVE PR: #53 — `refactor(student): rebuild the learner experience end to end`**
 
-**NEXT BATCH AFTER B04 MERGE: `UX-B05 — Student Downloads / Account / Copy Closure`**
+**ADMIN B06–B14: DEFERRED / SUPERSEDED PENDING ARCHITECTURE DECISION.** The dedicated **Super Admin Product Rebuild** workstream owns Admin product responsibilities, backend workflows, IA, navigation, frontend architecture and UX/UI. Do not patch or execute the old Admin batches in parallel.
 
-**ADMIN B06–B14: DEFERRED.** A dedicated **Super Admin Product Rebuild** workstream owns the Admin product/architecture/IA/frontend/UX rebuild and may supersede the old B06–B14 plan. Do not start or patch the old Admin batches before its Architecture Decision.
-
-Exact normal-roadmap return after the UX refoundation closes remains:
+Exact normal-roadmap return after Student/shared refoundation closes remains:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
 
-Canonical UX roadmap: `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
+## Verified baseline
 
-## Live main baseline used for the final B04 resync
+UX-B04 Student Practice / Assessment is **CLOSED / VERIFIED / MERGED**.
 
-Live `main` at the start of this final resync:
+- final synchronized B04 head: `56f19b88169160c8edd90c9cad8cf129a834b76e`;
+- final B04 matrix: **23/23 SUCCESS** after one same-SHA transient Chromium focus rerun;
+- PR #47 merged;
+- live `main` used to start the current Student branch: `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
 
-`8d0676443aa7e186c41a79cc011f7f828d1290ef`
+Existing verified backend/domain/security contracts remain preserved, including the Full Product Architecture Audit / FPA-002 authorization repair and Legacy Content work already present on the baseline.
 
-This main includes the Full Product Architecture Audit documentation and the independent `FPA-002` / SEC-01 Assessment authorization repair. The B04 branch was rebuilt from this live main and only the B04 Student/roadmap files were overlaid; the API authorization repair, its tests, audit documents, Legacy Content work and runtime evidence remain preserved.
+## Current Student product architecture
 
-Final conservative merge commit before the documentation reconciliation:
+Canonical Student architecture:
 
-`90f93904c2fd9969559fa3bfee9e9b94cf7820ab`
+`docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
 
-## Completed Student refoundation foundation
+Binding design order:
 
-- UX-B00 — DONE / VERIFIED / MERGED.
-- UX-B01 — DONE / VERIFIED / MERGED.
-- UX-B02 — DONE / VERIFIED / MERGED.
-- UX-B03 — DONE / VERIFIED / MERGED as `56ee51ab0d5669b4a38f9efec991ea79971d3503`.
-- UX-B04 — implementation and visual acceptance complete; final synchronized exact-head CI is being rerun after the latest main/audit resync.
+**Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
 
-## UX-B04 implemented product shape
+Acceptance bar:
 
-Routes:
+**Functional + Clear + Easy + Comfortable + Consistent + Fast + Maintainable + Professional**
 
-- `/app/practice` — Practice library and recent attempts.
-- `/app/practice/quizzes/:quizId` — quiz detail, learner-facing question-set choice, Practice/Test decision.
-- `/app/practice/attempts/:sessionId` — focused active attempt or completed result/review.
+Future-complete mobile navigation is intentionally limited to four primary destinations:
 
-Preserved contracts:
+- الرئيسية
+- التعلّم
+- التدريب
+- مكتبتي
 
-- API/PostgreSQL remain canonical authority.
-- Auth/Authorization/Entitlements remain server-owned.
-- published quiz/version snapshot behavior remains server-owned.
-- Assessment answer/scoring/finalization remain server-owned.
-- Practice gives immediate feedback; Test defers feedback until finalize.
-- `/v1` remains outside Service Worker Cache authority.
-- signed offline authorization/integrity/device/session contracts remain unchanged.
+`مكتبتي` is the future owner of Downloads + Stage17 Notes/Saved/Needs Review. Notifications remain an app-bar secondary action when Stage18 exists. Progress/Statistics/Achievements receive their own route when Stage19 exists. Unimplemented destinations must remain hidden until real contracts and behavior exist.
 
-Final B04 visual/product corrections include:
+## Current implementation state on PR #53
 
-- replaced the old two-column dashboard-like Assessment surface with list → detail → focused attempt → result/review composition;
-- direct attempt URLs restore canonical session state from the API;
-- focused attempt/review suppress distracting Student navigation;
-- learner-facing Arabic copy replaces implementation/version/server terminology;
-- result completion resets viewport to the result start and programmatically focuses its heading;
-- phone/desktop Visual QA covers Library, Quiz detail, Attempt and Result;
-- skip-link behavior is kept for normal product chrome and omitted only inside the focused attempt/review state where that chrome is absent.
+Implemented/refactored in the active branch:
 
-## B04 previously accepted exact-head evidence
+- first installed-app launch / Welcome experience;
+- activation and returning login rebuilt around learner-facing copy;
+- recovery guidance;
+- reusable Help / Instructions route (`/help`);
+- reusable Support / Contact guidance route (`/support`) without invented contact details;
+- removal of normal Student-visible cryptography/cache/session/roadmap jargon;
+- `App.tsx` reduced to session orchestration rather than owning every screen;
+- account wrapper removed from all authenticated destinations;
+- unified Student app bar / adaptive navigation / four-item mobile bottom navigation;
+- connection state shown only when degraded/actionable;
+- Home simplified around real available destinations rather than fake metrics;
+- Learn / Subject hierarchy preserved with calmer presentation;
+- focused Reader presentation rebuilt without obsolete AccountPage CSS coupling;
+- Downloads rebuilt as saved + available learner library while preserving current Stage16 materialization/integrity authority;
+- Account is the single visible owner for access/class-code/logout/help tasks;
+- Stage14 stale presentation stylesheet removed;
+- historical `assessment-polish.css` removed and replaced with owned Assessment integration styling;
+- Stage14 browser assertions updated to verify real learner outcomes instead of legacy copy/chrome.
 
-Before the latest main audit resync, docs-synchronized head:
+## Not yet closed
 
-`ee0007d553cd6b351b263a6fc86e4a3333288e9f`
+The Student rebuild is **NOT YET COMPLETE / NOT YET MERGED**.
 
-passed **22/22 triggered workflows**, including:
+Still required before closure:
 
-- B04 `34717052253` — SUCCESS
-- Stage14 `34717052270` — SUCCESS
-- Stage15 `34717052276` — SUCCESS
-- Stage16 `34717052304` — SUCCESS
-- B03 `34717052258` — SUCCESS
-- B02 `34717052244` — SUCCESS
-- B01 `34717052303` — SUCCESS
-- Rebuild `34717052226` — SUCCESS
-- Stage9 Content Import `34717052290` — SUCCESS
+1. finish exact-head regression feedback for Stage14/B01/B02/B03/B04/B05/Stage15/Stage16/Rebuild and all triggered workflows;
+2. correct any real browser regressions at root cause;
+3. finish Practice/Assessment integration cleanup where old shell selectors remain;
+4. continue removal/consolidation of dead legacy CSS in `styles.css` only after executable parity proves it safe;
+5. inspect phone + desktop Visual QA artifacts for Welcome/Auth/Help/Support/Home/Learn/Reader/Practice/Downloads/Account where fixtures permit;
+6. keep production-copy scan blocking implementation/stage/roadmap terminology;
+7. update `PROJECT_ENGINEERING_LOG.md` with final findings/decisions/tests;
+8. synchronize with any movement of live `main` before merge;
+9. merge PR #53 only with exact-head guard after functional + visual acceptance.
 
-The latest resync changes the PR head, so these are historical acceptance evidence only; merge requires a fresh all-green matrix on the new synchronized exact head.
+## Explicit non-goals in this refoundation
 
-## Parallel Full Product Architecture Audit checkpoint
+- do not implement Stage17 Notes/Favorites/Needs Review prematurely;
+- do not implement Stage18 Notifications prematurely;
+- do not implement Stage19 Progress/Statistics/Achievements prematurely;
+- do not silently implement remaining Stage16 cold-start offline Reader authority inside presentation work;
+- do not modify the dedicated Super Admin rebuild.
 
-- Audit PR #49 merged as `4249c91e434994343bfe3bd685af6d101c987dc1`.
-- SEC-01 / `FPA-002` repair merged in PR #50 at `f60f263f9fecfa33a3876ef7df6334c222c7cf3a`.
-- Repair fixed abandoned Assessment-session authorization and has PostgreSQL/Chromium verification.
-- Railway API deployment `1e5a749a-10ac-47fd-99d8-e2653fce154b` reported SUCCESS.
-- `FPA-013` remains open: Reader active-search-match DOM focus finding.
-- Authenticated production-path verification remains `NOT YET VERIFIED` where the audit says so.
+## Preserved authority
 
-These audit results are preserved and do not reopen completed Student UX batches.
+- API/PostgreSQL canonical;
+- Auth/Authz/Entitlements server-owned;
+- media ready ≠ published;
+- AI never auto-publishes;
+- Question Bank / published immutable Quiz version authority unchanged;
+- Assessment scoring/finalization server-owned;
+- `/v1` excluded from Service Worker Cache authority;
+- signed offline authorization/integrity/device/session contracts unchanged;
+- no password/session token/device private key stored as offline product data.
 
-## Binding design-quality rule
+## Immediate next action
 
-The existing UI is functional evidence, not a visual preservation contract. Changed screens must meet:
-
-**Functional + Clear + Elegant + Consistent + Fast + Maintainable + Professional**.
-
-Student is an Arabic-first/RTL-first educational app, not a dashboard. The responsible engineer/designer owns final ship quality, not incremental similarity to legacy visuals.
-
-## Immediate next actions
-
-1. Run full exact-head CI on the new B04 synchronized documentation head.
-2. If fully green, update PR #47 and Issue #16, merge PR #47 with exact-head guard, and verify live `main` SHA.
-3. Start UX-B05 only from that live main.
-4. Complete B05 fully: Downloads, Account, copy closure, loading/error/empty/offline, RTL/accessibility/mobile polish.
-5. After B05 merge, record Student Refoundation core B01–B05 complete.
-6. Stop before Admin B06–B14 and synchronize with the dedicated Super Admin Product Rebuild workstream.
+Stabilize the current Student experience head through real Chromium regression + Visual QA, finish the remaining presentation-debt cleanup without changing deferred business contracts, then close/merge PR #53. After that, synchronize with the dedicated Super Admin rebuild before shared final responsive/RTL/a11y/visual-regression closure and return to `STUDENT-016I`.
