@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-12",
+  "projectRef": "zhbgbmqhonqmzpqfiehs",
+  "sourceNamespace": "supabase:zhbgbmqhonqmzpqfiehs",
+  "mode": "read_only_audit",
+  "relevantTables": {
+    "classes": {
+      "rows": 15,
+      "primaryKey": ["id"]
+    },
+    "subjects": {
+      "rows": 58,
+      "primaryKey": ["id"],
+      "foreignKeys": [{"columns": ["class_id"], "references": "classes(id)"}]
+    },
+    "subject_extra_classes": {
+      "rows": 0,
+      "primaryKey": ["id"],
+      "foreignKeys": [
+        {"columns": ["subject_id"], "references": "subjects(id)"},
+        {"columns": ["class_id"], "references": "classes(id)"}
+      ]
+    },
+    "lessons": {
+      "rows": 5273,
+      "semanticUnit": "page_or_image_record_not_final_logical_lesson",
+      "primaryKey": ["id"],
+      "foreignKeys": [{"columns": ["subject_id"], "references": "subjects(id)"}],
+      "contentTypeCounts": {"lesson": 3416, "exam_model": 1857},
+      "rowsWithImages": 5273,
+      "imageReferences": 5273,
+      "embeddedQuestionItems": 25715
+    },
+    "quizzes": {
+      "rows": 0,
+      "primaryKey": ["id"],
+      "foreignKeys": [{"columns": ["subject_id"], "references": "subjects(id)"}]
+    },
+    "saved_questions": {
+      "rows": 0,
+      "primaryKey": ["id"],
+      "foreignKeys": [{"columns": ["lesson_id"], "references": "lessons(id)"}]
+    }
+  },
+  "storageBuckets": [
+    {
+      "id": "lesson_content",
+      "public": true,
+      "objectCount": 9075,
+      "totalBytesFromMetadata": 1495150104,
+      "mimeCounts": {"image/jpeg": 7105, "image/webp": 1970}
+    },
+    {
+      "id": "student_notes_media",
+      "public": true,
+      "objectCount": 0,
+      "totalBytesFromMetadata": 0
+    }
+  ],
+  "referencedLessonStorage": {
+    "referenceCount": 5273,
+    "distinctUrlCount": 5273,
+    "matchedObjectCount": 5273,
+    "missingObjectCount": 0,
+    "referencedBytesFromMetadata": 1041164935
+  },
+  "candidateLogicalLessonAnalysis": {
+    "groupingRule": "subject_id + normalized_title + contiguous page_number run",
+    "candidateGroups": 3148,
+    "nullPageNumbers": 0,
+    "duplicateSubjectPagePositions": 6,
+    "repeatedNoncontiguousTitleScopes": 18,
+    "logicalGroupsInRepeatedTitleScopes": 66,
+    "blankTitles": 0
+  },
+  "questionInventory": {
+    "location": "lessons.ai_questions",
+    "total": 25715,
+    "types": {
+      "mcq": 15230,
+      "true_false": 10466,
+      "direct": 10,
+      "medium": 4,
+      "easy": 3,
+      "hard": 2
+    },
+    "difficulty": {"medium": 23179, "easy": 1790, "hard": 746},
+    "rawFingerprint": {
+      "unique": 25713,
+      "duplicateGroups": 2,
+      "duplicateExtraRows": 2
+    }
+  },
+  "materializationState": {
+    "fullPerLessonManifest": "PENDING_TARGET_AND_BYTE_GATES",
+    "rawImageBytes": "NOT_AVAILABLE_THROUGH_CURRENT_CONNECTOR",
+    "sha256": "NOT_YET_VERIFIED",
+    "dimensions": "NOT_YET_VERIFIED_FROM_BYTES",
+    "perceptualHashes": "NOT_YET_VERIFIED"
+  }
+}
