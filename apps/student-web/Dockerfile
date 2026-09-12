@@ -17,6 +17,7 @@ ENV VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI=${VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI}
 
 # Production traffic is intentionally same-origin. Local/dev builds may still
 # provide VITE_API_BASE_URL outside this production Docker image.
+ENV VITE_API_BASE_URL=""
 RUN npm run build --prefix apps/student-web --ignore-scripts
 
 FROM nginx:1.27-alpine AS runtime
