@@ -1,15 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import type {
+  LegacySubjectDryRun,
+  LegacySubjectImportResult,
+} from "../src/content/legacy-supabase-importer.js";
 import {
   assertFirstProductionBatchDryRun,
   assertReplayStable,
   FIRST_PRODUCTION_BATCH_FLAG,
   parseFirstProductionBatchFlag,
 } from "../src/content/legacy-supabase-startup.js";
-import type {
-  LegacySubjectDryRun,
-  LegacySubjectImportResult,
-} from "../src/content/legacy-supabase-importer.js";
 import type { LegacySubjectVerificationResult } from "../src/content/legacy-supabase-verifier.js";
 
 function validDryRun(): LegacySubjectDryRun {
@@ -91,7 +91,10 @@ test("production legacy startup requires the single explicit bounded flag", () =
     targetSubjectSlug: "english",
     documentOrder: 0,
   });
-  assert.throws(() => parseFirstProductionBatchFlag("grade9-all-content"), /legacy_startup_batch_flag_not_allowed/);
+  assert.throws(
+    () => parseFirstProductionBatchFlag("grade9-all-content"),
+    /legacy_startup_batch_flag_not_allowed/,
+  );
 });
 
 test("production legacy startup refuses source drift from the approved 69/62/104 contract", () => {
