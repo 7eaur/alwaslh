@@ -31,6 +31,7 @@ Specialized references cover:
 - Student PWA / installed-app UX;
 - Super Admin workspace UX;
 - Design System + Arabic RTL + responsive + accessibility;
+- production-ready visible content/copy and data presentation;
 - React/Vite frontend engineering;
 - Backend/API/database/security/performance;
 - educational product logic;
@@ -39,6 +40,19 @@ Specialized references cover:
 - project architecture/change guardrails.
 
 Conflict priority is explicit: Product Owner direction and verified project authority/contracts outrank project references; project references outrank external plugins, generic skills and visual inspiration. Product Design, Mobbin and Figma are supporting tools, never canonical product authority.
+
+## Product Owner UX clarification — binding for refoundation
+
+Before redesigning, the owner must understand and preserve the original Alwaslh product idea, approved identity, Student/Admin mental models, business rules, and real flows. The approved identity sources under `packages/brand/` are mandatory evidence, including `BRAND_FOUNDATION.md`, `BRAND_GUIDELINES.md`, identity/tokens and production assets.
+
+Visible production UI must contain **display-ready human content**, not backend/process commentary. Internal API/database/cache/signature/revision/sync concepts remain hidden unless a dedicated Admin operations task genuinely needs them. Student wording must be simple educational Arabic; Admin wording should use real domain language, not code language. No raw enums, developer notes, fake metrics, or invented claims.
+
+Navigation/layout rule:
+
+- Dashboard is an overview/entry point, not the whole product in one long page.
+- Major Admin workflows get clear routes/pages and meaningful sub-pages; unrelated tables/forms/queues/actions must not be stacked into one scrolling wall.
+- Student is structured like an installed educational app: few stable destinations, deliberate drill-down, focused Reader and Assessment screens, and separate task boundaries instead of one long website page.
+- Student and Admin remain visually unified by identity/tokens/components/state semantics, but not by identical layout or density.
 
 ## Frozen baseline before skill-package batch
 
@@ -142,6 +156,7 @@ Required outcome:
 - strong Arabic RTL hierarchy;
 - responsive/mobile-first Student installed-app UX;
 - efficient dense Admin workspace patterns;
+- production-ready visible copy and meaningful data presentation;
 - loading/empty/error/offline/permission states;
 - accessibility baseline;
 - visual consistency without forcing Student and Admin into identical layouts;
@@ -226,17 +241,18 @@ Normal roadmap execution resumes only after:
 
 1. Student + Admin UX/code inventory audit;
 2. approved information architecture;
-3. unified design-system rules/tokens/primitives;
+3. unified design-system rules/tokens/primitives grounded in approved identity;
 4. corrected navigation/layout foundations;
-5. high-impact Student/Admin flows remediated;
-6. responsive behavior verified;
-7. accessibility baseline verified for changed components;
-8. changed loading/empty/error/offline/permission states verified;
-9. lint/typecheck/tests/build pass for changed apps;
-10. no backend/security/business-contract regression;
-11. `PROJECT_ENGINEERING_LOG.md` and `PROJECT_STATUS.md` synchronized;
-12. return marker remains `STUDENT-016I` unless new evidence proves a dependency/order change.
+5. production-ready visible text/data language for changed flows;
+6. high-impact Student/Admin flows remediated;
+7. responsive behavior verified;
+8. accessibility baseline verified for changed components;
+9. changed loading/empty/error/offline/permission states verified;
+10. lint/typecheck/tests/build pass for changed apps;
+11. no backend/security/business-contract regression;
+12. `PROJECT_ENGINEERING_LOG.md` and `PROJECT_STATUS.md` synchronized;
+13. return marker remains `STUDENT-016I` unless new evidence proves a dependency/order change.
 
 ## Next management action
 
-Use the unified skill package to perform a structured Student/Admin source-and-flow inventory audit. Do not begin broad visual implementation before the audit, IA and design-system decisions are evidence-backed.
+Use the unified skill package to perform a structured Student/Admin source-and-flow inventory audit. The audit must begin from the real product idea and approved brand sources, then map current/target IA, content language and screen boundaries before broad visual implementation.
