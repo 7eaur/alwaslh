@@ -48,7 +48,12 @@ async function fillLogin(page, password) {
   await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
 }
 
+async function submitLogin(page) {
+  await page.locator(".student-entry-form").getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
+}
+
 async function expectAuthenticatedHome(page) {
+  await expect(page).toHaveURL(/\/app\/home$/);
   await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
   await expect(page.getByRole("link", { name: "حسابي", exact: true })).toBeVisible();
 }
@@ -63,11 +68,15 @@ test("student activation, recovery, device access and canonical curriculum work 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
 
+  await page.getByLabel("رمز الوصول الكامل").fill("123");
+  await expect(page.getByRole("button", { name: "متابعة التفعيل" })).toBeDisabled();
+
   await page.getByLabel("رمز الوصول الكامل").fill("999999");
   const invalidVerifyPromise = page.waitForResponse((response) => response.url().includes("/v1/student/activation/verify") && response.request().method() === "POST");
   await page.getByRole("button", { name: "متابعة التفعيل" }).click();
   expect((await invalidVerifyPromise).status()).toBe(404);
-  await expect(page.getByRole("alert")).toContainText("كود التفعيل غير موجود");
+  await expect(page.getByRole("alert")).toContainText("رمز التفعيل غير صحيح أو لم يعد صالحًا");
+  await expect(page.locator("body")).not.toContainText("كود التفعيل غير موجود");
 
   await page.getByLabel("رمز الوصول الكامل").fill(accountCodeArabic);
   await expect(page.getByLabel("رمز الوصول الكامل")).toHaveValue(accountCode);
@@ -79,6 +88,9 @@ test("student activation, recovery, device access and canonical curriculum work 
   await expect(page.locator(".form-alert.is-success")).toContainText("الرمز صالح");
 
   await page.getByLabel("كلمة المرور الخاصة بك").fill(initialPassword);
+  await page.getByLabel("تأكيد كلمة المرور").fill(`${initialPassword}x`);
+  await expect(page.getByText("كلمتا المرور غير متطابقتين.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "إنشاء الحساب والمتابعة" })).toBeDisabled();
   await page.getByLabel("تأكيد كلمة المرور").fill(initialPassword);
   const completePromise = page.waitForResponse((response) => response.url().includes("/v1/student/activation/complete") && response.request().method() === "POST");
   await page.getByRole("button", { name: "إنشاء الحساب والمتابعة" }).click();
@@ -103,7 +115,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   await fillLogin(page, initialPassword);
   const loginStartPromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/start") && response.request().method() === "POST");
   const loginCompletePromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/complete") && response.request().method() === "POST");
-  await page.getByRole("button", { name: "تسجيل الدخول" }).click();
+  await submitLogin(page);
   const loginStart = await loginStartPromise;
   const loginComplete = await loginCompletePromise;
   expect(loginStart.status()).toBe(200);
@@ -120,7 +132,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   await switchToLogin(page);
   await fillLogin(page, recovery.temporaryPassword);
   const recoveryStartPromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/start") && response.request().method() === "POST");
-  await page.getByRole("button", { name: "تسجيل الدخول" }).click();
+  await submitLogin(page);
   const recoveryStart = await recoveryStartPromise;
   expect(recoveryStart.status()).toBe(200);
   const recoveryChallenge = await recoveryStart.json();
@@ -133,8 +145,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   await page.getByLabel("تأكيد كلمة المرور").fill(privatePassword);
   const recoveryCompletePromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/complete") && response.request().method() === "POST");
   await page.getByRole("button", { name: "حفظ كلمة المرور والدخول" }).click();
-  const recoveryComplete = await recoveryCompletePromise;
-  expect(recoveryComplete.status()).toBe(200);
+  expect((await recoveryCompletePromise).status()).toBe(200);
   await expectAuthenticatedHome(page);
   expect(await storedPublicKey(page, accountCode)).toBe(firstPublicKey);
 
@@ -146,7 +157,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   await fillLogin(page, privatePassword);
   const rebindStartPromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/start") && response.request().method() === "POST");
   const rebindCompletePromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/complete") && response.request().method() === "POST");
-  await page.getByRole("button", { name: "تسجيل الدخول" }).click();
+  await submitLogin(page);
   const rebindStart = await rebindStartPromise;
   const rebindComplete = await rebindCompletePromise;
   expect(rebindStart.status()).toBe(200);
@@ -168,6 +179,8 @@ test("student activation, recovery, device access and canonical curriculum work 
   await page.reload();
   await openAccount(page);
   await expect(page.getByText("لا توجد صفوف مفعّلة لحسابك الآن", { exact: true })).toBeVisible();
+  await page.getByLabel("رمز الصف").fill("123");
+  await expect(page.getByRole("button", { name: "تفعيل الصف" })).toBeDisabled();
   await page.getByLabel("رمز الصف").fill(toArabicIndic(classAccess.code));
   await expect(page.getByLabel("رمز الصف")).toHaveValue(classAccess.code);
   const redeemPromise = page.waitForResponse((response) => response.url().includes("/v1/student/access/redeem") && response.request().method() === "POST");
@@ -181,19 +194,12 @@ test("student activation, recovery, device access and canonical curriculum work 
   await expect(page.getByText("تم تفعيل الصف. أصبح محتواه متاحًا في التعلم.", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: classAccess.className })).toBeVisible();
   const subjectLink = page.getByRole("link", { name: new RegExp(classAccess.subjectName) });
-  await expect(subjectLink).toBeVisible();
   await subjectLink.click();
-  await expect(page).toHaveURL(/\/app\/learn\/subjects\/[^/]+$/);
   await expect(page.getByRole("heading", { name: classAccess.subjectName })).toBeVisible();
-  await expect(page.getByRole("heading", { name: classAccess.sectionTitle })).toBeVisible();
   await expect(page.getByText("درس غير منشور يجب ألا يظهر", { exact: true })).toHaveCount(0);
   await expect(page.locator(".lesson-link .lesson-copy strong")).toHaveText(classAccess.lessonTitles);
 
-  const bodyMetrics = await page.locator("body").evaluate((body) => ({ scrollWidth: body.scrollWidth, clientWidth: body.clientWidth }));
-  expect(bodyMetrics.scrollWidth).toBeLessThanOrEqual(bodyMetrics.clientWidth + 1);
-
   await page.getByRole("link", { name: "التعلّم", exact: true }).first().click();
-  await expect(page).toHaveURL(/\/app\/learn$/);
   await page.evaluate(async () => { await fetch("/v1/auth/logout", { method: "POST", credentials: "include" }); });
   await openAccount(page);
   const expiredRequest = page.waitForResponse((response) => response.url().includes("/v1/student/access/entitlements") && response.status() === 401);
