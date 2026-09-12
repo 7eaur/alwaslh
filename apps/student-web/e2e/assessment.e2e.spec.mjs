@@ -53,15 +53,10 @@ test("Student Practice/Test uses published snapshots, server feedback, resume an
 
   await page.goto("/");
   await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "التدريب", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/app\/practice$/);
   await expect(page.getByRole("heading", { name: "التدريبات والاختبارات" })).toBeVisible();
   await expect(page.getByRole("heading", { name: fixture.quizTitle })).toBeVisible();
-
-  const learningSurfaceOrder = await page
-    .locator(".curriculum-surface, .assessment-surface, .access-section")
-    .evaluateAll((elements) => elements.map((element) => element.className));
-  expect(learningSurfaceOrder[0]).toContain("curriculum-surface");
-  expect(learningSurfaceOrder[1]).toContain("assessment-surface");
-  expect(learningSurfaceOrder[2]).toContain("access-section");
   await expectNoHorizontalOverflow(page);
 
   const card = page.locator(`[data-quiz-id="${fixture.quizId}"]`);
