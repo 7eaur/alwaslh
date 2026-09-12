@@ -9,7 +9,6 @@ import {
 import { clearActiveOfflineLease } from "./offline-session";
 import { StudentAccessSection } from "./student-access";
 import {
-  initialStudentEntryMode,
   StudentBrand,
   StudentEntryExperience,
   type StudentEntryMode,
@@ -17,10 +16,20 @@ import {
 } from "./student-entry";
 
 type SessionPhase = "checking" | "anonymous" | "authenticated" | "offline" | "unavailable";
+const WELCOME_SEEN_KEY = "alwaslh-student:welcome-seen-v1";
+
+function initialEntryMode(): StudentEntryMode {
+  const standalone = window.matchMedia?.("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+  if (!standalone) return "activation";
+  try {
+    return window.localStorage.getItem(WELCOME_SEEN_KEY) === "1" ? "activation" : "welcome";
+  } catch {
+    return "welcome";
+  }
+}
 
 function useOnlineStatus(): boolean {
   const [online, setOnline] = useState(() => navigator.onLine);
-
   useEffect(() => {
     const handleOnline = () => setOnline(true);
     const handleOffline = () => setOnline(false);
@@ -31,7 +40,6 @@ function useOnlineStatus(): boolean {
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
-
   return online;
 }
 
@@ -67,7 +75,7 @@ export default function App() {
   const online = useOnlineStatus();
   const [phase, setPhase] = useState<SessionPhase>("checking");
   const [profile, setProfile] = useState<SessionProfile | null>(null);
-  const [mode, setMode] = useState<StudentEntryMode>(() => initialStudentEntryMode());
+  const [mode, setMode] = useState<StudentEntryMode>(() => initialEntryMode());
   const [notice, setNotice] = useState<StudentEntryNotice | null>(null);
 
   async function checkSession() {
@@ -126,12 +134,7 @@ export default function App() {
   if (phase === "authenticated" && profile) {
     return (
       <div className="app-frame">
-        <StudentAccessSection
-          profile={profile}
-          online={online}
-          onSessionExpired={handleSessionExpired}
-          onLoggedOut={() => void handleLogout()}
-        />
+        <StudentAccessSection profile={profile} online={online} onSessionExpired={handleSessionExpired} onLoggedOut={() => void handleLogout()} />
       </div>
     );
   }
