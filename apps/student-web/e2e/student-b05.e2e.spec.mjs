@@ -14,7 +14,7 @@ async function expectNoOverflow(page) {
 }
 
 async function assertProductionCopy(page) {
-  await expect(page.locator("body")).not.toContainText(/SHA-256|Service Worker|Cache API|IndexedDB|localStorage|sessionStorage|ES256|P-256|content revision|revision|manifest|device key|مفتاح الجهاز|بصمة SHA/i);
+  await expect(page.locator("body")).not.toContainText(/SHA-256|Service Worker|Cache API|IndexedDB|localStorage|sessionStorage|ES256|P-256|content revision|revision|manifest|device key|مفتاح الجهاز|بصمة SHA|Stage\d*|roadmap|العقود الحالية|المراحل القادمة|مراحل التطبيق القادمة/i);
 }
 
 async function capture(page, name) {
@@ -29,6 +29,49 @@ async function capture(page, name) {
   }
   await page.setViewportSize({ width: 390, height: 844 });
 }
+
+test("Student entry, installed welcome, help and support are learner-facing", async ({ browser }) => {
+  const normal = await browser.newContext();
+  const normalPage = await normal.newPage();
+  await normalPage.goto("/app/home");
+  await expect(normalPage.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
+  await capture(normalPage, "entry-activation");
+
+  await normalPage.goto("/help");
+  await expect(normalPage.getByRole("heading", { name: "استخدام التطبيق خطوة بخطوة" })).toBeVisible();
+  await capture(normalPage, "help");
+
+  await normalPage.goto("/support");
+  await expect(normalPage.getByRole("heading", { name: "إذا واجهتك مشكلة، ابدأ من هنا" })).toBeVisible();
+  await expect(normalPage.getByText(/تواصل مع الإدارة أو الجهة التعليمية/)).toBeVisible();
+  await capture(normalPage, "support");
+  await normal.close();
+
+  const installed = await browser.newContext();
+  await installed.addInitScript(() => {
+    const nativeMatchMedia = window.matchMedia.bind(window);
+    window.matchMedia = (query) => {
+      if (query === "(display-mode: standalone)") {
+        return {
+          matches: true,
+          media: query,
+          onchange: null,
+          addListener() {},
+          removeListener() {},
+          addEventListener() {},
+          removeEventListener() {},
+          dispatchEvent() { return false; },
+        };
+      }
+      return nativeMatchMedia(query);
+    };
+  });
+  const installedPage = await installed.newPage();
+  await installedPage.goto("/app/home");
+  await expect(installedPage.getByRole("heading", { name: "تعلّم، تدرّب، وارجع لما تحتاجه بسهولة." })).toBeVisible();
+  await capture(installedPage, "installed-welcome");
+  await installed.close();
+});
 
 test("B05 Downloads and Account are learner-facing, responsive and honest offline", async ({ page, context }) => {
   const fixture = createReaderFixture();
@@ -63,10 +106,12 @@ test("B05 Downloads and Account are learner-facing, responsive and honest offlin
   await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "لديك رمز صف جديد؟" })).toBeVisible();
   await expect(page.getByRole("button", { name: "تسجيل الخروج" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "التعليمات والمساعدة" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "الدعم والتواصل" })).toBeVisible();
   await capture(page, "account");
 
   await page.getByRole("link", { name: "الرئيسية", exact: true }).first().click();
   await expect(page.locator(".student-account-section")).toHaveCount(0);
-  await page.getByRole("link", { name: "التعلم", exact: true }).first().click();
+  await page.getByRole("link", { name: "التعلّم", exact: true }).first().click();
   await expect(page.locator(".student-account-section")).toHaveCount(0);
 });
