@@ -1,72 +1,91 @@
-# QA and Browser Verification
+# QA & Browser Verification
 
-Do not approve a UI refactor from code review alone.
+Browser verification is required for UX/UI changes because correctness cannot be inferred from code or build success alone.
 
-## Minimum batch verification
+## Verify the real task
 
-Run what applies:
-- lint
-- TypeScript/typecheck
-- unit tests
-- integration/API tests
-- production build
-- targeted Playwright/browser flows
+For each changed flow verify:
 
-Use existing repository workflows as the executable contract. Do not weaken tests to make a redesign pass.
+- entry point;
+- expected route/page hierarchy;
+- primary action;
+- back/exit path;
+- loading/empty/error/offline/permission states;
+- responsive behavior;
+- keyboard/focus behavior where applicable;
+- visible copy/data quality;
+- no leaked implementation jargon;
+- no unrelated workflow sections stacked into the same page without a product reason.
 
-## Browser checks
+## Student device coverage
 
-For changed Student screens verify at least:
-- narrow mobile
-- common mobile
-- tablet
-- desktop
-- RTL
-- keyboard/focus where interactive
-- loading
-- empty
-- error
-- offline/connection transition when relevant
-- installed/PWA context when the feature depends on it
+At minimum cover representative:
 
-For changed Admin screens verify:
-- common desktop
-- narrower laptop/tablet fallback
-- dense realistic data
-- long Arabic labels
-- table overflow/reflow
-- dialogs/drawers/forms
-- keyboard/focus
-- loading/empty/error/permission/conflict states where applicable
+- narrow phone;
+- common phone;
+- tablet;
+- desktop/browser fallback.
 
-## Regression checks
+For PWA-related changes also verify installed/app-like viewport behavior where tooling permits.
 
-Verify:
-- navigation/back behavior
-- session persistence
-- authorization errors
-- duplicate submissions
-- stale async responses
-- destructive confirmation
-- no console errors
-- no unexpected network loops
-- no layout shift that blocks actions
+Check safe-area collisions, sticky/bottom navigation, virtual keyboard interactions, and scroll traps.
 
-For protected/offline Student flows, retain existing tamper/expiry/account/device/integrity tests.
+## Admin coverage
 
-## Visual review
+Verify realistic desktop widths first, then responsive fallback.
 
-Screenshots are evidence, not the only evidence.
+Check:
+- global navigation grouping;
+- contextual navigation;
+- page title/action hierarchy;
+- tables at realistic column/data density;
+- filter/search behavior;
+- forms/dialogs/drawers;
+- long labels and Arabic wrapping;
+- no dashboard/page becomes an unstructured wall of unrelated sections.
 
-Compare:
-- hierarchy
-- spacing rhythm
-- typography
-- action priority
-- state consistency
-- RTL correctness
-- clipping/overflow
-- focus visibility
-- responsive composition
+## Visible-content QA
 
-A polished screenshot with broken flows is a failed batch.
+Treat poor copy as a product defect when it confuses the user.
+
+Reject screens containing:
+- TODO/placeholder/developer notes;
+- raw enum keys;
+- stack/API/database/cache/signature/revision/sync terminology without a genuine operator need;
+- fake KPIs or invented claims;
+- inconsistent names for the same domain concept;
+- buttons whose labels describe implementation instead of user intent.
+
+## Automated/browser tests
+
+Use Playwright/browser tooling for meaningful user journeys, not only selectors.
+
+Prefer assertions on:
+- visible user state;
+- navigation destination;
+- accessibility role/name;
+- persistence/resume where relevant;
+- error/recovery behavior;
+- actual responsive composition;
+- offline/online transitions where relevant.
+
+Avoid brittle tests coupled to decorative DOM structure.
+
+## Visual regression
+
+Use screenshots when layout consistency, responsive behavior, RTL, or identity compliance is material.
+
+Review screenshots as evidence, not as proof that interactions/business behavior are correct.
+
+## Completion gate
+
+A frontend batch is not complete until:
+
+1. applicable lint/typecheck/tests pass;
+2. production build passes;
+3. changed browser flows work;
+4. changed responsive targets are inspected;
+5. changed accessibility/focus behavior is inspected;
+6. visible copy/data is production-ready;
+7. no verified backend/security/business contract regressed;
+8. project status/log are updated.
