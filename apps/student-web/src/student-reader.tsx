@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ApiRequestError,
   getStudentLessonReader,
   isMissingSessionError,
   studentAssetContentUrl,
   type StudentLessonReader,
   type StudentReaderAsset,
 } from "./auth-api";
+import { studentErrorMessage } from "./student-error-copy";
 import { studentSubjectHref, type StudentLessonContext } from "./student-learning-model";
 
 type ReaderState =
@@ -17,8 +17,7 @@ type ReaderState =
   | { status: "error"; message: string };
 
 function requestMessage(error: unknown): string {
-  if (error instanceof ApiRequestError) return error.message;
-  return "تعذر فتح الدرس. حاول مرة أخرى.";
+  return studentErrorMessage(error, "reader");
 }
 
 function normalizeSearch(value: string): string {
