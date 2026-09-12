@@ -143,7 +143,8 @@ export function assertReplayStable(
   replayVerification: LegacySubjectVerificationResult,
 ): void {
   if (first.runId !== replay.runId) throw new Error("legacy_startup_replay_changed_import_run");
-  if (replay.newMediaAssets !== 0) throw new Error(`legacy_startup_replay_created_media:${replay.newMediaAssets}`);
+  if (replay.newMediaAssets !== 0)
+    throw new Error(`legacy_startup_replay_created_media:${replay.newMediaAssets}`);
   if (
     replay.lessons !== first.lessons ||
     replay.sourceAssets !== first.sourceAssets ||
@@ -282,11 +283,7 @@ function assertProtectedState(baseline: ProtectedState, current: ProtectedState)
   }
 }
 
-async function jsonRows(
-  database: Database,
-  text: string,
-  values: readonly unknown[],
-): Promise<unknown[]> {
+async function jsonRows(database: Database, text: string, values: readonly unknown[]): Promise<unknown[]> {
   const rows = await database.query<{ row: unknown }>(text, values);
   return rows.map((entry) => entry.row);
 }
@@ -308,7 +305,9 @@ async function createVerifiedSnapshot(
   for (const variant of variants) {
     const bytes = await storage.read(variant.storage_key);
     if (bytes.byteLength !== Number(variant.byte_size) || sha256(bytes) !== variant.checksum_sha256) {
-      throw new Error(`legacy_startup_snapshot_media_integrity_failed:${variant.media_asset_id}:${variant.kind}`);
+      throw new Error(
+        `legacy_startup_snapshot_media_integrity_failed:${variant.media_asset_id}:${variant.kind}`,
+      );
     }
   }
 
@@ -371,7 +370,10 @@ async function createVerifiedSnapshot(
   await writeFile(filePath, serialized, { encoding: "utf8", flag: "wx" });
   const persisted = await readFile(filePath, "utf8");
   if (sha256(persisted) !== digest) throw new Error("legacy_startup_snapshot_readback_hash_mismatch");
-  const parsed = JSON.parse(persisted) as { schemaVersion?: number; inspection?: { counts?: { lessons?: number } } };
+  const parsed = JSON.parse(persisted) as {
+    schemaVersion?: number;
+    inspection?: { counts?: { lessons?: number } };
+  };
   if (parsed.schemaVersion !== 1 || parsed.inspection?.counts?.lessons !== 10) {
     throw new Error("legacy_startup_snapshot_readback_structure_invalid");
   }
@@ -559,7 +561,14 @@ export async function runLegacyContentStartupBatch(
       }
     };
 
-    const first = await importLegacySubject({ database, storage, client, mapping, dryRun, onProgress: progress });
+    const first = await importLegacySubject({
+      database,
+      storage,
+      client,
+      mapping,
+      dryRun,
+      onProgress: progress,
+    });
     journal = await writeAttempt(config, journal, "first-import-complete");
     phaseBeforeFailure = journal.phase;
     log("legacy_startup_first_import_complete", first as unknown as Record<string, unknown>);
@@ -568,20 +577,39 @@ export async function runLegacyContentStartupBatch(
     await assertStudentPublicationFence(database, mapping);
     journal = await writeAttempt(config, journal, "first-verification-complete");
     phaseBeforeFailure = journal.phase;
-    log("legacy_startup_first_verification_complete", firstVerification as unknown as Record<string, unknown>);
+    log(
+      "legacy_startup_first_verification_complete",
+      firstVerification as unknown as Record<string, unknown>,
+    );
 
-    const replay = await importLegacySubject({ database, storage, client, mapping, dryRun, onProgress: progress });
+    const replay = await importLegacySubject({
+      database,
+      storage,
+      client,
+      mapping,
+      dryRun,
+      onProgress: progress,
+    });
     journal = await writeAttempt(config, journal, "replay-import-complete");
     phaseBeforeFailure = journal.phase;
     log("legacy_startup_replay_import_complete", replay as unknown as Record<string, unknown>);
 
-    const replayVerification = await verifyLegacySubjectImport({ database, storage, client, mapping, dryRun });
+    const replayVerification = await verifyLegacySubjectImport({
+      database,
+      storage,
+      client,
+      mapping,
+      dryRun,
+    });
     await assertStudentPublicationFence(database, mapping);
     assertReplayStable(first, replay, firstVerification, replayVerification);
     assertProtectedState(journal.protectedBaseline, await captureProtectedState(database));
     journal = await writeAttempt(config, journal, "replay-verification-complete");
     phaseBeforeFailure = journal.phase;
-    log("legacy_startup_replay_verification_complete", replayVerification as unknown as Record<string, unknown>);
+    log(
+      "legacy_startup_replay_verification_complete",
+      replayVerification as unknown as Record<string, unknown>,
+    );
 
     if (!journal.snapshotPath || !journal.snapshotSha256 || !journal.snapshotByteSize) {
       throw new Error("legacy_startup_verified_snapshot_missing_at_completion");
