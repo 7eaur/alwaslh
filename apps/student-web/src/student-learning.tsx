@@ -33,7 +33,8 @@ function requestMessage(error: unknown): string {
   return "تعذر تحميل موادك ودروسك. حاول مرة أخرى.";
 }
 
-function decodeRouteId(value: string): string | null {
+function decodeRouteId(value: string | undefined): string | null {
+  if (!value) return null;
   try {
     return decodeURIComponent(value);
   } catch {
