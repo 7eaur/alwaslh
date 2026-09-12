@@ -2,7 +2,7 @@
 
 > Current consolidated engineering truth. Code, PostgreSQL migrations, executable CI and live runtime evidence outrank prose. Historical detail remains in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-12 — normal roadmap paused for UX/UI refoundation; return point is STUDENT-016I.**
+Last consolidated: **2026-09-12 — normal roadmap paused for UX/UI refoundation; unified repository skill package prepared; return point remains STUDENT-016I.**
 
 ## Project Understanding
 
@@ -39,11 +39,11 @@ Stable rules:
 
 ## Current Position
 
-Frozen live baseline before this documentation branch:
+Live `main` before the skill-package batch:
 
-`main@e2344d22820a972b6a29f7d5cca16a94b670cd10`
+`5513d7ba7f3aac11231479c99d656cbffe458a9d`
 
-This is PR #39 merge commit.
+This includes PR #40 and the formal UX/UI pause/resume checkpoint.
 
 Stage state:
 
@@ -86,13 +86,16 @@ Student authenticated hosted same-origin E2E after PR #39: `NOT YET VERIFIED`.
 - **AD-194** — production browser API traffic uses same-origin `/v1` proxying.
 - **AD-195** — normal roadmap pauses before 016I while UX/UI foundations are remediated.
 - **AD-196** — Student and Admin share one design foundation/state language but retain different density and interaction models.
+- **AD-197** — project capability guidance uses one repository-scoped skill entry point plus progressive-disclosure references; do not install overlapping project-specific skills that compete for the same tasks.
+- **AD-198** — external design tools/references such as Product Design, Mobbin and Figma are subordinate to Product Owner direction, live project evidence, security/business contracts and project-specific skill rules.
 
 ## Audit Findings
 
 | ID | Severity | Area | Problem | Solution | Status |
 |---|---:|---|---|---|---|
-| `DOC-PAUSE-001` | P2 | Continuity | stale docs described 016H as open after PR #38 | synchronize status/log and add explicit pause/resume document | FIXED in this docs branch |
+| `DOC-PAUSE-001` | P2 | Continuity | stale docs described 016H as open after PR #38 | synchronize status/log and add explicit pause/resume document | FIXED |
 | `UX-FOUNDATION-001` | P1 | UX/UI | Admin is cognitively heavy and Student UI foundation is structurally weak/inconsistent | structured source/flow audit, IA redesign and unified design system before more features | ACTIVE |
+| `SKILL-FOUNDATION-001` | P2 | Engineering governance | multiple generic design/frontend skills could conflict or override project contracts | one project router skill with task-specific references and explicit conflict order | IMPLEMENTED in current branch |
 | `STUDENT-016I` | P1 | Offline/PWA | true browser-close/restart/network-unavailable Reader is not closed | resume after UX/UI refoundation | PAUSED / NEXT ROADMAP ITEM |
 | `STUDENT-016R` | P1 | Reconnect | full revalidation/purge is incomplete | revalidate server authority and purge invalid local content | OPEN |
 | `STUDENT-016S` | P1 | Sync | schema primitives exist but full delta flow is not proven | implement writers/cursor/delta/client application | OPEN |
@@ -100,25 +103,63 @@ Student authenticated hosted same-origin E2E after PR #39: `NOT YET VERIFIED`.
 
 ## Changes Made — 2026-09-12
 
-Documentation-only pause batch:
+### UX/UI pause batch
 
 - created `docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md`;
-- synchronized `PROJECT_STATUS.md` with PR #38/#39 reality;
-- consolidated this log around the actual current state;
-- recorded the UX/UI refoundation as the active management track;
+- synchronized status/log with PR #38/#39 reality;
 - recorded exact return point as `STUDENT-016I`.
 
-No application code, migrations, Railway configuration, PostgreSQL data, content publication or AI provider configuration changed.
+### Unified skill-package batch
+
+Branch: `chore/alwaslh-skill-package`.
+
+Initial skill commit: `832a0c66b150dfb198be3b5f42a5792ac687f0b2`.
+
+Created one triggerable repository skill:
+
+`.agents/skills/alwaslh-product-engineering/SKILL.md`
+
+Created focused progressive-disclosure references:
+
+- `references/project-guardrails.md`
+- `references/student-pwa-app-ux.md`
+- `references/admin-workspace-ux.md`
+- `references/design-system-rtl-a11y.md`
+- `references/frontend-engineering.md`
+- `references/backend-security-performance.md`
+- `references/educational-product-logic.md`
+- `references/qa-browser-verification.md`
+- `references/research-design-tools.md`
+
+Design rationale:
+
+- one skill name/trigger avoids competing project-specific skills;
+- references are loaded only when the task needs them;
+- Student PWA is explicitly treated as an installed educational app experience, not a small website;
+- Admin is explicitly treated as a dense operational workspace, not a Student-like UI;
+- shared Design System/RTL/accessibility rules do not force identical layout/density;
+- external design tools remain advisory and cannot override verified contracts;
+- backend/security/performance guidance is included without turning the UX refoundation into a backend rewrite.
+
+No application code, migrations, Railway configuration, PostgreSQL data, content publication or AI provider configuration changed in this skill-package batch.
 
 ## Tests & Verification
 
-No product code changed in this documentation batch, so no new product test claim is made.
+Skill-package structural checks completed in the working session:
 
-Relevant verified evidence remains:
+- baseline recursive tree contained no existing `.agents/skills` path — no repository skill-name collision found;
+- `SKILL.md` frontmatter contains one valid lower-case hyphenated name and a task-specific description;
+- YAML frontmatter parse check — PASS;
+- all nine referenced files were created under the same skill folder;
+- no second project-specific triggerable skill was introduced;
+- no product source code changed.
+
+GitHub CI/PR verification for the final branch head remains required before merge.
+
+Relevant existing product evidence remains:
 
 - PR #38: 18/18 workflows SUCCESS;
 - PR #39: 17/17 workflows SUCCESS;
-- PR #39 tested tree equals current recovery baseline tree;
 - hosted Admin same-origin authenticated persistence verified live.
 
 ## Content State
@@ -147,9 +188,11 @@ Do not bulk-materialize the full inventory during UX/UI maintenance.
 
 **UX/UI REFOUNDATION + DESIGN SYSTEM + STUDENT/ADMIN EXPERIENCE REMEDIATION**
 
-Before broad UI implementation:
+The unified project skill package is now the governing capability layer for the upcoming audit and redesign work.
 
-1. establish the design/frontend/product skill package and governing rules;
+Next sequence:
+
+1. merge/verify the unified skill package;
 2. inventory Student routes/screens/components/states;
 3. inventory Admin routes/workflows/components/states;
 4. map current and target information architecture;
