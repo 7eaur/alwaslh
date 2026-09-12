@@ -5,6 +5,7 @@ import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
 import type { AdminContentOperationsService } from "./admin-operations.js";
+import type { AdminContentPreviewService } from "./admin-preview.js";
 
 const OverviewQuerySchema = z.object({
   classSlug: z.string().trim().min(1).max(160).optional(),
@@ -42,6 +43,7 @@ export function registerAdminContentOperationsRoutes(
   config: AppConfig,
   auth: AuthService,
   operations: AdminContentOperationsService,
+  preview: AdminContentPreviewService,
 ): void {
   app.get("/v1/admin/content-operations", async (request) => {
     await adminActor(request, config, auth);
@@ -71,6 +73,19 @@ export function registerAdminContentOperationsRoutes(
     await adminActor(request, config, auth);
     const params = parseBody(ExtractionParamsSchema, request.params);
     return { extraction: await operations.ocrExtraction(params.extractionId) };
+  });
+
+  app.get("/v1/admin/content-operations/ocr/:extractionId/preview", async (request, reply) => {
+    await adminActor(request, config, auth);
+    const params = parseBody(ExtractionParamsSchema, request.params);
+    const content = await preview.ocrSource(params.extractionId);
+    reply.header("Content-Type", content.mimeType);
+    reply.header("Content-Length", String(content.byteSize));
+    reply.header("Cache-Control", "private, no-store");
+    reply.header("Pragma", "no-cache");
+    reply.header("X-Content-Type-Options", "nosniff");
+    reply.header("ETag", `"${content.checksumSha256}"`);
+    return reply.send(content.bytes);
   });
 
   app.patch("/v1/admin/content-operations/ocr/:extractionId/review", async (request) => {
