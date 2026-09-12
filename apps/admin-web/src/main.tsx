@@ -6,6 +6,7 @@ import { BrowserRouter } from "react-router-dom";
 import "./styles.css";
 import "./content-ingestion.css";
 import "./foundation.css";
+import "./admin-shell.css";
 import { AdminRouter } from "./router";
 
 const root = document.getElementById("root");
