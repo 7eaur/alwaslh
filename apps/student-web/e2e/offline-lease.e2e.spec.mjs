@@ -154,7 +154,7 @@ async function activateStudent(page, code, password) {
 }
 
 async function switchToLogin(page) {
-  await page.locator(".student-auth-switch").getByRole("button", { name: "لدي حساب بالفعل" }).click();
+  await page.locator(".student-auth-switch").getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
   await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
 }
 
@@ -198,11 +198,14 @@ async function openAccount(page) {
   await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
 }
 
-async function refreshAccess(page) {
-  await openAccount(page);
-  const refresh = page.locator(".access-section").getByRole("button", { name: "تحديث" });
-  await expect(refresh).toBeEnabled();
-  await refresh.click();
+async function expectSessionExpiryFromAccess(page) {
+  const expiredRequest = page.waitForResponse(
+    (response) => response.url().includes("/v1/student/access/entitlements") && response.status() === 401,
+  );
+  await page.getByRole("link", { name: "حسابي", exact: true }).click();
+  await expiredRequest;
+  await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
+  await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.", { exact: true })).toBeVisible();
 }
 
 test("offline lease persists and cleanup stays scoped across logout and device rebind", async ({ page, context }) => {
@@ -261,8 +264,7 @@ test("offline lease persists and cleanup stays scoped across logout and device r
 
   const reset = runAuthFixture("device-rebind", lease.profileId);
   expect(reset.status).toBe("device_rebind_allowed");
-  await refreshAccess(page);
-  await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.", { exact: true })).toBeVisible();
+  await expectSessionExpiryFromAccess(page);
   await expect.poll(async () => (await readOfflineLeases(page)).some((record) => record.scopeKey === currentRecord.scopeKey)).toBe(false);
   afterOfflineLogout = await readOfflineLeases(page);
   expect(afterOfflineLogout.some((record) => record.scopeKey === staleSameProfile.scopeKey)).toBe(true);
@@ -292,8 +294,7 @@ test("server-side session expiry removes only the active lease scope", async ({ 
 
   const recovery = runAuthFixture("temporary-password", activation.profile.id);
   expect(recovery.temporaryPassword).toEqual(expect.any(String));
-  await refreshAccess(page);
-  await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة بأمان.", { exact: true })).toBeVisible();
+  await expectSessionExpiryFromAccess(page);
 
   await expect.poll(async () => (await readOfflineLeases(page)).some((record) => record.scopeKey === currentRecord.scopeKey)).toBe(false);
   const afterExpiry = await readOfflineLeases(page);
