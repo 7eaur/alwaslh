@@ -52,10 +52,14 @@ async function submitLogin(page) {
   await page.locator(".student-entry-form").getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
 }
 
-async function expectAuthenticatedHome(page) {
-  await expect(page).toHaveURL(/\/app\/home$/);
-  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+async function expectAuthenticatedApp(page) {
+  await expect(page).toHaveURL(/\/app\/(?:home|account)$/);
   await expect(page.getByRole("link", { name: "حسابي", exact: true })).toBeVisible();
+  if (/\/app\/home$/.test(page.url())) {
+    await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+  } else {
+    await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
+  }
 }
 
 async function openAccount(page) {
@@ -101,7 +105,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   expect(activation.deviceId).toMatch(/^[0-9a-f-]{36}$/);
   const studentProfileId = activation.profile.id;
 
-  await expectAuthenticatedHome(page);
+  await expectAuthenticatedApp(page);
   await openAccount(page);
   await expect(page.getByText("كل المحتوى المتاح", { exact: true })).toBeVisible();
   await expect(page.getByText(/لديك وصول كامل/)).toBeVisible();
@@ -121,7 +125,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   expect(loginStart.status()).toBe(200);
   expect((await loginStart.json()).purpose).toBe("login");
   expect(loginComplete.status()).toBe(200);
-  await expectAuthenticatedHome(page);
+  await expectAuthenticatedApp(page);
   expect(await storedPublicKey(page, accountCode)).toBe(firstPublicKey);
 
   const recovery = runAuthFixture("temporary-password", studentProfileId);
@@ -146,7 +150,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   const recoveryCompletePromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/complete") && response.request().method() === "POST");
   await page.getByRole("button", { name: "حفظ كلمة المرور والدخول" }).click();
   expect((await recoveryCompletePromise).status()).toBe(200);
-  await expectAuthenticatedHome(page);
+  await expectAuthenticatedApp(page);
   expect(await storedPublicKey(page, accountCode)).toBe(firstPublicKey);
 
   const reset = runAuthFixture("device-rebind", studentProfileId);
@@ -165,7 +169,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   expect(rebindChallenge.purpose).toBe("device_rebind");
   expect(rebindChallenge.requiresDeviceRegistration).toBe(true);
   expect(rebindComplete.status()).toBe(200);
-  await expectAuthenticatedHome(page);
+  await expectAuthenticatedApp(page);
 
   const reboundPublicKey = await storedPublicKey(page, accountCode);
   expect(reboundPublicKey).toEqual(expect.any(String));
