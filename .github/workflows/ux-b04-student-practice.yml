@@ -73,3 +73,12 @@ jobs:
       - name: Verify routed focused Practice and Assessment
         working-directory: apps/student-web
         run: npx playwright test e2e/assessment.e2e.spec.mjs
+
+      - name: Upload B04 visual QA screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-b04-visual-qa
+          path: apps/student-web/test-results/ux-b04-*.png
+          if-no-files-found: warn
+          retention-days: 7
