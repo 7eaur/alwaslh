@@ -14,16 +14,16 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
 }
 
 async function openQuestionBank(page) {
-  await page.getByRole("button", { name: "بنك الأسئلة", exact: true }).click();
+  await page.goto("/app/questions");
   await expect(page.getByRole("heading", { name: "بنك الأسئلة", exact: true })).toBeVisible();
 }
 
 async function openQuizBuilder(page) {
-  await page.getByRole("button", { name: "الاختبارات والنماذج", exact: true }).click();
+  await page.goto("/app/quizzes");
   await expect(page.getByRole("heading", { name: "منشئ الاختبارات والنماذج", exact: true })).toBeVisible();
 }
 
@@ -86,8 +86,7 @@ test("Question Bank creates, reviews and publishes a manual direct question thro
   await expect(page.getByText("نُشرت النسخة التي كانت قيد المراجعة.", { exact: true })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
-  await openQuestionBank(page);
+  await expect(page.getByRole("heading", { name: "بنك الأسئلة", exact: true })).toBeVisible();
   const search = page.getByRole("form", { name: "فلترة بنك الأسئلة" });
   await search.getByLabel("بحث في نص السؤال").fill("الطاقة الحركية");
   await search.getByRole("button", { name: "تطبيق" }).click();
@@ -120,7 +119,6 @@ test("Question Bank imports only the pre-approved AI fixture as a draft with pro
   await expect(detail.getByText("stage13f-question-generation · v1", { exact: true })).toBeVisible();
   await expect(detail.getByText("قرار اعتماد #1", { exact: true })).toBeVisible();
 
-  // Replaying the exact approved output must not duplicate the Question Bank mapping.
   await page.getByRole("button", { name: "استيراد مخرج AI" }).click();
   const replayEditor = page.locator(".qb-editor-panel");
   await replayEditor.getByLabel("معرف مخرج AI").fill(approvedOutputId);
@@ -141,7 +139,7 @@ test("Question Bank returns to login after the real Admin session expires", asyn
   await refresh.click();
 
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "بنك الأسئلة" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "بنك الأسئلة", exact: true })).toHaveCount(0);
 });
 
 test("Question Bank stays within a 390px viewport", async ({ page }) => {

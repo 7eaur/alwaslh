@@ -15,11 +15,11 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
 }
 
 async function openReports(page) {
-  await page.getByRole("button", { name: "الملفات والتقارير" }).click();
+  await page.goto("/app/access-codes/reports");
   await expect(page.getByRole("heading", { name: "الملفات والتقارير", exact: true })).toBeVisible();
 }
 
@@ -125,5 +125,5 @@ test("Files workspace returns to login after the real Admin session expires", as
   await logoutRealAdminSession(page);
   await page.getByRole("button", { name: "تصدير CSV متوافق مع Excel" }).click();
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "الملفات والتقارير" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "الملفات والتقارير", exact: true })).toHaveCount(0);
 });

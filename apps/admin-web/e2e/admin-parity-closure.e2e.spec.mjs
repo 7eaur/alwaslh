@@ -12,13 +12,13 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
 }
 
 test("Stage13G closure edits lesson summaries, exports history, and updates draft quiz metadata", async ({ page }) => {
   await login(page);
 
-  await page.getByRole("button", { name: "توليد المحتوى بالذكاء الاصطناعي", exact: true }).click();
+  await page.goto("/app/tools/ai-authoring");
   const lessonPanel = page.locator('section[aria-labelledby="lesson-parity-title"]');
   await expect(lessonPanel.getByRole("heading", { name: "تحرير وتصدير محتوى الدرس" })).toBeVisible();
   await lessonPanel.locator("select").first().selectOption({ label: "درس التوليد الأول" });
@@ -43,7 +43,7 @@ test("Stage13G closure edits lesson summaries, exports history, and updates draf
   const revisionAfterClear = Number(await lessonPanel.locator(".parity-metric strong").textContent());
   expect(revisionAfterClear).toBe(revisionAfterSave + 1);
 
-  await page.getByRole("button", { name: "الاختبارات والنماذج", exact: true }).click();
+  await page.goto("/app/quizzes");
   const quizPanel = page.locator('section[aria-labelledby="quiz-metadata-title"]');
   await expect(quizPanel.getByRole("heading", { name: "بيانات الاختبار" })).toBeVisible();
   await quizPanel.locator("select").selectOption({ label: "اختبار التوليد G-D — draft" });

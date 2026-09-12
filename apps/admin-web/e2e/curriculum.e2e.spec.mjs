@@ -6,7 +6,7 @@ const testClassOptionLabel = "الصف الإداري التجريبي — نش�
 const testSubjectOptionLabel = "العلوم الإدارية التجريبية";
 
 async function openCurriculum(page) {
-  await page.getByRole("button", { name: "المنهج والمحتوى", exact: true }).click();
+  await page.goto("/app/curriculum");
   await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
 }
 
@@ -16,7 +16,7 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
   await openCurriculum(page);
 }
 
@@ -98,9 +98,8 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
   await expect(updatedLessonRow.locator(".status-badge")).toHaveText("غير نشط");
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الصفوف والمواد والدروس" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toHaveCount(0);
-  await openCurriculum(page);
   await selectTestOffering(page);
   await expect(page.getByText("الدرس الإداري المحدّث", { exact: true })).toBeVisible();
 
@@ -111,7 +110,7 @@ test("admin signs in and manages the curriculum hierarchy without destructive de
 
 test("admin reviews source media and pending OCR through the operations workspace", async ({ page }) => {
   await login(page);
-  await page.getByRole("button", { name: "الوسائط وOCR" }).click();
+  await page.goto("/app/reviews/content");
 
   await expect(page.getByRole("heading", { name: "الوسائط وOCR" })).toBeVisible();
   await expect(page.getByText("كتاب تشغيل الوسائط التجريبي", { exact: true })).toBeVisible();

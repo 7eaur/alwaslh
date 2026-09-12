@@ -20,6 +20,14 @@ async function login(page) {
   return (await attentionResponse).json();
 }
 
+async function openHealthFromOverview(page) {
+  await page
+    .getByRole("navigation", { name: "مسارات عمل سريعة" })
+    .getByRole("link", { name: "الحالة والمشكلات", exact: true })
+    .click();
+  await expect(page.getByRole("heading", { name: "الحالة والمشكلات", exact: true })).toBeVisible();
+}
+
 test("Overview is attention-first and notification management remains a real end-to-end workflow", async ({ page }) => {
   const attention = await login(page);
   expect(attention).toHaveProperty("review");
@@ -30,8 +38,7 @@ test("Overview is attention-first and notification management remains a real end
   expect(attention).not.toHaveProperty("security");
 
   await expect(page.getByText("ما الذي يحتاج انتباهك الآن؟", { exact: false })).toBeVisible();
-  await page.getByRole("link", { name: "الحالة والمشكلات", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "الحالة والمشكلات", exact: true })).toBeVisible();
+  await openHealthFromOverview(page);
 
   await page.getByRole("link", { name: "إدارة الإشعارات", exact: true }).click();
   await expect(page.getByRole("heading", { name: "إشعارات الطلاب", exact: true })).toBeVisible();
@@ -70,7 +77,7 @@ test("Overview returns to login after the real Admin session expires", async ({ 
 test("Overview, health, and notifications stay within a 390px viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
-  await page.getByRole("link", { name: "الحالة والمشكلات", exact: true }).click();
+  await openHealthFromOverview(page);
   await page.getByRole("link", { name: "إدارة الإشعارات", exact: true }).click();
   await expect(page.getByRole("heading", { name: "إشعارات الطلاب", exact: true })).toBeVisible();
 

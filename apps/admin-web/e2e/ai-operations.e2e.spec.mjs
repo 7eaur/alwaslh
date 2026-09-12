@@ -45,11 +45,11 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
 }
 
 async function openAiWorkspace(page) {
-  await page.getByRole("button", { name: "عمليات AI والمراجعة", exact: true }).click();
+  await page.goto("/app/reviews/ai");
   await expect(page.getByRole("heading", { name: "عمليات AI", exact: true })).toBeVisible();
 }
 
@@ -118,8 +118,6 @@ test("Admin AI operations keep canonical review authority while navigating the f
   await page.getByText("سجل المراجعة (101)", { exact: true }).click();
   await expect(page.getByText("stage13e-e2e-review-1", { exact: true })).toBeVisible();
 
-  // The displayed audit page contains the oldest revision, but action authority must
-  // still come from the canonical latest revision queried independently by the server.
   const approve = page.getByRole("button", { name: "اعتماد بعد المراجعة" });
   await expect(approve).toBeVisible();
   await expect(approve).toBeEnabled();
@@ -129,8 +127,7 @@ test("Admin AI operations keep canonical review authority while navigating the f
   await expect(reviewPagination).toContainText("101–102 من 102");
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
-  await openAiWorkspace(page);
+  await expect(page.getByRole("heading", { name: "عمليات AI", exact: true })).toBeVisible();
   await openSeededJob(page);
   await page.locator(".ai-unit-card").first().click();
   await expect(page.getByText("معتمد بعد المراجعة", { exact: true })).toBeVisible();
@@ -147,7 +144,7 @@ test("Admin AI operations return to login after the real Admin session expires",
   await refresh.click();
 
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "عمليات AI والمراجعة" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "عمليات AI", exact: true })).toHaveCount(0);
 });
 
 test("Admin AI operations refresh canonical review state after a real 409 race", async ({ page }) => {
