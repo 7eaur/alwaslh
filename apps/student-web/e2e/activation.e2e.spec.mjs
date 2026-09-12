@@ -204,9 +204,8 @@ test("student activation, recovery, device access and canonical curriculum work 
 
   await page.getByRole("link", { name: "التعلّم", exact: true }).first().click();
   await page.evaluate(async () => { await fetch("/v1/auth/logout", { method: "POST", credentials: "include" }); });
-  await openAccount(page);
   const expiredRequest = page.waitForResponse((response) => response.url().includes("/v1/student/access/entitlements") && response.status() === 401);
-  await page.locator(".student-account-section").first().getByRole("button", { name: "تحديث", exact: true }).click();
+  await page.getByRole("link", { name: "حسابي", exact: true }).click();
   await expiredRequest;
   await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
   await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة.", { exact: true })).toBeVisible();
