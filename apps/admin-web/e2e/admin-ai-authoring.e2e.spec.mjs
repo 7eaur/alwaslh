@@ -13,7 +13,7 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
 }
 
 async function openAuthoring(page) {
@@ -26,7 +26,7 @@ async function openAuthoring(page) {
   const questions = page.waitForResponse(
     (response) => response.url().includes("/v1/admin/question-bank?") && response.status() === 200,
   );
-  await page.getByRole("button", { name: "توليد المحتوى بالذكاء الاصطناعي", exact: true }).click();
+  await page.goto("/app/tools/ai-authoring");
   await Promise.all([curriculum, quizzes, questions]);
   await expect(
     page.getByRole("heading", { name: "توليد المحتوى بالذكاء الاصطناعي", exact: true }),
@@ -155,6 +155,6 @@ test("G-D stays responsive and returns to login after the real Admin session exp
   await page.getByRole("button", { name: "تحديث البيانات", exact: true }).click();
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "توليد المحتوى بالذكاء الاصطناعي", exact: true }),
+    page.getByRole("heading", { name: "توليد المحتوى بالذكاء الاصطناعي", exact: true }),
   ).toHaveCount(0);
 });

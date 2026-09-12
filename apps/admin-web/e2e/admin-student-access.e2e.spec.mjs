@@ -13,11 +13,11 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
 }
 
 async function openStudentAccess(page) {
-  await page.getByRole("button", { name: "الطلاب والوصول" }).click();
+  await page.goto("/app/students");
   await expect(page.getByRole("heading", { name: "الطلاب والوصول", exact: true })).toBeVisible();
 }
 
@@ -94,7 +94,7 @@ test("Student access workspace returns to login after the real Admin session exp
   await filters.getByRole("button", { name: "تطبيق البحث" }).click();
 
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "الطلاب والوصول" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "الطلاب والوصول", exact: true })).toHaveCount(0);
 });
 
 test("Student access workspace stays within a 390px viewport", async ({ page }) => {

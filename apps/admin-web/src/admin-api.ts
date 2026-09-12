@@ -121,15 +121,14 @@ async function parseResponseBody(response: Response): Promise<unknown> {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function requestResponse(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers);
   if (init.body !== undefined && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  let response: Response;
   try {
-    response = await fetch(`${apiBaseUrl}${path}`, {
+    return await fetch(`${apiBaseUrl}${path}`, {
       ...init,
       credentials: "include",
       headers,
@@ -141,22 +140,35 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       0,
     );
   }
+}
 
+function toRequestError(payload: unknown, status: number): ApiRequestError {
+  const publicError = payload as PublicErrorBody | undefined;
+  return new ApiRequestError(
+    publicError?.error?.code ?? "INTERNAL_ERROR",
+    publicError?.error?.message ?? "تعذر إكمال الطلب",
+    status,
+  );
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await requestResponse(path, init);
   const payload = await parseResponseBody(response);
-  if (!response.ok) {
-    const publicError = payload as PublicErrorBody | undefined;
-    throw new ApiRequestError(
-      publicError?.error?.code ?? "INTERNAL_ERROR",
-      publicError?.error?.message ?? "تعذر إكمال الطلب",
-      response.status,
-    );
-  }
-
+  if (!response.ok) throw toRequestError(payload, response.status);
   return payload as T;
 }
 
 export function adminApiRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
   return request<T>(path, init);
+}
+
+export async function adminApiBlobRequest(path: string, init: RequestInit = {}): Promise<Blob> {
+  const response = await requestResponse(path, init);
+  if (!response.ok) {
+    const payload = await parseResponseBody(response);
+    throw toRequestError(payload, response.status);
+  }
+  return response.blob();
 }
 
 export function isMissingSessionError(error: unknown): boolean {

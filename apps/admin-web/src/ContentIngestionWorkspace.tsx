@@ -9,28 +9,22 @@ import {
 import {
   archiveContentIngestionTask,
   createContentIngestionTask,
+  type ContentIngestionItemStatus,
   type ContentIngestionTaskDetail,
   type ContentIngestionTaskStatus,
   fetchContentIngestionHistory,
   fetchContentIngestionTask,
   linkContentIngestionTask,
   processContentIngestionTask,
-  transitionContentPublication,
   uploadContentIngestionItem,
 } from "./content-ingestion-api";
+import { LessonPublicationPanel } from "./LessonPublicationPanel";
 
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
 const MAX_PDF_BYTES = 100 * 1024 * 1024;
 
-type BusyAction =
-  | "idle"
-  | "uploading"
-  | "processing"
-  | "linking"
-  | "reviewing"
-  | "publishing"
-  | "archiving";
+type BusyAction = "idle" | "uploading" | "processing" | "linking" | "archiving";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
@@ -52,15 +46,19 @@ function taskStatusLabel(status: ContentIngestionTaskStatus): string {
   }
 }
 
-function publicationLabel(task: ContentIngestionTaskDetail): string {
-  if (task.lessonAssets.length === 0) return task.linkedAt ? "مسودة بلا عناصر" : "غير مرتبط";
-  const states = new Set(task.lessonAssets.map((asset) => asset.publicationStatus));
-  if (states.size !== 1) return "حالة مختلطة";
-  const state = task.lessonAssets[0]?.publicationStatus;
-  if (state === "draft") return "مسودة";
-  if (state === "review") return "قيد المراجعة";
-  if (state === "published") return "منشور";
-  return "غير مرتبط";
+function itemStatusLabel(status: ContentIngestionItemStatus): string {
+  switch (status) {
+    case "pending_upload":
+      return "بانتظار الرفع";
+    case "uploaded":
+      return "مرفوع";
+    case "processing":
+      return "قيد المعالجة";
+    case "completed":
+      return "جاهز";
+    case "failed":
+      return "تعذر تجهيزه";
+  }
 }
 
 function formattedBytes(value: number): string {
@@ -85,6 +83,7 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
   const [history, setHistory] = useState<Awaited<ReturnType<typeof fetchContentIngestionHistory>> | null>(null);
   const [selectedTask, setSelectedTask] = useState<ContentIngestionTaskDetail | null>(null);
   const [selectedLessonId, setSelectedLessonId] = useState("");
+  const [lessonContentRefreshToken, setLessonContentRefreshToken] = useState(0);
   const [files, setFiles] = useState<File[]>([]);
   const [includeArchived, setIncludeArchived] = useState(false);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
@@ -119,6 +118,7 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
         }
         return nextCurriculum.lessons.find((lesson) => lesson.status !== "archived")?.id ?? "";
       });
+      setLessonContentRefreshToken((value) => value + 1);
     } catch (error) {
       if (isMissingSessionError(error)) {
         onSessionExpired();
@@ -163,6 +163,7 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
         setFeedback({ kind: "info", message: "جارٍ تحميل تفاصيل مهمة الرفع…" });
         const task = await fetchContentIngestionTask(taskId);
         setSelectedTask(task);
+        setSelectedLessonId(task.lessonId);
         setFeedback(null);
       } catch (error) {
         handleError(error);
@@ -238,6 +239,7 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
         const task = await work(selectedTask.id);
         setSelectedTask(task);
         await refreshHistory();
+        if (action === "linking") setLessonContentRefreshToken((value) => value + 1);
         setFeedback({ kind: "success", message: successMessage });
       } catch (error) {
         handleError(error);
@@ -248,7 +250,6 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
     [handleError, refreshHistory, selectedTask],
   );
 
-  const taskPublicationState = selectedTask?.lessonAssets[0]?.publicationStatus ?? null;
   const isBusy = busyAction !== "idle";
 
   if (loadState === "loading" && !curriculum) {
@@ -269,11 +270,10 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
     <>
       <header className="page-header">
         <div>
-          <p className="eyebrow">رفع المحتوى ونشره</p>
-          <h1>الصور وPDF وسجل المعالجة</h1>
+          <p className="eyebrow">إدخال المحتوى</p>
+          <h1>رفع المحتوى ومعالجته</h1>
           <p className="page-description">
-            الرفع والمعالجة لا يعنيان النشر. تُحفظ المهمة وتاريخها أولًا، ثم تُربط الوسائط بالدرس كمسودة، وبعد
-            المراجعة فقط يمكن نشرها للطلاب.
+            ارفع الصور وPDF، تابع المعالجة، ثم اربط النتائج بالدرس كمسودة. قرار المراجعة والنشر منفصل ويُدار على مستوى محتوى الدرس نفسه.
           </p>
         </div>
         <button className="secondary-button" type="button" onClick={() => void refresh()} disabled={isBusy}>
@@ -292,7 +292,7 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
           <section className="ingestion-panel" aria-labelledby="new-ingestion-title">
             <div className="ingestion-panel-heading">
               <div>
-                <p className="section-kicker">NEW TASK</p>
+                <p className="section-kicker">رفع جديد</p>
                 <h2 id="new-ingestion-title">مهمة رفع جديدة</h2>
               </div>
               <span className="ingestion-policy-note">JPG · PNG · WebP · PDF</span>
@@ -359,11 +359,17 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
             </form>
           </section>
 
+          <LessonPublicationPanel
+            lessonId={selectedLessonId}
+            refreshToken={lessonContentRefreshToken}
+            disabled={isBusy}
+            onSessionExpired={onSessionExpired}
+          />
+
           {selectedTask ? (
             <TaskDetail
               task={selectedTask}
               isBusy={isBusy}
-              publicationState={taskPublicationState}
               onProcess={() =>
                 void runTaskAction(
                   "processing",
@@ -375,31 +381,9 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
                 void runTaskAction(
                   "linking",
                   linkContentIngestionTask,
-                  "تم ربط الوسائط بالدرس كمسودة. لم يتم نشر أي شيء بعد.",
+                  "تم ربط الوسائط بالدرس كمسودة. يمكنك الآن إدارة مراجعة محتوى الدرس ونشره من لوحة قرار النشر.",
                 )
               }
-              onSubmitReview={() =>
-                void runTaskAction(
-                  "reviewing",
-                  (taskId) => transitionContentPublication(taskId, "submit_review"),
-                  "تم إرسال محتوى المهمة إلى المراجعة.",
-                )
-              }
-              onReturnDraft={() =>
-                void runTaskAction(
-                  "reviewing",
-                  (taskId) => transitionContentPublication(taskId, "return_to_draft"),
-                  "أعيد محتوى المهمة إلى المسودة.",
-                )
-              }
-              onPublish={() => {
-                if (!window.confirm("سيصبح محتوى هذه المهمة منشورًا للطلاب. هل تريد المتابعة؟")) return;
-                void runTaskAction(
-                  "publishing",
-                  (taskId) => transitionContentPublication(taskId, "publish"),
-                  "تم نشر محتوى المهمة للطلاب بقرار صريح.",
-                );
-              }}
               onArchive={() =>
                 void runTaskAction("archiving", archiveContentIngestionTask, "تمت أرشفة المهمة مع الاحتفاظ بتاريخها.")
               }
@@ -407,7 +391,7 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
           ) : (
             <WorkspaceState
               title="لا توجد مهمة مفتوحة"
-              body="أنشئ مهمة جديدة أو افتح مهمة من السجل لمراجعة التقدم والربط والنشر."
+              body="أنشئ مهمة جديدة أو افتح مهمة من السجل لمراجعة الرفع والمعالجة والربط."
             />
           )}
         </div>
@@ -415,7 +399,7 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
         <aside className="ingestion-history" aria-labelledby="ingestion-history-title">
           <div className="ingestion-panel-heading">
             <div>
-              <p className="section-kicker">HISTORY</p>
+              <p className="section-kicker">السجل</p>
               <h2 id="ingestion-history-title">سجل الرفع</h2>
             </div>
             <label className="archive-toggle">
@@ -461,22 +445,14 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
 function TaskDetail({
   task,
   isBusy,
-  publicationState,
   onProcess,
   onLink,
-  onSubmitReview,
-  onReturnDraft,
-  onPublish,
   onArchive,
 }: {
   task: ContentIngestionTaskDetail;
   isBusy: boolean;
-  publicationState: "draft" | "review" | "published" | null;
   onProcess: () => void;
   onLink: () => void;
-  onSubmitReview: () => void;
-  onReturnDraft: () => void;
-  onPublish: () => void;
   onArchive: () => void;
 }) {
   const allUploaded = task.uploadedCount === task.itemCount;
@@ -487,12 +463,11 @@ function TaskDetail({
     <section className="ingestion-panel task-detail" aria-labelledby="active-ingestion-title">
       <div className="ingestion-panel-heading">
         <div>
-          <p className="section-kicker">ACTIVE TASK</p>
+          <p className="section-kicker">مهمة الرفع</p>
           <h2 id="active-ingestion-title">{task.lessonTitle}</h2>
         </div>
         <div className="task-badges">
           <span className={`ingestion-status status-${task.status}`}>{taskStatusLabel(task.status)}</span>
-          <span className="publication-status">{publicationLabel(task)}</span>
         </div>
       </div>
 
@@ -505,7 +480,7 @@ function TaskDetail({
 
       {task.lastErrorMessage ? (
         <div className="task-error" role="alert">
-          <strong>{task.lastErrorCode ?? "processing_failed"}</strong>
+          <strong>تعذر إكمال المعالجة</strong>
           <span>{task.lastErrorMessage}</span>
         </div>
       ) : null}
@@ -517,46 +492,22 @@ function TaskDetail({
             <div>
               <strong>{item.filename}</strong>
               <small>
-                {item.mimeType} · {formattedBytes(item.declaredByteSize)}
+                {formattedBytes(item.declaredByteSize)}
                 {item.outputCount > 0 ? ` · ${item.outputCount} ناتج` : ""}
               </small>
               {item.lastErrorMessage ? <small className="item-error">{item.lastErrorMessage}</small> : null}
             </div>
-            <span className={`item-state state-${item.status}`}>{item.status}</span>
+            <span className={`item-state state-${item.status}`}>{itemStatusLabel(item.status)}</span>
           </li>
         ))}
       </ol>
 
-      <div className="task-actions" aria-label="إجراءات المهمة">
+      <div className="task-actions" aria-label="إجراءات مهمة الرفع">
         <button className="primary-button" type="button" onClick={onProcess} disabled={isBusy || !canProcess}>
           {task.status === "failed" ? "إعادة محاولة المعالجة" : "بدء المعالجة"}
         </button>
         <button className="secondary-button" type="button" onClick={onLink} disabled={isBusy || !canLink}>
           ربط بالدرس كمسودة
-        </button>
-        <button
-          className="secondary-button"
-          type="button"
-          onClick={onSubmitReview}
-          disabled={isBusy || publicationState !== "draft"}
-        >
-          إرسال للمراجعة
-        </button>
-        <button
-          className="secondary-button"
-          type="button"
-          onClick={onReturnDraft}
-          disabled={isBusy || publicationState !== "review"}
-        >
-          إعادة إلى المسودة
-        </button>
-        <button
-          className="primary-button publish-button"
-          type="button"
-          onClick={onPublish}
-          disabled={isBusy || publicationState !== "review"}
-        >
-          نشر المحتوى للطلاب
         </button>
         <button
           className="secondary-button"

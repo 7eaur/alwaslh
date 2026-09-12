@@ -4,6 +4,7 @@ import { currentProfile } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
+import { buildOperationsAttention } from "./attention.js";
 import type { AdminOperationsService } from "./service.js";
 
 const OverviewQuerySchema = z.object({
@@ -35,7 +36,24 @@ export function registerAdminOperationsRoutes(
     return operations.overview(parsed.data.recentLimit ?? 8);
   });
 
+  app.get("/v1/admin/operations/attention", async (request) => {
+    await requireAdmin(request, config, auth);
+    const parsed = OverviewQuerySchema.safeParse(request.query);
+    if (!parsed.success) throw new AppError("BAD_REQUEST", "معاملات الطلب غير صالحة", 400);
+    const recentLimit = parsed.data.recentLimit ?? 8;
+    const [governance, audit] = await Promise.all([
+      operations.governance(config),
+      operations.audit({ limit: recentLimit, offset: 0 }),
+    ]);
+    return buildOperationsAttention(governance, audit.entries);
+  });
+
   app.get("/v1/admin/operations/governance", async (request) => {
+    await requireAdmin(request, config, auth);
+    return operations.governance(config);
+  });
+
+  app.get("/v1/admin/operations/diagnostics", async (request) => {
     await requireAdmin(request, config, auth);
     return operations.governance(config);
   });

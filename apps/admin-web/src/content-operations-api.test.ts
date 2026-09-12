@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   fetchContentDocument,
   fetchContentOperations,
+  fetchOcrSourcePreview,
   reviewOcrExtraction,
 } from "./content-operations-api";
 
@@ -71,6 +72,27 @@ describe("content operations api client", () => {
     expect(url.pathname).toBe("/v1/admin/content-operations/documents/doc-1");
     expect(url.searchParams.get("limit")).toBe("25");
     expect(url.searchParams.get("offset")).toBe("5");
+  });
+
+  it("loads OCR source preview as a credentialed binary response", async () => {
+    const bytes = new Uint8Array([137, 80, 78, 71]);
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(bytes, {
+        status: 200,
+        headers: { "Content-Type": "image/png" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const preview = await fetchOcrSourcePreview("ocr-1");
+    expect(preview.type).toBe("image/png");
+    expect(new Uint8Array(await preview.arrayBuffer())).toEqual(bytes);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(new URL(url, "http://admin.test").pathname).toBe(
+      "/v1/admin/content-operations/ocr/ocr-1/preview",
+    );
+    expect(init.credentials).toBe("include");
   });
 
   it("submits OCR review with correction only when supplied", async () => {

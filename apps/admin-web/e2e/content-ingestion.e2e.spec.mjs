@@ -46,18 +46,23 @@ async function login(page) {
   await page.getByLabel("معرّف المدير").fill(adminIdentifier);
   await page.getByLabel("كلمة المرور").fill(adminPassword);
   await page.getByRole("button", { name: "دخول آمن" }).click();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
 }
 
 async function openIngestion(page) {
-  await page.getByRole("button", { name: "رفع المحتوى ونشره", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "الصور وPDF وسجل المعالجة" })).toBeVisible();
+  await page.goto("/app/content");
+  await expect(page.getByRole("heading", { name: "رفع المحتوى ومعالجته" })).toBeVisible();
+}
+
+function publicationCount(panel, label) {
+  return panel.locator(".task-metric").filter({ hasText: label });
 }
 
 test("admin preserves mixed file order, processes, reviews, publishes and keeps durable history", async ({ page }) => {
   await login(page);
   await openIngestion(page);
-  await page.getByLabel("الدرس").selectOption({ label: lessonOption });
+  const uploadPanel = page.locator('section[aria-labelledby="new-ingestion-title"]');
+  await uploadPanel.getByLabel("الدرس").selectOption({ label: lessonOption });
   await page.locator('input[type="file"]').setInputFiles([
     { name: "01-cover.png", mimeType: "image/png", buffer: png },
     { name: "02-pages.pdf", mimeType: "application/pdf", buffer: buildPdf() },
@@ -80,21 +85,29 @@ test("admin preserves mixed file order, processes, reviews, publishes and keeps 
   await expect(page.locator(".task-detail .ingestion-status")).toHaveText("اكتملت المعالجة", { timeout: 30_000 });
   await expect(page.locator(".task-metric").filter({ hasText: "الوسائط الناتجة" })).toContainText("3");
   await page.getByRole("button", { name: "ربط بالدرس كمسودة" }).click();
-  await expect(page.locator(".publication-status")).toHaveText("مسودة");
-  await expect(page.getByText("تم ربط الوسائط بالدرس كمسودة. لم يتم نشر أي شيء بعد.")).toBeVisible();
-  await page.getByRole("button", { name: "إرسال للمراجعة" }).click();
-  await expect(page.locator(".publication-status")).toHaveText("قيد المراجعة");
+  await expect(
+    page.getByText("تم ربط الوسائط بالدرس كمسودة. يمكنك الآن إدارة مراجعة محتوى الدرس ونشره من لوحة قرار النشر."),
+  ).toBeVisible();
+
+  const publication = page.locator("section.lesson-publication-panel");
+  await expect(publicationCount(publication, "مسودة")).toContainText("3");
+  await publication.getByRole("button", { name: "إرسال المسودات للمراجعة" }).click();
+  await expect(publicationCount(publication, "قيد المراجعة")).toContainText("3");
+  await expect(publication.getByText("تم إرسال مسودات الدرس إلى المراجعة.")).toBeVisible();
+
   page.once("dialog", (dialog) => dialog.accept());
-  await page.getByRole("button", { name: "نشر المحتوى للطلاب" }).click();
-  await expect(page.locator(".publication-status")).toHaveText("منشور");
-  await expect(page.getByText("تم نشر محتوى المهمة للطلاب بقرار صريح.")).toBeVisible();
+  await publication.getByRole("button", { name: "نشر محتوى المراجعة" }).click();
+  await expect(publicationCount(publication, "منشور")).toContainText("3");
+  await expect(publication.getByText("تم نشر محتوى المراجعة للطلاب.")).toBeVisible();
+
   await page.reload();
-  await expect(page.getByRole("heading", { name: "لوحة التشغيل", exact: true })).toBeVisible();
-  await openIngestion(page);
+  await expect(page.getByRole("heading", { name: "رفع المحتوى ومعالجته" })).toBeVisible();
+  const reloadedPublication = page.locator("section.lesson-publication-panel");
+  await expect(publicationCount(reloadedPublication, "منشور")).toContainText("3");
+
   const historyTask = page.locator(".history-task").filter({ hasText: lessonTitle }).first();
   await expect(historyTask).toBeVisible();
   await historyTask.click();
-  await expect(page.locator(".publication-status")).toHaveText("منشور");
   await page.getByRole("button", { name: "أرشفة المهمة" }).click();
   await expect(page.getByText("تمت أرشفة المهمة مع الاحتفاظ بتاريخها.")).toBeVisible();
   await page.getByLabel("إظهار المؤرشف").check();
@@ -106,6 +119,7 @@ test("content ingestion workspace remains usable at a narrow viewport", async ({
   await login(page);
   await openIngestion(page);
   await expect(page.getByRole("heading", { name: "مهمة رفع جديدة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نشر محتوى الدرس" })).toBeVisible();
   const dimensions = await page.evaluate(() => ({
     viewport: window.innerWidth,
     documentWidth: document.documentElement.scrollWidth,

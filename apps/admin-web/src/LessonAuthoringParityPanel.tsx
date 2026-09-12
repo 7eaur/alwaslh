@@ -86,7 +86,7 @@ export function LessonAuthoringParityPanel({ onSessionExpired }: { onSessionExpi
     try {
       await updateLessonSummary(selected.id, value);
       await load();
-      setNotice(value === null ? "تم مسح الملخص ورفع content revision بأمان." : "تم حفظ الملخص ورفع content revision عند وجود تغيير فعلي.");
+      setNotice(value === null ? "تم مسح الملخص وتحديث نسخة المحتوى." : "تم حفظ الملخص وتحديث نسخة المحتوى عند وجود تغيير فعلي.");
     } catch (error) {
       if (isMissingSessionError(error)) {
         onSessionExpired();
@@ -116,9 +116,7 @@ export function LessonAuthoringParityPanel({ onSessionExpired }: { onSessionExpi
       } else {
         downloadText(`${bundle.filenameBase}-print.html`, bundle.printHtml, "text/html;charset=utf-8");
       }
-      setNotice(
-        `جاهز: ${bundle.counts.lessons} درس، ${bundle.counts.questions} سؤال، ${bundle.counts.historyEvents} حدث سجل.`,
-      );
+      setNotice(`جاهز: ${bundle.counts.lessons} درس، ${bundle.counts.questions} سؤال، ${bundle.counts.historyEvents} حدث سجل.`);
       setState("ready");
     } catch (error) {
       if (isMissingSessionError(error)) {
@@ -133,12 +131,12 @@ export function LessonAuthoringParityPanel({ onSessionExpired }: { onSessionExpi
   const busy = state === "loading" || state === "saving" || state === "exporting";
 
   return (
-    <section className="parity-panel" aria-labelledby="lesson-parity-title">
+    <section className="parity-panel" aria-labelledby="lesson-content-tools-title">
       <div className="parity-panel-heading">
         <div>
-          <p className="parity-eyebrow">Lesson parity</p>
-          <h2 id="lesson-parity-title">تحرير وتصدير محتوى الدرس</h2>
-          <p>تحرير الملخص ومسحه، مع تصدير آمن للمحتوى وسجل التوليد/المراجعة من السلطات الحالية فقط.</p>
+          <p className="parity-eyebrow">أدوات الدرس</p>
+          <h2 id="lesson-content-tools-title">ملخص الدرس والتصدير</h2>
+          <p>حرّر ملخص الدرس أو صدّر محتواه وسجل التغييرات من سياق المحتوى نفسه.</p>
         </div>
         <button type="button" className="secondary-button" onClick={() => void load()} disabled={busy}>
           تحديث
@@ -161,7 +159,7 @@ export function LessonAuthoringParityPanel({ onSessionExpired }: { onSessionExpi
               </select>
             </label>
             <div className="parity-metric" aria-live="polite">
-              <span>Content revision</span>
+              <span>نسخة المحتوى</span>
               <strong>{selected?.contentRevision ?? "—"}</strong>
             </div>
           </div>
@@ -209,29 +207,32 @@ export function LessonAuthoringParityPanel({ onSessionExpired }: { onSessionExpi
 
           <div className="parity-divider" />
           <h3>تصدير المحتوى والسجل</h3>
-          <div className="parity-grid parity-grid-4">
-            <label>
-              <span>مصدر السجل</span>
-              <select value={historySource} onChange={(event) => setHistorySource(event.target.value as LessonHistorySource)} disabled={busy}>
-                <option value="all">الكل</option>
-                <option value="curriculum">المنهج</option>
-                <option value="question_bank">بنك الأسئلة</option>
-                <option value="ai">مهام AI</option>
-              </select>
-            </label>
-            <label>
-              <span>نوع الحدث (اختياري)</span>
-              <input value={eventType} maxLength={80} onChange={(event) => setEventType(event.target.value)} disabled={busy} />
-            </label>
-            <label>
-              <span>من</span>
-              <input type="datetime-local" value={from} onChange={(event) => setFrom(event.target.value)} disabled={busy} />
-            </label>
-            <label>
-              <span>إلى</span>
-              <input type="datetime-local" value={to} onChange={(event) => setTo(event.target.value)} disabled={busy} />
-            </label>
-          </div>
+          <details>
+            <summary>خيارات سجل متقدمة</summary>
+            <div className="parity-grid parity-grid-4">
+              <label>
+                <span>مصدر السجل</span>
+                <select value={historySource} onChange={(event) => setHistorySource(event.target.value as LessonHistorySource)} disabled={busy}>
+                  <option value="all">الكل</option>
+                  <option value="curriculum">المنهج</option>
+                  <option value="question_bank">بنك الأسئلة</option>
+                  <option value="ai">الذكاء الاصطناعي</option>
+                </select>
+              </label>
+              <label>
+                <span>نوع الحدث الداخلي</span>
+                <input value={eventType} maxLength={80} onChange={(event) => setEventType(event.target.value)} disabled={busy} />
+              </label>
+              <label>
+                <span>من</span>
+                <input type="datetime-local" value={from} onChange={(event) => setFrom(event.target.value)} disabled={busy} />
+              </label>
+              <label>
+                <span>إلى</span>
+                <input type="datetime-local" value={to} onChange={(event) => setTo(event.target.value)} disabled={busy} />
+              </label>
+            </div>
+          </details>
           <div className="parity-actions">
             <button type="button" className="secondary-button" disabled={!selected || busy} onClick={() => void exportBundle("content")}>
               تنزيل المحتوى CSV

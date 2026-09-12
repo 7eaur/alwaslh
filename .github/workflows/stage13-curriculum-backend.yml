@@ -66,6 +66,8 @@ jobs:
           node --test --import tsx
           tests/integration/curriculum.integration.test.ts
           tests/integration/content-operations.integration.test.ts
+          tests/integration/content-preview.integration.test.ts
+          tests/integration/lesson-content.integration.test.ts
         working-directory: apps/api
 
   stage13-admin-browser:
@@ -94,6 +96,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/alwaslh_stage13_admin_ui
       LOG_LEVEL: silent
       ALLOWED_ORIGINS: http://127.0.0.1:5175
+      MEDIA_STORAGE_ROOT: /tmp/alwaslh-stage13-admin-media
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
@@ -127,7 +130,11 @@ jobs:
         run: npm run auth:create-admin --prefix apps/api
       - name: Seed content operations browser fixture
         run: |
-          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          mkdir -p "$MEDIA_STORAGE_ROOT/stage13-browser"
+          printf '%s' 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9WlV8V0AAAAASUVORK5CYII=' | base64 -d > "$MEDIA_STORAGE_ROOT/stage13-browser/ai.png"
+          PREVIEW_SHA="$(sha256sum "$MEDIA_STORAGE_ROOT/stage13-browser/ai.png" | awk '{print $1}')"
+          PREVIEW_SIZE="$(stat -c%s "$MEDIA_STORAGE_ROOT/stage13-browser/ai.png")"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -v preview_sha="$PREVIEW_SHA" -v preview_size="$PREVIEW_SIZE" <<'SQL'
           with import_run as (
             insert into content_import_runs (
               source_repository, source_revision, manifest_sha256,
@@ -177,7 +184,7 @@ jobs:
             union all
             select id, 'thumbnail'::media_variant_kind, 'thumbnail-v1', 'stage13-browser/thumb.webp', 'image/webp', 200, 240, 336, repeat('c', 64) from media
             union all
-            select id, 'ai'::media_variant_kind, 'ai-v1', 'stage13-browser/ai.webp', 'image/webp', 700, 800, 1120, repeat('c', 64) from media
+            select id, 'ai'::media_variant_kind, 'ai-v1', 'stage13-browser/ai.png', 'image/png', :preview_size, 1, 1, :'preview_sha' from media
             returning id, kind
           )
           insert into ocr_extractions (
@@ -185,7 +192,7 @@ jobs:
             profile_key, status, attempt_count, max_attempts, raw_text, normalized_text,
             mean_confidence, review_status, review_reason, idempotency_key, completed_at
           )
-          select id, repeat('c', 64), 'browser-fixture', 'v1', 'standard',
+          select id, :'preview_sha', 'browser-fixture', 'v1', 'standard',
                  'completed', 1, 3, 'نص خام يحتاج المراجعة', 'نص خام يحتاج المراجعة',
                  44.5, 'pending', 'low_confidence', 'stage13-browser-ocr', now()
           from variants where kind = 'ai';

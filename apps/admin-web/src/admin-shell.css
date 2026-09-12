@@ -1,0 +1,89 @@
+.admin-nav {
+  gap: var(--space-4);
+  overflow-y: auto;
+  padding-inline-end: var(--space-1);
+}
+
+.admin-nav-group {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.admin-nav-label {
+  margin: 0;
+  padding-inline: var(--space-3);
+  color: rgb(255 255 255 / 0.42);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.admin-nav-links {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.admin-nav .nav-item {
+  text-decoration: none;
+}
+
+.workspace-subnav,
+.workspace-related-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.workspace-subnav {
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.workspace-subnav-link {
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.workspace-subnav-link:hover,
+.workspace-subnav-link:focus-visible {
+  color: var(--text-primary);
+  background: var(--surface-canvas);
+}
+
+.workspace-subnav-link.is-active {
+  color: var(--brand-primary-700);
+  background: rgb(0 181 169 / 0.08);
+}
+
+.workspace-related-actions {
+  justify-content: flex-end;
+}
+
+.workspace-related-link,
+.admin-route-state-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.admin-route-state {
+  margin-inline: auto;
+}
+
+@media (max-width: 900px) {
+  .admin-nav {
+    gap: var(--space-3);
+  }
+
+  .admin-nav-label {
+    padding-inline: var(--space-2);
+  }
+}

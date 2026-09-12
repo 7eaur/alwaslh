@@ -60,7 +60,6 @@
 }
 
 .ingestion-policy-note,
-.publication-status,
 .ingestion-status,
 .item-state {
   display: inline-flex;
@@ -120,7 +119,8 @@
 .file-picker small,
 .task-item-list small,
 .history-task small,
-.empty-copy {
+.empty-copy,
+.lesson-publication-lesson {
   color: var(--text-secondary);
   line-height: var(--line-normal);
 }
@@ -191,11 +191,19 @@
   justify-content: flex-end;
 }
 
-.task-metrics {
+.task-metrics,
+.lesson-publication-counts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-3);
   margin-bottom: var(--space-5);
+}
+
+.task-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.lesson-publication-counts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .task-metric {
@@ -218,6 +226,44 @@
 .task-metric strong {
   margin-top: var(--space-1);
   font-size: var(--font-size-lg);
+}
+
+.lesson-publication-lesson {
+  margin: var(--space-1) 0 0;
+}
+
+.lesson-publication-warning,
+.lesson-publication-feedback {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface-canvas);
+  line-height: var(--line-normal);
+}
+
+.lesson-publication-warning,
+.lesson-publication-feedback.is-error {
+  border-color: rgb(177 57 57 / 0.35);
+}
+
+.lesson-publication-feedback.is-success {
+  border-color: rgb(28 123 82 / 0.35);
+}
+
+.lesson-publication-feedback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.lesson-publication-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
 }
 
 .task-error {
@@ -361,7 +407,8 @@
     justify-content: flex-start;
   }
 
-  .task-metrics {
+  .task-metrics,
+  .lesson-publication-counts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -376,8 +423,14 @@
   }
 
   .task-actions > button,
+  .lesson-publication-actions > button,
   .publish-button {
     width: 100%;
     margin-inline-start: 0;
+  }
+
+  .lesson-publication-feedback {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

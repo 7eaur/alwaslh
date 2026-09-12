@@ -1,4 +1,4 @@
-import { adminApiRequest } from "./admin-api";
+import { adminApiBlobRequest, adminApiRequest } from "./admin-api";
 
 export type ContentDocumentKind = "textbook" | "government_exam";
 export type MediaStatus = "processing" | "ready" | "failed";
@@ -171,6 +171,10 @@ export function fetchOcrExtraction(extractionId: string): Promise<OcrExtractionD
   return adminApiRequest<{ extraction: OcrExtractionDetail }>(
     `/v1/admin/content-operations/ocr/${extractionId}`,
   ).then((result) => result.extraction);
+}
+
+export function fetchOcrSourcePreview(extractionId: string): Promise<Blob> {
+  return adminApiBlobRequest(`/v1/admin/content-operations/ocr/${extractionId}/preview`);
 }
 
 export function reviewOcrExtraction(

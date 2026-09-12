@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import { Link, Navigate, NavLink, Route, Routes } from "react-router-dom";
 import {
   ApiRequestError,
   type AdminProfile,
@@ -7,12 +8,16 @@ import {
   logoutAdmin,
   restoreAdminSession,
 } from "./admin-api";
+import { ADMIN_NAVIGATION } from "./admin-navigation";
 import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
-import { AdminGovernanceWorkspace } from "./AdminGovernanceWorkspace";
-import { AdminOperationsWorkspace } from "./AdminOperationsWorkspace";
 import { AdminReportsWorkspace } from "./AdminReportsWorkspace";
 import { AdminStudentAccessWorkspace } from "./AdminStudentAccessWorkspace";
 import { AiOperationsPage } from "./AiOperationsPage";
+import { AdminOverviewPage } from "./admin/overview/AdminOverviewPage";
+import { AdminNotificationsPage } from "./admin/operations/AdminNotificationsPage";
+import { AdminOperationsAuditPage } from "./admin/operations/AdminOperationsAuditPage";
+import { AdminOperationsDiagnosticsPage } from "./admin/operations/AdminOperationsDiagnosticsPage";
+import { AdminOperationsHealthPage } from "./admin/operations/AdminOperationsHealthPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
@@ -30,9 +35,7 @@ function errorMessage(error: unknown): string {
 
 export function App() {
   const [session, setSession] = useState<AdminProfile | null>(null);
-  const [sessionState, setSessionState] = useState<
-    "restoring" | "signed_out" | "signed_in" | "error"
-  >("restoring");
+  const [sessionState, setSessionState] = useState<"restoring" | "signed_out" | "signed_in" | "error">("restoring");
   const [sessionError, setSessionError] = useState("");
 
   const restore = useCallback(async () => {
@@ -58,12 +61,7 @@ export function App() {
   }, [restore]);
 
   if (sessionState === "restoring") {
-    return (
-      <FullPageState
-        title="جارٍ التحقق من جلسة الإدارة"
-        body="نراجع الجلسة الآمنة قبل عرض أي بيانات إدارية."
-      />
-    );
+    return <FullPageState title="جارٍ التحقق من جلسة الإدارة" body="نراجع الجلسة الآمنة قبل عرض أي بيانات إدارية." />;
   }
   if (sessionState === "error") {
     return (
@@ -133,19 +131,6 @@ function BrandBlock({ auth = false }: { auth?: boolean }) {
   );
 }
 
-type AdminWorkspace =
-  | "operations"
-  | "governance"
-  | "curriculum"
-  | "content-ingestion"
-  | "content-operations"
-  | "ai-operations"
-  | "ai-authoring"
-  | "question-bank"
-  | "quiz-builder"
-  | "student-access"
-  | "reports";
-
 function AdminShell({
   profile,
   onLogout,
@@ -155,101 +140,28 @@ function AdminShell({
   onLogout: () => Promise<void>;
   onSessionExpired: () => void;
 }) {
-  const [workspace, setWorkspace] = useState<AdminWorkspace>("operations");
-
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar" aria-label="التنقل الرئيسي">
         <BrandBlock />
         <nav className="admin-nav" aria-label="أقسام الإدارة">
-          <button
-            className={`nav-item nav-button${workspace === "operations" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "operations" ? "page" : undefined}
-            onClick={() => setWorkspace("operations")}
-          >
-            لوحة التشغيل
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "governance" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "governance" ? "page" : undefined}
-            onClick={() => setWorkspace("governance")}
-          >
-            الحوكمة والأمان
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "curriculum" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "curriculum" ? "page" : undefined}
-            onClick={() => setWorkspace("curriculum")}
-          >
-            المنهج والمحتوى
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "content-ingestion" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "content-ingestion" ? "page" : undefined}
-            onClick={() => setWorkspace("content-ingestion")}
-          >
-            رفع المحتوى ونشره
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "content-operations" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "content-operations" ? "page" : undefined}
-            onClick={() => setWorkspace("content-operations")}
-          >
-            الوسائط وOCR
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "ai-operations" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "ai-operations" ? "page" : undefined}
-            onClick={() => setWorkspace("ai-operations")}
-          >
-            عمليات AI والمراجعة
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "ai-authoring" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "ai-authoring" ? "page" : undefined}
-            onClick={() => setWorkspace("ai-authoring")}
-          >
-            توليد المحتوى بالذكاء الاصطناعي
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "question-bank" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "question-bank" ? "page" : undefined}
-            onClick={() => setWorkspace("question-bank")}
-          >
-            بنك الأسئلة
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "quiz-builder" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "quiz-builder" ? "page" : undefined}
-            onClick={() => setWorkspace("quiz-builder")}
-          >
-            الاختبارات والنماذج
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "student-access" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "student-access" ? "page" : undefined}
-            onClick={() => setWorkspace("student-access")}
-          >
-            الطلاب والوصول
-          </button>
-          <button
-            className={`nav-item nav-button${workspace === "reports" ? " is-active" : ""}`}
-            type="button"
-            aria-current={workspace === "reports" ? "page" : undefined}
-            onClick={() => setWorkspace("reports")}
-          >
-            الملفات والتقارير
-          </button>
+          {ADMIN_NAVIGATION.map((group) => (
+            <section className="admin-nav-group" key={group.label} aria-label={group.label}>
+              <p className="admin-nav-label">{group.label}</p>
+              <div className="admin-nav-links">
+                {group.items.map((item) => (
+                  <NavLink
+                    className={({ isActive }) => `nav-item${isActive ? " is-active" : ""}`}
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                  >
+                    {item.label}
+                  </NavLink>
+                ))}
+              </div>
+            </section>
+          ))}
         </nav>
         <div className="sidebar-account">
           <span>الحساب الحالي</span>
@@ -260,36 +172,158 @@ function AdminShell({
         </div>
       </aside>
       <main className="admin-main">
-        {workspace === "operations" ? (
-          <AdminOperationsWorkspace onSessionExpired={onSessionExpired} />
-        ) : workspace === "governance" ? (
-          <AdminGovernanceWorkspace onSessionExpired={onSessionExpired} />
-        ) : workspace === "curriculum" ? (
-          <CurriculumWorkspace onSessionExpired={onSessionExpired} />
-        ) : workspace === "content-ingestion" ? (
-          <ContentIngestionWorkspace onSessionExpired={onSessionExpired} />
-        ) : workspace === "content-operations" ? (
-          <ContentOperationsWorkspace onSessionExpired={onSessionExpired} />
-        ) : workspace === "ai-operations" ? (
-          <AiOperationsPage onSessionExpired={onSessionExpired} />
-        ) : workspace === "ai-authoring" ? (
-          <>
-            <AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />
-            <LessonAuthoringParityPanel onSessionExpired={onSessionExpired} />
-          </>
-        ) : workspace === "question-bank" ? (
-          <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
-        ) : workspace === "quiz-builder" ? (
-          <>
-            <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
-            <QuizMetadataPanel onSessionExpired={onSessionExpired} />
-          </>
-        ) : workspace === "reports" ? (
-          <AdminReportsWorkspace onSessionExpired={onSessionExpired} />
-        ) : (
-          <AdminStudentAccessWorkspace onSessionExpired={onSessionExpired} />
-        )}
+        <AdminRoutes onSessionExpired={onSessionExpired} />
       </main>
     </div>
+  );
+}
+
+function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
+  return (
+    <Routes>
+      <Route index element={<AdminOverviewPage onSessionExpired={onSessionExpired} />} />
+      <Route path="curriculum" element={<CurriculumWorkspace onSessionExpired={onSessionExpired} />} />
+      <Route
+        path="content"
+        element={
+          <WorkspaceWithRelatedActions
+            actions={[
+              { label: "ملخص الدرس والتصدير", to: "/app/content/lesson-tools" },
+              { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
+            ]}
+          >
+            <ContentIngestionWorkspace onSessionExpired={onSessionExpired} />
+          </WorkspaceWithRelatedActions>
+        }
+      />
+      <Route
+        path="content/lesson-tools"
+        element={
+          <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى المحتوى", to: "/app/content" }]}>
+            <LessonAuthoringParityPanel onSessionExpired={onSessionExpired} />
+          </WorkspaceWithRelatedActions>
+        }
+      />
+      <Route path="reviews" element={<Navigate replace to="/app/reviews/content" />} />
+      <Route
+        path="reviews/content"
+        element={
+          <ReviewArea current="content">
+            <ContentOperationsWorkspace onSessionExpired={onSessionExpired} />
+          </ReviewArea>
+        }
+      />
+      <Route
+        path="reviews/ai"
+        element={
+          <ReviewArea current="ai">
+            <AiOperationsPage onSessionExpired={onSessionExpired} />
+          </ReviewArea>
+        }
+      />
+      <Route
+        path="questions"
+        element={
+          <WorkspaceWithRelatedActions actions={[{ label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" }]}>
+            <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
+          </WorkspaceWithRelatedActions>
+        }
+      />
+      <Route
+        path="quizzes"
+        element={
+          <WorkspaceWithRelatedActions
+            actions={[
+              { label: "بيانات الاختبار", to: "/app/quizzes/metadata" },
+              { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
+            ]}
+          >
+            <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
+          </WorkspaceWithRelatedActions>
+        }
+      />
+      <Route
+        path="quizzes/metadata"
+        element={
+          <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى الاختبارات", to: "/app/quizzes" }]}>
+            <QuizMetadataPanel onSessionExpired={onSessionExpired} />
+          </WorkspaceWithRelatedActions>
+        }
+      />
+      <Route path="students" element={<AdminStudentAccessWorkspace onSessionExpired={onSessionExpired} />} />
+      <Route
+        path="access-codes"
+        element={
+          <WorkspaceWithRelatedActions actions={[{ label: "الملفات والتقارير", to: "/app/access-codes/reports" }]}>
+            <AdminStudentAccessWorkspace onSessionExpired={onSessionExpired} />
+          </WorkspaceWithRelatedActions>
+        }
+      />
+      <Route path="operations" element={<AdminOperationsHealthPage onSessionExpired={onSessionExpired} />} />
+      <Route path="operations/audit" element={<AdminOperationsAuditPage onSessionExpired={onSessionExpired} />} />
+      <Route path="operations/diagnostics" element={<AdminOperationsDiagnosticsPage onSessionExpired={onSessionExpired} />} />
+      <Route path="operations/notifications" element={<AdminNotificationsPage onSessionExpired={onSessionExpired} />} />
+      <Route path="tools/ai-authoring" element={<AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />} />
+      <Route path="access-codes/reports" element={<AdminReportsWorkspace onSessionExpired={onSessionExpired} />} />
+      <Route path="*" element={<AdminRouteNotFound />} />
+    </Routes>
+  );
+}
+
+function ReviewArea({ current, children }: { current: "content" | "ai"; children: ReactNode }) {
+  return (
+    <>
+      <nav className="workspace-subnav" aria-label="أنواع المراجعة">
+        <NavLink
+          className={`workspace-subnav-link${current === "content" ? " is-active" : ""}`}
+          to="/app/reviews/content"
+          aria-current={current === "content" ? "page" : undefined}
+        >
+          المحتوى وOCR
+        </NavLink>
+        <NavLink
+          className={`workspace-subnav-link${current === "ai" ? " is-active" : ""}`}
+          to="/app/reviews/ai"
+          aria-current={current === "ai" ? "page" : undefined}
+        >
+          مخرجات الذكاء الاصطناعي
+        </NavLink>
+      </nav>
+      {children}
+    </>
+  );
+}
+
+function WorkspaceWithRelatedActions({
+  actions,
+  children,
+}: {
+  actions: readonly { label: string; to: string }[];
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <nav className="workspace-related-actions" aria-label="إجراءات مرتبطة">
+        {actions.map((action) => (
+          <Link className="secondary-button workspace-related-link" key={action.to} to={action.to}>
+            {action.label}
+          </Link>
+        ))}
+      </nav>
+      {children}
+    </>
+  );
+}
+
+function AdminRouteNotFound() {
+  return (
+    <section className="auth-card admin-route-state">
+      <p className="eyebrow">مساحة الإدارة</p>
+      <h1>هذه الوجهة غير موجودة</h1>
+      <p>استخدم التنقل الرئيسي للوصول إلى المهمة المطلوبة.</p>
+      <Link className="primary-button admin-route-state-link" to="/app">
+        العودة إلى النظرة العامة
+      </Link>
+    </section>
   );
 }

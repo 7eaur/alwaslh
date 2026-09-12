@@ -17,8 +17,11 @@ import { AuthService } from "./auth/service.js";
 import { type AppConfig, allowedOrigins } from "./config.js";
 import { AdminContentOperationsService } from "./content/admin-operations.js";
 import { registerAdminContentOperationsRoutes } from "./content/admin-operations-http.js";
+import { AdminContentPreviewService } from "./content/admin-preview.js";
 import { registerAdminContentIngestionRoutes } from "./content/ingestion-http.js";
 import { AdminContentIngestionService } from "./content/ingestion-service.js";
+import { AdminLessonContentService } from "./content/lesson-content.js";
+import { registerAdminLessonContentRoutes } from "./content/lesson-content-http.js";
 import { registerCurriculumRoutes } from "./curriculum/http.js";
 import { LessonAuthoringExportService } from "./curriculum/lesson-authoring-export.js";
 import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authoring-export-http.js";
@@ -70,14 +73,17 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const notifications = new NotificationService(database);
   const curriculum = new CurriculumService(database);
   const lessonAuthoringExports = new LessonAuthoringExportService(database);
+  const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const contentOperations = new AdminContentOperationsService(database);
+  const contentPreview = new AdminContentPreviewService(database, mediaStorage);
+  const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
+  const lessonContent = new AdminLessonContentService(database);
   const aiOperations = new AdminAiOperationsService(database);
   const questionBank = new QuestionBankService(database);
   const questionBankRegeneration = new QuestionBankRegenerationService(database);
   const quizBuilder = new QuizBuilderService(database);
   const quizCandidates = new QuizQuestionCandidateService(database);
   const quizExports = new QuizVersionExportService(quizBuilder);
-  const mediaStorage = new FileSystemMediaStorage(config.MEDIA_STORAGE_ROOT);
   const studentReader = new StudentReaderService(database, mediaStorage);
   const studentAssessment = new StudentAssessmentService(database);
   const studentOffline = new StudentOfflineService(database);
@@ -87,7 +93,6 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
     studentReader,
     offlineAuthorizationSigner,
   );
-  const contentIngestion = new AdminContentIngestionService(database, mediaStorage);
   const aiAuthoring = new AdminAiAuthoringService(database, questionBank, quizBuilder);
   const quizSpecializedExports = new QuizSpecializedExportService(quizBuilder, database, mediaStorage);
 
@@ -119,8 +124,9 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerLessonAuthoringExportRoutes(app, config, auth, lessonAuthoringExports);
   registerStudentAssessmentRoutes(app, config, auth, studentAssessment);
   registerStudentOfflineRoutes(app, config, auth, studentOffline, studentOfflineDownloads);
-  registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
+  registerAdminContentOperationsRoutes(app, config, auth, contentOperations, contentPreview);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
+  registerAdminLessonContentRoutes(app, config, auth, lessonContent);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
   registerAdminAiAuthoringRoutes(app, config, auth, aiAuthoring);
   registerQuestionBankRoutes(app, config, auth, questionBank);
