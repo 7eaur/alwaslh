@@ -7,7 +7,7 @@ import "./styles.css";
 import "./student-shell.css";
 import "./student-learning.css";
 import "./foundation.css";
-import "./assessment-polish.css";
+import "./assessment-integration.css";
 import "./student-entry.css";
 import "./student-session.css";
 import "./student-library-account.css";
