@@ -34,11 +34,11 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
   ]);
 
   await page.goto("/");
-  await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/app\/home$/);
+  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
   await page.getByRole("link", { name: "التعلم", exact: true }).first().click();
   await expect(page).toHaveURL(/\/app\/learn$/);
-  await expect(page.getByRole("heading", { name: "التعلم" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "موادك ودروسك" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/Stage16|PWA|authority/);
 
   await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
@@ -90,9 +90,16 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
 
   const search = page.getByLabel("بحث داخل الدرس");
   await search.fill("الحركة");
-  await expect(page.getByText(fixture.approvedText, { exact: true })).toBeVisible();
+  await expect(page.getByText(/نتيجة/)).toBeVisible();
+  await page.getByRole("button", { name: "الانتقال إلى أول نتيجة" }).click();
+  await expect(page.locator(".reader-page").first()).toBeFocused();
+  await search.focus();
+  await search.press("Enter");
+  await expect(page.locator(".reader-page").first()).toBeFocused();
+
   await search.fill("عبارة غير موجودة داخل الدرس");
   await expect(page.getByText("لا توجد نتيجة داخل الدرس", { exact: true })).toBeVisible();
+  await expect(page.getByText("لا توجد نتائج", { exact: true })).toBeVisible();
   await search.fill("");
 
   await page.setViewportSize({ width: 768, height: 1024 });
