@@ -496,6 +496,37 @@ test("Stage15 Student assessment runtime is entitlement-safe, answer-safe, resum
     });
     assert.equal(accessRevokedResponse.statusCode, 404);
 
+    // FPA-002: abandoned sessions are unfinished content, not completed history.
+    const abandonedAfterExpiry = await app.inject({
+      method: "GET",
+      url: `/v1/student/assessment-sessions/${randomStart.session.id}`,
+      headers: { cookie: studentCookie },
+    });
+    assert.equal(abandonedAfterExpiry.statusCode, 404);
+
+    // Cancellation remains possible after expiry, but must not restore content access.
+    const abandonExpired = await app.inject({
+      method: "POST",
+      url: `/v1/student/assessment-sessions/${accessRecheckStart.session.id}/abandon`,
+      headers: authHeaders,
+    });
+    assert.equal(abandonExpired.statusCode, 204);
+    const expiredAbandonedRead = await app.inject({
+      method: "GET",
+      url: `/v1/student/assessment-sessions/${accessRecheckStart.session.id}`,
+      headers: { cookie: studentCookie },
+    });
+    assert.equal(expiredAbandonedRead.statusCode, 404);
+
+    // The existing completed-result history contract is intentionally preserved.
+    const completedAfterExpiry = await app.inject({
+      method: "GET",
+      url: `/v1/student/assessment-sessions/${finalizedPractice.session.id}`,
+      headers: { cookie: studentCookie },
+    });
+    assert.equal(completedAfterExpiry.statusCode, 200);
+    assert.equal(assessmentBody(completedAfterExpiry).attempt?.id, practiceAttemptId);
+
     const attemptCountRows = await db.query<{ count: string }>(
       "select count(*)::text as count from quiz_attempts where profile_id = $1 and quiz_id = $2",
       [studentId, quizId],
