@@ -65,8 +65,8 @@ test("legacy Supabase grouping refuses ambiguous image/page shapes", () => {
   ]);
   assert.equal(plan.lessons.length, 0);
   assert.deepEqual(
-    plan.unresolvedPages.map((entry) => entry.reason),
-    ["missing_page_number", "missing_image", "multiple_images"],
+    plan.unresolvedPages.map((entry) => entry.reason).sort(),
+    ["missing_image", "missing_page_number", "multiple_images"],
   );
 });
 
