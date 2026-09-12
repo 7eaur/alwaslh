@@ -1,53 +1,63 @@
-# Backend, API, Database, Security and Performance
+# Backend, API, Database, Security & Performance
 
-Use this reference when UI work touches API/backend/database contracts or when implementing backend features.
+Use this reference when UX work crosses into backend contracts or when backend work is requested directly.
 
-## Backend correctness
+## Authority
 
-Verify:
-- request validation
-- authorization at the server boundary
-- business invariants
-- database constraints
-- transaction boundaries for multi-write state changes
-- idempotency where retries are expected
-- stable error contracts
-- useful structured logging without secrets
-- exact publication/entitlement/session/device semantics
+Canonical business authority remains server/PostgreSQL unless an explicit verified contract says otherwise.
 
-Do not rely on UI hiding a button as authorization.
+Do not move validation, authorization, publication, entitlement, scoring, AI approval, or offline authority into browser state for convenience.
+
+## API
+
+- Preserve established route/contracts whenever possible.
+- Validate inputs at the boundary.
+- Return stable domain-oriented responses, not accidental database shapes.
+- Keep authorization explicit and server-owned.
+- Distinguish validation/auth/not-found/conflict/server failures.
+- Avoid exposing secrets, storage keys, implementation stack details, or unnecessary internal identifiers.
+
+## Presentation boundary
+
+An API response may contain fields needed by implementation without making those fields user-facing.
+
+Frontend/UI work must map backend state to presentation-ready labels/messages/data. Do not treat raw API objects as screen specifications.
+
+If the UI needs a new human-facing state, first determine whether it is purely presentation mapping or a real missing domain contract. Do not add backend fields only to avoid doing proper presentation modeling.
 
 ## Database
 
-- Prefer constraints for durable invariants.
-- Review indexes against real query patterns.
-- Avoid N+1 access.
-- Keep migrations forward-safe and explicit.
-- Do not change existing data semantics solely to simplify a component.
-- For concurrent workflows, reason about conflicts/locking/versioning instead of assuming single-user execution.
+- Respect migrations as integrity contracts.
+- Avoid ad-hoc runtime schema assumptions.
+- Use transactions for multi-step consistency where required.
+- Check indexes/query shape before performance rewrites.
+- Prevent N+1/repeated query patterns where evidence shows them.
 
 ## Security
 
-Never expose or log:
-- passwords
-- session tokens/cookies
-- private signing keys
-- device private keys
-- credentials/secrets
+Never weaken:
+- session/device verification;
+- entitlements/access checks;
+- publication checks;
+- assessment finalization/scoring authority;
+- AI human-review publication boundary;
+- signed offline authorization/integrity checks.
 
-Validate untrusted input, parameterize queries, enforce authorization server-side, and preserve least privilege.
+Do not expose internal security mechanics to ordinary Student/Admin UI simply to explain why a request was denied. Present the meaningful user state and recovery action while preserving detailed evidence in logs/operations where appropriate.
 
-For offline/PWA work, signed authorization and integrity checks are security boundaries. UI convenience cannot bypass expiry, scope, entitlement, publication, key identity, or blob-integrity validation.
+No secrets in browser bundles, logs, docs, screenshots, or test fixtures committed to the repository.
 
 ## Performance
 
-Optimize based on evidence:
-- query count/latency
-- payload size
-- repeated serialization
-- unbounded lists
-- missing pagination/bounds
-- expensive synchronous processing
-- repeated network calls
+Measure or identify a concrete bottleneck before adding complexity.
 
-Use caching only when ownership/invalidation is clear. Do not cache protected or fast-changing authority in a way that makes the browser canonical.
+Check:
+- query count/shape;
+- request duplication;
+- payload size;
+- media/image transformations;
+- cache eligibility;
+- long-running job boundaries;
+- frontend bundle/render cost.
+
+Correctness and authorization outrank caching shortcuts.
