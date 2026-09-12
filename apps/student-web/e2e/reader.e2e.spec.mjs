@@ -90,7 +90,7 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
 
   const search = page.getByLabel("بحث داخل الدرس");
   await search.fill("الحركة");
-  await expect(page.getByText(/نتيجة/)).toBeVisible();
+  await expect(page.locator(".reader-search__status > span")).toHaveText("1 نتيجة");
   await page.getByRole("button", { name: "الانتقال إلى أول نتيجة" }).click();
   await expect(page.locator(".reader-page").first()).toBeFocused();
   await search.focus();
