@@ -87,6 +87,10 @@ function attemptDate(value: string): string {
   return new Intl.DateTimeFormat("ar-YE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 }
 
+function hasBlockingCatalogState(state: AssessmentCatalogState): boolean {
+  return state.quizzes.length === 0 && state.status !== "ready";
+}
+
 function CatalogState({
   state,
   online,
@@ -96,7 +100,7 @@ function CatalogState({
   online: boolean;
   onRetry: () => void;
 }) {
-  if (state.status === "loading" && state.quizzes.length === 0) {
+  if (state.status === "loading") {
     return (
       <div className="practice-skeleton" role="status" aria-live="polite" aria-busy="true">
         <span className="sr-only">جاري تحميل التدريبات والاختبارات</span>
@@ -107,7 +111,7 @@ function CatalogState({
     );
   }
 
-  if (state.status === "offline" && state.quizzes.length === 0) {
+  if (state.status === "offline") {
     return (
       <div className="practice-state" role="status">
         <strong>تحتاج اتصالًا لعرض التدريبات</strong>
@@ -116,7 +120,7 @@ function CatalogState({
     );
   }
 
-  if (state.status === "error" && state.quizzes.length === 0) {
+  if (state.status === "error") {
     return (
       <div className="practice-state practice-state--error" role="alert">
         <strong>تعذر تحميل التدريبات</strong>
@@ -161,8 +165,9 @@ function PracticeLibrary({
     (quiz) => (!classId || quiz.classId === classId) && (!subjectId || quiz.subjectId === subjectId),
   );
 
-  const catalogState = <CatalogState state={state} online={online} onRetry={onRetry} />;
-  if (catalogState) return catalogState;
+  if (hasBlockingCatalogState(state)) {
+    return <CatalogState state={state} online={online} onRetry={onRetry} />;
+  }
 
   return (
     <div className="practice-library">
@@ -875,8 +880,9 @@ export function StudentAssessmentExperience({
     return <PracticeLibrary state={state} online={online} onRetry={() => void loadCatalog()} />;
   }
 
-  const catalogState = <CatalogState state={state} online={online} onRetry={() => void loadCatalog()} />;
-  if (catalogState) return catalogState;
+  if (hasBlockingCatalogState(state)) {
+    return <CatalogState state={state} online={online} onRetry={() => void loadCatalog()} />;
+  }
 
   const quiz = state.quizzes.find((candidate) => candidate.id === route.quizId) ?? null;
   if (!quiz) {
@@ -899,3 +905,5 @@ export function StudentAssessmentExperience({
     />
   );
 }
+
+export const StudentAssessmentSection = StudentAssessmentExperience;
