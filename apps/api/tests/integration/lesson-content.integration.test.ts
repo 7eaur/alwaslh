@@ -79,7 +79,12 @@ test("lesson-level publication manages imported draft assets without requiring a
        ($1, 0, 'page-1.webp', 'image/webp', $2, 100, 'ready', 1),
        ($3, 1, 'page-2.webp', 'image/webp', $4, 100, 'ready', 1)
      returning id`,
-    [`lesson-content-ready-a-${adminId}`, "a".repeat(64), `lesson-content-ready-b-${adminId}`, "b".repeat(64)],
+    [
+      `lesson-content-ready-a-${adminId}`,
+      "a".repeat(64),
+      `lesson-content-ready-b-${adminId}`,
+      "b".repeat(64),
+    ],
   );
   const failedMediaRows = await db.query<{ id: string }>(
     `insert into media_assets (
@@ -99,7 +104,13 @@ test("lesson-level publication manages imported draft assets without requiring a
          lesson_id, kind, position, storage_key, mime_type, byte_size, checksum_sha256,
          media_asset_id, publication_status
        ) values ($1, 'image', $2, $3, 'image/webp', 100, $4, $5, 'draft')`,
-      [lessonId, position, `lesson-content/${lessonId}/${position}.webp`, position === 0 ? "a".repeat(64) : "b".repeat(64), media.id],
+      [
+        lessonId,
+        position,
+        `lesson-content/${lessonId}/${position}.webp`,
+        position === 0 ? "a".repeat(64) : "b".repeat(64),
+        media.id,
+      ],
     );
   }
   await db.query(

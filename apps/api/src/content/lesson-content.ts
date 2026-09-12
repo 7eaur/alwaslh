@@ -206,13 +206,7 @@ export class AdminLessonContentService {
           where id = $1`,
         [lessonId],
       );
-      await recordLessonContentEvent(
-        tx,
-        actorProfileId,
-        lessonId,
-        "lesson_content_published",
-        assets.length,
-      );
+      await recordLessonContentEvent(tx, actorProfileId, lessonId, "lesson_content_published", assets.length);
     });
 
     return this.state(lessonId);
