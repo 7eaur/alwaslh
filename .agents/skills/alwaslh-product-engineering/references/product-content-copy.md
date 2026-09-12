@@ -8,6 +8,8 @@ Every visible word and data point must be written for the person using the produ
 
 Do not expose backend implementation details simply because they exist in code or API responses.
 
+Visible language must also fit the approved Alwaslh identity: educational, calm, clear, Arabic-first, trustworthy, and not childish or overly technical.
+
 ## Never expose by default
 
 Do not show these concepts to Students and do not show them to Admin operators unless the task genuinely requires technical operations/troubleshooting:
@@ -74,6 +76,16 @@ For every visible data point ask:
 Hide irrelevant/internal fields.
 
 Do not ship fake KPIs, invented totals, fake success claims, or decorative statistics. If real data is unavailable, use an honest empty/loading/not-available state.
+
+## Copy and page hierarchy
+
+Text should reinforce the page's single purpose, not compensate for poor information architecture.
+
+Do not use headings and long explanatory paragraphs to make a page containing several unrelated workflows feel organized. Split the workflows into proper pages/sub-pages instead.
+
+A dashboard heading should summarize/guide; detailed operational copy belongs in the relevant workflow page.
+
+A Student Home screen should guide continuation/navigation; detailed lesson/test/offline instructions belong in their focused screens.
 
 ## Ready-to-display requirement
 
