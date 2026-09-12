@@ -14,70 +14,90 @@ export interface OfflineScope {
 }
 
 const ACTIVE_SCOPE_SESSION_KEY = "alwaslh-student-offline:active-scope";
-let activeOfflineScope: OfflineScope | null = null;
+let scopeGeneration = 0;
+let persistence: Promise<unknown> = Promise.resolve();
+
+function persistInOrder<T>(operation: () => Promise<T>): Promise<T> {
+  const result = persistence.then(operation, operation);
+  persistence = result.catch(() => undefined);
+  return result;
+}
 
 function sessionStorageOrNull(): Storage | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.sessionStorage;
+    return window.localStorage;
   } catch {
     return null;
   }
 }
 
 function persistActiveOfflineScope(scope: OfflineScope | null): void {
-  activeOfflineScope = scope;
   const storage = sessionStorageOrNull();
-  if (!storage) return;
-
+  if (!storage) throw new Error("offline_scope_storage_unavailable");
   if (scope) storage.setItem(ACTIVE_SCOPE_SESSION_KEY, JSON.stringify(scope));
   else storage.removeItem(ACTIVE_SCOPE_SESSION_KEY);
+  // Remove the old tab-only selector; it must never resurrect a logged-out scope.
+  try { window.sessionStorage.removeItem(ACTIVE_SCOPE_SESSION_KEY); } catch { /* optional legacy cleanup */ }
 }
 
 function readActiveOfflineScope(): OfflineScope | null {
-  if (activeOfflineScope) return activeOfflineScope;
   const storage = sessionStorageOrNull();
   if (!storage) return null;
-
-  const serialized = storage.getItem(ACTIVE_SCOPE_SESSION_KEY);
-  if (!serialized) return null;
   try {
-    const candidate = JSON.parse(serialized) as Partial<OfflineScope>;
+    const serialized = storage.getItem(ACTIVE_SCOPE_SESSION_KEY);
+    if (!serialized) return null;
+    const candidate = JSON.parse(serialized) as Partial<OfflineScope> | null;
     if (
+      !candidate ||
+      Object.keys(candidate).length !== 2 ||
       typeof candidate.profileId !== "string" ||
       candidate.profileId.length === 0 ||
+      candidate.profileId.length > 128 ||
+      candidate.profileId.includes(":") ||
       typeof candidate.deviceId !== "string" ||
-      candidate.deviceId.length === 0
+      candidate.deviceId.length === 0 ||
+      candidate.deviceId.length > 128 ||
+      candidate.deviceId.includes(":")
     ) {
       storage.removeItem(ACTIVE_SCOPE_SESSION_KEY);
       return null;
     }
-    activeOfflineScope = { profileId: candidate.profileId, deviceId: candidate.deviceId };
-    return activeOfflineScope;
+    return { profileId: candidate.profileId, deviceId: candidate.deviceId };
   } catch {
-    storage.removeItem(ACTIVE_SCOPE_SESSION_KEY);
+    try { storage.removeItem(ACTIVE_SCOPE_SESSION_KEY); } catch { /* storage denied: fail closed */ }
     return null;
   }
 }
 
-export function getActiveOfflineScope(profileId: string): OfflineScope | null {
+export function getActiveOfflineScope(profileId?: string): OfflineScope | null {
   const scope = readActiveOfflineScope();
-  return scope?.profileId === profileId ? scope : null;
+  return profileId === undefined || scope?.profileId === profileId ? scope : null;
 }
 
-export async function refreshOfflineLeaseForCurrentSession(): Promise<StoredOfflineLease> {
+export async function refreshOfflineLeaseForCurrentSession(expectedProfileId?: string): Promise<StoredOfflineLease> {
+  const generation = ++scopeGeneration;
   const lease = await getStudentOfflineLease();
-  const record = await saveOfflineLease(lease);
-  persistActiveOfflineScope({ profileId: lease.profileId, deviceId: lease.deviceId });
-  return record;
+  if (expectedProfileId !== undefined && lease.profileId !== expectedProfileId) {
+    throw new Error("offline_lease_profile_mismatch");
+  }
+  return persistInOrder(async () => {
+    if (generation !== scopeGeneration) throw new Error("offline_session_changed");
+    const record = await saveOfflineLease(lease);
+    if (generation !== scopeGeneration) {
+      await deleteOfflineScope(lease.profileId, lease.deviceId);
+      throw new Error("offline_session_changed");
+    }
+    persistActiveOfflineScope({ profileId: lease.profileId, deviceId: lease.deviceId });
+    return record;
+  });
 }
 
 export async function syncOfflineLeaseForSession(
   profileId: string,
   reason: OfflineSessionSyncReason,
 ): Promise<StoredOfflineLease> {
-  const record = await refreshOfflineLeaseForCurrentSession();
-  if (record.profileId !== profileId) throw new Error("offline_lease_profile_mismatch");
+  const record = await refreshOfflineLeaseForCurrentSession(profileId);
 
   if (reason === "device_rebind") {
     const records = await listOfflineLeases();
@@ -92,8 +112,9 @@ export async function syncOfflineLeaseForSession(
 }
 
 export async function clearActiveOfflineLease(): Promise<void> {
+  ++scopeGeneration;
   const scope = readActiveOfflineScope();
-  if (!scope) return;
-  await deleteOfflineScope(scope.profileId, scope.deviceId);
   persistActiveOfflineScope(null);
+  if (!scope) return;
+  await persistInOrder(() => deleteOfflineScope(scope.profileId, scope.deviceId));
 }

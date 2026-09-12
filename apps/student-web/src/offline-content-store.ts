@@ -1,3 +1,4 @@
+import { verifyOfflineLessonAuthorization } from "./offline-authorization";
 import type {
   StudentOfflineAuthorizationEnvelope,
   StudentOfflineLessonAssetManifest,
@@ -8,6 +9,7 @@ import {
   loadOfflineLease,
   OFFLINE_LESSON_PACKAGE_STORE,
   OFFLINE_LESSON_SCOPE_INDEX,
+  OFFLINE_CLOCK_ROLLBACK_TOLERANCE_MS,
   offlineScopeKey,
   offlineTransactionDone,
   openOfflineDatabase,
@@ -325,27 +327,82 @@ export async function removeOfflineLessonPackage(
   }
 }
 
-export function offlineLessonPackageAllowsUse(
+function storedPackageManifest(record: StoredOfflineLessonPackage): StudentOfflineLessonManifest {
+  return {
+    version: 1,
+    profileId: record.profileId,
+    deviceId: record.deviceId,
+    issuedAt: record.issuedAt,
+    leaseExpiresAt: record.leaseExpiresAt,
+    authorizationExpiresAt: record.authorizationExpiresAt,
+    lesson: {
+      id: record.lessonId,
+      classId: record.classId,
+      title: record.title,
+      summary: record.summary,
+      contentRevision: record.contentRevision,
+      publishedAt: record.publishedAt,
+    },
+    totalByteSize: record.totalByteSize,
+    assets: record.assets.map((asset) => ({
+      ...asset,
+      downloadPath: `/v1/student/offline/lessons/${record.lessonId}/assets/${asset.id}?revision=${record.contentRevision}`,
+    })),
+  };
+}
+
+// This is an asynchronous security boundary: callers must await verification on
+// every use. Stored fields and the unsigned lease can only restrict permission.
+export async function offlineLessonPackageAllowsUse(
   record: StoredOfflineLessonPackage,
   lease: StoredOfflineLease,
   clientNowMs = Date.now(),
-): boolean {
-  if (
-    record.profileId !== lease.profileId ||
-    record.deviceId !== lease.deviceId ||
-    !storedLeaseAllowsClass(lease, record.classId, clientNowMs)
-  ) {
+  verificationKeySpki?: string,
+): Promise<boolean> {
+  try {
+    if (
+      !Number.isFinite(clientNowMs) ||
+      record.profileId !== lease.profileId ||
+      record.deviceId !== lease.deviceId ||
+      lease.lease.profileId !== lease.profileId ||
+      lease.lease.deviceId !== lease.deviceId ||
+      record.scopeKey !== offlineScopeKey(lease.profileId, lease.deviceId) ||
+      record.packageKey !== offlineLessonPackageKey(lease.profileId, lease.deviceId, record.lessonId) ||
+      !storedLeaseAllowsClass(lease, record.classId, clientNowMs)
+    ) {
+      return false;
+    }
+
+    const evaluation = evaluateStoredOfflineLease(lease, clientNowMs);
+    const manifest = await verifyOfflineLessonAuthorization(
+      record.authorization, storedPackageManifest(record), verificationKeySpki,
+    );
+    validateOfflineLessonManifest(manifest);
+    const issuedAt = Date.parse(manifest.issuedAt);
+    const expiresAt = Date.parse(manifest.authorizationExpiresAt);
+    const leaseExpiresAt = Date.parse(manifest.leaseExpiresAt);
+    if (
+      evaluation.status !== "fresh" || evaluation.estimatedServerTimeMs === null ||
+      !Number.isFinite(record.downloadedAtClientMs) ||
+      clientNowMs + OFFLINE_CLOCK_ROLLBACK_TOLERANCE_MS < record.downloadedAtClientMs ||
+      expiresAt <= issuedAt || expiresAt > leaseExpiresAt ||
+      leaseExpiresAt - issuedAt > 24 * 60 * 60 * 1000
+    ) return false;
+
+    // Never extend a signed deadline by rewriting the unsigned lease's issue time.
+    // Browser time is not tamper-proof; the signed maximum remains authoritative.
+    const estimatedNow = Math.max(
+      clientNowMs,
+      evaluation.estimatedServerTimeMs,
+      issuedAt + Math.max(0, clientNowMs - record.downloadedAtClientMs),
+    );
+    if (estimatedNow >= expiresAt) return false;
+    await verifiedAssets(manifest, record.assets.map((asset) => ({ assetId: asset.id, blob: asset.blob })));
+    return true;
+  } catch {
+    // Malformed IndexedDB records, missing keys and any integrity failure deny use.
     return false;
   }
-
-  const evaluation = evaluateStoredOfflineLease(lease, clientNowMs);
-  const authorizationExpiresAt = Date.parse(record.authorizationExpiresAt);
-  return (
-    evaluation.status === "fresh" &&
-    evaluation.estimatedServerTimeMs !== null &&
-    Number.isFinite(authorizationExpiresAt) &&
-    evaluation.estimatedServerTimeMs < authorizationExpiresAt
-  );
 }
 
 export async function loadUsableOfflineLessonPackage(
@@ -358,6 +415,6 @@ export async function loadUsableOfflineLessonPackage(
     loadOfflineLease(profileId, deviceId, clientNowMs),
     loadOfflineLessonPackage(profileId, deviceId, lessonId),
   ]);
-  if (!lease || !lesson || !offlineLessonPackageAllowsUse(lesson, lease, clientNowMs)) return null;
+  if (!lease || !lesson || !(await offlineLessonPackageAllowsUse(lesson, lease, clientNowMs))) return null;
   return lesson;
 }

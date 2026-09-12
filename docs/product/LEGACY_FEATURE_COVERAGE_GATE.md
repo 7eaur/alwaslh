@@ -4,7 +4,7 @@ Purpose: prevent any valuable capability from legacy **الوسيلة الذكي
 
 Canonical inventory: `PRODUCT_FEATURE_PARITY_MATRIX.md`.
 
-Last synchronized: **2026-09-11 — Stage13G VERIFIED/CLOSED on Track A; NOT PROMOTED to main.**
+Last synchronized: **2026-09-12 — Stage13G integrated through PR #33; historical evidence retained.**
 
 ## Rule
 
@@ -40,7 +40,7 @@ Infrastructure never silently closes a later UI/business outcome.
 - Stage13G G-D/parity dedicated closure: `80115ce27984a6f9098ab7e227f4b81e1f8aad39`, run `34554764124`, all jobs SUCCESS, Chromium 17/17.
 - Stage13G wider closure code/workflow head: `dbb67a52c813aaf8b8d1af0faeacec65edde716b`; verification-only PR #30: **15/15 workflows SUCCESS**, closed unmerged.
 
-Stage13G remains outside `main` until explicit promotion.
+Stage13G was integrated through PR #33 (`5e22c3ff157b42b6da47febe205dd91fcb264eed`) after 19/19 workflows SUCCESS on `dcdae7579a40878c71f64593280a0df2f8363ee2`. Earlier Track A checkpoints above are historical evidence.
 
 ## Previously Verified Admin Coverage
 
@@ -188,7 +188,7 @@ Current product-equivalent PDF path is browser Print/Save-as-PDF. Server-generat
 
 ## Student Coverage Boundary
 
-Track B separately owns Student Product. Do not mark Student-facing practice/test/notifications/offline/personal-data/progress rows green merely because Admin/backend authorities exist. Inspect Track B Source of Truth and its executable evidence independently.
+Unified continuation from live main now owns Student Product. Stage14/15 are documented closed; Stage16 remains open. Do not mark Student-facing notifications/offline/personal-data/progress rows green merely because Admin/backend authorities exist. Inspect current Student handoff and executable evidence independently.
 
 ## AI Capability Boundary Still Open
 

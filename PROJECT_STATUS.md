@@ -4,6 +4,10 @@
 
 Last synchronized: **2026-09-12**.
 
+## Active candidate batch — 2026-09-12
+
+`fix/stage16-read-time-authority` from live `main@dee9ebda9c56900421754228ad0db34a4b6a40e7`: STUDENT-016H durable selector + asynchronous read-time ES256/metadata/blob verification + late-refresh/logout guard implemented locally. Student lint/typecheck/build and 34/34 unit tests PASS. Exact-head CI/browser gate pending; **not merged, Stage16 still OPEN**. Full audit remains progressive. See latest batch in `PROJECT_ENGINEERING_LOG.md`.
+
 ## Current position
 
 - Repository: `7eaur/alwaslh`.
