@@ -84,6 +84,8 @@ test("protected lesson download verifies server authorization and bytes, commits
 
   await page.goto("/");
   await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
+  await page.getByRole("link", { name: "التنزيلات", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/app\/downloads$/);
   await expect(page.getByRole("heading", { name: "تنزيل الدروس لهذا الجهاز" })).toBeVisible();
   await expect(page.getByLabel("الدرس")).toContainText(fixture.lessonTitle);
 
@@ -151,6 +153,7 @@ test("protected lesson download verifies server authorization and bytes, commits
   packages = await offlinePackageFacts(page);
   expect(packages).toHaveLength(1);
 
+  await page.getByRole("link", { name: "حسابي", exact: true }).click();
   await page.getByRole("button", { name: "تسجيل الخروج" }).click();
   await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
   await expect.poll(async () => (await offlinePackageFacts(page)).length).toBe(0);
