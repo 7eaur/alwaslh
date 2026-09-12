@@ -185,7 +185,16 @@ async function loginStudent(page, code, password, expectedPurpose) {
   };
 }
 
+async function openAccount(page) {
+  if (!/\/app\/account$/.test(page.url())) {
+    await page.getByRole("link", { name: "حسابي", exact: true }).click();
+  }
+  await expect(page).toHaveURL(/\/app\/account$/);
+  await expect(page.getByRole("heading", { name: "الحساب والوصول" })).toBeVisible();
+}
+
 async function refreshAccess(page) {
+  await openAccount(page);
   const refresh = page.locator(".access-section").getByRole("button", { name: "تحديث" });
   await expect(refresh).toBeEnabled();
   await refresh.click();
@@ -225,8 +234,9 @@ test("offline lease persists and cleanup stays scoped across logout and device r
   await putOfflineLease(page, staleSameProfile);
   await putOfflineLease(page, otherAccount);
 
+  await openAccount(page);
   await context.setOffline(true);
-  await expect(page.getByText("أنت غير متصل الآن.", { exact: false })).toBeVisible();
+  await expect(page.getByText("غير متصل — يمكنك فتح ما سبق تنزيله", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "تسجيل الخروج" }).click();
   await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
   await expect.poll(async () => (await readOfflineLeases(page)).some((record) => record.scopeKey === currentRecord.scopeKey)).toBe(false);

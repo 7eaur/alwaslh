@@ -5,6 +5,7 @@ import "@alwaslh/ui/styles.css";
 import { BrowserRouter } from "react-router-dom";
 import "./styles.css";
 import "./stage14.css";
+import "./student-shell.css";
 import "./foundation.css";
 import { registerStudentServiceWorker } from "./pwa";
 import { StudentRouter } from "./router";

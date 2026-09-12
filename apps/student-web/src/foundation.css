@@ -22,3 +22,9 @@
 .brand-mark svg {
   visibility: hidden;
 }
+
+/* B02 migration compatibility: Account becomes the primary utility destination in B05,
+   but Home keeps the established logout control until that cleanup batch. */
+.account-page:has(.student-destination--home) .account-summary .secondary-button {
+  display: inline-flex;
+}

@@ -10,106 +10,99 @@ Last synchronized: **2026-09-12**.
 
 **ACTIVE TRACK: UX/UI REFOUNDATION + DESIGN SYSTEM + STUDENT/ADMIN EXPERIENCE REMEDIATION**
 
-**CURRENT UX BATCH: `UX-B01 — Shared frontend foundation`**
-
-**PR: #43 — OPEN / IMPLEMENTATION VERIFIED / FINAL DOC-HEAD REVALIDATION REQUIRED**
+**CURRENT UX BATCH: `UX-B02 — Student Shell and Navigation`**
 
 **EXACT RETURN POINT AFTER THIS TRACK: `STUDENT-016I — True cold-start offline Reader`**
 
-Canonical documents:
-
-- `docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md`
-- `docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md`
-- `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
-- `docs/product/DESIGN_SYSTEM_SPEC.md`
-- `docs/product/CONTENT_LANGUAGE_RULES.md`
-- `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`
+Canonical roadmap: `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
 
 ## Live main baseline
 
-UX-B00 closed through PR #42.
+UX-B01 is closed and integrated.
 
-- PR #42 final head: `203882a934dfcb68df4a1e1e4f972583317cabf1`
-- exact-head workflows: **15/15 SUCCESS**
-- `Rebuild Stage Verification` run: `34708535728` — SUCCESS
-- merge commit / live `main`: `3997ac94b47100bc1557b7622ae3c6d47058d25d`
+- PR #43 final head: `781e70eb31a48b76e50a1bad490f7aa947d2d7ce`
+- exact-head workflows: **20/20 SUCCESS**
+- PR #43 merge commit / verified live `main`: `9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`
 
-## UX-B00 closure
+UX-B00 and UX-B01 must not be redone.
 
-Status: **DONE / VERIFIED / MERGED**.
+## UX-B02 current state
 
-Delivered the source-backed Master Audit, Target IA, Design System Spec, Content Language Rules, B01–B17 implementation roadmap, and corrected replacement-conversation resume path. No application/backend/database contract changed in B00.
+PR: **#44** — `feat(student): establish installed-app shell and navigation`
 
-## UX-B01 scope and state
+Branch: `ux/student-shell-navigation`
 
-Branch: `ux/shared-foundation`
+Base: `main@9866e3b3c332d4c83b15c6e20b4cfd2972008f1b`
 
-Base: `3997ac94b47100bc1557b7622ae3c6d47058d25d`
+Verified implementation head before this documentation synchronization:
 
-PR: `#43 — feat(ux): establish shared frontend routing and presentation foundation`
+`3cc44b1bb9b44de3cb99a18c6cf5b2d29439c8f3`
 
-Verified implementation head before final documentation sync:
+Result on that exact code head: **20/20 workflows SUCCESS**.
 
-`6acd2ce85c1b848ae34a9740be562a5d423eacfc`
+Key runs:
 
-Result on that exact head: **20/20 workflows SUCCESS**.
+- `UX B02 Student Shell and Navigation` — `34711657358` — SUCCESS;
+- `Stage14 Student Product` — `34711657422` — SUCCESS;
+- `Stage15 Student Assessment` — `34711657321` — SUCCESS;
+- `Stage16 Student PWA` — `34711657335` — SUCCESS;
+- `UX B01 Shared Frontend Foundation` — `34711657347` — SUCCESS;
+- `Rebuild Stage Verification` — `34711657393` — SUCCESS.
 
-Implemented:
+The documentation synchronization commit creates the final PR head and therefore requires one final exact-head workflow pass before PR #44 can be marked acceptance-ready.
 
-- framework-neutral shared `@alwaslh/ui` semantics/styles for presentation state and error mapping;
-- thin app-local React presentation adapters for Student/Admin shells, PageState rendering and route focus;
-- `BrowserRouter` foundation in Student and Admin;
-- canonical `/app/*` route boundary, root redirect and human Arabic not-found state;
-- route-focus + skip-link accessibility foundation;
-- RTL route-shell contract;
-- semantic loading/empty/error/offline/permission/info state patterns;
-- evidence-backed app/workspace/layout/safe-area/z-index/control tokens without prematurely applying Student safe-area composition;
-- official open-book app mark aligned in Student/Admin shell branding;
-- targeted Playwright routing contracts for direct URL, canonical route, RTL, focus and browser history;
-- dedicated UX-B01 real-Chromium workflow covering Student 390px and Admin desktop routing foundation.
+## UX-B02 delivered scope
 
-Explicitly **not** moved in B01:
+- canonical authenticated Student entry at `/app/home`;
+- stable top-level destinations:
+  - `/app/home`
+  - `/app/learn`
+  - `/app/practice`
+  - `/app/downloads`;
+- separate `/app/account` entry;
+- mobile bottom navigation with safe-area handling;
+- tablet horizontal adaptive navigation;
+- desktop sticky navigation rail;
+- authenticated global connection/offline indicator;
+- Home overview with clear learning entry points instead of the old giant default surface;
+- Curriculum mounted only under Learn;
+- Assessment mounted only under Practice;
+- current verified Offline Downloads mounted only under Downloads;
+- access/class-code management retained temporarily for migration compatibility and final Account cleanup in B05;
+- RTL, route focus, browser history/back and no-overflow contracts;
+- production-facing Arabic shell copy;
+- dedicated phone/tablet/desktop Chromium verification.
 
-- Student Home/Learn/Practice/Downloads IA migration — UX-B02;
-- Student Reader/Assessment workflow migration — UX-B03/B04;
-- Student offline copy cleanup — UX-B05;
-- Admin grouped workspace routing — UX-B06;
-- backend/API/PostgreSQL contracts;
-- Stage16 `016I/R/S/O/G` work.
+The old `StudentAccessSection` no longer acts as one giant visible surface containing Curriculum + Assessment + Downloads together. Its current file remains a migration orchestrator only until B03–B05 move descendant concerns into their final boundaries.
 
-## UX-B01 executable evidence
+## UX-B02 regression found and fixed
 
-Exact implementation head:
+During exact-head verification, Stage16 initially exposed a B02 navigation timing regression: opening Account after the server invalidated a session caused an unnecessary automatic entitlements reload to consume the 401 before the explicit access refresh action.
 
-`6acd2ce85c1b848ae34a9740be562a5d423eacfc`
+Root-cause fix:
 
-All 20 PR-head workflows were successful:
+- reuse already-loaded access state when moving from Home to Account/Learn;
+- avoid redundant entitlements request;
+- preserve direct-entry loading behavior;
+- do not alter Stage16 signed offline authorization, IndexedDB lifecycle, materialization or Service Worker authority.
 
-`34709720850`, `34709720815`, `34709720841`, `34709720831`, `34709720826`, `34709720817`, `34709720829`, `34709720896`, `34709720827`, `34709720893`, `34709720881`, `34709720812`, `34709720843`, `34709720832`, `34709720858`, `34709720825`, `34709720880`, `34709720821`, `34709720835`, `34709720837`.
+Verification after the fix:
 
-Key acceptance evidence:
+- `Stage16 Student PWA` run `34711657335` — **SUCCESS**;
+- PostgreSQL lease/download contracts — SUCCESS;
+- PWA app-shell Chromium — SUCCESS;
+- lifecycle/materialization Chromium — SUCCESS.
 
-- `UX B01 Shared Frontend Foundation` run `34709720825` — SUCCESS:
-  - API/Student/Admin builds — SUCCESS;
-  - migrations — SUCCESS;
-  - Student routing foundation at 390px Chromium — SUCCESS;
-  - Admin routing foundation at desktop Chromium — SUCCESS.
-- `Stage14 Student Product` run `34709720881` — SUCCESS:
-  - Student lint/typecheck/unit/build — SUCCESS;
-  - real Chromium auth/access/curriculum suite at 390px — SUCCESS.
-- `Stage 13E Frontend Preparation` run `34709720841` — Admin lint/typecheck/unit/build SUCCESS.
-- `Stage 13 Admin Product Verification` run `34709720835` — Admin backend + real browser E2E SUCCESS.
-- `Rebuild Stage Verification` run `34709720837` — SUCCESS including product, brand, UX, PostgreSQL, auth/access/activation and browser gates.
-- `Stage16 Student PWA` run `34709720829` — SUCCESS, proving B01 did not regress current offline/PWA contracts.
+## UX-B02 explicit non-goals preserved
 
-Two CI issues were found and fixed before this verified head:
+Not part of this batch:
 
-1. shared React source could not resolve app-local React dependencies; root fix made `@alwaslh/ui` framework-neutral and kept thin React adapters inside each app;
-2. the first B01 workflow incorrectly injected an absolute `VITE_API_BASE_URL`, breaking canonical same-origin `/v1` unit contracts; root fix removed the override and retained the existing Vite `/v1` proxy.
-
-Manual screenshot review in this tool environment: `NOT YET VERIFIED`. Real Chromium viewport/RTL/focus/history behavior is verified; full visual/device closure remains UX-B16/B17.
-
-The documentation-sync commit after this evidence changes the PR head, so exact final PR-head CI must be green again before merge. Do not treat earlier runs as acceptance for a later head.
+- Reader route/shell migration — UX-B03;
+- Assessment redesign/route migration — UX-B04;
+- full Downloads/Account/offline technical-copy cleanup — UX-B05;
+- any Admin refoundation — UX-B06+;
+- `STUDENT-016I/R/S/O/G` or any new Stage16 implementation;
+- API/PostgreSQL/Railway/business-rule changes.
 
 ## Product contracts preserved
 
@@ -122,37 +115,6 @@ The documentation-sync commit after this evidence changes the PR head, so exact 
 - assessment scoring/finalization remains server-owned;
 - `/v1` is not Service Worker Cache API authority;
 - signed offline authorization/integrity/device/session rules remain unchanged.
-
-## Target product IA
-
-### Student
-
-Implemented-era target destinations for B02+:
-
-- Home
-- Learn / Subjects
-- Practice
-- Downloads
-- Account
-
-Focused descendants:
-
-- Subject / Lesson / Reader
-- Quiz / Attempt / Assessment
-
-Do not add Personal Learning or Progress before their roadmap stages exist.
-
-### Super Admin
-
-- Overview
-- Curriculum
-- Content / Ingestion / OCR
-- AI Jobs / Human Review
-- Question Bank / Quizzes
-- Students / Access Codes
-- Operations / Notifications / Audit / constrained System Status
-
-Dashboard remains an overview/attention surface only.
 
 ## Stage ledger
 
@@ -168,22 +130,47 @@ Dashboard remains an overview/attention surface only.
 | Stage17 | BLOCKED BY Stage16 closure |
 | Stage18–29 | pending in roadmap order |
 
-`STUDENT-016H`: **DONE / VERIFIED / MERGED**. Do not redo it.
+`STUDENT-016H`: **DONE / VERIFIED / MERGED**.
 
-Exact normal-roadmap continuation after refoundation:
+Exact normal-roadmap continuation after UX-B17 remains:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
 
-## Known open items outside B01
+## UX-B02 verification evidence
 
-- Student live authenticated same-origin E2E after PR #39 — `NOT YET VERIFIED` as a hosted-runtime item; local/CI Student browser suites are green.
+Verified on code head `3cc44b1bb9b44de3cb99a18c6cf5b2d29439c8f3`:
+
+- Student lint — PASS;
+- strict typecheck — PASS;
+- unit tests — PASS;
+- production build — PASS;
+- API build/migrations in dedicated B02 gate — PASS;
+- real Chromium at 390px — PASS;
+- representative tablet navigation — PASS;
+- desktop rail navigation — PASS;
+- RTL — PASS;
+- route focus + browser back/history — PASS;
+- no horizontal overflow — PASS;
+- global online/offline state — PASS;
+- Stage14 activation/login/recovery/access/curriculum + Reader parity — PASS;
+- Stage15 assessment parity through Practice — PASS;
+- Stage16 PWA/download/lease/lifecycle regression — PASS;
+- Rebuild activation browser regression — PASS;
+- complete workflow matrix — **20/20 SUCCESS**.
+
+Manual screenshot/art-direction closure remains `NOT YET VERIFIED` here and belongs to the later visual/device closure batches B16/B17; executable responsive browser evidence is complete for B02 acceptance.
+
+## Known open items outside B02
+
+- Student hosted live authenticated same-origin E2E after PR #39 — `NOT YET VERIFIED` as a hosted-runtime item.
 - `AI-012..AI-019` live provider readiness — `NOT YET VERIFIED`.
-- Student final installed-app destination composition/safe-area navigation — B02.
-- Student normal UI technical offline/device copy — B05.
-- Admin grouped IA and current Stage/parity/config copy — B06–B15.
+- Reader information architecture and dedicated Reader shell — B03.
+- Assessment route/shell redesign — B04.
+- Student Downloads/Account and technical offline-copy closure — B05.
+- Admin grouped IA and workflow migration — B06–B15.
 - final visual/responsive/device/accessibility closure — B16/B17.
-- Stage28 Production Cutover is not complete.
+- Stage28 Production Cutover — not complete.
 
 ## Next action
 
-Re-verify PR #43 on the exact documentation-synchronized head. If green, record the final head/run evidence in PR #43 and Issue #16 and leave B01 ready for review/merge. **Do not start UX-B02 until B01 is accepted and integrated.**
+Run one final exact-head CI pass after this documentation synchronization. If green, record the final SHA/run IDs in PR #44 and Issue #16 and leave UX-B02 ready for review/merge. Do **not** start UX-B03 in this batch.
