@@ -1,7 +1,7 @@
 export interface AdminNavigationItem {
   label: string;
   to: string;
-  end?: boolean;
+  end: boolean;
 }
 
 export interface AdminNavigationGroup {
@@ -17,31 +17,31 @@ export const ADMIN_NAVIGATION: readonly AdminNavigationGroup[] = [
   {
     label: "المحتوى التعليمي",
     items: [
-      { label: "المنهج", to: "/app/curriculum" },
-      { label: "المحتوى", to: "/app/content" },
-      { label: "المراجعات", to: "/app/reviews" },
+      { label: "المنهج", to: "/app/curriculum", end: false },
+      { label: "المحتوى", to: "/app/content", end: false },
+      { label: "المراجعات", to: "/app/reviews", end: false },
     ],
   },
   {
     label: "الأسئلة والاختبارات",
     items: [
-      { label: "بنك الأسئلة", to: "/app/questions" },
-      { label: "الاختبارات", to: "/app/quizzes" },
+      { label: "بنك الأسئلة", to: "/app/questions", end: false },
+      { label: "الاختبارات", to: "/app/quizzes", end: false },
     ],
   },
   {
     label: "الطلاب والوصول",
     items: [
-      { label: "الطلاب", to: "/app/students" },
-      { label: "أكواد الوصول", to: "/app/access-codes" },
+      { label: "الطلاب", to: "/app/students", end: false },
+      { label: "أكواد الوصول", to: "/app/access-codes", end: false },
     ],
   },
   {
     label: "التشغيل",
     items: [
-      { label: "الحالة والمشكلات", to: "/app/operations" },
-      { label: "سجل التدقيق", to: "/app/operations/audit" },
-      { label: "التشخيص المتقدم", to: "/app/operations/diagnostics" },
+      { label: "الحالة والمشكلات", to: "/app/operations", end: true },
+      { label: "سجل التدقيق", to: "/app/operations/audit", end: false },
+      { label: "التشخيص المتقدم", to: "/app/operations/diagnostics", end: false },
     ],
   },
 ] as const;
