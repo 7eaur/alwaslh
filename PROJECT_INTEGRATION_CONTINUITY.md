@@ -1,115 +1,170 @@
 # PROJECT INTEGRATION CONTINUITY — الوسيلة الذكية
 
-> Operational continuity for replacement engineering conversations. Current code + migrations + executable CI outrank prose.
+> Operational continuity for replacement engineering conversations. Current code + migrations + executable CI + live Railway evidence outrank prose.
 
-Last synchronized: **2026-09-11**.
+Last synchronized: **2026-09-12**.
 
 ## Resume procedure
 
-1. Confirm repo `7eaur/alwaslh` and branch `parallel/stage14-student-product`.
-2. Read README + Documentation Index + Student Track docs + Stage16 handoff.
-3. Read Handoff/Status/Resume/Engineering Log/this file/Execution Queue.
-4. Read product overrides + roadmap Stage16 + latest Issue #16.
-5. Live-check Student branch, `main` and Actions before editing.
-6. Before shared API changes inspect actual Track A/main contracts and Reader/content/media implementation.
+1. Confirm repo `7eaur/alwaslh` and live `main` HEAD.
+2. Do not resume from historical long-lived Track branches unless inspecting history.
+3. Read README + Documentation Index + Handoff/Status/Resume/Engineering Log/this file/Execution Queue.
+4. Read Product Overrides + Stage16 handoff + Railway/content live-state docs + latest Issue #16.
+5. Live-check Actions and Railway before changing shared/runtime behavior.
+6. Create a short-lived branch from current `main` for the next batch.
 
-## Operating model
+## Current operating model
 
-- Track A: Backend/Admin/AI/Question Bank/Quiz Builder/Stage13G.
-- Track B: Student Product on `parallel/stage14-student-product`.
-- Issue #16 is the shared ledger.
-- Shared authority is consumed, never duplicated.
-- deployment remains deferred.
+The former Track A/Track B split is historical after PR #33.
 
-## Canonical checkpoints
+PR #33 integrated Stage13G + current Student Product:
 
-- Stage14 `ac55f1435d232cadff334816407f1182125dda90` — CLOSED / VERIFIED.
-- Stage13F main baseline `3aeca598759e31b4eddc5cb3535e00c11fc0f7d2`.
-- Stage13F→Student `4a476e1f29cb605fce294d7c34fd68e8218a32e8` — VERIFIED.
-- Stage15 `9a787b7c0f6bd3ed12f24de92546c33fcc21e26d` — CLOSED / VERIFIED.
-- Stage16 PWA `c1ae86036d4d302b8ca8c411227f41c37b4063ef` — VERIFIED.
-- Stage16 bounded server lease `5b71aa2a3bfbf2a9b7d1c6ec7a3762033ac9cacd` — VERIFIED.
-- Stage16 client lease lifecycle runtime `53aeb972c4c891c3eecafdde0716b544751d2711` — VERIFIED for current lease boundary.
+- verification head `dcdae7579a40878c71f64593280a0df2f8363ee2`;
+- **19/19 workflows SUCCESS**;
+- merge commit `5e22c3ff157b42b6da47febe205dd91fcb264eed`.
 
-Runtime evidence:
+Product Owner direction now assigns the entire remaining post-Stage13 product sequence to one continuation owner. This changes task routing, **not architecture boundaries**: shared server/DB authority must still be implemented in API/database layers, not duplicated in Student Web.
 
-- Stage16 `34551931757` SUCCESS, including real Chromium IndexedDB lifecycle 3/3.
-- Stage14 `34551931610` attempt 2 SUCCESS on the same runtime, full quality + browser suite.
+## Integrated baseline
+
+Before this documentation sync, live `main` was:
+
+`8006a7c4b2fa66bcac9cfb3addcd52fa831c42df`
+
+It includes:
+
+- Stage13G Admin/Backend/AI/Question Bank/Quiz work;
+- Stage14 Student Product;
+- Stage15 Student Assessment;
+- current Stage16 PWA/offline signing/materialization work;
+- Railway Docker deployment support;
+- Grade 9 English scoped canonical media bootstrap;
+- live-content proof documentation.
+
+Always live-check after this docs branch merges.
 
 ## Stable integration boundaries
 
-- Browser is not Auth/Access/Curriculum/Question Bank/Assessment authority.
-- protected Reader/media remains server-authorized and `private,no-store`.
-- `/v1` must not enter SW Cache API.
-- offline lease is metadata authorization, not downloaded content.
-- offline DB remains account/device-scoped and credential-free.
-- `content_revisions`, `content_tombstones`, `sync_checkpoints` remain dormant until verified writers/API/client flows exist.
+- Browser is not Auth/Access/Curriculum/Question Bank/Assessment durable authority.
+- protected Reader/media is server-authorized and online responses remain `private,no-store`.
+- `/v1` must not enter Service Worker Cache API.
+- offline storage remains profile/device scoped and credential-free.
+- private offline signing material is API-only; Student receives only the public verification identity.
+- `content_revisions`, `content_tombstones`, `sync_checkpoints` are not a complete sync authority until writers/API/client flow is verified.
+- `media ready` never implies `lesson published`.
+- AI review never implies Question Bank publication.
 
-## Shared API already added by Student Stage16
+## Stage16 shared files / conflict-sensitive surfaces
 
+Backend:
+
+- `apps/api/src/app.ts`
 - `apps/api/src/offline/service.ts`
+- `apps/api/src/offline/download.ts`
 - `apps/api/src/offline/http.ts`
-- `apps/api/src/app.ts` Student offline registration
-- `apps/api/tests/integration/student-offline.integration.test.ts`
+- `apps/api/src/offline/signing.ts`
+- `apps/api/src/curriculum/student-reader.ts`
+- `apps/api/src/config.ts`
+- future sync writers/routes/migrations.
 
-No Stage16 DB migration has been required so far.
+Student:
 
-Potential manual conflict surfaces:
+- `apps/student-web/src/offline-store.ts`
+- `apps/student-web/src/offline-content-store.ts`
+- `apps/student-web/src/offline-download*.ts`
+- `apps/student-web/src/offline-authorization.ts`
+- `apps/student-web/src/offline-session.ts`
+- `apps/student-web/src/App.tsx`
+- Stage16 E2E specs.
 
-- `apps/api/src/app.ts` registrations;
-- Reader/media/offline route namespaces;
-- migrations after current integrated schema if future sync persistence is required.
+Conflict policy:
 
-Conflict policy: preserve canonical Track A services and resolve additively. Never copy durable authority into Student Web merely to avoid a shared-file conflict.
+- preserve canonical business/server authority;
+- resolve additively;
+- do not duplicate state merely to avoid shared-file edits;
+- rerun all affected API/Student/browser gates after conflicts.
 
-## Verified lease lifecycle boundary
+## Current Stage16 authority boundary
 
-`GET /v1/student/offline/lease` remains the lease authority.
+Verified:
 
-Client behavior verified at `53aeb972...`:
+- bounded lease;
+- explicit protected materialization;
+- checksum/size/budget/atomic storage;
+- ES256 signed server manifest;
+- Student key-ID/signature/canonical payload verification before storage;
+- tamper rejection at download time.
 
-- activation/login/restore refreshes and saves lease metadata best-effort;
-- DB `alwaslh-student-offline` v1 store `leases`, key `profileId:deviceId`;
-- logout/session-expiry deletes only active scope;
-- device rebind removes stale scopes only within the same profile;
-- another account scope survives;
-- reload-safe cleanup uses only non-secret `{profileId,deviceId}` session pointer;
-- clock rollback beyond 5-minute tolerance rejects offline lease use.
+Not yet verified/closed:
 
-No protected lesson/media bytes exist yet.
+- durable active scope across true browser restart;
+- signed authorization re-verification at offline use/render time;
+- blob SHA-256 recheck at use time;
+- cold-start offline Reader;
+- reconnect revocation/publication/revision purge;
+- revision/tombstone/cursor/delta/client application;
+- bounded outbox semantics.
 
-## Current shared-contract next boundary
+## Deployment continuity
 
-`STUDENT-016-CACHE-003` + `STUDENT-016-DOWNLOAD-006` require an explicit protected lesson download contract before any blob storage.
+Railway project `charming-peace` is the current hosted inspection/dev stack.
 
-Do not invent the contract from dormant sync tables. First inspect actual canonical Reader/content/publication/media schema and services. The contract must reuse canonical lesson/content/media IDs where stable and expose only safe manifest data required for offline materialization:
+Public surfaces:
 
-- stable lesson/asset identity;
-- explicit content revision/provenance;
-- SHA-256/checksum;
-- exact byte size;
-- current Published + entitlement authorization;
-- no raw storage key;
-- no current Reader endpoint caching.
+- Student `https://alwaslh-dev-student-7eaur-production.up.railway.app`
+- Admin `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
+- API `https://alwaslh-dev-api-7eaur-production.up.railway.app`
 
-Client storage design must define account/device budget, exact byte accounting, failure rollback and deterministic eviction/removal before adding blob stores.
+Latest known state: API/Admin/Student/PostgreSQL all SUCCESS.
 
-## Open boundaries
+API uses:
 
-- `STUDENT-016-CACHE-003` — explicit protected materialization OPEN / next design.
-- `STUDENT-016-DOWNLOAD-006` — manifest/budget/checksum/accounting/rollback/eviction OPEN / next.
-- `STUDENT-016-REVOCATION-007` — reconnect revalidation/purge OPEN.
-- `STUDENT-016-SYNC-001` — revision/tombstone/cursor authority OPEN / PROVEN absent.
-- `STUDENT-016-OUTBOX-008` — delta/outbox OPEN.
-- Stage17+ blocked/later.
-- deployment deferred.
+- repository root source;
+- `apps/api/Dockerfile`;
+- pre-deploy migrations;
+- direct `node apps/api/dist/server.js` start;
+- `/ready` healthcheck;
+- persistent media volume `/app/runtime-data/media`.
 
-Closed in current runtime boundary:
+Observed caveat: manual Railway redeploy may incorrectly choose root Railpack even when Dockerfile is configured. Commit-based deployment has correctly honored Dockerfile. If logs show root Railpack, correct deployment path rather than changing application architecture.
 
-- `STUDENT-016-QA-004` FIXED / VERIFIED.
-- `STUDENT-016-CLIENT-005` FIXED / VERIFIED.
-- `STUDENT-016-LEASE-002` FIXED / VERIFIED for lease server+client lifecycle.
+Full detail: `docs/operations/RAILWAY_LIVE_STATE.md`.
+
+## Content continuity
+
+Canonical source:
+
+`7eaur/alwaslh-go@f81ebb6ef6198818fa091f7a8c1c81b4de7dbd23`
+
+Stage9 full inventory: 48 documents / 5,552 images.
+
+Live Grade 9 English proof:
+
+- 75 images / 8,390,689 bytes;
+- 75 ready media assets;
+- 300 variants;
+- 75 Draft lesson assets;
+- 10 lessons.
+
+Important continuity rules:
+
+- assets remain Draft until Admin review/publish;
+- no automatic AI question generation/publication;
+- do not import old Supabase data without new explicit Product Owner instruction;
+- before bulk media load, verify source-to-lesson mapping and Railway media capacity.
+
+Full detail: `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`.
+
+## Stage transition continuity
+
+Current sequence:
+
+`Stage16 closure → Stage17 → Stage18 → Stage19 → Stage20 → Stage21 → Stage22 → Stage23 → Stage24 → Stage25 → Stage26 → Stage27 → Stage28 → Stage29`.
+
+`AI-012..AI-019` remains an open cross-cutting live-provider requirement and must be explicitly verified before final release if live AI is part of the release candidate.
 
 ## Exact continuation
 
-Live shared-state recheck → inspect Reader/content/media → explicit manifest + bounded storage contract → smallest compatible shared API → account/device materialization + real Chromium → reconnect revalidation/purge → authoritative revisions/tombstones/cursor/delta/outbox → Stage16 closure. Do not start Stage17 or deployment.
+Live shared-state recheck → short-lived branch from `main` → durable offline scope → read-time signed authorization verification → read-time blob integrity → cold-start offline Reader + real Chromium → reconnect purge → authoritative delta/tombstone/outbox → Stage16 closure → Stage17.
+
+A separate content-review batch may publish the already imported Grade 9 English Draft sample through normal Admin authority, but should not be mixed into the Stage16 architecture batch.
