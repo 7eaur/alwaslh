@@ -35,6 +35,8 @@ type PracticeRoute =
   | { kind: "attempt"; sessionId: string }
   | { kind: "invalid" };
 
+const ARABIC_OPTION_MARKERS = ["أ", "ب", "ج", "د", "هـ", "و", "ز", "ح", "ط", "ي"] as const;
+
 function requestMessage(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
   return "تعذر تحميل التدريبات والاختبارات. حاول مرة أخرى.";
@@ -77,6 +79,10 @@ function attemptHref(sessionId: string): string {
 
 function modeLabel(mode: StudentAssessmentMode): string {
   return mode === "practice" ? "تدريب" : "اختبار";
+}
+
+function optionMarker(index: number): string {
+  return ARABIC_OPTION_MARKERS[index] ?? String(index + 1);
 }
 
 function scoreLabel(value: number): string {
@@ -338,7 +344,7 @@ function QuizDetail({
         <section className="quiz-choice-section" aria-labelledby="question-set-title">
           <div>
             <p className="eyebrow">قبل البدء</p>
-            <h2 id="question-set-title">مجموعة الأسئلة</h2>
+            <h2 id="question-set-title">اختر مجموعة الأسئلة</h2>
             <p>اختر مجموعة محددة، أو اترك الاختيار تلقائيًا إذا أردت تنويع الأسئلة.</p>
           </div>
           <div className="field-group quiz-question-set-field">
@@ -675,7 +681,7 @@ function AssessmentWorkspace({
                   checked={selectedOptionId === option.id}
                   onChange={() => setSelectedOptionId(option.id)}
                 />
-                <span className="attempt-option-marker" aria-hidden="true">{String.fromCharCode(65 + optionIndex)}</span>
+                <span className="attempt-option-marker" aria-hidden="true">{optionMarker(optionIndex)}</span>
                 <span>{option.label}</span>
               </label>
             ))}
@@ -763,12 +769,7 @@ function AttemptPage({
 
   useEffect(() => {
     void loadAttempt();
-  }, [sessionId]);
-
-  useEffect(() => {
-    if (!online || state.status !== "ready" || state.assessment.session.status !== "in_progress") return;
-    void loadAttempt();
-  }, [online]);
+  }, [sessionId, online]);
 
   if (state.status === "loading") {
     return (
