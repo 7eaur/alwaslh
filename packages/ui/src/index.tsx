@@ -15,6 +15,7 @@ interface ProductShellProps {
   surface: ProductSurface;
   children: ReactNode;
   contentId?: string;
+  contentLabel?: string;
   skipLabel?: string;
 }
 
@@ -22,6 +23,7 @@ export function ProductShell({
   surface,
   children,
   contentId = "route-content",
+  contentLabel = "محتوى الصفحة",
   skipLabel = "انتقل إلى المحتوى",
 }: ProductShellProps) {
   return (
@@ -29,7 +31,14 @@ export function ProductShell({
       <a className="aw-skip-link" href={`#${contentId}`}>
         {skipLabel}
       </a>
-      <div id={contentId} className="aw-route-content" data-route-focus tabIndex={-1}>
+      <div
+        id={contentId}
+        className="aw-route-content"
+        data-route-focus
+        role="region"
+        aria-label={contentLabel}
+        tabIndex={-1}
+      >
         {children}
       </div>
     </div>
