@@ -1,162 +1,155 @@
 # PROJECT STATUS — الوسيلة الذكية
 
-> Concise execution truth. Code, PostgreSQL migrations, executable CI and live runtime evidence outrank prose. Anything not executed or inspected is `NOT YET VERIFIED`.
+> Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not executed or inspected is `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-12**.
+Last synchronized: **2026-09-13**.
 
 ## Current management state
 
 **NORMAL ROADMAP: PAUSED**
 
-**ACTIVE TRACK: UX/UI REFOUNDATION + DESIGN SYSTEM + STUDENT/ADMIN EXPERIENCE REMEDIATION**
+**ACTIVE TRACKS: UX/UI REFOUNDATION + PARALLEL SUPER ADMIN PRODUCT REBUILD**
 
-**CURRENT UX BATCH: `UX-B03 — Student Learning Hierarchy and Reader Shell`**
+**STUDENT MAIN CHECKPOINT:** `UX-B04 — Student Practice / Assessment` is merged on live `main@f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
 
-**EXACT RETURN POINT AFTER THIS TRACK: `STUDENT-016I — True cold-start offline Reader`**
+**SUPER ADMIN CURRENT BATCH:** `AR-05 — Reviews + AI` — DISCOVERY / IMPLEMENTATION NEXT.
 
-Canonical roadmap: `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
+**SUPER ADMIN COMPLETED:** `AR-01` through `AR-04` — DONE / VERIFIED on rebuild evidence.
 
-## Live main baseline
-
-UX-B00, UX-B01 and UX-B02 are closed and integrated. Do not redo them.
-
-### UX-B02 final acceptance
-
-- PR #44 final head: `b956248418303618120d02cda562bf179cd7071b`
-- exact-head workflows: **20/20 SUCCESS**
-- key final runs:
-  - `UX B02 Student Shell and Navigation` `34711941779` — SUCCESS
-  - `Stage14 Student Product` `34711941781` — SUCCESS after rerunning one transient Chromium timeout job only
-  - `Stage15 Student Assessment` `34711941813` — SUCCESS
-  - `Stage16 Student PWA` `34711941769` — SUCCESS
-  - `Stage 13 Admin Product Verification` `34711941728` — SUCCESS
-  - `Stage 13G Admin Operations Verification` `34711941761` — SUCCESS
-  - `Rebuild Stage Verification` `34711941790` — SUCCESS
-- PR #44 merge commit: `ced57cb4dd45daedbe9a95c4897d1b073ec9e4e9`
-- verified live `main`: `ced57cb4dd45daedbe9a95c4897d1b073ec9e4e9`
-
-The initial Stage14 failure on the final docs head was a single Assessment E2E timeout. Stage15 was green on the same SHA, 11/12 Stage14 browser tests passed, and rerunning only the failed Chromium job passed with no code change. It is recorded as transient timing rather than a product regression.
-
-## UX-B03 current state
-
-Branch: `ux/student-learning`
-
-Base: `main@ced57cb4dd45daedbe9a95c4897d1b073ec9e4e9`
-
-Status: **IMPLEMENTATION IN PROGRESS / VERIFICATION PENDING**.
-
-Target boundaries:
-
-- `/app/learn` — choose an entitled subject;
-- `/app/learn/subjects/:subjectId` — one subject curriculum/lesson sequence;
-- `/app/learn/lessons/:lessonId` — focused Reader;
-- direct subject/lesson URLs must resolve only through the server-authorized curriculum catalog;
-- Reader keeps existing protected-media, speech, search, loading/error/session contracts;
-- Reader suppresses global Student navigation while active;
-- learner-facing copy must not expose publication/review/MIME/revision internals.
-
-Implemented on the branch so far:
-
-- added `student-learning-model.ts` for authorized subject/lesson lookup and route helpers;
-- added unit coverage for authorized route lookup;
-- added `student-learning.tsx` with real Learn/Subject/Lesson route composition;
-- added `student-reader.tsx` as a dedicated focused Reader shell;
-- removed the legacy state-driven `student-curriculum.tsx` giant surface;
-- updated Student shell orchestration so Learn descendants are route-driven and access management stays only at the Learn root during migration;
-- hidden global bottom/adaptive navigation while the Reader is active;
-- added `student-learning.css` for Learn/Subject/Reader layouts and responsive reading width;
-- cleaned Reader copy such as “النص المعتمد/منشور/مسودات/MIME” from the Student surface;
-- migrated Reader/activation E2E selectors to semantic links and real route hierarchy;
-- added dedicated `UX B03 Student Learning and Reader` CI gate.
-
-## UX-B03 explicit non-goals
-
-Not part of this batch:
-
-- `STUDENT-016I` true cold-start offline Reader or any new Stage16 capability;
-- Assessment route/shell redesign — UX-B04;
-- full Downloads/Account/offline technical-copy cleanup — UX-B05;
-- Admin refoundation — UX-B06+;
-- API/PostgreSQL/Railway contract changes unless a separately proven root-cause defect requires its own batch.
-
-## Product contracts preserved
-
-- API/PostgreSQL remain canonical authority;
-- Auth/Authorization remain server-owned;
-- Entitlements remain authoritative;
-- `media ready != published`;
-- AI never auto-publishes;
-- human review chain remains mandatory;
-- assessment scoring/finalization remains server-owned;
-- `/v1` is not Service Worker Cache API authority;
-- signed offline authorization/integrity/device/session rules remain unchanged.
-
-## Stage ledger
-
-| Stage | State |
-|---|---|
-| Stage1–10 + OCR | VERIFIED |
-| Stage11 | VERIFIED |
-| Stage12 | VERIFIED backend/runtime; `AI-012..AI-019` live provider readiness OPEN |
-| Stage13A–G | VERIFIED / CLOSED / integrated |
-| Stage14 Student | CLOSED / VERIFIED |
-| Stage15 Practice/Assessment | CLOSED / VERIFIED |
-| **Stage16 Offline/PWA** | **OPEN / PARTIALLY VERIFIED — paused during UX refoundation** |
-| Stage17 | BLOCKED BY Stage16 closure |
-| Stage18–29 | pending in roadmap order |
-
-`STUDENT-016H`: **DONE / VERIFIED / MERGED**.
-
-Exact normal-roadmap continuation after UX-B17 remains:
+Exact normal-roadmap return after the UX refoundation closes remains:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
 
-## UX-B03 verification required before acceptance
+Canonical UX roadmap: `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
+Super Admin roadmap: `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`.
 
-- Student lint;
-- strict typecheck;
-- unit tests;
-- production build;
-- direct Learn → Subject → Lesson route hierarchy in real Chromium;
-- direct authorized lesson URL refresh/deep-link behavior;
-- unauthorized/not-in-catalog subject and lesson state;
-- Reader protected media headers/content parity;
-- Reader speech/search/loading/error/offline honesty;
-- Reader global-navigation suppression;
-- browser back/history and route focus;
-- phone/tablet/desktop no-overflow verification;
-- Stage14 regression;
-- Stage15 regression;
-- Stage16 regression without new Stage16 implementation;
-- Rebuild regression;
-- exact-head full path-triggered GitHub Actions matrix.
+## Live main baseline
 
-Current result: **NOT YET VERIFIED — implementation branch exists; PR/exact-head CI pending.**
+Current live `main`:
 
-## Known open items outside B03
+`f44d5f72eaeb0acd8ca5c67d2816a56596761f21`
 
-- Student hosted live authenticated same-origin E2E after PR #39 — `NOT YET VERIFIED` as a hosted-runtime item.
-- `AI-012..AI-019` live provider readiness — `NOT YET VERIFIED`.
-- Assessment focused route/shell — B04.
-- Downloads/Account and technical offline-copy closure — B05.
-- Admin grouped IA/workflow migration — B06–B15.
-- final visual/responsive/device/accessibility closure — B16/B17.
-- Stage28 Production Cutover — not complete.
+This main includes the merged UX-B04 Student Practice/Assessment work plus the Full Product Architecture Audit documentation and independent `FPA-002` / SEC-01 Assessment authorization repair. The Super Admin rebuild remains isolated on `rebuild/super-admin-foundation` and must preserve concurrent Student/audit work when later resynchronized.
 
-## Next action
+## Completed Student refoundation foundation
 
-Open the independent UX-B03 PR, run exact-head CI and Chromium verification, fix any real regression at root cause, and do not start UX-B04 until B03 is accepted and integrated.
+- UX-B00 — DONE / VERIFIED / MERGED.
+- UX-B01 — DONE / VERIFIED / MERGED.
+- UX-B02 — DONE / VERIFIED / MERGED.
+- UX-B03 — DONE / VERIFIED / MERGED as `56ee51ab0d5669b4a38f9efec991ea79971d3503`.
+- UX-B04 — DONE / VERIFIED / MERGED on live main `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
+- UX-B05 — remains the next Student UX closure batch; owned by the Student workstream, not the Admin rebuild.
 
+## Parallel Super Admin Product Rebuild checkpoint
 
-## Parallel audit checkpoint — 2026-09-12 (AUDIT-01)
+Branch: `rebuild/super-admin-foundation`
 
-Audit-only baseline `3eb6b18ac5f403cb10463864c3c4b9e86f68b249`; UX #47 and Legacy Content ownership preserved. See [full product/architecture audit](docs/audits/FULL_PRODUCT_ARCHITECTURE_AUDIT_2026-09-12.md) and [complete surface/route/test inventory](docs/audits/FULL_PRODUCT_ARCHITECTURE_INVENTORY_2026-09-12.md). Scoped decision C: partial rebuild of Admin task composition/source review, retain backend/domain with targeted refactors (B). This does **not** stop UX Refoundation or mark the product complete.
+Draft PR: **#52 — `refactor(admin): rebuild Super Admin foundation`**
 
-Fresh baseline checks: API 62 unit tests, Student 37, Admin 63 passed; all three builds passed; API lint passed with one unused importer-variable warning. FPA-001 shared-subject/class navigation was reproduced in the actual module; FPA-002 abandoned-session access omission was reproduced in the actual service with a query double, not PostgreSQL. Real production journeys and the exact new PostgreSQL scenario remain `NOT YET VERIFIED` in this initial batch. Audit findings are separate from normal roadmap completion. Issue #16 kickoff: `5648443655`; FPA-001 notice: `5648464422`. Publication SHA and Actions runs are recorded in the audit execution addendum/Issue #16 after publication.
+Verified implementation checkpoint before AR-05:
 
+`ba74c17902827805d6be0ab91c0ff384fc3e2530`
 
-### AUDIT-01 verified publication / SEC-01 follow-up
+### AR-01 — DONE / VERIFIED
 
-Audit PR #49 merged as `4249c91e434994343bfe3bd685af6d101c987dc1` after 15/15 workflows passed at `674519d9ff391de73828ea6b055c0301e63e3b1f`. [Execution addendum](docs/audits/AUDIT_EXECUTION_EVIDENCE_2026-09-12.md) records every run ID, real PostgreSQL red/green proof for FPA-002, deployed Student/Admin source SHAs, and the additional Reader focus finding FPA-013. The independent repair is PR #50; final merge/deployment evidence is tracked in that addendum and Issue #16. These audit batches do not change UX/content workstream ownership or declare project completion.
+- route-driven Admin shell and deep links;
+- five task-oriented navigation areas;
+- Governance / AI Authoring / Reports removed from normal top-level navigation;
+- stage/parity/debug surfaces removed from normal product shell.
 
-SEC-01 is now merged in PR #50 at `f60f263f9fecfa33a3876ef7df6334c222c7cf3a`: fixed head `b68bc9bac05102635b57a04668a065c0f5598e7a` passed 18/18 workflows (Stage14 passed a documented targeted retry; FPA-013 remains open). Railway API deployment `1e5a749a-10ac-47fd-99d8-e2653fce154b` reported SUCCESS at `2026-09-12T20:51:20.911Z`. Authenticated production-path verification is `NOT YET VERIFIED`; the targeted PostgreSQL/Chromium contract is verified.
+### AR-02 — DONE / VERIFIED
+
+- attention-first Overview;
+- Operations split into Health / Audit / Diagnostics;
+- contextual Notifications route;
+- server-owned `/v1/admin/operations/attention` projection;
+- humanized operational read model with technical diagnostics kept advanced-only.
+
+### AR-03 — DONE / VERIFIED
+
+- Curriculum backend/domain contracts preserved;
+- giant Curriculum composition decomposed into hierarchy browsing, contextual creation and entity actions;
+- secondary rename/status/order controls moved behind contextual/advanced management;
+- real PostgreSQL/API/Chromium curriculum flow verified.
+
+### AR-04 — DONE / VERIFIED
+
+Implemented and verified:
+
+- protected OCR source preview with server-side byte-size and SHA-256 integrity checks;
+- no public storage-path authority exposed to the browser;
+- source image/page rendered beside OCR text during human review;
+- OCR review remains authenticated and server-authoritative;
+- lesson-level content publication command no longer requires the UI to know `ingestion_task_id`;
+- legacy/source-imported lesson assets without ingestion tasks can follow Draft → Review → Published;
+- publication remains blocked when required media is not ready;
+- `content_revision` and audit authority remain server-owned;
+- upload task now owns upload/process/link/archive only; lesson publication is a separate lesson-owned workflow;
+- legitimate lesson-summary/export and draft-quiz-metadata capabilities were relocated to contextual routes instead of restoring removed parity panels:
+  - `/app/content/lesson-tools`
+  - `/app/quizzes/metadata`
+- raw MIME/error codes, raw lifecycle strings and parity/stage copy were removed from normal operator presentation.
+
+AR-04 exact-head evidence on `ba74c179...`:
+
+- Stage 13D Content Ingestion `34726217380` — SUCCESS;
+- Stage 13D Admin Upload UI `34726217393` — SUCCESS, including real Chromium upload/process/link/review/publish/history flow;
+- Stage 13G Admin Operations `34726217382` — SUCCESS, including real API + PostgreSQL + Chromium;
+- Stage 13 Admin Product `34726217394` — SUCCESS;
+- Stage 13E Frontend Preparation `34726217369` — SUCCESS;
+- Stage 13E Admin AI Operations `34726217384` — SUCCESS;
+- Stage 13E Combined Integration `34726217359` — SUCCESS;
+- OCR Foundation `34726217374` — SUCCESS;
+- Stage 9/10/11/12 and Student API/Product regressions shown on the same head were also green when completed.
+
+A few unrelated broad matrix jobs may still have been running when this checkpoint was written; they do not reopen AR-04 unless they expose a regression caused by this branch.
+
+## AR-05 current evidence and target
+
+Discovery from actual code shows the current AI review controller already has useful mechanics to KEEP:
+
+- server-canonical refresh;
+- polling for non-terminal jobs;
+- conflict refresh;
+- pagination;
+- review edit/approve/reject authority.
+
+However the ordinary UI still exposes technical workflow details such as job/unit IDs, prompt keys/versions and provider/runtime attempt data, and `AdminAiAuthoringWorkspace` still asks an operator to paste an `Output ID` to apply an approved result.
+
+AR-05 therefore owns:
+
+1. a content-first human AI review queue/surface;
+2. preservation of proven polling/conflict/retry mechanics;
+3. moving provider/model/route/token/cost/raw identifiers to advanced diagnostics only;
+4. contextual apply/import actions directly from an approved reviewed result;
+5. removal of manual `jobId` / `outputId` cross-workspace handoff from normal Admin UX;
+6. backend/use-case changes only where needed to preserve idempotency, provenance, review revision and validation authority.
+
+## Parallel Full Product Architecture Audit checkpoint
+
+- Audit PR #49 merged as `4249c91e434994343bfe3bd685af6d101c987dc1`.
+- SEC-01 / `FPA-002` repair merged in PR #50 at `f60f263f9fecfa33a3876ef7df6334c222c7cf3a`.
+- Repair fixed abandoned Assessment-session authorization and has PostgreSQL/Chromium verification.
+- Railway API deployment `1e5a749a-10ac-47fd-99d8-e2653fce154b` reported SUCCESS.
+- `FPA-013` remains open: Reader active-search-match DOM focus finding.
+- Authenticated production-path verification remains `NOT YET VERIFIED` where the audit says so.
+
+These audit results are preserved and do not reopen completed Student UX or Super Admin batches.
+
+## Binding design-quality rule
+
+The existing UI is functional evidence, not a visual preservation contract. Changed screens must meet:
+
+**Functional + Clear + Elegant + Consistent + Fast + Maintainable + Professional**.
+
+Student is an Arabic-first/RTL-first educational app. Super Admin is a dense but readable task-oriented operations product, not a generic dashboard. The responsible engineer/designer owns final ship quality, not incremental similarity to legacy visuals.
+
+## Immediate next actions
+
+1. Implement AR-05 Reviews + AI from repository evidence.
+2. Keep existing server-authoritative review/polling/conflict mechanics where correct.
+3. Add contextual approved-result apply/import flow; remove manual Output ID handoff from normal UX.
+4. Re-run targeted Stage 13E AI/PostgreSQL/Chromium gates after each coherent batch.
+5. Continue AR-06 → AR-10 only after each prior batch is verified.
+6. Keep PR #52 draft until the Admin rebuild and final exact-head verification are complete.
+7. Before eventual merge, resynchronize with live main without overwriting Student/audit work.
