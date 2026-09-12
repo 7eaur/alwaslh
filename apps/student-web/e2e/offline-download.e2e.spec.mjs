@@ -98,11 +98,18 @@ test("protected lesson download preserves integrity contracts behind learner-fac
   expect(await offlinePackageFacts(page)).toHaveLength(0);
   await page.unroute(offlineManifestPattern);
 
-  const offlineAssetPattern = "**/v1/student/offline/lessons/*/assets/*?revision=*";
+  let corruptedAssetRequestObserved = false;
+  const offlineAssetPattern = "**/v1/student/offline/lessons/**/assets/**";
   await page.route(offlineAssetPattern, async (route) => {
-    await route.fulfill({ status: 200, contentType: manifest.assets[0].mimeType, body: Buffer.alloc(manifest.assets[0].byteSize, 0) });
+    const response = await route.fetch();
+    const body = Buffer.from(await response.body());
+    expect(body.length).toBe(manifest.assets[0].byteSize);
+    if (body.length > 0) body[0] ^= 0xff;
+    corruptedAssetRequestObserved = true;
+    await route.fulfill({ response, body });
   });
   await saveLesson(page, fixture.lessonTitle);
+  expect(corruptedAssetRequestObserved).toBe(true);
   await expect(page.getByText("تعذر حفظ الدرس بأمان. لم يتم الاحتفاظ بتنزيل غير مكتمل.", { exact: true })).toBeVisible();
   expect(await offlinePackageFacts(page)).toHaveLength(0);
   await page.unroute(offlineAssetPattern);
