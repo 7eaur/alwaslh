@@ -35,11 +35,10 @@ test("protected Reader serves published media, approved OCR, search and honest o
 
   await page.goto("/");
   await expect(page.getByText("تم تسجيل الدخول", { exact: true })).toBeVisible();
-  await expect(page.getByText(/ابدأ من صفك ومادتك وافتح الدرس مباشرة/)).toBeVisible();
-  const learningSurfaceOrder = await page.locator(".curriculum-surface, .access-section").evaluateAll((elements) =>
-    elements.map((element) => element.className),
-  );
-  expect(learningSurfaceOrder[0]).toContain("curriculum-surface");
+  await expect(page).toHaveURL(/\/app\/home$/);
+  await page.getByRole("link", { name: "التعلم", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/app\/learn$/);
+  await expect(page.getByRole("heading", { name: "التعلم" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/Stage16|PWA|authority/);
 
   await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
