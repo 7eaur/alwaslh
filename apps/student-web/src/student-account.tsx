@@ -90,7 +90,7 @@ export function StudentAccountExperience({ online, onSessionExpired, onAccessCha
 
   return (
     <div className="student-account-experience">
-      <section className="student-account-section" aria-labelledby="active-access-title">
+      <section className="student-account-section access-section" aria-labelledby="active-access-title">
         <div className="student-account-section__heading">
           <div><p className="eyebrow">المحتوى المتاح</p><h2 id="active-access-title">وصولك الحالي</h2><p>هنا ترى ما هو متاح لحسابك الآن.</p></div>
           <button className="text-button" type="button" onClick={() => void loadAccess()} disabled={!online || state.status === "loading"}>تحديث</button>
