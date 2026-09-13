@@ -93,18 +93,23 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/app/library");
-  await expect(page.getByRole("heading", { name: "كل ما يخص تعلمك في مكان واحد" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "التنزيلات", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "ملاحظاتي", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "المحفوظات", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "يحتاج مراجعة", exact: true })).toBeVisible();
-  const firstLibraryCard = page.locator(".student-library-card").first();
+  await expect(page.getByRole("heading", { name: "محتواك الشخصي، مرتب في مكان واحد" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "نظرة سريعة على ما احتفظت به" })).toBeVisible();
+  await expect(page.getByLabel("إحصائيات مكتبتي")).toBeVisible();
+  await expect(page.locator("[data-library-stat='downloads']")).toContainText("الدروس المحفوظة");
+  await expect(page.locator("[data-library-stat='notes']")).toContainText("٠");
+  await expect(page.locator(".student-library-tabs")).toHaveCount(0);
+
+  const libraryCards = page.locator(".student-library-card");
+  await expect(libraryCards).toHaveCount(4);
+  const firstLibraryCard = libraryCards.first();
   await expectClickable(firstLibraryCard, { minHeight: 96 });
   await expect(firstLibraryCard.locator(".student-clickable-card__arrow")).toBeVisible();
   await capture(page, "library-overview");
 
-  await page.getByRole("link", { name: "التنزيلات", exact: true }).click();
+  await libraryCards.filter({ hasText: "التنزيلات" }).click();
   await expect(page).toHaveURL(/\/app\/library\/downloads$/);
+  await expect(page.getByRole("link", { name: /العودة إلى نظرة مكتبتي/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "الدروس المحفوظة" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "دروس متاحة للتنزيل" })).toBeVisible();
   await expect(page.locator("[data-downloadable-lesson-id]").filter({ hasText: fixture.lessonTitle })).toBeVisible();
@@ -126,6 +131,9 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
   await capture(page, "library-downloads-offline");
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
+
+  await page.goto("/app/library");
+  await expect(page.locator("[data-library-stat='downloads']")).toContainText("١");
 
   await page.goto("/app/library/notes");
   await expect(page.getByRole("heading", { name: "لا توجد ملاحظات بعد" })).toBeVisible();
