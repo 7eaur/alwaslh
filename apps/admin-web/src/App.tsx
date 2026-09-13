@@ -21,6 +21,7 @@ import { AdminOperationsHealthPage } from "./admin/operations/AdminOperationsHea
 import { QuestionBankCreatePage } from "./admin/questions/QuestionBankCreatePage";
 import { QuestionBankDetailPage } from "./admin/questions/QuestionBankDetailPage";
 import { QuestionBankListPage } from "./admin/questions/QuestionBankListPage";
+import { QuizBuilderListPage } from "./admin/quizzes/QuizBuilderListPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
@@ -250,10 +251,19 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
         element={
           <WorkspaceWithRelatedActions
             actions={[
+              { label: "إنشاء وإدارة", to: "/app/quizzes/manage" },
               { label: "بيانات الاختبار", to: "/app/quizzes/metadata" },
               { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
             ]}
           >
+            <QuizBuilderListPage onSessionExpired={onSessionExpired} />
+          </WorkspaceWithRelatedActions>
+        }
+      />
+      <Route
+        path="quizzes/manage"
+        element={
+          <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى الاختبارات", to: "/app/quizzes" }]}>
             <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
           </WorkspaceWithRelatedActions>
         }
