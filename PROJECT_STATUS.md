@@ -5,8 +5,7 @@
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no automatic merge.  
 **Live main reference checked:** `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.  
-**AR-09 Batch 1 code-head:** `20c128bb4a2b7166ad1d04d24e4672c93422d38e`.  
-**Batch 1 verification checkpoint:** `61ab697e4ddcc263330c0826e0c127594712ca53`.
+**AR-09 Batch 2 code-head:** `d1bf7101135516c751c02d269a384015f9e3a132`.
 
 ## Super Admin stage ledger
 
@@ -19,40 +18,48 @@
 - AR-07 — Quiz Builder — DONE / VERIFIED. Final code-head `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
 - AR-08 — Students + Access Codes — DONE / VERIFIED. Final code-head `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
 - AR-09 — Cleanup / architecture enforcement — **ACTIVE**.
-  - Batch 1 — quiz metadata feature ownership relocation — **VERIFIED**.
-  - Original code-head Frontend `34756904661` — SUCCESS; Admin AI `34756904665` — SUCCESS.
-  - Original Combined `34756904664` and Stage13G `34756904668` were cancelled only because the later documentation push superseded them.
-  - Unchanged-production-code checkpoint `07de0e24475b8af410bf2c213ede2a334062b30c`: Admin AI `34757034197`, Combined `34757034226`, Stage13G `34757034179` — SUCCESS, including Real API + PostgreSQL + Chromium.
-  - Documentation closure checkpoint `61ab697e4ddcc263330c0826e0c127594712ca53` triggered fresh gates: Admin AI `34758285729` — IN PROGRESS; Combined `34758285717` — IN PROGRESS; Stage13G `34758285875` — IN PROGRESS at handoff.
+  - Batch 1 — Quiz metadata feature ownership relocation — **VERIFIED**.
+  - Batch 2 — Lesson authoring tools feature ownership relocation — **VERIFIED** on exact code-head `d1bf7101135516c751c02d269a384015f9e3a132`.
+  - Batch 2 verification: Frontend `34759439669` — SUCCESS; Admin AI `34759439651` — SUCCESS; Combined `34759439615` — SUCCESS; Stage13G `34759439612` — SUCCESS, including Admin UI quality, backend operations and Real API + PostgreSQL + Chromium.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
-## AR-09 Batch 1 closure
+## AR-09 Batch 2 closure
 
-Batch 1 moved `QuizMetadataPanel` from root `apps/admin-web/src/` to canonical Quiz ownership under `apps/admin-web/src/admin/quizzes/`, updated the route import, and removed the obsolete root seam. No migration, API, PostgreSQL authority, auth/security rule, quiz lifecycle rule or Student workstream code changed.
+The run first reconciled the inherited Batch 1 documentation handoff and current exact-head CI before mutation. The current pre-change head `8e0f46b6cdc5425d2b86bc772e54070be63d7986` was confirmed green on Admin AI, Combined and Stage13G, including Real API + PostgreSQL + Chromium, so the non-overlap blocker was cleared.
 
-The cancelled long-running checks on the original code-head were superseded by a documentation-only commit, not failures. The immediately following checkpoint, containing unchanged production code, completed Admin AI, Combined and Stage13G successfully, while the original code-head already had Frontend green. This closes the executable verification gap without weakening tests or backend contracts.
+`/app/content/lesson-tools` and its real Chromium test were inspected before modification. `LessonAuthoringParityPanel` owns presentation/state for lesson summary editing and export, while `fetchAdminCurriculum`, `updateLessonSummary` and `exportLessonAuthoring` remain the existing server/API contracts. Classification:
+- **KEEP:** route behavior, lesson-summary save/clear flow, content/history/print export, server authority and API contracts.
+- **REFACTOR:** physical ownership into `apps/admin-web/src/admin/content/`.
+- **REMOVE:** obsolete root `apps/admin-web/src/LessonAuthoringParityPanel.tsx` after the route import moved.
+- **NO CHANGE:** migrations, backend authority, PostgreSQL contracts, auth/security, Student workstream.
 
-**Decision: AR-09 Batch 1 = VERIFIED. AR-09 remains ACTIVE.**
+Implementation chain:
+1. `6f4638deddc57e3c5c2e1185c57054e39f4fbc86` — created `apps/admin-web/src/admin/content/LessonAuthoringParityPanel.tsx` with behavior preserved and only relative imports adjusted.
+2. `ec7ed60aa106767dddfb423e7c626d93a3fa2cea` — changed `App.tsx` to route through the content-owned implementation.
+3. `d1bf7101135516c751c02d269a384015f9e3a132` — removed the obsolete root seam.
 
-## Current non-overlap blocker
+Exact-head verification for `d1bf7101135516c751c02d269a384015f9e3a132` is fully green:
+- Frontend `34759439669` — SUCCESS.
+- Admin AI `34759439651` — SUCCESS.
+- Combined `34759439615` — SUCCESS.
+- Stage13G `34759439612` — SUCCESS.
 
-No Batch 2 code was started because the documentation closure checkpoint itself has active CI:
-- Admin AI `34758285729` — IN PROGRESS.
-- Combined `34758285717` — IN PROGRESS.
-- Stage13G `34758285875` — IN PROGRESS.
+**Decision: AR-09 Batch 2 = VERIFIED. AR-09 remains ACTIVE.**
+
+## Current non-overlap gate
+
+This documentation update advances branch HEAD and will trigger fresh CI. Do not start Batch 3 while any current documentation-head gate is ACTIVE/RUNNING. The first action in the next task is to fetch current HEAD and reconcile those runs.
 
 ## Remaining AR-09 inventory snapshot
 
-`App.tsx` still imports route-owned root surfaces including `AdminAiAuthoringWorkspace`, `AdminReportsWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, `CurriculumWorkspace`, and `LessonAuthoringParityPanel`. Root location alone is not evidence of removability.
-
-The next smallest candidate is `LessonAuthoringParityPanel`, directly rendered by `/app/content/lesson-tools`. Its behavior and server contracts are KEEP candidates; physical ownership may be REFACTORed into `admin/content` only after callers/tests are reconciled.
+Root route-owned surfaces still include `AdminAiAuthoringWorkspace`, `AdminReportsWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, and `CurriculumWorkspace`. Root location alone is not evidence of removability; callers, tests and domain ownership must be inspected before selecting the next smallest cleanup seam.
 
 ## Shared resume point for task A/B — continue AR-09 only
 
-1. Fetch current branch HEAD first and reconcile any newer commit.
-2. Reconcile `34758285729`, `34758285717`, and `34758285875` before any code mutation.
-3. If any fails, inspect the failing job/log and fix root cause without weakening tests or server authority.
-4. If all are green, inspect all callers/tests for `LessonAuthoringParityPanel` and `/app/content/lesson-tools`; classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE.
-5. Only if exclusively route-owned, relocate it under `apps/admin-web/src/admin/content/`, update the route import, remove the root seam, and run exact-head quality gates.
+1. Fetch live `main`, current branch HEAD, the three continuity files, recent commits, PR #52 and exact-head CI.
+2. Reconcile all CI triggered by the Batch 2 documentation commits before any new code mutation.
+3. If a gate fails, inspect exact job/log and fix root cause without weakening tests, contracts or server authority.
+4. If all gates are green, re-inventory remaining root route-owned surfaces and inspect callers/tests before choosing exactly one smallest ownership cleanup batch.
+5. Continue one cleanup seam at a time; do not infer removability from root location alone.
 6. Do not begin AR-10 until AR-09 is fully DONE / VERIFIED.
 7. Keep PR #52 Draft; no merge or auto-merge.
