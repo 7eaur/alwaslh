@@ -18,7 +18,7 @@ import {
   processContentIngestionTask,
   uploadContentIngestionItem,
 } from "../../content-ingestion-api";
-import { LessonPublicationPanel } from "../../LessonPublicationPanel";
+import { LessonPublicationPanel } from "./LessonPublicationPanel";
 
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
 const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
