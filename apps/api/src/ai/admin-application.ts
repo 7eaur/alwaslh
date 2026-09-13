@@ -1,7 +1,7 @@
-import type { AiGenerationOutput } from "./contracts.js";
-import { aiGenerationOutputSchema } from "./contracts.js";
 import type { Database } from "../db.js";
 import { AppError } from "../errors.js";
+import type { AiGenerationOutput } from "./contracts.js";
+import { aiGenerationOutputSchema } from "./contracts.js";
 
 export type AdminAiApplicationKind = "lesson" | "quiz";
 
