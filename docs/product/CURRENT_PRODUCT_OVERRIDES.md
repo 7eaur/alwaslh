@@ -104,7 +104,7 @@ Do not regress to eager imports of Learn/Assessment/Library/Account into the ini
 
 ## PO-OVR-010 — Library overview composition
 
-Current active decision for `/app/library`:
+PR #55 is merged. `/app/library` remains:
 
 1. concise heading;
 2. honest `ملخص مكتبتي`;
@@ -122,17 +122,21 @@ Library statistics:
 - one quiet divided summary surface, not a KPI card wall;
 - no decorative gradient.
 
-This override supersedes any older sentence that recommends Library overview tabs.
-
 Detailed decision: `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`.
 
 ## PO-OVR-011 — Active batch
 
-Active PR: **#55 — Library Overview Refinement**
+Active roadmap item: **`STUDENT-016I` — true cold-start offline Reader**.
 
-Branch: `ux/student-library-overview`
+Active PR observed during roadmap return:
 
-Do not redesign it again from scratch. Final required work is exact-head CI + phone/desktop Visual QA + merge if evidence is green.
+- PR #57 — `feat(student): close cold-start offline Reader gap`;
+- branch `stage16/student-016i`;
+- exact head `4624dcc824555c1d29e9d697a7474bf76223468b` at the observed checkpoint.
+
+Do not start a duplicate 016I implementation. Re-fetch the live PR head/CI first and continue the existing branch.
+
+Merge requires final exact-head CI to be green, especially Stage16 real Chromium acceptance. At the recorded checkpoint at least `Stage 8 · Student activation browser E2E` was failing, so PR #57 was not merge-ready.
 
 ## PO-OVR-012 — Backend roadmap is still not completed by prebuilt UI
 
@@ -141,6 +145,8 @@ Prebuilt UI does not close service/backend stages.
 Return sequence remains:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
+
+`STUDENT-016I` is currently in progress in PR #57. Do not skip ahead until its exact-head gate is closed.
 
 Stage17 later connects Notes/Saved/Needs Review ownership/CRUD/provenance/offline/sync.
 
@@ -160,3 +166,9 @@ Dedicated Super Admin Product Rebuild owns Admin IA/workflows/frontend/product a
 - PostgreSQL migrations/current contracts are DB authority.
 - legacy Supabase is not current operating/content authority unless a new explicit Product Owner decision reactivates it.
 - imported content remains subject to normal Draft/review/publication authority.
+
+## PO-OVR-015 — Content Rebuild roadmap return is closed
+
+The requested Content Rebuild sequence is complete through `ROADMAP-RETURN = DONE / STUDENT-016I_HANDOFF_VERIFIED`.
+
+This does not authorize publication. Content publication remains a separate explicit review gate, and the verified imported slice remains unpublished.
