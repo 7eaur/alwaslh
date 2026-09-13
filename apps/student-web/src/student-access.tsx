@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import type { SessionProfile } from "./auth-api";
-import { StudentAccountExperience } from "./student-account";
-import { StudentAssessmentSection } from "./student-assessment";
-import {
-  StudentLibraryExperience,
-  StudentNotificationsExperience,
-  StudentProgressExperience,
-} from "./student-future-surfaces";
-import { StudentLearningExperience } from "./student-learning";
+
+const StudentAccountExperience = lazy(() =>
+  import("./student-account").then((module) => ({ default: module.StudentAccountExperience })),
+);
+const StudentAssessmentSection = lazy(() =>
+  import("./student-assessment").then((module) => ({ default: module.StudentAssessmentSection })),
+);
+const StudentLearningExperience = lazy(() =>
+  import("./student-learning").then((module) => ({ default: module.StudentLearningExperience })),
+);
+const StudentLibraryExperience = lazy(() =>
+  import("./student-future-surfaces").then((module) => ({ default: module.StudentLibraryExperience })),
+);
+const StudentNotificationsExperience = lazy(() =>
+  import("./student-future-surfaces").then((module) => ({ default: module.StudentNotificationsExperience })),
+);
+const StudentProgressExperience = lazy(() =>
+  import("./student-future-surfaces").then((module) => ({ default: module.StudentProgressExperience })),
+);
 
 type StudentDestination = "home" | "learn" | "practice" | "library" | "notifications" | "progress" | "account";
 type StudentDestinationIcon = "home" | "learn" | "practice" | "library" | "notifications" | "progress" | "account";
@@ -54,6 +65,15 @@ function DestinationIcon({ kind }: { kind: StudentDestinationIcon }) {
   if (kind === "notifications") return <svg {...common}><path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 8H3c0-1 3-1 3-8Z" /><path d="M10 21h4" /></svg>;
   if (kind === "progress") return <svg {...common}><path d="M5 19V9M12 19V5M19 19v-7" /><path d="M3 19h18" /></svg>;
   return <svg {...common}><circle cx="12" cy="8" r="3.2" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></svg>;
+}
+
+function StudentFeatureLoading() {
+  return (
+    <div className="student-feature-loading" role="status" aria-live="polite" aria-busy="true">
+      <span className="spinner" aria-hidden="true" />
+      <span>جاري فتح الصفحة</span>
+    </div>
+  );
 }
 
 function StudentShellNavigation({ destination, online, focused = false }: { destination: StudentDestination; online: boolean; focused?: boolean }) {
@@ -127,18 +147,20 @@ export function StudentAccessSection({ profile, online, onSessionExpired, onLogg
       <StudentShellNavigation destination={destination} online={online} focused={focusedReader} />
       <div className="student-destination">
         {destination === "home" ? <StudentHomeOverview /> : null}
-        {destination === "learn" ? (
-          <>
-            {atLearnRoot ? <LearnHeading /> : null}
-            {atLearnRoot && activatedAccess ? <div className="form-alert is-success student-route-notice" role="status"><strong>تم تفعيل الصف. أصبح محتواه متاحًا في التعلّم.</strong></div> : null}
-            <StudentLearningExperience online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} />
-          </>
-        ) : null}
-        {destination === "practice" ? <StudentAssessmentSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /> : null}
-        {destination === "library" ? <StudentLibraryExperience online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /> : null}
-        {destination === "notifications" ? <StudentNotificationsExperience /> : null}
-        {destination === "progress" ? <StudentProgressExperience /> : null}
-        {destination === "account" ? <StudentAccountExperience profile={profile} online={online} onSessionExpired={onSessionExpired} onAccessChanged={() => setCurriculumRefreshKey((current) => current + 1)} onLoggedOut={onLoggedOut} /> : null}
+        <Suspense fallback={<StudentFeatureLoading />}>
+          {destination === "learn" ? (
+            <>
+              {atLearnRoot ? <LearnHeading /> : null}
+              {atLearnRoot && activatedAccess ? <div className="form-alert is-success student-route-notice" role="status"><strong>تم تفعيل الصف. أصبح محتواه متاحًا في التعلّم.</strong></div> : null}
+              <StudentLearningExperience online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} />
+            </>
+          ) : null}
+          {destination === "practice" ? <StudentAssessmentSection online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /> : null}
+          {destination === "library" ? <StudentLibraryExperience online={online} refreshKey={curriculumRefreshKey} onSessionExpired={onSessionExpired} /> : null}
+          {destination === "notifications" ? <StudentNotificationsExperience /> : null}
+          {destination === "progress" ? <StudentProgressExperience /> : null}
+          {destination === "account" ? <StudentAccountExperience profile={profile} online={online} onSessionExpired={onSessionExpired} onAccessChanged={() => setCurriculumRefreshKey((current) => current + 1)} onLoggedOut={onLoggedOut} /> : null}
+        </Suspense>
       </div>
     </div>
   );
