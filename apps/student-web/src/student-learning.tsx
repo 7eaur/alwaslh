@@ -14,7 +14,7 @@ import {
   studentLessonHref,
   studentSubjectHref,
 } from "./student-learning-model";
-import { StudentLessonReaderPage } from "./student-reader";
+import { StudentLessonReaderPage, StudentOfflineLessonReaderPage } from "./student-reader";
 
 type CurriculumState =
   | { status: "loading" }
@@ -65,8 +65,8 @@ function LearningState({ state, online, onRetry }: {
   if (state.status === "offline") return (
     <div className="learning-state" role="status">
       <strong>أنت غير متصل</strong>
-      <p>أعد الاتصال لتصفح موادك ودروسك. المحتوى الذي سبق حفظه ستجده في التنزيلات.</p>
-      <Link className="secondary-button learning-state__action" to="/app/downloads">فتح التنزيلات</Link>
+      <p>يمكنك فتح الدروس التي سبق حفظها على هذا الجهاز من التنزيلات.</p>
+      <Link className="secondary-button learning-state__action" to="/app/library/downloads">فتح التنزيلات</Link>
     </div>
   );
   return (
@@ -172,6 +172,7 @@ export function StudentLearningExperience({ online, refreshKey, onSessionExpired
   useEffect(() => { void loadCurriculum(); }, [online, refreshKey]);
 
   if (route.kind === "invalid") return <Navigate replace to="/app/learn" />;
+  if (!online && route.kind === "lesson") return <StudentOfflineLessonReaderPage lessonId={route.lessonId} />;
   if (state.status !== "ready") return <LearningState state={state} online={online} onRetry={() => void loadCurriculum()} />;
   if (route.kind === "learn") return <LearnLanding catalog={state.catalog} />;
   if (route.kind === "subject") return <SubjectPage catalog={state.catalog} subjectId={route.subjectId} />;
