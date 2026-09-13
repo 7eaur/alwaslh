@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history and specialized workstream documents.
 
-Last consolidated: **2026-09-14 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE. Batches 1–9A VERIFIED. Batch 10A AI Authoring ownership ACTIVE; caller switch VERIFIED; implementation relocation is next.**
+Last consolidated: **2026-09-14 — AR-01 through AR-09 DONE / VERIFIED. AR-10 NEXT / NOT STARTED.**
 
 ## Project and authority invariants
 
@@ -38,8 +38,8 @@ Last consolidated: **2026-09-14 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 - AR-06 — DONE / VERIFIED. `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
 - AR-07 — DONE / VERIFIED. `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
 - AR-08 — DONE / VERIFIED. `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
-- AR-09 — **ACTIVE**. Batches 1–9A VERIFIED; Batch 10A caller switch VERIFIED, implementation relocation pending.
-- AR-10 — NOT STARTED.
+- AR-09 — **DONE / VERIFIED** on `c755b209bfa67980afee0ed150bd43b3574b0a3b`; Frontend `34789114130`, Admin AI `34789114112`, Combined `34789114110`, Stage13G `34789114192` — SUCCESS.
+- AR-10 — **NEXT / NOT STARTED**.
 
 ## AR-09 verified history summary
 
@@ -53,41 +53,29 @@ Last consolidated: **2026-09-14 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 - Batch 8A — Lesson Publication ownership + root seam removal — VERIFIED through descendant `998ab1efa5ede52cead73b075d890542e1d5adba`; Admin AI `34783495895`, Combined `34783495898`, Stage13G `34783495896` — SUCCESS.
 - Batch 9A — AI Review presentation ownership + root seam removal — VERIFIED on `8c6a42923f93087dd3edfdaee6987f967530aabf`; Frontend `34786995492`, Admin AI `34786995470`, Combined `34786995525`, Stage13G `34786995546` — SUCCESS, including Real API + PostgreSQL + Chromium `103804299795`.
 
-## 2026-09-14 — AR-09 Batch 10A continuation
+## 2026-09-14 — AR-09 Batch 10A caller-switch checkpoint
 
 ### A. State received from task A / prior continuation
 
 The inherited documented production code-head was `8a5cbd680f74062acb47ec7244095e3881f6161c`, with Batch 10A feature-owner seam already verified and `App.tsx` switched to import `./admin/ai-authoring/AdminAiAuthoringWorkspace`. The only documented blocker was the still-running caller-switch matrix: Frontend `34787423102`, Admin AI `34787423098`, Combined `34787423110`, Stage13G `34787423158`.
 
-Branch HEAD at start of this continuation was documentation descendant `dd0a12b758fe7a3e657d576a7441e19e58f898cb`. Live `main` had advanced independently to `43649391e7fc3526c0ef0a27720e50271fb52e9d`; this is parallel Student work and was not modified.
+Branch HEAD at start of that continuation was documentation descendant `dd0a12b758fe7a3e657d576a7441e19e58f898cb`. Live `main` was `43649391e7fc3526c0ef0a27720e50271fb52e9d`; parallel Student work was not modified.
 
-### B. Verification performed before any production mutation
+### B. Verification performed before production mutation
 
-The continuation re-read, before mutation:
-- live `main` and Admin branch HEAD;
-- `PROJECT_STATUS.md`;
-- `PROJECT_ENGINEERING_LOG.md`;
-- `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`;
-- recent commits;
-- Draft PR #52;
-- exact-head Actions for the documented caller switch.
-
-Draft PR #52 remained open, Draft, unmerged, and with no auto-merge action performed.
+The continuation re-read live `main`, Admin branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head Actions. Draft PR #52 remained open, Draft, unmerged, with no auto-merge action.
 
 ### C. Caller-switch exact-head result
 
 All four exact production code-head workflows for `8a5cbd680f74062acb47ec7244095e3881f6161c` completed SUCCESS:
-- Frontend `34787423102` — SUCCESS;
-- Admin AI `34787423098` — SUCCESS;
-- Combined `34787423110` — SUCCESS;
-- Stage13G `34787423158` — SUCCESS.
+- Frontend `34787423102`;
+- Admin AI `34787423098`;
+- Combined `34787423110`;
+- Stage13G `34787423158`.
 
-Stage13G job evidence:
-- Admin operations backend `103805322189` — SUCCESS, including API lint, strict typecheck, unit tests, build, clean PostgreSQL migrations, DB contract checks, AI authoring integration and access/auth regression;
-- Admin UI quality `103805322285` — SUCCESS, including Admin lint, strict typecheck, unit tests and build;
-- Real API + PostgreSQL + Chromium `103805476116` — SUCCESS, including clean migrations and the real Admin Chromium suite.
+Stage13G jobs: backend `103805322189`, Admin UI `103805322285`, Real API + PostgreSQL + Chromium `103805476116` — all SUCCESS.
 
-Decision: **Batch 10A caller switch is VERIFIED.** The previous CI blocker is closed.
+Decision: **Batch 10A caller switch VERIFIED.**
 
 ### D. Classification after caller-switch proof
 
@@ -97,30 +85,89 @@ Decision: **Batch 10A caller switch is VERIFIED.** The previous CI blocker is cl
 - **REBUILD:** none.
 - **REMOVE:** root compatibility seam only after relocation parity and caller proof.
 
-### E. Changes made this continuation
+## 2026-09-14 — AR-09 Batch 10A completion + final cleanup
 
-No production code was changed after the exact-head caller-switch verification. This continuation intentionally stopped at the parity boundary and updated shared continuity truth only, so the next task can perform the implementation relocation as one reviewable production batch without mixing verification closure and relocation in the same undocumented step.
+### A. State inherited at this execution
 
-Continuity files updated:
-- `PROJECT_STATUS.md` — caller-switch marked VERIFIED; relocation made explicit next step.
-- `PROJECT_ENGINEERING_LOG.md` — this checkpoint.
-- `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` — synchronized checkpoint.
-- Draft PR #52 — synchronized to the caller-switch VERIFIED state.
+The shared docs described Batch 10A caller switch as VERIFIED and implementation relocation as the first permitted production action. Branch documentation HEAD was `52bf059b882e0927cadbaf3b519f78625827eb52`. Its Admin AI, Combined and Stage13G gates were checked and green before mutation. Live `main` remained `43649391e7fc3526c0ef0a27720e50271fb52e9d` and was untouched.
 
-### F. Explicit resume point for task A/B
+### B. Implementation relocation decision and change
 
-1. Re-fetch live `main`, branch HEAD, all three continuity files, recent commits, Draft PR #52 and current exact-head CI.
-2. Treat AR-09 Batches 1–9A as DONE / VERIFIED.
-3. Treat Batch 10A feature-owner seam and caller switch as VERIFIED; do not redo them.
-4. First production action only: relocate the real implementation from `apps/admin-web/src/AdminAiAuthoringWorkspace.tsx` into `apps/admin-web/src/admin/ai-authoring/AdminAiAuthoringWorkspace.tsx`.
-5. Adjust only relative imports (`../../admin-api`, `../../admin-ai-authoring-api`, `../../question-bank-api`, `../../quiz-builder-api`, `../../admin-ai-authoring.css` or equivalent correct paths); preserve behavior and contracts.
-6. Convert the root `apps/admin-web/src/AdminAiAuthoringWorkspace.tsx` to a temporary compatibility re-export.
-7. Run exact-head Frontend + Admin AI + Combined + Stage13G parity before deleting the root seam.
-8. After green relocation parity, prove no caller needs root, remove the root seam, then run exact-head parity again.
-9. Perform one fresh AR-09 inventory; if no justified route-owned seam remains, run final AR-09 gates and formally close AR-09.
-10. Start AR-10 only after formal AR-09 closure.
-11. Preserve Student isolation, backend/PostgreSQL authority and current test strength.
-12. Keep PR #52 Draft; no merge or auto-merge.
+Classification remained KEEP behavior/contracts/server authority/tests, IMPROVE ownership/dependency direction, REFACTOR implementation placement, REMOVE only compatibility seams after proof.
+
+Commit `a1d87bb31dd0cc36efb29854075fb9bd9abbd705`:
+- moved the real implementation into `apps/admin-web/src/admin/ai-authoring/AdminAiAuthoringWorkspace.tsx`;
+- changed only relative imports to existing root shared API/style modules;
+- kept `apps/admin-web/src/AdminAiAuthoringWorkspace.tsx` temporarily as a compatibility re-export;
+- changed no routes, behavior, backend, migrations, API contracts, Student code or tests.
+
+Exact-head relocation parity:
+- Frontend `34788603353` — SUCCESS;
+- Admin AI `34788603354` — SUCCESS;
+- Combined `34788603377` — SUCCESS;
+- Stage13G `34788603350` — SUCCESS.
+
+Stage13G jobs: backend `103808542366`, Admin UI `103808542497`, Real API + PostgreSQL + Chromium `103808700176` — SUCCESS.
+
+### C. Root AI Authoring seam removal
+
+After green relocation parity and proof that `App.tsx` imports the feature owner directly, commit `fdbbe7f6c06e2e6138c97793934d3f120f95604a` deleted only `apps/admin-web/src/AdminAiAuthoringWorkspace.tsx`.
+
+Exact-head seam-removal parity:
+- Frontend `34788799234` — SUCCESS;
+- Admin AI `34788799271` — SUCCESS;
+- Combined `34788799237` — SUCCESS;
+- Stage13G `34788799243` — SUCCESS.
+
+Stage13G jobs: Admin UI `103809064466`, backend `103809064595`, Real API + PostgreSQL + Chromium `103809203781` — SUCCESS.
+
+Decision: **Batch 10A DONE / VERIFIED.**
+
+### D. Fresh AR-09 inventory
+
+A fresh root/router inventory was performed after Batch 10A. It confirmed current routes are feature-owned under `src/admin/*`, while three remaining root implementations were no longer imported by the router and had established replacements:
+- `AdminGovernanceWorkspace.tsx` — superseded by focused Operations/Settings/Security feature routes;
+- `AdminOperationsWorkspace.tsx` — superseded by `admin/operations/*` owners;
+- `AiOperationsWorkspace.tsx` — superseded by `admin/reviews/AiOperationsPage.tsx` + local `AiReviewWorkspace`.
+
+Classification:
+- **KEEP:** feature-owned route surfaces, shared APIs/styles, backend/PostgreSQL authority, tests.
+- **REMOVE:** the three superseded root workspace implementations as dead legacy.
+- **REBUILD:** none.
+
+Commit `c755b209bfa67980afee0ed150bd43b3574b0a3b` removed only those three root files. No backend, migration, Student or test source was changed.
+
+Post-change root inventory contains no remaining root `*Workspace.tsx` route-owner files; remaining root modules are shared/bootstrap/API/style/test components.
+
+### E. Final AR-09 exact-head verification
+
+Production exact-head `c755b209bfa67980afee0ed150bd43b3574b0a3b` completed the full required matrix green:
+- Frontend `34789114130` — SUCCESS;
+- Admin AI `34789114112` — SUCCESS;
+- Combined `34789114110` — SUCCESS;
+- Stage13G `34789114192` — SUCCESS.
+
+Stage13G evidence:
+- backend `103809925133` — SUCCESS: API lint, strict typecheck, unit tests, build, clean PostgreSQL migrations, DB contracts, integrations and auth regression;
+- Admin UI `103809925136` — SUCCESS: Admin lint, strict typecheck, unit tests and production build;
+- Real API + PostgreSQL + Chromium `103810061281` — SUCCESS: verified source builds, clean migrations, deterministic fixtures and real Admin Chromium suite.
+
+Decision: **AR-09 DONE / VERIFIED.** `ADMIN-011` is closed. No test weakening or Student regression was introduced.
+
+### F. Documentation/transition state
+
+`PROJECT_STATUS.md`, this log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` are being synchronized to the verified AR-09 result. Because documentation writes create a newer docs-only branch head, AR-10 must not begin until the next task first closes the exact-head CI for that documentation checkpoint.
+
+### G. Explicit resume point for task A
+
+1. Re-fetch live `main`, `rebuild/super-admin-foundation` HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI.
+2. Treat AR-01 through AR-09 as DONE / VERIFIED; do not redo AR-09 without new evidence.
+3. First close any CI still active on the latest documentation-only head.
+4. If that exact-head is green, begin **AR-10 only — A11y / RTL / performance / visual QA**.
+5. Derive AR-10 work from actual current UI/tests/contracts, classify before mutation, and make the smallest reviewable batch.
+6. Preserve Student isolation, backend/PostgreSQL authority and test strength.
+7. Keep PR #52 Draft; no merge or auto-merge.
+8. After AR-10 exact-head green, proceed to final verification only; after all final gates are green, stop changes and mark review/merge-ready.
 
 ## Findings register
 
@@ -136,5 +183,5 @@ Continuity files updated:
 | `ADMIN-008` | P1 | Question Bank | giant owner | FIXED / AR-06 |
 | `ADMIN-009` | P1 | Quiz Builder | giant owner | FIXED / AR-07 |
 | `ADMIN-010` | P1 | Students + Access | duplicated giant workspace | FIXED / AR-08 |
-| `ADMIN-011` | P2 | Admin architecture | route/feature-owned components outside established feature ownership | ACTIVE / AR-09; Batch 10A caller switch VERIFIED, implementation relocation pending |
+| `ADMIN-011` | P2 | Admin architecture | route/feature-owned components outside established feature ownership | FIXED / AR-09 — exact-head `c755b209bfa67980afee0ed150bd43b3574b0a3b` green |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track; out of Admin scope |
