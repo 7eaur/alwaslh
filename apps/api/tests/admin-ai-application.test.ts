@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { AiGenerationOutput } from "../src/ai/contracts.js";
 import { projectAdminAiApplication } from "../src/ai/admin-application.js";
+import type { AiGenerationOutput } from "../src/ai/contracts.js";
 
 const summary: AiGenerationOutput = {
   kind: "summary",
