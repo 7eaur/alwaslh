@@ -8,13 +8,13 @@ Last synchronized: **2026-09-13**.
 
 **ACTIVE TRACK: Student Library Overview Refinement**
 
-The Student/UI workstream and Content Rebuild are independent parallel tracks. The content checkpoint below does not change Student publication or resume the paused backend roadmap by itself.
+The Student/UI workstream and Content Rebuild are independent parallel tracks. The content checkpoint below does not change Student publication by itself.
 
-### Parallel Content Rebuild checkpoint — IMPORT-001
+### Parallel Content Rebuild checkpoint — VERIFY-001
 
 `BATCH-001-G9-EN-PB3-U1` remains **CLOSED / COMMITTED_STATE_VERIFIED** in modern PostgreSQL and intentionally unpublished.
 
-Subsequent Content Rebuild checkpoints are now verified through import:
+Content Rebuild checkpoints are now verified through the independent delivery/provenance gate:
 
 - `STRUCTURE-001 = DONE / SECTION_BOUNDARY_VERIFIED`
 - `STRUCTURE-002 = DONE / SECTION_BOUNDARY_VERIFIED`
@@ -23,24 +23,32 @@ Subsequent Content Rebuild checkpoints are now verified through import:
 - `CONTENT-GAPS-001 = DONE / GAP_INVENTORY_VERIFIED`
 - `MEDIA-001 = DONE / MEDIA_PROFILE_VERIFIED_PARTIAL_ACCEPTANCE`
 - `IMPORT-001 = DONE / COMMITTED_STATE_VERIFIED`
+- `VERIFY-001 = DONE / DELIVERY_ISOLATION_AND_PROVENANCE_VERIFIED`
 
-IMPORT-001 closed only the already-reviewed CURATION-001 slice: Unit 2 lesson `Describing people and animals`, book pages `5..8` / source pages `9..12`.
+VERIFY-001 independently checked only the imported CURATION-001 slice: Unit 2 lesson `Describing people and animals`, book pages `5..8` / source pages `9..12`.
 
-Modern PostgreSQL committed state was independently verified after concurrent advancement:
+Runtime evidence:
+- verifier source commit `12fb1a5268e97f0a0d70eee4d33322c139e3deb5` in `7eaur/alwaslh-go`;
+- Railway deployment `e5e8fef8-f8e7-467e-b3d8-60529c1a652a` — SUCCESS;
+- marker `VERIFY001_PASS`.
 
-- one target Unit 2 Section, ID `434f9978-efae-471e-b37d-6b151edecc5b`;
-- one target curated Lesson, ID `1a6e3a6e-06e8-496e-8d18-c8d4545d1da9`;
-- 4 exact reviewed Lesson Assets ordered `0..3`;
-- 4 exact ready Media Assets with matching source paths/checksums;
-- Lesson remains unpublished and all 4 Lesson Assets remain draft/unpublished;
-- 0 unauthorized Question links were added to the curated Lesson;
-- 4 legacy source Lessons remain active/unpublished/sectionless and now retain 0 of the reviewed page assets;
-- exactly 12 legacy Question Revisions remain preserved and unpublished on the legacy Lessons.
+Verified state:
+- exact target Section ID `434f9978-efae-471e-b37d-6b151edecc5b`, count 1;
+- exact target Lesson ID `1a6e3a6e-06e8-496e-8d18-c8d4545d1da9`, count 1, content revision 1;
+- 4/4 exact Lesson Assets;
+- 4/4 ready Media Assets;
+- 4/4 exact source-path and source/media SHA-256 provenance;
+- 4/4 Lesson Assets remain draft/unpublished;
+- Student Reader contract-eligible Lesson rows = 0;
+- Student Reader publication-guard eligible Asset rows = 0;
+- unauthorized Question links to curated Lesson = 0;
+- 12 legacy Question Revisions remain preserved and unpublished;
+- publication/RAW/media-binary/question mutation counts = 0;
+- verification failures = 0.
 
-The bounded apply runner did not overwrite concurrent state: deployment `efb92e21-e8df-4674-92d9-041321da9f92` failed closed before mutation because the target Section already existed. Independent exact-state verification then passed in deployment `3e1ce24a-39ca-498c-b219-8ceb895eda84` with marker `IMPORT001_POST_APPLY_VERIFY_PASS`. No duplicate apply, auto-publication, RAW mutation, media-binary mutation, question rewrite, anomaly deletion, or unrelated repair was performed by the closing run.
+The imported slice is therefore consistent against modern PostgreSQL identity/provenance contracts and remains intentionally isolated from Student delivery. VERIFY-001 did not authorize or perform publication.
 
 Grade 9 English retained corpus truth remains:
-
 - RAW page candidates/images: `69 / 69`;
 - legacy questions: `104`;
 - recovered sections: `8`;
@@ -51,9 +59,9 @@ Grade 9 English retained corpus truth remains:
 - corpus-wide duplicate-position anomalies remain preserved: `6`;
 - historical `62 Draft lessons` remains reconciliation evidence only and is not used to derive `69 -> 62`.
 
-MEDIA-001 evidence remains valid: only book page 5 q76 WebP passed all byte/PSNR/manual-legibility gates as a reproducible derived candidate; pages 6–8 remained rejected. IMPORT-001 did not push a new media binary.
+MEDIA-001 evidence remains valid: only book page 5 q76 WebP passed all byte/PSNR/manual-legibility gates as a reproducible derived candidate; pages 6–8 remained rejected. IMPORT-001 and VERIFY-001 did not push a new media binary.
 
-Next Content Rebuild item: **`VERIFY-001` only**. Publication remains closed.
+Next Content Rebuild item: **`ROADMAP-RETURN -> STUDENT-016I` only**, subject to live Student checkpoint verification. Publication remains closed.
 
 **ACTIVE PR: #55 — `refactor(student): redesign Library overview hierarchy`**
 
@@ -146,12 +154,7 @@ Still open:
 - unsupported self-service Account security/preferences;
 - Super Admin rebuild remains a separate workstream.
 
-Content Rebuild continues independently in this order:
-
-`VERIFY-001 → ROADMAP-RETURN`.
-
-Completed before that return:
-`BATCH-001 → STRUCTURE-001 → STRUCTURE-002 → CURATION-001 → CURATION-002 → CONTENT-GAPS-001 → MEDIA-001 → IMPORT-001`.
+Content Rebuild gate sequence is complete through VERIFY-001. The next content action is `ROADMAP-RETURN`, which must first reconcile the live Student workstream before resuming `STUDENT-016I`.
 
 ## Required startup for next conversation
 
