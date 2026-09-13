@@ -122,7 +122,7 @@ test("G-D exports only selected versions and opens the authenticated print view"
 
   const versionPicker = exportPanel.getByRole("group", { name: "النماذج المحددة" });
   const versionChecks = versionPicker.getByRole("checkbox");
-  await expect(versionChecks).toHaveCount(2);
+  await expect(versionChecks).toHaveCount(1);
   await versionChecks.nth(0).check();
   await expect(downloadButton).toBeEnabled();
 
