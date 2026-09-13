@@ -18,6 +18,7 @@ import { AdminNotificationsPage } from "./admin/operations/AdminNotificationsPag
 import { AdminOperationsAuditPage } from "./admin/operations/AdminOperationsAuditPage";
 import { AdminOperationsDiagnosticsPage } from "./admin/operations/AdminOperationsDiagnosticsPage";
 import { AdminOperationsHealthPage } from "./admin/operations/AdminOperationsHealthPage";
+import { QuestionBankCreatePage } from "./admin/questions/QuestionBankCreatePage";
 import { QuestionBankDetailPage } from "./admin/questions/QuestionBankDetailPage";
 import { QuestionBankListPage } from "./admin/questions/QuestionBankListPage";
 import "./ai-operations-review.css";
@@ -26,7 +27,6 @@ import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
 import { LessonAuthoringParityPanel } from "./LessonAuthoringParityPanel";
 import { LoginScreen } from "./LoginScreen";
-import { QuestionBankWorkspace } from "./QuestionBankWorkspace";
 import { QuizBuilderWorkspace } from "./QuizBuilderWorkspace";
 import { QuizMetadataPanel } from "./QuizMetadataPanel";
 
@@ -240,7 +240,7 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
         path="questions/manage"
         element={
           <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى بنك الأسئلة", to: "/app/questions" }]}>
-            <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
+            <QuestionBankCreatePage onSessionExpired={onSessionExpired} />
           </WorkspaceWithRelatedActions>
         }
       />
