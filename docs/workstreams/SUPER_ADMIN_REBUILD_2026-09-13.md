@@ -1,6 +1,6 @@
 # Super Admin Rebuild — 2026-09-13
 
-Status: **ACTIVE — AR-01 through AR-08 DONE / VERIFIED. AR-09 Cleanup / architecture enforcement ACTIVE; Batches 1–3 VERIFIED.**
+Status: **ACTIVE — AR-01 through AR-08 DONE / VERIFIED. AR-09 Cleanup / architecture enforcement ACTIVE; Batches 1–3 VERIFIED; Batch 4A ACTIVE.**
 
 Branch: `rebuild/super-admin-foundation`  
 Draft PR: `#52 — refactor(admin): rebuild Super Admin foundation`  
@@ -96,15 +96,48 @@ For exact code-head `3b1eb104fef1ac70035dcd9875d9807f95bf2009`:
 
 **Batch 3 is VERIFIED. AR-09 remains ACTIVE; AR-10 remains blocked.**
 
-## Explicit handoff — continue AR-09 only
+## AR-09 Batch 4A — AI review route ownership — ACTIVE
+
+### Reconciliation and evidence
+
+- The inherited documentation HEAD `1077fe0c0074976831f1708a61e9372c81cc8386` was verified before mutation.
+- Its Admin AI run `34762502501`, Combined `34762502390`, and Stage13G `34762502493` are SUCCESS; Stage13G includes successful Admin UI, backend, and Real API + PostgreSQL + Chromium jobs.
+- A fresh route inventory showed `/app/reviews/ai` still importing root `AiOperationsPage` even though `reviews` is an established feature owner.
+- `AiOperationsPage` remains client orchestration around server-authoritative AI job/review/application APIs; no migration or backend change is justified.
+
+### Classification
+
+- **KEEP:** route behavior, polling/pagination, review/application semantics, conflict/session handling, API authority and existing tests.
+- **IMPROVE:** feature ownership under `src/admin/reviews/`.
+- **REFACTOR:** establish a feature-owned route adapter first; move implementation only after parity.
+- **REBUILD:** none.
+- **REMOVE:** root `AiOperationsPage.tsx` only after executable parity.
+- **NO CHANGE:** migrations, backend, PostgreSQL authority, auth/security, Student workstream and test strength.
+
+### Implementation to current checkpoint
+
+- `9427649f29e3bf69d2143dc4b12235652bcefc6b` — added `apps/admin-web/src/admin/reviews/AiOperationsPage.tsx` as a temporary adapter.
+- `069858ace554e2be51e21b128e76e6089f26edef` — changed `App.tsx` so `/app/reviews/ai` imports through the feature owner.
+- No logic, API, backend, migration, Student or test assertion was changed.
+
+### Exact-head verification state
+
+Exact code-head `069858ace554e2be51e21b128e76e6089f26edef` entered the normal matrix:
+- Frontend `34763851152` — IN PROGRESS at checkpoint.
+- Admin AI `34763851138` — IN PROGRESS at checkpoint.
+- Combined `34763851147` — IN PROGRESS at checkpoint.
+- Stage13G `34763851137` — IN PROGRESS at checkpoint.
+
+No implementation relocation or root seam removal is allowed until this matrix is green.
+
+## Explicit handoff — continue AR-09 Batch 4A only
 
 1. Fetch live `main`, current branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI.
-2. Reconcile CI emitted by this documentation checkpoint before any further code mutation.
-3. Re-inventory the remaining root route-owned surfaces and inspect actual callers, tests and contracts. Previously observed candidates include `AdminAiAuthoringWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, and `CurriculumWorkspace`; do not assume any still needs relocation solely because it is root-level.
-4. Select only the smallest justified remaining seam, classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE, then run its exact-head matrix.
-5. If the fresh inventory shows no justified architecture cleanup remains, run final AR-09 verification and close AR-09 instead of creating work for its own sake.
-6. Do not begin AR-10 until AR-09 is fully DONE / VERIFIED.
-7. Keep PR #52 Draft; no merge or auto-merge.
+2. Reconcile Frontend `34763851152`, Admin AI `34763851138`, Combined `34763851147`, and Stage13G `34763851137` for `069858ace554e2be51e21b128e76e6089f26edef`.
+3. If all are green, continue the same AI-review seam only: move the actual implementation into `src/admin/reviews/AiOperationsPage.tsx`, adjust relative imports only, then remove root `AiOperationsPage.tsx` after parity.
+4. If a gate fails, fix the root cause without weakening tests or server contracts.
+5. Do not select another cleanup candidate and do not begin AR-10 while Batch 4A is unresolved.
+6. Keep PR #52 Draft; no merge or auto-merge.
 
 ## Quality gate for remaining stages
 
