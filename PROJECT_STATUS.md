@@ -10,7 +10,7 @@ Last synchronized: **2026-09-13**.
 
 **ACTIVE TRACKS: UX/UI REFOUNDATION + PARALLEL SUPER ADMIN PRODUCT REBUILD**
 
-**SUPER ADMIN CURRENT BATCH:** `AR-07 — Quiz Builder` — ACTIVE / Batch 1 + Batch 2A + Batch 2B + Batch 2C VERIFIED; Batch 2D is next.
+**SUPER ADMIN CURRENT BATCH:** `AR-07 — Quiz Builder` — ACTIVE / Batch 1 + Batch 2A + Batch 2B + Batch 2C + Batch 2D VERIFIED; legacy version-management cleanup is next.
 
 **SUPER ADMIN COMPLETED:** `AR-01` through `AR-06` — DONE / VERIFIED.
 
@@ -18,7 +18,7 @@ Branch: `rebuild/super-admin-foundation`
 
 Draft PR: **#52 — `refactor(admin): rebuild Super Admin foundation`** — remains Draft.
 
-Latest live `main` re-read in this checkpoint: `343ff1fd7b3d64d7e990b72606695365f520fa58`. This includes independent Student work; the Admin branch remains isolated and must not overwrite or opportunistically rebase that work.
+Latest live `main` re-read for this execution checkpoint: `343ff1fd7b3d64d7e990b72606695365f520fa58`. It contains independent Student work; the Admin branch remains isolated and must not overwrite or opportunistically rebase that work.
 
 Canonical UX roadmap: `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
 Super Admin roadmap: `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`.
@@ -62,7 +62,7 @@ Final exact code-head `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`:
 
 ### Batch 1 — focused list ownership — VERIFIED
 
-The giant `QuizBuilderWorkspace.tsx` originally combined list/create/detail/version editing/lifecycle/export. Server APIs were already focused and backend integration tests proved published Question Bank revision eligibility, frozen version snapshots, lifecycle-controlled export and published-version immutability.
+The original `QuizBuilderWorkspace.tsx` combined list/create/detail/version editing/lifecycle/export. Server APIs were already focused and backend integration tests proved published Question Bank revision eligibility, frozen version snapshots, lifecycle-controlled export and published-version immutability.
 
 Implementation:
 - `7746000748129a659e098e016d3ffbfd4d5ddc46` — focused `QuizBuilderListPage`.
@@ -76,73 +76,78 @@ Exact-head verification:
 
 ### Batch 2A — routed quiz entity/deep-link ownership — VERIFIED
 
-Root-cause finding:
-- list cards routed to `/app/quizzes/manage?quizId=...`;
-- the legacy workspace did not read `quizId` from the URL;
-- therefore list→entity navigation was not true deep-link ownership even though the list split compiled.
-
 Implementation:
-- `3099648db1b1cf95d1af3c1d579e8f7972748006` — added `admin/quizzes/QuizBuilderDetailPage.tsx`, a server-backed route-owned entity overview using `fetchQuiz`.
-- `1c5707ae089487811401368e4c048720a7b121cf` — list cards now navigate to `/app/quizzes/:quizId`.
-- `7b3d23812bafeea25d6c86a2b9a593d4dcf01cac` — registered the canonical entity route.
+- `3099648db1b1cf95d1af3c1d579e8f7972748006` — canonical route-owned `QuizBuilderDetailPage`.
+- `1c5707ae089487811401368e4c048720a7b121cf` — list cards route to `/app/quizzes/:quizId`.
+- `7b3d23812bafeea25d6c86a2b9a593d4dcf01cac` — canonical entity route registration.
 
-Exact-head verification on `7b3d23812bafeea25d6c86a2b9a593d4dcf01cac`:
+Verification on `7b3d23812bafeea25d6c86a2b9a593d4dcf01cac`:
 - Frontend `34742505009` — SUCCESS.
 - Admin AI `34742505020` — SUCCESS.
-- Combined `34742505015` — SUCCESS, including clean PostgreSQL and real Admin Chromium.
+- Combined `34742505015` — SUCCESS.
 
-### Batch 2B — entity-owned lifecycle/export + explicit routed Chromium proof — VERIFIED
+### Batch 2B — entity-owned lifecycle/export + routed Chromium proof — VERIFIED
 
-Decision and implementation:
-- **KEEP:** PostgreSQL/API lifecycle, published Question Bank revision linkage, immutable published snapshots and export authority.
-- **REFACTOR:** submit/reject/publish/archive and CSV/print export moved into canonical `/app/quizzes/:quizId` ownership.
-- **KEEP TEMPORARILY:** `/app/quizzes/manage` for create + version composition/editing only.
-- `39f0d1ef961208b0697b1c8b3c80e352723fad82` — `QuizBuilderDetailPage` owns lifecycle actions and lifecycle-gated export while still calling canonical server commands.
-- `53efb6951b6f30cc95e84646973d974d2fc4536c` — explicit real Chromium list→entity/direct-deep-link coverage.
+Implementation:
+- `39f0d1ef961208b0697b1c8b3c80e352723fad82` — lifecycle actions and lifecycle-gated CSV/print export moved into `/app/quizzes/:quizId` while canonical API/PostgreSQL authority stayed intact.
+- `53efb6951b6f30cc95e84646973d974d2fc4536c` — explicit real Chromium list→entity/direct-deep-link proof.
 
-Final exact-head verification on `53efb6951b6f30cc95e84646973d974d2fc4536c`:
+Verification on `53efb6951b6f30cc95e84646973d974d2fc4536c`:
 - Frontend `34743947733` — SUCCESS.
 - Admin AI `34743947732` — SUCCESS.
 - Combined `34743947735` — SUCCESS.
 
 ### Batch 2C — entity-owned draft version composition/editing — VERIFIED
 
-Source-truth correction before mutation:
-- the actual canonical entity route is `/app/quizzes/:quizId`, rendered by `apps/admin-web/src/admin/quizzes/QuizBuilderDetailPage.tsx`;
-- there is no separate nested `/versions` route and no `QuizBuilderEntityPage` file;
-- `/app/quizzes/manage` still points to the root legacy `QuizBuilderWorkspace.tsx` parity adapter.
-
-Classification:
-- **KEEP:** existing PostgreSQL/API rules, published Question Bank candidate eligibility, immutable published snapshots, lifecycle/export authority.
-- **REFACTOR:** draft version composition/editing into the existing canonical entity page.
-- **KEEP TEMPORARILY:** legacy workspace for quiz creation until focused create ownership is executable.
-- **REMOVE LATER:** duplicated legacy version-management UI after explicit real-browser parity.
-- **NO CHANGE:** migrations, backend business rules and Student workstream.
-
 Implementation:
-- `8c179f0554ebcb16476cd9d56c0795291ba0b811` — `QuizBuilderDetailPage` gained draft-only version management: add version, search/paginate eligible published question revisions, select revisions, replace draft version questions and delete draft versions. Lifecycle and exports remain entity-owned/server-authoritative.
-- First Combined run `34745301662` failed only in the old Quiz Builder Chromium assertion expecting the removed legacy link `إدارة النماذج`; API/Admin quality, migrations, DB contract and backend regressions were green. Admin AI `34745301663` was SUCCESS.
-- The production UX was not reverted to satisfy the stale test.
-- `f9180093617fb4974d1f8652a96b3d1f6fe77fad` — updated `e2e/quiz-builder.e2e.spec.mjs` to assert the new entity-owned `إضافة نموذج` capability instead of the retired legacy management link.
+- `8c179f0554ebcb16476cd9d56c0795291ba0b811` — draft-only add/edit/delete version ownership plus server-returned published-candidate search/pagination in `QuizBuilderDetailPage`.
+- First Combined `34745301662` failed only because the old Chromium assertion expected retired legacy navigation; production UX was not reverted.
+- `f9180093617fb4974d1f8652a96b3d1f6fe77fad` — browser test aligned with canonical entity ownership.
 
 Final exact-head verification on `f9180093617fb4974d1f8652a96b3d1f6fe77fad`:
-- Frontend `34745428055` — **SUCCESS**.
-- Admin AI `34745428031` — **SUCCESS**.
-- Combined `34745428045` — **SUCCESS**, including clean PostgreSQL, backend authority/security regressions and real Chromium.
+- Frontend `34745428055` — SUCCESS.
+- Admin AI `34745428031` — SUCCESS.
+- Combined `34745428045` — SUCCESS.
 
-Batch 2C is VERIFIED. AR-07 remains ACTIVE because quiz creation still lives in the temporary legacy adapter and version-management duplication has not yet been removed after full browser parity.
+### Batch 2D — explicit real Chromium version-management parity — VERIFIED
+
+Goal proved on canonical `/app/quizzes/:quizId` using real Admin UI + real API/PostgreSQL fixture:
+- create a real quiz against the seeded curriculum scope;
+- create and publish two real Question Bank questions;
+- add a draft quiz version;
+- search/select an eligible published revision;
+- save the version;
+- reopen and replace its selected question;
+- delete the draft version;
+- recreate a version, submit the quiz for review and prove add/edit/delete controls are unavailable outside draft.
+
+Execution:
+- `e783751a144630bf0da1f44acee5a6b4bcd5a575` — added full Chromium version-management proof.
+- Frontend `34746160739` — SUCCESS.
+- Admin AI `34746160733` — SUCCESS.
+- Combined `34746160743` — FAILED only at the new Chromium flow. All earlier quality/migration/backend-authority steps in Combined were green.
+
+Root cause was in the new fixture, not production behavior: the test created a multiple-choice question with only three options and `answerText: null` while `answerStatus = known`, violating the existing Question Bank contract that requires four options and matching answer text for the correct option. The backend contract was not weakened.
+
+- `df73f9d136bc7d84179601a475627ce47e0d1c58` — corrected the fixture to four options and `answerText` matching the correct answer.
+
+Final exact-head verification on `df73f9d136bc7d84179601a475627ce47e0d1c58`:
+- Frontend `34746324618` — **SUCCESS**.
+- Admin AI `34746324625` — **SUCCESS**.
+- Combined `34746324634` — **SUCCESS**, including clean PostgreSQL, backend authority/security regressions and the expanded real Chromium version-management flow.
+
+Batch 2D is VERIFIED. No production backend rule, migration, Student behavior or server authority was changed to satisfy the test.
 
 ## Immediate next actions / shared handoff
 
-1. Re-read this file, `PROJECT_ENGINEERING_LOG.md`, `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`, current branch HEAD, live `main`, PR #52 and exact-head CI before editing.
+1. Re-read this file, `PROJECT_ENGINEERING_LOG.md`, `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`, current feature HEAD, live `main`, Draft PR #52 and exact-head CI before editing.
 2. Reconcile CI generated by this synchronized documentation checkpoint before new code.
-3. Continue **AR-07 only — Batch 2D**.
-4. Add explicit real Chromium coverage for draft version management on `/app/quizzes/:quizId`: add version → search/select published candidate → save → reopen/replace questions → delete; include non-draft immutability where fixture flow permits.
-5. Once that executable parity is green, slim/remove duplicated version-management ownership from root `QuizBuilderWorkspace.tsx`; do not remove quiz create capability yet.
-6. Migrate quiz creation into a focused create route/flow as a separate coherent batch. Preserve server validation and lesson/question eligibility contracts.
-7. Remove the legacy workspace only after focused create + entity version management have executable replacement parity.
-8. Do not start AR-08 until AR-07 is fully green, legacy ownership is resolved, and closure documentation is synchronized.
-9. Keep PR #52 Draft; no automatic merge.
+3. Continue **AR-07 only** with the next small batch: slim/remove duplicate version-management ownership from root `QuizBuilderWorkspace.tsx`, because Batch 2D now proves executable replacement parity on the canonical entity route.
+4. **Retain quiz creation capability** in the legacy adapter until a focused create route/flow is built and verified. Do not remove legitimate capability merely to delete the workspace.
+5. After cleanup is green, migrate quiz creation as a separate coherent batch while preserving server validation, curriculum scoping and Question Bank eligibility contracts.
+6. Remove the legacy workspace only after focused create + entity version management have executable replacement parity and no route depends on it.
+7. Do not start AR-08 until AR-07 is fully exact-head green, legacy ownership is resolved, and closure documentation is synchronized.
+8. Keep PR #52 Draft; no automatic merge.
 
 ## Parallel product/audit facts that remain open
 
