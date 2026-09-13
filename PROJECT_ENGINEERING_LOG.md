@@ -1,195 +1,150 @@
 # PROJECT ENGINEERING LOG — الوسيلة الذكية
 
-> Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains in Git history, merged PRs and specialized workstream documents.
+> Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-13 — Content Rebuild through ROADMAP-RETURN; Student resumed at STUDENT-016I / PR #57**.
+Last consolidated: **2026-09-13 — Grade 9 English full technical import completed and verified**.
 
-## 1. Stable product / architecture authority
+## Stable architecture authority
 
-الوسيلة الذكية منصة تعليمية عربية تتكون من Student Web/PWA، Super Admin Web، Fastify API، PostgreSQL، وسلطات content/media/OCR/AI/question-bank/assessment/offline.
+- `apps/student-web` — Student Web/PWA
+- `apps/admin-web` — Super Admin boundary
+- `apps/api` — authoritative Fastify API
+- `database/migrations` — PostgreSQL schema/integrity authority
+- API + PostgreSQL own canonical business state
+- `media ready != published`
+- AI/legacy output never auto-publishes learner content/questions
+- RAW/provenance/checksum authority must be preserved
+- browser is not canonical durable business authority
 
-Core boundaries remain:
+## 2026-09-13 — Full Grade 9 English bulk import
 
-- `apps/student-web` — Student Web/PWA;
-- `apps/admin-web` — Super Admin boundary;
-- `apps/api` — authoritative Fastify API;
-- `database/migrations` — PostgreSQL schema/integrity authority;
-- `packages/brand` — canonical brand/tokens;
-- `packages/ui` — shared presentation primitives.
+User priority was explicitly switched from scheduled Student-roadmap continuation to the fastest safe complete Grade 9 English import. The hourly automation was disabled before the content work continued.
 
-Stable contracts:
+### Source authority
 
-- API + PostgreSQL own canonical business state;
-- browser is not canonical durable business authority;
-- Auth/Authz/Entitlements remain server-owned;
-- Full Code = 6 digits; Class Code = 7 digits;
-- `media ready != published`;
-- AI output never auto-publishes Student content/questions;
-- protected Reader/media remains server-authorized;
-- Question Bank publication + immutable Quiz version remain Student delivery authority;
-- Assessment scoring/finalization/history remain server-owned;
-- `/v1` is never Service Worker Cache authority;
-- offline signing/integrity/device/session rules remain unchanged;
-- no password/session token/device private key is persisted as offline learning data.
+Grade 9 English source scope is the immutable legacy Supabase reconstruction for subject:
 
-## 2. Binding Student product decisions retained
+`1794eea5-4772-4c94-bd2b-b08e5815e733`
 
-- final primary navigation: `الرئيسية / التعلّم / التدريب / مكتبتي`;
-- `مكتبتي` owns learner personal/offline collections;
-- learner copy must not expose implementation/security/storage/stage jargon;
-- one Student shell owns global chrome;
-- browser tests assert user outcomes, not obsolete copy/selectors;
-- future surfaces may exist before backend integration only as honest zero-data surfaces;
-- no fabricated notes/counts/progress/scores/statistics/achievements/rankings/streaks/recommendations;
-- destination-level code splitting protects initial bundle size;
-- clickable elements must look clickable, static must look static, touch targets remain >=44px;
-- Library overview is summary-first and does not duplicate navigation.
+Canonical reconstruction manifest:
 
-Canonical Student product documents:
+`7eaur/alwaslh-go@content/legacy-staging-rebuild/content-staging/curated/grade-9/english/pupil-book-3/reconstruction-candidates.json`
 
-- `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
-- `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
-- `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
+The `alwaslh-go@master` tree inspected during this run contains a separate Third Secondary/Pupil's Book 6 corpus. It was not substituted as Grade 9 evidence.
 
-## 3. Verified merged Student baseline
+### Execution
 
-### PR #53 — Student Experience Rebuild
+Content source commit:
 
-- MERGED / VERIFIED;
-- accepted head `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
-- exact-head matrix 23/23 SUCCESS;
-- merge commit `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
+`9e58ab3e882b883bddd016099949881801eedc28`
 
-### PR #54 — Future Student Surfaces
+Railway deployment:
 
-- MERGED / VERIFIED;
-- accepted head `4b6f24c5cb9bd0da525ecfebc59b1ebbf156c903`;
-- exact-head matrix 23/23 SUCCESS;
-- merge commit `c3734366c132ea3919a925bdd0dd37cfd5d82104`;
-- phone/desktop Visual QA accepted.
+`de7f9883-b2f0-483d-a7c1-ffbfb15ac30c` — `SUCCESS`
 
-### PR #55 — Library Overview Refinement
+Runtime sequence completed:
 
-- MERGED;
-- accepted head `8ceb4d5a5f70f7896f6cb358e05605479942d442`;
-- merge commit `343ff1fd7b3d64d7e990b72606695365f520fa58`.
+`inspect -> rollback-only transaction gate -> controlled apply -> committed-state verify`
 
-Feature-level lazy loading retained the accepted initial Student JS reduction from approximately `599.61 KB / 148.83 KB gzip` to `225.89 KB / 71.24 KB gzip`.
+Markers:
 
-## 4. Active Student Stage16 checkpoint — STUDENT-016I
+- `BULK_G9_EN_INSPECT_PASS`
+- `BULK_G9_EN_TRANSACTION_GATE_PASS`
+- `BULK_G9_EN_APPLY_PASS`
+- `BULK_G9_EN_VERIFY_PASS`
+- `BULK_G9_EN_RUNNER_PASS`
 
-ROADMAP-RETURN live reconciliation found that concurrent Student execution had already progressed beyond the stale PR #55 prose.
+### Verified input scope
 
-Active PR:
+- 69 RAW-backed pages
+- 69 RAW images
+- 104 Question Revisions
+- 8 recovered Units/Sections
+- 1 source-manifest-only final page (page 70), retained as evidence-only because no RAW identity exists
 
-- PR #57 — `feat(student): close cold-start offline Reader gap`;
-- branch `stage16/student-016i`;
-- exact head observed `4624dcc824555c1d29e9d697a7474bf76223468b`;
-- base when opened `343ff1fd7b3d64d7e990b72606695365f520fa58`.
+Units:
 
-Scope remains limited to true cold-start offline Reader for previously saved, still-authorized lessons after browser/app restart with network unavailable, using durable non-secret scope recovery plus the existing signed package/blob integrity authority.
+1. Unit 1 - Revision
+2. Unit 2 - Describing: Making plans
+3. Unit 3 - Other countries
+4. Unit 4 - Visiting Japan
+5. Unit 5 - Safety
+6. Unit 6 - Helping others
+7. Unit 7 - Communications
+8. Unit 8 - Winning medals
 
-Security constraints retained:
+### Transaction result
 
-- no synthetic server session;
-- no `/v1` cache authority;
-- no persisted password/session token/device private key;
-- explicit online denial remains server-authoritative;
-- signature/checksum/profile-device/time/authorization failures remain fail-closed.
+Rollback gate proved the complete mutation before commit and rolled it back successfully.
 
-Observed exact-head CI state for `4624dcc...` is **NOT GREEN**. At least `Stage 8 · Student activation browser E2E` is failing. Do not merge until the live exact-head matrix, especially Stage16 real Chromium acceptance, is green.
+Committed apply then produced and verifier confirmed:
 
-Next roadmap after this PR remains:
+- Sections verified: `8/8`
+- missing Sections created: `6`
+- existing Sections reused: `2`
+- pages verified: `69/69`
+- source identities: `69/69`
+- RAW images verified by SHA-256: `69/69`
+- ready Media Assets: `69/69`
+- Lesson Assets: `69/69`
+- involved live Lesson identities: `59`
+- Lessons assigned to recovered Sections: `54`
+- existing correct Lesson assignments reused: `5`
+- Question Revisions preserved: `104/104`
+- evidence-only page 70 preserved: `1`
 
-`STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`.
+Mutation isolation:
 
-## 5. Content Rebuild execution — queue closed through ROADMAP-RETURN
+- RAW mutations: `0`
+- media-binary mutations: `0`
+- Question mutations: `0`
+- publication changes: `0`
+- unrelated mutations: `0`
 
-Canonical execution documents live on `7eaur/alwaslh-go@content/legacy-staging-rebuild`:
+Publication remains closed:
 
-- `content-staging/CONTENT_REBUILD_EXECUTION_STATUS.md`
-- `content-staging/CONTENT_REBUILD_HANDOFF.md`
+- published Lessons: `0`
+- published Lesson Assets: `0`
+- published Questions: `0`
 
-Fixed rules remain:
+### Lesson identity interpretation
 
-- RAW immutable;
-- provenance and SHA-256 preserved;
-- no automatic page-title-to-Lesson assumption;
-- no `69 -> 62` heuristic as curriculum truth;
-- no anomaly deletion for cosmetic counts;
-- no AI/legacy auto-publication;
-- DB mutation fails closed on identity/count/provenance drift;
-- media derivatives accepted only with measured byte/quality evidence.
+The live `59` Lesson identities are not derived from the prohibited historical `69 -> 62` heuristic. They are the actual Lesson owners of the 69 verified Lesson Assets after earlier curation/reassignment. All 69 RAW-backed page/image identities remain represented exactly once.
 
-Completed sequence:
+The legacy extraction stores page rows as `content_type = lesson`. Modern curation can legitimately group several source pages under one Lesson while retaining each page as a separate Lesson Asset with immutable provenance.
 
-- `BATCH-001 = DONE / COMMITTED_STATE_VERIFIED`
-- `STRUCTURE-001 = DONE / SECTION_BOUNDARY_VERIFIED`
-- `STRUCTURE-002 = DONE / SECTION_BOUNDARY_VERIFIED`
-- `CURATION-001 = DONE / LESSON_BOUNDARY_VERIFIED`
-- `CURATION-002 = DONE / LESSON_BOUNDARY_VERIFIED`
-- `CONTENT-GAPS-001 = DONE / GAP_INVENTORY_VERIFIED`
-- `MEDIA-001 = DONE / MEDIA_PROFILE_VERIFIED_PARTIAL_ACCEPTANCE`
-- `IMPORT-001 = DONE / COMMITTED_STATE_VERIFIED`
-- `VERIFY-001 = DONE / DELIVERY_ISOLATION_AND_PROVENANCE_VERIFIED`
-- `ROADMAP-RETURN = DONE / STUDENT-016I_HANDOFF_VERIFIED`
+Therefore the Grade 9 English **technical/data-completeness import is complete**. Further merge/rename decisions are pedagogical curation of already-imported material, not missing-content import work.
 
-### Retained content truth
+Detailed evidence:
 
-Grade 9 English:
+`7eaur/alwaslh-go@content/legacy-staging-rebuild/content-staging/BULK_GRADE9_ENGLISH_IMPORT_REPORT.md`
 
-- 69 RAW pages/images;
-- 104 legacy questions;
-- 8 recovered sections;
-- reviewed Lesson-boundary coverage 10 pages;
-- unresolved boundary candidates 59 pages;
-- manifest-only page 70 remains evidence-only;
-- 0 Grade 9 English duplicate page-number anomalies;
-- 6 corpus-wide duplicate-position anomalies preserved;
-- historical 62 Draft lessons remain reconciliation evidence only, not curriculum truth.
+## Content checkpoints retained
 
-### CURATION-001 imported/verified slice
+- BATCH-001 — DONE / COMMITTED_STATE_VERIFIED
+- STRUCTURE-001 — DONE / SECTION_BOUNDARY_VERIFIED
+- STRUCTURE-002 — DONE / SECTION_BOUNDARY_VERIFIED
+- CURATION-001 — DONE / LESSON_BOUNDARY_VERIFIED
+- CURATION-002 — DONE / LESSON_BOUNDARY_VERIFIED
+- CONTENT-GAPS-001 — DONE / GAP_INVENTORY_VERIFIED
+- MEDIA-001 — DONE / MEDIA_PROFILE_VERIFIED_PARTIAL_ACCEPTANCE
+- IMPORT-001 — DONE / COMMITTED_STATE_VERIFIED
+- VERIFY-001 — DONE / DELIVERY_ISOLATION_AND_PROVENANCE_VERIFIED
+- ROADMAP-RETURN — DONE / STUDENT-016I_HANDOFF_VERIFIED
+- FULL-GRADE9-ENGLISH-BULK-IMPORT — DONE / FULL_ASSET_COVERAGE_VERIFIED / UNPUBLISHED
 
-- Unit 2 lesson `Describing people and animals`;
-- book pages `5..8`, source pages `9..12`;
-- exact Section ID `434f9978-efae-471e-b37d-6b151edecc5b`;
-- exact Lesson ID `1a6e3a6e-06e8-496e-8d18-c8d4545d1da9`;
-- 4 exact Lesson Assets;
-- 4 ready Media Assets with exact source path/checksum provenance;
-- 12 legacy Question Revisions preserved unpublished;
-- target Lesson/assets remain unpublished;
-- Student Reader eligible lesson rows 0;
-- Student Reader publication-guard eligible asset rows 0;
-- no publication/RAW/media-binary/question mutation during VERIFY-001.
+## Student workstream retained
 
-VERIFY-001 evidence:
+PR #57 remains a separate open Student Stage16 workstream for `STUDENT-016I`. Last live head inspected during this content run:
 
-- verifier commit `12fb1a5268e97f0a0d70eee4d33322c139e3deb5`;
-- Railway deployment `e5e8fef8-f8e7-467e-b3d8-60529c1a652a`;
-- marker `VERIFY001_PASS`.
+`ce97ef2524cd3735a0200ee0f15fa6e6e224e01e`
 
-ROADMAP-RETURN then performed documentation/execution reconciliation only. It did not mutate Content Rebuild business data and did not authorize publication.
+It was not merged or modified by the bulk content import.
 
-## 6. Open / deferred product work
+When Student work resumes, re-fetch exact-head CI rather than relying on this log.
 
-### Student Stage16+
+## Continuation rule
 
-`STUDENT-016I` is active in PR #57. After it: reconnect revalidation/purge (`016R`), revision/tombstone/cursor/delta sync (`016S`), conditional bounded outbox (`016O`), Stage16 closure (`016G`), then Stage17–19 authoritative integrations.
+Do not rerun the Grade 9 bulk apply unless fresh drift invalidates the committed-state verifier.
 
-### Admin
-
-Super Admin redesign remains owned by its dedicated workstream. Do not conflate it with Student or Content Rebuild.
-
-## 7. Documentation precedence
-
-For Student continuation:
-
-1. `PROJECT_HANDOFF.md`
-2. `PROJECT_STATUS.md`
-3. `PROJECT_ENGINEERING_LOG.md`
-4. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-5. `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
-6. `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
-7. `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
-
-For Content Rebuild, additionally read the live work-branch copies of the execution status and handoff, then live-check both repository heads before editing.
+Content next steps require an explicit product choice: pedagogical Lesson grouping/naming refinement and/or publication review. Neither permits RAW mutation, fabricated page 70, anomaly deletion, heuristic `69 -> 62`, or automatic publication.
