@@ -8,7 +8,7 @@ Last synchronized: **2026-09-13**.
 
 **NORMAL BACKEND ROADMAP: PAUSED FOR PRODUCT/UX FOUNDATION**
 
-**ACTIVE TRACK: STUDENT FUTURE-COMPLETE SURFACES + FRONTEND SPLITTING**
+**ACTIVE TRACK: STUDENT FUTURE-COMPLETE SURFACES + FRONTEND SPLITTING + INTERACTION AFFORDANCE**
 
 **ACTIVE PR: #54 — `feat(student): prebuild future Library notifications and progress surfaces`**
 
@@ -48,6 +48,29 @@ Canonical docs:
 - `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
 - `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
 
+## Interaction affordance rule — active
+
+The Student app now has a binding usability rule:
+
+**Anything clickable must look clickable before the learner touches it; anything static must not visually compete with an action.**
+
+Implementation:
+
+- `student-affordance.css` is the shared Student interaction layer;
+- primary actions use the strongest filled treatment;
+- secondary actions use a visible bordered treatment;
+- lightweight actions still receive a button-like surface instead of looking like ordinary body text;
+- clickable cards use pointer/focus/press states and a consistent directional cue;
+- Library tabs have clear active/inactive states and touch targets;
+- Account logout is visually separated as a destructive action;
+- important interactive labels use the approved teal hierarchy while descriptive text remains neutral;
+- hover is enhancement only; phone users receive the same clarity without relying on hover;
+- keyboard `focus-visible` is preserved and strengthened;
+- disabled actions remain visibly disabled and non-clickable;
+- reduced-motion behavior remains preserved.
+
+The design target is not “make everything look like a button.” The target is **action hierarchy**: primary, secondary, contextual, destructive, then static information.
+
 ## PR #54 implementation
 
 Current Student structure:
@@ -64,7 +87,8 @@ Current Student structure:
 - Home points to Learn / Practice / Library with secondary Progress / Notifications;
 - Account is the personal management hub for access/class-code + Library/Progress/Notifications + Help/Support + logout;
 - future Reader/Assessment integration flows for Notes/Saved/Needs Review specified before Stage17 backend work;
-- responsive RTL styling and existing subtle motion/reduced-motion contract extended to all new surfaces.
+- responsive RTL styling and existing subtle motion/reduced-motion contract extended to all new surfaces;
+- interaction affordance layer makes clickable cards, tabs, buttons and contextual actions visibly distinct from static information.
 
 ## Performance architecture — verified
 
@@ -93,16 +117,18 @@ Before splitting, the same expanded app produced a single main JS chunk of appro
 
 ## Current verification evidence
 
-On the documentation-complete code path:
+Before the final affordance refinement:
 
 - Student lint/typecheck/unit/build: SUCCESS;
 - 11 Student unit files / 41 tests: SUCCESS;
 - feature-level chunks emitted as expected;
-- an earlier B05 Chromium run with the future surfaces was SUCCESS;
-- initial B02 desktop scenario was SUCCESS;
-- initial B02 mobile failure was only a strict Playwright selector ambiguity because both the app-bar bell and Home card contain `الإشعارات`; the test now targets the exact app-bar accessible name.
+- B01/B02/B03/B04/B05 Student browser paths passed on the prior exact head;
+- Stage14/Stage16 passed on the prior exact head;
+- B05 produced 28 phone/desktop Visual QA screenshots for the future surfaces.
 
-Because the final documentation commit changes the exact head, the current full workflow matrix must still complete on that final SHA before merge.
+Manual review of those screenshots identified a usability gap: some actionable links/cards were technically clickable but visually too close to static content. That evidence directly produced the new `student-affordance.css` layer and stronger Library/Progress/Account CTAs.
+
+Because the affordance changes move the branch head, all final acceptance evidence must be taken from the new exact head.
 
 ## Required acceptance before PR #54 merge
 
@@ -110,11 +136,12 @@ Because the final documentation commit changes the exact head, the current full 
 2. B01/B02/B03/B04/B05 browser regressions;
 3. Stage14/15/16 + Rebuild verification;
 4. all other triggered workflows SUCCESS;
-5. phone + desktop Visual QA for Library overview/downloads/notes/saved/review, Notifications, Progress and Account;
-6. no horizontal overflow;
-7. production-copy scanner remains clean;
-8. `prefers-reduced-motion` remains valid;
-9. verify live main/base before merge and use exact expected-head guard.
+5. regenerate and manually inspect B05 phone + desktop Visual QA after affordance changes;
+6. verify clickable cards/actions are visually distinct without making static cards look interactive;
+7. no horizontal overflow;
+8. production-copy scanner remains clean;
+9. `prefers-reduced-motion` remains valid;
+10. verify live main/base before merge and use exact expected-head guard.
 
 ## Not completed by this PR
 
