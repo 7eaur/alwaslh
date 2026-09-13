@@ -27,6 +27,7 @@ import {
   unitStatusLabel,
   validationStatusLabel,
 } from "./ai-operations-view-model";
+import { AiStructuredOutputEditor } from "./AiStructuredOutputEditor";
 import "./ai-review-workspace.css";
 
 interface Props {
@@ -42,10 +43,6 @@ interface Props {
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
   onApplyOutput: (outputId: string, kind: AiApplicationCapability["kind"]) => Promise<void>;
 }
-
-type ReviewOutputWithApplication = AiReviewOutputView & {
-  application?: AiApplicationCapability | null;
-};
 
 function formatDateTime(value: string | null): string {
   if (!value) return "—";
@@ -82,7 +79,12 @@ function jobTypeLabel(value: string): string {
 
 function statusClass(status: string): string {
   if (status === "completed" || status === "valid" || status === "approved") return "is-success";
-  if (status === "failed" || status === "invalid" || status === "rejected" || status === "cancelled") return "is-danger";
+  if (
+    status === "failed" ||
+    status === "invalid" ||
+    status === "rejected" ||
+    status === "cancelled"
+  ) return "is-danger";
   if (status === "review_required" || status === "edited" || status === "retrying") return "is-warning";
   return "is-neutral";
 }
@@ -307,7 +309,7 @@ function UnitReview({
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
   onApplyOutput: (outputId: string, kind: AiApplicationCapability["kind"]) => Promise<void>;
 }) {
-  const output = unit.output as ReviewOutputWithApplication | null;
+  const output = unit.output;
   return (
     <div className="ai-review-result">
       <div className="ai-review-detail-heading compact">
@@ -350,46 +352,29 @@ function ReviewOutput({
   onReviewSubmit,
   onApplyOutput,
 }: {
-  output: ReviewOutputWithApplication;
+  output: AiReviewOutputView;
   mutationPending: boolean;
   onReviewPageChange: (offset: number) => void;
   onReviewSubmit: (outputId: string, input: AiReviewMutationInput) => Promise<boolean>;
   onApplyOutput: (outputId: string, kind: AiApplicationCapability["kind"]) => Promise<void>;
 }) {
   const [mode, setMode] = useState<"edit" | "reject" | null>(null);
-  const [editedJson, setEditedJson] = useState("");
   const [note, setNote] = useState("");
   const [clientError, setClientError] = useState("");
   const visibleOutput = output.effectiveReviewedOutput ?? (output.reviewStatus === "pending" ? output.normalizedOutput : null);
 
   function openEdit() {
     setMode("edit");
-    setEditedJson(JSON.stringify(output.effectiveReviewedOutput ?? output.normalizedOutput ?? {}, null, 2));
-    setNote("");
     setClientError("");
   }
 
-  async function submitEdit() {
-    let editedOutput: AiGenerationOutputApi;
-    try {
-      const parsed = JSON.parse(editedJson) as unknown;
-      if (!parsed || typeof parsed !== "object" || typeof (parsed as { kind?: unknown }).kind !== "string") {
-        setClientError("المحتوى المعدل غير صالح. صحح البنية ثم أعد المحاولة.");
-        return;
-      }
-      editedOutput = parsed as AiGenerationOutputApi;
-    } catch {
-      setClientError("تعذر قراءة المحتوى المعدل. صحح الصياغة ثم أعد المحاولة.");
-      return;
-    }
-    const trimmed = note.trim();
-    const input: AiReviewMutationInput = trimmed
-      ? { action: "edit", editedOutput, note: trimmed }
+  async function submitEdit(editedOutput: AiGenerationOutputApi, reviewNote: string): Promise<boolean> {
+    const input: AiReviewMutationInput = reviewNote
+      ? { action: "edit", editedOutput, note: reviewNote }
       : { action: "edit", editedOutput };
-    if (await onReviewSubmit(output.id, input)) {
-      setMode(null);
-      setClientError("");
-    }
+    const saved = await onReviewSubmit(output.id, input);
+    if (saved) setClientError("");
+    return saved;
   }
 
   async function submitReject() {
@@ -444,7 +429,7 @@ function ReviewOutput({
       ) : null}
 
       <div className="ai-review-actions" aria-label="إجراءات مراجعة النتيجة">
-        {output.allowedReviewActions.includes("edit") ? <button className="secondary-button" type="button" disabled={mutationPending} onClick={openEdit}>{reviewActionLabel("edit")}</button> : null}
+        {output.allowedReviewActions.includes("edit") && visibleOutput ? <button className="secondary-button" type="button" disabled={mutationPending} onClick={openEdit}>{reviewActionLabel("edit")}</button> : null}
         {output.allowedReviewActions.includes("approve") ? <button className="primary-button" type="button" disabled={mutationPending} onClick={() => void onReviewSubmit(output.id, { action: "approve" })}>{reviewActionLabel("approve")}</button> : null}
         {output.allowedReviewActions.includes("reject") ? <button className="danger-button" type="button" disabled={mutationPending} onClick={() => { setMode("reject"); setNote(""); setClientError(""); }}>{reviewActionLabel("reject")}</button> : null}
         {output.allowedReviewActions.length === 0 && !output.application ? <span className="empty-inline">لا توجد إجراءات أخرى متاحة لهذه النتيجة.</span> : null}
@@ -462,15 +447,13 @@ function ReviewOutput({
         </div>
       ) : null}
 
-      {mode === "edit" && output.allowedReviewActions.includes("edit") ? (
-        <details className="ai-review-advanced-editor" open>
-          <summary>تحرير متقدم للنتيجة</summary>
-          <p className="field-help">هذا المحرر مؤقت للتركيب المنظم؛ التحقق الدلالي على الخادم يظل إلزاميًا قبل حفظ أي تعديل.</p>
-          <label><span>المحتوى المنظم</span><textarea value={editedJson} onChange={(event) => setEditedJson(event.target.value)} rows={16} spellCheck={false} /></label>
-          <label><span>ملاحظة المراجعة (اختيارية)</span><textarea value={note} onChange={(event) => setNote(event.target.value)} rows={3} /></label>
-          {clientError ? <p className="field-error" role="alert">{clientError}</p> : null}
-          <div className="ai-review-editor-actions"><button className="primary-button" type="button" disabled={mutationPending} onClick={() => void submitEdit()}>حفظ التعديل والتحقق</button><button className="secondary-button" type="button" disabled={mutationPending} onClick={() => setMode(null)}>إلغاء</button></div>
-        </details>
+      {mode === "edit" && output.allowedReviewActions.includes("edit") && visibleOutput ? (
+        <AiStructuredOutputEditor
+          initialOutput={visibleOutput}
+          disabled={mutationPending}
+          onSubmit={submitEdit}
+          onCancel={() => setMode(null)}
+        />
       ) : null}
 
       {mode === "reject" && output.allowedReviewActions.includes("reject") ? (
@@ -511,7 +494,7 @@ function QuestionList({ title, questions }: { title: string; questions: readonly
     <section className="ai-review-questions">
       <div className="ai-review-pane-heading compact"><h5>{title}</h5><span className="count-pill">{questions.length}</span></div>
       {questions.length === 0 ? <p className="empty-inline">لا توجد أسئلة في هذه النتيجة.</p> : null}
-      <ol>{questions.map((question, index) => <li key={`${index}-${question.prompt.slice(0, 40)}`}><div className="ai-review-question-meta"><span>{questionTypeLabel(question.type)}</span><span>{difficultyLabel(question.difficulty)}</span><span>{answerStatusLabel(question.answerStatus)}</span></div><strong>{question.prompt}</strong>{question.options.length > 0 ? <ul>{question.options.map((option, optionIndex) => <li key={`${optionIndex}-${option.slice(0, 30)}`} className={question.correctOptionIndex === optionIndex ? "is-correct" : ""}>{option}{question.correctOptionIndex === optionIndex ? " — الإجابة المثبتة" : ""}</li>)}</ul> : null}{question.answerText ? <p><strong>الإجابة:</strong> {question.answerText}</p> : null}{question.explanation ? <p><strong>الشرح:</strong> {question.explanation}</p> : null}<Evidence evidence={question.sourceEvidence} /></li>)}</ol>
+      <ol>{questions.map((questionValue, index) => <li key={`${index}-${questionValue.prompt.slice(0, 40)}`}><div className="ai-review-question-meta"><span>{questionTypeLabel(questionValue.type)}</span><span>{difficultyLabel(questionValue.difficulty)}</span><span>{answerStatusLabel(questionValue.answerStatus)}</span></div><strong>{questionValue.prompt}</strong>{questionValue.options.length > 0 ? <ul>{questionValue.options.map((option, optionIndex) => <li key={`${optionIndex}-${option.slice(0, 30)}`} className={questionValue.correctOptionIndex === optionIndex ? "is-correct" : ""}>{option}{questionValue.correctOptionIndex === optionIndex ? " — الإجابة المثبتة" : ""}</li>)}</ul> : null}{questionValue.answerText ? <p><strong>الإجابة:</strong> {questionValue.answerText}</p> : null}{questionValue.explanation ? <p><strong>الشرح:</strong> {questionValue.explanation}</p> : null}<Evidence evidence={questionValue.sourceEvidence} /></li>)}</ol>
     </section>
   );
 }
