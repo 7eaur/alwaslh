@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { aiGenerationOutputSchema } from "../../src/ai/contracts.js";
+import {
+  aiGenerationOutputSchema,
+  aiGenerationRequestSchema,
+  type AiGenerationOutput,
+  type AiGenerationRequest,
+} from "../../src/ai/contracts.js";
 import { createDatabase, type QueryExecutor } from "../../src/db.js";
 import { AI_GOLDEN_FIXTURES } from "./ai-golden.js";
 
@@ -27,6 +32,43 @@ const fixture = AI_GOLDEN_FIXTURES.find((candidate) => candidate.id === "science
 if (!fixture) throw new Error("Stage13E E2E golden fixture is missing");
 const request = fixture.request;
 const output = aiGenerationOutputSchema.parse(fixture.output);
+
+const applicationMediaAssetId = randomUUID();
+const applicationOcrExtractionId = randomUUID();
+const applicationApprovedText = "هذا نص مرجعي معتمد لدرس التطبيق المباشر من شاشة المراجعة.";
+const applicationSummary = "ملخص درس معتمد عبر مراجعات AI";
+const applicationRequest = aiGenerationRequestSchema.parse({
+  language: "ar",
+  subjectDomain: "general",
+  sourceSensitivity: "standard",
+  notationPolicy: "arabic_visible_numerals",
+  sourceChunks: [
+    {
+      mediaAssetId: applicationMediaAssetId,
+      pageNumber: 1,
+      inputChecksumSha256: "c".repeat(64),
+      inputKind: "approved_ocr",
+      ocrExtractionId: applicationOcrExtractionId,
+      approvedText: applicationApprovedText,
+      ocrReviewStatus: "approved",
+      contentSourceAssetId: null,
+    },
+  ],
+  mode: "lesson_summary",
+  lessonTitle: "درس تطبيق نتيجة AI",
+});
+const applicationOutput = aiGenerationOutputSchema.parse({
+  kind: "summary",
+  summary: applicationSummary,
+  sourceEvidence: [
+    {
+      mediaAssetId: applicationMediaAssetId,
+      pageNumber: 1,
+      ocrExtractionId: applicationOcrExtractionId,
+      quote: applicationApprovedText,
+    },
+  ],
+});
 
 async function insertJob(
   tx: QueryExecutor,
@@ -61,6 +103,7 @@ async function insertUnit(
   unitKey: string,
   position: number,
   status: "queued" | "review_required",
+  inputPayload: AiGenerationRequest = request,
 ): Promise<string> {
   const rows = await tx.query<{ id: string }>(
     `insert into ai_job_units (
@@ -73,7 +116,7 @@ async function insertUnit(
        case when $4 = 'review_required' then now() else null end,
        case when $4 = 'review_required' then now() else null end
      ) returning id`,
-    [jobId, unitKey, position, status, JSON.stringify(request)],
+    [jobId, unitKey, position, status, JSON.stringify(inputPayload)],
   );
   const id = rows[0]?.id;
   assert.ok(id);
@@ -98,7 +141,11 @@ async function insertQueuedUnits(
   );
 }
 
-async function insertOutput(tx: QueryExecutor, unitId: string): Promise<string> {
+async function insertOutput(
+  tx: QueryExecutor,
+  unitId: string,
+  outputPayload: AiGenerationOutput = output,
+): Promise<string> {
   const rows = await tx.query<{ id: string }>(
     `insert into ai_outputs (
        job_unit_id, validation_status, raw_response, normalized_output,
@@ -107,7 +154,7 @@ async function insertOutput(tx: QueryExecutor, unitId: string): Promise<string> 
        $1, 'valid', '{"fixture":"stage13e-e2e"}'::jsonb, $2::jsonb,
        '[]'::jsonb, '[]'::jsonb
      ) returning id`,
-    [unitId, JSON.stringify(output)],
+    [unitId, JSON.stringify(outputPayload)],
   );
   const id = rows[0]?.id;
   assert.ok(id);
@@ -153,12 +200,59 @@ async function insertReviewHistory(
   ]);
 }
 
+async function insertApprovedApplicationFixture(
+  tx: QueryExecutor,
+  actorProfileId: string,
+  createdAt: Date,
+): Promise<{ lessonId: string; jobId: string; outputId: string }> {
+  const classId = (
+    await tx.query<{ id: string }>(
+      `insert into classes (slug, name, position)
+       values ('stage13e-ai-apply-class', 'صف تطبيق AI', 98)
+       returning id`,
+    )
+  )[0]?.id;
+  const subjectId = (
+    await tx.query<{ id: string }>(
+      `insert into subjects (slug, name)
+       values ('stage13e-ai-apply-subject', 'مادة تطبيق AI')
+       returning id`,
+    )
+  )[0]?.id;
+  assert.ok(classId && subjectId);
+  await tx.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [classId, subjectId]);
+  const lessonId = (
+    await tx.query<{ id: string }>(
+      `insert into lessons (class_id, subject_id, slug, title, position)
+       values ($1, $2, 'stage13e-ai-apply-lesson', 'درس تطبيق نتيجة AI', 0)
+       returning id`,
+      [classId, subjectId],
+    )
+  )[0]?.id;
+  assert.ok(lessonId);
+
+  const jobId = await insertJob(tx, "lesson_summary", "completed", 1, 1, createdAt);
+  const unitId = await insertUnit(tx, jobId, `lesson:${lessonId}`, 0, "review_required", applicationRequest);
+  const outputId = await insertOutput(tx, unitId, applicationOutput);
+  await tx.query(
+    `insert into ai_output_review_events (
+       ai_output_id, revision, action, actor_profile_id, reviewed_output, note
+     ) values ($1, 1, 'approve', $2, $3::jsonb, 'stage13e-direct-application')`,
+    [outputId, actorProfileId, JSON.stringify(applicationOutput)],
+  );
+  await tx.query("update ai_outputs set reviewed_by_profile_id = $2, reviewed_at = now() where id = $1", [
+    outputId,
+    actorProfileId,
+  ]);
+  return { lessonId, jobId, outputId };
+}
+
 const database = createDatabase(databaseUrl);
 try {
   const seeded = await database.transaction(async (tx) => {
     const existing = await tx.query<{ job_type: string }>(
       "select job_type from ai_jobs where job_type = any($1::text[])",
-      [[happyJobType, raceJobType, paginationJobType]],
+      [[happyJobType, raceJobType, paginationJobType, "lesson_summary"]],
     );
     if (existing.length > 0) {
       throw new Error(
@@ -175,6 +269,10 @@ try {
     }
 
     const now = Date.now();
+
+    // Direct-application fixture: a canonical approved lesson-summary output. Chromium
+    // must apply it from the review surface, then the workflow verifies the real lesson row.
+    const application = await insertApprovedApplicationFixture(tx, actorProfileId, new Date(now + 1_000));
 
     // Happy fixture: active server-owned lifecycle + open review output. It deliberately
     // has 51 units, 51 execution-attempt rows and 101 append-only review revisions so
@@ -200,8 +298,8 @@ try {
     const raceOutputId = await insertOutput(tx, raceUnitId);
 
     // Job-list pagination fixture: one deliberately old marker plus 30 newer completed
-    // filler jobs. Together with happy/race this guarantees the marker is only reachable
-    // from the second server page while the real Stage13E jobs stay on the first page.
+    // filler jobs. Together with happy/race/application this guarantees the marker is only
+    // reachable from the second server page while active review work stays on the first page.
     const paginationJobId = await insertJob(
       tx,
       paginationJobType,
@@ -225,7 +323,15 @@ try {
       await insertUnit(tx, fillerId, `${fillerType}-review`, 0, "review_required");
     }
 
-    return { happyJobId, happyReviewUnitId, happyOutputId, raceJobId, raceOutputId, paginationJobId };
+    return {
+      application,
+      happyJobId,
+      happyReviewUnitId,
+      happyOutputId,
+      raceJobId,
+      raceOutputId,
+      paginationJobId,
+    };
   });
 
   console.log(
@@ -233,6 +339,7 @@ try {
       happyJobType,
       raceJobType,
       paginationJobType,
+      applicationSummary,
       ...seeded,
     }),
   );
