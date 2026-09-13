@@ -4,9 +4,9 @@
 
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no automatic merge.  
-**Live main reference checked in this run:** `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.  
-**AR-09 Batch 1 exact code-head:** `20c128bb4a2b7166ad1d04d24e4672c93422d38e`.  
-**Previous documentation checkpoint reconciled:** `a0ea9466becb1c2ba24971e2df8d7a46e8b531b1`.
+**Live main reference checked:** `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.  
+**Current feature checkpoint received:** `07de0e24475b8af410bf2c213ede2a334062b30c`.  
+**AR-09 Batch 1 code-head:** `20c128bb4a2b7166ad1d04d24e4672c93422d38e`.
 
 ## Super Admin stage ledger
 
@@ -19,53 +19,40 @@
 - AR-07 — Quiz Builder — DONE / VERIFIED. Final code-head `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
 - AR-08 — Students + Access Codes — DONE / VERIFIED. Final code-head `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
 - AR-09 — Cleanup / architecture enforcement — **ACTIVE**.
-  - Batch 1 — quiz metadata feature ownership relocation — code-head `20c128bb4a2b7166ad1d04d24e4672c93422d38e`.
-  - Frontend run `34756904661` — SUCCESS.
-  - Admin AI run `34756904665` — RUNNING at checkpoint.
-  - Combined run `34756904664` — RUNNING at checkpoint.
-  - Stage13G run `34756904668` — RUNNING at checkpoint.
+  - Batch 1 — quiz metadata feature ownership relocation — **VERIFIED**.
+  - Code-head `20c128bb4a2b7166ad1d04d24e4672c93422d38e`.
+  - Frontend `34756904661` — SUCCESS.
+  - Admin AI `34756904665` — SUCCESS.
+  - Combined `34756904664` and Stage13G `34756904668` were cancelled only because the later documentation checkpoint superseded that SHA before completion.
+  - Exact current checkpoint `07de0e24475b8af410bf2c213ede2a334062b30c` then completed equivalent required gates: Admin AI `34757034197` — SUCCESS; Combined `34757034226` — SUCCESS; Stage13G `34757034179` — SUCCESS, including Admin UI quality, backend operations and Real API + PostgreSQL + Chromium.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
-## AR-09 Batch 1 truth
+## AR-09 Batch 1 closure
 
 ### State received
 
-The run began by re-reading `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`, fetching live `main`, current feature HEAD and Draft PR #52, and reconciling the AR-08 documentation checkpoint. AR-08 was already DONE / VERIFIED and its executable gates were green, so AR-09 was the first legal incomplete stage.
+The previous shared checkpoint documented Batch 1 as ACTIVE while exact-head CI was still running. Fresh reconciliation found no newer implementation commit beyond the documentation checkpoint. Draft PR #52 remains open, Draft and unmerged.
 
-### Inventory and classification
+### What was verified
 
-The root `apps/admin-web/src` inventory still contained several route-owned Admin surfaces outside their owning feature directories. `App.tsx` showed that `/app/quizzes/metadata` directly imported the root `QuizMetadataPanel.tsx`, while the rest of Quiz Builder already lived under `apps/admin-web/src/admin/quizzes/`.
+Batch 1 moved `QuizMetadataPanel` from the root `apps/admin-web/src/` seam to canonical Quiz ownership under `apps/admin-web/src/admin/quizzes/`, updated the route import, and removed the obsolete root file. No migration, API, PostgreSQL authority, auth/security rule, quiz lifecycle rule or Student workstream code changed.
 
-For this smallest safe cleanup seam:
-- **KEEP:** `/app/quizzes/metadata` route behavior, quiz metadata form behavior, `fetchQuizzes`, `fetchQuiz`, `updateQuiz`, server-side status authority, PostgreSQL/backend contracts.
-- **REFACTOR:** physical ownership of `QuizMetadataPanel` into `apps/admin-web/src/admin/quizzes/`.
-- **REMOVE:** obsolete root-level `apps/admin-web/src/QuizMetadataPanel.tsx` seam after the route import moved.
-- **NO CHANGE:** migrations, backend validation/security, Student workstream, quiz lifecycle rules.
+The original code-head had Frontend and Admin AI green; its long Combined/Stage13G runs were cancelled by the immediately-following docs commit, not by a failure. The resulting current checkpoint contains the exact same production code plus documentation only, and its Combined and Stage13G suites are green, including real Chromium/PostgreSQL execution. This closes the verification gap without weakening any gate.
 
-### Changes
+**Decision: AR-09 Batch 1 = VERIFIED. AR-09 remains ACTIVE.**
 
-- `adc85a6c21eece93560a85febdb2c37e64fe3727` — created `apps/admin-web/src/admin/quizzes/QuizMetadataPanel.tsx` with behavior preserved and only relative imports adjusted.
-- `6a6360f5c37f96984fe95907783a5ab6e4962557` — changed `App.tsx` to import the feature-owned panel.
-- `20c128bb4a2b7166ad1d04d24e4672c93422d38e` — removed the old root-level `QuizMetadataPanel.tsx`.
+## Remaining AR-09 inventory snapshot
 
-No API, migration, backend, auth, publication or Student-facing behavior was modified.
+`App.tsx` still imports route-owned root surfaces including `AdminAiAuthoringWorkspace`, `AdminReportsWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, `CurriculumWorkspace`, and `LessonAuthoringParityPanel`. Root location alone is not evidence of removability; each must be checked against actual route ownership, callers and tests before refactor/removal.
 
-### Exact-head verification state
+The next smallest candidate identified for inspection is `LessonAuthoringParityPanel`, which is owned by `/app/content/lesson-tools`; however no mutation is authorized until this documentation checkpoint itself has no active CI and the candidate's callers/tests are reconciled.
 
-On exact code-head `20c128bb4a2b7166ad1d04d24e4672c93422d38e`:
-- Stage 13E Frontend Preparation `34756904661` — SUCCESS.
-- Stage 13E Admin AI Operations `34756904665` — RUNNING at this checkpoint.
-- Stage 13E Combined Integration `34756904664` — RUNNING at this checkpoint.
-- Stage 13G Admin Operations `34756904668` — RUNNING at this checkpoint.
+## Shared resume point for task A/B — continue AR-09 only
 
-Because required exact-head CI is still active, Batch 1 is **not yet VERIFIED** and no second cleanup seam is being started in parallel.
-
-## Shared resume point for task B — continue AR-09 only
-
-1. Fetch current feature HEAD first. If it is newer than this checkpoint, reconcile the newer commits before any mutation.
-2. Reconcile runs `34756904665`, `34756904664`, and `34756904668` for exact code-head `20c128bb...`; Frontend `34756904661` is already SUCCESS.
-3. If any required run fails, inspect the failing job/log and fix root cause without weakening tests.
-4. If all required runs succeed, mark AR-09 Batch 1 VERIFIED in all three continuity files and PR #52.
-5. Only then continue the AR-09 inventory and choose the next smallest safe root-level ownership/dead-seam cleanup after checking all callers and tests. Do not assume `AdminReportsWorkspace` or any other root file is removable merely because it is root-level.
+1. Fetch current branch HEAD first. If newer than this checkpoint, reconcile it before any mutation.
+2. Reconcile CI triggered by this documentation checkpoint; do not start a parallel batch while it is ACTIVE/RUNNING.
+3. If green, inspect callers/tests for `LessonAuthoringParityPanel` and the `/app/content/lesson-tools` route. Classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE before modifying anything.
+4. If it is exclusively route-owned and no compatibility caller requires the root seam, perform one small relocation into `apps/admin-web/src/admin/content/`, update imports, remove the old seam, and run exact-head Frontend/Admin AI/Combined/Stage13G as applicable.
+5. If evidence shows the candidate is shared, keep it and choose the next smallest safe AR-09 seam instead.
 6. Do not begin AR-10 until AR-09 is fully DONE / VERIFIED.
 7. Keep PR #52 Draft; no merge or auto-merge.
