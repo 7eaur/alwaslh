@@ -58,6 +58,7 @@ Stable contracts:
 - **AD-252 — no fabricated learner data.** Prebuilt surfaces may render honest empty states but never fake notes, unread counts, progress, statistics, scores, achievements, rankings, streaks or recommendations.
 - **AD-253 — final Student IA is active now.** Mobile navigation is `الرئيسية / التعلّم / التدريب / مكتبتي`; Notifications is app-bar secondary action; Progress is Home/Account/desktop secondary route.
 - **AD-254 — destination-level code splitting.** New features do not accumulate in the initial Student bundle. Learn/Reader, Practice/Assessment, Library/personal surfaces and Account load through `React.lazy`; Home/Shell stays immediate.
+- **AD-255 — interaction affordance is a product rule.** Anything clickable must look clickable before interaction; static information must not visually compete with actions. Primary, secondary, contextual and destructive actions must have distinct visual hierarchy. Hover may enhance but never be required to discover clickability.
 
 Binding design order:
 
@@ -98,6 +99,30 @@ Base: `main@d8ccb0b7ba004618cbcbdd96937d5cded47161dc`
 - Home — Learn/Practice/Library primary destinations + Progress/Notifications secondary links.
 - Account — current access/class-code/help/support/logout plus personal links to Library/Progress/Notifications.
 
+### Interaction affordance implementation
+
+Manual inspection of the first future-surface Visual QA artifact found that several controls were functionally clickable but visually too close to static content. That is a usability defect even when the DOM and browser tests pass.
+
+Implemented:
+
+- new `student-affordance.css` shared layer;
+- primary buttons use the strongest filled treatment;
+- secondary buttons use explicit border/surface treatment;
+- contextual text actions receive a compact control surface instead of reading like body text;
+- Library cards use stronger interactive border, teal title hierarchy and a consistent directional cue;
+- Home secondary cards inherit the same visible cue;
+- Library tabs use explicit touch targets and stronger active state;
+- Progress and empty-state links render as obvious CTAs instead of underlined-looking text links;
+- Account `تحديث` is a compact visible control;
+- Account `تسجيل الخروج` is visually separated as a destructive action;
+- Account Library/Progress/Notifications cards use consistent navigation cues;
+- Help/Support links render as explicit actions;
+- pointer, pressed, hover and `focus-visible` states are standardized;
+- phone clarity does not depend on hover;
+- disabled actions remain visibly disabled/non-actionable.
+
+The rule is intentionally not “make every card look clickable.” Static summary/information panels retain quieter surfaces and no directional cue.
+
 ### Stage17–19 integration specification
 
 `STUDENT_FUTURE_SURFACES_SPEC.md` defines before backend implementation:
@@ -136,16 +161,16 @@ Loading state uses learner copy `جاري فتح الصفحة`; reduced-motion d
 
 ## Current Verification Evidence
 
-On the documentation-complete code path before the final exact-head matrix finishes:
+Before the final interaction-affordance head:
 
 - Student lint/typecheck/unit/build — SUCCESS;
 - 11 Student test files / 41 unit tests — SUCCESS;
 - production build emits the intended feature chunks with the sizes above;
-- earlier B05 Chromium + expanded Visual QA — SUCCESS;
-- earlier B02 desktop navigation — SUCCESS;
-- earlier B02 mobile failure was only a non-exact `الإشعارات` Playwright locator matching both app-bar bell and Home card; corrected to the exact app-bar accessible name.
+- B01/B02/B03/B04/B05 Student browser paths passed on the prior exact head;
+- Stage14/Stage16 passed on the prior exact head;
+- B05 generated 28 phone/desktop Visual QA screenshots.
 
-Final merge still requires the complete exact-head matrix because documentation changes also move the head.
+The Visual QA itself exposed the interaction-affordance gap, so the prior all-green matrix is not final acceptance for PR #54. The new exact head must regenerate Visual QA and re-run the complete matrix.
 
 ## Findings Register
 
@@ -159,6 +184,7 @@ Final merge still requires the complete exact-head matrix because documentation 
 | `UX-MOTION-101` | P2 | Interaction | static-feeling surfaces | restrained shared motion/depth | FIXED |
 | `UX-FUTURE-101` | P1 | Future IA | Notes/Notifications/Progress would force later navigation rewrites | final surfaces/placement prebuilt | FIXED / DATA CONNECTION PENDING |
 | `UX-DATA-102` | P1 | Product truth | risk of placeholder/fake future metrics | zero-data-only pre-integration policy | FIXED / GOVERNANCE |
+| `UX-AFF-101` | P1 | Student usability | some clickable cards/actions were visually ambiguous in phone QA | shared affordance layer + explicit CTAs/directional cues/action hierarchy | IN FINAL VERIFICATION |
 | `PERF-STUDENT-101` | P2 | Frontend bundle | future screens pushed main JS to ~599.61 kB | lazy destination chunks; main reduced to 225.89 kB | FIXED / FINAL CI PENDING |
 | `UX-OFFLINE-104` | P1 | Reader | true cold-start offline Reader not complete | return to `STUDENT-016I` | OPEN / ROADMAP |
 | `UX-IA-103` | P1 | Admin | Admin requires independent rebuild | dedicated Super Admin workstream | DELEGATED |
@@ -169,7 +195,8 @@ Final merge still requires the complete exact-head matrix because documentation 
 - B01/B02/B03/B04/B05 Chromium regressions;
 - Stage14/15/16 + Rebuild verification;
 - all other triggered workflows green;
-- phone/desktop Visual QA for Library overview/downloads/notes/saved/review, Notifications, Progress and Account;
+- regenerated phone/desktop Visual QA inspected manually after affordance changes;
+- obvious visual distinction between clickable and static surfaces;
 - no horizontal overflow;
 - learner-copy scan clean;
 - reduced-motion acceptance preserved;
