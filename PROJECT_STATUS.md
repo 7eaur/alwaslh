@@ -2,17 +2,77 @@
 
 > Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-13**.
+Last synchronized: **2026-09-13 — Grade 9 English full technical import verified**.
 
 ## Current state
 
-**ACTIVE TRACK: Student Stage16 — `STUDENT-016I` cold-start offline Reader**
+**CURRENT USER PRIORITY: Content Rebuild — Grade 9 English full import**
 
-The Student/UI workstream and Content Rebuild are independent parallel tracks. Content publication remains closed.
+The hourly roadmap automation is disabled. Student PR #57 remains a separate open workstream and was not merged as part of this content run.
 
-### Parallel Content Rebuild checkpoint — ROADMAP-RETURN CLOSED
+### Grade 9 English — FULL IMPORT COMPLETE / UNPUBLISHED
 
-The requested Content Rebuild execution sequence is complete through roadmap return:
+The full RAW-backed Grade 9 English Pupil's Book 3 source corpus is now present in modern PostgreSQL and has passed inspect → rollback-only gate → controlled apply → committed-state verification.
+
+Verified scope:
+
+- RAW-backed pages: `69/69`
+- RAW images verified by SHA-256: `69/69`
+- content source identities: `69/69`
+- ready Media Assets: `69/69`
+- Lesson Assets: `69/69`
+- recovered Units/Sections: `8/8`
+- live Lesson identities owning the 69 assets: `59`
+- Question Revisions preserved: `104/104`
+- manifest-only final page 70: `1`, preserved as evidence-only because it has no RAW identity
+
+Recovered Units:
+
+1. `Unit 1 - Revision`
+2. `Unit 2 - Describing: Making plans`
+3. `Unit 3 - Other countries`
+4. `Unit 4 - Visiting Japan`
+5. `Unit 5 - Safety`
+6. `Unit 6 - Helping others`
+7. `Unit 7 - Communications`
+8. `Unit 8 - Winning medals`
+
+Bulk mutation boundary:
+
+- missing Sections created: `6`
+- existing Sections reused: `2`
+- Lessons assigned to recovered Section: `54`
+- existing correct Lesson assignments reused: `5`
+- RAW mutations: `0`
+- media-binary mutations: `0`
+- Question mutations: `0`
+- unrelated mutations: `0`
+- publication changes: `0`
+
+Publication state remains intentionally closed:
+
+- published Lessons: `0`
+- published Lesson Assets: `0`
+- published Questions: `0`
+
+Runtime evidence:
+
+- content source commit: `9e58ab3e882b883bddd016099949881801eedc28`
+- Railway deployment: `de7f9883-b2f0-483d-a7c1-ffbfb15ac30c` — `SUCCESS`
+- markers: `BULK_G9_EN_INSPECT_PASS`, `BULK_G9_EN_TRANSACTION_GATE_PASS`, `BULK_G9_EN_APPLY_PASS`, `BULK_G9_EN_VERIFY_PASS`, `BULK_G9_EN_RUNNER_PASS`
+- canonical report: `7eaur/alwaslh-go@content/legacy-staging-rebuild/content-staging/BULK_GRADE9_ENGLISH_IMPORT_REPORT.md`
+
+### Source authority clarification
+
+`7eaur/alwaslh-go@master` contains a different Third Secondary/Pupil's Book 6 corpus and was not used as Grade 9 authority.
+
+Grade 9 English authority for this import is the immutable legacy Supabase reconstruction plus `content-staging/curated/grade-9/english/pupil-book-3/reconstruction-candidates.json`.
+
+The count `59` is the observed live Lesson identity count after prior reviewed curation/reassignment. It is **not** derived using the prohibited `69 -> 62` heuristic. Every RAW-backed page/image remains represented exactly once.
+
+The technical/data-completeness import is complete. A later pedagogical cleanup may merge/rename already-imported Lesson identities, but that is semantic refinement rather than missing content/media import work.
+
+## Content Rebuild checkpoints retained
 
 - `BATCH-001 = DONE / COMMITTED_STATE_VERIFIED`
 - `STRUCTURE-001 = DONE / SECTION_BOUNDARY_VERIFIED`
@@ -24,123 +84,32 @@ The requested Content Rebuild execution sequence is complete through roadmap ret
 - `IMPORT-001 = DONE / COMMITTED_STATE_VERIFIED`
 - `VERIFY-001 = DONE / DELIVERY_ISOLATION_AND_PROVENANCE_VERIFIED`
 - `ROADMAP-RETURN = DONE / STUDENT-016I_HANDOFF_VERIFIED`
+- `FULL-GRADE9-ENGLISH-BULK-IMPORT = DONE / FULL_ASSET_COVERAGE_VERIFIED / UNPUBLISHED`
 
-ROADMAP-RETURN was reconciled against live GitHub state, not the stale Library prose that remained on `main`:
+## Student workstream retained
 
-- PR #55 is already **MERGED**, accepted head `8ceb4d5a5f70f7896f6cb358e05605479942d442`, merge commit `343ff1fd7b3d64d7e990b72606695365f520fa58`;
-- current Student architecture still names `STUDENT-016I` as the first unfinished Stage16 item;
-- concurrent execution already opened PR #57 for exactly that scope, so no duplicate 016I branch/implementation is allowed from Content Rebuild;
-- no Content Rebuild RAW/media/question/publication mutation occurred during roadmap return.
+PR #57 — `feat(student): close cold-start offline Reader gap` remains open on branch `stage16/student-016i`.
 
-`BATCH-001-G9-EN-PB3-U1` remains **CLOSED / COMMITTED_STATE_VERIFIED** and intentionally unpublished.
+Last live head checked during this content run:
 
-VERIFY-001 retained evidence for CURATION-001 (`Describing people and animals`, book pages `5..8` / source pages `9..12`):
+`ce97ef2524cd3735a0200ee0f15fa6e6e224e01e`
 
-- verifier source commit `12fb1a5268e97f0a0d70eee4d33322c139e3deb5` in `7eaur/alwaslh-go`;
-- Railway deployment `e5e8fef8-f8e7-467e-b3d8-60529c1a652a` — SUCCESS;
-- marker `VERIFY001_PASS`;
-- exact Section count 1, exact Lesson count 1;
-- 4/4 Lesson Assets and 4/4 ready Media Assets with exact provenance;
-- Lesson/assets remain unpublished;
-- Student Reader eligible Lesson rows = 0 and publication-guard eligible Asset rows = 0;
-- unauthorized Question links = 0;
-- 12 legacy Question Revisions preserved unpublished;
-- publication/RAW/media-binary/question mutation counts = 0.
-
-Grade 9 English retained corpus truth remains:
-
-- RAW page candidates/images: `69 / 69`;
-- legacy questions: `104`;
-- recovered sections: `8`;
-- reviewed Lesson-boundary coverage: `10` pages;
-- unresolved boundary candidates: `59` pages;
-- page 70 remains manifest-only evidence without a RAW identity;
-- Grade 9 English duplicate page-number anomalies: `0`;
-- corpus-wide duplicate-position anomalies remain preserved: `6`;
-- historical `62 Draft lessons` remains reconciliation evidence only and is not used to derive `69 -> 62`.
-
-## Active Student checkpoint
-
-**ACTIVE PR: #57 — `feat(student): close cold-start offline Reader gap`**
-
-**ACTIVE BRANCH: `stage16/student-016i`**
-
-**EXACT HEAD OBSERVED: `4624dcc824555c1d29e9d697a7474bf76223468b`**
-
-**BASE WHEN OPENED: `main@343ff1fd7b3d64d7e990b72606695365f520fa58`**
-
-PR #57 explicitly owns `STUDENT-016I`: a previously saved, still-authorized lesson must remain safely readable after browser/app restart while the network is unavailable, using durable non-secret scope recovery plus existing signed package/blob integrity authority.
-
-Current exact-head CI is **NOT GREEN** at this checkpoint. At least `Stage 8 · Student activation browser E2E` is failing on head `4624dcc...`; other checks include successes. Do not merge PR #57 until the exact-head matrix and Stage16 real Chromium acceptance are green. This failure belongs to the Student workstream and does not reopen Content Rebuild.
-
-## Verified merged Student baseline
-
-### PR #53 — Student Experience Rebuild
-
-- MERGED / VERIFIED;
-- exact accepted head `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
-- **23/23 workflows SUCCESS**;
-- merge commit `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
-
-### PR #54 — Future Student Surfaces
-
-- MERGED / VERIFIED;
-- exact accepted head `4b6f24c5cb9bd0da525ecfebc59b1ebbf156c903`;
-- **23/23 workflows SUCCESS**;
-- phone/desktop Visual QA accepted;
-- merge commit `c3734366c132ea3919a925bdd0dd37cfd5d82104`.
-
-### PR #55 — Library Overview Refinement
-
-- MERGED;
-- accepted head `8ceb4d5a5f70f7896f6cb358e05605479942d442`;
-- merge commit `343ff1fd7b3d64d7e990b72606695365f520fa58`.
-
-The merged Student foundation includes Welcome/Auth/Recovery/Help/Support, Home/Learn/Subject/Reader, Practice/Quiz/Assessment/Result, final primary navigation `الرئيسية / التعلّم / التدريب / مكتبتي`, Library/Notifications/Progress/Account prebuilt surfaces, learner-safe error copy, restrained/reduced motion, destination-level lazy loading, and no fabricated future learner data.
-
-Library hierarchy after PR #55:
-
-1. concise Library heading;
-2. `ملخص مكتبتي` with honest statistics;
-3. one `أقسام مكتبتي` destination grid;
-4. child sections use one clear `العودة إلى مكتبتي` action.
-
-Downloads count is real from the existing offline package store; Notes/Saved/Needs Review remain honest zero states until Stage17 authoritative repositories exist.
-
-## Performance state
-
-Accepted Student feature-level code splitting reduced the initial main bundle from roughly `599.61 KB minified / 148.83 KB gzip` to roughly `225.89 KB minified / 71.24 KB gzip`.
-
-Do not regress this by eagerly importing destination feature trees back into the Student shell.
+It is not merged. Do not infer current CI state without re-fetching exact-head checks when Student work resumes.
 
 ## Remaining roadmap
 
-Current sequence:
+Student roadmap remains:
 
-`STUDENT-016I [IN PROGRESS / PR #57] → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
+`STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
 
-Still open after 016I:
+Content publication is a separate explicit gate. Do not expose the imported Grade 9 English content to students merely because the technical import is complete.
 
-- `016R` reconnect revalidation/purge;
-- `016S` revision/tombstone/cursor/delta synchronization;
-- conditional `016O` bounded outbox only if later offline writes require it;
-- `016G` Stage16 closure matrix;
-- Stage17 Notes / Saved / Needs Review CRUD, provenance, ownership, offline/sync;
-- Stage18 Notifications feed/unread/deep links/lifecycle;
-- Stage19 trusted Progress/Statistics/Achievements;
-- unsupported self-service Account security/preferences;
-- Super Admin rebuild remains a separate workstream.
+## Required startup
 
-## Required startup for next conversation
-
-Read in order:
+Read live heads first, then:
 
 1. `PROJECT_HANDOFF.md`
 2. `PROJECT_STATUS.md`
 3. `PROJECT_ENGINEERING_LOG.md`
-4. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-5. `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
-6. `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
-7. `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
-
-For Content Rebuild also read `content-staging/CONTENT_REBUILD_EXECUTION_STATUS.md` and `content-staging/CONTENT_REBUILD_HANDOFF.md` from `7eaur/alwaslh-go@content/legacy-staging-rebuild`, then live-check both repository heads before editing.
+4. relevant product architecture documents
+5. for Content Rebuild, the live `CONTENT_REBUILD_EXECUTION_STATUS.md` and `CONTENT_REBUILD_HANDOFF.md` in `7eaur/alwaslh-go@content/legacy-staging-rebuild`
