@@ -10,6 +10,7 @@ test.skip(!enabled, "Stage13E browser fixture is only available in the combined 
 
 const adminIdentifier = process.env.STAGE13E_ADMIN_IDENTIFIER ?? "stage13e-admin-ui";
 const adminPassword = process.env.STAGE13E_ADMIN_PASSWORD ?? "Stage13eAdminUiPass123!";
+const apiBaseUrl = process.env.STAGE13E_E2E_API_BASE_URL ?? "http://127.0.0.1:3000";
 const seededJobType = process.env.STAGE13E_E2E_JOB_TYPE;
 const raceJobType = process.env.STAGE13E_E2E_RACE_JOB_TYPE;
 const paginationJobType = process.env.STAGE13E_E2E_PAGINATION_JOB_TYPE;
@@ -154,6 +155,15 @@ test("Admin AI review applies an approved lesson result without copying internal
 
   await expect(page.getByRole("status")).toContainText("تم تحديث ملخص الدرس");
   await expect(page.getByText(/Output ID|UUID|Job:/)).toHaveCount(0);
+
+  const curriculumResponse = await page.context().request.get(`${apiBaseUrl}/v1/admin/curriculum`);
+  expect(curriculumResponse.ok()).toBeTruthy();
+  const curriculumPayload = await curriculumResponse.json();
+  const appliedLesson = curriculumPayload.curriculum.lessons.find(
+    (lesson) => lesson.slug === "stage13e-ai-apply-lesson",
+  );
+  expect(appliedLesson?.summary).toBe("ملخص درس معتمد عبر مراجعات AI");
+  expect(appliedLesson?.contentRevision).toBe(1);
 });
 
 test("Admin AI review returns to login after the real Admin session expires", async ({ page }) => {
