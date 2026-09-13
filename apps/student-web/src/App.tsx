@@ -6,7 +6,7 @@ import {
   restoreStudentSession,
   type SessionProfile,
 } from "./auth-api";
-import { clearActiveOfflineLease } from "./offline-session";
+import { clearActiveOfflineLease, getActiveOfflineScope } from "./offline-session";
 import { StudentAccessSection } from "./student-access";
 import {
   StudentBrand,
@@ -46,9 +46,15 @@ function ConnectionGate({ kind, onRetry }: { kind: "offline" | "unavailable"; on
   return <main className="student-session-state"><StudentBrand /><section aria-labelledby="connection-title">
     <p className="eyebrow">{offline ? "لا يوجد اتصال" : "تعذر الاتصال"}</p>
     <h1 id="connection-title">{offline ? "اتصل بالإنترنت للمتابعة" : "الخدمة غير متاحة الآن"}</h1>
-    <p>{offline ? "نحتاج اتصالًا للتحقق من حسابك عند فتح التطبيق. اتصل بالإنترنت ثم أعد المحاولة." : "لم يتم تسجيل خروجك. انتظر قليلًا ثم أعد المحاولة."}</p>
+    <p>{offline ? "نحتاج اتصالًا للتحقق من حسابك عند فتح التطبيق. إذا سبق أن حفظت درسًا على هذا الجهاز فسيظهر لك تلقائيًا عندما يكون الوصول المحلي ما زال صالحًا." : "لم يتم تسجيل خروجك. انتظر قليلًا ثم أعد المحاولة."}</p>
     <button className="primary-button" type="button" onClick={onRetry} disabled={offline && !navigator.onLine}>إعادة المحاولة</button>
   </section></main>;
+}
+
+function offlineProfile(): SessionProfile | null {
+  const scope = getActiveOfflineScope();
+  if (!scope) return null;
+  return { id: scope.profileId, role: "student", displayName: null };
 }
 
 export default function App() {
@@ -59,7 +65,12 @@ export default function App() {
   const [notice, setNotice] = useState<StudentEntryNotice | null>(null);
 
   async function checkSession() {
-    if (!navigator.onLine) { setPhase("offline"); return; }
+    if (!navigator.onLine) {
+      const localProfile = offlineProfile();
+      setProfile(localProfile);
+      setPhase("offline");
+      return;
+    }
     setPhase("checking");
     try {
       const restored = await restoreStudentSession();
@@ -70,7 +81,11 @@ export default function App() {
       setProfile(restored); setPhase("authenticated");
     } catch (error) {
       if (isMissingSessionError(error)) { setProfile(null); setPhase("anonymous"); }
-      else if (error instanceof ApiRequestError && error.code === "SERVICE_UNAVAILABLE") setPhase(navigator.onLine ? "unavailable" : "offline");
+      else if (error instanceof ApiRequestError && error.code === "SERVICE_UNAVAILABLE") {
+        const localProfile = offlineProfile();
+        if (localProfile) { setProfile(localProfile); setPhase("offline"); }
+        else setPhase(navigator.onLine ? "unavailable" : "offline");
+      }
       else setPhase("unavailable");
     }
   }
@@ -92,6 +107,7 @@ export default function App() {
   }
 
   if (phase === "checking") return <LoadingScreen />;
+  if (phase === "offline" && profile) return <div className="app-frame"><StudentAccessSection profile={profile} online={false} onSessionExpired={handleSessionExpired} onLoggedOut={() => void handleLogout()} /></div>;
   if (phase === "offline") return <ConnectionGate kind="offline" onRetry={() => void checkSession()} />;
   if (phase === "unavailable") return <ConnectionGate kind="unavailable" onRetry={() => void checkSession()} />;
 
