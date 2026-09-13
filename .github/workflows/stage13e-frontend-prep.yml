@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - frontend/stage13e-ai-operations
+      - rebuild/super-admin-foundation
     paths:
       - apps/admin-web/**
       - .github/workflows/stage13e-frontend-prep.yml
