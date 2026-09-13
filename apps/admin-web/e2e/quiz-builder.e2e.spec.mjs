@@ -59,7 +59,7 @@ test("Quiz Builder list opens the canonical entity route and direct deep link su
   await expect(page).toHaveURL(new RegExp(`/app/quizzes/${quizId}$`));
   await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
   await expect(page.getByTestId("quiz-status")).toHaveText("مسودة");
-  await expect(page.getByRole("link", { name: "إدارة النماذج" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "إضافة نموذج" })).toBeVisible();
 
   await page.goto(`/app/quizzes/${quizId}`);
   await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();
