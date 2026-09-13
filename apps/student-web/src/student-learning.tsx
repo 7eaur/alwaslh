@@ -172,7 +172,7 @@ export function StudentLearningExperience({ online, refreshKey, onSessionExpired
   useEffect(() => { void loadCurriculum(); }, [online, refreshKey]);
 
   if (route.kind === "invalid") return <Navigate replace to="/app/learn" />;
-  if (!online && route.kind === "lesson") return <StudentOfflineLessonReaderPage lessonId={route.lessonId} />;
+  if (!online && route.kind === "lesson" && state.status !== "ready") return <StudentOfflineLessonReaderPage lessonId={route.lessonId} />;
   if (state.status !== "ready") return <LearningState state={state} online={online} onRetry={() => void loadCurriculum()} />;
   if (route.kind === "learn") return <LearnLanding catalog={state.catalog} />;
   if (route.kind === "subject") return <SubjectPage catalog={state.catalog} subjectId={route.subjectId} />;
