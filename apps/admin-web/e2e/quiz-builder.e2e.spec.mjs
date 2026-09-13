@@ -52,6 +52,7 @@ async function createRoutedQuiz(page) {
 }
 
 async function createPublishedQuestion(page, scope, prompt) {
+  const correctAnswer = "الإجابة الصحيحة";
   const createResponse = await page.context().request.post(`${apiBaseUrl}/v1/admin/question-bank/manual`, {
     data: {
       classId: scope.classId,
@@ -60,9 +61,9 @@ async function createPublishedQuestion(page, scope, prompt) {
       question: {
         prompt,
         type: "multiple_choice",
-        options: ["الإجابة الصحيحة", "مشتت أول", "مشتت ثان"],
+        options: [correctAnswer, "مشتت أول", "مشتت ثان", "مشتت ثالث"],
         correctOptionIndex: 0,
-        answerText: null,
+        answerText: correctAnswer,
         answerStatus: "known",
         difficulty: "easy",
         explanation: "سؤال fixture حقيقي لاختبار تركيب نموذج الاختبار.",
@@ -88,7 +89,6 @@ async function openVersionEditor(page, mode) {
   await expect(
     page.getByRole("heading", { name: mode === "add" ? "إضافة نموذج اختبار" : "تعديل أسئلة النموذج", exact: true }),
   ).toBeVisible();
-  await expect(page.getByRole("group", { name: "الأسئلة المنشورة المتاحة" })).toBeVisible().catch(() => {});
 }
 
 async function selectCandidate(page, prompt, checked) {
