@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-07 DONE / VERIFIED. AR-08 Students + Access Codes is NEXT / NOT STARTED.**
+Last consolidated: **2026-09-13 — AR-01 through AR-07 DONE / VERIFIED. AR-08 Students + Access Codes ACTIVE; Batch 1 focused Students route VERIFIED.**
 
 ## Project and authority invariants
 
@@ -45,6 +45,7 @@ Last consolidated: **2026-09-13 — AR-01 through AR-07 DONE / VERIFIED. AR-08 S
 - **AD-ADMIN-023:** temporary Quiz Builder legacy ownership is limited to creation only once list/entity/version/lifecycle/export parity is executable; successful creation hands off to `/app/quizzes/:quizId`.
 - **AD-ADMIN-024:** focused creation proof uses canonical detail contracts and stable semantic accessible names; browser tests must not depend on ambiguous partial accessible-name matches or brittle CSS selectors.
 - **AD-ADMIN-025:** once focused quiz creation has executable parity, `/app/quizzes/manage` imports its focused owner directly and the root legacy Quiz Builder seam is removed rather than preserved as an alias.
+- **AD-ADMIN-026:** Students and Access Codes are separate task owners: `/app/students` owns individual account support/inspection while `/app/access-codes` owns code inventory, issuance and bulk lifecycle; server access/auth authority remains unchanged.
 
 ## Super Admin stage ledger
 
@@ -153,17 +154,84 @@ The previous giant ownership has been replaced by:
 - real PostgreSQL/API/Chromium coverage for routed operations and creation;
 - no remaining root Quiz Builder legacy workspace seam.
 
-## Explicit resume point for A / next Admin task — AR-08 only
+## AR-08 — Students + Access Codes — ACTIVE
+
+### Batch 1 — focused Students route ownership — VERIFIED
+
+#### 1. State received and verification reconciliation
+
+- Re-read `PROJECT_STATUS.md`, this log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before mutation.
+- Live `main` remained `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.
+- Feature branch began at `765e9b7dca5b4ee8146807ed007ffbf701bed770`; PR #52 was open/Draft.
+- Documentation-only CI on that head was reconciled before mutation: Admin AI `34750605622` — SUCCESS; Combined `34750605687` — SUCCESS.
+
+#### 2. Contract and ownership inspection
+
+Inspected:
+- `apps/admin-web/src/AdminStudentAccessWorkspace.tsx`;
+- route callers in `apps/admin-web/src/App.tsx`;
+- `apps/admin-web/src/admin-student-access-api.ts`;
+- Stage13G verification workflow and real Chromium coverage.
+
+Finding: both `/app/students` and `/app/access-codes` rendered the same giant workspace. The workspace combined student search/detail/support mutations with access-code filtering/generation/bulk revocation behind local tabs, so the navigation split was not a real ownership split.
+
+Server contracts remain authoritative for:
+- student list/detail;
+- temporary password and device rebind;
+- entitlement revocation;
+- access-code inventory and state;
+- full/class code generation;
+- redemption/expiry/revocation semantics.
+
+Classification:
+- **KEEP:** API/PostgreSQL/auth/access authority, existing student support behavior, access-code business rules and Student-facing contracts.
+- **REFACTOR:** route ownership so Students and Access Codes no longer share the same giant screen.
+- **IMPROVE:** executable browser proof for direct focused routes and mobile no-overflow.
+- **REMOVE LATER:** the legacy giant workspace only after Access Codes replacement parity is executable.
+- **NO CHANGE:** migrations, backend validation/security, Student/audit workstream.
+
+#### 3. Implementation
+
+- `995203cf9344d5c4c1f3b41b208fdfe2d6bd3507` — created `apps/admin-web/src/admin/students/AdminStudentsPage.tsx` with focused ownership of individual student lookup/inspection/support only.
+- `6d8ddf181c9eff6f909c11195eb9ecee4529c47e` — `/app/students` now routes directly to `AdminStudentsPage`; `/app/access-codes` intentionally remains on the legacy workspace for parity-first migration.
+- `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb` — updated real Chromium coverage to prove the focused Students route has no Access Codes tab, preserves recovery/device-rebind/entitlement-revoke/session-expiry behavior, enters Access Codes through its own URL, and keeps both routes within a 390px viewport.
+
+#### 4. Exact-head verification
+
+Code-head: `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb`.
+
+- Frontend/Admin Web quality `34751701107` — **SUCCESS**.
+- Admin AI `34751701104` — **SUCCESS**.
+- Combined `34751701154` — **SUCCESS**.
+
+Combined job `103709249693` passed:
+- API/Admin quality gates;
+- all migrations on clean PostgreSQL;
+- Stage13E database contract;
+- backend authority regressions;
+- Stage12/auth security regressions;
+- deterministic browser fixture setup and invariants;
+- real Admin Chromium suite.
+
+No backend or migration changes were made, and no server authority was duplicated into frontend state.
+
+#### 5. Batch decision
+
+**AR-08 Batch 1 = VERIFIED. AR-08 remains ACTIVE.**
+
+The Students route now has focused ownership. Access Codes deliberately remains on the legacy workspace until its own focused page can reproduce inventory, generation, filtering and non-destructive bulk revocation with executable parity.
+
+## Explicit resume point for B — continue AR-08 only
 
 1. Re-read `PROJECT_STATUS.md`, this log and the Super Admin workstream before mutation.
-2. Fetch live `main`, current feature HEAD, Draft PR #52 and exact-head CI. If docs-only CI is still active, reconcile it before starting code.
-3. Start **AR-08 — Students + Access Codes** only. AR-09 remains blocked until AR-08 is exact-head green and documented.
-4. Inspect `apps/admin-web/src/AdminStudentAccessWorkspace.tsx`, its actual route callers, API/services/tests and PostgreSQL contracts for students/access-code issuance, redemption, expiry/revocation and audit/integrity before changing UI ownership.
-5. Preserve server-side authority and Student-facing contracts. Do not infer business rules from the existing giant workspace UI.
-6. Apply the approved IA boundary: `/app/students` for individual student lookup/support/inspection; `/app/access-codes` for code inventory, issuance and bulk lifecycle operations. Do not duplicate the same workspace under both routes.
-7. Implement one small coherent batch, verify applicable lint/typecheck/unit/build + database/backend/security + real Chromium, then document exact SHA/Run IDs.
-8. Keep PR #52 Draft; no automatic merge.
-9. Preserve parallel Student/audit work unchanged.
+2. Fetch live `main`, current feature HEAD, Draft PR #52 and exact-head CI. Reconcile documentation-only CI from this checkpoint first if it is still active.
+3. Continue **AR-08 only**; AR-09 remains blocked.
+4. Extract Access Codes ownership from `AdminStudentAccessWorkspace` into a focused page under `apps/admin-web/src/admin/access-codes/`.
+5. Route `/app/access-codes` directly to that focused owner; it must not require switching a tab belonging to the Students workspace.
+6. Preserve server authority for inventory/filtering, full/class-code generation, expiry/redemption state, class association and non-destructive bulk revocation.
+7. Update real Chromium to prove direct `/app/access-codes` generation/filtering/revoke plus responsive no-overflow. Keep existing backend/database/security regressions.
+8. Remove/reduce the legacy `AdminStudentAccessWorkspace` only after replacement parity is executable and exact-head green; shared presentational helpers may be extracted without moving business authority.
+9. Keep PR #52 Draft; no automatic merge. Preserve parallel Student/audit work unchanged.
 
 ## Current audit/findings register
 
@@ -178,6 +246,7 @@ The previous giant ownership has been replaced by:
 | `ADMIN-007` | P1 | AI authoring | manual internal-ID handoff | FIXED / AR-05 |
 | `ADMIN-008` | P1 | Question Bank | giant list/create/edit/review/history owner | FIXED / AR-06 |
 | `ADMIN-009` | P1 | Quiz Builder | giant list/create/detail/version/lifecycle/export owner | FIXED / AR-07 |
+| `ADMIN-010` | P1 | Students + Access | same giant workspace duplicated under `/app/students` and `/app/access-codes` | PARTIAL FIX / AR-08 Batch 1; Students focused, Access Codes pending |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track |
 
 ## Remaining Super Admin sequence
