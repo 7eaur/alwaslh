@@ -1,0 +1,289 @@
+.ai-review-workspace {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.ai-review-page-header {
+  align-items: flex-start;
+}
+
+.ai-review-layout {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 2fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.ai-review-list-pane,
+.ai-review-detail-pane,
+.ai-review-job-detail,
+.ai-review-result,
+.ai-review-output {
+  min-width: 0;
+}
+
+.ai-review-list-pane,
+.ai-review-detail-pane {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.ai-review-list-pane {
+  padding: var(--space-4);
+  position: sticky;
+  top: var(--space-4);
+}
+
+.ai-review-detail-pane {
+  padding: var(--space-5);
+}
+
+.ai-review-pane-heading,
+.ai-review-detail-heading,
+.ai-review-output-heading,
+.ai-review-job-actions,
+.ai-review-actions,
+.ai-review-editor-actions,
+.ai-review-pagination,
+.ai-review-apply {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-review-pane-heading.compact,
+.ai-review-detail-heading.compact {
+  align-items: flex-start;
+}
+
+.ai-review-pane-heading p,
+.ai-review-detail-heading p,
+.ai-review-output-heading p,
+.ai-review-apply p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-text-muted);
+}
+
+.ai-review-job-list,
+.ai-review-unit-list {
+  display: grid;
+  gap: var(--space-2);
+  margin-block: var(--space-4);
+}
+
+.ai-review-job,
+.ai-review-unit {
+  width: 100%;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: inherit;
+  text-align: start;
+  padding: var(--space-3);
+  cursor: pointer;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ai-review-job:hover,
+.ai-review-unit:hover,
+.ai-review-job.is-selected,
+.ai-review-unit.is-selected {
+  border-color: var(--color-brand-primary);
+  background: var(--color-surface-subtle);
+}
+
+.ai-review-job:focus-visible,
+.ai-review-unit:focus-visible,
+.ai-review-pagination button:focus-visible,
+.ai-review-actions button:focus-visible,
+.ai-review-job-actions button:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.ai-review-job > span:first-child,
+.ai-review-unit > span:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.ai-review-job small,
+.ai-review-unit small {
+  color: var(--color-text-muted);
+}
+
+.ai-review-job-detail {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.ai-review-job-actions,
+.ai-review-actions,
+.ai-review-editor-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.ai-review-unit-layout {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.7fr) minmax(0, 1.6fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.ai-review-result-pane {
+  min-width: 0;
+}
+
+.ai-review-result {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ai-review-output {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.ai-review-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.ai-review-sources,
+.ai-review-issues,
+.ai-review-content,
+.ai-review-history,
+.ai-review-execution-history,
+.ai-review-advanced-editor,
+.ai-review-reject,
+.ai-review-apply {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+}
+
+.ai-review-sources ul,
+.ai-review-issues ul,
+.ai-review-history ol,
+.ai-review-execution-history ol,
+.ai-review-questions > ol,
+.ai-review-questions li ul,
+.ai-review-evidence ul {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: 1.25rem;
+}
+
+.ai-review-content,
+.ai-review-questions,
+.ai-review-version {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ai-review-version + .ai-review-version {
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: var(--space-4);
+}
+
+.ai-review-long-copy,
+.ai-review-questions strong,
+.ai-review-evidence blockquote {
+  overflow-wrap: anywhere;
+}
+
+.ai-review-question-meta {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.ai-review-questions > ol > li {
+  padding-block: var(--space-3);
+}
+
+.ai-review-questions .is-correct {
+  font-weight: 700;
+}
+
+.ai-review-evidence {
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+}
+
+.ai-review-evidence blockquote {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-3);
+  border-inline-start: 3px solid var(--color-border-subtle);
+}
+
+.ai-review-apply {
+  align-items: flex-start;
+  background: var(--color-surface-subtle);
+}
+
+.ai-review-advanced-editor,
+.ai-review-reject {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ai-review-advanced-editor label,
+.ai-review-reject label {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ai-review-advanced-editor textarea,
+.ai-review-reject textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.ai-review-pagination {
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+}
+
+.ai-review-state-actions {
+  margin-top: var(--space-3);
+}
+
+@media (max-width: 980px) {
+  .ai-review-layout,
+  .ai-review-unit-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-review-list-pane {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .ai-review-detail-pane,
+  .ai-review-list-pane {
+    padding: var(--space-3);
+  }
+
+  .ai-review-page-header,
+  .ai-review-pane-heading,
+  .ai-review-detail-heading,
+  .ai-review-output-heading,
+  .ai-review-apply {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ai-review-statuses {
+    justify-content: flex-start;
+  }
+}
