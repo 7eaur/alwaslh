@@ -108,7 +108,7 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
   await expect(page.getByRole("heading", { name: "الدروس المحفوظة" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "دروس متاحة للتنزيل" })).toBeVisible();
   await expect(page.locator("[data-downloadable-lesson-id]").filter({ hasText: fixture.lessonTitle })).toBeVisible();
-  await expectClickable(page.getByRole("button", { name: "تحديث", exact: true }));
+  await expectClickable(page.locator(".downloads-section__heading .text-button").first());
   await capture(page, "library-downloads");
 
   const lessonRow = page.locator("[data-downloadable-lesson-id]").filter({ hasText: fixture.lessonTitle });
