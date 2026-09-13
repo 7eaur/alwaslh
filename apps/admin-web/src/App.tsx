@@ -14,6 +14,7 @@ import { AiOperationsPage } from "./admin/reviews/AiOperationsPage";
 import { AdminAccessCodesPage } from "./admin/access-codes/AdminAccessCodesPage";
 import { AdminAccessCodeReportsPage } from "./admin/access-codes/AdminAccessCodeReportsPage";
 import { LessonAuthoringParityPanel } from "./admin/content/LessonAuthoringParityPanel";
+import { CurriculumWorkspace } from "./admin/curriculum/CurriculumWorkspace";
 import { AdminOverviewPage } from "./admin/overview/AdminOverviewPage";
 import { AdminNotificationsPage } from "./admin/operations/AdminNotificationsPage";
 import { AdminOperationsAuditPage } from "./admin/operations/AdminOperationsAuditPage";
@@ -30,7 +31,6 @@ import { AdminStudentsPage } from "./admin/students/AdminStudentsPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
-import { CurriculumWorkspace } from "./CurriculumWorkspace";
 import { LoginScreen } from "./LoginScreen";
 
 function errorMessage(error: unknown): string {
