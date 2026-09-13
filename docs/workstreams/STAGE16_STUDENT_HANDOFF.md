@@ -1,92 +1,64 @@
 # STAGE16 STUDENT HANDOFF — Offline / PWA
 
-> Canonical continuation checkpoint for the active Stage16 work. Current `main` code, migrations and executable CI evidence outrank prose. Anything not executed is `NOT YET VERIFIED`.
+> Canonical Stage16 continuation checkpoint. Current `main` code, PostgreSQL migrations, executable tests/CI and verified runtime outrank prose. Anything not executed is `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-12**.
+Last synchronized: **2026-09-13 — `STUDENT-016I` active on `stage16/student-016i`.**
 
-## 1. Identity / current ownership
+## 1. Current checkpoint
 
-- Repository: `7eaur/alwaslh`
-- Canonical baseline: **live `main`**
-- Shared ledger: GitHub Issue #16
-- Current operating decision: unified post-Stage13 continuation. Old Track A/Track B long-lived branches are historical after PR #33 integration.
-- New Stage16 work starts from current `main` on a short-lived branch.
-- One owner now carries the remaining product, but backend/database/frontend concerns must still be changed in their correct layers.
+Repository: `7eaur/alwaslh`
 
-## 2. Integration checkpoint
+Active branch: `stage16/student-016i`
 
-PR #33 integrated verified Stage13G with the latest Student Product.
+Base: `main@343ff1fd7b3d64d7e990b72606695365f520fa58`
 
-- PR verification head: `dcdae7579a40878c71f64593280a0df2f8363ee2`
-- merge commit: `5e22c3ff157b42b6da47febe205dd91fcb264eed`
-- wider PR verification: **19/19 workflows SUCCESS**
-- Stage16 run on the PR head: `34560999667` — all Stage16 jobs SUCCESS.
+That base is the merge commit of verified PR #55. Do not resume from the older PR #33-era SHAs in previous versions of this document.
 
-Stage16 `34560999667` specifically verified:
+Stage14/15 product work and the Student UX rebuild are already merged. Stage16 remains ACTIVE.
 
-- installable PWA app shell in real Chromium;
-- PostgreSQL offline lease + protected download contracts;
-- API signing unit policy;
-- real Chromium IndexedDB lease lifecycle + protected materialization + signed-manifest tamper rejection.
-
-Before this documentation sync, live `main` was `8006a7c4b2fa66bcac9cfb3addcd52fa831c42df`; always live-check after this docs PR merges.
-
-## 3. Stable security/business invariants
+## 2. Stable Stage16 security invariants
 
 Do not violate these while finishing Stage16:
 
-- `/v1` never becomes Service Worker Cache API authority;
-- protected Reader/media remains `private,no-store` online;
-- no password/session cookie/token/device private key/raw media storage key in offline IndexedDB;
-- browser local data is resilience state, not canonical backend business authority;
-- current server Auth/Access/Entitlement/Curriculum/Publication authority remains canonical;
-- signed authorization private key exists only on the server;
-- Student receives/verifies only the non-secret public verification identity;
-- no automatic `skipWaiting`/forced reload during study;
-- no Stage17 before Stage16 closes;
-- no fake sync authority from dormant tables.
+- `/v1` never becomes Service Worker Cache authority;
+- protected Reader/media remains server-authorized online;
+- no password/session cookie/token/device private key/raw media storage key is stored as offline learning state;
+- browser data is resilience state, not canonical backend business authority;
+- server Auth/Access/Entitlement/Curriculum/Publication authority remains canonical;
+- signing private key exists only on the server;
+- Student verifies only the public verification identity;
+- no automatic `skipWaiting` / forced reload during study;
+- offline use is bounded by profile/device scope + stored lease + signed lesson authorization + time bounds + asset integrity;
+- an explicit online denial/revocation must never be converted into offline authorization;
+- no Stage17 before Stage16 closure.
 
-## 4. Verified Stage16 architecture
+## 3. Verified existing architecture — do not rebuild
 
-### 4.1 Safe PWA shell — VERIFIED
+### 3.1 PWA shell
 
-- Service Worker caches app shell/static assets only;
+Already exists:
+
+- service worker caches app shell/static assets;
 - `/v1` is excluded from SW cache/interception;
-- real Chromium offline shell behavior is tested;
-- no automatic `skipWaiting`.
+- installable shell acceptance exists;
+- no forced update activation.
 
-### 4.2 Bounded offline lease — VERIFIED
+### 3.2 Bounded offline lease
 
-Server route:
+Server authority:
 
 `GET /v1/student/offline/lease`
 
-Authority:
+The lease remains bounded by current Student session, bound non-revoked device, server time, entitlement and expiration.
 
-- Student session required;
-- non-revoked bound device required;
-- PostgreSQL/server time authority;
-- max lease 24h;
-- lease clipped by session expiration;
-- grants clipped by entitlement expiration;
-- metadata only, `private,no-store`.
-
-Client:
+Client storage:
 
 - IndexedDB DB `alwaslh-student-offline`;
 - `leases` store scoped by `profileId:deviceId`;
-- login/activation/restore refresh best-effort;
-- exact-scope logout/session-expiry/device-rebind cleanup;
-- >5-minute backward clock movement rejects lease use.
+- exact-scope logout/session-expiry/rebind cleanup;
+- clock rollback tolerance enforced.
 
-### 4.3 Protected lesson materialization — VERIFIED for download/storage boundary
-
-Server files:
-
-- `apps/api/src/offline/service.ts`
-- `apps/api/src/offline/download.ts`
-- `apps/api/src/offline/http.ts`
-- `apps/api/src/curriculum/student-reader.ts`
+### 3.3 Protected lesson materialization
 
 Routes:
 
@@ -94,224 +66,165 @@ Routes:
 - `GET /v1/student/offline/lessons/:lessonId/manifest`
 - `GET /v1/student/offline/lessons/:lessonId/assets/:assetId?revision=<n>`
 
-Manifest/assets are issued only after current Student session/device/entitlement/published Reader authority succeeds.
+Materialization already enforces current Student/device/entitlement/published Reader authority before issuing data.
 
-Manifest includes:
+IndexedDB `lessonPackages` already has:
 
-- profile/device identity;
-- lesson/class identity;
-- lesson title/summary;
-- safe numeric `contentRevision`;
-- publication time;
-- issue/lease/authorization expiry times;
-- stable asset IDs and positions;
-- mime/size/dimensions/source-page/text where safe;
-- SHA-256 checksums;
-- exact revision-pinned download paths.
-
-Client files:
-
-- `apps/student-web/src/offline-store.ts`
-- `apps/student-web/src/offline-content-store.ts`
-- `apps/student-web/src/offline-download-api.ts`
-- `apps/student-web/src/offline-download.ts`
-- `apps/student-web/src/offline-session.ts`
-- `apps/student-web/src/offline-authorization.ts`
-- `apps/student-web/src/App.tsx`
-
-Storage:
-
-- IndexedDB v2 `lessonPackages` scoped by `profileId:deviceId`;
-- 64 MiB max lesson payload;
-- 256 MiB max account/device scope payload;
-- replacement-aware accounting;
+- exact profile/device scope;
+- bounded per-lesson and per-scope payload budgets;
+- atomic validated replacement;
 - no silent eviction;
-- exact size + SHA-256 before commit;
-- atomic replacement only after the complete new package validates;
-- failed/tampered download cannot overwrite prior valid package;
-- manual remove + exact-scope cleanup.
+- manual removal and exact-scope cleanup.
 
-## 5. Server-signed offline authorization — IMPLEMENTED / VERIFIED AT ISSUANCE+DOWNLOAD
+### 3.4 Server-signed offline authorization
 
-This is newer than several older Stage16 docs and must not be missed.
+Already implemented:
 
-### Server
+- P-256 / ES256 manifest signing;
+- canonical full-manifest payload;
+- key ID derived from public key;
+- fail-closed production signing configuration;
+- browser WebCrypto verification using configured public SPKI.
 
-`apps/api/src/offline/signing.ts` provides:
+## 4. Important correction to the old handoff
 
-- P-256 / ES256 signing;
-- canonical JSON serialization of the entire offline lesson manifest;
-- signed fields covering profile/device/class/lesson/revision/publication/issue/expiry and every asset metadata/checksum/size/path;
-- public-key-derived SHA-256 `keyId`;
-- fail-closed production behavior: manifest issuance returns unavailable if the private signing key is not configured;
-- only test environment may fall back to the repository test key.
+The 2026-09-12 version of this document listed three items as missing. They are **already implemented in current post-PR55 code** and were directly inspected before starting `STUDENT-016I`.
 
-`apps/api/src/offline/download.ts` now returns:
+### Durable non-secret scope — IMPLEMENTED
 
-```text
-{
-  manifest: <StudentOfflineLessonManifest>,
-  authorization: <ES256 signed envelope>
-}
-```
+`apps/student-web/src/offline-session.ts` persists only the active `profileId + deviceId` selector in localStorage and validates it fail-closed. It cleans the obsolete sessionStorage key.
 
-### Client
+### Read-time signed authorization — IMPLEMENTED
 
-`apps/student-web/src/offline-authorization.ts`:
+`apps/student-web/src/offline-content-store.ts` calls `verifyOfflineLessonAuthorization(...)` when deciding whether a stored package may be used. It reconstructs the stored manifest and requires the signed payload to match current stored metadata.
 
-- consumes configured `VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI` only;
-- derives and checks `keyId`;
-- imports a P-256 SPKI public key into WebCrypto;
-- verifies ES256/SHA-256 signature;
-- decodes signed payload;
-- requires canonical payload equality;
-- requires outer manifest == signed manifest;
-- fails with typed verification errors on malformed/key/signature/payload/mismatch states.
+### Read-time blob integrity — IMPLEMENTED
 
-`offline-download.e2e.spec.mjs` proves:
+Protected package use rechecks each stored Blob byte size and SHA-256 before returning it to the caller.
 
-- signed manifest is received;
-- server key identity matches expected test public key;
-- valid package is stored;
-- tampering the outer manifest while leaving the signature unchanged is rejected;
-- tampering asset bytes is rejected by checksum;
-- logout deletes package scope.
+Unit coverage already rejects wrong device/class/scope, modified metadata, signature mutation, blob mutation, expiry and clock rollback.
 
-Railway deployment configuration contains:
+Therefore `STUDENT-016I` must **connect runtime behavior to these primitives**, not rewrite them.
 
-- API: private signing key variable name `OFFLINE_AUTH_SIGNING_PRIVATE_KEY_PEM_B64`;
-- Student: public verification key variable `VITE_OFFLINE_AUTH_PUBLIC_KEY_SPKI`.
+## 5. `STUDENT-016I` — true cold-start offline Reader
 
-Never copy their actual values into docs/chat.
+### Proven pre-fix runtime gap
 
-## 6. Why `STUDENT-016-OFFLINE-AUTH-009` is only PARTIALLY FIXED
+Direct inspection of current base proved:
 
-Download-time signature verification is **not yet the complete cold-offline authorization chain**.
+1. `App.tsx` stopped at a connection gate before the Student shell on offline startup.
+2. `student-learning.tsx` required online curriculum loading before lesson routing.
+3. `student-reader.tsx` had no stored-package rendering path.
+4. saved Downloads exposed update/remove but no direct open action.
+5. existing PWA acceptance explicitly expected the connection gate on an anonymous offline shell; existing download acceptance did not prove Reader use after restart.
 
-Current code still has these gaps:
+### Implementation on active branch
 
-### 6.1 Active scope is not durable across a true browser restart
+`apps/student-web/src/App.tsx`
 
-`apps/student-web/src/offline-session.ts` stores active scope in:
+- discovers the previously verified durable local Student/device scope when startup cannot reach the server;
+- creates only a local presentation profile derived from that scope;
+- does not invent/persist a server session or token;
+- when server auth is reachable, normal server session authority is unchanged.
 
-`sessionStorage["alwaslh-student-offline:active-scope"]`
+`apps/student-web/src/student-learning.tsx`
 
-That intentionally disappears when the browser session ends. A true cold start therefore has no durable non-secret selector for which profile/device package library to inspect.
+- only an offline **lesson** route bypasses the online curriculum catalog;
+- Learn/Subject browsing remains honestly offline/unavailable without server catalog state.
 
-### 6.2 Signed envelope is stored but not re-verified as read-time authority
+`apps/student-web/src/student-reader.tsx`
 
-`StoredOfflineLessonPackage` stores the authorization envelope, but current `offlineLessonPackageAllowsUse()` is still driven by the stored mutable lease + duplicated package fields and does not call `verifyOfflineLessonAuthorization()` at use/render time.
+- adds `StudentOfflineLessonReaderPage`;
+- calls `loadUsableOfflineLessonPackage(profileId, deviceId, lessonId)`;
+- renders no protected content unless lease/scope/signature/time/blob checks all pass;
+- creates temporary Blob object URLs only after verification;
+- invalid/tampered/expired content fails closed with learner-safe copy.
 
-Before protected cold-offline rendering, the application must re-verify the stored signed payload and derive trusted metadata from that signed payload rather than trusting mutable duplicated fields.
+`apps/student-web/src/student-offline-downloads.tsx`
 
-### 6.3 Blob checksum is verified at write time, not every offline read
+- saved packages expose explicit `فتح الدرس` using the canonical lesson route.
 
-`saveOfflineLessonPackage()` hashes blobs before commit. The cold-offline Reader must additionally re-hash stored blobs against **signed** checksums when opening/using them.
+## 6. `STUDENT-016I` executable acceptance
 
-### 6.4 No accepted cold-start offline Reader flow yet
+New test:
 
-There is no complete executable acceptance proving:
+`apps/student-web/e2e/offline-reader-cold-start.e2e.spec.mjs`
 
-`download online → close/restart browser context → network unavailable → PWA shell → durable scope discovery → signed authorization verify → blob verify → offline lesson render`.
+Required positive path:
 
-Until that exists, Stage16 cannot claim true protected cold-offline Reader completion.
+`download online → wait for Service Worker shell → clear HTTP session cookie → close Chromium → relaunch same persistent browser profile → set browser offline → deep-link to saved lesson → verified Reader renders saved title/text/image`.
 
-## 7. Exact next Stage16 batch
+This is intentionally stronger than page reload: Chromium itself is closed and relaunched with the same persistent browser profile, so localStorage/IndexedDB/Service Worker state must truly survive restart.
 
-Implement in this order:
+Required fail-closed cases in the same browser acceptance:
 
-1. **Durable non-secret scope selector**
-   - stores only identity needed to discover local packages;
-   - never password/token/session/private device key;
-   - login/restore updates it;
-   - logout/rebind removes/replaces exact scope.
-2. **Read-time signed authorization verification**
-   - reconstruct/parse stored package manifest safely;
-   - verify key ID, ES256 signature, canonical payload;
-   - ensure stored package fields/assets match signed payload;
-   - fail closed.
-3. **Read-time blob integrity**
-   - SHA-256 every blob before offline rendering/use;
-   - match signed checksums and byte sizes.
-4. **Offline library/Reader UX**
-   - app shell loads when network/session bootstrap cannot reach server;
-   - discover valid package(s) for durable active scope;
-   - clearly show offline mode;
-   - online-only Assessment/actions unavailable or honestly disabled.
-5. **Real Chromium cold-start acceptance**
-   - download online;
-   - close/restart context;
-   - network offline;
-   - open Reader;
-   - signature tamper rejection;
-   - blob tamper rejection;
-   - authorization expiry rejection;
-   - clock rollback rejection;
-   - account/device isolation.
-6. **Reconnect revalidation/purge**
-   - session/device state;
-   - entitlement;
-   - publication/unpublication;
-   - lesson revision;
-   - purge/disable revoked/expired/invalid/stale package per defined policy.
-7. **Revision/tombstone/cursor/delta**
-   - prove authoritative writers;
-   - bounded server cursor/delta API;
-   - client application/idempotency;
-   - tombstone semantics.
-8. **Outbox only if required**
-   - only for explicitly product-authorized offline writes in later stages;
-   - bounded retry/idempotency/conflict policy.
-9. **Stage16 closure**
-   - exact-head lint/typecheck/unit/build;
-   - clean PostgreSQL/API contracts;
-   - real Chromium cold-offline/reconnect;
-   - a11y/responsive regression;
-   - wider product regression;
-   - docs + Issue #16.
+- stored ES256 signature mutation;
+- same-size stored Blob corruption;
+- different profile scope;
+- different device scope;
+- client clock rollback beyond tolerance;
+- signed authorization expiry.
 
-## 8. Reconnect / revocation finding
+The test also proves the restarted browser has **no Student HTTP session cookie** before offline Reader use.
 
-`STUDENT-016-REVOCATION-007` remains OPEN.
+Workflow:
 
-Do not keep showing protected bytes merely because they exist locally. On reconnect, current backend authority wins. Revoked device, expired/revoked entitlement, unpublished lesson, changed publication state or invalid revision must be reconciled and local material disabled/purged per the final documented policy.
+`.github/workflows/stage16-student-pwa.yml`
 
-## 9. Sync finding
+The `offline-client` real-Chromium job now runs:
 
-`content_revisions`, `content_tombstones`, `sync_checkpoints` exist from earlier schema, but schema presence alone is not sync authority.
+- `offline-lease.e2e.spec.mjs`
+- `offline-download.e2e.spec.mjs`
+- `offline-reader-cold-start.e2e.spec.mjs`
 
-`STUDENT-016-SYNC-001` and `STUDENT-016-OUTBOX-008` remain OPEN until writers + API + client + executable reconciliation tests exist.
+## 7. Current verification status
 
-## 10. Current hosted/runtime context
+For the active branch:
 
-Railway inspection/dev stack is live:
+- code/security discovery — COMPLETE;
+- implementation — first coherent batch committed;
+- documentation synchronization — COMPLETE for top-level docs + this handoff;
+- local execution in this tool environment — `NOT YET VERIFIED`;
+- PR exact-head GitHub Actions — `NOT YET VERIFIED`;
+- merge readiness — **NO** until exact-head CI is green.
 
-- Student: `https://alwaslh-dev-student-7eaur-production.up.railway.app`
-- Admin: `https://alwaslh-dev-admin-7eaur-production.up.railway.app`
-- API: `https://alwaslh-dev-api-7eaur-production.up.railway.app`
+Do not weaken the cold-start acceptance if it fails. Diagnose whether the owner is runtime code, Service Worker persistence, test setup, or an actual security contract.
 
-Latest known service statuses at this sync: API/Admin/Student/PostgreSQL SUCCESS.
+## 8. After `STUDENT-016I`
 
-The hosted environment does not close Stage16 by itself. Repository/CI executable acceptance is still required.
+Continue in order:
 
-## 11. Content note
+### `STUDENT-016R` — reconnect revalidation/purge
 
-Grade 9 English canonical media proof is materialized in Railway as **Draft**, not Student-visible. It may be reviewed/published independently of the Stage16 code batch, but do not mix bulk content publication into the cold-offline architecture change.
+Current backend authority wins on reconnect. Revalidate/purge or disable local content for revoked device, expired/revoked entitlement, unpublished lesson, changed publication state or invalid/stale revision according to explicit policy.
 
-See `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`.
+### `STUDENT-016S` — revision/tombstone/cursor/delta
 
-## 12. Findings summary
+Schema presence is not sync authority. Prove authoritative writers + API + bounded cursor/delta + client idempotent application + tombstone semantics.
+
+### conditional `STUDENT-016O`
+
+Add an outbox only if later product-authorized offline writes actually require it. No speculative queue.
+
+### `STUDENT-016G`
+
+Close Stage16 only after exact-head quality/build/PostgreSQL/API/real-browser/offline/reconnect regression gates pass.
+
+Then Stage17 may begin.
+
+## 9. Findings summary
 
 | ID | Status |
 |---|---|
 | `STUDENT-016-LEASE-002` | FIXED / VERIFIED |
 | `STUDENT-016-CACHE-003` | FIXED / VERIFIED for protected materialization boundary |
 | `STUDENT-016-DOWNLOAD-006` | FIXED / VERIFIED |
-| `STUDENT-016-OFFLINE-AUTH-009` | **PARTIAL FIX** — server signature + download verification VERIFIED; cold-start/read-time authority OPEN |
-| `STUDENT-016-REVOCATION-007` | OPEN |
-| `STUDENT-016-SYNC-001` | OPEN |
-| `STUDENT-016-OUTBOX-008` | OPEN |
+| `STUDENT-016-OFFLINE-AUTH-009` | read-time scope/signature/blob primitives IMPLEMENTED; runtime cold-start closure ACTIVE in `016I` |
+| `UX-OFFLINE-104` | ACTIVE — `016I` runtime + restart acceptance |
+| `STUDENT-016-REVOCATION-007` | OPEN → `016R` |
+| `STUDENT-016-SYNC-001` | OPEN → `016S` |
+| `STUDENT-016-OUTBOX-008` | CONDITIONAL → `016O` only if needed |
 
-## 13. Continuation sentence
+## 10. Continuation sentence
 
-**Stage14 and Stage15 are CLOSED / VERIFIED and integrated with Stage13G in `main`. Stage16 is ACTIVE. PWA shell, bounded lease/lifecycle, protected materialization and ES256 signed authorization verification at download time are VERIFIED on the integrated PR #33 head (`dcdae757...`, Stage16 run `34560999667`). Stage16 must next implement durable non-secret scope discovery, read-time signed-envelope + blob verification, true cold-start offline Reader, reconnect purge and then revision/tombstone/delta/outbox before Stage17 begins.**
+**Current merged baseline is `main@343ff1fd7b3d64d7e990b72606695365f520fa58` after verified PR #55. `STUDENT-016I` is active on `stage16/student-016i`. Durable scope, read-time ES256 verification and read-time Blob SHA-256 verification already exist; the active batch connects startup/routing/Reader UX to those authorities and gates the result with a persistent-profile Chromium restart test before proceeding to reconnect revalidation (`016R`).**
