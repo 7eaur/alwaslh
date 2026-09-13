@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — Student main preserved; Super Admin AR-01 through AR-04 verified; AR-05 active.**
+Last consolidated: **2026-09-13 — Student main preserved; Super Admin AR-01 through AR-05 verified; AR-06 next.**
 
 ## Project Understanding
 
@@ -92,6 +92,7 @@ The Admin rebuild must preserve this Student state when eventually resynchronizi
 - **AD-ADMIN-005 — content publication belongs to lesson content, not ingestion-task identity.** UI does not synthesize pipeline IDs.
 - **AD-ADMIN-006 — OCR review requires visible source evidence.** Protected source media is rendered beside extracted text where available.
 - **AD-ADMIN-007 — removing a parity panel must not remove a legitimate capability.** Valid lesson-summary/export and quiz-metadata functions were relocated contextually under Content/Quizzes rather than restored as dashboard panels.
+- **AD-ADMIN-008 — approved AI output is applied contextually, never by manual internal-ID handoff.** The reviewed result owns the operator action while backend commands retain approval, provenance, idempotency and validation authority.
 
 ## Super Admin Changes Made
 
@@ -158,24 +159,36 @@ Verified runs include:
 - OCR Foundation `34726217374` — SUCCESS.
 - Stage 9, 10, 11, 12 and completed Student regression workflows on the same head were green.
 
-## AR-05 — Reviews + AI — ACTIVE
+### AR-05 — Reviews + AI — DONE / VERIFIED
 
-Repository evidence before implementation:
+Classification and decisions:
 
-- `AiOperationsPage` contains good controller mechanics worth KEEP: server-canonical refresh, polling for non-terminal jobs, pagination, conflict refresh and review mutations.
-- `AiOperationsWorkspace` currently mixes operator review with technical execution detail: raw job ID, unit key, prompt key/version, attempt/provider/model/route/token/cost and internal error data.
-- `AdminAiAuthoringWorkspace` currently requires an operator to paste an `Output ID` to call `applyApprovedLessonOutput` / `applyApprovedQuizOutput`.
-- Backend already has guarded apply endpoints for approved outputs, but the normal frontend handoff is technical and cross-workspace.
+- **KEEP:** `AiOperationsPage` server-canonical refresh, polling for non-terminal jobs, pagination, conflict refresh and review mutation authority.
+- **REBUILD:** ordinary AI review composition into a content-first human review queue under `/app/reviews/ai`.
+- **REMOVE from normal UX:** raw job/unit/output IDs, prompt keys, provider/model/route/token/cost pipeline details and manual internal-ID handoff.
+- **REFACTOR:** application flow so an approved reviewed result exposes its own contextual lesson/quiz apply/import action.
 
-AR-05 target:
+Implemented behavior:
 
-1. content-first human review queue;
-2. retain proven polling/conflict/retry mechanics;
-3. hide provider/job/runtime internals from normal review and keep them under Diagnostics;
-4. make approve/edit/reject decisions from the reviewed result itself;
-5. provide contextual Apply/Import action directly after approval;
-6. eliminate manual `jobId` / `outputId` handoff from normal Admin UX;
-7. preserve idempotency, provenance, review revision, semantic validation and server authority.
+- operator review is centered on generated content, source evidence, validation findings and human decision;
+- provider/runtime internals no longer dominate normal review;
+- approve/edit/reject remains server-authoritative and conflict recovery refreshes canonical state;
+- approved lesson/quiz results can be applied/imported contextually without pasting `Output ID`;
+- backend application commands preserve approval checks, provenance, idempotency and validation authority;
+- durable attempt/review histories remain paginated and accessible;
+- lesson application E2E proves one legal revision transition from baseline `content_revision = 1` to `2`; PostgreSQL `bigint` is asserted as API string `"2"`;
+- the final E2E defect was test drift: native `<details>` remained open after mutation/refetch and the old test toggled it closed. Coverage now opens a disclosure only when needed instead of changing correct product UX.
+
+Exact-head acceptance checkpoint:
+
+`cda2c3a683c6101db12f0c7cfad772226c234e0d`
+
+Verified runs:
+
+- Stage 13E Frontend Preparation `34729512441` — SUCCESS.
+- Stage 13E Admin AI Operations `34729512433` — SUCCESS.
+- Stage 13E Combined Integration `34729512404` — SUCCESS.
+- Combined integration passed API/Admin lint, typecheck, unit/build gates, clean PostgreSQL migrations, Stage13E DB contracts, backend authority regressions, Stage12/Auth regressions, deterministic fixture invariants and the real Chromium suite.
 
 ## Audit Findings
 
@@ -195,8 +208,8 @@ AR-05 target:
 | `ADMIN-003` | P1 | Curriculum UX | unrelated creation/edit controls crowded in one surface | old Curriculum workspace | hierarchy/context decomposition | FIXED / AR-03 |
 | `ADMIN-004` | P1 | Content publication | UI publication coupled to ingestion task identity | source imports may lack task ID | lesson-level publication use case | FIXED / AR-04 |
 | `ADMIN-005` | P1 | OCR review | extracted text lacked visible source evidence | old review UI | protected source preview beside OCR | FIXED / AR-04 |
-| `ADMIN-006` | P1 | AI review | normal review exposes pipeline/runtime internals | `AiOperationsWorkspace` | AR-05 human review composition | OPEN / AR-05 |
-| `ADMIN-007` | P1 | AI authoring | operator manually copies `Output ID` to apply approved result | `AdminAiAuthoringWorkspace` | contextual approved-result apply/import | OPEN / AR-05 |
+| `ADMIN-006` | P1 | AI review | normal review exposes pipeline/runtime internals | legacy `AiOperationsWorkspace` composition | content-first human review queue + advanced-only diagnostics | FIXED / AR-05 |
+| `ADMIN-007` | P1 | AI authoring | operator manually copies `Output ID` to apply approved result | legacy `AdminAiAuthoringWorkspace` flow | contextual approved-result apply/import command | FIXED / AR-05 |
 | `UX-COPY-101` | P1 | Downloads/Account | Student technical/offline copy remains | Student B05 | UX-B05 | OPEN |
 | `STUDENT-016I` | P1 | Offline/PWA | true cold-start offline Reader not closed | roadmap | resume after UX closure | PAUSED |
 | `AI-012..AI-019` | P2 | AI | live provider readiness not proven | runtime | separate live verification | NOT YET VERIFIED |
@@ -220,7 +233,7 @@ A green build alone is not product acceptance.
 ## Known Issues
 
 - `FPA-013` Reader active-search focus remains open.
-- API lint still reports a pre-existing unused `SOURCE_BUCKET` warning in `legacy-supabase-importer.ts`; it is nonblocking and unrelated to AR-04/AR-05 until separately justified.
+- API lint still reports a pre-existing unused `SOURCE_BUCKET` warning in `legacy-supabase-importer.ts`; it is nonblocking and unrelated to completed AR-04/AR-05 work until separately justified.
 - Admin production bundle currently emits a >500 kB chunk warning; this is nonblocking now and belongs to evidence-driven AR-10 performance cleanup unless an earlier regression proves urgency.
 - `AI-012..AI-019` live provider readiness remains `NOT YET VERIFIED`.
 - Stage28 Production Cutover is not complete.
@@ -229,7 +242,7 @@ A green build alone is not product acceptance.
 
 Super Admin rebuild:
 
-`AR-05 Reviews + AI → AR-06 Question Bank → AR-07 Quiz Builder → AR-08 Students + Access Codes → AR-09 Cleanup → AR-10 A11y/RTL/Performance/Visual QA`
+`AR-06 Question Bank → AR-07 Quiz Builder → AR-08 Students + Access Codes → AR-09 Cleanup → AR-10 A11y/RTL/Performance/Visual QA`
 
 Parallel Student work:
 
