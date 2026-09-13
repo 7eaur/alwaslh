@@ -1,12 +1,11 @@
 # Super Admin Rebuild — 2026-09-13
 
-Status: **ACTIVE — AR-01 through AR-08 DONE / VERIFIED. AR-09 Cleanup / architecture enforcement ACTIVE; Batch 1 VERIFIED.**
+Status: **ACTIVE — AR-01 through AR-08 DONE / VERIFIED. AR-09 Cleanup / architecture enforcement ACTIVE; Batches 1–2 VERIFIED.**
 
 Branch: `rebuild/super-admin-foundation`  
 Draft PR: `#52 — refactor(admin): rebuild Super Admin foundation`  
 Latest live `main` checked: `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.  
-AR-09 Batch 1 code-head: `20c128bb4a2b7166ad1d04d24e4672c93422d38e`.  
-Batch 1 closure checkpoint: `61ab697e4ddcc263330c0826e0c127594712ca53`.
+AR-09 Batch 2 exact code-head: `d1bf7101135516c751c02d269a384015f9e3a132`.
 
 > Source of truth order: repository code + PostgreSQL migrations + executable tests/CI + verified runtime + canonical project documentation.
 
@@ -104,28 +103,57 @@ Verification:
 - code-head Combined `34756904664` and Stage13G `34756904668` were cancelled solely because the documentation commit superseded them.
 - unchanged-production checkpoint `07de0e24475b8af410bf2c213ede2a334062b30c`: Admin AI `34757034197`, Combined `34757034226`, Stage13G `34757034179` — SUCCESS, including Real API + PostgreSQL + Chromium.
 
-**AR-09 Batch 1 = VERIFIED. AR-09 remains ACTIVE.**
+**AR-09 Batch 1 = VERIFIED.**
+
+### Batch 2 — Lesson authoring tools feature ownership relocation — VERIFIED
+
+Pre-change reconciliation:
+- live `main` was checked at `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.
+- inherited branch HEAD `8e0f46b6cdc5425d2b86bc772e54070be63d7986` was reconciled before mutation.
+- PR #52 was confirmed open, Draft and unmerged.
+- current-head Admin AI, Combined and Stage13G were green, including Real API + PostgreSQL + Chromium, so no active blocker remained.
+
+Inspected evidence before modification:
+- `App.tsx` directly rendered `LessonAuthoringParityPanel` at `/app/content/lesson-tools`.
+- the panel used existing `fetchAdminCurriculum`, `updateLessonSummary` and `exportLessonAuthoring` contracts and owned no canonical backend authority.
+- `admin-parity-closure.e2e.spec.mjs` already exercised the real route against the Stage13G fixture: select lesson, save summary, assert revision increment, download content/history CSV, clear summary, assert another revision increment.
+
+Classification:
+- **KEEP:** route behavior, summary save/clear, export behavior, existing API/server authority.
+- **REFACTOR:** component ownership into `apps/admin-web/src/admin/content/`.
+- **REMOVE:** obsolete root seam only after route import moved.
+- **NO CHANGE:** migrations, backend/PostgreSQL contracts, auth/security, Student workstream.
+
+Implementation:
+- `6f4638deddc57e3c5c2e1185c57054e39f4fbc86` — add feature-owned `apps/admin-web/src/admin/content/LessonAuthoringParityPanel.tsx` with behavior preserved and relative imports adjusted.
+- `ec7ed60aa106767dddfb423e7c626d93a3fa2cea` — point `App.tsx` route import at the content owner.
+- `d1bf7101135516c751c02d269a384015f9e3a132` — remove obsolete root `LessonAuthoringParityPanel.tsx`.
+
+Exact-head verification on `d1bf7101135516c751c02d269a384015f9e3a132`:
+- Frontend `34759439669` — SUCCESS.
+- Admin AI `34759439651` — SUCCESS.
+- Combined `34759439615` — SUCCESS.
+- Stage13G `34759439612` — SUCCESS, including Admin UI quality, backend operations and Real API + PostgreSQL + Chromium.
+
+No test was weakened or changed for this ownership relocation. No migrations/backend/Student files changed.
+
+**AR-09 Batch 2 = VERIFIED. AR-09 remains ACTIVE.**
 
 ### Current checkpoint / non-overlap gate
 
-`61ab697e4ddcc263330c0826e0c127594712ca53` documented Batch 1 closure and updated PR #52. Its fresh gates are active at handoff:
-- Admin AI `34758285729` — IN PROGRESS.
-- Combined `34758285717` — IN PROGRESS.
-- Stage13G `34758285875` — IN PROGRESS.
+Continuity documentation now advances beyond code-head `d1bf710...`. The status commit began at `bf79dd10dbe019b88e283cf6881a844093cacf50`, followed by the engineering-log update. The final documentation HEAD must be fetched after this workstream update, and all CI triggered by that final HEAD must be reconciled before Batch 3 starts.
 
-No Batch 2 code was started while those gates are active.
+### Remaining candidate inventory
 
-### Next candidate
-
-`/app/content/lesson-tools` directly renders root `LessonAuthoringParityPanel`. Before any relocation, inspect all callers/tests. If exclusive, preserve summary/export behavior and server contracts, move physical ownership under `apps/admin-web/src/admin/content/`, update `App.tsx`, remove only the obsolete root seam, and prove exact-head parity.
+Root route-owned surfaces still include `AdminAiAuthoringWorkspace`, `AdminReportsWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, and `CurriculumWorkspace`. Root location alone does not justify relocation. For each next candidate, inspect callers/tests/contracts and feature ownership first, then select exactly one smallest safe cleanup seam.
 
 ## 6. Explicit handoff — continue AR-09 only
 
-1. Fetch current feature HEAD and reconcile newer commits first.
-2. Reconcile `34758285729`, `34758285717`, `34758285875` before mutation.
-3. If any fails, inspect exact failing logs and fix root cause without weakening tests or authority.
-4. If all succeed, inspect callers/tests for `LessonAuthoringParityPanel` and `/app/content/lesson-tools` and classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE.
-5. Only if exclusive, perform one small ownership relocation batch and exact-head verification.
+1. Fetch live `main`, current feature HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI.
+2. Reconcile every run triggered by the Batch 2 documentation commits before any mutation; if any run remains ACTIVE/RUNNING, do not start code in parallel.
+3. If a gate fails, inspect exact failing job/log and repair root cause without weakening tests or authority.
+4. When documentation-head CI is green, re-inventory remaining root route-owned surfaces and inspect callers/tests/contracts for the smallest safe candidate.
+5. Classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE before modification, then execute one reviewable seam only.
 6. AR-10 remains blocked until AR-09 is fully DONE / VERIFIED.
 7. Keep PR #52 Draft; no merge or auto-merge.
 
