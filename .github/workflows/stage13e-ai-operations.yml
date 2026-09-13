@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - backend/stage13e-ai-operations
+      - rebuild/super-admin-foundation
 
 permissions:
   contents: read
