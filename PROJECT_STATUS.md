@@ -12,9 +12,9 @@ Last synchronized: **2026-09-13**.
 
 **STUDENT MAIN CHECKPOINT:** `UX-B04 — Student Practice / Assessment` is merged on live `main@f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
 
-**SUPER ADMIN CURRENT BATCH:** `AR-05 — Reviews + AI` — DISCOVERY / IMPLEMENTATION NEXT.
+**SUPER ADMIN CURRENT BATCH:** `AR-06 — Question Bank` — DISCOVERY / IMPLEMENTATION NEXT.
 
-**SUPER ADMIN COMPLETED:** `AR-01` through `AR-04` — DONE / VERIFIED on rebuild evidence.
+**SUPER ADMIN COMPLETED:** `AR-01` through `AR-05` — DONE / VERIFIED on rebuild evidence.
 
 Exact normal-roadmap return after the UX refoundation closes remains:
 
@@ -46,9 +46,9 @@ Branch: `rebuild/super-admin-foundation`
 
 Draft PR: **#52 — `refactor(admin): rebuild Super Admin foundation`**
 
-Verified implementation checkpoint before AR-05:
+Verified implementation checkpoint before AR-06:
 
-`ba74c17902827805d6be0ab91c0ff384fc3e2530`
+`cda2c3a683c6101db12f0c7cfad772226c234e0d`
 
 ### AR-01 — DONE / VERIFIED
 
@@ -90,7 +90,7 @@ Implemented and verified:
   - `/app/quizzes/metadata`
 - raw MIME/error codes, raw lifecycle strings and parity/stage copy were removed from normal operator presentation.
 
-AR-04 exact-head evidence on `ba74c179...`:
+AR-04 exact-head evidence on `ba74c17902827805d6be0ab91c0ff384fc3e2530`:
 
 - Stage 13D Content Ingestion `34726217380` — SUCCESS;
 - Stage 13D Admin Upload UI `34726217393` — SUCCESS, including real Chromium upload/process/link/review/publish/history flow;
@@ -102,33 +102,32 @@ AR-04 exact-head evidence on `ba74c179...`:
 - OCR Foundation `34726217374` — SUCCESS;
 - Stage 9/10/11/12 and Student API/Product regressions shown on the same head were also green when completed.
 
-A few unrelated broad matrix jobs may still have been running when this checkpoint was written; they do not reopen AR-04 unless they expose a regression caused by this branch.
+### AR-05 — DONE / VERIFIED
 
-## AR-05 current evidence and target
+Implemented and verified:
 
-Discovery from actual code shows the current AI review controller already has useful mechanics to KEEP:
+- content-first human AI review queue under `/app/reviews/ai`;
+- existing server-canonical polling, refresh, pagination, conflict recovery and review authority preserved;
+- provider/model/route/token/cost/job/unit/output internals removed from the normal review experience and retained only where diagnostic context is justified;
+- approve/edit/reject remains a server-authoritative human-review decision;
+- approved lesson/quiz outputs expose contextual apply/import actions from the reviewed result itself;
+- normal Admin flow no longer requires copying `jobId` / `outputId` between workspaces;
+- backend application commands preserve approval checks, idempotency/provenance and semantic-validation authority;
+- lesson application verification proves the existing `content_revision` baseline `1` advances once to `2`; PostgreSQL `bigint` is intentionally asserted as API string `"2"` in the browser contract;
+- durable attempt/review histories remain paginated and accessible without exposing pipeline labels;
+- E2E disclosure logic opens native `<details>` only when closed, avoiding a false test failure that previously toggled an already-open review history closed after mutation/refetch.
 
-- server-canonical refresh;
-- polling for non-terminal jobs;
-- conflict refresh;
-- pagination;
-- review edit/approve/reject authority.
+AR-05 exact-head evidence on `cda2c3a683c6101db12f0c7cfad772226c234e0d`:
 
-However the ordinary UI still exposes technical workflow details such as job/unit IDs, prompt keys/versions and provider/runtime attempt data, and `AdminAiAuthoringWorkspace` still asks an operator to paste an `Output ID` to apply an approved result.
-
-AR-05 therefore owns:
-
-1. a content-first human AI review queue/surface;
-2. preservation of proven polling/conflict/retry mechanics;
-3. moving provider/model/route/token/cost/raw identifiers to advanced diagnostics only;
-4. contextual apply/import actions directly from an approved reviewed result;
-5. removal of manual `jobId` / `outputId` cross-workspace handoff from normal Admin UX;
-6. backend/use-case changes only where needed to preserve idempotency, provenance, review revision and validation authority.
+- Stage 13E Frontend Preparation `34729512441` — SUCCESS;
+- Stage 13E Admin AI Operations `34729512433` — SUCCESS;
+- Stage 13E Combined Integration `34729512404` — SUCCESS;
+- Combined verification includes API/Admin quality gates, clean PostgreSQL migrations, DB contracts, backend authority regressions, Stage12/Auth regressions, deterministic real fixture checks and real Chromium.
 
 ## Parallel Full Product Architecture Audit checkpoint
 
 - Audit PR #49 merged as `4249c91e434994343bfe3bd685af6d101c987dc1`.
-- SEC-01 / `FPA-002` repair merged in PR #50 at `f60f263f9fecfa33a3876ef7df6334c222c7cf3a`.
+- SEC-01 / `FPA-002` repair PR #50 merged at `f60f263f9fecfa33a3876ef7df6334c222c7cf3a`.
 - Repair fixed abandoned Assessment-session authorization and has PostgreSQL/Chromium verification.
 - Railway API deployment `1e5a749a-10ac-47fd-99d8-e2653fce154b` reported SUCCESS.
 - `FPA-013` remains open: Reader active-search-match DOM focus finding.
@@ -146,10 +145,10 @@ Student is an Arabic-first/RTL-first educational app. Super Admin is a dense but
 
 ## Immediate next actions
 
-1. Implement AR-05 Reviews + AI from repository evidence.
-2. Keep existing server-authoritative review/polling/conflict mechanics where correct.
-3. Add contextual approved-result apply/import flow; remove manual Output ID handoff from normal UX.
-4. Re-run targeted Stage 13E AI/PostgreSQL/Chromium gates after each coherent batch.
-5. Continue AR-06 → AR-10 only after each prior batch is verified.
+1. Start AR-06 with a repository-backed Question Bank inventory across migrations, service/API authority, Admin adapters/UI and executable tests.
+2. Classify Question Bank behavior KEEP / IMPROVE / REFACTOR / REBUILD / REMOVE before changing composition.
+3. Rebuild list/detail/editor/review/history boundaries while preserving server lifecycle rules, revision/source evidence and publication authority.
+4. Run the targeted Stage 13F Question Bank/API/PostgreSQL/Chromium gates on each coherent AR-06 batch and require exact-head verification before closure.
+5. Continue AR-07 → AR-10 only after each prior batch is verified and documented.
 6. Keep PR #52 draft until the Admin rebuild and final exact-head verification are complete.
 7. Before eventual merge, resynchronize with live main without overwriting Student/audit work.
