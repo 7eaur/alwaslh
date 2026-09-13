@@ -13,7 +13,8 @@ function requiredEnv(name: string): string {
 const databaseUrl = requiredEnv("DATABASE_URL");
 const adminIdentifier = process.env.STAGE13F_ADMIN_IDENTIFIER ?? "stage13f-admin-ui";
 const outputId = process.env.STAGE13F_E2E_OUTPUT_ID ?? "13000000-0000-4000-8000-000000000004";
-const regenerationOutputId = process.env.STAGE13F_E2E_REGEN_OUTPUT_ID ?? "13000000-0000-4000-8000-000000000007";
+const regenerationOutputId =
+  process.env.STAGE13F_E2E_REGEN_OUTPUT_ID ?? "13000000-0000-4000-8000-000000000007";
 const mediaAssetId = "13000000-0000-4000-8000-000000000001";
 const jobId = "13000000-0000-4000-8000-000000000002";
 const unitId = "13000000-0000-4000-8000-000000000003";
