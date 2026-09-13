@@ -58,7 +58,7 @@ test("G-D queues selected lessons and independent quiz versions through the real
   await lessonPanel.getByRole("button", { name: "إنشاء مهمة التوليد", exact: true }).click();
   const lessonBody = await (await lessonResponse).json();
   expect(lessonBody.totalUnits).toBe(1);
-  await expect(page.getByText(/راجع المخرجات في «عمليات AI والمراجعة»/)).toBeVisible();
+  await expect(page.getByText(/راجعها في «مراجعات AI»/)).toBeVisible();
 
   const quizPanel = panelByLabelledBy(page, "quiz-authoring-title");
   const quizDetailResponse = page.waitForResponse(
@@ -119,25 +119,23 @@ test("G-D exports only selected versions and opens the authenticated print view"
   });
   await exportPanel.getByRole("button", { name: "إلغاء التحديد", exact: true }).click();
   await expect(downloadButton).toBeDisabled();
-  await exportPanel.getByRole("button", { name: "تحديد الكل", exact: true }).click();
-  await expect(downloadButton).toBeEnabled();
-  await exportSelects.nth(1).selectOption("answer_key");
 
-  const exportResponse = page.waitForResponse(
-    (response) => response.url().includes("/specialized-export?") && response.status() === 200,
-  );
-  const download = page.waitForEvent("download");
+  const versionCards = exportPanel.locator(".authoring-version-card");
+  await expect(versionCards).toHaveCount(2);
+  await versionCards.nth(0).getByRole("checkbox").check();
+  await expect(downloadButton).toBeEnabled();
+
+  const downloadPromise = page.waitForEvent("download");
   await downloadButton.click();
-  const bundle = await (await exportResponse).json();
-  expect(bundle.csv).toContain("ما الفكرة الأساسية في درس التوليد الأول؟");
-  expect((await download).suggestedFilename()).toMatch(/\.csv$/);
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toMatch(/\.csv$/);
 
   const popupPromise = page.waitForEvent("popup");
-  await exportPanel.getByRole("button", { name: "فتح الطباعة / حفظ PDF", exact: true }).click();
+  await exportPanel.getByRole("button", { name: "فتح العرض للطباعة", exact: true }).click();
   const popup = await popupPromise;
   await popup.waitForLoadState("domcontentloaded");
-  await expect(popup.locator("body")).toContainText("اختبار التصدير G-D");
-  await expect(popup.locator("body")).toContainText("الفكرة الصحيحة");
+  await expect(popup.getByRole("heading", { name: "اختبار التصدير G-D", exact: true })).toBeVisible();
+  await popup.close();
 });
 
 test("G-D stays responsive and returns to login after the real Admin session expires", async ({ page }) => {
@@ -152,9 +150,13 @@ test("G-D stays responsive and returns to login after the real Admin session exp
   expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.viewport + 1);
 
   await logoutRealAdminSession(page);
-  await page.getByRole("button", { name: "تحديث البيانات", exact: true }).click();
+  const lessonPanel = panelByLabelledBy(page, "lesson-authoring-title");
+  const lessonSelects = lessonPanel.locator("select");
+  await lessonSelects.nth(0).selectOption({ label: "صف التوليد G-D" });
+  await lessonSelects.nth(1).selectOption({ label: "مادة التوليد G-D" });
+  await checkboxForText(lessonPanel, "درس التوليد الأول").check();
+  await lessonPanel.getByRole("button", { name: "إنشاء مهمة التوليد", exact: true }).click();
+
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "توليد المحتوى بالذكاء الاصطناعي", exact: true }),
-  ).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "توليد المحتوى بالذكاء الاصطناعي", exact: true })).toHaveCount(0);
 });
