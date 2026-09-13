@@ -1,11 +1,11 @@
 # Super Admin Rebuild — 2026-09-13
 
-Status: **ACTIVE — AR-01 through AR-08 DONE / VERIFIED. AR-09 Cleanup / architecture enforcement ACTIVE; Batches 1–3 VERIFIED; Batch 4A ACTIVE.**
+Status: **ACTIVE — AR-01 through AR-08 DONE / VERIFIED. AR-09 Cleanup / architecture enforcement ACTIVE; Batches 1–4A VERIFIED.**
 
 Branch: `rebuild/super-admin-foundation`  
 Draft PR: `#52 — refactor(admin): rebuild Super Admin foundation`  
 Latest live `main` checked: `0c7c9f9c5e4ec6ae020484a9a4892eaf3b8b5194`.  
-Latest verified AR-09 code-head: `3b1eb104fef1ac70035dcd9875d9807f95bf2009`.
+Latest verified AR-09 code-head: `141e3e7912171c10356b8d32a268ddcbfda267f3`.
 
 > Source of truth order: repository code + PostgreSQL migrations + executable tests/CI + verified runtime + canonical project documentation.
 
@@ -50,93 +50,61 @@ No later AR stage starts before the current stage is verified and documented.
 - AR-09 Batch 1: quiz metadata ownership relocation — VERIFIED; unchanged-production checkpoint `07de0e24475b8af410bf2c213ede2a334062b30c` with Admin AI `34757034197`, Combined `34757034226`, Stage13G `34757034179` — SUCCESS.
 - AR-09 Batch 2: lesson authoring tools ownership relocation — VERIFIED on `d1bf7101135516c751c02d269a384015f9e3a132`; Frontend `34759439669`, Admin AI `34759439651`, Combined `34759439615`, Stage13G `34759439612` — SUCCESS.
 - AR-09 Batch 3: access-code reports ownership relocation — VERIFIED on `3b1eb104fef1ac70035dcd9875d9807f95bf2009`; Frontend `34762225733`, Admin AI `34762225735`, Combined `34762225728`, Stage13G `34762225748` — SUCCESS.
+- AR-09 Batch 4A: AI review route + implementation ownership relocation — VERIFIED on `141e3e7912171c10356b8d32a268ddcbfda267f3`; Frontend `34765398964`, Admin AI `34765398992`, Combined `34765398969`, Stage13G `34765398946` — SUCCESS.
 
-## AR-09 Batch 3 — Access-code reports ownership — VERIFIED
+## AR-09 Batch 4A — AI review ownership — VERIFIED
 
-### Reconciliation before mutation
+### Reconciliation before code
 
-The inherited adapter code-head was `6e7e43e17651d54413ccf6cc234f4e1457942a25`. Fresh verification resolved the previously open Combined gate as SUCCESS (`34761018762`). Its Stage13G run `34761018720` was CANCELLED solely because a newer documentation commit advanced the branch, not because of an assertion failure. The later documentation HEAD `7a247a407312ec9af00b5952118d449ab12fefff`, carrying the same production adapter code, then completed Stage13G including Real API + PostgreSQL + Chromium successfully.
+The run began by refreshing live `main`, current branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI.
 
-No additional seam was started before this non-overlap gate was reconciled.
+The inherited feature-route adapter code-head was `069858ace554e2be51e21b128e76e6089f26edef`. Its Frontend/Admin-AI gates had passed while Combined/Stage13G were cancelled due later documentation commits advancing the branch, not due test assertions. The later documentation HEAD `f48b8f7f7dfa6763e06eb1173e9f99cf7ba97017`, which carried the same production adapter code, completed Admin AI `34763965876`, Combined `34763965874` and Stage13G `34763965870` successfully. No parallel seam was started before this parity gate was reconciled.
 
-### Evidence inspected
+### Evidence and classification
 
-- `/app/access-codes/reports` already routed through `AdminAccessCodeReportsPage` under `src/admin/access-codes/`.
-- the feature page was still only a one-line compatibility adapter to root `AdminReportsWorkspace`.
-- root `AdminReportsWorkspace` owned presentation/client state only and used existing server-authoritative curriculum/access-code APIs plus CSV helpers.
-- `admin-reports.e2e.spec.mjs` already covered row-level import behavior, selected CSV export, selected printing, 390px no-overflow and session expiry.
+The root `AiOperationsPage.tsx`, the temporary `admin/reviews/AiOperationsPage.tsx` adapter, the `/app/reviews/ai` route, `AiReviewWorkspace`, AI job/detail/output/unit APIs, application capability, approved lesson/quiz application calls and executable CI were inspected.
 
-### Classification
-
-- **KEEP:** route, report/import/export/print behavior, session handling, CSS behavior, API/PostgreSQL authority and E2E contract.
-- **IMPROVE:** align implementation ownership with route ownership.
-- **REFACTOR:** move the actual component into `src/admin/access-codes/AdminAccessCodeReportsPage.tsx`.
+- **KEEP:** route behavior, polling/pagination, human-review and application semantics, conflict/session handling, APIs and tests.
+- **IMPROVE:** align implementation ownership with Reviews feature ownership.
+- **REFACTOR:** move the actual client orchestration into `src/admin/reviews/AiOperationsPage.tsx` with relative-import changes only.
 - **REBUILD:** none.
-- **REMOVE:** root `AdminReportsWorkspace.tsx` after relocation.
-- **NO CHANGE:** migrations, backend, PostgreSQL constraints, auth/security, Student workstream and test strength.
+- **REMOVE:** root compatibility implementation after parity.
+- **NO CHANGE:** backend, migrations, PostgreSQL authority, auth/security, Student workstream and test strength.
 
 ### Implementation
 
-- `d540eaab7fe1100e27904052c08d2aa05625c8a7` — replaced the temporary adapter with the complete reports implementation under `admin/access-codes`; adjusted only relative imports and renamed the exported component to `AdminAccessCodeReportsPage`.
-- `3b1eb104fef1ac70035dcd9875d9807f95bf2009` — deleted root `AdminReportsWorkspace.tsx` after the feature owner became self-contained.
-- `admin-reports.css` intentionally stayed at its existing location to keep this batch bounded; no CSS behavior was changed.
+- `27bf196e968a245fe436f2ac135ee2193d3ee021` — replaced the Reviews adapter with the complete AI operations implementation. Only relative imports changed; polling, pagination, review submission, approved output application, conflict recovery and session handling were preserved.
+- Exact-head `27bf196e...` then passed Frontend `34765234243`, Admin AI `34765234255`, Combined `34765234286`, Stage13G `34765234274`.
+- `141e3e7912171c10356b8d32a268ddcbfda267f3` — deleted root `apps/admin-web/src/AiOperationsPage.tsx` only after that parity was proven.
 
-No backend, migration, PostgreSQL, Student or test file changed.
+### Final exact-head verification
 
-### Exact-head verification
+For `141e3e7912171c10356b8d32a268ddcbfda267f3`:
 
-For exact code-head `3b1eb104fef1ac70035dcd9875d9807f95bf2009`:
-- Frontend Preparation `34762225733` — SUCCESS.
-- Admin AI Operations `34762225735` — SUCCESS.
-- Combined Integration `34762225728` — SUCCESS.
-- Stage13G Admin Operations `34762225748` — SUCCESS.
-  - Admin UI quality job `103736953704` — SUCCESS.
-  - Admin operations backend job `103736953580` — SUCCESS, including clean migrations/contracts and reports/security/auth regressions.
-  - Real API + PostgreSQL + Chromium job `103737110446` — SUCCESS; the real Admin Chromium suite passed.
+- Frontend Preparation `34765398964` — SUCCESS.
+- Admin AI Operations `34765398992` — SUCCESS.
+- Combined Integration `34765398969` — SUCCESS.
+- Stage13G Admin Operations `34765398946` — SUCCESS.
 
-**Batch 3 is VERIFIED. AR-09 remains ACTIVE; AR-10 remains blocked.**
+No backend, migration, PostgreSQL, Student or test file changed. No assertion was weakened.
 
-## AR-09 Batch 4A — AI review route ownership — ACTIVE
+**Batch 4A is VERIFIED. AR-09 remains ACTIVE; AR-10 remains blocked.**
 
-### Reconciliation and evidence
+## AR-09 next decision gate
 
-- The inherited documentation HEAD `1077fe0c0074976831f1708a61e9372c81cc8386` was verified before mutation.
-- Its Admin AI run `34762502501`, Combined `34762502390`, and Stage13G `34762502493` are SUCCESS; Stage13G includes successful Admin UI, backend, and Real API + PostgreSQL + Chromium jobs.
-- A fresh route inventory showed `/app/reviews/ai` still importing root `AiOperationsPage` even though `reviews` is an established feature owner.
-- `AiOperationsPage` remains client orchestration around server-authoritative AI job/review/application APIs; no migration or backend change is justified.
+Do not assume another cleanup batch is necessary. The next task must re-inventory root-level Admin route-owned surfaces against route callers, tests, API/backend contracts and established feature owners.
 
-### Classification
+- If no genuine architecture-cleanup seam remains, execute final AR-09 exact-head verification and close AR-09.
+- If a genuine seam remains, select only the smallest bounded candidate and repeat the parity-first ownership process.
+- Do not move into AR-10 until AR-09 is formally DONE / VERIFIED.
 
-- **KEEP:** route behavior, polling/pagination, review/application semantics, conflict/session handling, API authority and existing tests.
-- **IMPROVE:** feature ownership under `src/admin/reviews/`.
-- **REFACTOR:** establish a feature-owned route adapter first; move implementation only after parity.
-- **REBUILD:** none.
-- **REMOVE:** root `AiOperationsPage.tsx` only after executable parity.
-- **NO CHANGE:** migrations, backend, PostgreSQL authority, auth/security, Student workstream and test strength.
+## Explicit handoff — AR-09 only
 
-### Implementation to current checkpoint
-
-- `9427649f29e3bf69d2143dc4b12235652bcefc6b` — added `apps/admin-web/src/admin/reviews/AiOperationsPage.tsx` as a temporary adapter.
-- `069858ace554e2be51e21b128e76e6089f26edef` — changed `App.tsx` so `/app/reviews/ai` imports through the feature owner.
-- No logic, API, backend, migration, Student or test assertion was changed.
-
-### Exact-head verification state
-
-Exact code-head `069858ace554e2be51e21b128e76e6089f26edef` entered the normal matrix:
-- Frontend `34763851152` — IN PROGRESS at checkpoint.
-- Admin AI `34763851138` — IN PROGRESS at checkpoint.
-- Combined `34763851147` — IN PROGRESS at checkpoint.
-- Stage13G `34763851137` — IN PROGRESS at checkpoint.
-
-No implementation relocation or root seam removal is allowed until this matrix is green.
-
-## Explicit handoff — continue AR-09 Batch 4A only
-
-1. Fetch live `main`, current branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI.
-2. Reconcile Frontend `34763851152`, Admin AI `34763851138`, Combined `34763851147`, and Stage13G `34763851137` for `069858ace554e2be51e21b128e76e6089f26edef`.
-3. If all are green, continue the same AI-review seam only: move the actual implementation into `src/admin/reviews/AiOperationsPage.tsx`, adjust relative imports only, then remove root `AiOperationsPage.tsx` after parity.
-4. If a gate fails, fix the root cause without weakening tests or server contracts.
-5. Do not select another cleanup candidate and do not begin AR-10 while Batch 4A is unresolved.
+1. Fetch live `main`, current branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI before mutation.
+2. Reconcile any active CI on the latest documentation HEAD first; no code should start in parallel.
+3. Re-inventory remaining root-level route-owned Admin surfaces and verify callers/tests/contracts.
+4. If no justified cleanup remains, perform final AR-09 exact-head matrix and update status/log/workstream/PR to DONE / VERIFIED.
+5. If cleanup remains, execute only one smallest logical seam and preserve server/PostgreSQL/Student authority.
 6. Keep PR #52 Draft; no merge or auto-merge.
 
 ## Quality gate for remaining stages
