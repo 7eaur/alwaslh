@@ -7,6 +7,7 @@ on:
     branches:
       - integration/stage13e-ai-operations
       - integration/stage13e-promotion
+      - rebuild/super-admin-foundation
 
 permissions:
   contents: read
