@@ -249,11 +249,42 @@
   margin-top: 0.7rem;
 }
 
+.student-account-personal-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.student-account-personal-links a {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.3rem 0.7rem;
+  align-items: center;
+  padding: 0.95rem;
+  border: 1px solid var(--aw-color-border, #dbe5e6);
+  border-radius: 0.9rem;
+  background: #fff;
+  color: var(--aw-color-ink, #123c43);
+  text-decoration: none;
+}
+
+.student-account-personal-links strong,
+.student-account-personal-links small {
+  display: block;
+}
+
+.student-account-personal-links small {
+  grid-column: 1 / -1;
+  color: var(--aw-color-muted, #66777b);
+  line-height: 1.65;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .student-icon-action:hover,
   .student-library-card:hover,
   .student-home-secondary__item:hover,
-  .student-library-tabs a:hover {
+  .student-library-tabs a:hover,
+  .student-account-personal-links a:hover {
     transform: translateY(-1px);
     border-color: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 35%, #dbe5e6);
   }
@@ -262,7 +293,8 @@
 @media (max-width: 760px) {
   .student-home-secondary,
   .student-library-grid,
-  .student-progress-layout {
+  .student-progress-layout,
+  .student-account-personal-links {
     grid-template-columns: 1fr;
   }
 
