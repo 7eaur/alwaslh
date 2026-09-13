@@ -5,8 +5,8 @@
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no automatic merge.  
 **Live main reference checked:** `0c7c9f9c5e4ec6ae020484a9a4892eaf3b8b5194`.  
-**Latest fully verified AR-09 code-head:** `141e3e7912171c10356b8d32a268ddcbfda267f3`.  
-**Current AR-09 Batch 5A code-head:** `39da6e1ea0bb542e2d23f15d8e4c119cdb3c2022` — CI ACTIVE.
+**Latest fully verified AR-09 code-head:** `d40c71192f513f18d69b0e67be408e6f146a3ec5`.  
+**Current stage:** AR-09 Cleanup / architecture enforcement — ACTIVE.
 
 ## Super Admin stage ledger
 
@@ -22,56 +22,47 @@
   - Batch 1 — Quiz metadata ownership relocation — VERIFIED.
   - Batch 2 — Lesson authoring tools ownership relocation — VERIFIED.
   - Batch 3 — Access-code reports ownership relocation — VERIFIED.
-  - Batch 4A — AI review route + implementation ownership relocation — VERIFIED on `141e3e7912171c10356b8d32a268ddcbfda267f3`.
-  - Batch 5A — Curriculum route ownership adapter — **ACTIVE / CI RUNNING** on `39da6e1ea0bb542e2d23f15d8e4c119cdb3c2022`.
+  - Batch 4A — AI review ownership relocation — VERIFIED on `141e3e7912171c10356b8d32a268ddcbfda267f3`.
+  - Batch 5A — Curriculum ownership relocation + root seam removal — **DONE / VERIFIED** on `d40c71192f513f18d69b0e67be408e6f146a3ec5`.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
-## AR-09 Batch 5A — Curriculum route ownership adapter
+## AR-09 Batch 5A — Curriculum ownership relocation — VERIFIED
 
-### State inherited and verified
+### Reconciliation and implementation
 
-Before code mutation, live `main`, branch HEAD, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`, Draft PR #52 and latest exact-head CI were refreshed. The inherited documentation HEAD was `faec80191b56833118eda050d19d3b1bb79f7141`; PR #52 remained open + Draft with no merge. The prior AR-09 Batch 4A implementation was fully verified.
+The run refreshed live `main`, the branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI before mutation. The inherited adapter commit `39da6e1ea0bb542e2d23f15d8e4c119cdb3c2022` had Frontend `34766693628`, Admin AI `34766693635` and Combined `34766693638` successful; its Stage13G `34766693674` was cancelled only because the branch advanced. The successor documentation HEAD `7b77037d1906418a6713eef191706deed29ddf09` had an all-green replacement matrix, including Stage13G `34766824068`, so adapter parity was considered reconciled rather than failed.
 
-Fresh route inventory showed a justified remaining seam: `/app/curriculum` still imported root `apps/admin-web/src/CurriculumWorkspace.tsx`, while a real `src/admin/curriculum/` feature owner already exists and owns the curriculum UI/components.
-
-### Classification
-
-- **KEEP:** `/app/curriculum`, all curriculum CRUD behavior, selection/state flow, server APIs, PostgreSQL authority and tests.
-- **IMPROVE:** make route ownership point through the established Curriculum feature boundary.
-- **REFACTOR:** adapter-first route ownership only in this batch.
+Classification remained:
+- **KEEP:** `/app/curriculum`, CRUD semantics, server refresh, session behavior, API/PostgreSQL authority and tests.
+- **IMPROVE:** feature ownership.
+- **REFACTOR:** move route orchestration implementation into `src/admin/curriculum/`.
 - **REBUILD:** none.
-- **REMOVE:** nothing yet; root implementation stays until executable parity is green.
+- **REMOVE:** obsolete root compatibility seam only after parity.
 - **NO CHANGE:** backend, migrations, auth/security, Student workstream and test strength.
 
-### Changes
+Commit `c06f9dc0a58203f3a5f70f9f47641eadcbd71464` moved the real `CurriculumWorkspace` implementation to `apps/admin-web/src/admin/curriculum/CurriculumWorkspace.tsx`, changing only relative imports and preserving runtime behavior. Exact-head verification was fully green:
+- Frontend `34768120218` — SUCCESS.
+- Admin AI `34768120359` — SUCCESS.
+- Combined `34768120260` — SUCCESS.
+- Stage13G `34768120244` — SUCCESS.
 
-Commit `39da6e1ea0bb542e2d23f15d8e4c119cdb3c2022` — `refactor(admin): route curriculum through feature owner`:
+Only after that parity proof, commit `d40c71192f513f18d69b0e67be408e6f146a3ec5` removed `apps/admin-web/src/CurriculumWorkspace.tsx`. Its second exact-head matrix was also fully green:
+- Frontend `34768283004` — SUCCESS.
+- Admin AI `34768282985` — SUCCESS.
+- Combined `34768283077` — SUCCESS.
+- Stage13G `34768282982` — SUCCESS.
 
-- added `apps/admin-web/src/admin/curriculum/CurriculumWorkspace.tsx` as a temporary feature-owned adapter exporting the existing implementation;
-- changed `App.tsx` so `/app/curriculum` imports through `src/admin/curriculum/`;
-- no runtime behavior, API contract, database rule, styling or test assertion changed.
-
-### Exact-head CI at checkpoint
-
-For `39da6e1ea0bb542e2d23f15d8e4c119cdb3c2022`:
-
-- Frontend Preparation `34766693628` — **SUCCESS**.
-- Admin AI Operations `34766693635` — **IN PROGRESS** at checkpoint.
-- Combined Integration `34766693638` — **IN PROGRESS** at checkpoint.
-- Stage13G Admin Operations `34766693674` — **IN PROGRESS** at checkpoint.
-
-Batch 5A is therefore **ACTIVE**, not VERIFIED. No implementation move or compatibility-file deletion is allowed until these gates are reconciled.
+Batch 5A is therefore **DONE / VERIFIED**. No backend, migration, Student or test-strength change was made.
 
 ## Current blocker / next step
 
-CI is the only blocker. First reconcile runs `34766693635`, `34766693638`, and `34766693674` for exact code-head `39da6e1e...`.
-
-If all are green, continue the **same Curriculum seam only**: move the real `CurriculumWorkspace` implementation under `src/admin/curriculum/` with relative-import changes only, retain the root compatibility file until parity, then remove it only after a second exact-head green matrix. Do not start another cleanup seam or AR-10 in parallel.
+There is no Batch 5A blocker. AR-09 itself remains ACTIVE because a fresh post-Batch-5A inventory has not yet been performed. Do not invent another cleanup batch. The next task must first re-fetch live state and inventory remaining root-level route-owned Admin surfaces and callers/tests/contracts. If no justified cleanup seam remains, proceed directly to final AR-09 verification and close AR-09 on exact-head green. AR-10 remains blocked until AR-09 is formally DONE / VERIFIED.
 
 ## Shared resume point for task A/B
 
-1. Re-fetch live `main`, branch HEAD, all three continuity files, PR #52 and exact-head CI.
-2. Reconcile `34766693635`, `34766693638`, `34766693674` before code.
-3. If green, continue AR-09 Batch 5A Curriculum ownership only.
-4. If any fails, diagnose/root-fix without weakening tests or server authority.
-5. Keep PR #52 Draft; no merge or auto-merge.
+1. Re-fetch live `main`, branch HEAD, these three continuity files, Draft PR #52 and exact-head CI.
+2. Confirm the documentation checkpoint did not introduce a newer unresolved state.
+3. Perform a fresh AR-09 root/route ownership inventory only; do not assume another batch exists.
+4. If a justified seam exists, select one smallest reviewable cleanup and preserve backend/Student/test authority.
+5. If no justified seam exists, run final AR-09 verification and close AR-09 before AR-10.
+6. Keep PR #52 Draft; no merge or auto-merge.
