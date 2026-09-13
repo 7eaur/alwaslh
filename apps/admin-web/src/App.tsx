@@ -10,7 +10,7 @@ import {
 } from "./admin-api";
 import { ADMIN_NAVIGATION } from "./admin-navigation";
 import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
-import { AiOperationsPage } from "./AiOperationsPage";
+import { AiOperationsPage } from "./admin/reviews/AiOperationsPage";
 import { AdminAccessCodesPage } from "./admin/access-codes/AdminAccessCodesPage";
 import { AdminAccessCodeReportsPage } from "./admin/access-codes/AdminAccessCodeReportsPage";
 import { LessonAuthoringParityPanel } from "./admin/content/LessonAuthoringParityPanel";
