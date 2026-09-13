@@ -1,12 +1,12 @@
 # Super Admin Rebuild — 2026-09-13
 
-Status: **ACTIVE — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder is NEXT / NOT STARTED.**
+Status: **ACTIVE — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder ACTIVE / Batch 1 exact-head CI pending.**
 
 Branch: `rebuild/super-admin-foundation`
 
 Draft PR: `#52 — refactor(admin): rebuild Super Admin foundation`
 
-Latest live `main` direct branch read before AR-06 closure: `343ff1fd7b3d64d7e990b72606695365f520fa58`.
+Latest live `main` direct branch read before AR-07 Batch 1: `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
 
 > Source of truth order: repository code + PostgreSQL migrations + executable tests/CI + verified runtime + canonical project documentation. This workstream does not replace those sources.
 
@@ -100,7 +100,7 @@ Rules:
 - **AR-04 — Content + OCR** — DONE / VERIFIED.
 - **AR-05 — Reviews + AI** — DONE / VERIFIED.
 - **AR-06 — Question Bank** — DONE / VERIFIED.
-- **AR-07 — Quiz Builder** — NEXT / NOT STARTED.
+- **AR-07 — Quiz Builder** — ACTIVE / Batch 1 IN VERIFICATION.
 - **AR-08 — Students + Access Codes** — NOT STARTED.
 - **AR-09 — Cleanup + architecture enforcement** — NOT STARTED.
 - **AR-10 — A11y/RTL/performance/visual QA** — NOT STARTED.
@@ -183,22 +183,60 @@ On `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`:
 
 No hidden import/test dependency remained after the deletion. AR-06 is therefore **DONE / VERIFIED**.
 
-## 7. Explicit next handoff — AR-07 only
+## 7. AR-07 — Quiz Builder — active execution checkpoint
+
+### Source-of-truth inventory completed before Batch 1
+
+The branch handoff received was `ea6c0a07fddeaf0a219440cca277e68f7fa9587b`; live `main` was re-read at `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`, and Draft PR #52 remained Draft.
+
+Inspected frontend owners/contracts:
+
+- `QuizBuilderWorkspace.tsx` currently combines list, create, detail, version composition/editing, lifecycle and export.
+- `quiz-builder-api.ts` already separates list/detail/candidates/create/update/version/lifecycle/export server commands.
+- `/app/quizzes` previously routed directly to the giant workspace; `/app/quizzes/metadata` remains an auxiliary focused route.
+
+Inspected backend/executable authority:
+
+- `apps/api/src/quiz-builder/http.ts` and `service.ts` remain authoritative.
+- `apps/api/tests/integration/quiz-builder.integration.test.ts` proves that only published Question Bank revisions can enter quiz versions; stored quiz questions are frozen snapshots; reviewed/published export obeys server lifecycle; published versions reject mutation; database integrity enforces snapshot immutability.
+
+Classification:
+
+- **KEEP:** server lifecycle, Question Bank revision linkage, snapshot immutability and export rules.
+- **KEEP TEMPORARILY:** legacy `QuizBuilderWorkspace.tsx` as a parity adapter while responsibilities migrate.
+- **REFACTOR:** list ownership into a focused route/page first.
+- **NEXT:** route-owned detail/management decomposition and explicit browser deep-link parity after Batch 1 verification.
+- **NO CHANGE:** PostgreSQL/API business rules and Student workstream in this batch.
+
+### Batch 1 implementation
+
+- `7746000748129a659e098e016d3ffbfd4d5ddc46` — added `apps/admin-web/src/admin/quizzes/QuizBuilderListPage.tsx`, with server-backed list/search/status filter/pagination and resilient loading/error/empty states.
+- `30d9443ed1c159440d38dc76db61686028c3d028` — `/app/quizzes` now owns the focused list; the existing all-capabilities workspace moved to `/app/quizzes/manage` as a temporary parity-preserving route; metadata and AI related actions remain available.
+- No migrations, backend business rules or Student code changed.
+
+### Batch 1 verification state
+
+Exact code head: `30d9443ed1c159440d38dc76db61686028c3d028`.
+
+- Stage 13E Frontend Preparation `34741455324` — **IN PROGRESS** at the documented checkpoint.
+- Stage 13E Admin AI Operations `34741455298` — **PENDING** at the documented checkpoint.
+- Stage 13E Combined Integration `34741455320` — **PENDING** at the documented checkpoint.
+
+No second code batch was started while those runs remained active. Batch 1 is **NOT YET VERIFIED**.
+
+## 8. Explicit next handoff — AR-07 only
 
 1. Re-read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and this file.
 2. Fetch current feature HEAD, live `main`, Draft PR #52 and exact-head CI before mutation.
-3. AR-06 closure documentation commits follow verified code head `02cf24d5…`; inspect any workflows they trigger before changing code.
-4. Do not reopen AR-06 without a real regression.
-5. Start **AR-07 — Quiz Builder only**.
-6. Inventory actual quiz migrations/schema/integrity contracts, API routes/services/use-cases, `QuizBuilderWorkspace`/related frontend surfaces, metadata route, tests and real Chromium coverage before editing.
-7. Classify each area KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE. Do not assume the existing frontend composition is the desired product architecture.
-8. Preserve quiz lifecycle/composition/versioning/publication/business authority and question references under server authority.
-9. Prefer route/entity/workflow ownership over a giant workspace; add thin backend use-case commands only if the UI is otherwise forced to understand pipeline/database internals.
-10. Use small reviewable batches and require exact-head lint/typecheck/unit/build + clean PostgreSQL/API authority regressions + real Chromium proof before AR-07 closure.
-11. Do not start AR-08 before AR-07 is verified and documented.
-12. Keep PR #52 Draft; no automatic merge.
+3. Documentation commits follow code head `30d9443e…`; reconcile runs `34741455324`, `34741455298`, `34741455320` plus any newer documentation-only exact-head runs before editing code.
+4. If a code-head run fails, inspect its failing job/log and fix root cause only; do not weaken tests or preserve a stale giant-workspace assumption at the cost of the route architecture.
+5. If green, mark AR-07 Batch 1 VERIFIED.
+6. Continue **AR-07 only**: split entity/detail/management ownership and add explicit list→entity/deep-link real Chromium parity while keeping lifecycle/version/export authority server-owned.
+7. Use small reviewable batches; keep the legacy workspace only as long as it owns legitimate unmigrated capability.
+8. Do not start AR-08 before AR-07 exact-head green and synchronized documentation.
+9. Keep PR #52 Draft; no automatic merge.
 
-## 8. Quality gate for every remaining stage
+## 9. Quality gate for every remaining stage
 
 - lint;
 - strict typecheck;
