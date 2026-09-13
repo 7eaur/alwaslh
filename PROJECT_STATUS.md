@@ -10,9 +10,9 @@ Last synchronized: **2026-09-13**.
 
 **ACTIVE TRACKS: UX/UI REFOUNDATION + PARALLEL SUPER ADMIN PRODUCT REBUILD**
 
-**STUDENT MAIN CHECKPOINT:** `UX-B04 — Student Practice / Assessment` is merged on live `main@f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
+**STUDENT MAIN CHECKPOINT:** live `main` has independently advanced to `c3734366c132ea3919a925bdd0dd37cfd5d82104`; Student/audit work remains owned by the parallel track and must not be overwritten by the Admin rebuild.
 
-**SUPER ADMIN CURRENT BATCH:** `AR-06 — Question Bank` — ACTIVE / BATCH 1 VERIFIED.
+**SUPER ADMIN CURRENT BATCH:** `AR-06 — Question Bank` — ACTIVE / BATCH 2A CODE VERIFIED.
 
 **SUPER ADMIN COMPLETED:** `AR-01` through `AR-05` — DONE / VERIFIED on rebuild evidence.
 
@@ -25,11 +25,11 @@ Super Admin roadmap: `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`.
 
 ## Live main baseline
 
-Current live `main`:
+Current live `main` observed at the start of AR-06 Batch 2A:
 
-`f44d5f72eaeb0acd8ca5c67d2816a56596761f21`
+`c3734366c132ea3919a925bdd0dd37cfd5d82104`
 
-This main includes the merged UX-B04 Student Practice/Assessment work plus the Full Product Architecture Audit documentation and independent `FPA-002` / SEC-01 Assessment authorization repair. The Super Admin rebuild remains isolated on `rebuild/super-admin-foundation` and must preserve concurrent Student/audit work when later resynchronized.
+The Super Admin rebuild remains isolated on `rebuild/super-admin-foundation`. Any eventual resynchronization must preserve concurrent Student/audit work.
 
 ## Completed Student refoundation foundation
 
@@ -37,8 +37,8 @@ This main includes the merged UX-B04 Student Practice/Assessment work plus the F
 - UX-B01 — DONE / VERIFIED / MERGED.
 - UX-B02 — DONE / VERIFIED / MERGED.
 - UX-B03 — DONE / VERIFIED / MERGED as `56ee51ab0d5669b4a38f9efec991ea79971d3503`.
-- UX-B04 — DONE / VERIFIED / MERGED on live main `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
-- UX-B05 — remains the next Student UX closure batch; owned by the Student workstream, not the Admin rebuild.
+- UX-B04 — DONE / VERIFIED / MERGED on its recorded main checkpoint.
+- UX-B05 and later Student work remain Student-owned; the Admin rebuild does not modify them.
 
 ## Parallel Super Admin Product Rebuild checkpoint
 
@@ -124,30 +124,34 @@ AR-05 exact-head evidence on `cda2c3a683c6101db12f0c7cfad772226c234e0d`:
 - Stage 13E Combined Integration `34729512404` — SUCCESS;
 - Combined verification includes API/Admin quality gates, clean PostgreSQL migrations, DB contracts, backend authority regressions, Stage12/Auth regressions, deterministic real fixture checks and real Chromium.
 
-### AR-06 — ACTIVE / BATCH 1 VERIFIED
+### AR-06 — ACTIVE / BATCH 2A CODE VERIFIED
 
-Repository-backed inventory confirms the Question Bank backend/domain is mature and remains **KEEP**: PostgreSQL/API own question lifecycle, revisions, publication authority, AI provenance/import/regeneration validation and review events. The main problem is frontend composition: legacy `QuestionBankWorkspace.tsx` still combines list, create/import/edit, detail, review and history and exposes advanced identifiers in normal UI.
+Repository-backed inventory confirms the Question Bank backend/domain remains **KEEP**: PostgreSQL/API own question lifecycle, revisions, publication authority, AI provenance/import/regeneration validation and review events. The root issue remains frontend composition and route ownership, not missing backend CRUD.
 
-Batch 1 establishes entity route ownership without weakening parity:
+Batch 1 established `/app/questions/:questionId` and route-owned detail/review/history without weakening server authority.
 
-- added `/app/questions/:questionId`;
-- added route-owned `QuestionBankDetailPage`;
-- detail/review screen reads canonical question detail + curriculum from server APIs;
-- submit-review / publish / reject remain server-authoritative;
-- ordinary source evidence presents page/quote and human context, not checksum/OCR/internal IDs;
-- revision and decision histories remain available;
-- legacy Question Bank workspace remains temporarily mounted at `/app/questions` so existing creation/import/regeneration parity is not removed before ownership is migrated.
+Batch 2A now makes entity routing the normal Question Bank browsing path while retaining mutation parity safely:
 
-Verified code head for AR-06 Batch 1:
+- added `apps/admin-web/src/admin/questions/QuestionBankListPage.tsx` as a focused list/filter/pagination surface;
+- `/app/questions` now renders the focused list and question cards navigate to `/app/questions/:questionId`;
+- the legacy all-in-one `QuestionBankWorkspace` is moved behind `/app/questions/manage` as a temporary compatibility adapter for manual create, approved-AI import, edit and regeneration until those mutation responsibilities are moved contextually;
+- no PostgreSQL migration, API lifecycle command or server authority was changed;
+- no Student workstream file/code was modified;
+- technical-ID handoff is not declared removed until edit/regeneration parity is moved to entity-owned UI and covered by browser verification.
 
-`1677770dc6402e4b2825c1b8dd50f546fdf74d0c`
+AR-06 Batch 2A code commits:
 
-Evidence:
+- `931254e3b62d4cc8465f0bf7cd503ba1e32ae54c` — focused routed Question Bank list;
+- `09a84c95b2de59ea318ff43171883756a776a79b` — make entity routes the default flow and isolate legacy manage route;
+- `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac` — align the new list with shared styles/type contracts.
 
-- Stage 13E Frontend Preparation `34731668746` — SUCCESS; lint, strict typecheck, unit and production build passed.
-- Stage 13E Combined Integration `34731668810` — SUCCESS; API/Admin quality gates, clean PostgreSQL migrations, DB contracts, backend authority/security regressions, deterministic fixtures and real Chromium passed.
+Exact code-head evidence on `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac`:
 
-AR-06 is **not complete**. Next ownership work must remain inside AR-06: wire the list to entity routes, move editor/review/history responsibility out of the giant workspace, remove normal manual technical-ID handoffs only after contextual parity is preserved, add direct deep-link/browser coverage, then verify exact-head before closure.
+- Stage 13E Admin AI Operations `34733273139` — SUCCESS;
+- Stage 13E Frontend Preparation `34733273136` — SUCCESS;
+- Stage 13E Combined Integration `34733273134` — SUCCESS, including API/Admin quality gates, clean PostgreSQL migrations/contracts, authority/security regressions, deterministic fixtures and real Chromium.
+
+AR-06 is **not complete**. The next coherent work remains inside AR-06: move current-revision edit ownership into `QuestionBankDetailPage`, then approved regeneration contextually; retain manual create/import in `/app/questions/manage` until their ownership is safely separated; add direct deep-link + list→detail + routed lifecycle browser coverage; only then consider removing the legacy workspace.
 
 ## Parallel Full Product Architecture Audit checkpoint
 
@@ -170,11 +174,12 @@ Student is an Arabic-first/RTL-first educational app. Super Admin is a dense but
 
 ## Immediate next actions
 
-1. Continue AR-06 from verified Batch 1; do not start AR-07.
-2. Wire Question Bank list navigation to `/app/questions/:questionId` and make route ownership the normal detail path.
-3. Decompose editor/review/history from `QuestionBankWorkspace.tsx` incrementally while retaining create/import/regenerate business parity.
-4. Remove checksum/OCR/output/internal-ID presentation from normal Question Bank workflow; keep advanced diagnostics only where justified.
-5. Add direct deep-link and routed lifecycle browser coverage, then run targeted Question Bank/API/PostgreSQL/Chromium gates on exact head.
-6. Close AR-06 only when list/detail/editor/review/history ownership is verified; then proceed AR-07 → AR-10.
-7. Keep PR #52 draft until the Admin rebuild and final exact-head verification are complete.
-8. Before eventual merge, resynchronize with live main without overwriting Student/audit work.
+1. Re-read this file, `PROJECT_ENGINEERING_LOG.md`, the Super Admin workstream and current exact-head CI before editing.
+2. Continue AR-06 only; do not start AR-07.
+3. Move `editQuestionBankItem` / current-revision editor ownership from `QuestionBankWorkspace` into `QuestionBankDetailPage` while preserving server lifecycle authority.
+4. Move approved regeneration contextually next; keep manual create/import in `/app/questions/manage` until separate route ownership is proven.
+5. Add browser coverage for direct deep-link, list→detail navigation and routed lifecycle/edit/regeneration behavior.
+6. Remove the legacy workspace only after create/import/edit/regeneration parity has been verified from the new route-owned composition.
+7. Close AR-06 only on exact-head Frontend + API/PostgreSQL/Chromium evidence; then proceed AR-07 → AR-10.
+8. Keep PR #52 draft until the Admin rebuild and final exact-head verification are complete.
+9. Before eventual merge, resynchronize with live main without overwriting Student/audit work.
