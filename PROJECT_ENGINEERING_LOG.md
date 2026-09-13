@@ -10,7 +10,7 @@ Last consolidated: **2026-09-13 — Student Future Surfaces / PR #54.**
 
 Student is an installed educational application, not a dashboard. The final product includes current learning/assessment/offline/access flows plus planned personal-learning, notification and progress capabilities.
 
-The Product Owner has confirmed that no production learner will use the app until the remaining roadmap is complete. Therefore final Student UI/IA may be prebuilt before backend integration so later stages connect real contracts into stable product locations instead of repeatedly restructuring navigation.
+The Product Owner confirmed that no production learner will use the app until the remaining roadmap is complete. Therefore final Student UI/IA may be prebuilt before backend integration so later stages connect real contracts into stable product locations instead of repeatedly restructuring navigation.
 
 Canonical Student documents:
 
@@ -54,10 +54,10 @@ Stable contracts:
 - **AD-248** — Student presentation maps backend error truth to learner explanation + next action; raw API message is not UI copy.
 - **AD-249** — predictable invalid/offline/expired/unavailable/storage states are first-class acceptance scenarios.
 - **AD-250** — motion is restrained interaction affordance and always honors reduced motion.
-- **AD-251 — future-surface prebuild authorized.** Because no production learners use the app before completion, approved future Student surfaces may be implemented before their backend service is connected.
+- **AD-251 — future-surface prebuild authorized.** Approved future Student surfaces may be implemented before their backend service is connected because no production learner uses the app before completion.
 - **AD-252 — no fabricated learner data.** Prebuilt surfaces may render honest empty states but never fake notes, unread counts, progress, statistics, scores, achievements, rankings, streaks or recommendations.
 - **AD-253 — final Student IA is active now.** Mobile navigation is `الرئيسية / التعلّم / التدريب / مكتبتي`; Notifications is app-bar secondary action; Progress is Home/Account/desktop secondary route.
-- **AD-254 — destination-level code splitting.** New features must not accumulate in the initial Student bundle. Learn/Reader, Practice/Assessment, Library/personal surfaces and Account load through `React.lazy`; Home/Shell stays immediate.
+- **AD-254 — destination-level code splitting.** New features do not accumulate in the initial Student bundle. Learn/Reader, Practice/Assessment, Library/personal surfaces and Account load through `React.lazy`; Home/Shell stays immediate.
 
 Binding design order:
 
@@ -100,51 +100,52 @@ Base: `main@d8ccb0b7ba004618cbcbdd96937d5cded47161dc`
 
 ### Stage17–19 integration specification
 
-`STUDENT_FUTURE_SURFACES_SPEC.md` defines now, before backend implementation:
+`STUDENT_FUTURE_SURFACES_SPEC.md` defines before backend implementation:
 
 - Note creation from Reader and all-notes Library flow;
-- note source provenance and source-unavailable behavior;
+- source provenance and source-unavailable behavior;
 - saved-question idempotent UX;
 - Needs Review placement;
 - notification unread/deep-link behavior;
-- Progress page hierarchy and authoritative-metric rules;
+- Progress hierarchy and authoritative-metric rules;
 - Account future security/preferences reservation;
 - loading/empty/error/offline/denied matrix;
 - phone/tablet/desktop behavior;
 - Stage17/18/19 backend integration gates.
 
-### Performance work
+### Performance work — verified build evidence
 
-Before code splitting, adding the future surfaces increased the monolithic production JS to approximately:
+Before code splitting, the expanded future-surface app built as one main JS chunk of approximately:
 
 - `599.61 kB` minified;
 - `148.83 kB` gzip.
 
-Rather than raising Vite’s warning limit, PR #54 now lazy-loads destination feature modules with `React.lazy` + `Suspense`.
+PR #54 now uses `React.lazy` + `Suspense` at destination level. Production build verified:
 
-Immediate Shell/Home remains synchronous. Lazy destinations:
+- initial `index` JS: **225.89 kB / 71.24 kB gzip**;
+- Account chunk: **7.91 kB / 2.57 kB gzip**;
+- Learn/Reader chunk: **13.85 kB / 4.09 kB gzip**;
+- Assessment chunk: **22.58 kB / 6.10 kB gzip**;
+- Future/Library chunk: **25.81 kB / 7.56 kB gzip**;
+- Assessment CSS chunk: **15.90 kB / 3.04 kB gzip**;
+- shared initial CSS: **62.02 kB / 10.89 kB gzip**.
 
-- Learn/Reader;
-- Practice/Assessment;
-- Library/personal surfaces;
-- Account.
+The initial JS payload is materially smaller and the previous >500 kB Vite chunk warning is gone. No warning-limit suppression or manual chunk hack was used.
 
-Loading state uses learner copy `جاري فتح الصفحة`, and reduced-motion disables its spinner animation.
-
-Final production-build output after this split is **PENDING exact-head verification**.
+Loading state uses learner copy `جاري فتح الصفحة`; reduced-motion disables spinner animation.
 
 ## Current Verification Evidence
 
-On an intermediate pre-split PR #54 head:
+On the documentation-complete code path before the final exact-head matrix finishes:
 
 - Student lint/typecheck/unit/build — SUCCESS;
 - 11 Student test files / 41 unit tests — SUCCESS;
-- PostgreSQL migrations — SUCCESS;
-- expanded B05 Chromium + Visual QA — SUCCESS;
-- B02 desktop navigation — SUCCESS;
-- B02 mobile failed only because Playwright’s non-exact `الإشعارات` locator matched both the app-bar bell and Home secondary card. The test now targets the exact app-bar accessible name.
+- production build emits the intended feature chunks with the sizes above;
+- earlier B05 Chromium + expanded Visual QA — SUCCESS;
+- earlier B02 desktop navigation — SUCCESS;
+- earlier B02 mobile failure was only a non-exact `الإشعارات` Playwright locator matching both app-bar bell and Home card; corrected to the exact app-bar accessible name.
 
-This is not final acceptance because code splitting and documentation changed the branch afterward.
+Final merge still requires the complete exact-head matrix because documentation changes also move the head.
 
 ## Findings Register
 
@@ -158,14 +159,13 @@ This is not final acceptance because code splitting and documentation changed th
 | `UX-MOTION-101` | P2 | Interaction | static-feeling surfaces | restrained shared motion/depth | FIXED |
 | `UX-FUTURE-101` | P1 | Future IA | Notes/Notifications/Progress would force later navigation rewrites | final surfaces/placement prebuilt | FIXED / DATA CONNECTION PENDING |
 | `UX-DATA-102` | P1 | Product truth | risk of placeholder/fake future metrics | zero-data-only pre-integration policy | FIXED / GOVERNANCE |
-| `PERF-STUDENT-101` | P2 | Frontend bundle | future screens pushed main JS to ~599.61 kB | destination-level dynamic imports | IN VERIFICATION |
+| `PERF-STUDENT-101` | P2 | Frontend bundle | future screens pushed main JS to ~599.61 kB | lazy destination chunks; main reduced to 225.89 kB | FIXED / FINAL CI PENDING |
 | `UX-OFFLINE-104` | P1 | Reader | true cold-start offline Reader not complete | return to `STUDENT-016I` | OPEN / ROADMAP |
 | `UX-IA-103` | P1 | Admin | Admin requires independent rebuild | dedicated Super Admin workstream | DELEGATED |
 
 ## Acceptance Required Before PR #54 Merge
 
 - exact-head lint/typecheck/unit/build;
-- production build proves meaningful initial-bundle reduction and emitted lazy chunks;
 - B01/B02/B03/B04/B05 Chromium regressions;
 - Stage14/15/16 + Rebuild verification;
 - all other triggered workflows green;
