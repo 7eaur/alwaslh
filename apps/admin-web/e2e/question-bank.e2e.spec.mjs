@@ -68,7 +68,7 @@ test("Question Bank list routes to durable detail, supports direct deep link, an
   const detail = page.getByTestId("question-detail-page");
   await expect(page.getByRole("heading", { name: "تفاصيل السؤال", exact: true })).toBeVisible();
   await expect(detail.getByRole("heading", { name: "أي الخيارات يمثل وحدة قياس الطاقة؟", exact: true })).toBeVisible();
-  await expect(detail.locator(".qb-status-review")).toBeVisible();
+  await expect(detail.locator(".qb-status-review").first()).toBeVisible();
   await expect(detail.getByText("الجول", { exact: true }).first()).toBeVisible();
 
   await page.goto(directUrl);
@@ -77,7 +77,7 @@ test("Question Bank list routes to durable detail, supports direct deep link, an
 
   await page.getByTestId("question-detail-page").getByRole("button", { name: "نشر النسخة" }).click();
   await expect(page.getByText("نُشرت النسخة التي كانت قيد المراجعة.", { exact: true })).toBeVisible();
-  await expect(page.getByTestId("question-detail-page").locator(".qb-status-published")).toBeVisible();
+  await expect(page.getByTestId("question-detail-page").locator(".qb-status-published").first()).toBeVisible();
 });
 
 test("Question Bank routed editor creates a revision and preserves submit-review/reject authority", async ({ page }) => {
@@ -98,16 +98,16 @@ test("Question Bank routed editor creates a revision and preserves submit-review
 
   await expect(page.getByText("حُفظ التعديل في نسخة مسودة جديدة مع إبقاء النسخ السابقة محفوظة.", { exact: true })).toBeVisible();
   await expect(detail.getByRole("heading", { name: "سؤال الصفحة الثانية بعد التعديل المساري", exact: true })).toBeVisible();
-  await expect(detail.locator(".qb-status-draft")).toBeVisible();
+  await expect(detail.locator(".qb-status-draft").first()).toBeVisible();
 
   await detail.getByRole("button", { name: "إرسال للمراجعة" }).click();
   await expect(page.getByText("أُرسل السؤال للمراجعة.", { exact: true })).toBeVisible();
-  await expect(detail.locator(".qb-status-review")).toBeVisible();
+  await expect(detail.locator(".qb-status-review").first()).toBeVisible();
 
   await detail.getByLabel("سبب الإرجاع").fill("إثبات مسار الإرجاع قبل النشر");
   await detail.getByRole("button", { name: "إرجاع للمسودة" }).click();
   await expect(page.getByText("أُعيد السؤال إلى المسودة مع حفظ سبب القرار.", { exact: true })).toBeVisible();
-  await expect(detail.locator(".qb-status-draft")).toBeVisible();
+  await expect(detail.locator(".qb-status-draft").first()).toBeVisible();
 });
 
 test("Question Bank routed detail applies an approved regeneration to the same question identity", async ({ page }) => {
@@ -120,8 +120,8 @@ test("Question Bank routed detail applies an approved regeneration to the same q
   await card.click();
 
   const detail = page.getByTestId("question-detail-page");
-  await expect(detail.locator(".qb-status-published")).toBeVisible();
-  await expect(detail.getByText("إجابة تجريبية 30", { exact: false })).toBeVisible();
+  await expect(detail.locator(".qb-status-published").first()).toBeVisible();
+  await expect(detail.getByText("إجابة تجريبية 30", { exact: false }).first()).toBeVisible();
   const itemUrl = page.url();
 
   await detail.getByRole("button", { name: "تطبيق إعادة توليد معتمدة" }).click();
@@ -132,7 +132,7 @@ test("Question Bank routed detail applies an approved regeneration to the same q
   await expect(page.getByText("تم إنشاء Draft revision جديدة لنفس هوية السؤال من مخرج إعادة التوليد المعتمد.", { exact: true })).toBeVisible();
   await expect(page).toHaveURL(itemUrl);
   await expect(detail.getByRole("heading", { name: "كيف يمكن صياغة السؤال التجريبي رقم 30 بصورة بديلة؟", exact: true })).toBeVisible();
-  await expect(detail.locator(".qb-status-draft")).toBeVisible();
+  await expect(detail.locator(".qb-status-draft").first()).toBeVisible();
   await expect(detail.locator("summary").filter({ hasText: "سجل النسخ" })).toContainText("2");
 });
 
