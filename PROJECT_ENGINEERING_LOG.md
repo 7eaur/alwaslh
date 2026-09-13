@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains in Git history, merged PRs and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — Student Library + Content Rebuild through MEDIA-001**.
+Last consolidated: **2026-09-13 — Student Library + Content Rebuild through IMPORT-001**.
 
 ## 1. Stable product / architecture authority
 
@@ -213,7 +213,7 @@ Verified Grade 9 English inventory:
 - manifest-only page 70 has no RAW identity and remains evidence-only;
 - Grade 9 English duplicate page-number anomalies: 0;
 - corpus-wide duplicate-position anomalies remain preserved: 6;
-- only 4 modern page mappings are verified by this rebuild track; the other 65 remain `unverified`, not asserted missing.
+- only 4 modern page mappings were verified by BATCH-001 at that checkpoint; other mappings remain subject to explicit rebuild verification.
 
 Historical `62 Draft lessons` is reconciliation evidence only and was not used to derive `69 -> 62`.
 
@@ -262,7 +262,52 @@ Interpretation:
 - publication mutation: 0;
 - unrelated-record mutation: 0.
 
-Next Content Rebuild item is **`IMPORT-001` only**, followed by `VERIFY-001 → ROADMAP-RETURN`.
+### IMPORT-001 — DONE / COMMITTED_STATE_VERIFIED
+
+Scope was intentionally limited to CURATION-001 only: Unit 2 lesson `Describing people and animals`, book pages `5..8` / source pages `9..12`.
+
+Pre-apply gates:
+
+- live identity inspector deployment `4cf8665b-4dd1-4e90-9ec8-92d897c34f59`, marker `IMPORT001_INSPECT_PASS`;
+- rollback gate script commit `177b91572ac6fe3b37acd9bcc094876a1cbb3beb`;
+- rollback deployment `8e4cdcbb-2783-4dca-b025-e1191fa9e330`, marker `IMPORT001_TRANSACTION_GATE_PASS`;
+- validated direct mutation boundary: `1 Section + 1 Lesson + 4 Lesson Asset reassignments`;
+- Media create/mutate = 0/0;
+- legacy Lesson mutation = 0;
+- Question mutation = 0;
+- publication mutation = 0;
+- unrelated mutation = 0.
+
+Controlled apply implementation:
+
+- fail-closed script commit `2af3b935512c853eb4c2b1f3767766f8513a1c0a`;
+- deployment `026bfc1b-8ba0-4ae8-a74b-7170086f45e1` captured the prior rollback command and therefore did not perform the apply;
+- later apply deployment `efb92e21-e8df-4674-92d9-041321da9f92` refused to mutate because the target Section already existed (`IMPORT001_APPLY_FAIL: target section already exists count=1`).
+
+This is treated as concurrent advancement, not as permission to overwrite. No duplicate write was attempted and this closing run does not claim authorship of the already-committed rows.
+
+Independent committed-state verification:
+
+- initial verifier commit `3727dde8f6f037d34691a75feae3d46d164f1041`, deployment `4144bf3c-1eeb-4c9f-8a77-65e60b1ed1c8`, marker `IMPORT001_POST_APPLY_VERIFY_PASS`;
+- exact-identity verifier commit `2f3d0fa9923f9dceb692477c2fd1a0fd89d2b0c8`, deployment `3e1ce24a-39ca-498c-b219-8ceb895eda84`, marker `IMPORT001_POST_APPLY_VERIFY_PASS`.
+
+Verified target state:
+
+- Section: exactly 1, ID `434f9978-efae-471e-b37d-6b151edecc5b`;
+- curated Lesson: exactly 1, ID `1a6e3a6e-06e8-496e-8d18-c8d4545d1da9`;
+- Lesson Assets: exactly 4 previously reviewed IDs, ordered 0..3;
+- Media Assets: exactly 4 previously reviewed IDs, ready;
+- all 4 source paths and source/media SHA-256 values match reviewed evidence;
+- target Lesson published = false;
+- Lesson Assets draft/unpublished = 4/4;
+- unauthorized target Question links = 0;
+- 4 legacy source Lessons remain active/unpublished/sectionless and now carry 0 reviewed page assets;
+- exactly 12 legacy Question Revisions remain linked to the legacy Lessons and unpublished;
+- no RAW or media-binary rewrite, Question rewrite, auto-publication, anomaly deletion, or unrelated repair was performed by the closing run.
+
+The Railway inspector was returned to an idle start command after verification to prevent documentation commits from replaying apply/verifier commands.
+
+Next Content Rebuild item is **`VERIFY-001` only**, followed by `ROADMAP-RETURN` when its gate is satisfied.
 
 ## 6. Open / deferred product work
 
