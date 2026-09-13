@@ -64,9 +64,10 @@ test("protected lesson download preserves integrity contracts inside learner Lib
   await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
   await page.getByRole("link", { name: "مكتبتي", exact: true }).first().click();
   await expect(page).toHaveURL(/\/app\/library$/);
-  await page.getByRole("link", { name: "التنزيلات", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "محتواك الشخصي، مرتب في مكان واحد" })).toBeVisible();
+  await page.locator(".student-library-card").filter({ hasText: "التنزيلات" }).click();
   await expect(page).toHaveURL(/\/app\/library\/downloads$/);
-  await expect(page.getByRole("heading", { name: "كل ما يخص تعلمك في مكان واحد" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /العودة إلى نظرة مكتبتي/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "الدروس المحفوظة" })).toBeVisible();
   await expect(downloadableRow(page, fixture.lessonTitle)).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/SHA-256|Service Worker|Cache API|content revision|revision|ES256|P-256/i);

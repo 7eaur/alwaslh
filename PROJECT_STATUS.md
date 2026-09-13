@@ -1,162 +1,187 @@
 # PROJECT STATUS — الوسيلة الذكية
 
-> Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not executed or inspected is `NOT YET VERIFIED`.
+> Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
 Last synchronized: **2026-09-13**.
 
-## Current management state
+## Current state
 
-**NORMAL BACKEND ROADMAP: PAUSED FOR PRODUCT/UX FOUNDATION**
+**ACTIVE TRACK: Student Library Overview Refinement**
 
-**ACTIVE TRACK: STUDENT FUTURE-COMPLETE SURFACES + FRONTEND SPLITTING + INTERACTION AFFORDANCE**
+**ACTIVE PR: #55 — `refactor(student): redesign Library overview hierarchy`**
 
-**ACTIVE PR: #54 — `feat(student): prebuild future Library notifications and progress surfaces`**
+**ACTIVE BRANCH: `ux/student-library-overview`**
 
-**ADMIN B06–B14: DEFERRED / SUPERSEDED-PENDING-ADMIN-ADR.** Dedicated Super Admin Product Rebuild owns Admin architecture and UX.
+**BASE WHEN OPENED: `main@c3734366c132ea3919a925bdd0dd37cfd5d82104`**
 
-## Verified merged baseline
+PR #55 is **OPEN** and was mergeable at the latest live inspection. Live-check current head/base/mergeability before merge.
 
-Student Experience Rebuild PR #53 is **CLOSED / VERIFIED / MERGED**.
+Normal backend roadmap remains paused until this Student UX batch is closed.
 
-- exact accepted head: `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
-- exact-head workflow matrix: **23/23 SUCCESS**;
+## Verified merged Student baseline
+
+### PR #53 — Student Experience Rebuild
+
+- MERGED / VERIFIED;
+- exact accepted head `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
+- **23/23 workflows SUCCESS**;
+- merge commit `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
+
+### PR #54 — Future Student Surfaces
+
+- MERGED / VERIFIED;
+- exact accepted head `4b6f24c5cb9bd0da525ecfebc59b1ebbf156c903`;
+- **23/23 workflows SUCCESS**;
 - phone/desktop Visual QA accepted;
-- live `main` after merge: `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
+- merge commit / current merged baseline `c3734366c132ea3919a925bdd0dd37cfd5d82104`.
 
-Preserved authority:
+Merged Student foundation now includes:
 
-- API/PostgreSQL canonical;
-- Auth/Authz/Entitlements server-owned;
-- Assessment scoring/finalization server-owned;
-- published immutable Quiz authority unchanged;
-- `/v1` excluded from Service Worker Cache authority;
-- signed offline authorization/integrity/device/session contracts unchanged;
-- no password/session token/device private key persisted as offline learning data.
+- Welcome / Activation / Login / Recovery / Help / Support;
+- Home / Learn / Subject / Reader;
+- Practice / Quiz / Assessment / Result;
+- final primary navigation: `الرئيسية / التعلّم / التدريب / مكتبتي`;
+- Library / Notifications / Progress / Account prebuilt surfaces;
+- learner-safe error copy;
+- restrained motion + reduced-motion support;
+- strong interaction affordance + >=44px touch targets;
+- destination-level lazy loading;
+- no fabricated future learner data.
 
-## Product Owner direction now active
+## Performance state
 
-No production learner will use the Student app before the remaining roadmap is complete.
+Accepted Student feature-level code splitting reduced the initial main bundle from roughly:
 
-Therefore the final UI/IA for approved future capabilities may be built now before backend connection, under one hard rule:
+- **599.61 KB minified / 148.83 KB gzip**
 
-**Build the final surface now; connect authoritative data later.**
+to roughly:
 
-Prebuilt UI may show honest empty/zero-data states. It must never fabricate notes, unread counts, progress percentages, scores, statistics, achievements, ranking, streaks, recommendations or unsupported account/security behavior.
+- **225.89 KB minified / 71.24 KB gzip**
 
-Canonical docs:
+with Learn, Assessment, Library/personal surfaces and Account split into on-demand chunks.
 
-- `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
-- `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
+Do not regress this by eagerly importing destination feature trees back into the Student shell.
 
-## Interaction affordance rule — active
+## Active PR #55 — Library Overview redesign
 
-The Student app now has a binding usability rule:
+### Problem
 
-**Anything clickable must look clickable before the learner touches it; anything static must not visually compete with an action.**
+The merged `/app/library` repeated the same destinations twice:
 
-Implementation:
+- horizontal section tabs;
+- destination cards.
 
-- `student-affordance.css` is the shared Student interaction layer;
-- primary actions use the strongest filled treatment;
-- secondary actions use a visible bordered treatment;
-- lightweight actions still receive a button-like surface instead of looking like ordinary body text;
-- clickable cards use pointer/focus/press states and a consistent directional cue;
-- Library tabs have clear active/inactive states and touch targets;
-- Account logout is visually separated as a destructive action;
-- important interactive labels use the approved teal hierarchy while descriptive text remains neutral;
-- hover is enhancement only; phone users receive the same clarity without relying on hover;
-- keyboard `focus-visible` is preserved and strengthened;
-- disabled actions remain visibly disabled and non-clickable;
-- reduced-motion behavior remains preserved.
+This created unnecessary repetition and weakened the idea of a useful personal overview.
 
-The design target is not “make everything look like a button.” The target is **action hierarchy**: primary, secondary, contextual, destructive, then static information.
+### Approved target hierarchy
 
-## PR #54 implementation
+1. concise Library heading;
+2. `ملخص مكتبتي` with honest statistics;
+3. one `أقسام مكتبتي` destination grid;
+4. child sections use one clear `العودة إلى مكتبتي` action instead of repeating the full destination navigation.
 
-Current Student structure:
+Collections:
 
-- four-item mobile navigation: `الرئيسية / التعلّم / التدريب / مكتبتي`;
-- `/app/library` overview;
-- `/app/library/downloads` using the existing Stage16 Downloads implementation;
-- `/app/library/notes` honest empty pre-integration surface;
-- `/app/library/saved` honest empty pre-integration surface;
-- `/app/library/review` honest empty pre-integration surface;
-- `/app/downloads` retained as compatibility route;
-- app-bar Notifications action + `/app/notifications` honest zero-data feed state;
-- `/app/progress` pre-integration Learning/Practice/Achievements composition without fake metrics;
-- Home points to Learn / Practice / Library with secondary Progress / Notifications;
-- Account is the personal management hub for access/class-code + Library/Progress/Notifications + Help/Support + logout;
-- future Reader/Assessment integration flows for Notes/Saved/Needs Review specified before Stage17 backend work;
-- responsive RTL styling and existing subtle motion/reduced-motion contract extended to all new surfaces;
-- interaction affordance layer makes clickable cards, tabs, buttons and contextual actions visibly distinct from static information.
+- التنزيلات;
+- ملاحظاتي;
+- المحفوظات;
+- يحتاج مراجعة.
 
-## Performance architecture — verified
+### Statistics authority
 
-The Student app is split now instead of allowing future screens to accumulate in one initial JS bundle.
+- Downloads count is real and read from the existing offline package store for the active profile/device.
+- Browser acceptance saves a real lesson then requires Downloads count to change `٠ → ١`.
+- Notes / Saved / Needs Review remain honest zero states until Stage17 authoritative repositories exist.
+- No fake progress/activity/streak/recommendation/achievement/engagement metrics.
 
-`student-access.tsx` uses feature-level `React.lazy` / `Suspense` for:
+### Visual rules
 
-- Learn/Reader;
-- Practice/Assessment;
-- Library/personal surfaces;
-- Account.
+- one quiet divided summary surface, not separate dashboard KPI cards;
+- no decorative gradient;
+- statistic cells are static/non-clickable;
+- destination cards are clearly clickable;
+- phone: compact 2×2 statistics + one-column destination list;
+- desktop: one-glance summary + destination grid;
+- duplicate Library tabs removed.
 
-Home/Shell remains immediately available. Loading copy is learner-facing: `جاري فتح الصفحة`.
+Canonical decision:
 
-Production-build evidence after splitting:
+- `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
 
-- **initial main JS: 225.89 kB minified / 71.24 kB gzip**;
-- Account chunk: 7.91 kB / 2.57 kB gzip;
-- Learn/Reader chunk: 13.85 kB / 4.09 kB gzip;
-- Assessment chunk: 22.58 kB / 6.10 kB gzip;
-- Future/Library chunk: 25.81 kB / 7.56 kB gzip;
-- Assessment feature CSS chunk: 15.90 kB / 3.04 kB gzip;
-- shared initial CSS: 62.02 kB / 10.89 kB gzip.
+## Verification state — PR #55
 
-Before splitting, the same expanded app produced a single main JS chunk of approximately **599.61 kB / 148.83 kB gzip**. The initial JS payload is therefore materially smaller and Vite no longer reports the >500 kB main-chunk warning on the verified build.
+Local/targeted implementation verification recorded before the latest exact-head pass:
 
-## Current verification evidence
+- Student lint — SUCCESS;
+- strict typecheck — SUCCESS;
+- unit tests — **11 files / 41 tests SUCCESS**;
+- production build — SUCCESS.
 
-Before the final affordance refinement:
+### Exact-head CI inspection — `aca9a2f72ecede120d1d87889f9a3fb0660ea712`
 
-- Student lint/typecheck/unit/build: SUCCESS;
-- 11 Student unit files / 41 tests: SUCCESS;
-- feature-level chunks emitted as expected;
-- B01/B02/B03/B04/B05 Student browser paths passed on the prior exact head;
-- Stage14/Stage16 passed on the prior exact head;
-- B05 produced 28 phone/desktop Visual QA screenshots for the future surfaces.
+Triggered matrix result: **20/23 workflows SUCCESS**.
 
-Manual review of those screenshots identified a usability gap: some actionable links/cards were technically clickable but visually too close to static content. That evidence directly produced the new `student-affordance.css` layer and stronger Library/Progress/Account CTAs.
+Failures:
 
-Because the affordance changes move the branch head, all final acceptance evidence must be taken from the new exact head.
+- `UX B02 Student Shell and Navigation`;
+- `Stage14 Student Product`;
+- `Rebuild Stage Verification`.
 
-## Required acceptance before PR #54 merge
+Failure classification:
 
-1. exact-head lint/typecheck/unit/build;
-2. B01/B02/B03/B04/B05 browser regressions;
-3. Stage14/15/16 + Rebuild verification;
-4. all other triggered workflows SUCCESS;
-5. regenerate and manually inspect B05 phone + desktop Visual QA after affordance changes;
-6. verify clickable cards/actions are visually distinct without making static cards look interactive;
-7. no horizontal overflow;
-8. production-copy scanner remains clean;
-9. `prefers-reduced-motion` remains valid;
-10. verify live main/base before merge and use exact expected-head guard.
+- B02 quality/build/migrations/Chromium setup all passed; its browser step failed because `student-shell-navigation.e2e.spec.mjs` still expected the intentionally removed Library heading `كل ما يخص تعلمك في مكان واحد`.
+- PR #55 intentionally replaced that heading with `محتواك الشخصي، مرتب في مكان واحد` as part of the approved Library hierarchy.
+- Stage14 quality passed and failed only in `npm run test:e2e`.
+- Rebuild Stage Verification backend/build/migration jobs passed and failed only in the Stage8 browser `npm run test:e2e` job.
+- Both aggregate workflows execute the same full Playwright suite, so the stale B02 expectation necessarily makes them red as well.
+- No evidence from this matrix indicates a backend, PostgreSQL, auth, access, curriculum, assessment or offline-integrity regression.
 
-## Not completed by this PR
+Fix applied:
 
-These surfaces are prebuilt, but their authoritative service implementations remain future roadmap work:
+- `apps/student-web/e2e/student-shell-navigation.e2e.spec.mjs` now asserts the approved current Library heading while preserving navigation, focus, history, offline-state and no-overflow assertions.
+- This is a test-contract alignment, not a relaxation of product acceptance.
 
-- Stage17 Notes/Saved/Needs Review data and CRUD/sync/provenance contracts;
-- Stage18 Notifications feed/unread/deep-link contracts;
-- Stage19 Progress/Statistics/Achievements formulas/data/privacy contracts;
-- true cold-start offline Reader authority at `STUDENT-016I`;
-- unsupported self-service Account security/preferences controls.
+Because the branch head moved after the fix and documentation synchronization, **a fresh exact-head 23/23 matrix is required**. Do not merge using evidence from `aca9a2f...`.
 
-## Normal backend-roadmap return
+## Exact next action
 
-After Student/shared refoundation and Admin synchronization:
+1. live-fetch the new PR #55 head and unchanged/changed `main`;
+2. require all exact-head triggered workflows to complete SUCCESS;
+3. inspect the exact-head B05 Chromium artifact and phone/desktop Visual QA;
+4. verify no duplicate Library tabs;
+5. verify saved-download statistic updates `0 → 1` after a real download;
+6. verify stats are visually static and destination cards clearly clickable;
+7. verify responsive/no-overflow/reduced-motion/learner-copy checks;
+8. if all triggered workflows are SUCCESS and Visual QA is accepted, update final evidence then merge PR #55 using expected-head SHA guard;
+9. after merge, return immediately to normal roadmap at `STUDENT-016I`.
+
+## Remaining roadmap after PR #55
+
+The future surfaces are prebuilt, but their service/backend ownership is not complete.
+
+Return sequence:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
 
-The difference now is that Stage17–19 should connect real contracts into already-established UI/IA instead of restructuring the Student application again.
+Still open:
+
+- true cold-start offline Reader / remaining Stage16 authority;
+- Stage17 Notes / Saved / Needs Review CRUD, provenance, ownership, offline/sync;
+- Stage18 Notifications feed/unread/deep links/lifecycle;
+- Stage19 trusted Progress/Statistics/Achievements;
+- unsupported self-service Account security/preferences;
+- Super Admin rebuild remains a separate workstream.
+
+## Required startup for next conversation
+
+Read in order:
+
+1. `PROJECT_HANDOFF.md`
+2. `PROJECT_STATUS.md`
+3. `PROJECT_ENGINEERING_LOG.md`
+4. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+5. `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
+6. `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
+7. `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
+
+Then live-check PR #55 / `main` / CI before editing.

@@ -49,7 +49,7 @@ test("Student shell provides stable mobile destinations, focus, history and acti
 
   await phoneNav.getByRole("link", { name: "مكتبتي" }).click();
   await expect(page).toHaveURL(/\/app\/library$/);
-  await expect(page.getByRole("heading", { name: "كل ما يخص تعلمك في مكان واحد" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "محتواك الشخصي، مرتب في مكان واحد" })).toBeVisible();
   await expect(phoneNav.getByRole("link", { name: "مكتبتي" })).toHaveAttribute("aria-current", "page");
 
   await page.context().setOffline(true);

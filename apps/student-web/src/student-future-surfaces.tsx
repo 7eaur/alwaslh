@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { listOfflineLessonPackages } from "./offline-content-store";
+import { getActiveOfflineScope } from "./offline-session";
 import { StudentOfflineDownloadsSection } from "./student-offline-downloads";
 
 type LibrarySection = "overview" | "downloads" | "notes" | "saved" | "review";
@@ -20,11 +23,11 @@ function LibraryIcon({ kind }: { kind: Exclude<LibrarySection, "overview"> }) {
   return <svg {...common}><path d="M12 3 4 7v5c0 4.4 3.2 7.5 8 9 4.8-1.5 8-4.6 8-9V7z" /><path d="M9 12h6M12 9v6" /></svg>;
 }
 
-const sections: Array<{ key: Exclude<LibrarySection, "overview">; label: string; description: string; href: string }> = [
-  { key: "downloads", label: "التنزيلات", description: "الدروس التي حفظتها على هذا الجهاز للتعلم دون اتصال.", href: "/app/library/downloads" },
-  { key: "notes", label: "ملاحظاتي", description: "كل ما تدوّنه أثناء القراءة والتعلّم في مكان واحد.", href: "/app/library/notes" },
-  { key: "saved", label: "المحفوظات", description: "الأسئلة والمحتوى الذي اخترت الرجوع إليه لاحقًا.", href: "/app/library/saved" },
-  { key: "review", label: "يحتاج مراجعة", description: "ما تريد التركيز عليه مرة أخرى أثناء المراجعة.", href: "/app/library/review" },
+const sections: Array<{ key: Exclude<LibrarySection, "overview">; label: string; description: string; href: string; action: string }> = [
+  { key: "downloads", label: "التنزيلات", description: "الدروس المحفوظة على هذا الجهاز لتعود إليها وقت الحاجة.", href: "/app/library/downloads", action: "إدارة التنزيلات" },
+  { key: "notes", label: "ملاحظاتي", description: "ملاحظاتك المرتبطة بالدروس، مرتبة مع مصدرها.", href: "/app/library/notes", action: "عرض الملاحظات" },
+  { key: "saved", label: "المحفوظات", description: "الأسئلة والمحتوى الذي اخترت الاحتفاظ به للرجوع إليه.", href: "/app/library/saved", action: "فتح المحفوظات" },
+  { key: "review", label: "يحتاج مراجعة", description: "العناصر التي تريد التركيز عليها مرة أخرى أثناء المراجعة.", href: "/app/library/review", action: "عرض المراجعة" },
 ];
 
 function librarySectionFromPath(pathname: string): LibrarySection {
@@ -71,6 +74,67 @@ function EmptyPersonalCollection({ kind }: { kind: "notes" | "saved" | "review" 
   );
 }
 
+function LibraryOverview({ refreshKey }: { refreshKey: number }) {
+  const [downloadCount, setDownloadCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const scope = getActiveOfflineScope();
+    if (!scope) {
+      setDownloadCount(0);
+      return () => { active = false; };
+    }
+    void listOfflineLessonPackages(scope.profileId, scope.deviceId)
+      .then((packages) => { if (active) setDownloadCount(packages.length); })
+      .catch(() => { if (active) setDownloadCount(null); });
+    return () => { active = false; };
+  }, [refreshKey]);
+
+  const downloadValue = downloadCount === null ? "—" : downloadCount.toLocaleString("ar-YE");
+
+  return (
+    <>
+      <section className="student-library-summary" aria-labelledby="library-summary-title">
+        <div className="student-library-summary__intro">
+          <p className="eyebrow">ملخص مكتبتي</p>
+          <h2 id="library-summary-title">نظرة سريعة على ما احتفظت به</h2>
+          <p>تظهر هنا العناصر التي تجمعها أثناء التعلّم حتى تعرف ما لديك قبل أن تدخل إلى أي قسم.</p>
+        </div>
+        <div className="student-library-stats" aria-label="إحصائيات مكتبتي">
+          <div className="student-library-stat student-library-stat--accent" data-library-stat="downloads">
+            <span>الدروس المحفوظة</span><strong>{downloadValue}</strong><small>على هذا الجهاز</small>
+          </div>
+          <div className="student-library-stat" data-library-stat="notes">
+            <span>الملاحظات</span><strong>٠</strong><small>لا توجد بعد</small>
+          </div>
+          <div className="student-library-stat" data-library-stat="saved">
+            <span>المحفوظات</span><strong>٠</strong><small>لا توجد بعد</small>
+          </div>
+          <div className="student-library-stat" data-library-stat="review">
+            <span>للمراجعة</span><strong>٠</strong><small>لا توجد الآن</small>
+          </div>
+        </div>
+      </section>
+
+      <section className="student-library-sections" aria-labelledby="library-sections-title">
+        <div className="student-library-sections__heading">
+          <div><p className="eyebrow">أقسام مكتبتي</p><h2 id="library-sections-title">اختر ما تريد الوصول إليه</h2></div>
+          <p>كل قسم له غرض واضح، بدون تكرار نفس الخيارات في أكثر من مكان.</p>
+        </div>
+        <div className="student-library-grid">
+          {sections.map((item) => (
+            <Link className="student-library-card student-clickable-card" key={item.key} to={item.href}>
+              <span className="student-library-card__icon"><LibraryIcon kind={item.key} /></span>
+              <span className="student-library-card__copy"><strong>{item.label}</strong><small>{item.description}</small><em>{item.action}</em></span>
+              <span className="student-clickable-card__arrow" aria-hidden="true">←</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
 export function StudentLibraryExperience({ online, refreshKey, onSessionExpired }: {
   online: boolean;
   refreshKey: number;
@@ -83,27 +147,18 @@ export function StudentLibraryExperience({ online, refreshKey, onSessionExpired 
     <section className="student-library" aria-labelledby="student-library-title">
       <header className="student-page-heading student-library__heading">
         <p className="eyebrow">مكتبتي</p>
-        <h1 id="student-library-title">كل ما يخص تعلمك في مكان واحد</h1>
-        <p>تنزيلاتك وملاحظاتك وما تحفظه للمراجعة، مرتبة لتصل إليها بدون تشتيت.</p>
+        <h1 id="student-library-title">محتواك الشخصي، مرتب في مكان واحد</h1>
+        <p>الدروس التي حفظتها وما تجمعه أثناء التعلّم والمراجعة، منظم لتصل إليه بسرعة.</p>
       </header>
 
-      <nav className="student-library-tabs" aria-label="أقسام مكتبتي">
-        <Link className={section === "overview" ? "is-active" : ""} to="/app/library" aria-current={section === "overview" ? "page" : undefined}>نظرة عامة</Link>
-        {sections.map((item) => <Link key={item.key} className={section === item.key ? "is-active" : ""} to={item.href} aria-current={section === item.key ? "page" : undefined}>{item.label}</Link>)}
-      </nav>
-
-      {section === "overview" ? (
-        <div className="student-library-grid">
-          {sections.map((item) => (
-            <Link className="student-library-card student-clickable-card" key={item.key} to={item.href}>
-              <span className="student-library-card__icon"><LibraryIcon kind={item.key} /></span>
-              <span><strong>{item.label}</strong><small>{item.description}</small></span>
-              <span className="student-clickable-card__arrow" aria-hidden="true">←</span>
-            </Link>
-          ))}
+      {section !== "overview" ? (
+        <div className="student-library-backbar">
+          <Link className="text-button student-library-back" to="/app/library"><span aria-hidden="true">→</span>العودة إلى نظرة مكتبتي</Link>
+          <span>{sections.find((item) => item.key === section)?.label}</span>
         </div>
       ) : null}
 
+      {section === "overview" ? <LibraryOverview refreshKey={refreshKey} /> : null}
       {section === "downloads" ? <StudentOfflineDownloadsSection online={online} refreshKey={refreshKey} onSessionExpired={onSessionExpired} embedded /> : null}
       {section === "notes" ? <EmptyPersonalCollection kind="notes" /> : null}
       {section === "saved" ? <EmptyPersonalCollection kind="saved" /> : null}

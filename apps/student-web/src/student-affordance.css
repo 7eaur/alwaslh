@@ -30,7 +30,7 @@
 }
 
 .student-shell .text-button {
-  min-height: 2.75rem;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -59,7 +59,7 @@
 }
 
 .student-shell .student-compact-action {
-  min-height: 2.75rem;
+  min-height: 44px;
   padding: 0.48rem 0.72rem;
   font-size: 0.9rem;
 }
