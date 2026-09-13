@@ -1,3 +1,5 @@
+import type { AiApplicationCapability } from "./ai-application-api";
+
 export type AiJobExecutionStatus = "queued" | "running" | "retrying" | "completed" | "failed" | "cancelled";
 export type AiJobLifecycleStatus = AiJobExecutionStatus | "paused";
 export type AiUnitStatus = AiJobExecutionStatus | "review_required";
@@ -105,6 +107,7 @@ export interface AiReviewOutputView {
   reviewHistory: readonly AiReviewHistoryEventView[];
   reviewPagination: AiPaginationView;
   allowedReviewActions: readonly AiReviewAction[];
+  application: AiApplicationCapability | null;
 }
 
 export interface AiAttemptView {
