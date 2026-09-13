@@ -138,6 +138,24 @@ test("Admin AI review keeps canonical human-review authority and survives reload
   await expect(page.getByRole("navigation", { name: "صفحات سجل مراجعة النتيجة" })).toContainText("1–50 من 102");
 });
 
+test("Admin AI review applies an approved lesson result without copying internal IDs", async ({ page }) => {
+  await login(page);
+  await openAiWorkspace(page);
+  await openJob(page, "lesson_summary");
+
+  await page.locator(".ai-review-unit").first().click();
+  await expect(page.getByRole("heading", { name: "مراجعة النتيجة" })).toBeVisible();
+  await expect(page.getByText("ملخص درس معتمد عبر مراجعات AI", { exact: true })).toBeVisible();
+
+  const apply = page.getByRole("button", { name: "تطبيق النتيجة على الدرس" });
+  await expect(apply).toBeVisible();
+  await expect(apply).toBeEnabled();
+  await apply.click();
+
+  await expect(page.getByRole("status")).toContainText("تم تحديث ملخص الدرس");
+  await expect(page.getByText(/Output ID|UUID|Job:/)).toHaveCount(0);
+});
+
 test("Admin AI review returns to login after the real Admin session expires", async ({ page }) => {
   await login(page);
   await openAiWorkspace(page);
