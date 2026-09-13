@@ -4,8 +4,8 @@
 
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no merge or auto-merge authorized.  
-**Live main checked this continuation:** `43649391e7fc3526c0ef0a27720e50271fb52e9d` — parallel Student workstream; untouched.  
-**Current stage:** AR-09 Cleanup / architecture enforcement — DONE / VERIFIED on production exact-head; AR-10 is NEXT.  
+**Live main checked this continuation:** `3053640cc5bb0699cfa7456cf646e8997f6aa81b` — parallel Student/content workstream; untouched.  
+**Current stage:** AR-10 A11y / RTL / performance / visual QA — **ACTIVE / Batch 1 exact-head verification running**.  
 **Verified AR-09 production code-head:** `c755b209bfa67980afee0ed150bd43b3574b0a3b`.
 
 ## Super Admin stage ledger
@@ -19,44 +19,30 @@
 - AR-07 — DONE / VERIFIED.
 - AR-08 — DONE / VERIFIED.
 - AR-09 — **DONE / VERIFIED**.
-  - Batches 1–9A — DONE / VERIFIED.
-  - Batch 10A — AI Authoring ownership relocation + root seam removal — DONE / VERIFIED.
-  - Final fresh root-workspace cleanup — DONE / VERIFIED.
-- AR-10 — A11y / RTL / performance / visual QA — **NEXT / NOT STARTED**.
+- AR-10 — **ACTIVE — Batch 1 accessibility baseline under exact-head CI**.
 
-## What was completed this continuation
+## AR-10 continuation
 
-Pre-mutation truth was re-read from live `main`, branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head Actions. The inherited documentation head `52bf059b882e0927cadbaf3b519f78625827eb52` was verified green before production mutation.
+The inherited documentation exact-head `fdc6a4ed2a3de8f7481b7522d1f14907a0018219` was closed before mutation:
+- Admin AI `34789354837` — SUCCESS;
+- Combined `34789354801` — SUCCESS;
+- Stage13G `34789354857` — SUCCESS.
 
-### AR-09 Batch 10A — AI Authoring ownership closed
+Current Admin inspection confirmed the product already has RTL ownership (`dir="rtl"`), a skip link, route-focus management, semantic navigation labels, responsive shell breakpoints and real Chromium coverage. Those are **KEEP**. The first concrete AR-10 gap was the global keyboard focus baseline: anchors/textarea/programmatic tabindex targets were not covered by the shared focus-visible rule, and no reduced-motion fallback existed.
 
-1. Real implementation relocation commit `a1d87bb31dd0cc36efb29854075fb9bd9abbd705` moved `AdminAiAuthoringWorkspace` into `apps/admin-web/src/admin/ai-authoring/` with only relative import adjustments; root remained a compatibility re-export.
-2. Exact-head relocation parity was fully green: Frontend `34788603353`, Admin AI `34788603354`, Combined `34788603377`, Stage13G `34788603350`.
-3. Root compatibility seam removal commit `fdbbe7f6c06e2e6138c97793934d3f120f95604a` deleted only `apps/admin-web/src/AdminAiAuthoringWorkspace.tsx` after caller proof.
-4. Exact-head seam-removal parity was fully green: Frontend `34788799234`, Admin AI `34788799271`, Combined `34788799237`, Stage13G `34788799243`.
+Commit `1d3fd708bb913f4363721b17e4d78c90d02b8ddc` changes only `apps/admin-web/src/styles.css`:
+- extends visible keyboard focus treatment to links, textarea and tabindex targets;
+- strengthens focus contrast/offset;
+- adds `prefers-reduced-motion: reduce` fallback without changing business behavior.
 
-### Fresh AR-09 inventory + final cleanup
-
-Fresh router/root inventory proved three remaining root workspaces were superseded by established feature owners and were not router-owned callers:
-- `apps/admin-web/src/AdminGovernanceWorkspace.tsx`;
-- `apps/admin-web/src/AdminOperationsWorkspace.tsx`;
-- `apps/admin-web/src/AiOperationsWorkspace.tsx`.
-
-They were classified **REMOVE / dead legacy** while current feature-owned routes/APIs/server/PostgreSQL contracts/tests were **KEEP**. Commit `c755b209bfa67980afee0ed150bd43b3574b0a3b` removed only those three superseded root files.
-
-Final AR-09 exact-head verification on `c755b209bfa67980afee0ed150bd43b3574b0a3b` is fully green:
-- Frontend `34789114130` — SUCCESS;
-- Admin AI `34789114112` — SUCCESS;
-- Combined `34789114110` — SUCCESS;
-- Stage13G `34789114192` — SUCCESS;
-  - backend `103809925133` — SUCCESS;
-  - Admin UI `103809925136` — SUCCESS;
-  - Real API + PostgreSQL + Chromium `103810061281` — SUCCESS.
-
-No backend, migrations, API authority, Student workstream or test-strength changes were made. Root `src/*Workspace.tsx` legacy ownership inventory is now clean; remaining root components are shared/bootstrap/API/style/test modules rather than route-owned legacy workspaces.
+No backend, migrations, API contracts, Student workstream or tests were changed.
 
 ## Current blocker / explicit next step
 
-AR-09 has no production blocker and is formally closed on a green exact-head production commit. This documentation checkpoint creates a newer docs-only branch head, so the next task must first inspect/close its exact-head CI before beginning AR-10.
+Do not make another AR-10 production mutation until exact-head CI for `1d3fd708bb913f4363721b17e4d78c90d02b8ddc` closes. Current runs:
+- Frontend `34791103952` — ACTIVE;
+- Admin AI `34791103945` — ACTIVE/queued at last check;
+- Combined `34791103997` — ACTIVE;
+- Stage13G `34791104004` — ACTIVE/queued at last check.
 
-Then execute **AR-10 only**: A11y / RTL / performance / visual QA according to the workstream quality gate. Do not redo AR-09 without new evidence. Preserve Student isolation, backend/PostgreSQL authority and test strength. Keep PR #52 Draft; no merge or auto-merge.
+After all are green, continue AR-10 with runtime/Chromium responsive + keyboard/RTL/no-overflow evidence and only then make the next smallest evidence-driven fix. AR-10 is not COMPLETE until accessibility, RTL, performance and visual/responsive QA are verified on exact-head. Final verification starts only after AR-10 is green. Keep PR #52 Draft; no merge or auto-merge.
