@@ -4,11 +4,10 @@
 
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no automatic merge.  
-**Live main reference checked this run:** `5b6fbfecade3abd52a5c4203e47c4f5b69444a86`.  
-**Latest fully verified AR-09 code-head before Batch 7A:** `2a958723d434e10755d35299ba509f69fc411bb3`.  
-**Batch 7A relocated implementation/documentation checkpoint verified before deletion:** `7ed738b7e42d3c5fc022cf3757a7877a66291dfa`.  
-**Current Batch 7A seam-removal code-head under verification:** `7b4106f82ab6f1c152ac20caf11c70779224acde`.  
-**Current stage:** AR-09 Cleanup / architecture enforcement — ACTIVE.
+**Live main checked this run:** `5b6fbfecade3abd52a5c4203e47c4f5b69444a86`.  
+**Current stage:** AR-09 Cleanup / architecture enforcement — ACTIVE.  
+**Latest verified Batch 7A production state:** root Content Ingestion seam removed and verified by Frontend `34778944908` on code-head `7b4106f82ab6f1c152ac20caf11c70779224acde`, plus Admin AI `34779021476`, Combined `34779021471`, Stage13G `34779021457` on documentation descendant `803e9b55c2496998358cf257a959bc4a6799a90f` carrying identical production code — SUCCESS.  
+**Current Batch 8A code-head:** `155759bf1cd9558a976ed1dca77dcce8186fff4e`.
 
 ## Super Admin stage ledger
 
@@ -16,86 +15,84 @@
 - AR-02 — Overview + Operations split — DONE / VERIFIED.
 - AR-03 — Curriculum — DONE / VERIFIED.
 - AR-04 — Content + OCR — DONE / VERIFIED.
-- AR-05 — Reviews + AI — DONE / VERIFIED. Final checkpoint `cda2c3a683c6101db12f0c7cfad772226c234e0d`; Frontend `34729512441`, Admin AI `34729512433`, Combined `34729512404` — SUCCESS.
-- AR-06 — Question Bank — DONE / VERIFIED. Final code-head `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
-- AR-07 — Quiz Builder — DONE / VERIFIED. Final code-head `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
-- AR-08 — Students + Access Codes — DONE / VERIFIED. Final code-head `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
+- AR-05 — Reviews + AI — DONE / VERIFIED.
+- AR-06 — Question Bank — DONE / VERIFIED.
+- AR-07 — Quiz Builder — DONE / VERIFIED.
+- AR-08 — Students + Access Codes — DONE / VERIFIED.
 - AR-09 — Cleanup / architecture enforcement — **ACTIVE**.
   - Batch 1 — Quiz metadata ownership relocation — VERIFIED.
   - Batch 2 — Lesson authoring tools ownership relocation — VERIFIED.
   - Batch 3 — Access-code reports ownership relocation — VERIFIED.
-  - Batch 4A — AI review ownership relocation — VERIFIED on `141e3e7912171c10356b8d32a268ddcbfda267f3`.
-  - Batch 5A — Curriculum ownership relocation + root seam removal — VERIFIED on `d40c71192f513f18d69b0e67be408e6f146a3ec5`.
-  - Batch 6A — Content review ownership relocation + root seam removal — VERIFIED on `2a958723d434e10755d35299ba509f69fc411bb3`.
-  - Batch 7A — Content ingestion ownership relocation — **ACTIVE; relocation parity verified, obsolete root compatibility seam removed in `7b4106f...`, deletion-head parity pending**.
+  - Batch 4A — AI review ownership relocation — VERIFIED.
+  - Batch 5A — Curriculum ownership relocation + root seam removal — VERIFIED.
+  - Batch 6A — Content review ownership relocation + root seam removal — VERIFIED.
+  - Batch 7A — Content ingestion ownership relocation + root seam removal — **DONE / VERIFIED**.
+  - Batch 8A — Lesson publication panel ownership relocation — **ACTIVE / IMPLEMENTATION MOVED / PARITY PENDING**.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
-## AR-09 Batch 7A — current checkpoint
+## What was reconciled before this mutation
 
-### State received and verified
+This run re-fetched live `main`, current Admin branch HEAD, the three continuity files, recent commits, Draft PR #52 and exact-head CI before modifying code.
 
-Before mutation this run re-fetched live `main`, branch HEAD, all three continuity files, latest commits, Draft PR #52 and exact-head CI.
+Inherited documentation HEAD `803e9b55c2496998358cf257a959bc4a6799a90f` had all workflows it triggered green: Admin AI `34779021476`, Combined `34779021471`, Stage13G `34779021457`. The seam-removal code-head `7b4106f82ab6f1c152ac20caf11c70779224acde` also had Frontend `34778944908` SUCCESS; its longer gates were superseded by documentation-only commits, not assertion failures. Therefore Batch 7A is now closed as DONE / VERIFIED.
 
-- live `main` = `5b6fbfecade3abd52a5c4203e47c4f5b69444a86`; this advance belongs to the parallel Student workstream and was not touched;
-- inherited Admin documentation HEAD = `7ed738b7e42d3c5fc022cf3757a7877a66291dfa`;
-- Draft PR #52 remained open, Draft and unmerged;
-- the inherited relocated implementation is owned by `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` and `ContentIngestionPage` imports it locally;
-- exact-head `7ed738b7...`, carrying the same relocated production code, completed Admin AI `34777365375`, Combined `34777365376`, Stage13G `34777365395` — all SUCCESS.
+## Fresh AR-09 inventory and decision
 
-Therefore the relocation-parity blocker was closed before deletion.
+A fresh route/feature ownership inventory was performed after Batch 7A closure.
 
-### Caller proof and classification
+Evidence:
+- `App.tsx` routes Content Ingestion through `admin/content/ContentIngestionPage`.
+- `admin/content/ContentIngestionWorkspace.tsx` still imported `LessonPublicationPanel` from the app root.
+- `LessonPublicationPanel` is exclusively the lesson-content publication decision surface and calls the canonical `lesson-content-api` server contract.
+- its behavior includes loading server-owned lesson publication state, submit-review, return-to-draft, publish confirmation, blocked-review handling, and missing-session handling.
 
-Caller/ownership verification showed:
-- `App.tsx` imports `ContentIngestionPage` from `./admin/content/ContentIngestionPage`;
-- `ContentIngestionPage` imports `./ContentIngestionWorkspace` from the Content feature folder;
-- the root `apps/admin-web/src/ContentIngestionWorkspace.tsx` contained only a compatibility re-export;
-- PR #52 patch confirms the former root route import was removed and the root implementation had already been reduced to the re-export.
+This is a justified AD-ADMIN-029 seam because Content is the established feature owner. The separate root `AdminAiAuthoringWorkspace` was also observed, but no parallel work was started; Batch 8A is the smaller and unambiguous ownership fix.
 
-Classification remains:
-- **KEEP:** ingestion behavior, validation, lifecycle/history/detail, linking/publication semantics, session handling, API/PostgreSQL authority and tests.
+Classification for Batch 8A:
+- **KEEP:** lesson publication behavior, confirmation, review-blocking rules, session handling, API/PostgreSQL authority and existing tests.
 - **IMPROVE:** feature ownership.
-- **REFACTOR:** completed implementation relocation.
+- **REFACTOR:** move real `LessonPublicationPanel` implementation under `admin/content/`.
 - **REBUILD:** none.
-- **REMOVE:** obsolete root compatibility re-export — executed this run.
-- **NO CHANGE:** backend, migrations, auth/security, Student workstream and test strength.
+- **REMOVE:** root compatibility seam only after executable parity proves no regression.
+- **NO CHANGE:** backend, migrations, Student workstream, auth/security or test strength.
 
-### Code changed this run
+## Batch 8A code changed
 
-`7b4106f82ab6f1c152ac20caf11c70779224acde` — `refactor(admin): remove content ingestion root seam`
+1. `333ed22db2a9708560845cfcc496a81fc18fd743` — `refactor(admin): add content-owned lesson publication panel`
+   - added `apps/admin-web/src/admin/content/LessonPublicationPanel.tsx` with behavior preserved and only relative import paths adjusted.
+2. `155759bf1cd9558a976ed1dca77dcce8186fff4e` — `refactor(admin): route lesson publication through content owner`
+   - reduced root `apps/admin-web/src/LessonPublicationPanel.tsx` to a compatibility re-export of the content-owned implementation.
 
-Deleted only:
-- `apps/admin-web/src/ContentIngestionWorkspace.tsx`
+No backend, migration, API-contract, Student, security or test file changed.
 
-No backend, migration, API-contract, auth/security, Student or test file changed.
+## Verification currently running
 
-### Exact-head parity status
+Exact code-head `155759bf1cd9558a976ed1dca77dcce8186fff4e` triggered:
+- Frontend `34780494748` — PENDING at checkpoint;
+- Admin AI `34780494751` — PENDING at checkpoint;
+- Combined `34780494746` — PENDING at checkpoint;
+- Stage13G `34780494761` — PENDING at checkpoint.
 
-Deletion code-head `7b4106f82ab6f1c152ac20caf11c70779224acde` triggered CI. At documentation checkpoint:
-- Combined `34778944934` — QUEUED;
-- the remaining configured branch gates had not all appeared yet in the run listing.
-
-No failure was observed. Because deletion-head parity is still active, Batch 7A remains ACTIVE and no further AR-09 cleanup or AR-10 work may start.
+No failure was observed before documentation. Batch 8A is therefore not COMPLETE and no caller rewrite/root deletion is allowed yet.
 
 ## Current blocker / next step
 
-The only blocker is exact-head CI for the seam-removal code in `7b4106f82ab6f1c152ac20caf11c70779224acde` (or a newer documentation-head equivalent carrying identical production code).
+The only blocker is exact-head parity for Batch 8A on `155759bf1cd9558a976ed1dca77dcce8186fff4e` or a newer documentation-only descendant carrying identical production code.
 
 Next task A/B must:
 1. re-fetch live `main`, branch HEAD, all three continuity docs, Draft PR #52 and exact-head CI;
-2. resolve the full deletion-head matrix first, including Frontend when triggered, Admin AI, Combined and Stage13G;
-3. if fully green, mark Batch 7A DONE / VERIFIED;
-4. perform a fresh AR-09 inventory before any new mutation;
-5. if no justified cleanup seam remains, run final AR-09 verification and formally close AR-09;
-6. only then start AR-10.
+2. resolve the Batch 8A matrix first;
+3. if green, inspect all callers of root `LessonPublicationPanel.tsx`;
+4. if `admin/content/ContentIngestionWorkspace.tsx` is the only relevant caller, switch it to local `./LessonPublicationPanel`, run exact-head parity, then delete the root compatibility seam only after that parity is green;
+5. perform another fresh AR-09 inventory after Batch 8A is fully verified;
+6. do not start AR-10 until AR-09 is formally closed.
 
 ## Shared resume point for task A/B
 
-- AR-09 Batches 1–6A are DONE / VERIFIED; do not redo them.
-- Batch 7A is ACTIVE at seam-removal parity.
-- Last relocation-equivalent green evidence: HEAD `7ed738b7e42d3c5fc022cf3757a7877a66291dfa`; Admin AI `34777365375`, Combined `34777365376`, Stage13G `34777365395` — SUCCESS.
-- Current production code-head: `7b4106f82ab6f1c152ac20caf11c70779224acde`; root Content Ingestion seam has been deleted.
-- First observed deletion-head run: Combined `34778944934` — QUEUED at checkpoint.
-- Do not create parallel code while exact-head verification is active.
+- AR-09 Batches 1–7A are DONE / VERIFIED; do not redo them.
+- Batch 8A is ACTIVE at first relocation parity.
+- Current production code-head: `155759bf1cd9558a976ed1dca77dcce8186fff4e`.
+- Current exact-head runs: Frontend `34780494748`, Admin AI `34780494751`, Combined `34780494746`, Stage13G `34780494761`.
+- Root `LessonPublicationPanel.tsx` is still intentionally present as a compatibility re-export; do not delete it before green parity + caller proof.
 - Preserve server/PostgreSQL authority, Student isolation and current test strength.
 - Keep PR #52 Draft; no merge or auto-merge.
