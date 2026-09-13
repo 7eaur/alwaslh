@@ -153,4 +153,4 @@ jobs:
 
       - name: Run Stage13E real Admin Chromium suite
         working-directory: apps/admin-web
-        run: npx playwright test e2e/ai-operations.e2e.spec.mjs
+        run: npx playwright test e2e/ai-operations.e2e.spec.mjs e2e/quiz-builder.e2e.spec.mjs
