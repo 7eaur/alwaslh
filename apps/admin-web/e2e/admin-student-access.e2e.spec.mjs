@@ -24,9 +24,9 @@ async function openStudents(page) {
 
 async function openAccessCodes(page) {
   await page.goto("/app/access-codes");
-  await expect(page.getByRole("heading", { name: "الطلاب والوصول", exact: true })).toBeVisible();
-  await page.getByRole("tab", { name: "أكواد الوصول" }).click();
   await expect(page.getByRole("heading", { name: "أكواد الوصول", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "حسابات الطلاب" })).toHaveCount(0);
+  await expect(page.getByRole("tab", { name: "أكواد الوصول" })).toHaveCount(0);
 }
 
 test("Focused student route performs recovery, device rebind and entitlement revoke through the real API", async ({
@@ -61,7 +61,7 @@ test("Focused student route performs recovery, device rebind and entitlement rev
   await expect(detail.getByText(/موقوف · تنتهي/)).toBeVisible();
 });
 
-test("Access-code route generates and non-destructively revokes unused codes", async ({ page }) => {
+test("Focused access-code route generates, filters and non-destructively revokes unused codes", async ({ page }) => {
   await login(page);
   await openAccessCodes(page);
 
