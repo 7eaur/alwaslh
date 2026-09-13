@@ -9,7 +9,7 @@ import {
   restoreAdminSession,
 } from "./admin-api";
 import { ADMIN_NAVIGATION } from "./admin-navigation";
-import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
+import { AdminAiAuthoringWorkspace } from "./admin/ai-authoring/AdminAiAuthoringWorkspace";
 import { AiOperationsPage } from "./admin/reviews/AiOperationsPage";
 import { ContentOperationsPage } from "./admin/reviews/ContentOperationsPage";
 import { AdminAccessCodesPage } from "./admin/access-codes/AdminAccessCodesPage";
