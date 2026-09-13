@@ -10,7 +10,7 @@ Last synchronized: **2026-09-13**.
 
 **ACTIVE TRACKS: UX/UI REFOUNDATION + PARALLEL SUPER ADMIN PRODUCT REBUILD**
 
-**SUPER ADMIN CURRENT BATCH:** `AR-07 — Quiz Builder` — NEXT / NOT STARTED.
+**SUPER ADMIN CURRENT BATCH:** `AR-07 — Quiz Builder` — ACTIVE / Batch 1 list ownership migration; exact-head CI pending.
 
 **SUPER ADMIN COMPLETED:** `AR-01` through `AR-06` — DONE / VERIFIED.
 
@@ -18,7 +18,7 @@ Branch: `rebuild/super-admin-foundation`
 
 Draft PR: **#52 — `refactor(admin): rebuild Super Admin foundation`** — remains Draft.
 
-Latest live `main` re-read before AR-06 closure: `343ff1fd7b3d64d7e990b72606695365f520fa58`. The Admin branch remains isolated and must not overwrite Student/audit work.
+Latest live `main` re-read before AR-07 Batch 1: `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`. The Admin branch remains isolated and must not overwrite Student/audit work.
 
 Canonical UX roadmap: `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`.
 Super Admin roadmap: `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`.
@@ -85,15 +85,38 @@ Final exact code-head verification for AR-06 on `02cf24d5c3fda57f7270580d8c5ff13
 
 No route/navigation change was introduced by Batch 2F; existing real Chromium Question Bank flows therefore remained the executable parity proof while the orphaned source was removed.
 
+## AR-07 — Quiz Builder — ACTIVE
+
+Batch 1 started from documented handoff `ea6c0a07fddeaf0a219440cca277e68f7fa9587b` after re-reading live `main`, PR #52, exact-head CI, frontend ownership, API/service contracts and `quiz-builder.integration.test.ts`.
+
+Classification so far:
+
+- **KEEP:** PostgreSQL/API authority for quiz lifecycle, published Question Bank revision references, immutable published snapshots and export rules.
+- **REFACTOR:** route ownership in Admin frontend; the old `QuizBuilderWorkspace.tsx` still combines list/create/detail/version editing/lifecycle/export.
+- **MIGRATE GRADUALLY:** preserve the legacy management surface while focused routes are proven, rather than removing capability in one large rewrite.
+
+Batch 1 code changes:
+
+- `7746000748129a659e098e016d3ffbfd4d5ddc46` — added `admin/quizzes/QuizBuilderListPage.tsx` as a focused server-backed list/search/status/pagination surface.
+- `30d9443ed1c159440d38dc76db61686028c3d028` — routed `/app/quizzes` to the focused list and moved the existing all-capabilities workspace to `/app/quizzes/manage` as a temporary parity-preserving management route.
+- No migrations, API business rules or Student code changed.
+
+CI launched for exact code head `30d9443ed1c159440d38dc76db61686028c3d028`:
+
+- Frontend `34741455324` — IN PROGRESS at this checkpoint.
+- Admin AI `34741455298` — PENDING at this checkpoint.
+- Combined `34741455320` — PENDING at this checkpoint.
+
+AR-07 is **not complete** and Batch 1 must not be declared verified until these exact-head runs are green.
+
 ## Immediate next actions / shared handoff
 
 1. Re-read this file, `PROJECT_ENGINEERING_LOG.md`, `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`, current branch HEAD, live `main`, PR #52 and exact-head CI before editing.
-2. Documentation-only closure commits may trigger fresh CI; inspect/close those runs before code mutation.
-3. Start **AR-07 — Quiz Builder only**; AR-06 is closed and must not be reopened without a real regression.
-4. Inventory Quiz Builder migrations/backend/API/frontend/tests before editing and classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE.
-5. Preserve quiz lifecycle/composition/versioning/business authority while simplifying frontend ownership and IA.
-6. Do not start AR-08 before AR-07 exact-head verification and synchronized documentation.
-7. Keep PR #52 Draft and do not merge automatically.
+2. First reconcile the three runs for code head `30d9443ed1c159440d38dc76db61686028c3d028`; do not start another code batch while they are active.
+3. If any run fails, inspect the failing job/log and fix the root cause only; do not weaken coverage or revert the route split merely to satisfy stale UI assumptions.
+4. If green, mark AR-07 Batch 1 VERIFIED and continue AR-07 only: next target is route-owned quiz detail/management decomposition with explicit list→entity/deep-link parity, while lifecycle/version/export authority remains server-owned.
+5. Do not start AR-08 before AR-07 exact-head verification and synchronized documentation.
+6. Keep PR #52 Draft and do not merge automatically.
 
 ## Parallel product/audit facts that remain open
 
