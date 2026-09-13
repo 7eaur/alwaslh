@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains in Git history, merged PRs and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — Student Library Overview / PR #55**.
+Last consolidated: **2026-09-13 — Student Library Overview / PR #55 exact-head closure**.
 
 ## 1. Project understanding
 
@@ -95,17 +95,7 @@ Acceptance target:
 - exact-head matrix **23/23 SUCCESS**;
 - merge commit `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
 
-Established:
-
-- Welcome / Activation / Login / Recovery;
-- Help / Support;
-- unified Student shell;
-- Home / Learn / Subject / Reader;
-- Practice / Quiz / Assessment / Result;
-- Downloads / Account;
-- learner-safe error copy;
-- reduced-motion-safe micro-interactions;
-- Reader search focus repair (`FPA-013`).
+Established Welcome/Auth/Recovery/Help/Support, unified shell, Home/Learn/Reader, Practice/Assessment/Result, Downloads/Account, learner-safe errors, reduced-motion-safe interactions and Reader focus repair.
 
 ### PR #54 — Future Student Surfaces
 
@@ -116,29 +106,11 @@ Established:
 - merge commit `c3734366c132ea3919a925bdd0dd37cfd5d82104`;
 - phone/desktop Visual QA accepted.
 
-Established:
-
-- final four-item Student primary navigation;
-- `/app/library` + Downloads / Notes / Saved / Needs Review prebuilt surfaces;
-- `/app/notifications` prebuilt honest zero state;
-- `/app/progress` prebuilt honest zero state;
-- Account personal-management hub;
-- interaction-affordance layer;
-- >=44px touch-target acceptance;
-- destination-level lazy loading;
-- no fabricated future learner data.
+Established final four-item Student primary navigation, Library/Notifications/Progress prebuilt surfaces, Account personal-management hub, affordance rules, >=44px targets, lazy destination loading and no fabricated future data.
 
 ### Performance result
 
-Feature-level lazy loading reduced the initial main Student bundle from approximately:
-
-- `599.61 KB minified / 148.83 KB gzip`
-
-to approximately:
-
-- `225.89 KB minified / 71.24 KB gzip`.
-
-Learn, Assessment, Library/personal surfaces and Account are emitted as separate on-demand chunks.
+Feature-level lazy loading reduced initial Student JS from approximately `599.61 KB / 148.83 KB gzip` to `225.89 KB / 71.24 KB gzip`.
 
 ## 5. Active work — PR #55 Library Overview Refinement
 
@@ -148,109 +120,82 @@ Base when opened: `main@c3734366c132ea3919a925bdd0dd37cfd5d82104`
 
 PR: `#55 — refactor(student): redesign Library overview hierarchy`
 
-Latest live inspection before this documentation sync: PR OPEN / mergeable. Live-check again before merge.
-
 ### Finding `UX-LIBRARY-101`
 
 - **Severity:** P2
 - **Area:** Student / Library / IA
-- **Problem:** `/app/library` repeated Downloads/Notes/Saved/Needs Review as both horizontal tabs and large destination cards.
-- **Evidence:** merged `student-future-surfaces.tsx` rendered both controls on the same overview.
-- **Impact:** repeated choices, unnecessary visual weight, weaker overview semantics, less elegant phone composition.
-- **Solution:** remove duplicate tabs; make Library summary-first; keep one destination grid; child sections expose a single back-to-Library action.
+- **Problem:** `/app/library` repeated Downloads/Notes/Saved/Needs Review as both horizontal tabs and destination cards.
+- **Impact:** repeated choices, visual weight and weaker overview semantics.
+- **Solution:** summary-first overview, one destination grid, one return-to-Library action in child sections.
 - **Status:** FIXED IN PR #55 / FINAL EXACT-HEAD VERIFICATION PENDING.
 
 ### Finding `UX-LIBRARY-102`
 
 - **Severity:** P2
 - **Area:** Student / Library / product truth
-- **Problem:** Product Owner requested a useful overview with statistics while Stage17 personal-learning repositories do not yet exist.
-- **Evidence:** Downloads already has real IndexedDB-backed offline packages; Notes/Saved/Needs Review are pre-integrated surfaces only.
-- **Impact:** naive UI could fabricate metrics and violate AD-252.
-- **Solution:** real saved-download count from existing offline package store; honest zero values for Notes/Saved/Needs Review until Stage17 repositories land; explicit Stage17 replacement requirement.
+- **Problem:** useful statistics were requested before Stage17 repositories exist.
+- **Solution:** real offline-package count for Downloads; honest zero states for Notes/Saved/Needs Review until Stage17 owns those records.
 - **Status:** IMPLEMENTED / FUTURE DATA CONNECTION PENDING.
 
 ### Finding `UX-LIBRARY-103`
 
 - **Severity:** P3
 - **Area:** Student / visual hierarchy
-- **Problem:** an early design direction risked separate KPI cards/gradient treatment and another dashboard/card-wall feel.
-- **Solution:** one flat quiet divided summary surface; only destination cards carry stronger interactive treatment.
+- **Problem:** separate KPI-card/gradient treatment would recreate dashboard/card-wall styling.
+- **Solution:** one quiet divided informational summary; stronger treatment reserved for clickable destination cards.
 - **Status:** FIXED BEFORE FINAL ACCEPTANCE.
 
-### Implementation
+### Finding `QA-STUDENT-104`
 
-`apps/student-web/src/student-future-surfaces.tsx`
+- **Severity:** P2
+- **Area:** Student / browser acceptance
+- **Problem:** after the approved Library redesign, `student-shell-navigation.e2e.spec.mjs` still asserted the old heading `كل ما يخص تعلمك في مكان واحد`.
+- **Evidence:** exact-head `aca9a2f72ecede120d1d87889f9a3fb0660ea712` produced **20/23 workflow SUCCESS**; B02 failed only in its Playwright shell step after quality/build/migrations/Chromium setup passed. Stage14 quality passed but its full `npm run test:e2e` failed; Rebuild backend/build/migration jobs passed but its Stage8 full `npm run test:e2e` failed. The full suites necessarily include the stale B02 spec.
+- **Impact:** exact-head matrix was red even though the failure contradicted the newly approved copy/IA rather than exposing a product regression.
+- **Solution:** update only the obsolete heading expectation to `محتواك الشخصي، مرتب في مكان واحد`; preserve navigation/focus/history/offline/no-overflow assertions and all offline integrity tests.
+- **Status:** FIXED ON PR #55; fresh exact-head matrix required.
 
-- Library overview hierarchy rebuilt;
-- honest summary/statistics;
-- real download count reads active offline package scope;
-- duplicate tabs removed;
-- child-section return control added.
+### Implementation ownership
 
-`apps/student-web/src/student-library-overview.css`
-
-- dedicated responsive overview composition;
-- one quiet statistics surface;
-- desktop/narrow 4-cell → 2×2 behavior;
-- destination card hierarchy;
-- return-bar styling;
-- no decorative gradient.
-
-`apps/student-web/e2e/student-b05.e2e.spec.mjs`
-
-- requires summary/statistics;
-- requires duplicate tabs absent;
-- requires four destination cards;
-- downloads a real lesson then requires Downloads stat `٠ → ١`;
-- preserves clickability/static-information acceptance.
-
-`apps/student-web/e2e/offline-download.e2e.spec.mjs`
-
-- stale old navigation selector updated to the new Library IA;
-- manifest/signature/checksum/tamper/removal/logout integrity coverage remains intact.
-
-`docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
-
-- canonical product/design decision for this batch.
+- `apps/student-web/src/student-future-surfaces.tsx` — overview hierarchy, real Downloads count, child return action.
+- `apps/student-web/src/student-library-overview.css` — responsive quiet summary/destination composition.
+- `apps/student-web/e2e/student-b05.e2e.spec.mjs` — summary, no duplicate tabs, destination and real count acceptance.
+- `apps/student-web/e2e/offline-download.e2e.spec.mjs` — new IA navigation while retaining integrity/tamper/removal/logout assertions.
+- `apps/student-web/e2e/student-shell-navigation.e2e.spec.mjs` — stale Library heading expectation aligned with approved overview.
+- `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md` — canonical decision.
 
 ## 6. PR #55 verification evidence
 
-Verified on the current implementation before the last documentation/test-sync commits:
+Implementation-level evidence already obtained:
 
 - Student lint — SUCCESS;
 - strict typecheck — SUCCESS;
 - unit tests — **11 files / 41 tests SUCCESS**;
 - production build — SUCCESS.
 
-First B05 Chromium run:
+Exact-head `aca9a2f72ecede120d1d87889f9a3fb0660ea712`:
 
-- 3 tests passed;
-- 1 old `offline-download.e2e.spec.mjs` assertion failed because it still expected the removed exact `التنزيلات` tab/old heading;
-- this was test-contract drift, not a runtime/download-integrity failure;
-- stale selector was updated to the new Library destination while preserving integrity assertions.
+- **20/23 workflows SUCCESS**;
+- failures: B02, Stage14, Rebuild;
+- B02 stale heading expectation proven directly;
+- Stage14 and Rebuild aggregate browser jobs execute the full Playwright suite containing that stale test;
+- API/build/migrations and unrelated backend stage jobs passed.
 
-Because test and documentation commits changed the branch head afterward:
+The selector fix moved the branch head. Therefore old exact-head evidence is not merge evidence.
 
-**FINAL EXACT-HEAD WIDE CI + REGENERATED PHONE/DESKTOP VISUAL QA ARE STILL REQUIRED BEFORE MERGE.**
+**FINAL REQUIRED GATE:** fresh exact-head workflow matrix + exact-head B05 phone/desktop Visual QA.
 
 ## 7. Exact continuation for PR #55
 
-Do not redesign the Library again unless new evidence proves a problem.
+Do not redesign the Library again without new product evidence.
 
-Next steps:
-
-1. live-fetch PR #55 head + live `main`;
-2. inspect triggered exact-head workflow matrix;
-3. require B01/B02/B03/B04/B05 + Stage14/15/16 + Rebuild and all other triggered workflows to succeed;
-4. inspect B05 Visual QA artifact for phone and desktop;
-5. verify no duplicate Library tabs;
-6. verify saved-download statistic updates `0 → 1` after a real download;
-7. verify statistics remain non-clickable;
-8. verify collection cards remain unmistakably clickable;
-9. verify no horizontal overflow, learner-safe copy and reduced-motion behavior;
-10. if all green and visuals accepted, update final evidence and merge PR #55 with expected-head SHA guard;
-11. if a failure appears, classify product regression vs stale test before changing UI.
+1. live-fetch final PR #55 head and `main`;
+2. require B01/B02/B03/B04/B05 + Stage14/15/16 + Rebuild and all other triggered workflows SUCCESS on that exact head;
+3. inspect B05 Visual QA artifact for phone and desktop;
+4. confirm duplicate tabs absent, real saved-download count `0 → 1`, stat cells static, destination cards obvious, no overflow, learner-safe copy and reduced-motion behavior;
+5. update final evidence;
+6. merge with expected-head SHA guard only after all gates pass;
+7. then resume normal roadmap at `STUDENT-016I`.
 
 ## 8. Open / deferred product work
 
@@ -258,39 +203,19 @@ Next steps:
 
 `UX-OFFLINE-104` / true cold-start offline Reader remains open.
 
-Normal return starts at:
-
-`STUDENT-016I`
-
-Then:
-
-`STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G`.
+Normal return starts at `STUDENT-016I`, then `STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G`.
 
 ### Stage17
 
-Connect authoritative Personal Learning Data to the prebuilt Library:
-
-- Notes CRUD/provenance;
-- Saved/bookmarked questions;
-- Needs Review;
-- ownership/offline/sync/conflict rules.
+Connect authoritative Notes CRUD/provenance, Saved questions, Needs Review and ownership/offline/sync/conflict rules.
 
 ### Stage18
 
-Connect Notifications:
-
-- feed;
-- unread/last-seen;
-- deep-link contract;
-- lifecycle/quiet-hours/opt-out/Web Push where approved.
+Connect Notifications feed, unread/last-seen, deep links and approved lifecycle behavior.
 
 ### Stage19
 
-Connect trusted Progress/Statistics/Achievements:
-
-- server-defined metrics only;
-- no client-invented mastery;
-- privacy-safe achievement/ranking behavior.
+Connect trusted server-defined Progress/Statistics/Achievements; no client-invented mastery.
 
 ### Admin
 
@@ -303,15 +228,9 @@ For current Student continuation, read:
 1. `PROJECT_HANDOFF.md`
 2. `PROJECT_STATUS.md`
 3. `PROJECT_ENGINEERING_LOG.md`
-4. `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
-5. `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
-6. `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
+4. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+5. `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
+6. `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
+7. `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
 
-Then live-check PR #55, `main` and CI.
-
-For broad historical recovery only after that, use:
-
-- `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`
-- `MASTER_REBUILD_ROADMAP.md`
-- `PRODUCT_FEATURE_PARITY_MATRIX.md`
-- specialized Railway/content/AI docs as relevant.
+Then live-check PR #55, `main` and CI. Anything uninspected is `NOT YET VERIFIED`.
