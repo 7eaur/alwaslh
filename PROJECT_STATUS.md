@@ -10,9 +10,9 @@ Last synchronized: **2026-09-13**.
 
 **ACTIVE TRACKS: UX/UI REFOUNDATION + PARALLEL SUPER ADMIN PRODUCT REBUILD**
 
-**STUDENT MAIN CHECKPOINT:** live `main` has independently advanced to `343ff1fd7b3d64d7e990b72606695365f520fa58` after Student PR #55 merged; Student/audit work remains owned by the parallel track and must not be overwritten by the Admin rebuild.
+**STUDENT MAIN CHECKPOINT:** live `main` is `343ff1fd7b3d64d7e990b72606695365f520fa58` after Student PR #55 merged; Student/audit work remains owned by the parallel track and must not be overwritten by the Admin rebuild.
 
-**SUPER ADMIN CURRENT BATCH:** `AR-06 — Question Bank` — ACTIVE / BATCH 2B VERIFIED.
+**SUPER ADMIN CURRENT BATCH:** `AR-06 — Question Bank` — ACTIVE / BATCH 2C VERIFIED.
 
 **SUPER ADMIN COMPLETED:** `AR-01` through `AR-05` — DONE / VERIFIED on rebuild evidence.
 
@@ -25,7 +25,7 @@ Super Admin roadmap: `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`.
 
 ## Live main baseline
 
-Current live `main` observed at the start of AR-06 Batch 2B:
+Current live `main` re-verified during AR-06 Batch 2C:
 
 `343ff1fd7b3d64d7e990b72606695365f520fa58`
 
@@ -125,7 +125,7 @@ AR-05 exact-head evidence on `cda2c3a683c6101db12f0c7cfad772226c234e0d`:
 - Stage 13E Combined Integration `34729512404` — SUCCESS;
 - Combined verification includes API/Admin quality gates, clean PostgreSQL migrations, DB contracts, backend authority regressions, Stage12/Auth regressions, deterministic real fixture checks and real Chromium.
 
-### AR-06 — ACTIVE / BATCH 2B VERIFIED
+### AR-06 — ACTIVE / BATCH 2C VERIFIED
 
 Repository-backed inventory confirms the Question Bank backend/domain remains **KEEP**: PostgreSQL/API own question lifecycle, revisions, publication authority, AI provenance/import/regeneration validation and review events. The root issue remains frontend composition and route ownership, not missing backend CRUD.
 
@@ -153,17 +153,34 @@ Batch 2B moved current-revision edit ownership into the route-owned question ent
 - the route reloads canonical detail/history after mutation;
 - no API, PostgreSQL migration, Question Bank lifecycle rule, or Student workstream code changed.
 
-AR-06 Batch 2B exact code head:
-
-`43162f9b4f0468af96ae726f16054a868aff605a`
-
-Exact-head verification:
+AR-06 Batch 2B verified code head `43162f9b4f0468af96ae726f16054a868aff605a`:
 
 - Stage 13E Frontend Preparation `34733906701` — SUCCESS;
 - Stage 13E Admin AI Operations `34733906692` — SUCCESS;
 - Stage 13E Combined Integration `34733906716` — SUCCESS, including API/Admin quality gates, clean PostgreSQL migrations/contracts, authority/security regressions and real Chromium regression coverage.
 
-AR-06 is **not complete**. Dedicated routed-editor browser coverage is not yet claimed by this batch, and approved regeneration plus manual create/import decomposition remain outstanding. The next coherent work is contextual approved regeneration on `/app/questions/:questionId`, followed by explicit direct deep-link + list→detail + edit/regeneration/lifecycle browser coverage before considering removal of the legacy workspace.
+Batch 2C moved approved AI regeneration ownership into the route-owned question entity flow without changing the canonical backend contract:
+
+- `QuestionBankDetailPage` now exposes approved regeneration only for a `published` revision with preserved source evidence;
+- regeneration calls the existing `applyApprovedQuestionRegeneration(itemId, outputId)` command and therefore keeps server approval, provenance, source/current-published-revision validation and idempotency authority;
+- a replayed approved output is surfaced without creating duplicate revisions;
+- successful application creates/reloads the server-owned Draft revision while keeping historical revisions intact;
+- manual create/import remain intentionally under `/app/questions/manage` until separate focused ownership is implemented and verified;
+- the legacy regeneration affordance is intentionally retained temporarily as a parity adapter until dedicated routed browser coverage proves the replacement path;
+- no API, migration, backend lifecycle rule or Student workstream code changed.
+
+AR-06 Batch 2C exact verified code head:
+
+`60cb917e88e92ae8c3e3b64c6a5c8b8e7eb2928e`
+
+Exact-head verification:
+
+- Stage 13E Frontend Preparation `34735333581` — SUCCESS;
+- Stage 13E Admin AI Operations `34735333557` — SUCCESS;
+- Stage 13E Combined Integration `34735333555` — SUCCESS;
+- Combined passed API/Admin quality gates, all clean PostgreSQL migrations and DB contracts, backend authority/security regressions, Stage12/Auth regressions, deterministic browser fixtures and the real Admin Chromium suite.
+
+AR-06 is **not complete**. Dedicated browser coverage must explicitly prove direct deep-link, list→detail, routed edit, routed approved-regeneration and submit-review/publish/reject authority before legacy mutation ownership is retired. Manual create/import decomposition also remains outstanding.
 
 ## Parallel Full Product Architecture Audit checkpoint
 
@@ -188,10 +205,10 @@ Student is an Arabic-first/RTL-first educational app. Super Admin is a dense but
 
 1. Re-read this file, `PROJECT_ENGINEERING_LOG.md`, the Super Admin workstream and current exact-head CI before editing.
 2. Continue AR-06 only; do not start AR-07.
-3. Move approved question regeneration into `QuestionBankDetailPage` contextually while preserving approval/provenance/idempotency/server validation.
-4. Keep manual create/import in `/app/questions/manage` until separate focused ownership is implemented and verified.
-5. Add explicit browser coverage for direct deep-link, `/app/questions` list→detail navigation, routed edit lifecycle, routed regeneration lifecycle, and review/publish/reject authority.
-6. Remove the legacy workspace only after create/import/edit/regeneration parity has been verified from the new route-owned composition.
-7. Close AR-06 only on exact-head Frontend + API/PostgreSQL/Chromium evidence that explicitly covers the routed workflows; then proceed AR-07 → AR-10.
+3. Add explicit Browser E2E covering direct `/app/questions/:questionId`, `/app/questions` list→detail navigation, routed edit lifecycle, routed approved-regeneration lifecycle and submit-review/publish/reject authority.
+4. Keep manual create/import in `/app/questions/manage` while that browser parity is established; do not remove the legacy adapter prematurely.
+5. After routed browser parity is green, decompose manual create/import into focused ownership, then remove duplicate legacy edit/regeneration/detail responsibilities.
+6. Remove `/app/questions/manage` only after create/import/edit/regeneration parity is proven from the new composition.
+7. Close AR-06 only on exact-head Frontend + API/PostgreSQL/Chromium evidence explicitly covering the routed workflows; then proceed AR-07 → AR-10.
 8. Keep PR #52 draft until the Admin rebuild and final exact-head verification are complete.
 9. Before eventual merge, resynchronize with live main `343ff1fd7b3d64d7e990b72606695365f520fa58` or newer without overwriting Student/audit work.
