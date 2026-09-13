@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiRequestError, isMissingSessionError } from "../../admin-api";
 import {
   type QuizBuilderDetail,
   type QuizBuilderStatus,
+  type QuizBuilderVersion,
+  type QuizQuestionCandidate,
+  type QuizVersionQuestionRef,
+  addQuizVersion,
   archiveQuiz,
   fetchQuiz,
+  fetchQuizCandidates,
   fetchQuizVersionExport,
   publishQuiz,
   rejectQuizReview,
+  removeQuizVersion,
+  replaceQuizVersionQuestions,
   submitQuizForReview,
 } from "../../quiz-builder-api";
 import "../../quiz-builder.css";
@@ -17,6 +24,16 @@ import "../../quiz-builder.css";
 interface Props {
   onSessionExpired: () => void;
 }
+
+interface VersionEditorState {
+  mode: "add" | "replace";
+  versionId: string | null;
+  label: string;
+  shuffleOptions: boolean;
+  selected: QuizVersionQuestionRef[];
+}
+
+const CANDIDATE_PAGE_SIZE = 50;
 
 function messageFor(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
@@ -28,6 +45,18 @@ function statusLabel(status: QuizBuilderStatus): string {
   if (status === "review") return "قيد المراجعة";
   if (status === "published") return "منشور";
   return "مؤرشف";
+}
+
+function typeLabel(type: QuizQuestionCandidate["type"]): string {
+  if (type === "multiple_choice") return "اختيار متعدد";
+  if (type === "true_false") return "صح / خطأ";
+  return "مباشر";
+}
+
+function difficultyLabel(value: QuizQuestionCandidate["difficulty"]): string {
+  if (value === "easy") return "سهل";
+  if (value === "hard") return "صعب";
+  return "متوسط";
 }
 
 function localDate(value: string | null | undefined): string {
@@ -43,6 +72,17 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
   const [rejectNote, setRejectNote] = useState("");
   const [mutationState, setMutationState] = useState<"idle" | "saving">("idle");
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+  const [versionEditor, setVersionEditor] = useState<VersionEditorState | null>(null);
+  const [candidates, setCandidates] = useState<QuizQuestionCandidate[]>([]);
+  const [candidatePagination, setCandidatePagination] = useState({
+    total: 0,
+    limit: CANDIDATE_PAGE_SIZE,
+    offset: 0,
+  });
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [candidateOffset, setCandidateOffset] = useState(0);
+  const [candidateState, setCandidateState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [candidateError, setCandidateError] = useState("");
 
   const loadDetail = useCallback(async () => {
     if (!quizId) {
@@ -66,6 +106,32 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
     }
   }, [onSessionExpired, quizId]);
 
+  const loadCandidates = useCallback(
+    async (search: string, offset: number) => {
+      if (!quizId) return;
+      setCandidateState("loading");
+      setCandidateError("");
+      try {
+        const result = await fetchQuizCandidates(quizId, {
+          ...(search.trim() ? { search: search.trim() } : {}),
+          limit: CANDIDATE_PAGE_SIZE,
+          offset,
+        });
+        setCandidates(result.items);
+        setCandidatePagination(result.pagination);
+        setCandidateState("ready");
+      } catch (cause) {
+        if (isMissingSessionError(cause)) {
+          onSessionExpired();
+          return;
+        }
+        setCandidateError(messageFor(cause));
+        setCandidateState("error");
+      }
+    },
+    [onSessionExpired, quizId],
+  );
+
   useEffect(() => {
     void loadDetail();
   }, [loadDetail]);
@@ -86,6 +152,7 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
       else await archiveQuiz(quizId);
 
       setRejectNote("");
+      setVersionEditor(null);
       setFeedback({
         kind: "success",
         text:
@@ -142,6 +209,107 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
     }
   }
 
+  async function openVersionEditor(version?: QuizBuilderVersion) {
+    if (!detail || detail.quiz.status !== "draft") return;
+    const selected = version
+      ? version.questions.flatMap((question) =>
+          question.questionBankItemId && question.questionBankRevisionId
+            ? [
+                {
+                  questionBankItemId: question.questionBankItemId,
+                  questionBankRevisionId: question.questionBankRevisionId,
+                },
+              ]
+            : [],
+        )
+      : [];
+    setCandidateSearch("");
+    setCandidateOffset(0);
+    setVersionEditor({
+      mode: version ? "replace" : "add",
+      versionId: version?.id ?? null,
+      label: version?.label ?? `النموذج ${detail.versions.length + 1}`,
+      shuffleOptions: version?.shuffleOptions ?? true,
+      selected,
+    });
+    await loadCandidates("", 0);
+  }
+
+  function toggleCandidate(candidate: QuizQuestionCandidate) {
+    setVersionEditor((current) => {
+      if (!current) return current;
+      const exists = current.selected.some((item) => item.questionBankRevisionId === candidate.revisionId);
+      return {
+        ...current,
+        selected: exists
+          ? current.selected.filter((item) => item.questionBankRevisionId !== candidate.revisionId)
+          : [
+              ...current.selected,
+              { questionBankItemId: candidate.itemId, questionBankRevisionId: candidate.revisionId },
+            ],
+      };
+    });
+  }
+
+  async function submitVersion(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!quizId || !detail || !versionEditor || detail.quiz.status !== "draft") return;
+    setFeedback(null);
+    if (!versionEditor.label.trim() || versionEditor.selected.length === 0) {
+      setFeedback({ kind: "error", text: "اكتب اسم النموذج واختر سؤالًا منشورًا واحدًا على الأقل." });
+      return;
+    }
+
+    setMutationState("saving");
+    try {
+      if (versionEditor.mode === "add") {
+        await addQuizVersion(quizId, {
+          label: versionEditor.label.trim(),
+          shuffleOptions: versionEditor.shuffleOptions,
+          questions: versionEditor.selected,
+        });
+        setFeedback({ kind: "success", text: "تم إنشاء نموذج الاختبار من revisions منشورة وثابتة." });
+      } else if (versionEditor.versionId) {
+        await replaceQuizVersionQuestions(quizId, versionEditor.versionId, versionEditor.selected);
+        setFeedback({ kind: "success", text: "تم تحديث أسئلة النموذج وهو ما يزال مسودة." });
+      }
+      setVersionEditor(null);
+      await loadDetail();
+    } catch (cause) {
+      if (isMissingSessionError(cause)) onSessionExpired();
+      else setFeedback({ kind: "error", text: messageFor(cause) });
+    } finally {
+      setMutationState("idle");
+    }
+  }
+
+  async function deleteVersion(versionId: string) {
+    if (!quizId || !detail || detail.quiz.status !== "draft") return;
+    setMutationState("saving");
+    setFeedback(null);
+    try {
+      await removeQuizVersion(quizId, versionId);
+      setVersionEditor((current) => (current?.versionId === versionId ? null : current));
+      setFeedback({ kind: "success", text: "تم حذف النموذج من المسودة." });
+      await loadDetail();
+    } catch (cause) {
+      if (isMissingSessionError(cause)) onSessionExpired();
+      else setFeedback({ kind: "error", text: messageFor(cause) });
+    } finally {
+      setMutationState("idle");
+    }
+  }
+
+  async function searchCandidates() {
+    setCandidateOffset(0);
+    await loadCandidates(candidateSearch, 0);
+  }
+
+  async function changeCandidatePage(nextOffset: number) {
+    setCandidateOffset(nextOffset);
+    await loadCandidates(candidateSearch, nextOffset);
+  }
+
   if (state === "loading") {
     return <StatePanel title="جارٍ تحميل الاختبار" body="نقرأ تفاصيل الاختبار ونماذجه من الخادم." />;
   }
@@ -167,6 +335,8 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
 
   const { quiz, lessons, versions, events } = detail;
   const busy = mutationState === "saving";
+  const candidateCanPrevious = candidateOffset > 0;
+  const candidateCanNext = candidateOffset + candidates.length < candidatePagination.total;
 
   return (
     <section className="quiz-builder" aria-labelledby="quiz-builder-detail-title">
@@ -187,9 +357,9 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
             العودة إلى القائمة
           </Link>
           {quiz.status === "draft" ? (
-            <Link className="primary-button" to="/app/quizzes/manage">
-              إدارة النماذج
-            </Link>
+            <button className="primary-button" type="button" onClick={() => void openVersionEditor()} disabled={busy}>
+              إضافة نموذج
+            </button>
           ) : null}
         </div>
       </header>
@@ -238,6 +408,134 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
         </div>
       </section>
 
+      {versionEditor && quiz.status === "draft" ? (
+        <section className="qz-list-panel" aria-labelledby="quiz-version-editor-title">
+          <div className="workspace-header">
+            <div>
+              <p className="eyebrow">تركيب النموذج</p>
+              <h2 id="quiz-version-editor-title">
+                {versionEditor.mode === "add" ? "إضافة نموذج اختبار" : "تعديل أسئلة النموذج"}
+              </h2>
+            </div>
+            <button className="secondary-button" type="button" onClick={() => setVersionEditor(null)} disabled={busy}>
+              إغلاق
+            </button>
+          </div>
+
+          <form className="qz-editor-form" onSubmit={submitVersion}>
+            <div className="qz-version-toolbar">
+              <label>
+                <span>اسم النموذج</span>
+                <input
+                  value={versionEditor.label}
+                  onChange={(event) =>
+                    setVersionEditor((current) => (current ? { ...current, label: event.target.value } : current))
+                  }
+                  disabled={versionEditor.mode === "replace" || busy}
+                  maxLength={200}
+                  required
+                />
+              </label>
+              <label className="qz-check">
+                <input
+                  type="checkbox"
+                  checked={versionEditor.shuffleOptions}
+                  onChange={(event) =>
+                    setVersionEditor((current) =>
+                      current ? { ...current, shuffleOptions: event.target.checked } : current,
+                    )
+                  }
+                  disabled={versionEditor.mode === "replace" || busy}
+                />
+                <span>خلط الخيارات</span>
+              </label>
+              <strong>{versionEditor.selected.length} سؤال محدد</strong>
+            </div>
+
+            <div className="qz-candidate-search">
+              <label>
+                <span>بحث في الأسئلة المنشورة</span>
+                <input
+                  value={candidateSearch}
+                  onChange={(event) => setCandidateSearch(event.target.value)}
+                  placeholder="ابحث في نص السؤال"
+                  disabled={busy}
+                />
+              </label>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={candidateState === "loading" || busy}
+                onClick={() => void searchCandidates()}
+              >
+                بحث
+              </button>
+            </div>
+
+            {candidateState === "loading" ? <p role="status">جارٍ تحميل الأسئلة المنشورة المطابقة للدروس…</p> : null}
+            {candidateState === "error" ? <p role="alert">{candidateError}</p> : null}
+            {candidateState === "ready" && candidates.length === 0 ? (
+              <p>لا توجد أسئلة منشورة مطابقة. انشر أسئلة مناسبة في بنك الأسئلة أو غيّر البحث.</p>
+            ) : null}
+            {candidateState === "ready" && candidates.length > 0 ? (
+              <div className="qz-candidate-list" aria-label="الأسئلة المنشورة المتاحة">
+                {candidates.map((candidate) => {
+                  const checked = versionEditor.selected.some(
+                    (item) => item.questionBankRevisionId === candidate.revisionId,
+                  );
+                  return (
+                    <label className={`qz-candidate-card${checked ? " is-selected" : ""}`} key={candidate.revisionId}>
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCandidate(candidate)}
+                        disabled={busy}
+                      />
+                      <span className="qz-candidate-body">
+                        <strong>{candidate.prompt}</strong>
+                        <small>
+                          {typeLabel(candidate.type)} · {difficultyLabel(candidate.difficulty)} · revision {candidate.revisionNumber}
+                          {candidate.sourcePages.length > 0 ? ` · ص ${candidate.sourcePages.join("، ")}` : ""}
+                        </small>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            <nav className="qz-pagination" aria-label="صفحات الأسئلة المتاحة">
+              <button
+                className="secondary-button small-button"
+                type="button"
+                disabled={!candidateCanPrevious || candidateState === "loading" || busy}
+                onClick={() => void changeCandidatePage(Math.max(0, candidateOffset - CANDIDATE_PAGE_SIZE))}
+              >
+                السابق
+              </button>
+              <span>{candidatePagination.total} سؤال متاح</span>
+              <button
+                className="secondary-button small-button"
+                type="button"
+                disabled={!candidateCanNext || candidateState === "loading" || busy}
+                onClick={() => void changeCandidatePage(candidateOffset + CANDIDATE_PAGE_SIZE)}
+              >
+                التالي
+              </button>
+            </nav>
+
+            <div className="qz-form-actions">
+              <button className="secondary-button" type="button" onClick={() => setVersionEditor(null)} disabled={busy}>
+                إلغاء
+              </button>
+              <button className="primary-button" type="submit" disabled={busy || candidateState === "loading"}>
+                {versionEditor.mode === "add" ? "إنشاء النموذج" : "حفظ أسئلة النموذج"}
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : null}
+
       <section className="qz-list-panel" aria-labelledby="quiz-lessons-title">
         <div className="workspace-header">
           <div>
@@ -280,7 +578,26 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
                       النموذج {version.versionNumber} · {version.questions.length} سؤال
                     </small>
                   </div>
-                  {quiz.status !== "draft" ? (
+                  {quiz.status === "draft" ? (
+                    <div className="qz-version-actions" aria-label={`إدارة ${version.label}`}>
+                      <button
+                        className="secondary-button small-button"
+                        type="button"
+                        onClick={() => void openVersionEditor(version)}
+                        disabled={busy}
+                      >
+                        تعديل الأسئلة
+                      </button>
+                      <button
+                        className="secondary-button small-button"
+                        type="button"
+                        onClick={() => void deleteVersion(version.id)}
+                        disabled={busy}
+                      >
+                        حذف النموذج
+                      </button>
+                    </div>
+                  ) : (
                     <div className="qz-version-actions" aria-label={`تصدير ${version.label}`}>
                       <button
                         className="secondary-button small-button"
@@ -299,7 +616,7 @@ export function QuizBuilderDetailPage({ onSessionExpired }: Props) {
                         طباعة / PDF
                       </button>
                     </div>
-                  ) : null}
+                  )}
                 </div>
                 <span>{version.shuffleOptions ? "ترتيب الخيارات عشوائي" : "ترتيب الخيارات ثابت"}</span>
                 <ol className="qz-version-questions">
