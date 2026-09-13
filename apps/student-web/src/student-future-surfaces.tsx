@@ -66,7 +66,7 @@ function EmptyPersonalCollection({ kind }: { kind: "notes" | "saved" | "review" 
       <p className="eyebrow">{copy.eyebrow}</p>
       <h2 id={`future-${kind}-title`}>{copy.title}</h2>
       <p>{copy.description}</p>
-      <Link className="secondary-button" to={copy.href}>{copy.action}</Link>
+      <Link className="secondary-button student-explicit-action" to={copy.href}>{copy.action}<span aria-hidden="true">←</span></Link>
     </section>
   );
 }
@@ -95,10 +95,10 @@ export function StudentLibraryExperience({ online, refreshKey, onSessionExpired 
       {section === "overview" ? (
         <div className="student-library-grid">
           {sections.map((item) => (
-            <Link className="student-library-card" key={item.key} to={item.href}>
+            <Link className="student-library-card student-clickable-card" key={item.key} to={item.href}>
               <span className="student-library-card__icon"><LibraryIcon kind={item.key} /></span>
               <span><strong>{item.label}</strong><small>{item.description}</small></span>
-              <span aria-hidden="true">←</span>
+              <span className="student-clickable-card__arrow" aria-hidden="true">←</span>
             </Link>
           ))}
         </div>
@@ -124,7 +124,7 @@ export function StudentNotificationsExperience() {
         <div className="future-empty-state__mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M6 9a6 6 0 0 1 12 0c0 7 3 7 3 8H3c0-1 3-1 3-8Z" /><path d="M10 21h4" /></svg></div>
         <h2>لا توجد إشعارات جديدة</h2>
         <p>عندما يوجد أمر مهم أو تحديث يحتاج متابعتك سيظهر هنا بوضوح.</p>
-        <Link className="secondary-button" to="/app/home">العودة إلى الرئيسية</Link>
+        <Link className="secondary-button student-explicit-action" to="/app/home">العودة إلى الرئيسية<span aria-hidden="true">←</span></Link>
       </div>
     </section>
   );
@@ -143,12 +143,12 @@ export function StudentProgressExperience() {
         <section className="future-summary-panel" aria-labelledby="progress-learning-title">
           <span className="future-summary-panel__icon" aria-hidden="true">✓</span>
           <div><p className="eyebrow">التعلّم</p><h2 id="progress-learning-title">ابدأ التعلّم ليظهر تقدمك هنا</h2><p>سنستخدم فقط الدروس والأنشطة التي يؤكد النظام أنك أكملتها.</p></div>
-          <Link className="text-button" to="/app/learn">فتح التعلّم</Link>
+          <Link className="secondary-button student-explicit-action" to="/app/learn">فتح التعلّم<span aria-hidden="true">←</span></Link>
         </section>
         <section className="future-summary-panel" aria-labelledby="progress-practice-title">
           <span className="future-summary-panel__icon" aria-hidden="true">◎</span>
           <div><p className="eyebrow">التدريب</p><h2 id="progress-practice-title">نتائجك ستظهر بعد أول محاولة</h2><p>النتائج ستعتمد على المحاولات المحفوظة في النظام، بدون تقديرات أو أرقام تجريبية.</p></div>
-          <Link className="text-button" to="/app/practice">فتح التدريب</Link>
+          <Link className="secondary-button student-explicit-action" to="/app/practice">فتح التدريب<span aria-hidden="true">←</span></Link>
         </section>
         <section className="future-summary-panel future-summary-panel--wide" aria-labelledby="progress-achievements-title">
           <span className="future-summary-panel__icon" aria-hidden="true">★</span>
