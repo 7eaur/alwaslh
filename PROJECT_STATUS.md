@@ -10,11 +10,11 @@ Last synchronized: **2026-09-13**.
 
 The Student/UI workstream and Content Rebuild are independent parallel tracks. The content checkpoint below does not change Student publication or resume the paused backend roadmap by itself.
 
-### Parallel Content Rebuild checkpoint — MEDIA-001
+### Parallel Content Rebuild checkpoint — IMPORT-001
 
 `BATCH-001-G9-EN-PB3-U1` remains **CLOSED / COMMITTED_STATE_VERIFIED** in modern PostgreSQL and intentionally unpublished.
 
-Subsequent Content Rebuild checkpoints are now also verified:
+Subsequent Content Rebuild checkpoints are now verified through import:
 
 - `STRUCTURE-001 = DONE / SECTION_BOUNDARY_VERIFIED`
 - `STRUCTURE-002 = DONE / SECTION_BOUNDARY_VERIFIED`
@@ -22,8 +22,24 @@ Subsequent Content Rebuild checkpoints are now also verified:
 - `CURATION-002 = DONE / LESSON_BOUNDARY_VERIFIED`
 - `CONTENT-GAPS-001 = DONE / GAP_INVENTORY_VERIFIED`
 - `MEDIA-001 = DONE / MEDIA_PROFILE_VERIFIED_PARTIAL_ACCEPTANCE`
+- `IMPORT-001 = DONE / COMMITTED_STATE_VERIFIED`
 
-Grade 9 English retained corpus truth:
+IMPORT-001 closed only the already-reviewed CURATION-001 slice: Unit 2 lesson `Describing people and animals`, book pages `5..8` / source pages `9..12`.
+
+Modern PostgreSQL committed state was independently verified after concurrent advancement:
+
+- one target Unit 2 Section, ID `434f9978-efae-471e-b37d-6b151edecc5b`;
+- one target curated Lesson, ID `1a6e3a6e-06e8-496e-8d18-c8d4545d1da9`;
+- 4 exact reviewed Lesson Assets ordered `0..3`;
+- 4 exact ready Media Assets with matching source paths/checksums;
+- Lesson remains unpublished and all 4 Lesson Assets remain draft/unpublished;
+- 0 unauthorized Question links were added to the curated Lesson;
+- 4 legacy source Lessons remain active/unpublished/sectionless and now retain 0 of the reviewed page assets;
+- exactly 12 legacy Question Revisions remain preserved and unpublished on the legacy Lessons.
+
+The bounded apply runner did not overwrite concurrent state: deployment `efb92e21-e8df-4674-92d9-041321da9f92` failed closed before mutation because the target Section already existed. Independent exact-state verification then passed in deployment `3e1ce24a-39ca-498c-b219-8ceb895eda84` with marker `IMPORT001_POST_APPLY_VERIFY_PASS`. No duplicate apply, auto-publication, RAW mutation, media-binary mutation, question rewrite, anomaly deletion, or unrelated repair was performed by the closing run.
+
+Grade 9 English retained corpus truth remains:
 
 - RAW page candidates/images: `69 / 69`;
 - legacy questions: `104`;
@@ -35,20 +51,9 @@ Grade 9 English retained corpus truth:
 - corpus-wide duplicate-position anomalies remain preserved: `6`;
 - historical `62 Draft lessons` remains reconciliation evidence only and is not used to derive `69 -> 62`.
 
-MEDIA-001 tested the smallest already-reviewed media batch: Unit 2 book pages `5..8`. The deterministic probe ran successfully in GitHub Actions run `34761171601`.
+MEDIA-001 evidence remains valid: only book page 5 q76 WebP passed all byte/PSNR/manual-legibility gates as a reproducible derived candidate; pages 6–8 remained rejected. IMPORT-001 did not push a new media binary.
 
-Measured result:
-
-- four RAW JPEGs total: `457,747` bytes;
-- WebP q82/method6 total: `464,290` bytes (`+1.43%`) — rejected as an optimization profile;
-- WebP q76/method6 total: `387,774` bytes (`15.29%` reduction overall), but acceptance remained page-specific;
-- page 5 alone passed every gate: RAW `93,793` → WebP `74,416` bytes (`20.66%` reduction), PSNR `39.52 dB`, dimensions unchanged at `962×1360`, and manual side-by-side legibility review passed;
-- accepted page-5 derivative SHA-256: `4fdeb9e17a0a269481ee046bcbf67053f834c8e75fdb4d5bda445977b742a5e2`;
-- pages 6–8 were rejected for insufficient byte savings and retain RAW/preferred existing media until separately re-evaluated.
-
-MEDIA-001 caused **0 RAW mutation, 0 PostgreSQL mutation, 0 publication change, and 0 unrelated-record mutation**. The q76 profile is not globally approved merely because one page passed.
-
-Next Content Rebuild item: **`IMPORT-001` only**, starting with a dry-run and live identity/provenance resolution on the smallest already-reviewed import scope.
+Next Content Rebuild item: **`VERIFY-001` only**. Publication remains closed.
 
 **ACTIVE PR: #55 — `refactor(student): redesign Library overview hierarchy`**
 
@@ -143,10 +148,10 @@ Still open:
 
 Content Rebuild continues independently in this order:
 
-`IMPORT-001 → VERIFY-001 → ROADMAP-RETURN`
+`VERIFY-001 → ROADMAP-RETURN`.
 
 Completed before that return:
-`BATCH-001 → STRUCTURE-001 → STRUCTURE-002 → CURATION-001 → CURATION-002 → CONTENT-GAPS-001 → MEDIA-001`.
+`BATCH-001 → STRUCTURE-001 → STRUCTURE-002 → CURATION-001 → CURATION-002 → CONTENT-GAPS-001 → MEDIA-001 → IMPORT-001`.
 
 ## Required startup for next conversation
 
