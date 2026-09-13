@@ -73,7 +73,10 @@ test("published student demo seeds through real contracts, replays, verifies, st
 
     const cleaned = await cleanupPublishedStudentDemo(db, storageRoot);
     assert.equal(cleaned.removed, true);
-    assert.ok(cleaned.storageKeysRemoved >= 15, `expected ingestion + 4 variants per page, got ${cleaned.storageKeysRemoved}`);
+    assert.ok(
+      cleaned.storageKeysRemoved >= 15,
+      `expected ingestion + 4 variants per page, got ${cleaned.storageKeysRemoved}`,
+    );
 
     const markerRows = await db.query<{ count: string }>(
       `select count(*)::text as count from classes where slug = $1`,
