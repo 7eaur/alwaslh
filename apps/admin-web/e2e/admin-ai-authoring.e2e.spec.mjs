@@ -120,9 +120,10 @@ test("G-D exports only selected versions and opens the authenticated print view"
   await exportPanel.getByRole("button", { name: "إلغاء التحديد", exact: true }).click();
   await expect(downloadButton).toBeDisabled();
 
-  const versionCards = exportPanel.locator(".authoring-version-card");
-  await expect(versionCards).toHaveCount(2);
-  await versionCards.nth(0).getByRole("checkbox").check();
+  const versionPicker = exportPanel.getByRole("group", { name: "النماذج المحددة" });
+  const versionChecks = versionPicker.getByRole("checkbox");
+  await expect(versionChecks).toHaveCount(2);
+  await versionChecks.nth(0).check();
   await expect(downloadButton).toBeEnabled();
 
   const downloadPromise = page.waitForEvent("download");
@@ -131,7 +132,7 @@ test("G-D exports only selected versions and opens the authenticated print view"
   expect(download.suggestedFilename()).toMatch(/\.csv$/);
 
   const popupPromise = page.waitForEvent("popup");
-  await exportPanel.getByRole("button", { name: "فتح العرض للطباعة", exact: true }).click();
+  await exportPanel.getByRole("button", { name: "فتح الطباعة / حفظ PDF", exact: true }).click();
   const popup = await popupPromise;
   await popup.waitForLoadState("domcontentloaded");
   await expect(popup.getByRole("heading", { name: "اختبار التصدير G-D", exact: true })).toBeVisible();
