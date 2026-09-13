@@ -10,28 +10,45 @@ Last synchronized: **2026-09-13**.
 
 The Student/UI workstream and Content Rebuild are independent parallel tracks. The content checkpoint below does not change Student publication or resume the paused backend roadmap by itself.
 
-### Parallel Content Rebuild checkpoint — BATCH-001
+### Parallel Content Rebuild checkpoint — MEDIA-001
 
-`BATCH-001-G9-EN-PB3-U1` is now **CLOSED / COMMITTED_STATE_VERIFIED** in modern PostgreSQL.
+`BATCH-001-G9-EN-PB3-U1` remains **CLOSED / COMMITTED_STATE_VERIFIED** in modern PostgreSQL and intentionally unpublished.
 
-Verified committed state:
+Subsequent Content Rebuild checkpoints are now also verified:
 
-- Grade 9 / English / Pupil Book 3 / `Unit 1 - Revision`;
-- exactly `1` target curriculum section;
-- `4` existing lesson identities reused and organized under that section;
-- `4` lesson assets remain `draft`;
-- `4` canonical media assets remain `ready` with source/checksum provenance intact;
-- `13` reviewed Question Bank revisions remain present (`7` corrected, `6` unchanged);
-- question provenance links `13/13` verified;
-- target duplicate lessons: `0`;
-- published lessons: `0`;
-- published lesson assets: `0`;
-- published questions: `0`;
-- RAW/media were not mutated; the existing four display WebP variants remain `549,794` bytes and are still larger than the `440,502`-byte RAW JPEG total.
+- `STRUCTURE-001 = DONE / SECTION_BOUNDARY_VERIFIED`
+- `STRUCTURE-002 = DONE / SECTION_BOUNDARY_VERIFIED`
+- `CURATION-001 = DONE / LESSON_BOUNDARY_VERIFIED`
+- `CURATION-002 = DONE / LESSON_BOUNDARY_VERIFIED`
+- `CONTENT-GAPS-001 = DONE / GAP_INVENTORY_VERIFIED`
+- `MEDIA-001 = DONE / MEDIA_PROFILE_VERIFIED_PARTIAL_ACCEPTANCE`
 
-A new bounded apply attempt in the Content Rebuild workstream failed closed before mutation because live state had already advanced. Read-only inspection then proved the exact intended target state was already committed by another concurrent execution, so no duplicate apply was performed. Final read-only verifier deployment `c3e609b3-f632-46e9-9fde-680330512eee` emitted `BATCH001_POST_APPLY_VERIFY_PASS`.
+Grade 9 English retained corpus truth:
 
-Next Content Rebuild item: `STRUCTURE-001`. BATCH-001 remains unpublished until a later explicit publication gate.
+- RAW page candidates/images: `69 / 69`;
+- legacy questions: `104`;
+- recovered sections: `8`;
+- reviewed Lesson-boundary coverage: `10` pages;
+- unresolved boundary candidates: `59` pages;
+- page 70 remains manifest-only evidence without a RAW identity;
+- Grade 9 English duplicate page-number anomalies: `0`;
+- corpus-wide duplicate-position anomalies remain preserved: `6`;
+- historical `62 Draft lessons` remains reconciliation evidence only and is not used to derive `69 -> 62`.
+
+MEDIA-001 tested the smallest already-reviewed media batch: Unit 2 book pages `5..8`. The deterministic probe ran successfully in GitHub Actions run `34761171601`.
+
+Measured result:
+
+- four RAW JPEGs total: `457,747` bytes;
+- WebP q82/method6 total: `464,290` bytes (`+1.43%`) — rejected as an optimization profile;
+- WebP q76/method6 total: `387,774` bytes (`15.29%` reduction overall), but acceptance remained page-specific;
+- page 5 alone passed every gate: RAW `93,793` → WebP `74,416` bytes (`20.66%` reduction), PSNR `39.52 dB`, dimensions unchanged at `962×1360`, and manual side-by-side legibility review passed;
+- accepted page-5 derivative SHA-256: `4fdeb9e17a0a269481ee046bcbf67053f834c8e75fdb4d5bda445977b742a5e2`;
+- pages 6–8 were rejected for insufficient byte savings and retain RAW/preferred existing media until separately re-evaluated.
+
+MEDIA-001 caused **0 RAW mutation, 0 PostgreSQL mutation, 0 publication change, and 0 unrelated-record mutation**. The q76 profile is not globally approved merely because one page passed.
+
+Next Content Rebuild item: **`IMPORT-001` only**, starting with a dry-run and live identity/provenance resolution on the smallest already-reviewed import scope.
 
 **ACTIVE PR: #55 — `refactor(student): redesign Library overview hierarchy`**
 
@@ -126,7 +143,10 @@ Still open:
 
 Content Rebuild continues independently in this order:
 
-`STRUCTURE-001 → STRUCTURE-002 → CURATION-001 → CURATION-002 → CONTENT-GAPS-001 → MEDIA-001 → IMPORT-001 → VERIFY-001 → ROADMAP-RETURN`
+`IMPORT-001 → VERIFY-001 → ROADMAP-RETURN`
+
+Completed before that return:
+`BATCH-001 → STRUCTURE-001 → STRUCTURE-002 → CURATION-001 → CURATION-002 → CONTENT-GAPS-001 → MEDIA-001`.
 
 ## Required startup for next conversation
 
