@@ -2,7 +2,7 @@
 
 > هذه الوثيقة هي نقطة البداية للمحادثة الهندسية التالية. لا تعتمد على ذاكرة المحادثات السابقة بدل المستودع. الكود + PostgreSQL migrations + الاختبارات/CI + verified runtime + الوثائق الحالية هي Source of Truth.
 
-Last synchronized: **2026-09-13 — Student Future Surfaces merged; Library Overview refinement active on PR #55.**
+Last synchronized: **2026-09-13 — PR #55 exact-head closure in progress; stale browser acceptance repaired.**
 
 ## 1. Start here — mandatory
 
@@ -14,95 +14,46 @@ Last synchronized: **2026-09-13 — Student Future Surfaces merged; Library Over
    - `PROJECT_HANDOFF.md` — this file;
    - `PROJECT_STATUS.md` — immediate execution truth;
    - `PROJECT_ENGINEERING_LOG.md` — decisions/findings/evidence;
+   - `docs/product/CURRENT_PRODUCT_OVERRIDES.md`;
    - `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md` — binding Student IA/UX architecture;
    - `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md` — Stage17–19 pre-integration surface rules;
-   - `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md` — active PR #55 Library decision;
-   - `docs/workstreams/UX_UI_REFOUNDATION_PAUSE_2026-09-12.md` — roadmap pause/return authority;
-   - `MASTER_REBUILD_ROADMAP.md` — long roadmap;
-   - `PRODUCT_FEATURE_PARITY_MATRIX.md` — legacy/product capability parity.
+   - `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md` — active PR #55 Library decision.
 4. For current work, inspect actual changed code/tests before editing.
 5. Anything not inspected or executed = `NOT YET VERIFIED`.
 
-If working on deployment/content/AI/Admin, then additionally read the relevant specialized docs listed later in this file.
-
 ---
 
-## 2. Current product state
+## 2. Verified merged Student baseline
 
-### Student — rebuilt foundation
+### PR #53 — Student Experience Rebuild
 
-PR #53 — **Student Experience Rebuild** — MERGED / VERIFIED.
+MERGED / VERIFIED.
 
 - accepted head: `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
 - exact-head matrix: **23/23 SUCCESS**;
 - merge commit: `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
 
-It established:
+Established Welcome/Auth/Recovery/Help/Support, unified shell, Home/Learn/Reader, Practice/Assessment/Result, Downloads/Account, learner-safe errors and reduced-motion-safe interaction.
 
-- first-run Welcome;
-- Activation / returning login / recovery;
-- Help / Support;
-- one Student shell;
-- Home / Learn / Subject / Reader;
-- Practice / Quiz / focused Assessment / Result;
-- Downloads / Account;
-- learner-safe error copy;
-- restrained motion + `prefers-reduced-motion`;
-- removal of technical/stage/internal copy from Student UI;
-- FPA-013 Reader search-focus repair.
+### PR #54 — Future Student Surfaces
 
-### Student — future-complete surfaces
-
-PR #54 — **Future Library / Notifications / Progress surfaces** — MERGED / VERIFIED.
+MERGED / VERIFIED.
 
 - accepted head: `4b6f24c5cb9bd0da525ecfebc59b1ebbf156c903`;
 - exact-head matrix: **23/23 SUCCESS**;
-- merged `main`: `c3734366c132ea3919a925bdd0dd37cfd5d82104`.
+- merge commit/current pre-PR55 baseline: `c3734366c132ea3919a925bdd0dd37cfd5d82104`;
+- phone/desktop Visual QA accepted.
 
-It established the final Student IA shell:
-
-**Primary mobile navigation**
+Final Student primary navigation is:
 
 1. `الرئيسية` — `/app/home`
 2. `التعلّم` — `/app/learn`
 3. `التدريب` — `/app/practice`
 4. `مكتبتي` — `/app/library`
 
-Secondary global destinations:
+Secondary global destinations: Notifications, Account and Progress. Library/Notifications/Progress future surfaces are prebuilt but must never fabricate learner data.
 
-- Notifications bell → `/app/notifications`;
-- Account → `/app/account`;
-- Progress → `/app/progress` from Home/Account/desktop secondary navigation.
-
-Prebuilt, honest future surfaces:
-
-- Library → Downloads / Notes / Saved / Needs Review;
-- Notifications zero-data surface;
-- Progress/Statistics/Achievements pre-integration surface;
-- Account as personal-management hub.
-
-Important Product Owner rule:
-
-> No production learner will use the Student app before the remaining roadmap is complete. Therefore final approved UI surfaces may be built before backend integration, but **must never fabricate learner data or business outcomes**.
-
-### Performance decision
-
-Student feature destinations are lazily loaded. The main initial Student bundle was reduced from roughly **599.61 KB minified / 148.83 KB gzip** to roughly **225.89 KB minified / 71.24 KB gzip** on the accepted future-surfaces implementation, with Learn, Assessment, Library/personal surfaces and Account emitted as separate chunks.
-
-Do not undo this architecture by re-importing large feature trees eagerly into the shell.
-
-### Interaction affordance decision
-
-Binding UX rule:
-
-**Clickable must look clickable. Static must look static. Primary actions must be visually strongest. Destructive actions must be distinct.**
-
-- touch targets >= 44px where interactive;
-- interactive cards have clear border/icon/directional cue/pressed-focus behavior;
-- static statistic/information surfaces must not pretend to be clickable;
-- affordance must be visible on touch devices without depending on hover.
-
-This rule is browser-tested.
+Student destination features remain lazily loaded; do not regress the accepted initial-bundle reduction by eagerly importing feature trees into the shell.
 
 ---
 
@@ -114,90 +65,78 @@ Branch: `ux/student-library-overview`
 
 Base when opened: `main@c3734366c132ea3919a925bdd0dd37cfd5d82104`
 
-State: **OPEN / mergeable at last inspection / FINAL EXACT-HEAD VERIFICATION STILL REQUIRED**.
-
-### Why this PR exists
-
-The first Future Surfaces version of `/app/library` repeated the same four destinations twice:
-
-- horizontal tabs;
-- four large destination cards.
-
-This made the page feel like a repeated section switcher instead of an elegant personal overview.
+State: **OPEN / final exact-head CI + Visual QA required before merge**.
 
 ### Approved Library hierarchy
 
-`/app/library` now follows:
+`/app/library` is a personal overview, not a duplicated section switcher:
 
 1. concise page heading;
-2. **ملخص مكتبتي** — honest statistics only;
-3. **أقسام مكتبتي** — one destination grid;
-4. child sections use one explicit `العودة إلى مكتبتي` action instead of repeating the same tabs.
+2. `ملخص مكتبتي` — honest informational statistics;
+3. `أقسام مكتبتي` — one destination grid;
+4. child sections expose one explicit return-to-Library action instead of repeating all destinations.
 
-The four collections remain:
-
-- التنزيلات;
-- ملاحظاتي;
-- المحفوظات;
-- يحتاج مراجعة.
+Collections remain Downloads / Notes / Saved / Needs Review.
 
 ### Statistics truth
 
-- **Downloads count is real**: it is read from the existing offline package store for the active profile/device.
-- Browser acceptance downloads a real lesson and requires the Library Downloads number to change from `٠` to `١`.
-- Notes / Saved / Needs Review remain honest `0` until Stage17 authoritative repositories exist.
-- These zero values are placeholders for absence of authoritative records, **not fabricated usage statistics**.
-- No fake streaks, activity counts, recommendations, progress percentages, achievement counts or engagement metrics.
+- Downloads count is real and read from the existing offline package store for the active profile/device.
+- Browser acceptance saves a real lesson and must observe Downloads `٠ → ١`.
+- Notes / Saved / Needs Review remain honest zero states until Stage17 repositories exist.
+- No fake progress, activity, streaks, recommendations, achievements or engagement metrics.
 
-### Visual composition
+### Visual rules
 
-- statistics use **one quiet divided summary surface**, not four KPI cards;
-- no decorative gradient;
-- summary/stat cells are non-clickable;
-- collection cards remain the only strong clickable destinations;
-- phone: compact 2×2 summary + one-column collection destinations;
-- desktop: one-glance summary + destination grid below;
-- no duplicated Library tabs.
+- one quiet divided summary surface, not four KPI cards;
+- summary/stat cells are static/non-clickable;
+- destination cards are clearly clickable before hover;
+- phone uses compact 2×2 summary + one-column destinations;
+- desktop keeps a one-glance summary + destination grid;
+- no duplicate Library tabs;
+- no decorative gradient/card wall;
+- >=44px interactive targets and reduced-motion behavior remain binding.
 
-### Files changed / authority
+### Exact-head CI evidence already inspected
 
-Key implementation:
+Head inspected: `aca9a2f72ecede120d1d87889f9a3fb0660ea712`.
 
-- `apps/student-web/src/student-future-surfaces.tsx`
-- `apps/student-web/src/student-library-overview.css`
-- `apps/student-web/src/main.tsx`
-- `apps/student-web/e2e/student-b05.e2e.spec.mjs`
-- `apps/student-web/e2e/offline-download.e2e.spec.mjs`
-- `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
+Result: **20/23 workflows SUCCESS**.
 
-The old offline-download browser test initially failed because it still targeted the removed exact `التنزيلات` tab/old heading. The test was updated to follow the new Library destination while keeping all manifest/signature/checksum/tamper/removal/logout integrity assertions.
+Failures:
 
-### Current verification state
+- UX B02 Student Shell and Navigation;
+- Stage14 Student Product;
+- Rebuild Stage Verification.
 
-Already verified on the implementation before the final documentation/test-sync commits:
+Classification:
 
-- Student lint — SUCCESS;
-- strict typecheck — SUCCESS;
-- unit tests — **11 files / 41 tests SUCCESS**;
-- production build — SUCCESS.
+- B02 quality/build/migrations/Chromium setup passed; its Playwright step still expected old Library heading `كل ما يخص تعلمك في مكان واحد` after PR #55 intentionally changed it to `محتواك الشخصي، مرتب في مكان واحد`.
+- Stage14 quality succeeded and failed only in full `npm run test:e2e`.
+- Rebuild backend/build/migration stages succeeded and only Stage8 browser full `npm run test:e2e` failed.
+- Those aggregate suites include the stale B02 spec, so they necessarily inherit its failure.
+- This evidence does not show a backend/PostgreSQL/auth/access/curriculum/offline-integrity regression.
 
-Final exact-head wide CI + regenerated phone/desktop Visual QA are still required because the branch head moved after test/documentation synchronization.
+Repair applied:
+
+- `apps/student-web/e2e/student-shell-navigation.e2e.spec.mjs` was aligned with the approved current Library heading only.
+- navigation, focus, history, actionable offline state and no-overflow assertions remain unchanged.
+- B05 and offline-download integrity coverage remain intact.
+
+Because this fix and documentation commits moved the branch head, **the `aca9a2f...` matrix cannot be used as merge evidence**.
 
 ### Exact next action
 
-Do **not** redesign Library again from scratch.
+1. live-fetch current PR #55 head and live `main`;
+2. require every triggered workflow SUCCESS on that exact head;
+3. inspect exact-head B05 Visual QA artifact at phone and desktop sizes;
+4. verify no duplicate Library tabs;
+5. verify real Downloads statistic updates `0 → 1` after saving a real lesson;
+6. verify statistics remain static/non-clickable and collection cards remain obvious actions;
+7. verify no horizontal overflow, learner-safe copy and reduced-motion acceptance;
+8. merge PR #55 only with expected-head SHA guard after acceptance;
+9. after merge, return immediately to normal roadmap at `STUDENT-016I`.
 
-Next conversation should:
-
-1. live-fetch PR #55 head and `main`;
-2. run/inspect exact-head workflow matrix for PR #55;
-3. specifically verify B05 Chromium and its Visual QA artifact;
-4. confirm Library overview has no duplicate tabs;
-5. confirm real saved-download stat changes 0 → 1;
-6. confirm stat cells remain non-clickable and collection cards remain clearly clickable;
-7. confirm responsive/no-overflow/reduced-motion/copy checks;
-8. if all triggered workflows are SUCCESS and visuals are accepted, update final evidence and merge PR #55 with expected-head SHA guard;
-9. if a failure appears, determine real product regression vs stale test before changing UI.
+Do not redesign Library again without new evidence.
 
 ---
 
@@ -209,37 +148,21 @@ Canonical docs:
 - `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
 - `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
 
-Binding priorities:
+Binding design order:
 
 **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
 
-Acceptance target:
+Acceptance:
 
 **Functional + Clear + Easy + Comfortable + Consistent + Fast + Maintainable + Professional**
 
-Student is an educational application, not an Admin dashboard.
-
-Do not show learners:
-
-- raw IDs;
-- device keys / crypto terms;
-- cache/service-worker/storage implementation terms;
-- stage/roadmap/internal API vocabulary;
-- fake metrics;
-- unsupported security controls;
-- fake notifications or unread badges.
-
-Every expected error state must answer:
-
-1. what happened, in learner language;
-2. what the learner can do now;
-3. without leaking internal/admin details.
+Student is an educational application, not an Admin dashboard. Do not expose raw IDs, device keys/crypto terms, storage/service-worker jargon, roadmap/stage vocabulary, fake metrics, fake notification badges or unsupported account/security controls.
 
 ---
 
 ## 5. Stable backend/security authorities
 
-Preserve these unless a new evidence-backed architecture decision explicitly replaces them:
+Preserve unless new evidence explicitly changes them:
 
 - API + PostgreSQL own canonical state;
 - browser is not durable business authority;
@@ -253,116 +176,58 @@ Preserve these unless a new evidence-backed architecture decision explicitly rep
 - AI output never auto-publishes learner content/questions;
 - Question Bank publication + immutable Quiz version remain delivery authority;
 - Assessment scoring/finalization/history server-owned;
-- `/v1` never becomes Service Worker Cache API authority;
+- `/v1` never becomes Service Worker Cache authority;
 - offline authorization/signature/checksum/device/session contracts remain security authority;
 - no password/session token/device private key is persisted as offline learning content.
 
 ---
 
-## 6. Roadmap status after Student UI foundation
+## 6. Roadmap return after PR #55
 
-The UI is structurally prebuilt for Stage17–19, but their backend/product-service work is **not complete**.
+The final Student UI locations are established, but Stage17–19 backend/service work is not complete.
 
-Normal engineering return point remains:
+Normal return sequence:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
 
-### Stage16 remaining authority
+### `STUDENT-016I`
 
-Still open:
+Exact return point after PR #55. It owns the **true cold-start offline Reader** closure: a previously saved authorized lesson must remain safely readable after app/browser restart while the network is unavailable, using durable non-secret scope recovery plus existing signed package/blob integrity authority. Inspect current Stage16 code/tests/docs before implementing; do not assume older prose is fully current.
 
-- true cold-start offline Reader;
-- durable non-secret scope recovery across browser restart;
-- read-time signed-authority verification;
-- read-time blob size/checksum verification;
-- reconnect revalidation/purge;
-- revision/tombstone/cursor/delta/outbox closure where actually required.
+### Later Stage16
 
-Do not claim Stage16 closed because Downloads UI works.
+- `016R` — reconnect revalidation/purge;
+- `016S` — revision/tombstone/cursor/delta synchronization;
+- conditional `016O` — bounded outbox only if later offline writes actually require it;
+- `016G` — Stage16 closure matrix.
 
-### Stage17
+### Stage17–19
 
-Connect authoritative Personal Learning Data into already-designed UI:
+- Stage17 connects authoritative Notes/Saved/Needs Review ownership, CRUD/provenance and offline/sync rules into the already-built Library surfaces.
+- Stage18 connects Notifications feed/unread/deep links/lifecycle.
+- Stage19 connects only server-defined trusted Progress/Statistics/Achievements.
 
-- Notes CRUD/provenance;
-- Saved/bookmarked questions;
-- Needs Review;
-- ownership/offline/sync/conflict rules.
-
-### Stage18
-
-Connect Notifications:
-
-- feed;
-- unread/last-seen;
-- valid deep-link schema;
-- lifecycle/quiet-hours/opt-out/Web Push where approved.
-
-### Stage19
-
-Connect trusted Progress/Statistics/Achievements:
-
-- only server-defined metrics;
-- no browser-invented mastery;
-- privacy-safe achievement/ranking behavior.
+Do not claim Stage16 closed merely because Downloads UI works.
 
 ---
 
 ## 7. Super Admin governance
 
-Do not implement the legacy B06–B14 Admin batches from the Student branch.
-
-A dedicated **Super Admin Product Rebuild** workstream owns:
-
-- Admin product responsibilities;
-- backend workflow mapping;
-- API/data visibility;
-- IA/navigation;
-- frontend architecture;
-- Admin UX/UI/design system.
-
-Known parallel Admin PR from the redesign workstream: PR #52 (`rebuild/super-admin-foundation`) — live-check before relying on its historical SHA/state.
-
-After Admin rebuild integration, shared cross-product responsive/RTL/accessibility/visual-regression cleanup may be synchronized.
+Do not implement legacy B06–B14 Admin batches from the Student branch. Dedicated Super Admin Product Rebuild owns Admin product architecture, workflows, API/data visibility, IA, frontend architecture and UX/UI.
 
 ---
 
-## 8. Specialized docs only when relevant
+## 8. Specialized docs when relevant
 
-For Railway/deployment:
+- Railway/deployment: `docs/operations/RAILWAY_LIVE_STATE.md`
+- imported content: `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
+- broad historical recovery: `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`, `PROJECT_RESUME_SNAPSHOT.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_EXECUTION_QUEUE.md`
+- original feature coverage: `PRODUCT_FEATURE_PARITY_MATRIX.md`, `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
 
-- `docs/operations/RAILWAY_LIVE_STATE.md`
-
-For imported content:
-
-- `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
-
-For broad historical project recovery/audit:
-
-- `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`
-- `PROJECT_RESUME_SNAPSHOT.md`
-- `PROJECT_INTEGRATION_CONTINUITY.md`
-- `PROJECT_EXECUTION_QUEUE.md`
-
-For original feature coverage:
-
-- `PRODUCT_FEATURE_PARITY_MATRIX.md`
-- `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
-
-These are supporting references. For **current Student continuation**, `PROJECT_HANDOFF.md` + `PROJECT_STATUS.md` + `PROJECT_ENGINEERING_LOG.md` + the three Student product docs above take precedence over stale historical stage prose.
+For current Student continuation, the top-level handoff/status/log plus current Student product docs outrank stale historical stage prose.
 
 ---
 
 ## 9. Continuation rule
 
-A new engineering conversation should not ask the Product Owner to restate decisions already documented here.
-
-It should:
-
-- read evidence;
-- live-check current refs/CI;
-- continue from the active batch;
-- update documentation during work;
-- preserve contracts;
-- fix proven problems at their owning layer;
-- avoid blind rewrite and avoid preserving bad UX merely because it already exists.
+A replacement engineer should read evidence, live-check refs/CI, continue from the exact active batch, update documentation during work, preserve contracts, fix proven problems in the owning layer, and avoid both blind rewrite and preserving bad UX merely because it already exists.
