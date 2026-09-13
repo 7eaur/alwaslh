@@ -1,3 +1,26 @@
+.student-feature-loading {
+  min-height: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  color: var(--aw-color-muted, #66777b);
+  font-weight: 600;
+}
+
+.student-feature-loading .spinner {
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 2px solid color-mix(in srgb, var(--aw-color-primary, #00b5a9) 22%, #dbe5e6);
+  border-top-color: var(--aw-color-primary-dark, #007f78);
+  border-radius: 999px;
+  animation: student-route-spin 700ms linear infinite;
+}
+
+@keyframes student-route-spin {
+  to { transform: rotate(360deg); }
+}
+
 .student-icon-action {
   width: 2.75rem;
   height: 2.75rem;
@@ -314,5 +337,12 @@
   .future-empty-state {
     min-height: 18rem;
     padding: 1.5rem 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-feature-loading .spinner {
+    animation: none;
+    border-color: var(--aw-color-primary-dark, #007f78);
   }
 }
