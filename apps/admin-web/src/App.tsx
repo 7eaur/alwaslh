@@ -10,9 +10,9 @@ import {
 } from "./admin-api";
 import { ADMIN_NAVIGATION } from "./admin-navigation";
 import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
-import { AdminReportsWorkspace } from "./AdminReportsWorkspace";
 import { AiOperationsPage } from "./AiOperationsPage";
 import { AdminAccessCodesPage } from "./admin/access-codes/AdminAccessCodesPage";
+import { AdminAccessCodeReportsPage } from "./admin/access-codes/AdminAccessCodeReportsPage";
 import { LessonAuthoringParityPanel } from "./admin/content/LessonAuthoringParityPanel";
 import { AdminOverviewPage } from "./admin/overview/AdminOverviewPage";
 import { AdminNotificationsPage } from "./admin/operations/AdminNotificationsPage";
@@ -293,7 +293,7 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
       <Route path="operations/diagnostics" element={<AdminOperationsDiagnosticsPage onSessionExpired={onSessionExpired} />} />
       <Route path="operations/notifications" element={<AdminNotificationsPage onSessionExpired={onSessionExpired} />} />
       <Route path="tools/ai-authoring" element={<AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />} />
-      <Route path="access-codes/reports" element={<AdminReportsWorkspace onSessionExpired={onSessionExpired} />} />
+      <Route path="access-codes/reports" element={<AdminAccessCodeReportsPage onSessionExpired={onSessionExpired} />} />
       <Route path="*" element={<AdminRouteNotFound />} />
     </Routes>
   );
