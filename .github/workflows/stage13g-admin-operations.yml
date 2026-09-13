@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - integration/stage13g-admin-product
+      - rebuild/super-admin-foundation
 
 permissions:
   contents: read
