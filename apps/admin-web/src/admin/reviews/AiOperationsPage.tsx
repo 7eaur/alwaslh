@@ -25,7 +25,7 @@ import type {
   AiOperationsFeedback,
   AiOperationsWorkspaceModel,
 } from "../../ai-operations-view-model";
-import { AiReviewWorkspace } from "../../AiReviewWorkspace";
+import { AiReviewWorkspace } from "./AiReviewWorkspace";
 
 interface Props {
   onSessionExpired: () => void;
