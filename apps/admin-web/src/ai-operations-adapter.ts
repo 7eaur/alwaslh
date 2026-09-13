@@ -165,6 +165,7 @@ export function mapAiOutputDetail(output: AiOutputDetailApi): AiReviewOutputView
     })),
     reviewPagination: { ...output.reviewPagination },
     allowedReviewActions: [...output.allowedReviewActions],
+    application: null,
   };
 }
 
