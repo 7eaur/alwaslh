@@ -2,283 +2,242 @@
 
 > Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — Student main preserved; Super Admin AR-01 through AR-05 verified; AR-06 Batch 1 verified and active.**
+Last consolidated: **2026-09-13 — Student main preserved; Super Admin AR-01 through AR-05 verified; AR-06 Batch 2A code verified and AR-06 remains active.**
 
-## Project Understanding
+## Project understanding
 
 الوسيلة الذكية منصة تعليمية عربية تتكون من Student Web/PWA + Super Admin Web فوق Fastify/PostgreSQL.
 
-Student is an installed educational app experience. Current Student product flow is:
+Student product flow is broadly:
 
 `Activation/Login → Home → Learn → Subject → Lesson/Reader`
 
 with separate `Practice`, `Downloads`, and `Account` destinations.
 
-The dedicated Super Admin Product Rebuild owns Admin responsibilities, backend workflow mapping, IA, navigation, frontend architecture, UX/UI and Admin design-system decisions. It supersedes patching the old B06–B14 Admin composition without evidence.
+The Super Admin Product Rebuild owns Admin responsibilities, backend workflow mapping, IA/navigation, frontend architecture and Admin UX/UI decisions. It does not own the parallel Student UX track.
 
-## Architecture
+## Architecture and authority
 
 - `apps/student-web` — Student Web/PWA.
 - `apps/admin-web` — Super Admin task-oriented product under staged rebuild.
 - `apps/api` — authoritative Fastify API.
 - `database/migrations` — PostgreSQL schema/integrity authority.
 - `packages/brand` — canonical brand/design tokens.
-- `packages/ui` — framework-neutral shared presentation foundation.
+- `packages/ui` — shared presentation foundation.
 
-Stable authority contracts:
+Stable invariants:
 
-- browser is not canonical business authority;
+- browser is never canonical business authority;
 - API + PostgreSQL own canonical state;
-- Auth/Authorization and Entitlements remain server-owned;
+- Auth/Authorization/Entitlements remain server-owned;
 - `media ready != published`;
 - AI output never auto-publishes Student content/questions;
 - human review remains mandatory;
 - Assessment scoring/finalization remains server-owned;
-- immutable/published quiz-version snapshot authority remains server-owned;
-- `/v1` is never Service Worker Cache API authority;
-- signed offline authorization, integrity and device/session rules remain unchanged;
-- no password/session token/device private key is persisted as offline learning content.
+- immutable/published quiz-version snapshots remain server-owned;
+- `/v1` is never Service Worker cache authority;
+- signed offline authorization/integrity/device/session rules remain unchanged.
 
-## Binding product-quality decision
+## Binding product-quality decisions
 
-- **AD-230 — legacy visuals are not a preservation contract.** Existing screens are evidence for functions/flows only. Layout, composition, typography, navigation, spacing, density and interaction patterns may be rebuilt while preserving identity and correct contracts.
+- **AD-230 — legacy visuals are not a preservation contract.** Existing screens are evidence for functions/flows only.
 - Acceptance is: **Functional + Clear + Elegant + Consistent + Fast + Maintainable + Professional**.
-- Student must feel like a modern Arabic-first/RTL-first educational app, not a dashboard.
-- Super Admin must be task-oriented, dense but readable, and must not expose pipeline/database internals as normal operator workflow.
+- Student remains Arabic-first/RTL-first and learner-oriented.
+- Super Admin must be task-oriented, dense but readable, and must not expose database/pipeline internals as normal operator workflow.
 
-## Student User Flows
+## Super Admin architecture decisions
 
-### B02 — shell/navigation — integrated
+- **AD-ADMIN-001 — route ownership replaces local workspace switching.** Primary Admin destinations are real routes/deep links.
+- **AD-ADMIN-002 — Overview is attention-first.** It answers what needs operator attention.
+- **AD-ADMIN-003 — Governance is not a normal workspace.** Health/Audit/Diagnostics own operations concerns.
+- **AD-ADMIN-004 — technical identifiers are advanced-only.** UUIDs, job/unit/output IDs, provider/model/route/tokens/cost, storage paths/checksums/raw JSON do not belong in normal workflows.
+- **AD-ADMIN-005 — content publication belongs to lesson content, not ingestion-task identity.**
+- **AD-ADMIN-006 — OCR review requires visible source evidence.**
+- **AD-ADMIN-007 — removing a parity panel must not remove a legitimate capability.**
+- **AD-ADMIN-008 — approved AI output is applied contextually, never by manual internal-ID handoff.**
+- **AD-ADMIN-009 — Question Bank entity detail is route-owned.** `/app/questions/:questionId` owns canonical detail/review/history while legacy composition may remain only as a temporary mutation adapter.
+- **AD-ADMIN-010 — Question Bank decomposition is parity-first.** List/detail navigation can migrate before create/import/edit/regeneration only if proven mutation capabilities remain reachable and server-authoritative during the transition.
 
-Top-level destinations:
+## Parallel Student/audit state
 
-`Home | Learn | Practice | Downloads` + `Account`
+Live `main` observed at the start of AR-06 Batch 2A:
 
-### B03 — learning hierarchy/Reader — integrated
+`c3734366c132ea3919a925bdd0dd37cfd5d82104`
 
-- `/app/learn`
-- `/app/learn/subjects/:subjectId`
-- `/app/learn/lessons/:lessonId`
+This is newer than the Admin branch's earlier documented Student checkpoint. The Admin rebuild did not merge, reset, overwrite or otherwise modify the Student workstream in this batch.
 
-Direct subject/lesson routes resolve only through server-authorized curriculum. Reader remains a focused learning screen.
-
-### B04 — Practice / Assessment — merged
-
-- `/app/practice` — library + recent attempts.
-- `/app/practice/quizzes/:quizId` — quiz detail + learner-facing question-set + Practice/Test choice.
-- `/app/practice/attempts/:sessionId` — focused attempt or result/review.
-
-Live main after B04 merge:
-
-`f44d5f72eaeb0acd8ca5c67d2816a56596761f21`
-
-The Admin rebuild must preserve this Student state when eventually resynchronizing.
-
-## Parallel architecture/security audit integration
+Architecture/security audit facts retained:
 
 - Audit PR #49 merged as `4249c91e434994343bfe3bd685af6d101c987dc1`.
 - `FPA-002` repair PR #50 merged at `f60f263f9fecfa33a3876ef7df6334c222c7cf3a`.
-- The repair closes abandoned Assessment-session authorization leakage with PostgreSQL/Chromium evidence.
-- Railway deployment `1e5a749a-10ac-47fd-99d8-e2653fce154b` reported SUCCESS.
-- `FPA-013` remains open: Reader active-search-match DOM focus finding.
-- Authenticated production-path verification remains `NOT YET VERIFIED` where explicitly recorded by the audit.
+- `FPA-013` Reader active-search focus remains open.
+- authenticated production-path verification remains `NOT YET VERIFIED` where recorded by the audit.
 
-## Super Admin Architecture Decisions
-
-- **AD-ADMIN-001 — route ownership replaces local workspace switching.** Primary Admin destinations are real routes/deep links.
-- **AD-ADMIN-002 — Overview is attention-first.** It answers what needs operator attention; generic metrics are secondary.
-- **AD-ADMIN-003 — Governance is not a normal workspace.** Health/Audit/Diagnostics own operations concerns.
-- **AD-ADMIN-004 — technical identifiers are advanced-only.** UUIDs, job/unit/output IDs, provider/model/route/tokens/cost, storage paths/checksums/raw JSON do not belong in normal workflows.
-- **AD-ADMIN-005 — content publication belongs to lesson content, not ingestion-task identity.** UI does not synthesize pipeline IDs.
-- **AD-ADMIN-006 — OCR review requires visible source evidence.** Protected source media is rendered beside extracted text where available.
-- **AD-ADMIN-007 — removing a parity panel must not remove a legitimate capability.** Valid lesson-summary/export and quiz-metadata functions were relocated contextually under Content/Quizzes rather than restored as dashboard panels.
-- **AD-ADMIN-008 — approved AI output is applied contextually, never by manual internal-ID handoff.** The reviewed result owns the operator action while backend commands retain approval, provenance, idempotency and validation authority.
-- **AD-ADMIN-009 — Question Bank entity detail is route-owned.** `/app/questions/:questionId` owns canonical question detail/review/history; legacy split-pane composition may remain only as a temporary parity adapter while list/editor/import/regeneration ownership is migrated.
-
-## Super Admin Changes Made
+## Super Admin changes made
 
 ### AR-01 — DONE / VERIFIED
 
-- Replaced local workspace-state navigation with React Router ownership.
-- Reduced navigation to task-oriented target IA.
-- Removed Governance / AI Authoring / Reports as top-level sidebar destinations.
-- Removed stage/parity/debug panels from normal shell.
-- Added deep-link/route coverage.
+- route-driven Admin shell and deep links;
+- five task-oriented navigation areas;
+- Governance / AI Authoring / Reports removed from normal top-level navigation;
+- stage/parity/debug surfaces removed from normal shell.
 
 ### AR-02 — DONE / VERIFIED
 
-- Added server-owned attention projection for Admin Overview.
-- Rebuilt `/app` around actionable review/failure/support queues.
-- Split Operations into Health, Audit and Diagnostics.
-- Kept Notifications contextual.
-- Humanized actor/resource/event presentation and removed raw diagnostics from normal Overview.
+- attention-first Overview;
+- server-owned operations attention projection;
+- Operations split into Health / Audit / Diagnostics;
+- Notifications contextualized;
+- technical diagnostics kept advanced-only.
 
 ### AR-03 — DONE / VERIFIED
 
-- Preserved correct Curriculum backend/domain contracts.
-- Decomposed giant Curriculum workspace into hierarchy browsing, contextual creation and management controls.
-- Kept lifecycle changes non-destructive and server-authoritative.
-- Moved secondary rename/status/order actions behind contextual/advanced disclosure.
-- Verified with API, clean migrations, PostgreSQL contracts and real Chromium.
+- correct Curriculum backend/domain contracts preserved;
+- giant composition decomposed into hierarchy browsing, contextual creation and entity actions;
+- secondary rename/status/order controls moved behind contextual/advanced management;
+- API/PostgreSQL/Chromium verification completed.
 
 ### AR-04 — DONE / VERIFIED
 
-Backend/content authority:
+- authenticated OCR source preview with server-side byte-size/SHA-256 integrity checks;
+- no public storage-path authority exposed;
+- source image/page shown beside OCR text during human review;
+- lesson-level publication command decoupled normal UI from `ingestion_task_id`;
+- publication still blocks when required media is not ready;
+- content revision and audit authority remain server-owned;
+- contextual lesson summary/export and quiz metadata routes retained legitimate capabilities;
+- raw MIME/error/lifecycle/parity labels removed from ordinary operator presentation.
 
-- Added authenticated safe OCR source preview.
-- Source preview verifies stored byte size and SHA-256 before response.
-- Storage key/path is not exposed as browser authority.
-- Added lesson-level publication command independent of `ingestion_task_id`.
-- Source/legacy-imported lesson assets without ingestion tasks can follow Draft → Review → Published.
-- Publish blocks when required media is not ready.
-- `content_revision` increments remain server-owned and audit events remain retained.
-- Legacy task-bound publication endpoint remains for compatibility while normal UI no longer depends on it.
+Exact-head checkpoint: `ba74c17902827805d6be0ab91c0ff384fc3e2530`.
 
-Frontend/UX:
-
-- OCR review now shows the real source image/page beside extracted/editable text.
-- Task detail owns upload/process/link/archive, not publication authority.
-- Lesson publication is a separate lesson-owned panel/workflow.
-- Raw MIME/error codes and raw processing enums were removed from normal operator presentation.
-- Valid lesson summary/content-history export capability was relocated to `/app/content/lesson-tools`.
-- Valid draft quiz metadata capability was relocated to `/app/quizzes/metadata`.
-- Both are contextual routes and not sidebar destinations; parity/stage terminology was removed from visible UI.
-
-Exact-head acceptance checkpoint:
-
-`ba74c17902827805d6be0ab91c0ff384fc3e2530`
-
-Verified runs include:
-
-- Stage 13D Content Ingestion `34726217380` — SUCCESS.
-- Stage 13D Admin Upload UI `34726217393` — SUCCESS, including real Chromium flow.
-- Stage 13G Admin Operations `34726217382` — SUCCESS, including real API + PostgreSQL + Chromium.
-- Stage 13 Admin Product `34726217394` — SUCCESS.
-- Stage 13E Frontend Preparation `34726217369` — SUCCESS.
-- Stage 13E Admin AI Operations `34726217384` — SUCCESS.
-- Stage 13E Combined Integration `34726217359` — SUCCESS.
-- OCR Foundation `34726217374` — SUCCESS.
-- Stage 9, 10, 11, 12 and completed Student regression workflows on the same head were green.
+Key successful runs: Content Ingestion `34726217380`, Admin Upload UI `34726217393`, Admin Operations `34726217382`, Admin Product `34726217394`, Frontend `34726217369`, Admin AI `34726217384`, Combined `34726217359`, OCR `34726217374`.
 
 ### AR-05 — Reviews + AI — DONE / VERIFIED
 
-Classification and decisions:
+Classification:
 
-- **KEEP:** `AiOperationsPage` server-canonical refresh, polling for non-terminal jobs, pagination, conflict refresh and review mutation authority.
-- **REBUILD:** ordinary AI review composition into a content-first human review queue under `/app/reviews/ai`.
-- **REMOVE from normal UX:** raw job/unit/output IDs, prompt keys, provider/model/route/token/cost pipeline details and manual internal-ID handoff.
-- **REFACTOR:** application flow so an approved reviewed result exposes its own contextual lesson/quiz apply/import action.
+- **KEEP:** server-canonical refresh/polling/pagination/conflict recovery/review authority.
+- **REBUILD:** content-first human review queue.
+- **REMOVE from normal UX:** raw job/unit/output/provider/model/route/token/cost internals and manual internal-ID handoff.
+- **REFACTOR:** approved reviewed results own contextual lesson/quiz application actions.
 
-Implemented behavior:
+Implemented:
 
-- operator review is centered on generated content, source evidence, validation findings and human decision;
-- provider/runtime internals no longer dominate normal review;
-- approve/edit/reject remains server-authoritative and conflict recovery refreshes canonical state;
-- approved lesson/quiz results can be applied/imported contextually without pasting `Output ID`;
-- backend application commands preserve approval checks, provenance, idempotency and validation authority;
-- durable attempt/review histories remain paginated and accessible;
-- lesson application E2E proves one legal revision transition from baseline `content_revision = 1` to `2`; PostgreSQL `bigint` is asserted as API string `"2"`;
-- the final E2E defect was test drift: native `<details>` remained open after mutation/refetch and the old test toggled it closed. Coverage now opens a disclosure only when needed instead of changing correct product UX.
+- approve/edit/reject remains server-authoritative;
+- approved results apply/import contextually without pasting Output IDs;
+- application commands preserve approval, provenance, idempotency and validation authority;
+- histories stay paginated/accessibly disclosed;
+- lesson application E2E proves legal revision `1 → 2`, with PostgreSQL `bigint` represented as API string `"2"`;
+- native `<details>` E2E drift fixed without changing correct product UX.
 
-Exact-head acceptance checkpoint:
+Exact-head checkpoint: `cda2c3a683c6101db12f0c7cfad772226c234e0d`.
 
-`cda2c3a683c6101db12f0c7cfad772226c234e0d`
+Successful runs: Frontend `34729512441`, Admin AI `34729512433`, Combined `34729512404`.
 
-Verified runs:
+### AR-06 — Question Bank — ACTIVE
 
-- Stage 13E Frontend Preparation `34729512441` — SUCCESS.
-- Stage 13E Admin AI Operations `34729512433` — SUCCESS.
-- Stage 13E Combined Integration `34729512404` — SUCCESS.
-- Combined integration passed API/Admin lint, typecheck, unit/build gates, clean PostgreSQL migrations, Stage13E DB contracts, backend authority regressions, Stage12/Auth regressions, deterministic fixture invariants and the real Chromium suite.
+#### Batch 1 — route-owned Question detail — VERIFIED
 
-### AR-06 — Question Bank — ACTIVE / BATCH 1 VERIFIED
+Repository inventory before editing confirmed durable list/detail/revision/event contracts, manual creation, approved AI import/regeneration, draft→review→published authority and publication validation.
 
-#### State received
+Classification:
 
-- AR-05 was already closed and verified.
-- Starting Admin rebuild head for this batch was `2ab2e8c8c16deb26eb8c922d884413244e0813aa`.
-- Live `main` had independently advanced with Student work; no main/Student changes were overwritten or merged into this batch.
-- No previous Admin CI/batch was active at the moment AR-06 inventory began.
+- **KEEP:** API/PostgreSQL lifecycle/publication authority; revisions/events; approved-AI provenance/import/regeneration; filters/pagination contracts.
+- **IMPROVE:** human state/context, deep links, progressive source/history disclosure and recovery states.
+- **REFACTOR:** route/feature ownership into list/detail/editor/review/history.
+- **REBUILD:** giant `QuestionBankWorkspace.tsx` composition.
+- **REMOVE from normal UX:** checksum/OCR/output/internal IDs and pipeline/stage terminology.
 
-#### Repository-backed inventory and classification
+Batch 1 added route-owned `QuestionBankDetailPage` and `/app/questions/:questionId`. Submit-review/publish/reject remain existing server commands; source/revision/event evidence remains available without exposing technical internals.
 
-Inspected Question Bank migrations/service/API/adapters/UI/tests before editing. The system already has durable list/detail/revision/event contracts, manual question creation, AI import/regeneration, draft→review→published lifecycle authority, publication validation and PostgreSQL/integration/browser coverage.
+Verified head: `1677770dc6402e4b2825c1b8dd50f546fdf74d0c`.
 
-- **KEEP:** API/PostgreSQL lifecycle and publication authority; revisions/events; approved AI provenance/import/regeneration validation; existing filters/pagination contracts.
-- **IMPROVE:** human status/context presentation, route ownership, source/history progressive disclosure, normal error/retry states.
-- **REFACTOR:** feature state into route-owned list/detail/editor/review/history surfaces.
-- **REBUILD:** `QuestionBankWorkspace.tsx` composition, which currently combines list/create/import/edit/detail/review/regeneration/history.
-- **REMOVE from normal UX:** checksum, OCR/internal IDs, raw AI output identifiers and stage/pipeline terminology. Advanced evidence may remain diagnostic-only.
+- Frontend `34731668746` — SUCCESS.
+- Combined `34731668810` — SUCCESS including clean migrations, DB contracts, authority/security regressions, deterministic fixtures and real Chromium.
 
-#### Batch 1 implementation
+#### Batch 2A — routed list becomes the normal browsing flow — CODE VERIFIED
 
-1. Added `apps/admin-web/src/admin/questions/QuestionBankDetailPage.tsx` in commit `b52147c8a070a2a7e018562b8d80a62fb4a66023`.
-2. Added route ownership `/app/questions/:questionId` through `App.tsx` in commit `1677770dc6402e4b2825c1b8dd50f546fdf74d0c`.
-3. The detail route reads canonical question detail and curriculum data from existing server APIs; it does not duplicate lifecycle authority in the browser.
-4. Submit-for-review, publish and reject actions still call the established Question Bank server commands.
-5. Normal source evidence shows human-useful page/quote context without checksum, OCR extraction ID, storage path or raw AI identifiers.
-6. Revision and event history remain available from the route-owned detail surface.
-7. The legacy `/app/questions` workspace remains temporarily mounted because create/import/edit/regeneration parity has not yet been migrated; AR-06 therefore remains ACTIVE.
+**State received and reconciliation**
 
-#### Verification
+1. Re-read `PROJECT_STATUS.md`, this log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before changing code.
+2. Re-fetched live refs: `main@c3734366c132ea3919a925bdd0dd37cfd5d82104`; Admin branch was `68dbda4d3463cb6f04b374815e9dd47a59be7a2b` before new changes.
+3. Confirmed Draft PR #52 remains draft.
+4. Detected that prose still referenced the earlier Student main checkpoint and AR-06 Batch 1 code head, so current refs/commits/CI were inspected before proceeding.
+5. Inspected Question Bank migration `0019_question_bank.sql`, API HTTP/service lifecycle implementation, frontend client/adapters, legacy workspace, route-owned detail page and API unit coverage.
+6. Confirmed no missing backend CRUD problem: PostgreSQL/API already enforce open/published revision uniqueness, lifecycle validation and provenance; the next root problem is frontend composition/route ownership.
 
-Verified code head: `1677770dc6402e4b2825c1b8dd50f546fdf74d0c`.
+**Decision/classification for Batch 2A**
 
-- Stage 13E Frontend Preparation run `34731668746` — SUCCESS.
-  - Admin lint — SUCCESS.
-  - strict typecheck — SUCCESS.
-  - unit tests — SUCCESS.
-  - production build — SUCCESS.
-- Stage 13E Combined Integration run `34731668810` — SUCCESS.
-  - API + Admin quality gates — SUCCESS.
-  - clean PostgreSQL migrations — SUCCESS.
-  - Stage13E DB contract — SUCCESS.
-  - backend authority regressions — SUCCESS.
-  - Stage12/Auth security regressions — SUCCESS.
-  - deterministic browser fixtures — SUCCESS.
-  - real Admin Chromium suite — SUCCESS.
+- **KEEP:** all existing PostgreSQL/API lifecycle and mutation authority.
+- **KEEP temporarily:** legacy manual create, approved-AI import, edit and regeneration inside the old workspace until each receives contextual route ownership.
+- **IMPROVE/REFACTOR:** `/app/questions` collection ownership and list→entity navigation.
+- **REBUILD incrementally:** giant workspace composition, without a flag-day rewrite.
+- **REMOVE later:** normal split-pane selection/manual technical handoffs only after route-owned parity is complete.
 
-No root-cause regression was found in this batch. The new route compiles and survives the existing real-browser parity suite.
+**Code changes**
 
-#### Explicit resume point for next Admin task
+1. `931254e3b62d4cc8465f0bf7cd503ba1e32ae54c` — added `apps/admin-web/src/admin/questions/QuestionBankListPage.tsx` with focused list/filter/pagination behavior and entity navigation.
+2. `09a84c95b2de59ea318ff43171883756a776a79b` — updated `App.tsx`: `/app/questions` now uses the focused list; `/app/questions/:questionId` remains canonical detail; `/app/questions/manage` temporarily mounts the legacy mutation workspace for parity.
+3. `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac` — aligned the new list with shared styles/types and route navigation behavior.
+4. No API, service, migration or Student code was changed.
 
-**Do not start AR-07. Continue AR-06.**
+**Verification on exact code head `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac`**
 
-Next coherent batch:
+- Stage 13E Admin AI Operations `34733273139` — SUCCESS.
+- Stage 13E Frontend Preparation `34733273136` — SUCCESS.
+- Stage 13E Combined Integration `34733273134` — SUCCESS.
+- Combined includes API/Admin quality gates, all clean PostgreSQL migrations/contracts, backend authority/security regressions, deterministic fixture setup and real Admin Chromium.
 
-1. Read this checkpoint plus `PROJECT_STATUS.md` and the workstream file, then confirm branch HEAD/CI first.
-2. Wire the normal Question Bank list/card navigation to `/app/questions/:questionId` so entity routing becomes the default detail path.
-3. Migrate editor/review/history ownership out of the giant `QuestionBankWorkspace` incrementally, preserving manual create, approved AI import, edit and regeneration behavior.
-4. Remove manual technical-ID handoffs from normal Question Bank UX only when contextual parity is available; do not delete proven server contracts merely to simplify the UI.
-5. Add direct deep-link + routed lifecycle browser coverage.
-6. Require exact-head Frontend + Question Bank/API/PostgreSQL/Chromium verification before declaring AR-06 complete.
+**What Batch 2A deliberately did not claim**
 
-## Audit Findings
+- current-revision editing has **not** yet moved into `QuestionBankDetailPage`;
+- approved regeneration has **not** yet moved into the route-owned detail flow;
+- manual create/import remains in `/app/questions/manage`;
+- direct deep-link + list→detail + routed lifecycle/edit/regeneration browser coverage still needs explicit AR-06 coverage;
+- AR-06 therefore remains **ACTIVE** and AR-07 must not start.
 
-| ID | Severity | Area | Problem | Evidence | Solution | Status |
-|---|---:|---|---|---|---|---|
-| `UX-IA-101` | P1 | Routing | apps lacked route-based navigation | repository shell | BrowserRouter + route ownership | FIXED / B01 |
-| `UX-IA-102` | P1 | Student shell | authenticated Student was one aggregate surface | Student app | stable shell + destination routing | FIXED / B02 |
-| `UX-IA-104` | P1 | Learn | subject/lesson state was local component navigation | Student Learn | real route hierarchy | FIXED / B03 |
-| `UX-IA-105` | P1 | Reader | Reader embedded inside curriculum browser | Student Reader | focused Reader screen | FIXED / B03 |
-| `UX-IA-106` | P1 | Practice | catalog/detail/attempt/result shared dashboard-like state | Student Assessment | routed Practice hierarchy | FIXED / B04 |
-| `UX-COPY-103` | P1 | Assessment | implementation/version language exposed to Student | UI copy | learner-facing copy | FIXED / B04 |
-| `UX-A11Y-102` | P2 | Assessment | focused attempt competed with global chrome | browser QA | focused shell + result scroll/focus | FIXED / B04 |
-| `FPA-002` | P1 | Assessment authz | abandoned-session authorization omission | API/PostgreSQL | server repair + regression proof | FIXED / MERGED |
-| `FPA-013` | P2 | Reader a11y | active search match does not move DOM focus | audit | accessibility closure | OPEN |
-| `ADMIN-001` | P1 | Admin IA | giant state-driven Admin shell / no deep links | legacy `App` | route-driven task IA | FIXED / AR-01 |
-| `ADMIN-002` | P1 | Overview | generic metrics instead of actionable attention | old Operations | attention projection + Overview | FIXED / AR-02 |
-| `ADMIN-003` | P1 | Curriculum UX | unrelated creation/edit controls crowded in one surface | old Curriculum workspace | hierarchy/context decomposition | FIXED / AR-03 |
-| `ADMIN-004` | P1 | Content publication | UI publication coupled to ingestion task identity | source imports may lack task ID | lesson-level publication use case | FIXED / AR-04 |
-| `ADMIN-005` | P1 | OCR review | extracted text lacked visible source evidence | old review UI | protected source preview beside OCR | FIXED / AR-04 |
-| `ADMIN-006` | P1 | AI review | normal review exposes pipeline/runtime internals | legacy `AiOperationsWorkspace` composition | content-first human review queue + advanced-only diagnostics | FIXED / AR-05 |
-| `ADMIN-007` | P1 | AI authoring | operator manually copies `Output ID` to apply approved result | legacy `AdminAiAuthoringWorkspace` flow | contextual approved-result apply/import command | FIXED / AR-05 |
-| `ADMIN-008` | P1 | Question Bank IA | list/editor/review/history remain combined and entity detail lacks route ownership | legacy `QuestionBankWorkspace` | route-owned detail + staged decomposition | IN PROGRESS / AR-06 |
-| `UX-COPY-101` | P1 | Downloads/Account | Student technical/offline copy remains | Student B05 | UX-B05 | OPEN |
-| `STUDENT-016I` | P1 | Offline/PWA | true cold-start offline Reader not closed | roadmap | resume after UX closure | PAUSED |
-| `AI-012..AI-019` | P2 | AI | live provider readiness not proven | runtime | separate live verification | NOT YET VERIFIED |
+**Documentation checkpoint**
 
-## Tests & Verification Policy
+- `PROJECT_STATUS.md` updated after the verified code head; its documentation commit is `90ea787484983fe170ac93fa5630e735dfd6ca6d`.
+- This log and the workstream file are updated as the same handoff sequence; because documentation commits advance HEAD, the next task must inspect the final documentation-head CI before changing code.
+
+#### Explicit resume point for the next Admin task
+
+**Do not start AR-07. Continue AR-06 only.**
+
+1. Read `PROJECT_STATUS.md`, this log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`; fetch live `main`, branch HEAD, Draft PR #52 and latest exact-head CI.
+2. If documentation-head CI is active, finish observing it before changing code.
+3. Move `editQuestionBankItem` / current-revision editor ownership into `QuestionBankDetailPage` while preserving server lifecycle authority and review restrictions.
+4. Then move approved regeneration contextually to the question entity flow.
+5. Keep manual create/import in `/app/questions/manage` until a separate focused ownership path is implemented and verified.
+6. Add explicit browser coverage for direct deep-link, `/app/questions` list→detail navigation and routed lifecycle/edit/regeneration behavior.
+7. Do not remove legacy workspace until all mutation parity is covered.
+8. Require exact-head Frontend + API/PostgreSQL/Chromium evidence before declaring AR-06 COMPLETE.
+
+## Audit findings
+
+| ID | Severity | Area | Problem | Solution | Status |
+|---|---:|---|---|---|---|
+| `UX-IA-101` | P1 | Routing | apps lacked route-based navigation | route ownership | FIXED / B01 |
+| `UX-IA-102` | P1 | Student shell | aggregate authenticated Student surface | stable shell/destinations | FIXED / B02 |
+| `UX-IA-104` | P1 | Learn | subject/lesson local-state navigation | real route hierarchy | FIXED / B03 |
+| `UX-IA-105` | P1 | Reader | Reader embedded in browser | focused Reader | FIXED / B03 |
+| `UX-IA-106` | P1 | Practice | catalog/detail/attempt/result shared state | routed Practice hierarchy | FIXED / B04 |
+| `FPA-002` | P1 | Assessment authz | abandoned-session authorization omission | server repair + regression proof | FIXED / MERGED |
+| `FPA-013` | P2 | Reader a11y | active search match lacks DOM focus | accessibility closure | OPEN |
+| `ADMIN-001` | P1 | Admin IA | giant state-driven shell/no deep links | route-driven task IA | FIXED / AR-01 |
+| `ADMIN-002` | P1 | Overview | generic metrics instead of attention | attention projection | FIXED / AR-02 |
+| `ADMIN-003` | P1 | Curriculum UX | unrelated controls crowded together | hierarchy/context decomposition | FIXED / AR-03 |
+| `ADMIN-004` | P1 | Content publication | task-ID-coupled UI authority | lesson publication use case | FIXED / AR-04 |
+| `ADMIN-005` | P1 | OCR review | text lacked visible source evidence | protected source preview | FIXED / AR-04 |
+| `ADMIN-006` | P1 | AI review | normal review exposed pipeline internals | content-first review | FIXED / AR-05 |
+| `ADMIN-007` | P1 | AI authoring | manual output-ID handoff | contextual apply/import | FIXED / AR-05 |
+| `ADMIN-008` | P1 | Question Bank IA | list/editor/review/history combined | route-owned list/detail + staged mutation decomposition | IN PROGRESS / AR-06 |
+| `UX-COPY-101` | P1 | Downloads/Account | technical Student copy remains | Student UX workstream | OPEN |
+| `STUDENT-016I` | P1 | Offline/PWA | cold-start offline Reader not closed | normal roadmap | PAUSED |
+| `AI-012..AI-019` | P2 | AI | live provider readiness not proven | live verification | NOT YET VERIFIED |
+
+## Tests & verification policy
 
 For every final candidate:
 
@@ -289,29 +248,23 @@ For every final candidate:
 - clean PostgreSQL migrations/contracts where triggered;
 - real Chromium flows;
 - responsive/no-overflow evidence;
-- Visual QA for changed product surfaces;
+- visual QA for changed surfaces;
 - complete exact-head triggered GitHub Actions matrix before final merge.
 
 A green build alone is not product acceptance.
 
-## Known Issues
+## Known issues
 
 - `FPA-013` Reader active-search focus remains open.
-- API lint still reports a pre-existing unused `SOURCE_BUCKET` warning in `legacy-supabase-importer.ts`; it is nonblocking and unrelated to completed AR-04/AR-05 work until separately justified.
-- Admin production bundle currently emits a >500 kB chunk warning; this is nonblocking now and belongs to evidence-driven AR-10 performance cleanup unless an earlier regression proves urgency.
+- API lint has a pre-existing unused `SOURCE_BUCKET` warning in `legacy-supabase-importer.ts`; unrelated/nonblocking until separately justified.
+- Admin production bundle emits a >500 kB chunk warning; evidence-driven AR-10 performance cleanup owns this unless an earlier regression proves urgency.
 - `AI-012..AI-019` live provider readiness remains `NOT YET VERIFIED`.
 - Stage28 Production Cutover is not complete.
 
-## Remaining Work
+## Remaining work
 
 Super Admin rebuild:
 
 `AR-06 Question Bank (ACTIVE) → AR-07 Quiz Builder → AR-08 Students + Access Codes → AR-09 Cleanup → AR-10 A11y/RTL/Performance/Visual QA`
 
-Parallel Student work:
-
-- UX-B05 remains Student-owned;
-- `FPA-013` remains open;
-- normal roadmap returns to `STUDENT-016I` only after UX refoundation closure.
-
-PR #52 remains draft. Before eventual Admin merge, resynchronize from live main conservatively, retain concurrent Student/audit work, run exact-head full matrix, and do not merge merely because individual builds pass.
+Parallel Student work remains Student-owned. PR #52 remains draft. Before eventual Admin merge, resynchronize from live main conservatively, retain concurrent Student/audit work, run exact-head full matrix, and do not merge merely because individual builds pass.
