@@ -11,8 +11,8 @@ import {
 import { ADMIN_NAVIGATION } from "./admin-navigation";
 import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
 import { AdminReportsWorkspace } from "./AdminReportsWorkspace";
-import { AdminStudentAccessWorkspace } from "./AdminStudentAccessWorkspace";
 import { AiOperationsPage } from "./AiOperationsPage";
+import { AdminAccessCodesPage } from "./admin/access-codes/AdminAccessCodesPage";
 import { AdminOverviewPage } from "./admin/overview/AdminOverviewPage";
 import { AdminNotificationsPage } from "./admin/operations/AdminNotificationsPage";
 import { AdminOperationsAuditPage } from "./admin/operations/AdminOperationsAuditPage";
@@ -284,7 +284,7 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
         path="access-codes"
         element={
           <WorkspaceWithRelatedActions actions={[{ label: "الملفات والتقارير", to: "/app/access-codes/reports" }]}>
-            <AdminStudentAccessWorkspace onSessionExpired={onSessionExpired} />
+            <AdminAccessCodesPage onSessionExpired={onSessionExpired} />
           </WorkspaceWithRelatedActions>
         }
       />
