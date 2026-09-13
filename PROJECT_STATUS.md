@@ -6,142 +6,121 @@ Last synchronized: **2026-09-13**.
 
 ## Current management state
 
-**NORMAL ROADMAP: PAUSED**
+**NORMAL BACKEND ROADMAP: PAUSED FOR PRODUCT/UX FOUNDATION**
 
-**ACTIVE TRACK: STUDENT UX/UI REFOUNDATION / EXPERIENCE REBUILD**
+**ACTIVE TRACK: STUDENT FUTURE-COMPLETE SURFACES + FRONTEND SPLITTING**
 
-**ACTIVE PR: #53 — `refactor(student): rebuild the learner experience end to end`**
+**ACTIVE PR: #54 — `feat(student): prebuild future Library notifications and progress surfaces`**
 
-**ADMIN B06–B14: DEFERRED.** The dedicated **Super Admin Product Rebuild** workstream owns Admin product architecture/IA/backend workflows/frontend/UX. Do not patch the old Admin batches from this branch.
+**ADMIN B06–B14: DEFERRED / SUPERSEDED-PENDING-ADMIN-ADR.** Dedicated Super Admin Product Rebuild owns Admin architecture and UX.
 
-Exact normal-roadmap return after Student/shared refoundation closes:
+## Verified merged baseline
 
-`STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17`
+Student Experience Rebuild PR #53 is **CLOSED / VERIFIED / MERGED**.
 
-## Verified baseline
+- exact accepted head: `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
+- exact-head workflow matrix: **23/23 SUCCESS**;
+- phone/desktop Visual QA accepted;
+- live `main` after merge: `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
 
-UX-B04 Student Practice / Assessment is **CLOSED / VERIFIED / MERGED**.
-
-- final synchronized B04 head: `56f19b88169160c8edd90c9cad8cf129a834b76e`;
-- final B04 matrix: **23/23 SUCCESS** after one same-SHA transient Chromium focus rerun;
-- PR #47 merged;
-- current Student branch started from live main `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
-
-The Full Product Architecture Audit / FPA-002 authorization repair, Legacy Content work and verified backend/security contracts on that baseline remain preserved.
-
-## Binding Student product quality
-
-Canonical architecture: `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
-
-Design order:
-
-**Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
-
-Acceptance:
-
-**Functional + Clear + Easy + Comfortable + Consistent + Fast + Maintainable + Professional**
-
-Student production UI must expose learner concepts only. It must not expose crypto/cache/session/stage/roadmap/internal API language.
-
-Motion is a launch-quality requirement: interaction should feel alive without becoming decorative or distracting. Transitions are short, restrained and accessibility-safe.
-
-## PR #53 implementation
-
-Implemented/refactored:
-
-- first installed-app Welcome / first-run experience;
-- activation, returning login and temporary-password recovery;
-- `/help` instructions and `/support` support guidance;
-- `App.tsx` reduced to session orchestration;
-- old authenticated Account wrapper removed;
-- unified Student shell/app-bar/adaptive navigation/mobile bottom navigation;
-- normal online state no longer wastes space with permanent “متصل” chrome;
-- Home simplified around real learner destinations;
-- Learn → Subject → focused Reader hierarchy retained and visually rebuilt;
-- Reader search exposes result count and moves keyboard/screen-reader focus to the first result on request / Enter, closing FPA-013 behavior;
-- Practice/Assessment remains routed and focused while removing raw API-error presentation;
-- Downloads rebuilt as learner-facing saved/available library while retaining Stage16 integrity/storage authority;
-- Account is the visible owner of access/class-code/logout/help/support;
-- `stage14.css` removed;
-- obsolete `assessment-polish.css` removed and live integration rules separated;
-- production-realistic browser fixtures replace Student-visible Stage/Reader fixture wording;
-- `student-motion.css` adds subtle surface-entry motion, feedback appearance, press/hover affordances and lightweight depth/borders without an animation library;
-- motion uses short opacity/transform transitions and honors `prefers-reduced-motion`;
-- B05 browser acceptance verifies reduced-motion behavior.
-
-## Error / instruction architecture
-
-A centralized Student error-copy layer maps backend error **codes/status/context** to learner-facing guidance. Raw backend messages are not presentation contracts.
-
-Every expected failure answers:
-
-1. **What happened?** in learner language.
-2. **What can I do now?** with one realistic next action.
-3. **What must not happen?** no technical/internal/admin detail leakage.
-
-Covered scenarios include invalid/expired activation, password mismatch, invalid login, temporary password, device verification/rebind, rate limit/service unavailable/offline entry, expired session, invalid class code, unavailable subject/lesson/quiz/attempt, Reader media/search/no-result states, offline Assessment write/finalize blocking, storage/device quota, incomplete/untrusted download, and empty/loading/error/offline states.
-
-## Preserved authority
+Preserved authority:
 
 - API/PostgreSQL canonical;
 - Auth/Authz/Entitlements server-owned;
-- media ready ≠ published;
-- AI never auto-publishes;
-- Question Bank / published immutable Quiz version authority unchanged;
 - Assessment scoring/finalization server-owned;
+- published immutable Quiz authority unchanged;
 - `/v1` excluded from Service Worker Cache authority;
 - signed offline authorization/integrity/device/session contracts unchanged;
-- no password/session token/device private key stored as offline product data.
+- no password/session token/device private key persisted as offline learning data.
 
-## Final verification evidence before documentation head
+## Product Owner direction now active
 
-On code head `17b1c43915eb5b3c279b91727fc8f1c3bc4e1ca8`:
+No production learner will use the Student app before the remaining roadmap is complete.
 
-- UX B01 — SUCCESS;
-- UX B02 — SUCCESS;
-- UX B03 — SUCCESS;
-- UX B04 — SUCCESS;
-- UX B05 — SUCCESS;
-- Stage15 Student Assessment — SUCCESS;
-- Stage16 PWA shell — SUCCESS;
-- Stage16 PostgreSQL offline contracts — SUCCESS;
-- Stage16 lifecycle/materialization Chromium — SUCCESS;
-- B05 quality/migrations/Chromium/visual artifact — SUCCESS;
-- B05 Visual QA artifact `10307419204`, digest `sha256:4fb6af5dd071d7dbf30bdfeea7704db9917a9185766ea8288aba526f6313405d`;
-- 16 B05 screenshots were manually inspected across Activation, Welcome, Help, Support, Downloads library/saved/offline and Account on phone + desktop; no launch-blocking visual issue was found;
-- Stage14 quality/build/migrations/contracts passed, while its browser suite exposed one final stale timing assumption around session expiry detection; that test was corrected to observe the entitlements `401` before entering Account instead of waiting for a refresh control after the app had already handled expiry.
+Therefore the final UI/IA for approved future capabilities may be built now before backend connection, under one hard rule:
 
-No backend/security/business contract was weakened by the browser-test corrections.
+**Build the final surface now; connect authoritative data later.**
 
-## Current closure state
+Prebuilt UI may show honest empty/zero-data states. It must never fabricate notes, unread counts, progress percentages, scores, statistics, achievements, ranking, streaks, recommendations or unsupported account/security behavior.
 
-**NOT YET MERGED.** The branch now contains the final Stage14 timing correction plus this documentation. The next branch head is the intended final acceptance head and must pass its own exact-head workflow matrix before merge.
+Canonical docs:
 
-Before merge:
+- `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
+- `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
 
-1. require the complete exact-head workflow matrix to finish SUCCESS;
-2. require Stage14/15/16 + B01–B05 + Rebuild browser coverage to pass;
-3. keep production-copy scanner blocking implementation/stage/roadmap terminology;
-4. retain `prefers-reduced-motion` browser acceptance;
-5. preserve B05 manual Visual QA acceptance;
-6. verify live `main` has not moved materially;
-7. update PR #53 / Issue #16 with final evidence;
-8. merge PR #53 only with the exact expected-head guard.
+## PR #54 implementation
 
-## Known non-blocking debt
+Current Student structure:
 
-- Student production JS bundle remains approximately `568.80 kB` minified / `144.88 kB` gzip and Vite warns above 500 kB. This is a real performance debt for later route-level code-splitting evaluation, but current browser acceptance does not show it as a launch blocker for this refoundation batch.
-- true cold-start offline Reader authority remains intentionally deferred to `STUDENT-016I`; do not fake completion here.
+- four-item mobile navigation: `الرئيسية / التعلّم / التدريب / مكتبتي`;
+- `/app/library` overview;
+- `/app/library/downloads` using the existing Stage16 Downloads implementation;
+- `/app/library/notes` honest empty pre-integration surface;
+- `/app/library/saved` honest empty pre-integration surface;
+- `/app/library/review` honest empty pre-integration surface;
+- `/app/downloads` retained as compatibility route;
+- app-bar Notifications action + `/app/notifications` honest zero-data feed state;
+- `/app/progress` pre-integration Learning/Practice/Achievements composition without fake metrics;
+- Home points to Learn / Practice / Library with secondary Progress / Notifications;
+- Account is the personal management hub for access/class-code + Library/Progress/Notifications + Help/Support + logout;
+- future Reader/Assessment integration flows for Notes/Saved/Needs Review specified before Stage17 backend work;
+- responsive RTL styling and existing subtle motion/reduced-motion contract extended to all new surfaces.
 
-## Explicit non-goals
+## Performance architecture
 
-- no premature Stage17 Notes/Favorites/Needs Review UI;
-- no premature Stage18 Notifications UI;
-- no premature Stage19 Progress/Statistics/Achievements UI;
-- no silent implementation of remaining Stage16 cold-start offline Reader authority;
-- no Admin rebuild from this branch;
-- no heavy animation framework, continuous decorative motion, bounce/glow effects or motion that obscures state/focus.
+The Student app is being split now instead of allowing future screens to accumulate in one initial JS bundle.
 
-## Immediate next action
+`student-access.tsx` uses feature-level `React.lazy` / `Suspense` for:
 
-Run the complete exact-head CI matrix on the documentation-complete branch head. If all workflows are green, verify PR head/base/mergeability, record final acceptance in PR #53 and Issue #16, merge with exact expected-head guard, verify live main, then synchronize with the dedicated Super Admin rebuild before returning to `STUDENT-016I`.
+- Learn/Reader;
+- Practice/Assessment;
+- Library/personal surfaces;
+- Account.
+
+Home/Shell remains immediately available. Loading copy is learner-facing: `جاري فتح الصفحة`.
+
+Before lazy splitting, the expanded future-surface build reached approximately **599.61 kB minified / 148.83 kB gzip** in one main JS chunk. A new production build on the documentation-complete head must verify the split output before this workstream is accepted.
+
+## Current verification evidence
+
+On the initial PR #54 code head before lazy splitting:
+
+- Student lint/typecheck/unit/build: SUCCESS;
+- 11 Student unit files / 41 tests: SUCCESS;
+- PostgreSQL migrations in B02/B05: SUCCESS;
+- B05 Chromium + expanded future-surface Visual QA: SUCCESS;
+- B02 desktop scenario: SUCCESS;
+- B02 mobile scenario found only a strict Playwright selector ambiguity because both the app-bar bell and Home card contain `الإشعارات`; selector corrected to the exact app-bar accessible name.
+
+Because lazy splitting + documentation changed the branch afterward, those results are not final acceptance evidence. The next exact-head matrix is authoritative.
+
+## Required acceptance before PR #54 merge
+
+1. exact-head lint/typecheck/unit/build;
+2. confirm production build emits route/feature chunks and reduces initial main bundle materially;
+3. B01/B02/B03/B04/B05 browser regressions;
+4. Stage14/15/16 + Rebuild verification;
+5. all other triggered workflows SUCCESS;
+6. phone + desktop Visual QA for Library overview/downloads/notes/saved/review, Notifications, Progress and Account;
+7. no horizontal overflow;
+8. production-copy scanner remains clean;
+9. `prefers-reduced-motion` remains valid;
+10. verify live main/base before merge and use exact expected-head guard.
+
+## Not completed by this PR
+
+These surfaces are prebuilt, but their authoritative service implementations remain future roadmap work:
+
+- Stage17 Notes/Saved/Needs Review data and CRUD/sync/provenance contracts;
+- Stage18 Notifications feed/unread/deep-link contracts;
+- Stage19 Progress/Statistics/Achievements formulas/data/privacy contracts;
+- true cold-start offline Reader authority at `STUDENT-016I`;
+- unsupported self-service Account security/preferences controls.
+
+## Normal backend-roadmap return
+
+After Student/shared refoundation and Admin synchronization:
+
+`STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
+
+The difference now is that Stage17–19 should connect real contracts into already-established UI/IA instead of restructuring the Student application again.
