@@ -1,8 +1,8 @@
 # PROJECT ENGINEERING LOG — الوسيلة الذكية
 
-> Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history, merged work and specialized workstream documents.
+> Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE; Batches 1–2 VERIFIED.**
+Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE; Batches 1–2 VERIFIED; Batch 3A ACTIVE pending exact-head Combined + Stage13G.**
 
 ## Project and authority invariants
 
@@ -38,110 +38,82 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 - AR-06 — DONE / VERIFIED. `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
 - AR-07 — DONE / VERIFIED. `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
 - AR-08 — DONE / VERIFIED. `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
-- AR-09 — **ACTIVE**. Batch 1 VERIFIED; Batch 2 VERIFIED; AR-10 remains blocked.
+- AR-09 — **ACTIVE**. Batch 1 VERIFIED; Batch 2 VERIFIED; Batch 3A ACTIVE.
 - AR-10 — NOT STARTED.
 
 ## AR-09 — Cleanup / architecture enforcement
 
 ### Batch 1 — Quiz metadata feature ownership relocation — VERIFIED
 
-#### State inherited and reconciliation
-
-The run began by fetching live `main` (`c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`), branch HEAD (`07de0e24475b8af410bf2c213ede2a334062b30c`), the three continuity files, recent commits, Draft PR #52 and all exact-head quality gates before mutation.
-
-The inherited implementation chain was:
-1. `adc85a6c21eece93560a85febdb2c37e64fe3727` — create feature-owned `apps/admin-web/src/admin/quizzes/QuizMetadataPanel.tsx`.
-2. `6a6360f5c37f96984fe95907783a5ab6e4962557` — switch `App.tsx` to the feature owner.
-3. `20c128bb4a2b7166ad1d04d24e4672c93422d38e` — remove obsolete root `QuizMetadataPanel.tsx`.
-4. `07de0e24475b8af410bf2c213ede2a334062b30c` — documentation-only checkpoint.
-
-Classification:
-- **KEEP:** `/app/quizzes/metadata`, metadata UX, quiz API calls and lifecycle/status authority.
-- **REFACTOR:** physical ownership under `admin/quizzes`.
-- **REMOVE:** obsolete root seam.
-- **NO CHANGE:** migrations, backend, PostgreSQL, auth/security, Student workstream and quiz business rules.
-
-#### Verification performed
-
-Original code-head `20c128bb4a2b7166ad1d04d24e4672c93422d38e`:
-- Frontend `34756904661` — SUCCESS.
-- Admin AI `34756904665` — SUCCESS.
-- Combined `34756904664` — CANCELLED after the newer documentation push superseded it.
-- Stage13G `34756904668` — CANCELLED for the same superseding push.
-
-No failing job was found. Current unchanged-production-code checkpoint `07de0e24475b8af410bf2c213ede2a334062b30c` completed the missing evidence:
-- Admin AI `34757034197` — SUCCESS.
-- Combined `34757034226` — SUCCESS.
-- Stage13G `34757034179` — SUCCESS.
-- Stage13G includes Admin UI quality, Admin operations backend, and Real API + PostgreSQL + Chromium — SUCCESS.
-
-No production code, test contract, backend validation, migration or Student code was changed during closure.
-
-**Decision: AR-09 Batch 1 = VERIFIED.**
+Implementation chain: `adc85a6c21eece93560a85febdb2c37e64fe3727` → `6a6360f5c37f96984fe95907783a5ab6e4962557` → `20c128bb4a2b7166ad1d04d24e4672c93422d38e`. Unchanged-production checkpoint `07de0e24475b8af410bf2c213ede2a334062b30c` completed Admin AI `34757034197`, Combined `34757034226`, Stage13G `34757034179` — SUCCESS. No backend/migration/Student authority changed.
 
 ### Batch 2 — Lesson authoring tools feature ownership relocation — VERIFIED
 
-#### 1. Source-of-truth reconciliation before mutation
+Implementation chain: `6f4638deddc57e3c5c2e1185c57054e39f4fbc86` → `ec7ed60aa106767dddfb423e7c626d93a3fa2cea` → `d1bf7101135516c751c02d269a384015f9e3a132`. Exact-head Frontend `34759439669`, Admin AI `34759439651`, Combined `34759439615`, Stage13G `34759439612` — SUCCESS, including real API + PostgreSQL + Chromium. No tests were weakened and no backend/migration/Student files changed.
 
-This run did not trust prior chat state. It fetched live `main`, current feature HEAD, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`, recent commits, Draft PR #52 and current exact-head CI first.
+### Batch 3A — Access-code reports route ownership adapter — ACTIVE
 
-- live `main` checked: `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.
-- inherited feature HEAD: `8e0f46b6cdc5425d2b86bc772e54070be63d7986`.
-- PR #52 was confirmed open, Draft and unmerged.
-- inherited Batch 1 documentation CI was reconciled through the newest exact head. `8e0f46b...` had successful Admin AI, Combined and Stage13G evidence, including Real API + PostgreSQL + Chromium, so no ACTIVE/RUNNING blocker remained before Batch 2 started.
+#### 1. State inherited from task A and reconciliation
 
-#### 2. Contracts/callers/tests inspected
+The run began from documentation HEAD `1b2915c00ee8818d467e1ef7fdc114366efdfb43`, after fetching live `main` (`c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`), branch HEAD, all three continuity files, recent state, Draft PR #52 and exact-head CI.
 
-Before changing code, the run inspected:
-- `apps/admin-web/src/App.tsx` — `/app/content/lesson-tools` directly rendered root `LessonAuthoringParityPanel`.
-- `apps/admin-web/src/LessonAuthoringParityPanel.tsx` — uses existing `fetchAdminCurriculum`, `updateLessonSummary`, and `exportLessonAuthoring` contracts; it owns UI state/presentation, not canonical backend authority.
-- `apps/admin-web/e2e/admin-parity-closure.e2e.spec.mjs` — real Chromium contract verifies the lesson-tools route, selects a real lesson, saves a summary and checks `contentRevision + 1`, downloads content/history CSV, clears the summary, and checks another revision increment.
+Inherited documentation said AR-09 Batches 1–2 were VERIFIED and explicitly blocked new mutation until these documentation-head runs were reconciled. Fresh verification established:
+- Admin AI `34759659708` — SUCCESS.
+- Combined `34759659619` — SUCCESS.
+- Stage13G `34759659630` — SUCCESS.
 
-No migrations, backend route/service, PostgreSQL constraint, auth/security rule or Student surface needed modification for this ownership cleanup.
+PR #52 was confirmed open, Draft and unmerged. No active inherited CI blocker remained before Batch 3A was selected.
+
+#### 2. Inventory, callers, tests and contracts inspected
+
+The remaining root route-owned inventory included `AdminAiAuthoringWorkspace`, `AdminReportsWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, and `CurriculumWorkspace`. Root location alone was not treated as evidence for removal.
+
+`AdminReportsWorkspace` was selected only after inspection because it is a small, bounded access-code feature seam:
+- `App.tsx` routed only `/app/access-codes/reports` to the root workspace.
+- the workspace calls existing `fetchAdminCurriculum`, `fetchAllAccessCodesForExport`, and `importFullAccessCodes` contracts and existing CSV helpers; canonical access-code authority remains server/PostgreSQL-owned.
+- `apps/admin-web/e2e/admin-reports.e2e.spec.mjs` already provides real Stage13G browser parity: row-level CSV import validation, selected-code export, print selection, 390px no-overflow, and session-expiry behavior.
+
+No migration, backend route/service, PostgreSQL constraint, auth/security contract or Student surface required modification.
 
 #### 3. Classification and decision
 
-- **KEEP:** `/app/content/lesson-tools`, summary edit/save/clear behavior, export behavior, existing server/API contracts and revision authority.
-- **IMPROVE:** none required in this batch; this was intentionally ownership-only.
-- **REFACTOR:** physical ownership of `LessonAuthoringParityPanel` into `apps/admin-web/src/admin/content/`.
+- **KEEP:** `/app/access-codes/reports`, import/export/print behavior, session-expiry handling, API/PostgreSQL authority, and existing E2E contract.
+- **IMPROVE:** make the route owner explicit under `admin/access-codes`.
+- **REFACTOR:** `App.tsx` route ownership through a feature-owned page adapter first, before moving the full implementation.
 - **REBUILD:** none.
-- **REMOVE:** obsolete root implementation only after `App.tsx` pointed at the feature-owned implementation.
-- **NO CHANGE:** migrations, backend, PostgreSQL authority, authentication/security, Student workstream.
+- **REMOVE:** root `AdminReportsWorkspace.tsx` only after executable parity proves the feature owner and the full implementation is relocated safely.
+- **NO CHANGE:** migrations, backend authority, PostgreSQL integrity, auth/security, Student workstream, test strength.
 
-Root cause addressed: a route-specific content workflow still lived as a root-level seam despite having a clear content feature owner, violating the architecture rule established in AD-ADMIN-029.
+Root cause addressed in this sub-batch: the access-code reports route was still directly coupled from `App.tsx` to a root implementation instead of having a feature owner consistent with AD-ADMIN-029.
 
-#### 4. Files changed and why
+#### 4. Changes made and why
 
-Implementation chain:
-1. `6f4638deddc57e3c5c2e1185c57054e39f4fbc86` — created `apps/admin-web/src/admin/content/LessonAuthoringParityPanel.tsx`; behavior was preserved byte-for-byte in logic/markup, with only relative imports adjusted for the new owner.
-2. `ec7ed60aa106767dddfb423e7c626d93a3fa2cea` — updated `apps/admin-web/src/App.tsx` so `/app/content/lesson-tools` imports the content-owned panel.
-3. `d1bf7101135516c751c02d269a384015f9e3a132` — deleted obsolete `apps/admin-web/src/LessonAuthoringParityPanel.tsx` after the route no longer depended on it.
+Exact code-head: `6e7e43e17651d54413ccf6cc234f4e1457942a25` (`refactor(admin): route access-code reports through feature owner`).
 
-No test was relaxed, skipped or rewritten to make the refactor pass.
+Files affected:
+1. `apps/admin-web/src/admin/access-codes/AdminAccessCodeReportsPage.tsx` — added as a temporary feature-owned route adapter exporting the existing `AdminReportsWorkspace` implementation under access-code ownership.
+2. `apps/admin-web/src/App.tsx` — removed the direct root `AdminReportsWorkspace` import, imported `AdminAccessCodeReportsPage`, and routed `/app/access-codes/reports` through it.
 
-#### 5. Exact-head tests and results
+Deliberately unchanged:
+- root `AdminReportsWorkspace.tsx` remains the compatibility implementation for this checkpoint;
+- `admin-reports.e2e.spec.mjs` was not weakened or altered;
+- no backend/migration/PostgreSQL/Student files changed.
 
-Exact code-head: `d1bf7101135516c751c02d269a384015f9e3a132`.
+This staging is intentional: route ownership is established first, exact-head parity is required, then the implementation may be physically relocated and the root seam removed in the next sub-batch.
 
-- Frontend Preparation `34759439669` — SUCCESS.
-- Admin AI Operations `34759439651` — SUCCESS.
-- Combined Integration `34759439615` — SUCCESS.
-- Stage13G Admin Operations `34759439612` — SUCCESS.
-- Stage13G continues to include Admin UI quality, backend operations, and Real API + PostgreSQL + Chromium verification.
+#### 5. Exact-head tests and current results
 
-No failing gate remained on the exact code-head.
+For `6e7e43e17651d54413ccf6cc234f4e1457942a25`:
+- Frontend Preparation `34761018736` — SUCCESS.
+- Admin AI Operations `34761018755` — SUCCESS.
+- Combined Integration `34761018762` — IN PROGRESS at the last check.
+- Stage13G Admin Operations `34761018720` — QUEUED at the last check.
 
-**Decision: AR-09 Batch 2 = VERIFIED. AR-09 remains ACTIVE.**
+There is no observed failing gate at this checkpoint, but the exact-head matrix is not complete. Therefore **Batch 3A remains ACTIVE and must not be declared VERIFIED**.
 
-#### 6. Documentation and non-overlap checkpoint
+#### 6. Non-overlap decision
 
-The Batch 2 status update begins at documentation commit `bf79dd10dbe019b88e283cf6881a844093cacf50` (`PROJECT_STATUS.md`). Subsequent continuity-file updates advance HEAD and may supersede earlier documentation-only workflow runs. Per the non-overlap rule, no Batch 3 code is allowed until the final documentation HEAD and its exact-head CI are reconciled.
-
-### Remaining cleanup inventory
-
-`App.tsx` still references route-owned root surfaces such as `AdminAiAuthoringWorkspace`, `AdminReportsWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, and `CurriculumWorkspace`. Their root location is not by itself evidence that they should move or be removed.
-
-For the next batch, callers, E2E coverage, API contracts and feature/domain ownership must be inspected first; then select exactly one smallest safe seam.
+No further code mutation was performed after `6e7e43e...` because Combined and Stage13G are still active/not completed. The root compatibility seam was intentionally retained. AR-10 remains blocked.
 
 ## Findings register
 
@@ -160,13 +132,12 @@ For the next batch, callers, E2E coverage, API contracts and feature/domain owne
 | `ADMIN-011` | P2 | Admin architecture | root-level route-owned components remain outside feature ownership | ACTIVE / AR-09 |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track; out of Admin scope |
 
-## Explicit resume point — AR-09 only
+## Explicit resume point — AR-09 Batch 3A only
 
-1. Fetch live `main`, current feature HEAD, the three continuity files, recent commits, Draft PR #52 and exact-head CI before any mutation.
-2. Reconcile every CI run triggered by the Batch 2 documentation commits; if ACTIVE/RUNNING, do not start code in parallel.
-3. If any exact-head gate fails, inspect the failing job/log and fix the root cause without weakening tests, API authority or PostgreSQL/security contracts.
-4. If documentation-head gates are green, re-inventory the remaining root route-owned surfaces and inspect callers/tests/contracts for each plausible candidate.
-5. Select exactly one smallest safe ownership cleanup; classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE before modifying it.
-6. Run exact-head applicable Frontend/Admin AI/Combined/Stage13G verification and document the result before another seam.
-7. AR-10 remains blocked until AR-09 is fully DONE / VERIFIED.
-8. PR #52 remains Draft. No merge or auto-merge.
+1. Fetch live `main`, current feature HEAD, the three continuity files, recent commits, Draft PR #52 and exact-head CI before mutation.
+2. Reconcile Combined `34761018762` and Stage13G `34761018720` for exact code-head `6e7e43e17651d54413ccf6cc234f4e1457942a25`; Frontend `34761018736` and Admin AI `34761018755` are already SUCCESS.
+3. If a remaining gate fails, inspect its exact job/log and repair root cause without weakening tests or server/PostgreSQL authority.
+4. If all four gates are green, record Batch 3A VERIFIED, then continue the same access-code reports seam only: relocate the actual implementation (and route-specific CSS only if ownership inspection confirms it is exclusive) under `src/admin/access-codes/`, adjust relative imports, remove the root compatibility file only after callers are clean, and run exact-head Frontend/Admin AI/Combined/Stage13G including real reports Chromium parity.
+5. Do not choose another cleanup candidate before the current reports seam is closed.
+6. AR-10 remains blocked until AR-09 is fully DONE / VERIFIED.
+7. PR #52 remains Draft; no merge or auto-merge.
