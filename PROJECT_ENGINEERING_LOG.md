@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE; Batches 1–6A VERIFIED; Batch 7A is the next justified cleanup seam.**
+Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE; Batches 1–6A VERIFIED; Batch 7A ACTIVE with its first Content-owned parity seam under exact-head verification.**
 
 ## Project and authority invariants
 
@@ -38,7 +38,7 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 - AR-06 — DONE / VERIFIED. `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
 - AR-07 — DONE / VERIFIED. `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
 - AR-08 — DONE / VERIFIED. `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
-- AR-09 — **ACTIVE**. Batches 1, 2, 3, 4A, 5A and 6A VERIFIED; Batch 7A next.
+- AR-09 — **ACTIVE**. Batches 1, 2, 3, 4A, 5A and 6A VERIFIED; Batch 7A ACTIVE.
 - AR-10 — NOT STARTED.
 
 ## AR-09 verified history summary
@@ -50,122 +50,90 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 - Batch 5A — Curriculum route + implementation ownership relocation and root seam removal — VERIFIED on `d40c71192f513f18d69b0e67be408e6f146a3ec5`; Frontend `34768283004`, Admin AI `34768282985`, Combined `34768283077`, Stage13G `34768282982` — SUCCESS.
 - Batch 6A — Content review route + real implementation ownership relocation and root seam removal — VERIFIED on `2a958723d434e10755d35299ba509f69fc411bb3`; Frontend `34771526703`, Admin AI `34771526711`, Combined `34771526699`, Stage13G `34771526724` — SUCCESS.
 
-## AR-09 Batch 6A — Content review ownership relocation — DONE / VERIFIED
+## AR-09 Batch 7A — Content ingestion ownership relocation — ACTIVE
 
 ### 1. State read and reconciled before code changes
 
 The run explicitly refreshed and read the live repository before mutation:
 
-1. live `main` = `3fe51062aa9c5ed0c39682f0da8e814ece0b0c62`;
-2. inherited branch HEAD = `0846aa2cebde010dd1544e3361c4089ae72a0da2`;
+1. live `main` = `8d11cddb2cde510f233926d394434a384d480745`;
+2. inherited branch/documentation HEAD = `c7230dd39ee0101b14d3df37a29c68e7c1631141`;
 3. `PROJECT_STATUS.md`;
 4. `PROJECT_ENGINEERING_LOG.md`;
 5. `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`;
-6. recent commits;
-7. Draft PR #52, which remained open + Draft + unmerged;
-8. exact-head CI for the inherited documentation checkpoint.
+6. recent branch commits;
+7. Draft PR #52 — open, Draft and unmerged;
+8. inherited exact-head CI.
 
-Inherited exact-head evidence on `0846aa2cebde010dd1544e3361c4089ae72a0da2`:
-- Admin AI `34770167069` — SUCCESS;
-- Combined `34770166985` — SUCCESS;
-- Stage13G `34770167023` — SUCCESS.
+Inherited checkpoint `c7230dd39ee0101b14d3df37a29c68e7c1631141` was fully green:
+- Admin AI `34771856670` — SUCCESS;
+- Combined `34771856671` — SUCCESS;
+- Stage13G `34771856708` — SUCCESS.
 
-Therefore no unresolved ACTIVE/RUNNING batch or newer undocumented mutation blocked continuation.
+Therefore no unresolved inherited ACTIVE/RUNNING work blocked the next documented batch.
 
-### 2. Contracts and implementation inspected
+### 2. Contracts, callers and executable coverage inspected
 
 The run inspected:
-- `apps/admin-web/src/App.tsx` route ownership;
-- root `apps/admin-web/src/ContentOperationsWorkspace.tsx`;
-- temporary `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` adapter;
-- the existing Reviews feature boundary;
-- exact-head CI authority for the route seam.
+- `apps/admin-web/src/App.tsx` and confirmed `/app/content` directly imports root `ContentIngestionWorkspace`;
+- the complete root `apps/admin-web/src/ContentIngestionWorkspace.tsx` orchestration;
+- `apps/admin-web/src/content-ingestion-api.ts` server contracts;
+- `apps/admin-web/src/LessonPublicationPanel.tsx` server-owned publication transitions;
+- `apps/admin-web/e2e/content-ingestion.e2e.spec.mjs` Chromium coverage;
+- the established `apps/admin-web/src/admin/content/` feature owner.
 
-The root component was confirmed to be the real route-specific content/OCR human-review implementation: overview/detail fetch, filters/pagination, source preview, OCR extraction loading, replacement text, human approve/reject, session-expiry handling and server refresh. It consumed existing `admin-api` and `content-operations-api` contracts. No schema/backend change was needed.
+The implementation owns route-specific Content behavior: curriculum lookup, durable ingestion history/task loading, validation, task creation, ordered file upload, processing, lesson linking, archival and lesson publication composition. Its canonical data remains server-backed; no schema/backend change is required for this ownership cleanup.
+
+The E2E contract already proves a mixed ordered PNG/PDF/PNG upload, processing, draft linking, review, publication, reload durability, archive visibility and a 390px no-overflow viewport. The test is retained unchanged.
 
 ### 3. Classification and decision
 
-- **KEEP:** route behavior, OCR review semantics, filters/pagination, detail/source flow, session handling, API/PostgreSQL authority and tests.
-- **IMPROVE:** implementation ownership under the established Reviews domain.
-- **REFACTOR:** relocate the real implementation with relative import/export adjustments only.
+- **KEEP:** route behavior, file rules, ingestion lifecycle/history, task details, link/publication semantics, session handling, API/PostgreSQL authority and current executable tests.
+- **IMPROVE:** implementation ownership under the established Content feature.
+- **REFACTOR:** create a Content-owned page seam first, then switch routing/implementation only after exact-head parity.
 - **REBUILD:** none.
-- **REMOVE:** root compatibility seam only after executable parity.
+- **REMOVE:** root compatibility seam only after routed implementation parity becomes green.
 - **NO CHANGE:** backend, migrations, auth/security, Student workstream and test strength.
 
-Root cause: route ownership had already moved to `admin/reviews`, but the actual orchestration implementation still lived at app root behind a temporary adapter.
+Root cause: `/app/content` remains a route-owned Admin workflow whose actual implementation still lives at app root even though `admin/content/` is the established feature boundary.
 
-### 4. Real implementation relocation
+### 4. Small parity seam created
 
-Commit `b3580fcac2a8f9536e86d993e035af1262b34ca4` — `refactor(admin): relocate content review implementation`:
+Commit `d184ec9efaa17a89710cd9e9798c8972cd1236fb` — `refactor(admin): add content ingestion feature seam` added:
 
-- replaced the temporary feature adapter with the full implementation in `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx`;
-- adjusted imports from root-relative paths to `../../...` paths required by the new location;
-- renamed the exported component to `ContentOperationsPage`;
-- deliberately kept `apps/admin-web/src/ContentOperationsWorkspace.tsx` during this first parity run;
-- changed no API, backend, migration, Student or test assertion.
+- `apps/admin-web/src/admin/content/ContentIngestionPage.tsx`.
 
-Exact-head matrix on `b3580fcac2a8f9536e86d993e035af1262b34ca4`:
-- Frontend Preparation `34771348426` — SUCCESS;
-- Admin AI Operations `34771348425` — SUCCESS;
-- Combined Integration `34771348397` — SUCCESS;
-- Stage13G Admin Operations `34771348464` — SUCCESS.
+The page delegates to the existing root `ContentIngestionWorkspace` and forwards only `onSessionExpired`. It deliberately changes no route, behavior, API, backend, migration, Student code or assertion. The root implementation stays authoritative for this first parity checkpoint.
 
-### 5. Root compatibility seam removal
+### 5. Exact-head evidence at checkpoint
 
-Only after the relocation matrix became fully green, commit `2a958723d434e10755d35299ba509f69fc411bb3` — `refactor(admin): remove content review root seam` deleted:
+On `d184ec9efaa17a89710cd9e9798c8972cd1236fb`:
+- Frontend run `34774259547`, job `103769340092` — SUCCESS; lint, strict typecheck, unit tests and production build passed.
+- Admin AI run `34774259574`, job `103769340020` — SUCCESS; API quality, clean PostgreSQL migrations/contracts, authorization/review controls and auth regressions passed.
+- Combined run `34774259560`, job `103769340292` — **IN PROGRESS**. At inspection time API/Admin quality, clean migrations/database contract and Stage13E backend authority were already SUCCESS; wider Stage12/auth regressions and subsequent real Chromium phases remained active/pending.
+- Stage13G run `34774259581` — **IN PROGRESS**. UI job `103769340158` and backend job `103769340279` were SUCCESS; Real API + PostgreSQL + Chromium job `103769483722` remained IN PROGRESS.
 
-- `apps/admin-web/src/ContentOperationsWorkspace.tsx`.
+Because exact-head parity was still running, the run intentionally did **not** switch `App.tsx`, move the real implementation or delete the root seam. This prevents a parallel mutation while the current batch is ACTIVE.
 
-No other code or contract changed in that commit.
+### 6. Files changed in this checkpoint
 
-Second exact-head matrix on `2a958723d434e10755d35299ba509f69fc411bb3`:
-- Frontend Preparation `34771526703` — SUCCESS;
-- Admin AI Operations `34771526711` — SUCCESS;
-- Combined Integration `34771526699` — SUCCESS;
-- Stage13G Admin Operations `34771526724` — SUCCESS.
+- `apps/admin-web/src/admin/content/ContentIngestionPage.tsx` — new feature-owned compatibility page only.
+- continuity documentation files — updated to record the active batch, exact SHA, CI IDs, classification and resume point.
 
-This satisfies the parity-first removal rule. Batch 6A is **DONE / VERIFIED**.
-
-### 6. Files changed in Batch 6A finalization
-
-- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` — temporary adapter replaced by real implementation.
-- `apps/admin-web/src/ContentOperationsWorkspace.tsx` — removed only after exact-head parity.
-
-No backend, database migration, Student, auth/security or test file changed.
-
-## Fresh AR-09 inventory after Batch 6A
-
-After the second exact-head matrix became green, the run re-inventoried app-root route owners and `App.tsx` instead of assuming AR-09 was complete.
-
-Confirmed route-owned feature surfaces already under feature owners include Reviews, Curriculum, Question Bank, Quiz Builder, Students, Access Codes and Operations. However `/app/content` still imports `ContentIngestionWorkspace` directly from app root:
-
-- route: `apps/admin-web/src/App.tsx` → `<ContentIngestionWorkspace ... />`;
-- implementation: `apps/admin-web/src/ContentIngestionWorkspace.tsx`;
-- established feature owner: `apps/admin-web/src/admin/content/`.
-
-The first section of the implementation confirms it owns server-backed content-ingestion orchestration: curriculum fetch, ingestion history/task fetch, upload/process/link/archive operations, validation and lesson-publication composition. This is a route-specific Content surface rather than a shared shell primitive.
-
-### Next-batch classification
-
-- **KEEP:** `/app/content` semantics, file validation, task lifecycle, history/detail behavior, upload/process/link/archive flows, lesson publication, session expiry, API/PostgreSQL authority and tests.
-- **IMPROVE:** Content feature ownership.
-- **REFACTOR:** parity-first owner introduction, route wiring, real implementation relocation.
-- **REBUILD:** none identified.
-- **REMOVE:** app-root compatibility seam only after green exact-head parity.
-- **NO CHANGE:** backend, migrations, Student workstream, auth/security and test strength.
-
-The smallest justified next work is **AR-09 Batch 7A — Content ingestion ownership relocation**. It was intentionally not started in this run because Batch 6A itself was the small reviewable code batch and its final documentation/CI checkpoint must be established first.
+No backend, database migration, auth/security, Student, API-contract or test file changed.
 
 ## Explicit resume point for the next task A/B
 
 1. Re-fetch live `main`, branch HEAD, all three continuity docs, Draft PR #52 and exact-head CI.
-2. Confirm the Batch 6A documentation checkpoint is current and there is no newer ACTIVE/RUNNING work.
-3. Do not redo Batch 6A; its final verified code-head is `2a958723d434e10755d35299ba509f69fc411bb3`.
-4. Begin **AR-09 Batch 7A only** by inspecting the complete `ContentIngestionWorkspace` implementation, its callers, tests, APIs and `LessonPublicationPanel` dependency.
-5. Establish a Content-owned seam under `apps/admin-web/src/admin/content/` and require exact-head parity before route switching/implementation removal, following AD-ADMIN-029.
-6. Preserve server/PostgreSQL authority, Student isolation and test strength.
-7. After Batch 7A is verified, perform another fresh AR-09 inventory; do not start AR-10 until AR-09 is formally DONE / VERIFIED.
-8. Keep PR #52 Draft; no merge or auto-merge.
+2. Treat Batches 1–6A as DONE / VERIFIED and do not redo them.
+3. Batch 7A is ACTIVE; current code-head under parity is `d184ec9efaa17a89710cd9e9798c8972cd1236fb`.
+4. Resolve Combined `34774259560` and Stage13G `34774259581` first. Do not start parallel code while either remains ACTIVE/RUNNING.
+5. If both are SUCCESS and no newer mutation supersedes the checkpoint, make only the next smallest change: switch `/app/content` in `App.tsx` from root `ContentIngestionWorkspace` to `admin/content/ContentIngestionPage`.
+6. Run exact-head parity again. Keep root `ContentIngestionWorkspace.tsx` until routed parity is green.
+7. Only after routed parity may the real implementation be relocated and the root seam considered for removal.
+8. Preserve server/PostgreSQL authority, Student isolation and current test strength.
+9. AR-10 remains blocked until fresh AR-09 inventory finds no justified seams and final exact-head verification closes AR-09.
+10. Keep PR #52 Draft; no merge or auto-merge.
 
 ## Findings register
 
@@ -181,5 +149,5 @@ The smallest justified next work is **AR-09 Batch 7A — Content ingestion owner
 | `ADMIN-008` | P1 | Question Bank | giant owner | FIXED / AR-06 |
 | `ADMIN-009` | P1 | Quiz Builder | giant owner | FIXED / AR-07 |
 | `ADMIN-010` | P1 | Students + Access | duplicated giant workspace | FIXED / AR-08 |
-| `ADMIN-011` | P2 | Admin architecture | route-owned components outside established feature ownership | ACTIVE / AR-09; Curriculum + Content Review fixed; Content Ingestion is next justified seam |
+| `ADMIN-011` | P2 | Admin architecture | route-owned components outside established feature ownership | ACTIVE / AR-09; Batch 7A Content Ingestion seam established, exact-head parity running |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track; out of Admin scope |
