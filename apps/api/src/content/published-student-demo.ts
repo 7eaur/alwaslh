@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import sharp from "sharp";
 import { normalizeIdentifier } from "../auth/crypto.js";
-import type { Database } from "../db.js";
 import { CurriculumService } from "../curriculum/service.js";
 import { StudentReaderService } from "../curriculum/student-reader.js";
+import type { Database } from "../db.js";
 import { FileSystemMediaStorage } from "../media/storage.js";
 import { QuestionBankService } from "../question-bank/service.js";
 import { QuizBuilderService } from "../quiz-builder/service.js";
@@ -162,9 +162,7 @@ async function tableCounts(db: Database): Promise<Record<string, number>> {
 }
 
 function diffCounts(before: Record<string, number>, after: Record<string, number>): Record<string, number> {
-  return Object.fromEntries(
-    Object.keys(after).map((key) => [key, (after[key] ?? 0) - (before[key] ?? 0)]),
-  );
+  return Object.fromEntries(Object.keys(after).map((key) => [key, (after[key] ?? 0) - (before[key] ?? 0)]));
 }
 
 async function buildDemoPage(page: number): Promise<Buffer> {
@@ -350,7 +348,11 @@ export async function verifyPublishedStudentDemo(
   const ingestionTaskId = taskRows[0]?.id;
   if (!ingestionTaskId || taskRows.length !== 1) throw new Error("demo_ingestion_task_missing");
 
-  const assetRows = await db.query<{ lesson_asset_id: string; media_asset_id: string; publication_status: string }>(
+  const assetRows = await db.query<{
+    lesson_asset_id: string;
+    media_asset_id: string;
+    publication_status: string;
+  }>(
     `select la.id as lesson_asset_id, la.media_asset_id, la.publication_status
        from lesson_assets la
       where la.lesson_id = $1 and la.ingestion_task_id = $2
@@ -364,7 +366,12 @@ export async function verifyPublishedStudentDemo(
     assetRows.every((row) => row.publication_status === "published") &&
     mediaAssetIds.every(Boolean);
 
-  const questionRows = await db.query<{ item_id: string; revision_id: string; answer_status: string; status: string }>(
+  const questionRows = await db.query<{
+    item_id: string;
+    revision_id: string;
+    answer_status: string;
+    status: string;
+  }>(
     `select qbi.id as item_id, qbr.id as revision_id, qbr.answer_status, qbr.status
        from question_bank_items qbi
        join question_bank_revisions qbr on qbr.item_id = qbi.id
@@ -375,7 +382,8 @@ export async function verifyPublishedStudentDemo(
     [ids.classId, ids.subjectId, ids.lessonId],
   );
   const questionBankPublished =
-    questionRows.length === 3 && questionRows.every((row) => row.answer_status === "known" && row.status === "published");
+    questionRows.length === 3 &&
+    questionRows.every((row) => row.answer_status === "known" && row.status === "published");
 
   const quizRows = await db.query<{ id: string }>(
     `select q.id from quizzes q
@@ -534,7 +542,10 @@ export async function seedPublishedStudentDemo(
   task = await ingestion.linkTaskToLesson(admin.id, task.id);
   task = await ingestion.transitionPublication(admin.id, task.id, "submit_review");
   task = await ingestion.transitionPublication(admin.id, task.id, "publish");
-  if (task.lessonAssets.length !== 3 || task.lessonAssets.some((asset) => asset.publicationStatus !== "published")) {
+  if (
+    task.lessonAssets.length !== 3 ||
+    task.lessonAssets.some((asset) => asset.publicationStatus !== "published")
+  ) {
     throw new Error("demo_lesson_asset_publication_failed");
   }
 
@@ -588,7 +599,10 @@ export async function cleanupPublishedStudentDemo(
         where ps.quiz_version_id = qv.id and qv.quiz_id = q.id and q.class_id = $1`,
       [ids.classId],
     );
-    await tx.query("delete from quizzes where class_id = $1 and subject_id = $2", [ids.classId, ids.subjectId]);
+    await tx.query("delete from quizzes where class_id = $1 and subject_id = $2", [
+      ids.classId,
+      ids.subjectId,
+    ]);
     await tx.query("delete from question_bank_items where class_id = $1 and subject_id = $2", [
       ids.classId,
       ids.subjectId,
@@ -599,10 +613,9 @@ export async function cleanupPublishedStudentDemo(
       await tx.query("delete from media_assets where id = any($1::uuid[])", [mediaRows.map((row) => row.id)]);
     }
     await tx.query("delete from student_entitlements where class_id = $1", [ids.classId]);
-    await tx.query(
-      "delete from curriculum_events where resource_key = any($1::text[])",
-      [[ids.classId, ids.subjectId, ids.sectionId, ids.lessonId]],
-    );
+    await tx.query("delete from curriculum_events where resource_key = any($1::text[])", [
+      [ids.classId, ids.subjectId, ids.sectionId, ids.lessonId],
+    ]);
     await tx.query("delete from lessons where id = $1", [ids.lessonId]);
     await tx.query("delete from curriculum_sections where id = $1", [ids.sectionId]);
     await tx.query("delete from subject_class_links where class_id = $1 and subject_id = $2", [
