@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE; Batches 1–7A VERIFIED; Batch 8A Lesson Publication ownership relocation ACTIVE at first exact-head parity.**
+Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE; Batches 1–7A VERIFIED; Batch 8A Lesson Publication ownership relocation ACTIVE with caller switched and exact-head parity running.**
 
 ## Project and authority invariants
 
@@ -13,7 +13,7 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 - Browser state is never canonical business authority.
 - Human review/publication/revision/provenance/audit authority remains server-owned.
 - Student/audit work must not be overwritten by the Admin rebuild.
-- Tests must represent canonical production contracts; backend validation is never weakened to satisfy fixtures.
+- Tests represent canonical production contracts; backend validation is never weakened to satisfy fixtures.
 
 ## Binding Admin architecture decisions
 
@@ -26,7 +26,7 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 - AD-ADMIN-026 — Students and Access Codes are separate task owners.
 - AD-ADMIN-027 — obsolete Students/Access compatibility aliases are removed after focused parity.
 - AD-ADMIN-028 — stage closure requires route ownership plus exact-head executable parity.
-- AD-ADMIN-029 — once a route-specific Admin surface has an established feature owner and no compatibility caller requires a root seam, its implementation belongs under `apps/admin-web/src/admin/<feature>/`; relocation must preserve behavior/contracts and removal waits until executable parity.
+- AD-ADMIN-029 — once a route-specific Admin surface has an established feature owner and no compatibility caller requires a root seam, its implementation belongs under `apps/admin-web/src/admin/<feature>/`; relocation preserves behavior/contracts and removal waits until executable parity.
 
 ## Super Admin stage ledger
 
@@ -43,125 +43,116 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 
 ## AR-09 verified history summary
 
-- Batch 1 — Quiz metadata feature ownership relocation — VERIFIED. Checkpoint `07de0e24475b8af410bf2c213ede2a334062b30c`; Admin AI `34757034197`, Combined `34757034226`, Stage13G `34757034179` — SUCCESS.
-- Batch 2 — Lesson authoring tools feature ownership relocation — VERIFIED on `d1bf7101135516c751c02d269a384015f9e3a132`; Frontend `34759439669`, Admin AI `34759439651`, Combined `34759439615`, Stage13G `34759439612` — SUCCESS.
-- Batch 3 — Access-code reports feature ownership relocation — VERIFIED on `3b1eb104fef1ac70035dcd9875d9807f95bf2009`; Frontend `34762225733`, Admin AI `34762225735`, Combined `34762225728`, Stage13G `34762225748` — SUCCESS.
+- Batch 1 — Quiz metadata ownership relocation — VERIFIED; checkpoint `07de0e24475b8af410bf2c213ede2a334062b30c`; Admin AI `34757034197`, Combined `34757034226`, Stage13G `34757034179` — SUCCESS.
+- Batch 2 — Lesson authoring tools ownership relocation — VERIFIED on `d1bf7101135516c751c02d269a384015f9e3a132`; Frontend `34759439669`, Admin AI `34759439651`, Combined `34759439615`, Stage13G `34759439612` — SUCCESS.
+- Batch 3 — Access-code reports ownership relocation — VERIFIED on `3b1eb104fef1ac70035dcd9875d9807f95bf2009`; Frontend `34762225733`, Admin AI `34762225735`, Combined `34762225728`, Stage13G `34762225748` — SUCCESS.
 - Batch 4A — AI review ownership relocation — VERIFIED on `141e3e7912171c10356b8d32a268ddcbfda267f3`; Frontend `34765398964`, Admin AI `34765398992`, Combined `34765398969`, Stage13G `34765398946` — SUCCESS.
-- Batch 5A — Curriculum ownership relocation + root seam removal — VERIFIED on `d40c71192f513f18d69b0e67be408e6f146a3ec5`; Frontend `34768283004`, Admin AI `34768282985`, Combined `34768283077`, Stage13G `34768282982` — SUCCESS.
-- Batch 6A — Content review ownership relocation + root seam removal — VERIFIED on `2a958723d434e10755d35299ba509f69fc411bb3`; Frontend `34771526703`, Admin AI `34771526711`, Combined `34771526699`, Stage13G `34771526724` — SUCCESS.
-- Batch 7A — Content ingestion ownership relocation + root seam removal — VERIFIED in this run. Frontend `34778944908` succeeded directly on seam-removal code-head `7b4106f82ab6f1c152ac20caf11c70779224acde`; documentation descendant `803e9b55c2496998358cf257a959bc4a6799a90f` carrying identical production code completed Admin AI `34779021476`, Combined `34779021471`, Stage13G `34779021457` — SUCCESS. Superseded longer runs on the earlier code-head were cancellation-by-newer-commit effects, not assertion failures.
+- Batch 5A — Curriculum ownership + root seam removal — VERIFIED on `d40c71192f513f18d69b0e67be408e6f146a3ec5`; Frontend `34768283004`, Admin AI `34768282985`, Combined `34768283077`, Stage13G `34768282982` — SUCCESS.
+- Batch 6A — Content review ownership + root seam removal — VERIFIED on `2a958723d434e10755d35299ba509f69fc411bb3`; Frontend `34771526703`, Admin AI `34771526711`, Combined `34771526699`, Stage13G `34771526724` — SUCCESS.
+- Batch 7A — Content ingestion ownership + root seam removal — VERIFIED. Frontend `34778944908` on seam-removal code-head `7b4106f82ab6f1c152ac20caf11c70779224acde`; documentation descendant `803e9b55c2496998358cf257a959bc4a6799a90f` completed Admin AI `34779021476`, Combined `34779021471`, Stage13G `34779021457` — SUCCESS.
 
 ## 2026-09-13 — AR-09 Batch 8A — Lesson Publication ownership relocation
 
-### 1. Source-of-truth refresh before mutation
+### A. State inherited from task A/B before this continuation
 
-Before any code change this run, the following were fetched and read:
+At the beginning of this continuation the repository was reconciled from live evidence rather than chat memory:
 
-1. live `main` = `5b6fbfecade3abd52a5c4203e47c4f5b69444a86`;
-2. Admin branch HEAD = `803e9b55c2496998358cf257a959bc4a6799a90f`;
-3. `PROJECT_STATUS.md`;
-4. `PROJECT_ENGINEERING_LOG.md`;
-5. `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`;
-6. recent branch commits;
-7. Draft PR #52;
-8. exact-head GitHub Actions.
+- live `main`: `5b6fbfecade3abd52a5c4203e47c4f5b69444a86`;
+- Admin branch inherited HEAD: `0550ab688dc8909d3690a3dce54173d58f5d6aa2`;
+- Draft PR #52: open and Draft, not merged;
+- AR-01..AR-08: DONE / VERIFIED;
+- AR-09 Batches 1–7A: DONE / VERIFIED;
+- Batch 8A: ACTIVE at first relocation parity;
+- AR-10: NOT STARTED.
 
-The live-main advance belongs to the parallel Student workstream and was not modified.
+The three continuity files, recent commits, Draft PR and exact-head Actions were read before any new mutation. The live-main advance is Student workstream activity and was not modified.
 
-### 2. Inherited blocker resolved first
+### B. Inherited blocker closed before mutation
 
-Inherited Batch 7A had been left waiting for seam-removal parity. Fresh evidence showed the documentation HEAD `803e9b55...` fully green for every workflow it triggered:
+The inherited documentation HEAD `0550ab688dc8909d3690a3dce54173d58f5d6aa2` was verified green:
 
-- Admin AI `34779021476` — SUCCESS;
-- Combined `34779021471` — SUCCESS;
-- Stage13G `34779021457` — SUCCESS.
+- Admin AI `34780605238` — SUCCESS;
+- Combined `34780605257` — SUCCESS;
+- Stage13G `34780605241` — SUCCESS;
+- Stage13G Real API + PostgreSQL + Chromium job — SUCCESS;
+- Stage13G Admin UI quality — SUCCESS;
+- Stage13G Admin operations backend — SUCCESS.
 
-The underlying seam-removal code-head `7b4106f82ab6f1c152ac20caf11c70779224acde` had Frontend `34778944908` — SUCCESS. The documentation descendants changed no production code. This closes Batch 7A as DONE / VERIFIED before any new cleanup work.
+The earlier first-relocation code had already moved the real implementation to `apps/admin-web/src/admin/content/LessonPublicationPanel.tsx`; therefore the inherited parity blocker was resolved before touching the caller.
 
-### 3. Fresh AR-09 inventory
+### C. Caller and contract verification
 
-The current `App.tsx`, root `apps/admin-web/src`, `admin/reviews`, `admin/content/ContentIngestionWorkspace.tsx`, historical AR-05 architecture decision and AI-authoring API tests were inspected.
+Files inspected:
 
-Important observations:
+- `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx`;
+- `apps/admin-web/src/LessonPublicationPanel.tsx`;
+- `apps/admin-web/src/admin/content/LessonPublicationPanel.tsx` from the inherited implementation move;
+- current continuity docs and exact-head checks.
 
-- normal content route ownership is now correctly under `admin/content/`;
-- `admin/content/ContentIngestionWorkspace.tsx` still imported `LessonPublicationPanel` from `../../LessonPublicationPanel` at app root;
-- root `LessonPublicationPanel` implements only lesson-content publication state/actions and calls `lesson-content-api`;
-- the panel is therefore unambiguously owned by Content and matches AD-ADMIN-029;
-- a root `AdminAiAuthoringWorkspace` also exists, but AR-05 deliberately treats AI authoring as cross-feature contextual work rather than an established single feature owner; no parallel or speculative relocation was opened while the smaller Content ownership seam exists.
+Evidence:
 
-### 4. Contract review before mutation
+- root `LessonPublicationPanel.tsx` contains only `export { LessonPublicationPanel } from "./admin/content/LessonPublicationPanel";`;
+- `admin/content/ContentIngestionWorkspace.tsx` was importing `LessonPublicationPanel` through that root compatibility seam;
+- its rendered use remains the lesson publication decision surface within the Content workflow;
+- backend, PostgreSQL, auth/security and Student contracts are unrelated to this import-path ownership cleanup and were not changed.
 
-`LessonPublicationPanel` behavior was read before moving:
+### D. Classification and decision
 
-- loads canonical lesson-content state from the server;
-- keeps session-expiry handling unchanged;
-- supports `submit_review`, `return_to_draft`, and `publish` through `transitionLessonContentPublication`;
-- requires explicit browser confirmation before publish;
-- disables publication when `reviewBlocked > 0`;
-- renders server-derived draft/review/published counts;
-- does not own PostgreSQL/business authority locally.
-
-Existing `lesson-content-api`/integration coverage remains the test authority; no tests or backend validation were weakened.
-
-### 5. Classification
-
-- **KEEP:** publication behavior, confirmation, review-blocking rules, state counts, session handling, API/PostgreSQL authority and current tests.
-- **IMPROVE:** Content feature ownership.
-- **REFACTOR:** relocate real panel implementation under `admin/content/`.
+- **KEEP:** publication behavior, confirmation, review-blocking rules, session handling, canonical server state, PostgreSQL authority and current tests.
+- **IMPROVE:** feature ownership and dependency direction.
+- **REFACTOR:** Content caller imports its Content-owned panel directly.
 - **REBUILD:** none.
-- **REMOVE:** root compatibility re-export only after executable parity and caller proof.
-- **NO CHANGE:** backend, migrations, API contract, auth/security, Student workstream and test strength.
+- **REMOVE:** root compatibility re-export only after caller-switch exact-head parity succeeds.
+- **NO CHANGE:** backend, migrations, API contracts, auth/security, Student workstream and test strength.
 
-Root cause is ownership drift, not a publication-rule defect.
+Root cause remains ownership drift; there is no evidence of a publication business-rule defect.
 
-### 6. Code mutation performed
+### E. Mutation performed in this continuation
 
-#### Commit `333ed22db2a9708560845cfcc496a81fc18fd743`
-`refactor(admin): add content-owned lesson publication panel`
+#### Commit `e5d3ebc837284e8f185e0d2e8c422e88be2a1db4`
+`refactor(admin): use content-owned lesson publication panel`
 
-Added:
-- `apps/admin-web/src/admin/content/LessonPublicationPanel.tsx`
+Changed only:
+- `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx`
 
-The implementation is behavior-equivalent to the former root panel; only relative import paths were adjusted to `../../admin-api` and `../../lesson-content-api`.
+Exact change:
+- from `import { LessonPublicationPanel } from "../../LessonPublicationPanel";`
+- to `import { LessonPublicationPanel } from "./LessonPublicationPanel";`
 
-#### Commit `155759bf1cd9558a976ed1dca77dcce8186fff4e`
-`refactor(admin): route lesson publication through content owner`
+No rendering behavior, props, publication commands, backend code, migration, API contract, Student code or test was changed. Root `apps/admin-web/src/LessonPublicationPanel.tsx` remains present intentionally until parity is green.
 
-Changed root:
-- `apps/admin-web/src/LessonPublicationPanel.tsx`
+### F. Verification results and current blocker
 
-It is now only:
-`export { LessonPublicationPanel } from "./admin/content/LessonPublicationPanel";`
+The caller-switch code-head `e5d3ebc837284e8f185e0d2e8c422e88be2a1db4` triggered the required matrix:
 
-This makes the Content feature the real implementation owner while deliberately retaining a compatibility seam until parity is executable.
+- Frontend `34782291937` — IN PROGRESS at checkpoint;
+- Admin AI `34782291934` — IN PROGRESS at checkpoint;
+- Combined `34782291938` — IN PROGRESS at checkpoint;
+- Stage13G `34782291927` — IN PROGRESS at checkpoint.
 
-No backend, migration, API-contract, Student, security or test file changed.
+No failure was observed before documentation. Because these gates are ACTIVE, no second production mutation was made: the root seam was not deleted, no parallel AR-09 cleanup was opened, and AR-10 was not started.
 
-### 7. Exact-head verification state
+### G. Stage state
 
-Code-head `155759bf1cd9558a976ed1dca77dcce8186fff4e` triggered four gates:
-
-- Frontend `34780494748` — PENDING at checkpoint;
-- Admin AI `34780494751` — PENDING at checkpoint;
-- Combined `34780494746` — PENDING at checkpoint;
-- Stage13G `34780494761` — PENDING at checkpoint.
-
-No failure was observed before documentation commits. Under the stage gate, Batch 8A remains ACTIVE and no root seam deletion/caller rewrite/AR-10 work may begin until these gates or a newer documentation-only equivalent are green.
+- AR-09 Batch 8A — **ACTIVE / CALLER SWITCHED / EXACT-HEAD PARITY PENDING**.
+- AR-09 — ACTIVE.
+- AR-10 — NOT STARTED.
+- Draft PR #52 must remain Draft; no merge or auto-merge.
 
 ## Explicit resume point for the next task A/B
 
-1. Re-fetch live `main`, branch HEAD, all three continuity docs, Draft PR #52 and exact-head CI.
+1. Re-fetch live `main`, branch HEAD, these three continuity docs, recent commits, Draft PR #52 and exact-head CI.
 2. Treat AR-09 Batches 1–7A as DONE / VERIFIED; do not redo them.
-3. Treat Batch 8A as ACTIVE at first relocation parity.
-4. Current production code-head is `155759bf1cd9558a976ed1dca77dcce8186fff4e`.
-5. Resolve Frontend `34780494748`, Admin AI `34780494751`, Combined `34780494746`, Stage13G `34780494761` first.
-6. If green, prove callers of root `LessonPublicationPanel.tsx`, switch the Content implementation caller to local `./LessonPublicationPanel`, and verify exact-head parity before deleting the root re-export.
-7. Do not open a parallel AI-authoring cleanup while Batch 8A is active.
-8. After Batch 8A fully verifies, perform a fresh AR-09 inventory; close AR-09 only when no justified established-owner seam remains and final exact-head gates are green.
-9. Only then begin AR-10.
-10. Preserve Student isolation, backend/PostgreSQL authority and current test strength.
-11. Keep PR #52 Draft; no merge or auto-merge.
+3. Treat Batch 8A as ACTIVE at caller-switch parity.
+4. Production code-head to verify first: `e5d3ebc837284e8f185e0d2e8c422e88be2a1db4`.
+5. Resolve Frontend `34782291937`, Admin AI `34782291934`, Combined `34782291938`, Stage13G `34782291927` before any production mutation.
+6. If and only if all are green, re-prove no remaining legitimate caller needs root `apps/admin-web/src/LessonPublicationPanel.tsx` and delete that compatibility re-export.
+7. Run a fresh exact-head matrix after root deletion. Batch 8A becomes DONE / VERIFIED only when that deletion head is green.
+8. After Batch 8A closes, run a fresh AR-09 inventory. Do not open speculative cross-feature cleanup without established ownership evidence.
+9. Close AR-09 only when no justified ownership seam remains and final exact-head gates are green.
+10. Only after formal AR-09 closure may AR-10 begin.
+11. Preserve Student isolation, backend/PostgreSQL authority and current test strength.
+12. Keep PR #52 Draft; no merge or auto-merge.
 
 ## Findings register
 
@@ -177,5 +168,5 @@ No failure was observed before documentation commits. Under the stage gate, Batc
 | `ADMIN-008` | P1 | Question Bank | giant owner | FIXED / AR-06 |
 | `ADMIN-009` | P1 | Quiz Builder | giant owner | FIXED / AR-07 |
 | `ADMIN-010` | P1 | Students + Access | duplicated giant workspace | FIXED / AR-08 |
-| `ADMIN-011` | P2 | Admin architecture | route/feature-owned components outside established feature ownership | ACTIVE / AR-09; Batch 7A fixed, Batch 8A parity pending |
+| `ADMIN-011` | P2 | Admin architecture | route/feature-owned components outside established feature ownership | ACTIVE / AR-09; Batch 8A caller-switch parity pending |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track; out of Admin scope |
