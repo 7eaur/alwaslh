@@ -113,7 +113,7 @@ export function StudentAccountExperience({
         <div>
           <p className="eyebrow">حسابي</p>
           <h1 id="student-account-title">{profile.displayName ? profile.displayName : "حساب الطالب"}</h1>
-          <p>أدر وصولك إلى الصفوف، وافتح التعليمات أو الدعم عندما تحتاج مساعدة.</p>
+          <p>أدر وصولك ومساحتك الشخصية، وافتح التعليمات أو الدعم عندما تحتاج مساعدة.</p>
         </div>
         <button className="secondary-button" type="button" onClick={() => void handleLogout()} disabled={logoutBusy}>{logoutBusy ? "جاري الخروج" : "تسجيل الخروج"}</button>
       </header>
@@ -158,6 +158,15 @@ export function StudentAccountExperience({
             {!online ? <div className="form-alert is-warning" role="status">اتصل بالإنترنت لتفعيل رمز الصف.</div> : null}
           </form>
         )}
+      </section>
+
+      <section className="student-account-section student-account-personal" aria-labelledby="account-personal-title">
+        <div className="student-account-section__heading"><div><p className="eyebrow">مساحتي</p><h2 id="account-personal-title">إدارة تعلمك من مكان واحد</h2><p>الوصول إلى ما يخصك شخصيًا بدون ازدحام الصفحة الرئيسية.</p></div></div>
+        <div className="student-account-personal-links">
+          <Link to="/app/library"><strong>مكتبتي</strong><small>التنزيلات والملاحظات والمحفوظات والمراجعة.</small><span aria-hidden="true">←</span></Link>
+          <Link to="/app/progress"><strong>تقدمي</strong><small>تقدم التعلّم والتدريب والإنجازات.</small><span aria-hidden="true">←</span></Link>
+          <Link to="/app/notifications"><strong>الإشعارات</strong><small>كل ما يحتاج انتباهك في مكان واحد.</small><span aria-hidden="true">←</span></Link>
+        </div>
       </section>
 
       <section className="student-account-section student-account-help" aria-labelledby="account-help-title">
