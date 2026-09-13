@@ -15,6 +15,7 @@ import {
   type QuestionBankQuestionInput,
   type QuestionBankQuestionType,
   type QuestionBankStatus,
+  applyApprovedQuestionRegeneration,
   editQuestionBankItem,
   fetchQuestionBankItem,
   publishQuestion,
@@ -123,6 +124,8 @@ export function QuestionBankDetailPage({ onSessionExpired }: Props) {
   const [rejectNote, setRejectNote] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [questionDraft, setQuestionDraft] = useState<QuestionBankQuestionInput | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [regenerationOutputId, setRegenerationOutputId] = useState("");
 
   const load = useCallback(async () => {
     if (!questionId) {
@@ -164,12 +167,26 @@ export function QuestionBankDetailPage({ onSessionExpired }: Props) {
     if (!revision || revision.status === "review") return;
     setQuestionDraft({ ...revision.question, options: [...revision.question.options] });
     setFeedback(null);
+    setIsRegenerating(false);
     setIsEditing(true);
   }
 
   function cancelEdit() {
     setIsEditing(false);
     setQuestionDraft(null);
+  }
+
+  function beginRegeneration() {
+    if (!revision || revision.status !== "published" || revision.sources.length === 0) return;
+    setFeedback(null);
+    setIsEditing(false);
+    setRegenerationOutputId("");
+    setIsRegenerating(true);
+  }
+
+  function cancelRegeneration() {
+    setIsRegenerating(false);
+    setRegenerationOutputId("");
   }
 
   async function submitEdit(event: FormEvent<HTMLFormElement>) {
@@ -186,6 +203,36 @@ export function QuestionBankDetailPage({ onSessionExpired }: Props) {
       await editQuestionBankItem(questionId, normalizedQuestion(questionDraft));
       setFeedback({ kind: "success", text: "حُفظ التعديل في نسخة مسودة جديدة مع إبقاء النسخ السابقة محفوظة." });
       cancelEdit();
+      await load();
+    } catch (cause) {
+      if (isMissingSessionError(cause)) {
+        onSessionExpired();
+        return;
+      }
+      setFeedback({ kind: "error", text: messageFor(cause) });
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitRegeneration(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!questionId || !revision || revision.status !== "published" || revision.sources.length === 0 || !regenerationOutputId.trim()) {
+      setFeedback({ kind: "error", text: "حدد مخرج إعادة التوليد المعتمد لسؤال منشور ذي مصدر محفوظ." });
+      return;
+    }
+    setBusy(true);
+    setFeedback(null);
+    try {
+      const result = await applyApprovedQuestionRegeneration(questionId, regenerationOutputId.trim());
+      setFeedback({
+        kind: "success",
+        text: result.replayed
+          ? "هذا المخرج طُبق سابقًا على السؤال نفسه؛ لم تُنشأ نسخة مكررة."
+          : "تم إنشاء Draft revision جديدة لنفس هوية السؤال من مخرج إعادة التوليد المعتمد.",
+      });
+      cancelRegeneration();
       await load();
     } catch (cause) {
       if (isMissingSessionError(cause)) {
@@ -285,6 +332,31 @@ export function QuestionBankDetailPage({ onSessionExpired }: Props) {
                 </div>
               </form>
             </section>
+          ) : isRegenerating ? (
+            <section className="qb-editor-panel" aria-labelledby="question-regeneration-title" data-testid="question-detail-regeneration">
+              <div className="qb-editor-heading">
+                <div>
+                  <h2 id="question-regeneration-title">تطبيق إعادة توليد معتمدة</h2>
+                  <p className="qb-editor-note">يقبل الخادم مخرج regenerate_question المعتمد فقط، ويتحقق من تطابق السؤال والمصدر مع النسخة المنشورة الحالية قبل إنشاء Draft revision جديدة.</p>
+                </div>
+                <button className="secondary-button small-button" type="button" onClick={cancelRegeneration} disabled={busy}>إغلاق</button>
+              </div>
+              <form className="qb-editor-form" onSubmit={submitRegeneration}>
+                <label className="qb-wide-field">
+                  <span>معرف مخرج إعادة التوليد المعتمد</span>
+                  <input
+                    value={regenerationOutputId}
+                    onChange={(event) => setRegenerationOutputId(event.target.value)}
+                    placeholder="UUID لمخرج regenerate_question"
+                    autoComplete="off"
+                  />
+                </label>
+                <div className="qb-form-actions">
+                  <button className="secondary-button" type="button" onClick={cancelRegeneration} disabled={busy}>إلغاء</button>
+                  <button className="primary-button" type="submit" disabled={busy || !regenerationOutputId.trim()}>إنشاء Draft revision</button>
+                </div>
+              </form>
+            </section>
           ) : (
             <section className="qb-question-content" aria-label="محتوى السؤال">
               <dl className="qb-facts">
@@ -306,10 +378,13 @@ export function QuestionBankDetailPage({ onSessionExpired }: Props) {
             </section>
           )}
 
-          {!isEditing ? (
+          {!isEditing && !isRegenerating ? (
             <section className="qb-lifecycle-actions" aria-label="إجراءات حالة السؤال">
               {revision.status === "draft" ? <button className="primary-button" type="button" disabled={busy} onClick={() => void lifecycle("submit")}>إرسال للمراجعة</button> : null}
               {revision.status !== "review" ? <button className="secondary-button" type="button" disabled={busy} onClick={beginEdit}>إنشاء نسخة معدلة</button> : null}
+              {revision.status === "published" && revision.sources.length > 0 ? (
+                <button className="secondary-button" type="button" disabled={busy} onClick={beginRegeneration}>تطبيق إعادة توليد معتمدة</button>
+              ) : null}
               {revision.status === "review" ? (
                 <>
                   <button className="primary-button" type="button" disabled={busy} onClick={() => void lifecycle("publish")}>نشر النسخة</button>
