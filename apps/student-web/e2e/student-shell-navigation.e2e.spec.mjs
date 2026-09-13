@@ -31,7 +31,7 @@ test("Student shell provides stable mobile destinations, focus, history and acti
   await expect(phoneNav.getByRole("link")).toHaveCount(4);
   await expect(phoneNav.getByRole("link", { name: "الرئيسية" })).toHaveAttribute("aria-current", "page");
   await expect(phoneNav.getByRole("link", { name: "مكتبتي" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "الإشعارات" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "الإشعارات", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "حسابي", exact: true })).toBeVisible();
   await expect(page.locator(".student-network-warning")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
