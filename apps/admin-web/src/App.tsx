@@ -21,6 +21,7 @@ import { AdminOperationsHealthPage } from "./admin/operations/AdminOperationsHea
 import { QuestionBankCreatePage } from "./admin/questions/QuestionBankCreatePage";
 import { QuestionBankDetailPage } from "./admin/questions/QuestionBankDetailPage";
 import { QuestionBankListPage } from "./admin/questions/QuestionBankListPage";
+import { QuizBuilderDetailPage } from "./admin/quizzes/QuizBuilderDetailPage";
 import { QuizBuilderListPage } from "./admin/quizzes/QuizBuilderListPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
@@ -276,6 +277,7 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
           </WorkspaceWithRelatedActions>
         }
       />
+      <Route path="quizzes/:quizId" element={<QuizBuilderDetailPage onSessionExpired={onSessionExpired} />} />
       <Route path="students" element={<AdminStudentAccessWorkspace onSessionExpired={onSessionExpired} />} />
       <Route
         path="access-codes"
