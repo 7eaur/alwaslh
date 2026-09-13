@@ -36,8 +36,8 @@ test("Quiz Builder create route creates a real quiz and lands on canonical entit
 
   await page.getByLabel("عنوان الاختبار").fill(title);
   await page.getByLabel("الوصف").fill("اختبار حقيقي لإثبات مسار الإنشاء الموجه إلى صفحة الكيان.");
-  await page.getByLabel("الصف").selectOption(scope.classId);
-  await page.getByLabel("المادة").selectOption(scope.subjectId);
+  await page.getByLabel("الصف", { exact: true }).selectOption(scope.classId);
+  await page.getByLabel("المادة", { exact: true }).selectOption(scope.subjectId);
   await page.getByRole("checkbox", { name: scope.lessonTitle }).check();
   await page.getByRole("button", { name: "إنشاء الاختبار", exact: true }).click();
 
