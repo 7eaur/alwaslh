@@ -1,129 +1,164 @@
 # PROJECT STATUS — الوسيلة الذكية
 
-> Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not executed or inspected is `NOT YET VERIFIED`.
+> Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
 Last synchronized: **2026-09-13**.
 
-## Current management state
+## Current state
 
-**NORMAL BACKEND ROADMAP: PAUSED FOR PRODUCT/UX FOUNDATION**
-
-**ACTIVE TRACK: STUDENT LIBRARY OVERVIEW REFINEMENT**
+**ACTIVE TRACK: Student Library Overview Refinement**
 
 **ACTIVE PR: #55 — `refactor(student): redesign Library overview hierarchy`**
 
-**ADMIN B06–B14: DEFERRED / SUPERSEDED-PENDING-ADMIN-ADR.** Dedicated Super Admin Product Rebuild owns Admin architecture and UX.
+**ACTIVE BRANCH: `ux/student-library-overview`**
 
-## Verified merged baseline
+**BASE WHEN OPENED: `main@c3734366c132ea3919a925bdd0dd37cfd5d82104`**
 
-Student Future Surfaces PR #54 is **CLOSED / VERIFIED / MERGED**.
+PR #55 is **OPEN** and was mergeable at the latest live inspection. Live-check current head/base/mergeability before merge.
 
-- exact accepted head: `4b6f24c5cb9bd0da525ecfebc59b1ebbf156c903`;
-- exact-head workflow matrix: **23/23 SUCCESS**;
+Normal backend roadmap remains paused until this Student UX batch is closed.
+
+## Verified merged Student baseline
+
+### PR #53 — Student Experience Rebuild
+
+- MERGED / VERIFIED;
+- exact accepted head `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
+- **23/23 workflows SUCCESS**;
+- merge commit `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
+
+### PR #54 — Future Student Surfaces
+
+- MERGED / VERIFIED;
+- exact accepted head `4b6f24c5cb9bd0da525ecfebc59b1ebbf156c903`;
+- **23/23 workflows SUCCESS**;
 - phone/desktop Visual QA accepted;
-- live `main` after merge: `c3734366c132ea3919a925bdd0dd37cfd5d82104`.
+- merge commit / current merged baseline `c3734366c132ea3919a925bdd0dd37cfd5d82104`.
 
-The merged Student IA contains:
+Merged Student foundation now includes:
 
-- primary mobile destinations `الرئيسية / التعلّم / التدريب / مكتبتي`;
-- Library with Downloads / Notes / Saved / Needs Review placements;
-- Notifications and Progress future-complete surfaces without fabricated data;
-- Account as personal-management hub;
+- Welcome / Activation / Login / Recovery / Help / Support;
+- Home / Learn / Subject / Reader;
+- Practice / Quiz / Assessment / Result;
+- final primary navigation: `الرئيسية / التعلّم / التدريب / مكتبتي`;
+- Library / Notifications / Progress / Account prebuilt surfaces;
+- learner-safe error copy;
+- restrained motion + reduced-motion support;
+- strong interaction affordance + >=44px touch targets;
 - destination-level lazy loading;
-- interaction-affordance rule with >=44px touch targets;
-- learner-safe copy and reduced-motion behavior.
+- no fabricated future learner data.
 
-Preserved authority:
+## Performance state
 
-- API/PostgreSQL canonical;
-- Auth/Authz/Entitlements server-owned;
-- Assessment scoring/finalization server-owned;
-- published immutable Quiz authority unchanged;
-- `/v1` excluded from Service Worker Cache authority;
-- signed offline authorization/integrity/device/session contracts unchanged;
-- no password/session token/device private key persisted as offline learning data.
+Accepted Student feature-level code splitting reduced the initial main bundle from roughly:
 
-## Active PR #55 — Library overview redesign
+- **599.61 KB minified / 148.83 KB gzip**
 
-Branch: `ux/student-library-overview`
+to roughly:
 
-Base: `main@c3734366c132ea3919a925bdd0dd37cfd5d82104`
+- **225.89 KB minified / 71.24 KB gzip**
 
-Problem identified from the actual merged UI:
+with Learn, Assessment, Library/personal surfaces and Account split into on-demand chunks.
 
-- `/app/library` repeated the same four destinations in a horizontal tab bar and again as large cards;
-- the page behaved as a section switcher rather than a useful personal overview;
-- repeated navigation increased visual weight and made the overview less elegant.
+Do not regress this by eagerly importing destination feature trees back into the Student shell.
 
-Implemented target hierarchy:
+## Active PR #55 — Library Overview redesign
+
+### Problem
+
+The merged `/app/library` repeated the same destinations twice:
+
+- horizontal section tabs;
+- destination cards.
+
+This created unnecessary repetition and weakened the idea of a useful personal overview.
+
+### Approved target hierarchy
 
 1. concise Library heading;
 2. `ملخص مكتبتي` with honest statistics;
-3. one clear `أقسام مكتبتي` destination grid;
-4. one explicit return-to-Library action inside child sections instead of repeating all destination tabs.
+3. one `أقسام مكتبتي` destination grid;
+4. child sections use one clear `العودة إلى مكتبتي` action instead of repeating the full destination navigation.
 
-### Statistics truth
+Collections:
 
-- **Downloads count** is read from the existing offline lesson package store for the active profile/device.
-- Browser acceptance performs a real lesson save then requires the overview count to change from `٠` to `١`.
-- Notes / Saved / Needs Review currently show honest zero states because Stage17 repositories are not yet integrated.
-- No fake progress, activity, streaks, recommendations, achievements or engagement numbers are introduced.
+- التنزيلات;
+- ملاحظاتي;
+- المحفوظات;
+- يحتاج مراجعة.
+
+### Statistics authority
+
+- Downloads count is real and read from the existing offline package store for the active profile/device.
+- Browser acceptance saves a real lesson then requires Downloads count to change `٠ → ١`.
+- Notes / Saved / Needs Review remain honest zero states until Stage17 authoritative repositories exist.
+- No fake progress/activity/streak/recommendation/achievement/engagement metrics.
 
 ### Visual rules
 
-- summary statistics are one quiet information panel with internal dividers, not four dashboard cards;
-- no decorative gradient is used;
-- statistic cells are intentionally non-clickable;
-- only destination cards use strong clickable affordance and directional cues;
-- phone uses a compact 2×2 statistics layout and one-column destination list;
-- desktop keeps the summary readable at a glance with destination cards below;
-- duplicate Library tabs are removed.
+- one quiet divided summary surface, not separate dashboard KPI cards;
+- no decorative gradient;
+- statistic cells are static/non-clickable;
+- destination cards are clearly clickable;
+- phone: compact 2×2 statistics + one-column destination list;
+- desktop: one-glance summary + destination grid;
+- duplicate Library tabs removed.
 
-Canonical decision document:
+Canonical decision:
 
 - `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
 
-## Verification state
+## Verification state — PR #55
 
-Latest candidate head before this documentation synchronization:
+Already verified on the current implementation before final documentation/test synchronization:
 
-`fa6c1a74005f07c802925706be3c2df35e29eb1d`
+- Student lint — SUCCESS;
+- strict typecheck — SUCCESS;
+- unit tests — **11 files / 41 tests SUCCESS**;
+- production build — SUCCESS.
 
-Verified on its immediate predecessor / same product implementation:
+A first B05 Chromium run exposed a stale test selector that still expected the removed exact `التنزيلات` tab/old Library heading. The product behavior was not the failure. The offline-download test was updated to follow the new Library destination while retaining all integrity/tamper/removal/logout assertions.
 
-- Student lint: SUCCESS;
-- Student typecheck: SUCCESS;
-- 11 unit test files / 41 tests: SUCCESS;
-- Student production build: SUCCESS.
+Because tests/docs moved the branch head afterward, **final exact-head wide CI + regenerated phone/desktop Visual QA are still required before merge**.
 
-A B05 Chromium run initially failed because legacy `offline-download.e2e.spec.mjs` still searched for the removed exact `التنزيلات` tab and old Library heading. The application behavior was not the failure. The test was updated to follow the new clickable Library destination card while preserving all offline integrity assertions.
+## Exact next action
 
-Because the test and this documentation moved the branch head, **final exact-head CI and Visual QA are still required before merge**.
+1. live-fetch PR #55 head and `main`;
+2. inspect/run exact-head triggered workflow matrix;
+3. verify B05 Chromium + artifact;
+4. verify no duplicate Library tabs;
+5. verify saved-download statistic updates `0 → 1` after real download;
+6. verify stats are visually static and destination cards clearly clickable;
+7. verify responsive/no-overflow/reduced-motion/learner-copy checks;
+8. if all triggered workflows are SUCCESS and Visual QA is accepted, update final evidence then merge PR #55 using expected-head SHA guard;
+9. if failure appears, classify real regression vs stale test before changing UI.
 
-## Required acceptance before PR #55 merge
+## Remaining roadmap after PR #55
 
-1. exact-head lint/typecheck/unit/build;
-2. B01/B02/B03/B04/B05 browser regressions;
-3. Stage14/15/16 + Rebuild verification;
-4. all other triggered workflows SUCCESS;
-5. inspect new phone + desktop Library overview screenshots;
-6. verify no duplicate Library tab navigation;
-7. verify real saved-download statistic updates after download;
-8. verify summary cells remain visually static while destination cards remain clearly clickable;
-9. no horizontal overflow;
-10. learner-copy scanner and reduced-motion acceptance remain clean;
-11. verify live `main`, PR mergeability and exact expected head before merge.
+The future surfaces are prebuilt, but their service/backend ownership is not complete.
 
-## Remaining roadmap authority
-
-PR #55 does **not** implement future backend/service ownership for:
-
-- Stage17 Notes / Saved / Needs Review CRUD, provenance, ownership and sync;
-- Stage18 Notifications feed/unread/deep-link contracts;
-- Stage19 Progress/Statistics/Achievements contracts;
-- true cold-start offline Reader at `STUDENT-016I`;
-- unsupported self-service Account security/preferences controls.
-
-Normal backend-roadmap return remains:
+Return sequence:
 
 `STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
+
+Still open:
+
+- true cold-start offline Reader / remaining Stage16 authority;
+- Stage17 Notes / Saved / Needs Review CRUD, provenance, ownership, offline/sync;
+- Stage18 Notifications feed/unread/deep links/lifecycle;
+- Stage19 trusted Progress/Statistics/Achievements;
+- unsupported self-service Account security/preferences;
+- Super Admin rebuild remains a separate workstream.
+
+## Required startup for next conversation
+
+Read in order:
+
+1. `PROJECT_HANDOFF.md`
+2. `PROJECT_STATUS.md`
+3. `PROJECT_ENGINEERING_LOG.md`
+4. `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
+5. `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
+6. `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
+
+Then live-check PR #55 / `main` / CI before editing.
