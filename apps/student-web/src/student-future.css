@@ -1,0 +1,286 @@
+.student-icon-action {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--aw-color-border, #dbe5e6);
+  border-radius: 0.9rem;
+  color: var(--aw-color-ink, #123c43);
+  background: #fff;
+  text-decoration: none;
+}
+
+.student-icon-action svg,
+.student-library-card__icon svg,
+.student-home-secondary__icon svg,
+.future-empty-state__mark svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.student-icon-action.is-active {
+  color: var(--aw-color-primary-dark, #007f78);
+  border-color: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 38%, #dbe5e6);
+  background: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 8%, #fff);
+}
+
+.student-adaptive-nav__secondary {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: auto;
+}
+
+.student-home-secondary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.student-home-secondary__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 5.25rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid var(--aw-color-border, #dbe5e6);
+  border-radius: 1rem;
+  background: #fff;
+  color: var(--aw-color-ink, #123c43);
+  text-decoration: none;
+}
+
+.student-home-secondary__item strong,
+.student-home-secondary__item small {
+  display: block;
+}
+
+.student-home-secondary__item small {
+  margin-top: 0.25rem;
+  color: var(--aw-color-muted, #66777b);
+  line-height: 1.65;
+}
+
+.student-home-secondary__icon {
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: var(--aw-color-mint, #e6f7f6);
+  color: var(--aw-color-primary-dark, #007f78);
+}
+
+.student-library,
+.student-future-page {
+  width: min(100%, 72rem);
+  margin-inline: auto;
+}
+
+.student-library__heading {
+  margin-bottom: 1rem;
+}
+
+.student-library-tabs {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding: 0.25rem 0 0.65rem;
+  margin-bottom: 1rem;
+  scrollbar-width: thin;
+}
+
+.student-library-tabs a {
+  flex: 0 0 auto;
+  padding: 0.68rem 0.9rem;
+  border: 1px solid var(--aw-color-border, #dbe5e6);
+  border-radius: 0.8rem;
+  background: #fff;
+  color: var(--aw-color-charcoal, #1f2937);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.student-library-tabs a.is-active {
+  color: var(--aw-color-primary-dark, #007f78);
+  border-color: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 44%, #dbe5e6);
+  background: var(--aw-color-mint, #e6f7f6);
+}
+
+.student-library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.student-library-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  min-height: 7.2rem;
+  padding: 1.05rem;
+  border: 1px solid var(--aw-color-border, #dbe5e6);
+  border-radius: 1rem;
+  background: #fff;
+  color: var(--aw-color-ink, #123c43);
+  text-decoration: none;
+}
+
+.student-library-card__icon {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.9rem;
+  background: var(--aw-color-mint, #e6f7f6);
+  color: var(--aw-color-primary-dark, #007f78);
+}
+
+.student-library-card strong,
+.student-library-card small {
+  display: block;
+}
+
+.student-library-card small {
+  margin-top: 0.3rem;
+  color: var(--aw-color-muted, #66777b);
+  line-height: 1.7;
+}
+
+.student-downloads-experience--embedded {
+  margin-top: 0.3rem;
+}
+
+.downloads-usage--embedded {
+  margin-inline-start: auto;
+  margin-bottom: 1rem;
+  width: fit-content;
+}
+
+.future-empty-state {
+  min-height: 20rem;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  text-align: center;
+  padding: 2rem 1.25rem;
+  border: 1px solid var(--aw-color-border, #dbe5e6);
+  border-radius: 1.1rem;
+  background: #fff;
+}
+
+.future-empty-state--quiet {
+  min-height: 22rem;
+}
+
+.future-empty-state__mark {
+  width: 3.6rem;
+  height: 3.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 1.1rem;
+  background: var(--aw-color-mint, #e6f7f6);
+  color: var(--aw-color-primary-dark, #007f78);
+  margin-bottom: 0.8rem;
+}
+
+.future-empty-state h2 {
+  margin: 0.15rem 0 0.4rem;
+  color: var(--aw-color-ink, #123c43);
+}
+
+.future-empty-state > p:not(.eyebrow) {
+  max-width: 38rem;
+  margin: 0 0 1.1rem;
+  color: var(--aw-color-muted, #66777b);
+  line-height: 1.85;
+}
+
+.student-progress-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.future-summary-panel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.95rem;
+  padding: 1.15rem;
+  border: 1px solid var(--aw-color-border, #dbe5e6);
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.future-summary-panel--wide {
+  grid-column: 1 / -1;
+}
+
+.future-summary-panel__icon {
+  width: 2.8rem;
+  height: 2.8rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.85rem;
+  background: var(--aw-color-mint, #e6f7f6);
+  color: var(--aw-color-primary-dark, #007f78);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.future-summary-panel h2 {
+  margin: 0.15rem 0 0.35rem;
+  font-size: 1.08rem;
+  color: var(--aw-color-ink, #123c43);
+}
+
+.future-summary-panel p:not(.eyebrow) {
+  margin: 0;
+  color: var(--aw-color-muted, #66777b);
+  line-height: 1.75;
+}
+
+.future-summary-panel .text-button {
+  grid-column: 2;
+  justify-self: start;
+  margin-top: 0.7rem;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .student-icon-action:hover,
+  .student-library-card:hover,
+  .student-home-secondary__item:hover,
+  .student-library-tabs a:hover {
+    transform: translateY(-1px);
+    border-color: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 35%, #dbe5e6);
+  }
+}
+
+@media (max-width: 760px) {
+  .student-home-secondary,
+  .student-library-grid,
+  .student-progress-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .future-summary-panel--wide {
+    grid-column: auto;
+  }
+
+  .student-library-tabs {
+    margin-inline: -0.2rem;
+    padding-inline: 0.2rem;
+  }
+
+  .student-library-card {
+    min-height: 6.3rem;
+  }
+
+  .future-empty-state {
+    min-height: 18rem;
+    padding: 1.5rem 1rem;
+  }
+}
