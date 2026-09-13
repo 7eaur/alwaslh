@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE; Batches 1–3 VERIFIED.**
+Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE; Batches 1–3 VERIFIED; Batch 4A ACTIVE.**
 
 ## Project and authority invariants
 
@@ -38,7 +38,7 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 A
 - AR-06 — DONE / VERIFIED. `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
 - AR-07 — DONE / VERIFIED. `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
 - AR-08 — DONE / VERIFIED. `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
-- AR-09 — **ACTIVE**. Batch 1 VERIFIED; Batch 2 VERIFIED; Batch 3 VERIFIED.
+- AR-09 — **ACTIVE**. Batch 1 VERIFIED; Batch 2 VERIFIED; Batch 3 VERIFIED; Batch 4A ACTIVE.
 - AR-10 — NOT STARTED.
 
 ## AR-09 — Cleanup / architecture enforcement
@@ -120,6 +120,56 @@ Exact code-head: `3b1eb104fef1ac70035dcd9875d9807f95bf2009`.
 
 No second cleanup seam was started after the exact-head matrix turned green. This run stops code mutation at the reports seam and records the next inventory point. AR-10 remains blocked until AR-09 itself is DONE / VERIFIED on a final exact-head matrix.
 
+### Batch 4A — AI review route feature ownership adapter — ACTIVE
+
+#### 1. State inherited and reconciled
+
+- Live `main` was refreshed to `0c7c9f9c5e4ec6ae020484a9a4892eaf3b8b5194` before mutation.
+- Branch HEAD was `1077fe0c0074976831f1708a61e9372c81cc8386`.
+- `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` were read literally.
+- Draft PR #52 was inspected and remained open + Draft with no merge.
+- The inherited documentation-head runs were reconciled before code work: Admin AI `34762502501` SUCCESS; Combined `34762502390` SUCCESS; Stage13G `34762502493` SUCCESS. Stage13G included successful Admin UI, backend, and Real API + PostgreSQL + Chromium jobs.
+
+#### 2. Fresh inventory and classification
+
+`App.tsx` still imported root `AiOperationsPage` for the route `/app/reviews/ai`, while Reviews is already an explicit route/feature owner in the rebuilt IA. `AiOperationsPage` is client orchestration over existing AI job/review/application APIs and preserves server-owned review/application authority.
+
+Classification for this bounded seam:
+- **KEEP:** `/app/reviews/ai`, review/application behavior, polling/pagination, conflict/session handling, API authority and existing executable tests.
+- **IMPROVE:** align route ownership with feature ownership under `src/admin/reviews/`.
+- **REFACTOR:** first establish a feature-owned adapter and route import; only after parity may the implementation move.
+- **REBUILD:** none.
+- **REMOVE:** root `AiOperationsPage.tsx` only after the feature-owned implementation is proven.
+- **NO CHANGE:** migrations, backend, PostgreSQL authority, auth/security, Student workstream and test assertions.
+
+#### 3. Changes made
+
+1. `9427649f29e3bf69d2143dc4b12235652bcefc6b` — `refactor(admin): establish AI review route ownership`
+   - added `apps/admin-web/src/admin/reviews/AiOperationsPage.tsx` as a temporary adapter re-exporting the current root implementation.
+2. `069858ace554e2be51e21b128e76e6089f26edef` — `refactor(admin): route AI reviews through feature owner`
+   - changed the `App.tsx` import so `/app/reviews/ai` now resolves through the feature-owned adapter.
+   - no behavior, backend, migration, Student or test file changed.
+
+#### 4. Verification state at checkpoint
+
+Exact code-head: `069858ace554e2be51e21b128e76e6089f26edef`.
+
+Runs started and were still active at the documentation checkpoint:
+- Frontend Preparation `34763851152` — IN PROGRESS.
+- Admin AI Operations `34763851138` — IN PROGRESS.
+- Combined Integration `34763851147` — IN PROGRESS.
+- Stage13G Admin Operations `34763851137` — IN PROGRESS.
+
+Because CI is active, no implementation relocation, root deletion, second cleanup seam, or AR-10 work was started.
+
+#### 5. Explicit continuation
+
+1. Reconcile all four runs for `069858ace554e2be51e21b128e76e6089f26edef` first.
+2. If fully green, continue the same seam only by moving the actual `AiOperationsPage` implementation into `src/admin/reviews/AiOperationsPage.tsx`, adjusting relative imports only; retain `AiReviewWorkspace` and API contracts unchanged.
+3. Remove root `AiOperationsPage.tsx` only after executable parity of the feature implementation.
+4. If any gate fails, fix the root cause without weakening production contracts or tests.
+5. AR-10 remains blocked.
+
 ## Findings register
 
 | ID | Severity | Area | Problem | Status |
@@ -134,15 +184,13 @@ No second cleanup seam was started after the exact-head matrix turned green. Thi
 | `ADMIN-008` | P1 | Question Bank | giant list/create/edit/review/history owner | FIXED / AR-06 |
 | `ADMIN-009` | P1 | Quiz Builder | giant list/create/detail/version/lifecycle/export owner | FIXED / AR-07 |
 | `ADMIN-010` | P1 | Students + Access | duplicated giant workspace under two routes | FIXED / AR-08 |
-| `ADMIN-011` | P2 | Admin architecture | root-level route-owned components remain outside feature ownership | ACTIVE / AR-09; reports seam fixed, remaining inventory pending |
+| `ADMIN-011` | P2 | Admin architecture | root-level route-owned components remain outside feature ownership | ACTIVE / AR-09; reports fixed, AI review route adapter active |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track; out of Admin scope |
 
-## Explicit resume point — AR-09 next cleanup batch only
+## Explicit resume point — AR-09 Batch 4A only
 
 1. Fetch live `main`, current feature HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI before mutation.
-2. Reconcile CI created by the documentation checkpoint commits from this run before selecting another code seam.
-3. Re-inventory the remaining root route-owned surfaces. Prior candidates were `AdminAiAuthoringWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, and `CurriculumWorkspace`, but their current callers/tests/contracts must be inspected again; do not relocate based on file location alone.
-4. Pick one smallest bounded seam, classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE, and preserve API/PostgreSQL/Student authority.
-5. If no justified seam remains after inventory, run the AR-09 final exact-head matrix and close AR-09; otherwise continue one seam at a time.
-6. AR-10 may start only after AR-09 is fully DONE / VERIFIED.
-7. PR #52 remains Draft; no merge or auto-merge.
+2. Reconcile Frontend `34763851152`, Admin AI `34763851138`, Combined `34763851147`, Stage13G `34763851137` for code-head `069858ace554e2be51e21b128e76e6089f26edef`.
+3. Continue only the AI review ownership seam if all are green; do not select another candidate yet.
+4. Preserve API/PostgreSQL/Student authority and current review/application behavior.
+5. PR #52 remains Draft; no merge or auto-merge.
