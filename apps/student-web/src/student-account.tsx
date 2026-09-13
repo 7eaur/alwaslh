@@ -113,15 +113,15 @@ export function StudentAccountExperience({
         <div>
           <p className="eyebrow">حسابي</p>
           <h1 id="student-account-title">{profile.displayName ? profile.displayName : "حساب الطالب"}</h1>
-          <p>أدر وصولك إلى الصفوف، وافتح التعليمات أو الدعم عندما تحتاج مساعدة.</p>
+          <p>أدر وصولك ومساحتك الشخصية، وافتح التعليمات أو الدعم عندما تحتاج مساعدة.</p>
         </div>
-        <button className="secondary-button" type="button" onClick={() => void handleLogout()} disabled={logoutBusy}>{logoutBusy ? "جاري الخروج" : "تسجيل الخروج"}</button>
+        <button className="secondary-button student-danger-action" type="button" onClick={() => void handleLogout()} disabled={logoutBusy}>{logoutBusy ? "جاري الخروج" : "تسجيل الخروج"}</button>
       </header>
 
       <section className="student-account-section access-section" aria-labelledby="active-access-title">
         <div className="student-account-section__heading">
           <div><p className="eyebrow">المحتوى المتاح</p><h2 id="active-access-title">وصولك الحالي</h2><p>يعرض هذا القسم الصفوف والمحتوى المتاح لحسابك الآن.</p></div>
-          <button className="text-button" type="button" onClick={() => void loadAccess()} disabled={!online || state.status === "loading"}>تحديث</button>
+          <button className="secondary-button student-compact-action" type="button" onClick={() => void loadAccess()} disabled={!online || state.status === "loading"}><span aria-hidden="true">↻</span> تحديث</button>
         </div>
         {state.status === "loading" ? (
           <div className="student-b05-skeleton" role="status" aria-live="polite" aria-busy="true"><span className="sr-only">جاري تحميل وصولك الحالي</span><span /><span /></div>
@@ -160,11 +160,20 @@ export function StudentAccountExperience({
         )}
       </section>
 
+      <section className="student-account-section student-account-personal" aria-labelledby="account-personal-title">
+        <div className="student-account-section__heading"><div><p className="eyebrow">مساحتي</p><h2 id="account-personal-title">إدارة تعلمك من مكان واحد</h2><p>الوصول إلى ما يخصك شخصيًا بدون ازدحام الصفحة الرئيسية.</p></div></div>
+        <div className="student-account-personal-links">
+          <Link to="/app/library"><strong>مكتبتي</strong><small>التنزيلات والملاحظات والمحفوظات والمراجعة.</small></Link>
+          <Link to="/app/progress"><strong>تقدمي</strong><small>تقدم التعلّم والتدريب والإنجازات.</small></Link>
+          <Link to="/app/notifications"><strong>الإشعارات</strong><small>كل ما يحتاج انتباهك في مكان واحد.</small></Link>
+        </div>
+      </section>
+
       <section className="student-account-section student-account-help" aria-labelledby="account-help-title">
         <div className="student-account-section__heading"><div><p className="eyebrow">المساعدة</p><h2 id="account-help-title">تحتاج مساعدة؟</h2><p>التعليمات والدعم منفصلان عن إعدادات الحساب حتى يبقى كل شيء واضحًا.</p></div></div>
         <div className="student-account-help-links">
-          <Link className="secondary-button" to="/help">التعليمات والمساعدة</Link>
-          <Link className="secondary-button" to="/support">الدعم والتواصل</Link>
+          <Link className="secondary-button student-explicit-action" to="/help">التعليمات والمساعدة<span aria-hidden="true">←</span></Link>
+          <Link className="secondary-button student-explicit-action" to="/support">الدعم والتواصل<span aria-hidden="true">←</span></Link>
         </div>
       </section>
     </main>

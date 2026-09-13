@@ -1,0 +1,145 @@
+/*
+ * Student interaction affordance layer.
+ * Clickable controls must look actionable before interaction; static information must not compete with them.
+ */
+
+.student-shell :is(.primary-button, .secondary-button) {
+  min-height: 2.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.8rem;
+  text-decoration: none;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.student-shell .primary-button {
+  border: 1px solid var(--aw-color-primary-dark, #007f78);
+  background: var(--aw-color-primary-dark, #007f78);
+  color: #fff;
+  box-shadow: 0 2px 6px rgb(18 60 67 / 12%);
+}
+
+.student-shell .secondary-button {
+  border: 1px solid color-mix(in srgb, var(--aw-color-primary, #00b5a9) 42%, #cfdcde);
+  background: #fff;
+  color: var(--aw-color-ink, #123c43);
+  box-shadow: 0 1px 2px rgb(18 60 67 / 5%);
+}
+
+.student-shell .text-button {
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  padding: 0.5rem 0.78rem;
+  border: 1px solid color-mix(in srgb, var(--aw-color-primary, #00b5a9) 32%, #dbe5e6);
+  border-radius: 0.72rem;
+  background: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 7%, #fff);
+  color: var(--aw-color-primary-dark, #007f78);
+  text-decoration: none;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.student-shell :is(.primary-button, .secondary-button, .text-button):disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+  box-shadow: none;
+}
+
+.student-shell .student-danger-action {
+  border-color: color-mix(in srgb, #b42318 38%, #dbe5e6);
+  color: #8f1d14;
+  background: color-mix(in srgb, #b42318 4%, #fff);
+  box-shadow: none;
+}
+
+.student-shell .student-compact-action {
+  min-height: 2.75rem;
+  padding: 0.48rem 0.72rem;
+  font-size: 0.9rem;
+}
+
+.student-shell .downloads-section__heading .text-button::before {
+  content: "↻";
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.student-shell :is(
+  .student-home-card,
+  .student-home-secondary__item,
+  .student-library-card,
+  .student-account-personal-links a,
+  .subject-list__link,
+  .lesson-link,
+  .practice-list__link,
+  .quiz-mode-option
+) {
+  cursor: pointer;
+}
+
+.student-shell .student-home-card {
+  border-color: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 18%, #dbe5e6);
+}
+
+.student-shell .student-home-card__copy strong {
+  color: var(--aw-color-primary-dark, #007f78);
+}
+
+.student-shell .student-home-card__arrow {
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 10%, #fff);
+  color: var(--aw-color-primary-dark, #007f78);
+  font-weight: 900;
+}
+
+.student-shell :is(.eyebrow, .downloads-context, .downloads-status, .student-access-list strong) {
+  text-wrap: pretty;
+}
+
+.student-shell :is(.primary-button, .secondary-button, .text-button, .student-home-card, .student-home-secondary__item, .student-library-card, .student-account-personal-links a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--aw-color-primary, #00b5a9) 42%, transparent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .student-shell .primary-button:not(:disabled):hover {
+    background: var(--aw-color-ink, #123c43);
+    border-color: var(--aw-color-ink, #123c43);
+    box-shadow: 0 6px 16px rgb(18 60 67 / 16%);
+  }
+
+  .student-shell :is(.secondary-button, .text-button):not(:disabled):hover {
+    border-color: var(--aw-color-primary-dark, #007f78);
+    background: var(--aw-color-mint, #e6f7f6);
+    color: var(--aw-color-primary-dark, #007f78);
+    box-shadow: 0 4px 12px rgb(18 60 67 / 9%);
+    text-decoration: none;
+  }
+
+  .student-shell .student-danger-action:not(:disabled):hover {
+    border-color: #b42318;
+    background: color-mix(in srgb, #b42318 8%, #fff);
+    color: #7a1710;
+    box-shadow: 0 4px 12px rgb(180 35 24 / 8%);
+  }
+}
+
+.student-shell :is(.primary-button, .secondary-button, .text-button):not(:disabled):active {
+  transform: scale(0.985);
+}
+
+@media (max-width: 520px) {
+  .student-shell .student-account-help-links .student-explicit-action {
+    width: 100%;
+  }
+}

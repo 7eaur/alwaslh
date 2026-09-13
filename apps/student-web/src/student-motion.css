@@ -11,25 +11,13 @@
 }
 
 @keyframes student-surface-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes student-feedback-in {
-  from {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .student-home,
@@ -42,6 +30,8 @@
 .attempt-review-shell,
 .student-downloads-experience,
 .student-account-experience,
+.student-library,
+.student-future-page,
 .student-welcome-panel,
 .student-auth-surface,
 .student-guidance {
@@ -53,6 +43,7 @@
 .reader-state,
 .practice-state,
 .student-b05-state,
+.future-empty-state,
 .attempt-feedback,
 .attempt-connection-state {
   animation: student-feedback-in var(--student-motion-fast) var(--student-motion-ease) both;
@@ -64,7 +55,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-home-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option),
+.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-icon-action, .student-home-card, .student-home-secondary__item, .student-library-card, .student-library-tabs a, .student-account-personal-links a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option),
 .student-entry-page :is(.primary-button, .secondary-button, .text-button, .student-auth-switch button),
 .student-session-state :is(.primary-button, .secondary-button) {
   transition:
@@ -75,24 +66,24 @@
     color var(--student-motion-base) var(--student-motion-ease);
 }
 
-.aw-product-shell--student :is(.student-home-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option, .downloads-list > li, .student-account-section) {
+.aw-product-shell--student :is(.student-home-card, .student-home-secondary__item, .student-library-card, .student-account-personal-links a, .future-summary-panel, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option, .downloads-list > li, .student-account-section) {
   box-shadow: var(--student-interactive-shadow);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .aw-product-shell--student :is(.student-home-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):hover {
+  .aw-product-shell--student :is(.student-home-card, .student-home-secondary__item, .student-library-card, .student-account-personal-links a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):hover {
     transform: translateY(-2px);
     box-shadow: var(--student-interactive-shadow-hover);
   }
 
-  .aw-product-shell--student :is(.primary-button, .secondary-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry):hover,
+  .aw-product-shell--student :is(.primary-button, .secondary-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-icon-action, .student-library-tabs a):hover,
   .student-entry-page :is(.primary-button, .secondary-button, .student-auth-switch button):hover,
   .student-session-state :is(.primary-button, .secondary-button):hover {
     transform: translateY(-1px);
   }
 }
 
-.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-home-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):active,
+.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-icon-action, .student-home-card, .student-home-secondary__item, .student-library-card, .student-library-tabs a, .student-account-personal-links a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):active,
 .student-entry-page :is(.primary-button, .secondary-button, .text-button, .student-auth-switch button):active,
 .student-session-state :is(.primary-button, .secondary-button):active {
   transform: scale(0.985);

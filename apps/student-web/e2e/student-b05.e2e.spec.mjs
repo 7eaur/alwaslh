@@ -30,6 +30,16 @@ async function capture(page, name) {
   await page.setViewportSize({ width: 390, height: 844 });
 }
 
+async function expectClickable(locator, { minHeight = 44 } = {}) {
+  const facts = await locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const box = element.getBoundingClientRect();
+    return { cursor: style.cursor, height: box.height };
+  });
+  expect(facts.cursor).toBe("pointer");
+  expect(facts.height).toBeGreaterThanOrEqual(minHeight);
+}
+
 test("Student entry, installed welcome, help and support are learner-facing", async ({ browser }) => {
   const normal = await browser.newContext();
   const normalPage = await normal.newPage();
@@ -52,16 +62,7 @@ test("Student entry, installed welcome, help and support are learner-facing", as
     const nativeMatchMedia = window.matchMedia.bind(window);
     window.matchMedia = (query) => {
       if (query === "(display-mode: standalone)") {
-        return {
-          matches: true,
-          media: query,
-          onchange: null,
-          addListener() {},
-          removeListener() {},
-          addEventListener() {},
-          removeEventListener() {},
-          dispatchEvent() { return false; },
-        };
+        return { matches: true, media: query, onchange: null, addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {}, dispatchEvent() { return false; } };
       }
       return nativeMatchMedia(query);
     };
@@ -86,45 +87,79 @@ test("Student motion respects reduced-motion preference", async ({ page }) => {
   expect(durationMs).toBeLessThanOrEqual(0.01);
 });
 
-test("B05 Downloads and Account are learner-facing, responsive and honest offline", async ({ page, context }) => {
+test("Library, Notifications, Progress and Account are responsive and learner-facing", async ({ page, context }) => {
   const fixture = createReaderFixture();
   await page.context().addCookies([{ name: fixture.sessionCookieName, value: fixture.sessionToken, url: "http://127.0.0.1:5174", httpOnly: true, sameSite: "Lax" }]);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/app/downloads");
-  await expect(page.getByRole("heading", { name: "التنزيلات", exact: true })).toBeVisible();
+  await page.goto("/app/library");
+  await expect(page.getByRole("heading", { name: "كل ما يخص تعلمك في مكان واحد" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "التنزيلات", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "ملاحظاتي", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "المحفوظات", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "يحتاج مراجعة", exact: true })).toBeVisible();
+  const firstLibraryCard = page.locator(".student-library-card").first();
+  await expectClickable(firstLibraryCard, { minHeight: 96 });
+  await expect(firstLibraryCard.locator(".student-clickable-card__arrow")).toBeVisible();
+  await capture(page, "library-overview");
+
+  await page.getByRole("link", { name: "التنزيلات", exact: true }).click();
+  await expect(page).toHaveURL(/\/app\/library\/downloads$/);
   await expect(page.getByRole("heading", { name: "الدروس المحفوظة" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "دروس متاحة للتنزيل" })).toBeVisible();
   await expect(page.locator("[data-downloadable-lesson-id]").filter({ hasText: fixture.lessonTitle })).toBeVisible();
-  await capture(page, "downloads-library");
+  await expectClickable(page.locator(".downloads-section__heading .text-button").first());
+  await capture(page, "library-downloads");
 
   const lessonRow = page.locator("[data-downloadable-lesson-id]").filter({ hasText: fixture.lessonTitle });
   await lessonRow.getByRole("button", { name: "حفظ بدون إنترنت" }).click();
   await expect(page.getByText("تم حفظ الدرس للتعلم بدون إنترنت.", { exact: true })).toBeVisible();
   const savedRow = page.locator("[data-downloaded-lesson-id]").filter({ hasText: fixture.lessonTitle });
   await expect(savedRow.getByText("متاح بدون إنترنت", { exact: true })).toBeVisible();
-  await capture(page, "downloads-saved");
+  await capture(page, "library-downloads-saved");
 
   await context.setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   await expect(page.getByText("أنت غير متصل الآن", { exact: true })).toBeVisible();
   await expect(savedRow).toBeVisible();
   await expect(page.getByRole("heading", { name: "دروس متاحة للتنزيل" })).toHaveCount(0);
-  await capture(page, "downloads-offline");
-
+  await capture(page, "library-downloads-offline");
   await context.setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
+
+  await page.goto("/app/library/notes");
+  await expect(page.getByRole("heading", { name: "لا توجد ملاحظات بعد" })).toBeVisible();
+  await expectClickable(page.getByRole("link", { name: "العودة إلى التعلّم" }));
+  await capture(page, "library-notes-empty");
+  await page.goto("/app/library/saved");
+  await expect(page.getByRole("heading", { name: "لم تحفظ شيئًا بعد" })).toBeVisible();
+  await expectClickable(page.getByRole("link", { name: "فتح التدريب" }));
+  await capture(page, "library-saved-empty");
+  await page.goto("/app/library/review");
+  await expect(page.getByRole("heading", { name: "لا توجد عناصر للمراجعة الآن" })).toBeVisible();
+  await capture(page, "library-review-empty");
+
+  await page.goto("/app/notifications");
+  await expect(page.getByRole("heading", { name: "ما يحتاج انتباهك" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "لا توجد إشعارات جديدة" })).toBeVisible();
+  await expectClickable(page.getByRole("link", { name: "العودة إلى الرئيسية" }));
+  await capture(page, "notifications-empty");
+
+  await page.goto("/app/progress");
+  await expect(page.getByRole("heading", { name: "شاهد تقدمك بدون أرقام مربكة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "ابدأ التعلّم ليظهر تقدمك هنا" })).toBeVisible();
+  await expectClickable(page.getByRole("link", { name: "فتح التعلّم" }));
+  const staticAchievementPanel = page.locator(".future-summary-panel--wide");
+  const staticCursor = await staticAchievementPanel.evaluate((element) => getComputedStyle(element).cursor);
+  expect(staticCursor).not.toBe("pointer");
+  await capture(page, "progress-empty");
+
   await page.getByRole("link", { name: "حسابي", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/account$/);
   await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "لديك رمز صف جديد؟" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "تسجيل الخروج" })).toBeVisible();
+  await expectClickable(page.getByRole("button", { name: "تسجيل الخروج" }));
   await expect(page.getByRole("link", { name: "التعليمات والمساعدة" })).toBeVisible();
   await expect(page.getByRole("link", { name: "الدعم والتواصل" })).toBeVisible();
   await capture(page, "account");
-
-  await page.getByRole("link", { name: "الرئيسية", exact: true }).first().click();
-  await expect(page.locator(".student-account-section")).toHaveCount(0);
-  await page.getByRole("link", { name: "التعلّم", exact: true }).first().click();
-  await expect(page.locator(".student-account-section")).toHaveCount(0);
 });

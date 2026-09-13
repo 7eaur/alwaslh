@@ -11,6 +11,8 @@ import "./assessment-integration.css";
 import "./student-entry.css";
 import "./student-session.css";
 import "./student-library-account.css";
+import "./student-future.css";
+import "./student-affordance.css";
 import "./student-motion.css";
 import { registerStudentServiceWorker } from "./pwa";
 import { StudentRouter } from "./router";

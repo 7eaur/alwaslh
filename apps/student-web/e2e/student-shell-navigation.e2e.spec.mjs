@@ -30,6 +30,8 @@ test("Student shell provides stable mobile destinations, focus, history and acti
   await expect(phoneNav).toBeVisible();
   await expect(phoneNav.getByRole("link")).toHaveCount(4);
   await expect(phoneNav.getByRole("link", { name: "الرئيسية" })).toHaveAttribute("aria-current", "page");
+  await expect(phoneNav.getByRole("link", { name: "مكتبتي" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "الإشعارات", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "حسابي", exact: true })).toBeVisible();
   await expect(page.locator(".student-network-warning")).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
@@ -44,6 +46,11 @@ test("Student shell provides stable mobile destinations, focus, history and acti
   await expect(page).toHaveURL(/\/app\/home$/);
   await expect(page.locator("#route-content")).toBeFocused();
   await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+
+  await phoneNav.getByRole("link", { name: "مكتبتي" }).click();
+  await expect(page).toHaveURL(/\/app\/library$/);
+  await expect(page.getByRole("heading", { name: "كل ما يخص تعلمك في مكان واحد" })).toBeVisible();
+  await expect(phoneNav.getByRole("link", { name: "مكتبتي" })).toHaveAttribute("aria-current", "page");
 
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
@@ -61,6 +68,8 @@ test("Student shell adapts navigation for tablet and desktop without overflow", 
   await expect(adaptiveNav).toBeVisible();
   await expect(page.getByRole("navigation", { name: "التنقل الرئيسي للطالب على الهاتف" })).toBeHidden();
   await expect(adaptiveNav.getByRole("link", { name: "الرئيسية" })).toHaveAttribute("aria-current", "page");
+  await expect(adaptiveNav.getByRole("link", { name: "مكتبتي" })).toBeVisible();
+  await expect(adaptiveNav.getByRole("link", { name: "تقدمي" })).toBeVisible();
   await expect(adaptiveNav.getByRole("link", { name: "الحساب" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
@@ -76,8 +85,12 @@ test("Student shell adapts navigation for tablet and desktop without overflow", 
   expect(navBox.height).toBeGreaterThan(navBox.width);
   await expectNoHorizontalOverflow(page);
 
-  await adaptiveNav.getByRole("link", { name: "التنزيلات" }).click();
-  await expect(page).toHaveURL(/\/app\/downloads$/);
+  await adaptiveNav.getByRole("link", { name: "مكتبتي" }).click();
+  await expect(page).toHaveURL(/\/app\/library$/);
   await expect(page.locator("#route-content")).toBeFocused();
-  await expect(adaptiveNav.getByRole("link", { name: "التنزيلات" })).toHaveAttribute("aria-current", "page");
+  await expect(adaptiveNav.getByRole("link", { name: "مكتبتي" })).toHaveAttribute("aria-current", "page");
+
+  await adaptiveNav.getByRole("link", { name: "تقدمي" }).click();
+  await expect(page).toHaveURL(/\/app\/progress$/);
+  await expect(page.getByRole("heading", { name: "شاهد تقدمك بدون أرقام مربكة" })).toBeVisible();
 });

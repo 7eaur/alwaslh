@@ -77,7 +77,12 @@ function packageCurrent(lesson: OfflineLessonOption | undefined, stored: StoredO
 
 function activeProfileId(): string | null { return getActiveOfflineScope()?.profileId ?? null; }
 
-export function StudentOfflineDownloadsSection({ online, refreshKey, onSessionExpired }: { online: boolean; refreshKey: number; onSessionExpired: () => void }) {
+export function StudentOfflineDownloadsSection({ online, refreshKey, onSessionExpired, embedded = false }: {
+  online: boolean;
+  refreshKey: number;
+  onSessionExpired: () => void;
+  embedded?: boolean;
+}) {
   const [state, setState] = useState<DownloadsState>({ status: "loading" });
   const [busyLessonId, setBusyLessonId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -141,12 +146,12 @@ export function StudentOfflineDownloadsSection({ online, refreshKey, onSessionEx
     finally { setBusyLessonId(null); }
   }
 
-  return (
-    <main className="student-downloads-experience" aria-labelledby="downloads-title">
-      <header className="student-downloads-hero">
+  const content = (
+    <>
+      {!embedded ? <header className="student-downloads-hero">
         <div><p className="eyebrow">بدون إنترنت</p><h1 id="downloads-title">التنزيلات</h1><p>احفظ الدروس التي تحتاجها لتفتحها لاحقًا حتى عند انقطاع الإنترنت.</p></div>
         {state.status === "ready" ? <div className="downloads-usage" aria-label={`استخدمت ${formatBytes(usedBytes)} من مساحة التنزيلات`}><strong>{packages.length}</strong><span>درس محفوظ</span><small>{formatBytes(usedBytes)} من {formatBytes(OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES)}</small></div> : null}
-      </header>
+      </header> : state.status === "ready" ? <div className="downloads-usage downloads-usage--embedded" aria-label={`استخدمت ${formatBytes(usedBytes)} من مساحة التنزيلات`}><strong>{packages.length}</strong><span>درس محفوظ</span><small>{formatBytes(usedBytes)} من {formatBytes(OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES)}</small></div> : null}
 
       {!online && state.status === "ready" ? <div className="student-b05-state is-warning" role="status"><strong>أنت غير متصل الآن</strong><p>يمكنك إدارة الدروس المحفوظة. اتصل بالإنترنت لإضافة تنزيلات جديدة أو تحديثها.</p></div> : null}
       {actionError ? <div className="form-alert is-danger" role="alert">{actionError}</div> : null}
@@ -184,6 +189,9 @@ export function StudentOfflineDownloadsSection({ online, refreshKey, onSessionEx
           </section> : null}
         </>
       )}
-    </main>
+    </>
   );
+
+  if (embedded) return <div className="student-downloads-experience student-downloads-experience--embedded">{content}</div>;
+  return <main className="student-downloads-experience" aria-labelledby="downloads-title">{content}</main>;
 }
