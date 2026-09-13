@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  ApiRequestError,
   isMissingSessionError,
   listStudentCurriculum,
   type StudentCurriculumCatalog,
 } from "./auth-api";
+import { studentErrorMessage } from "./student-error-copy";
 import { OfflineAuthorizationError } from "./offline-authorization";
 import {
   listOfflineLessonPackages,
@@ -18,8 +18,7 @@ import {
   OfflineMaterializationError,
   removeStoredOfflineLessonForSession,
 } from "./offline-materialization";
-import { refreshOfflineLeaseForCurrentSession } from "./offline-session";
-import type { StoredOfflineLease } from "./offline-store";
+import { getActiveOfflineScope, refreshOfflineLeaseForCurrentSession } from "./offline-session";
 
 interface OfflineLessonOption {
   id: string;
@@ -31,39 +30,17 @@ interface OfflineLessonOption {
 
 type DownloadsState =
   | { status: "loading" }
-  | { status: "offline" }
-  | {
-      status: "ready";
-      lease: StoredOfflineLease;
-      lessons: OfflineLessonOption[];
-      packages: StoredOfflineLessonPackage[];
-    }
+  | { status: "offline-empty" }
+  | { status: "ready"; lessons: OfflineLessonOption[]; packages: StoredOfflineLessonPackage[]; catalogAvailable: boolean }
   | { status: "error"; message: string };
 
 function lessonOptions(catalog: StudentCurriculumCatalog): OfflineLessonOption[] {
   const lessons: OfflineLessonOption[] = [];
   for (const classRecord of catalog.classes) {
     for (const subject of classRecord.subjects) {
-      for (const lesson of subject.unsectionedLessons) {
-        lessons.push({
-          id: lesson.id,
-          title: lesson.title,
-          className: classRecord.name,
-          subjectName: subject.name,
-          contentRevision: lesson.contentRevision,
-        });
-      }
-      for (const section of subject.sections) {
-        for (const lesson of section.lessons) {
-          lessons.push({
-            id: lesson.id,
-            title: lesson.title,
-            className: classRecord.name,
-            subjectName: subject.name,
-            contentRevision: lesson.contentRevision,
-          });
-        }
-      }
+      const append = (lesson: { id: string; title: string; contentRevision: number }) => lessons.push({ id: lesson.id, title: lesson.title, className: classRecord.name, subjectName: subject.name, contentRevision: lesson.contentRevision });
+      subject.unsectionedLessons.forEach(append);
+      subject.sections.forEach((section) => section.lessons.forEach(append));
     }
   }
   return lessons;
@@ -75,268 +52,138 @@ function formatBytes(value: number): string {
   return `${(value / (1024 * 1024)).toLocaleString("ar-YE", { maximumFractionDigits: 1 })} م.ب`;
 }
 
-function materializationMessage(error: unknown): string {
-  if (error instanceof ApiRequestError) return error.message;
-  if (error instanceof OfflineAuthorizationError) {
-    return "تعذر التحقق من تصريح التنزيل الصادر من الخادم. لم نحفظ محتوى غير موثوق على هذا الجهاز.";
-  }
+function downloadMessage(error: unknown): string {
+  if (error instanceof OfflineAuthorizationError) return "تعذر حفظ الدرس بأمان. حدّث الصفحة وحاول مرة أخرى.";
   if (error instanceof OfflineContentError) {
     switch (error.code) {
-      case "lesson_budget_exceeded":
-        return "حجم هذا الدرس أكبر من حد التنزيل المسموح للدرس الواحد (64 م.ب).";
-      case "scope_budget_exceeded":
-        return "لا توجد مساحة ضمن حد التنزيل لهذا الجهاز. احذف تنزيلًا محفوظًا ثم حاول مرة أخرى.";
+      case "lesson_budget_exceeded": return "حجم هذا الدرس أكبر من المساحة المسموح بها للتنزيل. افتحه عبر الإنترنت بدل حفظه على الجهاز.";
+      case "scope_budget_exceeded": return "مساحة التنزيلات ممتلئة. أزل درسًا محفوظًا لا تحتاجه ثم حاول مرة أخرى.";
+      case "storage_quota_exceeded": return "لا توجد مساحة كافية على الجهاز. حرر بعض المساحة ثم حاول حفظ الدرس مرة أخرى.";
+      case "crypto_unavailable": return "تعذر حفظ الدرس من هذا المتصفح. حدّث المتصفح أو استخدم متصفحًا حديثًا ثم حاول مرة أخرى.";
       case "byte_size_mismatch":
       case "checksum_mismatch":
       case "asset_missing":
-        return "لم يكتمل التحقق من ملفات الدرس، لذلك لم نحفظ تنزيلًا جزئيًا أو غير موثوق.";
-      case "storage_quota_exceeded":
-        return "رفض المتصفح تخزين الملف بسبب المساحة المتاحة على الجهاز. احذف تنزيلًا أو حرر مساحة ثم حاول مرة أخرى.";
-      case "crypto_unavailable":
-        return "هذا المتصفح لا يدعم التحقق التشفيري المطلوب لحفظ المحتوى دون اتصال.";
-      default:
-        return "بيانات التنزيل المنشورة غير صالحة للحفظ دون اتصال.";
+      case "manifest_invalid":
+        return "تعذر حفظ الدرس بأمان. لم يتم الاحتفاظ بتنزيل غير مكتمل. حدّث الصفحة ثم حاول مرة أخرى.";
     }
   }
-  if (error instanceof OfflineMaterializationError) {
-    return "تعذر مطابقة التنزيل مع الحساب والجهاز الحاليين. حدّث الصفحة ثم حاول مرة أخرى.";
-  }
-  return "تعذر إكمال تنزيل الدرس. حاول مرة أخرى.";
+  if (error instanceof OfflineMaterializationError) return "تعذر التحقق من هذا الجهاز. سجّل الدخول مرة أخرى، وإذا استمرت المشكلة افتح صفحة الدعم.";
+  return studentErrorMessage(error, "downloads");
 }
 
-export function StudentOfflineDownloadsSection({
-  online,
-  refreshKey,
-  onSessionExpired,
-}: {
-  online: boolean;
-  refreshKey: number;
-  onSessionExpired: () => void;
-}) {
-  const [state, setState] = useState<DownloadsState>({ status: online ? "loading" : "offline" });
-  const [selectedLessonId, setSelectedLessonId] = useState("");
-  const [busy, setBusy] = useState<"download" | "remove" | null>(null);
+function packageCurrent(lesson: OfflineLessonOption | undefined, stored: StoredOfflineLessonPackage): boolean {
+  return lesson ? stored.contentRevision >= lesson.contentRevision : true;
+}
+
+function activeProfileId(): string | null { return getActiveOfflineScope()?.profileId ?? null; }
+
+export function StudentOfflineDownloadsSection({ online, refreshKey, onSessionExpired }: { online: boolean; refreshKey: number; onSessionExpired: () => void }) {
+  const [state, setState] = useState<DownloadsState>({ status: "loading" });
+  const [busyLessonId, setBusyLessonId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   async function loadDownloads() {
+    setActionError(null);
     if (!online) {
-      setState((current) => (current.status === "ready" ? current : { status: "offline" }));
+      const scope = getActiveOfflineScope();
+      if (!scope) { setState({ status: "offline-empty" }); return; }
+      try {
+        const packages = await listOfflineLessonPackages(scope.profileId, scope.deviceId);
+        setState({ status: "ready", lessons: [], packages, catalogAvailable: false });
+      } catch { setState({ status: "offline-empty" }); }
       return;
     }
     setState({ status: "loading" });
     try {
-      const [lease, catalog] = await Promise.all([
-        refreshOfflineLeaseForCurrentSession(),
-        listStudentCurriculum(),
-      ]);
-      const lessons = lessonOptions(catalog);
-      const packages = await listOfflineLessonPackages(lease.profileId, lease.deviceId);
-      setState({ status: "ready", lease, lessons, packages });
-      setSelectedLessonId((current) =>
-        current && lessons.some((lesson) => lesson.id === current) ? current : (lessons[0]?.id ?? ""),
-      );
+      const [lease, catalog] = await Promise.all([refreshOfflineLeaseForCurrentSession(), listStudentCurriculum()]);
+      setState({ status: "ready", lessons: lessonOptions(catalog), packages: await listOfflineLessonPackages(lease.profileId, lease.deviceId), catalogAvailable: true });
     } catch (error) {
-      if (isMissingSessionError(error)) {
-        onSessionExpired();
-        return;
-      }
-      setState({
-        status: "error",
-        message: error instanceof ApiRequestError ? error.message : "تعذر تحميل حالة التنزيلات دون اتصال.",
-      });
+      if (isMissingSessionError(error)) { onSessionExpired(); return; }
+      setState({ status: "error", message: studentErrorMessage(error, "downloads") });
     }
   }
 
-  useEffect(() => {
-    void loadDownloads();
-  }, [online, refreshKey]);
+  useEffect(() => { void loadDownloads(); }, [online, refreshKey]);
 
-  const selectedLesson =
-    state.status === "ready"
-      ? (state.lessons.find((lesson) => lesson.id === selectedLessonId) ?? null)
-      : null;
-  const selectedPackage =
-    state.status === "ready"
-      ? (state.packages.find((record) => record.lessonId === selectedLessonId) ?? null)
-      : null;
-  const currentDownload =
-    selectedLesson && selectedPackage
-      ? selectedPackage.contentRevision >= selectedLesson.contentRevision
-      : false;
-  const usedBytes = state.status === "ready" ? offlineScopeUsageBytes(state.packages) : 0;
-  const downloadedCount = state.status === "ready" ? state.packages.length : 0;
+  const packages = state.status === "ready" ? state.packages : [];
+  const lessons = state.status === "ready" ? state.lessons : [];
+  const packageByLesson = new Map(packages.map((record) => [record.lessonId, record]));
+  const availableLessons = lessons.filter((lesson) => !packageByLesson.has(lesson.id));
+  const usedBytes = offlineScopeUsageBytes(packages);
 
-  const selectionLabel = useMemo(() => {
-    if (!selectedLesson) return null;
-    return `${selectedLesson.className} · ${selectedLesson.subjectName}`;
-  }, [selectedLesson]);
-
-  async function downloadSelectedLesson() {
-    if (state.status !== "ready" || !selectedLesson || busy || !online) return;
-    setBusy("download");
-    setActionError(null);
-    setNotice(null);
+  async function downloadLesson(lesson: OfflineLessonOption) {
+    if (state.status !== "ready" || busyLessonId || !online) return;
+    const profileId = activeProfileId();
+    if (!profileId) { setActionError("تعذر التحقق من هذا الجهاز. سجّل الدخول مرة أخرى، وإذا استمرت المشكلة افتح صفحة الدعم."); return; }
+    setBusyLessonId(lesson.id); setActionError(null); setNotice(null);
     try {
-      const replacingExistingPackage = selectedPackage !== null;
-      const record = await materializeStudentLessonForOffline(state.lease.profileId, selectedLesson.id);
-      setState((current) => {
-        if (current.status !== "ready") return current;
-        return {
-          ...current,
-          packages: [record, ...current.packages.filter((stored) => stored.lessonId !== record.lessonId)],
-        };
-      });
-      setNotice(
-        replacingExistingPackage
-          ? "تم تحديث النسخة المحفوظة والتحقق من ملفاتها وتصريحها الصادر من الخادم."
-          : "تم حفظ الدرس والتحقق من ملفاته وتصريحه الصادر من الخادم.",
-      );
+      const replacing = packageByLesson.has(lesson.id);
+      const record = await materializeStudentLessonForOffline(profileId, lesson.id);
+      setState((current) => current.status === "ready" ? { ...current, packages: [record, ...current.packages.filter((item) => item.lessonId !== record.lessonId)] } : current);
+      setNotice(replacing ? "تم تحديث الدرس المحفوظ." : "تم حفظ الدرس للتعلم بدون إنترنت.");
     } catch (error) {
-      if (isMissingSessionError(error)) {
-        onSessionExpired();
-        return;
-      }
-      setActionError(materializationMessage(error));
-    } finally {
-      setBusy(null);
-    }
+      if (isMissingSessionError(error)) { onSessionExpired(); return; }
+      setActionError(downloadMessage(error));
+    } finally { setBusyLessonId(null); }
   }
 
-  async function removeSelectedLesson() {
-    if (state.status !== "ready" || !selectedLesson || !selectedPackage || busy) return;
-    setBusy("remove");
-    setActionError(null);
-    setNotice(null);
+  async function removeLesson(record: StoredOfflineLessonPackage) {
+    if (busyLessonId) return;
+    const profileId = activeProfileId();
+    if (!profileId) { setActionError("تعذر التحقق من هذا الجهاز. سجّل الدخول مرة أخرى، وإذا استمرت المشكلة افتح صفحة الدعم."); return; }
+    setBusyLessonId(record.lessonId); setActionError(null); setNotice(null);
     try {
-      await removeStoredOfflineLessonForSession(state.lease.profileId, selectedLesson.id);
-      setState((current) => {
-        if (current.status !== "ready") return current;
-        return {
-          ...current,
-          packages: current.packages.filter((stored) => stored.lessonId !== selectedLesson.id),
-        };
-      });
-      setNotice("تم حذف النسخة المحفوظة من هذا الجهاز.");
-    } catch (error) {
-      setActionError(materializationMessage(error));
-    } finally {
-      setBusy(null);
-    }
+      await removeStoredOfflineLessonForSession(profileId, record.lessonId);
+      setState((current) => current.status === "ready" ? { ...current, packages: current.packages.filter((item) => item.lessonId !== record.lessonId) } : current);
+      setNotice("تمت إزالة الدرس من هذا الجهاز.");
+    } catch (error) { setActionError(downloadMessage(error)); }
+    finally { setBusyLessonId(null); }
   }
 
   return (
-    <section className="access-section" aria-labelledby="offline-download-title">
-      <div className="section-heading">
-        <div>
-          <p className="eyebrow">دون اتصال</p>
-          <h2 id="offline-download-title">تنزيل الدروس لهذا الجهاز</h2>
-        </div>
-        {state.status === "ready" ? (
-          <span className="subject-count">
-            {downloadedCount} محفوظ · {formatBytes(usedBytes)} من {formatBytes(OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES)}
-          </span>
-        ) : null}
-      </div>
+    <main className="student-downloads-experience" aria-labelledby="downloads-title">
+      <header className="student-downloads-hero">
+        <div><p className="eyebrow">بدون إنترنت</p><h1 id="downloads-title">التنزيلات</h1><p>احفظ الدروس التي تحتاجها لتفتحها لاحقًا حتى عند انقطاع الإنترنت.</p></div>
+        {state.status === "ready" ? <div className="downloads-usage" aria-label={`استخدمت ${formatBytes(usedBytes)} من مساحة التنزيلات`}><strong>{packages.length}</strong><span>درس محفوظ</span><small>{formatBytes(usedBytes)} من {formatBytes(OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES)}</small></div> : null}
+      </header>
 
-      <p className="field-hint">
-        نحفظ فقط النسخة المنشورة الحالية بعد التحقق من تصريح الخادم والحجم وبصمة SHA-256. لا نحذف تنزيلات قديمة تلقائيًا لتوفير المساحة.
-      </p>
+      {!online && state.status === "ready" ? <div className="student-b05-state is-warning" role="status"><strong>أنت غير متصل الآن</strong><p>يمكنك إدارة الدروس المحفوظة. اتصل بالإنترنت لإضافة تنزيلات جديدة أو تحديثها.</p></div> : null}
+      {actionError ? <div className="form-alert is-danger" role="alert">{actionError}</div> : null}
+      {notice ? <div className="form-alert is-success" role="status">{notice}</div> : null}
 
       {state.status === "loading" ? (
-        <div className="access-skeleton" role="status" aria-live="polite" aria-busy="true">
-          <span className="sr-only">جاري تحميل حالة التنزيلات</span>
-          <span />
-          <span />
-          <span />
-        </div>
-      ) : state.status === "offline" ? (
-        <div className="form-alert is-warning" role="status">
-          يلزم اتصال لبدء تنزيل جديد. التنزيلات المكتملة لا تُخزن في Service Worker أو Cache API.
-        </div>
+        <div className="student-b05-skeleton" role="status" aria-live="polite" aria-busy="true"><span className="sr-only">جاري تحميل التنزيلات</span><span /><span /><span /></div>
+      ) : state.status === "offline-empty" ? (
+        <div className="student-b05-state is-warning" role="status"><strong>لا يمكن تحميل قائمة التنزيلات الآن</strong><p>اتصل بالإنترنت مرة واحدة لفتح حسابك وتحديث التنزيلات.</p></div>
       ) : state.status === "error" ? (
-        <div className="access-error" role="alert">
-          <div className="form-alert is-danger">{state.message}</div>
-          <button className="secondary-button" type="button" onClick={() => void loadDownloads()} disabled={!online}>
-            إعادة المحاولة
-          </button>
-        </div>
-      ) : state.lessons.length === 0 ? (
-        <div className="empty-state">
-          <strong>لا توجد دروس منشورة متاحة للتنزيل الآن</strong>
-          <p>سيظهر الدرس هنا بعد نشره ضمن صلاحيات حسابك.</p>
-        </div>
+        <div className="student-b05-state is-error" role="alert"><strong>تعذر تحميل التنزيلات</strong><p>{state.message}</p><button className="secondary-button" type="button" onClick={() => void loadDownloads()} disabled={!online}>إعادة المحاولة</button></div>
       ) : (
-        <div className="access-tools">
-          <div className="field-group">
-            <label htmlFor="offline-lesson-select">الدرس</label>
-            <select
-              id="offline-lesson-select"
-              className="text-input"
-              value={selectedLessonId}
-              onChange={(event) => {
-                setSelectedLessonId(event.target.value);
-                setActionError(null);
-                setNotice(null);
-              }}
-              disabled={busy !== null}
-            >
-              {state.lessons.map((lesson) => (
-                <option key={lesson.id} value={lesson.id}>
-                  {lesson.className} · {lesson.subjectName} · {lesson.title}
-                </option>
-              ))}
-            </select>
-            {selectionLabel ? <p className="field-hint">{selectionLabel}</p> : null}
-          </div>
+        <>
+          <section className="downloads-section" aria-labelledby="saved-downloads-title">
+            <div className="downloads-section__heading"><div><p className="eyebrow">على هذا الجهاز</p><h2 id="saved-downloads-title">الدروس المحفوظة</h2></div>{online ? <button className="text-button" type="button" onClick={() => void loadDownloads()}>تحديث</button> : null}</div>
+            {packages.length === 0 ? <div className="student-b05-state is-empty"><strong>لم تحفظ أي درس بعد</strong><p>اختر درسًا من القائمة التالية واحفظه للتعلم بدون إنترنت.</p></div> : (
+              <ul className="downloads-list" aria-label="الدروس المحفوظة">
+                {packages.map((record) => {
+                  const lesson = lessons.find((item) => item.id === record.lessonId);
+                  const current = packageCurrent(lesson, record);
+                  return <li key={record.lessonId} data-downloaded-lesson-id={record.lessonId}>
+                    <div className="downloads-list__copy"><span className={`downloads-status ${current ? "is-ready" : "is-update"}`}>{current ? "متاح بدون إنترنت" : "يوجد تحديث للدرس"}</span><strong>{record.title}</strong><small>{formatBytes(record.totalByteSize)}</small></div>
+                    <div className="downloads-list__actions">{!current && lesson ? <button className="primary-button" type="button" onClick={() => void downloadLesson(lesson)} disabled={!online || busyLessonId !== null}>{busyLessonId === lesson.id ? "جاري التحديث" : "تحديث الدرس"}</button> : null}<button className="secondary-button" type="button" onClick={() => void removeLesson(record)} disabled={busyLessonId !== null}>{busyLessonId === record.lessonId ? "جاري الإزالة" : "إزالة من الجهاز"}</button></div>
+                  </li>;
+                })}
+              </ul>
+            )}
+          </section>
 
-          {actionError ? (
-            <div className="form-alert is-danger" role="alert">
-              {actionError}
-            </div>
-          ) : null}
-          {notice ? (
-            <div className="form-alert is-success" role="status">
-              {notice}
-            </div>
-          ) : null}
-
-          {selectedPackage ? (
-            <div className={`form-alert ${currentDownload ? "is-success" : "is-warning"}`} role="status">
-              {currentDownload
-                ? `هذه النسخة محفوظة ومتحقق منها عند الإصدار المنشور ${selectedPackage.contentRevision}.`
-                : `يوجد إصدار محفوظ أقدم (${selectedPackage.contentRevision}). حدّث التنزيل قبل اعتباره النسخة الحالية.`}
-            </div>
-          ) : (
-            <div className="form-alert is-info" role="status">
-              هذا الدرس غير محفوظ على هذا الجهاز بعد.
-            </div>
-          )}
-
-          <div className="access-code-row">
-            {!currentDownload ? (
-              <button
-                className="primary-button"
-                type="button"
-                onClick={() => void downloadSelectedLesson()}
-                disabled={!online || busy !== null || !selectedLesson}
-              >
-                {busy === "download" ? "جاري التحقق والحفظ" : selectedPackage ? "تحديث التنزيل" : "تنزيل للاستخدام دون اتصال"}
-              </button>
-            ) : null}
-            {selectedPackage ? (
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => void removeSelectedLesson()}
-                disabled={busy !== null}
-              >
-                {busy === "remove" ? "جاري الحذف" : "حذف التنزيل"}
-              </button>
-            ) : null}
-          </div>
-        </div>
+          {state.catalogAvailable ? <section className="downloads-section" aria-labelledby="available-downloads-title">
+            <div className="downloads-section__heading"><div><p className="eyebrow">احفظ للمرة القادمة</p><h2 id="available-downloads-title">دروس متاحة للتنزيل</h2></div></div>
+            {availableLessons.length === 0 ? <div className="student-b05-state is-empty"><strong>{lessons.length === 0 ? "لا توجد دروس متاحة الآن" : "كل الدروس المتاحة محفوظة"}</strong><p>{lessons.length === 0 ? "ستظهر الدروس هنا عندما تصبح متاحة لحسابك." : "يمكنك إزالة أي درس لم تعد تحتاجه من القائمة أعلاه."}</p></div> : (
+              <ul className="downloads-list downloads-list--available" aria-label="دروس متاحة للتنزيل">{availableLessons.map((lesson) => <li key={lesson.id} data-downloadable-lesson-id={lesson.id}><div className="downloads-list__copy"><span className="downloads-context">{lesson.className} · {lesson.subjectName}</span><strong>{lesson.title}</strong><small>احفظه لتفتحه عند انقطاع الإنترنت.</small></div><button className="primary-button" type="button" onClick={() => void downloadLesson(lesson)} disabled={!online || busyLessonId !== null}>{busyLessonId === lesson.id ? "جاري الحفظ" : "حفظ بدون إنترنت"}</button></li>)}</ul>
+            )}
+          </section> : null}
+        </>
       )}
-    </section>
+    </main>
   );
 }

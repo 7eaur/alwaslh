@@ -17,20 +17,14 @@ test("Student app shell installs safely and reloads offline without caching prot
   });
   await page.reload();
 
-  await expect
-    .poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller)))
-    .toBe(true);
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
 
   const cacheState = await page.evaluate(async () => {
     const names = await caches.keys();
-    const urls = (
-      await Promise.all(
-        names.map(async (name) => {
-          const cache = await caches.open(name);
-          return (await cache.keys()).map((request) => request.url);
-        }),
-      )
-    ).flat();
+    const urls = (await Promise.all(names.map(async (name) => {
+      const cache = await caches.open(name);
+      return (await cache.keys()).map((request) => request.url);
+    }))).flat();
     return { names, urls };
   });
 
@@ -38,9 +32,7 @@ test("Student app shell installs safely and reloads offline without caching prot
   expect(cacheState.urls.some((url) => new URL(url).pathname.startsWith("/v1/"))).toBe(false);
   expect(cacheState.urls.some((url) => new URL(url).pathname.startsWith("/assets/"))).toBe(true);
 
-  await page.evaluate(async () => {
-    await fetch("/v1/stage16-cache-probe").catch(() => undefined);
-  });
+  await page.evaluate(async () => { await fetch("/v1/stage16-cache-probe").catch(() => undefined); });
   const protectedApiCached = await page.evaluate(async () => {
     const names = await caches.keys();
     for (const name of names) {
@@ -55,6 +47,8 @@ test("Student app shell installs safely and reloads offline without caching prot
   await context.setOffline(true);
   await page.reload({ waitUntil: "domcontentloaded" });
   await expect(page).toHaveTitle("الوسيلة الذكية — مساحة الطالب");
-  await expect(page.getByRole("heading", { name: "نحتاج اتصالًا للتحقق من الحساب" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "اتصل بالإنترنت للمتابعة" })).toBeVisible();
+  await expect(page.getByText(/نحتاج اتصالًا للتحقق من حسابك عند فتح التطبيق/)).toBeVisible();
+  await expect(page.locator("body")).not.toContainText(/Service Worker|Cache API|session|authority|مفتاح الجهاز|roadmap|Stage/i);
   await context.setOffline(false);
 });

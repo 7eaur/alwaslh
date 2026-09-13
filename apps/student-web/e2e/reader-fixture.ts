@@ -25,7 +25,7 @@ try {
   if (!adminId) throw new Error("failed to create Reader browser Admin fixture");
 
   const studentRows = await db.query<{ id: string }>(
-    "insert into profiles (role, display_name) values ('student', 'طالب قارئ Stage14') returning id",
+    "insert into profiles (role, display_name) values ('student', 'طالب قارئ') returning id",
   );
   const studentId = studentRows[0]?.id;
   if (!studentId) throw new Error("failed to create Reader browser Student fixture");
@@ -51,14 +51,14 @@ try {
   const classRecord = await curriculum.createClass(adminId, {
     slug: `stage14-reader-class-${crypto.randomUUID()}`,
     name: "صف القارئ التجريبي",
-    description: "صف مخصص لاختبار Reader الحقيقي",
+    description: "صف تجريبي لمحتوى القراءة",
     position: 0,
     status: "active",
   });
   const subject = await curriculum.createSubject(adminId, {
     slug: `stage14-reader-subject-${crypto.randomUUID()}`,
     name: "العلوم التجريبية",
-    description: "مادة Reader للاختبار",
+    description: "مادة تجريبية للقراءة",
     status: "active",
   });
   await curriculum.createOffering(adminId, {

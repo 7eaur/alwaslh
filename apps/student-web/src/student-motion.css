@@ -1,0 +1,123 @@
+/* Student motion is a functional affordance: short, calm, and optional. */
+
+.aw-product-shell--student,
+.student-entry-page,
+.student-session-state {
+  --student-motion-fast: 120ms;
+  --student-motion-base: 170ms;
+  --student-motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --student-interactive-shadow: 0 1px 2px rgb(18 60 67 / 7%), 0 6px 18px rgb(18 60 67 / 5%);
+  --student-interactive-shadow-hover: 0 3px 8px rgb(18 60 67 / 9%), 0 12px 28px rgb(18 60 67 / 7%);
+}
+
+@keyframes student-surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes student-feedback-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.student-home,
+.learn-overview,
+.subject-page,
+.reader-shell,
+.practice-library,
+.quiz-detail,
+.attempt-shell,
+.attempt-review-shell,
+.student-downloads-experience,
+.student-account-experience,
+.student-welcome-panel,
+.student-auth-surface,
+.student-guidance {
+  animation: student-surface-in var(--student-motion-base) var(--student-motion-ease) both;
+}
+
+.form-alert,
+.learning-state,
+.reader-state,
+.practice-state,
+.student-b05-state,
+.attempt-feedback,
+.attempt-connection-state {
+  animation: student-feedback-in var(--student-motion-fast) var(--student-motion-ease) both;
+}
+
+.aw-product-shell--student :is(button, a),
+.student-entry-page :is(button, a),
+.student-session-state :is(button, a) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-home-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option),
+.student-entry-page :is(.primary-button, .secondary-button, .text-button, .student-auth-switch button),
+.student-session-state :is(.primary-button, .secondary-button) {
+  transition:
+    transform var(--student-motion-fast) var(--student-motion-ease),
+    box-shadow var(--student-motion-base) var(--student-motion-ease),
+    border-color var(--student-motion-base) var(--student-motion-ease),
+    background-color var(--student-motion-base) var(--student-motion-ease),
+    color var(--student-motion-base) var(--student-motion-ease);
+}
+
+.aw-product-shell--student :is(.student-home-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option, .downloads-list > li, .student-account-section) {
+  box-shadow: var(--student-interactive-shadow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .aw-product-shell--student :is(.student-home-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--student-interactive-shadow-hover);
+  }
+
+  .aw-product-shell--student :is(.primary-button, .secondary-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry):hover,
+  .student-entry-page :is(.primary-button, .secondary-button, .student-auth-switch button):hover,
+  .student-session-state :is(.primary-button, .secondary-button):hover {
+    transform: translateY(-1px);
+  }
+}
+
+.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-home-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):active,
+.student-entry-page :is(.primary-button, .secondary-button, .text-button, .student-auth-switch button):active,
+.student-session-state :is(.primary-button, .secondary-button):active {
+  transform: scale(0.985);
+  transition-duration: 70ms;
+}
+
+.aw-product-shell--student :is(button, a):focus-visible,
+.student-entry-page :is(button, a, input, select, textarea):focus-visible,
+.student-session-state :is(button, a):focus-visible {
+  transition-duration: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aw-product-shell--student *,
+  .aw-product-shell--student *::before,
+  .aw-product-shell--student *::after,
+  .student-entry-page *,
+  .student-entry-page *::before,
+  .student-entry-page *::after,
+  .student-session-state *,
+  .student-session-state *::before,
+  .student-session-state *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
