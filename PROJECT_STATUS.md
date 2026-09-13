@@ -5,7 +5,7 @@
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no automatic merge.  
 **Live main reference for this checkpoint:** `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.  
-**Super Admin:** AR-01 through AR-07 DONE / VERIFIED. AR-08 Students + Access Codes is NEXT / NOT STARTED. AR-09+ NOT STARTED.
+**Super Admin:** AR-01 through AR-07 DONE / VERIFIED. AR-08 Students + Access Codes is ACTIVE; Batch 1 focused Students route is VERIFIED. AR-09+ NOT STARTED.
 
 ## Stage ledger
 
@@ -16,7 +16,7 @@
 - AR-05 — Reviews + AI — DONE / VERIFIED. Final checkpoint `cda2c3a683c6101db12f0c7cfad772226c234e0d`; Frontend `34729512441`, Admin AI `34729512433`, Combined `34729512404` — SUCCESS.
 - AR-06 — Question Bank — DONE / VERIFIED. Final code-head `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
 - AR-07 — Quiz Builder — DONE / VERIFIED. Final code-head `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
-- AR-08 — Students + Access Codes — NEXT / NOT STARTED.
+- AR-08 — Students + Access Codes — ACTIVE. Batch 1 focused Students route code-head `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb`; Frontend `34751701107`, Admin AI `34751701104`, Combined `34751701154` — SUCCESS.
 - AR-09 — Cleanup / architecture enforcement — NOT STARTED.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
@@ -44,14 +44,33 @@ On final AR-07 code-head `c5bf37d4d72e341817970c7f95ff25bd771f8e17`:
 
 AR-07 is **DONE / VERIFIED**. The giant Quiz Builder ownership has been replaced by focused list, canonical entity detail/deep-link, entity-owned draft version composition, lifecycle/export, and focused create flow. The temporary root legacy seam has been removed only after executable replacement parity and exact-head green verification. No migration, backend business authority, Question Bank rule, or Student workstream contract was weakened to accomplish the cleanup.
 
-## Shared resume point for A / next task — AR-08 only
+## AR-08 — Students + Access Codes — ACTIVE
+
+### Batch 1 — focused Students route ownership — VERIFIED
+
+Evidence-driven finding: both `/app/students` and `/app/access-codes` previously rendered the same `AdminStudentAccessWorkspace`, so the approved IA split existed in navigation but not in actual frontend ownership.
+
+Implemented:
+- `995203cf9344d5c4c1f3b41b208fdfe2d6bd3507` — added focused `apps/admin-web/src/admin/students/AdminStudentsPage.tsx`, owning only student lookup, inspection, temporary-password support, device rebind, entitlement revocation, devices, redemption history and activity.
+- `6d8ddf181c9eff6f909c11195eb9ecee4529c47e` — routed `/app/students` directly to the focused Students page while leaving `/app/access-codes` on the legacy workspace temporarily for parity-first migration.
+- `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb` — updated real Chromium coverage to prove the focused Students route has no Access Codes tab, preserves student support mutations/session-expiry behavior, and verifies both Students and Access Codes routes at 390px without horizontal overflow.
+
+Exact-head verification on `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb`:
+- Frontend/Admin Web quality `34751701107` — SUCCESS.
+- Admin AI `34751701104` — SUCCESS.
+- Combined `34751701154` — SUCCESS.
+- Combined job `103709249693` passed API/Admin quality gates, clean PostgreSQL migrations, DB contract, backend authority regressions, Stage12/auth security regressions, deterministic browser fixtures and real Admin Chromium.
+
+No migration, backend validation, access-code issuance/redemption/revocation contract, or Student workstream code was changed. AR-08 remains ACTIVE because Access Codes still needs focused route ownership and the temporary giant workspace must remain until executable parity is proven.
+
+## Shared resume point for B / next AR-08 batch only
 
 1. Re-read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before mutation.
-2. Fetch current live `main`, feature HEAD, Draft PR #52 and exact-head CI; reconcile any documentation-only runs before code mutation if they are still active.
-3. Begin **AR-08 — Students + Access Codes** only; do not jump to AR-09.
-4. Inspect the actual `AdminStudentAccessWorkspace`, its callers, Admin navigation/routes, API/services/tests and PostgreSQL access/student contracts before deciding structure.
-5. Classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE from evidence. Preserve server authority, issuance/redemption/expiry/revocation/integrity rules and existing Student contracts.
-6. Target the approved IA split: individual student support/inspection under `/app/students`; bulk/code lifecycle operations under `/app/access-codes`; do not duplicate the same giant workspace under both routes.
-7. Implement only a small coherent AR-08 batch, then require applicable lint/typecheck/unit/build, backend/security/database checks and real Chromium evidence before calling any sub-batch verified.
-8. Keep PR #52 Draft; no automatic merge.
-9. Do not touch/rebase/overwrite parallel Student/audit work.
+2. Fetch current live `main`, feature HEAD, Draft PR #52 and exact-head CI; reconcile documentation-only runs from this checkpoint first if still active.
+3. Continue **AR-08 only**. Do not start AR-09.
+4. Extract Access Codes ownership from `AdminStudentAccessWorkspace` into a focused page under `apps/admin-web/src/admin/access-codes/` and route `/app/access-codes` directly to it.
+5. Preserve the existing backend contracts for code inventory/filtering, full/class-code generation, expiry, redemption state, class association and non-destructive bulk revocation. Do not infer or duplicate business authority in the browser.
+6. Update real Chromium so `/app/access-codes` is directly usable without switching a legacy tab and still proves generation, filtering, bulk revoke and 390px no-overflow.
+7. Only after executable parity is green should the remaining legacy `AdminStudentAccessWorkspace` seam be removed or reduced; shared presentational helpers may be extracted if that reduces duplication without changing behavior.
+8. Require applicable lint/typecheck/unit/build + clean PostgreSQL/backend/security + real Chromium before marking the next sub-batch verified.
+9. Keep PR #52 Draft; no automatic merge. Preserve parallel Student/audit work unchanged.
