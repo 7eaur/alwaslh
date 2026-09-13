@@ -88,7 +88,7 @@ export function QuizBuilderListPage({ onSessionExpired }: Props) {
         <div>
           <p className="eyebrow">التقييمات</p>
           <h1 id="quiz-builder-list-title">الاختبارات</h1>
-          <p>ابحث في الاختبارات ثم افتح مساحة الإدارة الحالية. دورة النشر وتجميد النماذج تبقى تحت سلطة الخادم.</p>
+          <p>ابحث في الاختبارات وافتح كل اختبار في رابط مستقل. دورة النشر وتجميد النماذج تبقى تحت سلطة الخادم.</p>
         </div>
         <div className="qz-header-actions">
           <span className="count-pill">{pagination.total} اختبار</span>
@@ -144,7 +144,7 @@ export function QuizBuilderListPage({ onSessionExpired }: Props) {
                 className="qz-quiz-card"
                 type="button"
                 key={item.id}
-                onClick={() => navigate(`/app/quizzes/manage?quizId=${encodeURIComponent(item.id)}`)}
+                onClick={() => navigate(`/app/quizzes/${encodeURIComponent(item.id)}`)}
               >
                 <div className="qz-card-topline">
                   <span className={`status-badge qb-status-${item.status}`}>{statusLabel(item.status)}</span>
