@@ -16,16 +16,24 @@ async function login(page) {
   await expect(page.getByRole("heading", { name: "نظرة عامة", exact: true })).toBeVisible();
 }
 
-async function openStudentAccess(page) {
+async function openStudents(page) {
   await page.goto("/app/students");
-  await expect(page.getByRole("heading", { name: "الطلاب والوصول", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الطلاب", exact: true })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "أكواد الوصول" })).toHaveCount(0);
 }
 
-test("Student access workspace performs recovery, device rebind and entitlement revoke through the real API", async ({
+async function openAccessCodes(page) {
+  await page.goto("/app/access-codes");
+  await expect(page.getByRole("heading", { name: "الطلاب والوصول", exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "أكواد الوصول" }).click();
+  await expect(page.getByRole("heading", { name: "أكواد الوصول", exact: true })).toBeVisible();
+}
+
+test("Focused student route performs recovery, device rebind and entitlement revoke through the real API", async ({
   page,
 }) => {
   await login(page);
-  await openStudentAccess(page);
+  await openStudents(page);
 
   const studentCard = page.getByRole("button", { name: /طالب الوصول التجريبي/ });
   await expect(studentCard).toBeVisible();
@@ -53,10 +61,9 @@ test("Student access workspace performs recovery, device rebind and entitlement 
   await expect(detail.getByText(/موقوف · تنتهي/)).toBeVisible();
 });
 
-test("Access-code workspace generates and non-destructively revokes unused codes", async ({ page }) => {
+test("Access-code route generates and non-destructively revokes unused codes", async ({ page }) => {
   await login(page);
-  await openStudentAccess(page);
-  await page.getByRole("tab", { name: "أكواد الوصول" }).click();
+  await openAccessCodes(page);
 
   const generation = page.getByRole("form", { name: "توليد أكواد الوصول" });
   await generation.getByLabel("العدد").fill("2");
@@ -82,9 +89,9 @@ test("Access-code workspace generates and non-destructively revokes unused codes
   await expect(page.locator(".access-code-card").first()).toContainText("الصف التجريبي للوصول");
 });
 
-test("Student access workspace returns to login after the real Admin session expires", async ({ page }) => {
+test("Focused student route returns to login after the real Admin session expires", async ({ page }) => {
   await login(page);
-  await openStudentAccess(page);
+  await openStudents(page);
 
   const filters = page.getByRole("form", { name: "فلترة حسابات الطلاب" });
   const search = filters.getByLabel("بحث بالمعرّف أو الاسم");
@@ -94,17 +101,22 @@ test("Student access workspace returns to login after the real Admin session exp
   await filters.getByRole("button", { name: "تطبيق البحث" }).click();
 
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "الطلاب والوصول", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "الطلاب", exact: true })).toHaveCount(0);
 });
 
-test("Student access workspace stays within a 390px viewport", async ({ page }) => {
+test("Student and access-code routes stay within a 390px viewport", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
-  await openStudentAccess(page);
-  await page.getByRole("tab", { name: "أكواد الوصول" }).click();
-  await expect(page.getByRole("heading", { name: "أكواد الوصول", exact: true })).toBeVisible();
+  await openStudents(page);
 
-  const dimensions = await page.evaluate(() => ({
+  let dimensions = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    documentWidth: document.documentElement.scrollWidth,
+  }));
+  expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.viewport + 1);
+
+  await openAccessCodes(page);
+  dimensions = await page.evaluate(() => ({
     viewport: window.innerWidth,
     documentWidth: document.documentElement.scrollWidth,
   }));
