@@ -24,6 +24,7 @@ import { QuestionBankListPage } from "./admin/questions/QuestionBankListPage";
 import { QuizBuilderCreatePage } from "./admin/quizzes/QuizBuilderCreatePage";
 import { QuizBuilderDetailPage } from "./admin/quizzes/QuizBuilderDetailPage";
 import { QuizBuilderListPage } from "./admin/quizzes/QuizBuilderListPage";
+import { QuizMetadataPanel } from "./admin/quizzes/QuizMetadataPanel";
 import { AdminStudentsPage } from "./admin/students/AdminStudentsPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
@@ -31,7 +32,6 @@ import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
 import { LessonAuthoringParityPanel } from "./LessonAuthoringParityPanel";
 import { LoginScreen } from "./LoginScreen";
-import { QuizMetadataPanel } from "./QuizMetadataPanel";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiRequestError) return error.message;
