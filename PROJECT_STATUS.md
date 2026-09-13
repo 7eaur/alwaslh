@@ -5,7 +5,7 @@
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no automatic merge.  
 **Live main reference checked:** `0c7c9f9c5e4ec6ae020484a9a4892eaf3b8b5194`.  
-**Latest fully verified AR-09 code-head:** `d40c71192f513f18d69b0e67be408e6f146a3ec5`.  
+**Latest fully verified AR-09 code-head:** `a22795d1ebfee861e3ca6e8d0a1502e09206ee9d`.  
 **Current stage:** AR-09 Cleanup / architecture enforcement — ACTIVE.
 
 ## Super Admin stage ledger
@@ -23,46 +23,58 @@
   - Batch 2 — Lesson authoring tools ownership relocation — VERIFIED.
   - Batch 3 — Access-code reports ownership relocation — VERIFIED.
   - Batch 4A — AI review ownership relocation — VERIFIED on `141e3e7912171c10356b8d32a268ddcbfda267f3`.
-  - Batch 5A — Curriculum ownership relocation + root seam removal — **DONE / VERIFIED** on `d40c71192f513f18d69b0e67be408e6f146a3ec5`.
+  - Batch 5A — Curriculum ownership relocation + root seam removal — VERIFIED on `d40c71192f513f18d69b0e67be408e6f146a3ec5`.
+  - Batch 6A — Content review ownership relocation — **ACTIVE**; feature adapter + route ownership VERIFIED on `a22795d1ebfee861e3ca6e8d0a1502e09206ee9d`, real implementation relocation/root seam removal still pending.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
-## AR-09 Batch 5A — Curriculum ownership relocation — VERIFIED
+## AR-09 Batch 6A — Content review ownership relocation — ACTIVE
 
-### Reconciliation and implementation
+### State received and inventory
 
-The run refreshed live `main`, the branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI before mutation. The inherited adapter commit `39da6e1ea0bb542e2d23f15d8e4c119cdb3c2022` had Frontend `34766693628`, Admin AI `34766693635` and Combined `34766693638` successful; its Stage13G `34766693674` was cancelled only because the branch advanced. The successor documentation HEAD `7b77037d1906418a6713eef191706deed29ddf09` had an all-green replacement matrix, including Stage13G `34766824068`, so adapter parity was considered reconciled rather than failed.
+The run refreshed live `main`, branch HEAD, all three continuity files, recent commits, Draft PR #52 and exact-head CI before mutation. The inherited documentation checkpoint `be4ee52aa99440b591930f37f35586c99324cc85` was confirmed fully green, so there was no unresolved work from the previous task.
 
-Classification remained:
-- **KEEP:** `/app/curriculum`, CRUD semantics, server refresh, session behavior, API/PostgreSQL authority and tests.
-- **IMPROVE:** feature ownership.
-- **REFACTOR:** move route orchestration implementation into `src/admin/curriculum/`.
+A fresh AR-09 inventory found one justified route-ownership seam: `/app/reviews/content` still imported `ContentOperationsWorkspace` from app-root `apps/admin-web/src/ContentOperationsWorkspace.tsx`, while the established Reviews feature owner already existed under `apps/admin-web/src/admin/reviews/`. The root workspace is a route-specific server-backed content/OCR human-review surface; no backend, migration or Student contract change was required.
+
+Classification:
+- **KEEP:** `/app/reviews/content` behavior, OCR review semantics, filters/pagination, session-expiry behavior, API/PostgreSQL authority and existing tests.
+- **IMPROVE:** feature ownership under the established Reviews domain.
+- **REFACTOR:** route through `src/admin/reviews/` first; relocate the real implementation only after parity.
 - **REBUILD:** none.
-- **REMOVE:** obsolete root compatibility seam only after parity.
+- **REMOVE:** root compatibility seam only after the relocated implementation proves exact-head parity.
 - **NO CHANGE:** backend, migrations, auth/security, Student workstream and test strength.
 
-Commit `c06f9dc0a58203f3a5f70f9f47641eadcbd71464` moved the real `CurriculumWorkspace` implementation to `apps/admin-web/src/admin/curriculum/CurriculumWorkspace.tsx`, changing only relative imports and preserving runtime behavior. Exact-head verification was fully green:
-- Frontend `34768120218` — SUCCESS.
-- Admin AI `34768120359` — SUCCESS.
-- Combined `34768120260` — SUCCESS.
-- Stage13G `34768120244` — SUCCESS.
+### Changes and exact-head evidence
 
-Only after that parity proof, commit `d40c71192f513f18d69b0e67be408e6f146a3ec5` removed `apps/admin-web/src/CurriculumWorkspace.tsx`. Its second exact-head matrix was also fully green:
-- Frontend `34768283004` — SUCCESS.
-- Admin AI `34768282985` — SUCCESS.
-- Combined `34768283077` — SUCCESS.
-- Stage13G `34768282982` — SUCCESS.
+Commit `a8efe7d7c0a811d0b03e25741c1881d87874b79b` added `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` as a temporary parity adapter only. Its exact-head matrix was fully green:
+- Frontend `34769685084` — SUCCESS.
+- Admin AI `34769685033` — SUCCESS.
+- Combined `34769685141` — SUCCESS.
+- Stage13G `34769685089` — SUCCESS.
 
-Batch 5A is therefore **DONE / VERIFIED**. No backend, migration, Student or test-strength change was made.
+After that proof, commit `a22795d1ebfee861e3ca6e8d0a1502e09206ee9d` changed `App.tsx` so `/app/reviews/content` is owned through `admin/reviews/ContentOperationsPage` rather than importing the root workspace directly. The legacy implementation intentionally remained in place as the temporary compatibility target. Exact-head verification was again fully green:
+- Frontend `34769885941` — SUCCESS.
+- Admin AI `34769885857` — SUCCESS.
+- Combined `34769885894` — SUCCESS.
+- Stage13G `34769885845` — SUCCESS.
+
+No backend, migration, Student or test-strength change was made.
 
 ## Current blocker / next step
 
-There is no Batch 5A blocker. AR-09 itself remains ACTIVE because a fresh post-Batch-5A inventory has not yet been performed. Do not invent another cleanup batch. The next task must first re-fetch live state and inventory remaining root-level route-owned Admin surfaces and callers/tests/contracts. If no justified cleanup seam remains, proceed directly to final AR-09 verification and close AR-09 on exact-head green. AR-10 remains blocked until AR-09 is formally DONE / VERIFIED.
+There is no failing gate. Batch 6A remains **ACTIVE** because `apps/admin-web/src/ContentOperationsWorkspace.tsx` still owns the real implementation. That seam is intentionally not deleted yet.
+
+The next task must first refresh live state and exact-head CI. If no newer concurrent work exists, continue this same seam only:
+1. move the actual `ContentOperationsWorkspace` implementation into `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx`, changing only relative imports and the exported component name as needed;
+2. keep the root implementation temporarily while the relocated owner runs through the full exact-head matrix;
+3. only after green parity, remove the root compatibility seam;
+4. run a second exact-head matrix after deletion;
+5. then perform a fresh AR-09 inventory; if no justified seam remains, close AR-09 formally before AR-10.
 
 ## Shared resume point for task A/B
 
 1. Re-fetch live `main`, branch HEAD, these three continuity files, Draft PR #52 and exact-head CI.
-2. Confirm the documentation checkpoint did not introduce a newer unresolved state.
-3. Perform a fresh AR-09 root/route ownership inventory only; do not assume another batch exists.
-4. If a justified seam exists, select one smallest reviewable cleanup and preserve backend/Student/test authority.
-5. If no justified seam exists, run final AR-09 verification and close AR-09 before AR-10.
+2. Confirm no newer commit or active run has superseded `a22795d1ebfee861e3ca6e8d0a1502e09206ee9d` / this documentation checkpoint.
+3. Continue **AR-09 Batch 6A only** with the real content-review implementation relocation described above.
+4. Preserve server/PostgreSQL authority, Student isolation and current test strength.
+5. Do not start AR-10 until AR-09 is formally DONE / VERIFIED.
 6. Keep PR #52 Draft; no merge or auto-merge.
