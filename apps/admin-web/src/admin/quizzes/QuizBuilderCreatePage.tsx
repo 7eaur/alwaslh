@@ -183,14 +183,14 @@ export function QuizBuilderCreatePage({ onSessionExpired }: Props) {
               </label>
               <label>
                 <span>الصف</span>
-                <select required value={quizDraft.classId} onChange={(event) => resetScope(event.target.value)}>
+                <select aria-label="الصف" required value={quizDraft.classId} onChange={(event) => resetScope(event.target.value)}>
                   <option value="">اختر الصف</option>
                   {classOptions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
               </label>
               <label>
                 <span>المادة</span>
-                <select required value={quizDraft.subjectId} onChange={(event) => resetSubject(event.target.value)} disabled={!quizDraft.classId}>
+                <select aria-label="المادة" required value={quizDraft.subjectId} onChange={(event) => resetSubject(event.target.value)} disabled={!quizDraft.classId}>
                   <option value="">اختر المادة</option>
                   {subjectOptions.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                 </select>
