@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains in Git history, merged PRs and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — Student Library + Content Rebuild through IMPORT-001**.
+Last consolidated: **2026-09-13 — Student Library + Content Rebuild through VERIFY-001**.
 
 ## 1. Stable product / architecture authority
 
@@ -158,22 +158,9 @@ Legacy media evidence for BATCH-001:
 - WebP delta: `+24.81%`;
 - therefore the existing WebP profile was not accepted as an optimization success.
 
-Key commits:
+Concurrent advancement was handled safely: the bounded apply executor failed closed before mutation after detecting live drift. Read-only inspection then established that another concurrent execution had already committed the exact intended state, so no duplicate apply was performed.
 
-- rollback/runtime source-identity fix: `3cd817414275aa31bcd67e7015ce48740409a43c`;
-- SQL parity fix: `c8c15e1d04b7bb353f6ee0755beec7b33c66a7c2`;
-- modern target dry-run: `557527bf59c71fdeb05c095bda1b4dedc94f8ea2`;
-- duplicate-safe batch contract: `e008731860612a58d7e3b4a29ec97222ceb62305`;
-- semantic review: `eae7b9d8b3b61b20f4ca74cb75f222aa5b6f9e60`;
-- DB/media validation: `e90891c6395813609d0f0cefe726c1cc3d4ac893`.
-
-Concurrent advancement was handled safely: the bounded apply executor commit `cebde403957b5932d4dd123784a6684e1be77bd3` failed closed before mutation after detecting live drift. Read-only inspection then established that another concurrent execution had already committed the exact intended state, so no duplicate apply was performed.
-
-Final post-apply verifier:
-
-- commit `1fdbb809da5030ce32a283c3765f90847d76ba0b`;
-- Railway deployment `c3e609b3-f632-46e9-9fde-680330512eee` — SUCCESS;
-- marker `BATCH001_POST_APPLY_VERIFY_PASS`.
+Final post-apply verifier marker: `BATCH001_POST_APPLY_VERIFY_PASS`.
 
 Verified committed state:
 
@@ -221,16 +208,6 @@ Historical `62 Draft lessons` is reconciliation evidence only and was not used t
 
 Scope: smallest already-reviewed media batch, CURATION-001 book pages `5..8` / source pages `9..12`.
 
-Reproducible execution evidence:
-
-- deterministic probe script commit: `2f1849536738e3f877018539a80b73e83a969c3f`;
-- workflow commit: `10ce6c2b250de28b5de9389cbcaf9b2e7cddad09`;
-- GitHub Actions run `34761171601` — SUCCESS;
-- artifact `media-001-evidence`, ID `10318976732`;
-- artifact digest `sha256:9702cbac1ed18e1be1809eaf844685b78c24c150958da1781ce0b7f1ad75e91a`;
-- decision contract commit `bb3dbbeff5d866930c1921124a8868b79af5703e`;
-- contract path `content-staging/curated/grade-9/english/pupil-book-3/media-001-unit2-describing.json`.
-
 Acceptance gate used:
 
 - dimensions must match RAW;
@@ -246,50 +223,18 @@ Measured aggregate:
 
 Page-level decision:
 
-- book page 5 / source page 9: RAW `93,793` -> q76 WebP `74,416` bytes = `20.66%` reduction; PSNR `39.52 dB`; dimensions unchanged `962×1360`; manual side-by-side review confirmed headings, body text, labels and numbers remained readable with no material readability regression. Candidate accepted with SHA-256 `4fdeb9e17a0a269481ee046bcbf67053f834c8e75fdb4d5bda445977b742a5e2`.
-- page 6 q76 reduction `15.83%`: rejected; q82 was larger than RAW.
-- page 7 q76 reduction `9.61%`: rejected; q82 was larger than RAW.
-- page 8 q76 reduction `17.42%`: rejected; q82 reduction only `0.24%`.
+- book page 5 / source page 9: RAW `93,793` -> q76 WebP `74,416` bytes = `20.66%` reduction; PSNR `39.52 dB`; dimensions unchanged `962×1360`; manual side-by-side review passed. Candidate SHA-256 `4fdeb9e17a0a269481ee046bcbf67053f834c8e75fdb4d5bda445977b742a5e2`.
+- pages 6..8 did not meet the 20% page-level saving gate and remained rejected.
 
-Interpretation:
-
-- q76 is not globally approved; only page 5 passed all gates.
-- pages 6..8 retain RAW/preferred existing media until a separate candidate passes the same kind of gate.
-- accepted page 5 derivative is reproducible from immutable RAW and must fail closed if regeneration does not yield the exact recorded SHA-256.
-- no binary media was pushed to production by MEDIA-001.
-- RAW mutation: 0;
-- PostgreSQL mutation: 0;
-- publication mutation: 0;
-- unrelated-record mutation: 0.
+No binary media was pushed to production by MEDIA-001.
 
 ### IMPORT-001 — DONE / COMMITTED_STATE_VERIFIED
 
 Scope was intentionally limited to CURATION-001 only: Unit 2 lesson `Describing people and animals`, book pages `5..8` / source pages `9..12`.
 
-Pre-apply gates:
+Pre-apply gates established the bounded effect: `1 Section + 1 Lesson + 4 Lesson Asset reassignments`, with Media/Question/publication/unrelated mutations all zero.
 
-- live identity inspector deployment `4cf8665b-4dd1-4e90-9ec8-92d897c34f59`, marker `IMPORT001_INSPECT_PASS`;
-- rollback gate script commit `177b91572ac6fe3b37acd9bcc094876a1cbb3beb`;
-- rollback deployment `8e4cdcbb-2783-4dca-b025-e1191fa9e330`, marker `IMPORT001_TRANSACTION_GATE_PASS`;
-- validated direct mutation boundary: `1 Section + 1 Lesson + 4 Lesson Asset reassignments`;
-- Media create/mutate = 0/0;
-- legacy Lesson mutation = 0;
-- Question mutation = 0;
-- publication mutation = 0;
-- unrelated mutation = 0.
-
-Controlled apply implementation:
-
-- fail-closed script commit `2af3b935512c853eb4c2b1f3767766f8513a1c0a`;
-- deployment `026bfc1b-8ba0-4ae8-a74b-7170086f45e1` captured the prior rollback command and therefore did not perform the apply;
-- later apply deployment `efb92e21-e8df-4674-92d9-041321da9f92` refused to mutate because the target Section already existed (`IMPORT001_APPLY_FAIL: target section already exists count=1`).
-
-This is treated as concurrent advancement, not as permission to overwrite. No duplicate write was attempted and this closing run does not claim authorship of the already-committed rows.
-
-Independent committed-state verification:
-
-- initial verifier commit `3727dde8f6f037d34691a75feae3d46d164f1041`, deployment `4144bf3c-1eeb-4c9f-8a77-65e60b1ed1c8`, marker `IMPORT001_POST_APPLY_VERIFY_PASS`;
-- exact-identity verifier commit `2f3d0fa9923f9dceb692477c2fd1a0fd89d2b0c8`, deployment `3e1ce24a-39ca-498c-b219-8ceb895eda84`, marker `IMPORT001_POST_APPLY_VERIFY_PASS`.
+The bounded apply executor refused duplicate mutation after concurrent advancement because the target Section already existed. Independent exact-state verification then passed with marker `IMPORT001_POST_APPLY_VERIFY_PASS`.
 
 Verified target state:
 
@@ -301,13 +246,41 @@ Verified target state:
 - target Lesson published = false;
 - Lesson Assets draft/unpublished = 4/4;
 - unauthorized target Question links = 0;
-- 4 legacy source Lessons remain active/unpublished/sectionless and now carry 0 reviewed page assets;
-- exactly 12 legacy Question Revisions remain linked to the legacy Lessons and unpublished;
-- no RAW or media-binary rewrite, Question rewrite, auto-publication, anomaly deletion, or unrelated repair was performed by the closing run.
+- exactly 12 legacy Question Revisions remain linked to legacy Lessons and unpublished;
+- no RAW/media-binary/question/publication/unrelated repair was performed by the close.
 
-The Railway inspector was returned to an idle start command after verification to prevent documentation commits from replaying apply/verifier commands.
+### VERIFY-001 — DONE / DELIVERY_ISOLATION_AND_PROVENANCE_VERIFIED
 
-Next Content Rebuild item is **`VERIFY-001` only**, followed by `ROADMAP-RETURN` when its gate is satisfied.
+Independent verifier: `content-staging/runtime/verify-001-unit2-describing.mjs` on `7eaur/alwaslh-go`.
+
+Evidence:
+
+- verifier source commit `12fb1a5268e97f0a0d70eee4d33322c139e3deb5`;
+- Railway deployment `e5e8fef8-f8e7-467e-b3d8-60529c1a652a` — SUCCESS;
+- runtime marker `VERIFY001_PASS`.
+
+The verifier checked the smallest imported Unit 2 slice independently against the modern PostgreSQL relationships and the Student Reader publication guards. The Student Reader implementation requires the Lesson to be published and Lesson Assets to have `publication_status='published'`; the imported slice remains deliberately outside both gates.
+
+Verified results:
+
+- exact Section identity count 1;
+- exact Lesson identity count 1; content revision 1;
+- exact Lesson Assets 4/4;
+- ready Media Assets 4/4;
+- exact source path + source/media SHA-256 provenance 4/4;
+- draft/unpublished Lesson Assets 4/4;
+- Student Reader base-contract eligible Lesson rows 0;
+- Student Reader publication-guard eligible Asset rows 0;
+- unauthorized Question links to curated Lesson 0;
+- 12 preserved legacy Question Revisions remain unpublished;
+- publication/RAW/media-binary/question mutation counts 0;
+- failures 0.
+
+Interpretation: the imported CURATION-001 slice is consistent and provenance-complete for its reviewed scope, while publication remains closed. VERIFY-001 did not authorize publication or mutate business data.
+
+The Railway inspector was returned to idle after verification.
+
+Next Content Rebuild action: `ROADMAP-RETURN -> STUDENT-016I`, after re-reading live Student heads/docs and confirming no newer Student checkpoint supersedes that roadmap item.
 
 ## 6. Open / deferred product work
 
