@@ -11,6 +11,7 @@ import {
 import { ADMIN_NAVIGATION } from "./admin-navigation";
 import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
 import { AiOperationsPage } from "./admin/reviews/AiOperationsPage";
+import { ContentOperationsPage } from "./admin/reviews/ContentOperationsPage";
 import { AdminAccessCodesPage } from "./admin/access-codes/AdminAccessCodesPage";
 import { AdminAccessCodeReportsPage } from "./admin/access-codes/AdminAccessCodeReportsPage";
 import { LessonAuthoringParityPanel } from "./admin/content/LessonAuthoringParityPanel";
@@ -30,7 +31,6 @@ import { QuizMetadataPanel } from "./admin/quizzes/QuizMetadataPanel";
 import { AdminStudentsPage } from "./admin/students/AdminStudentsPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
-import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { LoginScreen } from "./LoginScreen";
 
 function errorMessage(error: unknown): string {
@@ -214,7 +214,7 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
         path="reviews/content"
         element={
           <ReviewArea current="content">
-            <ContentOperationsWorkspace onSessionExpired={onSessionExpired} />
+            <ContentOperationsPage onSessionExpired={onSessionExpired} />
           </ReviewArea>
         }
       />
