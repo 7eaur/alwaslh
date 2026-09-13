@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import {
-  aiGenerationOutputSchema,
-  aiGenerationRequestSchema,
   type AiGenerationOutput,
   type AiGenerationRequest,
+  aiGenerationOutputSchema,
+  aiGenerationRequestSchema,
 } from "../../src/ai/contracts.js";
 import { createDatabase, type QueryExecutor } from "../../src/db.js";
 import { AI_GOLDEN_FIXTURES } from "./ai-golden.js";
@@ -220,7 +220,10 @@ async function insertApprovedApplicationFixture(
     )
   )[0]?.id;
   assert.ok(classId && subjectId);
-  await tx.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [classId, subjectId]);
+  await tx.query("insert into subject_class_links (class_id, subject_id) values ($1, $2)", [
+    classId,
+    subjectId,
+  ]);
   const lessonId = (
     await tx.query<{ id: string }>(
       `insert into lessons (class_id, subject_id, slug, title, position)
