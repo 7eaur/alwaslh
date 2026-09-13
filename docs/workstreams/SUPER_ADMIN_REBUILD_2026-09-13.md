@@ -1,12 +1,12 @@
 # Super Admin Rebuild — 2026-09-13
 
-Status: **ACTIVE — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder ACTIVE / Batch 1 + Batch 2A + Batch 2B + Batch 2C + Batch 2D VERIFIED; legacy version-management cleanup next.**
+Status: **ACTIVE — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder ACTIVE / Batch 1 + Batch 2A + Batch 2B + Batch 2C + Batch 2D + Batch 2E VERIFIED; focused create ownership next.**
 
 Branch: `rebuild/super-admin-foundation`
 
 Draft PR: `#52 — refactor(admin): rebuild Super Admin foundation`
 
-Latest live `main` direct branch read for this checkpoint: `343ff1fd7b3d64d7e990b72606695365f520fa58`.
+Latest live `main` direct branch read for this checkpoint: `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`.
 
 > Source of truth order: repository code + PostgreSQL migrations + executable tests/CI + verified runtime + canonical project documentation.
 
@@ -75,7 +75,7 @@ Rules:
 - **AR-04 — Content + OCR** — DONE / VERIFIED.
 - **AR-05 — Reviews + AI** — DONE / VERIFIED.
 - **AR-06 — Question Bank** — DONE / VERIFIED.
-- **AR-07 — Quiz Builder** — ACTIVE / Batch 1 + Batch 2A + Batch 2B + Batch 2C + Batch 2D VERIFIED; cleanup + focused create remain.
+- **AR-07 — Quiz Builder** — ACTIVE / Batch 1 + Batch 2A + Batch 2B + Batch 2C + Batch 2D + Batch 2E VERIFIED; focused create + legacy adapter removal remain.
 - **AR-08 — Students + Access Codes** — NOT STARTED.
 - **AR-09 — Cleanup + architecture enforcement** — NOT STARTED.
 - **AR-10 — A11y/RTL/performance/visual QA** — NOT STARTED.
@@ -167,19 +167,54 @@ Final exact-head verification:
 - Admin AI `34746324625` — **SUCCESS**.
 - Combined `34746324634` — **SUCCESS**, including PostgreSQL/contracts, backend authority/security regressions and expanded real Chromium.
 
-Batch 2D is VERIFIED. Quiz creation still remains in the temporary legacy adapter, and duplicate legacy version-management ownership can now be removed because executable replacement parity has been proven.
+Batch 2D is VERIFIED.
 
-## 6. Explicit next handoff — AR-07 cleanup only
+### Batch 2E — remove duplicate legacy ownership / create-only seam — VERIFIED
+
+#### Continuity/source check
+
+- Re-read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and this file before mutation.
+- Entered on feature documentation HEAD `bb782055e9a300212d49f2b1520e127076d0308f`.
+- Reconciled prior documentation CI before code: Admin AI `34746570479` — SUCCESS; Combined `34746570478` — SUCCESS.
+- Re-read Draft PR #52; it remained open and Draft.
+- Live `main` advanced independently to `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`; no Student/audit file was rebased or modified.
+
+#### Inventory and classification
+
+Root `apps/admin-web/src/QuizBuilderWorkspace.tsx` still owned duplicate list/detail/version-management/lifecycle/export code even after canonical route ownership had already been proven in earlier batches.
+
+- **KEEP:** PostgreSQL/API lifecycle, eligibility, snapshot and export authority.
+- **KEEP temporarily:** quiz creation capability.
+- **REMOVE:** duplicate list/detail/version/lifecycle/export ownership from the legacy workspace.
+- **REFACTOR:** legacy workspace into a create-only seam that hands off to the canonical entity route after creation.
+- **NO CHANGE:** migrations, backend domain validation, Student workstream.
+
+#### Implementation
+
+Exact code-head `1081152e6e95a11684de26398661326f50e82bfe`:
+- reduced `QuizBuilderWorkspace.tsx` to curriculum-scoped quiz creation only;
+- removed duplicate quiz list/detail/version/lifecycle/export state/actions/UI;
+- after successful `createQuiz`, redirects to `/app/quizzes/:quizId` so all ongoing management belongs to `QuizBuilderDetailPage`.
+
+#### Exact-head verification
+
+- Frontend `34747560417` — **SUCCESS**.
+- Admin AI `34747560473` — **SUCCESS**.
+- Combined `34747560426` — **SUCCESS**, including clean PostgreSQL migrations/contracts, backend authority/security regressions and real Admin Chromium.
+
+Batch 2E is VERIFIED. AR-07 remains ACTIVE only because quiz creation still lives in root `QuizBuilderWorkspace.tsx`; this temporary seam must receive focused feature ownership and executable browser proof before the legacy adapter is deleted.
+
+## 6. Explicit next handoff — AR-07 focused create only
 
 1. Re-read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and this file.
 2. Fetch current feature HEAD, live `main`, Draft PR #52 and exact-head CI.
-3. Reconcile documentation-only CI from this checkpoint before mutation.
-4. Slim/remove duplicated version-management state/actions/UI from root `QuizBuilderWorkspace.tsx` now that `/app/quizzes/:quizId` has real Chromium parity.
-5. Keep quiz creation capability in the legacy adapter during this cleanup; do not remove legitimate create functionality.
-6. Run frontend quality gates + Combined real Chromium and verify no route still relies on the removed duplicate version ownership.
-7. Migrate quiz creation as a separate coherent batch, preserving canonical server validation/curriculum/Question Bank eligibility contracts.
-8. Remove the legacy workspace only after focused create + entity version management have executable replacement parity.
-9. Do not start AR-08 before AR-07 exact-head green and synchronized closure documentation.
+3. Reconcile CI generated by this synchronized documentation checkpoint before mutation.
+4. Move the create-only responsibility from root `QuizBuilderWorkspace.tsx` into a focused page under `src/admin/quizzes/` (for example `QuizBuilderCreatePage.tsx`) while preserving the deliberate create route/deep link.
+5. Preserve canonical server validation and curriculum scoping; do not introduce client-side business authority.
+6. Add explicit real Chromium proof for opening the create route, creating a quiz through the real Admin UI/API/PostgreSQL path, and landing on canonical `/app/quizzes/:quizId`.
+7. Delete root `QuizBuilderWorkspace.tsx` only after the focused create flow is green and no route imports it.
+8. Run Frontend + Admin AI + Combined on the exact code-head; then synchronize closure docs/PR and only then mark AR-07 DONE.
+9. Do not start AR-08 before AR-07 is closed exact-head green.
 10. Keep PR #52 Draft; no automatic merge.
 
 ## 7. Quality gate for every remaining stage
