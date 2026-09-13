@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   isMissingSessionError,
   listStudentCurriculum,
@@ -19,6 +20,7 @@ import {
   removeStoredOfflineLessonForSession,
 } from "./offline-materialization";
 import { getActiveOfflineScope, refreshOfflineLeaseForCurrentSession } from "./offline-session";
+import { studentLessonHref } from "./student-learning-model";
 
 interface OfflineLessonOption {
   id: string;
@@ -153,7 +155,7 @@ export function StudentOfflineDownloadsSection({ online, refreshKey, onSessionEx
         {state.status === "ready" ? <div className="downloads-usage" aria-label={`استخدمت ${formatBytes(usedBytes)} من مساحة التنزيلات`}><strong>{packages.length}</strong><span>درس محفوظ</span><small>{formatBytes(usedBytes)} من {formatBytes(OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES)}</small></div> : null}
       </header> : state.status === "ready" ? <div className="downloads-usage downloads-usage--embedded" aria-label={`استخدمت ${formatBytes(usedBytes)} من مساحة التنزيلات`}><strong>{packages.length}</strong><span>درس محفوظ</span><small>{formatBytes(usedBytes)} من {formatBytes(OFFLINE_SCOPE_PAYLOAD_BUDGET_BYTES)}</small></div> : null}
 
-      {!online && state.status === "ready" ? <div className="student-b05-state is-warning" role="status"><strong>أنت غير متصل الآن</strong><p>يمكنك إدارة الدروس المحفوظة. اتصل بالإنترنت لإضافة تنزيلات جديدة أو تحديثها.</p></div> : null}
+      {!online && state.status === "ready" ? <div className="student-b05-state is-warning" role="status"><strong>أنت غير متصل الآن</strong><p>يمكنك فتح الدروس المحفوظة وإدارتها. اتصل بالإنترنت لإضافة تنزيلات جديدة أو تحديثها.</p></div> : null}
       {actionError ? <div className="form-alert is-danger" role="alert">{actionError}</div> : null}
       {notice ? <div className="form-alert is-success" role="status">{notice}</div> : null}
 
@@ -174,7 +176,11 @@ export function StudentOfflineDownloadsSection({ online, refreshKey, onSessionEx
                   const current = packageCurrent(lesson, record);
                   return <li key={record.lessonId} data-downloaded-lesson-id={record.lessonId}>
                     <div className="downloads-list__copy"><span className={`downloads-status ${current ? "is-ready" : "is-update"}`}>{current ? "متاح بدون إنترنت" : "يوجد تحديث للدرس"}</span><strong>{record.title}</strong><small>{formatBytes(record.totalByteSize)}</small></div>
-                    <div className="downloads-list__actions">{!current && lesson ? <button className="primary-button" type="button" onClick={() => void downloadLesson(lesson)} disabled={!online || busyLessonId !== null}>{busyLessonId === lesson.id ? "جاري التحديث" : "تحديث الدرس"}</button> : null}<button className="secondary-button" type="button" onClick={() => void removeLesson(record)} disabled={busyLessonId !== null}>{busyLessonId === record.lessonId ? "جاري الإزالة" : "إزالة من الجهاز"}</button></div>
+                    <div className="downloads-list__actions">
+                      <Link className="primary-button" to={studentLessonHref(record.lessonId)}>فتح الدرس</Link>
+                      {!current && lesson ? <button className="primary-button" type="button" onClick={() => void downloadLesson(lesson)} disabled={!online || busyLessonId !== null}>{busyLessonId === lesson.id ? "جاري التحديث" : "تحديث الدرس"}</button> : null}
+                      <button className="secondary-button" type="button" onClick={() => void removeLesson(record)} disabled={busyLessonId !== null}>{busyLessonId === record.lessonId ? "جاري الإزالة" : "إزالة من الجهاز"}</button>
+                    </div>
                   </li>;
                 })}
               </ul>
