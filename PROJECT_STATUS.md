@@ -66,9 +66,9 @@ Current Student structure:
 - future Reader/Assessment integration flows for Notes/Saved/Needs Review specified before Stage17 backend work;
 - responsive RTL styling and existing subtle motion/reduced-motion contract extended to all new surfaces.
 
-## Performance architecture
+## Performance architecture — verified
 
-The Student app is being split now instead of allowing future screens to accumulate in one initial JS bundle.
+The Student app is split now instead of allowing future screens to accumulate in one initial JS bundle.
 
 `student-access.tsx` uses feature-level `React.lazy` / `Suspense` for:
 
@@ -79,33 +79,42 @@ The Student app is being split now instead of allowing future screens to accumul
 
 Home/Shell remains immediately available. Loading copy is learner-facing: `جاري فتح الصفحة`.
 
-Before lazy splitting, the expanded future-surface build reached approximately **599.61 kB minified / 148.83 kB gzip** in one main JS chunk. A new production build on the documentation-complete head must verify the split output before this workstream is accepted.
+Production-build evidence after splitting:
+
+- **initial main JS: 225.89 kB minified / 71.24 kB gzip**;
+- Account chunk: 7.91 kB / 2.57 kB gzip;
+- Learn/Reader chunk: 13.85 kB / 4.09 kB gzip;
+- Assessment chunk: 22.58 kB / 6.10 kB gzip;
+- Future/Library chunk: 25.81 kB / 7.56 kB gzip;
+- Assessment feature CSS chunk: 15.90 kB / 3.04 kB gzip;
+- shared initial CSS: 62.02 kB / 10.89 kB gzip.
+
+Before splitting, the same expanded app produced a single main JS chunk of approximately **599.61 kB / 148.83 kB gzip**. The initial JS payload is therefore materially smaller and Vite no longer reports the >500 kB main-chunk warning on the verified build.
 
 ## Current verification evidence
 
-On the initial PR #54 code head before lazy splitting:
+On the documentation-complete code path:
 
 - Student lint/typecheck/unit/build: SUCCESS;
 - 11 Student unit files / 41 tests: SUCCESS;
-- PostgreSQL migrations in B02/B05: SUCCESS;
-- B05 Chromium + expanded future-surface Visual QA: SUCCESS;
-- B02 desktop scenario: SUCCESS;
-- B02 mobile scenario found only a strict Playwright selector ambiguity because both the app-bar bell and Home card contain `الإشعارات`; selector corrected to the exact app-bar accessible name.
+- feature-level chunks emitted as expected;
+- an earlier B05 Chromium run with the future surfaces was SUCCESS;
+- initial B02 desktop scenario was SUCCESS;
+- initial B02 mobile failure was only a strict Playwright selector ambiguity because both the app-bar bell and Home card contain `الإشعارات`; the test now targets the exact app-bar accessible name.
 
-Because lazy splitting + documentation changed the branch afterward, those results are not final acceptance evidence. The next exact-head matrix is authoritative.
+Because the final documentation commit changes the exact head, the current full workflow matrix must still complete on that final SHA before merge.
 
 ## Required acceptance before PR #54 merge
 
 1. exact-head lint/typecheck/unit/build;
-2. confirm production build emits route/feature chunks and reduces initial main bundle materially;
-3. B01/B02/B03/B04/B05 browser regressions;
-4. Stage14/15/16 + Rebuild verification;
-5. all other triggered workflows SUCCESS;
-6. phone + desktop Visual QA for Library overview/downloads/notes/saved/review, Notifications, Progress and Account;
-7. no horizontal overflow;
-8. production-copy scanner remains clean;
-9. `prefers-reduced-motion` remains valid;
-10. verify live main/base before merge and use exact expected-head guard.
+2. B01/B02/B03/B04/B05 browser regressions;
+3. Stage14/15/16 + Rebuild verification;
+4. all other triggered workflows SUCCESS;
+5. phone + desktop Visual QA for Library overview/downloads/notes/saved/review, Notifications, Progress and Account;
+6. no horizontal overflow;
+7. production-copy scanner remains clean;
+8. `prefers-reduced-motion` remains valid;
+9. verify live main/base before merge and use exact expected-head guard.
 
 ## Not completed by this PR
 
