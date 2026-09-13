@@ -213,108 +213,53 @@ Create/Edit/View/Review/History are actions/screens inside a workflow, not sideb
 
 Overview answers only: **"ما الذي يحتاج انتباهي الآن؟"**
 
-It may include:
-
-- content/OCR waiting for review;
-- AI outputs waiting for human review;
-- question/quiz review queues;
-- failed ingestion/OCR/AI jobs;
-- student/access exceptions needing intervention;
-- recent high-value operational activity.
-
-Generic row counts are secondary and must not dominate.
+It may include content/OCR waiting for review, AI outputs waiting for human review, question/quiz review queues, failed jobs, student/access exceptions and recent high-value activity. Generic row counts are secondary.
 
 ## 6. Target workflows
 
 ### Curriculum
-
-Entry: Curriculum list/tree.
-List: class/subject/offering/section/lesson hierarchy with human names and statuses.
-Detail: selected entity and children.
-Primary actions: create child, edit metadata, change supported lifecycle state.
-History: contextual only.
-Failure: inline validation and conflict refresh.
+Entry: Curriculum list/tree. List hierarchy with human names/statuses. Detail selected entity/children. Primary actions create child/edit/change supported lifecycle. History contextual.
 
 ### Content
-
-Entry: lesson/content list or curriculum lesson action.
-Normal lifecycle presentation: **Source → Processing → Review → Ready → Publish** only where backed by actual domain state.
-Detail: lesson, source files/pages, processing outcome, review readiness, publication state.
-Primary action: import/upload or review/publish as allowed.
-Advanced diagnostics: ingestion task IDs, asset IDs, source paths, MIME, hashes, raw error codes.
+Entry: lesson/content list or curriculum lesson action. Normal lifecycle presentation: **Source → Processing → Review → Ready → Publish** where backed by state. Detail owns lesson/source/review/publication. Advanced diagnostics own internal IDs/paths/hashes.
 
 ### OCR / source review
-
-Entry: review queue or lesson content detail.
-Review surface must show the source page/image beside extracted/editable text whenever the source can be rendered.
-Primary actions: approve/edit/reject/retry as supported by server contracts.
+Entry: review queue or lesson detail. Review shows source page/image beside extracted/editable text where renderable. Actions approve/edit/reject/retry as supported.
 
 ### AI
-
-Entry: contextual action from lesson/question/quiz OR central Reviews queue for pending result.
-Normal flow: request → working → review result → edit if allowed → approve/reject → apply/import.
-No manual job/output-ID handoff.
-Provider/runtime details live only under Operations > Diagnostics.
+Entry: contextual action from lesson/question/quiz OR central Reviews queue. Normal flow: request → working → review result → edit if allowed → approve/reject → apply/import. No manual job/output-ID handoff.
 
 ### Questions
-
-Entry: Question Bank list.
-List: prompt preview, scope, type, difficulty, origin, human lifecycle status.
-Detail/editor: content + lesson/source evidence.
-Review: focused decision surface.
-Primary actions depend on state: edit, submit for review, publish, return/reject, regenerate contextually.
-History: revisions/events drawer/tab.
+Entry: Question Bank list. List prompt preview/scope/type/difficulty/origin/human status. Detail/editor content + lesson/source evidence. Review focused decision surface. Actions state-dependent edit/submit/publish/return/regenerate contextually. History revisions/events.
 
 ### Quiz
-
-Entry: quiz list.
-Detail: scope/title/status/version summary.
-Builder: select published question candidates, arrange versions, shuffle options/settings.
-Review: final quiz/version composition before publication.
-Exports: contextual after/within quiz detail, not global Reports.
+Entry list. Detail scope/title/status/version. Builder selects published question candidates and arranges versions/settings. Review final composition. Exports contextual.
 
 ### Students
-
-Entry: searchable/paginated student list.
-Detail: identity, current access summary, device/recovery state, recent support-relevant activity.
-Primary actions: supported recovery/device/access actions only.
-Technical entitlement/source IDs are contextual/advanced.
+Entry searchable/paginated list. Detail identity/access/device/recovery/support activity. Supported recovery/device/access actions only.
 
 ### Access Codes
-
-Entry: code batches/codes list.
-Primary jobs: import/generate where supported, search/filter, inspect state, revoke eligible unused codes.
-Bulk selection and export belong here; do not mix with student support detail.
+Entry code batches/codes list. Import/generate/search/filter/state/revoke eligible unused codes. Bulk/export belongs here.
 
 ### Operations
-
-Health: actionable failures and attention queues.
-Audit: filterable audit trail with human actor/resource labels.
-Diagnostics: runtime/config/session/AI routing/provider/internal identifiers.
+Health actionable failures/queues. Audit filterable trail. Diagnostics runtime/config/session/AI internals.
 
 ## 7. Backend changes required
 
 ### B1 — Admin attention summary
-
-Add/reshape a use-case endpoint for Overview that returns actionable queue counts/items rather than only generic metrics. Existing metrics may remain diagnostics/secondary.
+Add/reshape use-case endpoint for actionable Overview queues rather than generic metrics.
 
 ### B2 — Lesson/content publication command
-
-The current publication route is ingestion-task-bound while source-imported lesson assets can exist without an ingestion task. Introduce a lesson/content publication use-case command that resolves internal task/assets/revisions server-side and enforces the existing publication authority. Do not ask the UI to synthesize internal IDs.
+Introduce lesson/content publication use-case resolving internal task/assets/revisions server-side; UI must not synthesize IDs.
 
 ### B3 — OCR review projection
-
-Expose a renderable source reference/preview contract for the review surface without leaking storage paths. Preserve authorization and media-access boundaries.
+Expose renderable source reference/preview without storage-path leakage.
 
 ### B4 — AI apply/import commands
-
-Replace manual cross-workspace `jobId`/`outputId` handoffs with contextual commands/actions from an approved result. Preserve idempotency, provenance, review revision, and validation internally.
+Replace manual `jobId`/`outputId` handoffs with contextual commands from approved results, preserving idempotency/provenance/review/validation.
 
 ### B5 — Humanized Admin read models
-
-Where ordinary screens currently need multiple lookups or raw IDs, add thin Admin read models/use-case responses with human labels and next-action state. Do not duplicate business authority in the frontend.
-
-No microservices or new generic backend layer is justified.
+Where ordinary screens need multiple lookups/raw IDs, add thin Admin use-case read models with human labels/next action. No duplicate frontend authority.
 
 ## 8. Frontend architecture
 
@@ -323,8 +268,6 @@ Target boundaries:
 ```text
 src/admin/
   shell/
-    AdminShell.tsx
-    admin-navigation.ts
   overview/
   curriculum/
   content/
@@ -335,164 +278,107 @@ src/admin/
   access-codes/
   operations/
   shared/
-    StatusBadge.tsx
-    DataTable.tsx
-    FilterBar.tsx
-    EmptyState.tsx
-    ErrorState.tsx
-    ConfirmDialog.tsx
   api/
-    adapters by feature/use case
   view-models/
-    feature-specific projections only
 ```
 
-Rules:
-
-- Route owns the page.
-- Feature owns its workflow state.
-- API adapters translate server contracts; components do not assemble pipeline internals.
-- Reusable primitives are extracted only when semantics match.
-- No component owns list + create + edit + review + export simultaneously.
-- Server state remains server-owned; local state is for transient UI/editor state.
-- Deep links are mandatory for primary destinations and entity detail.
-
-During incremental migration, old workspaces may be mounted behind target routes strictly as parity adapters; each is removed as its target feature is rebuilt.
+Rules: route owns page; feature owns workflow state; adapters translate server contracts; no component owns list+create+edit+review+export simultaneously; server state remains server-owned; deep links mandatory. Old workspaces may remain temporarily as parity adapters during migration.
 
 ## 9. Admin design-system rules
 
-- RTL-first and keyboard accessible.
-- Cairo/brand tokens from `@alwaslh/brand`/`@alwaslh/ui`; no new unrelated visual identity.
-- Dense but readable administration UI.
-- Tables/lists for operational collections; cards only when they add hierarchy, not as a default container.
-- One obvious primary action per screen/context.
-- Secondary/destructive actions de-emphasized and confirmed when needed.
-- Statuses use a shared humanized mapping and consistent semantic treatment.
-- Filters stay near their list and are URL/search-param friendly when useful.
-- Forms group fields by user decision, not database table columns.
-- Dialogs for short, reversible/confirmatory tasks; pages/routes for complex editable workflows; drawers for contextual history/detail when they do not need independent deep linking.
-- Loading/empty/error/success/retry states are first-class.
-- No gradients/glass/glow/decorative animation.
-- Respect reduced motion.
-- Minimum practical touch/focus targets and visible `:focus-visible` states.
-- Mobile/tablet: sidebar collapses to a usable navigation control; tables degrade deliberately instead of horizontal chaos.
+RTL-first, keyboard accessible, brand tokens, dense/readable, list/table for collections, one obvious primary action, humanized statuses, filters near list, decision-grouped forms, loading/empty/error/retry states, no decorative gradient/glass/glow, reduced motion, usable focus/touch targets, deliberate mobile/tablet degradation.
 
 ## 10. Implementation roadmap
 
 ### AR-01 — Architecture baseline + route-driven shell
-
-- Freeze this target architecture document.
-- Replace local workspace `useState` navigation with real routes/links.
-- Reduce sidebar to target work areas/destinations.
-- Preserve parity by mounting legacy workspace adapters under temporary target routes.
-- Remove stage/parity/debug panels from normal shell.
-- Add route/deep-link tests.
-
-Verification: lint, typecheck, unit, build, route tests, visual/keyboard smoke test.
+Route/deep-link shell and target navigation, parity adapters, remove normal debug/stage surfaces.
 
 ### AR-02 — Overview + Operations split
-
-- Build attention-first Overview.
-- Move governance to Diagnostics.
-- Separate Health / Audit / Diagnostics.
-- Add backend attention-summary projection.
+Attention-first Overview; Governance → Diagnostics; Health/Audit/Diagnostics; backend attention projection.
 
 ### AR-03 — Curriculum
-
-- Split giant workspace into hierarchy browser + entity editor/actions.
-- Keep existing curriculum domain contracts unless a tested use-case gap is proven.
+Hierarchy browser + entity editor/actions while preserving valid domain contracts.
 
 ### AR-04 — Content + OCR
-
-- Build lesson/content list/detail.
-- Build source/OCR visual review.
-- Introduce lesson/content publication command and safe source-preview contract.
+Lesson/content list/detail; source/OCR visual review; lesson publication command; safe source preview.
 
 ### AR-05 — Reviews + AI
-
-- Build human review queue.
-- Keep proven polling/conflict/retry mechanics.
-- Remove provider/job internals from normal review.
-- Add contextual apply/import actions.
+Human review queue; preserve proven polling/conflict/retry; remove provider/job internals; contextual apply/import.
 
 ### AR-06 — Question Bank
-
-- Split list/detail/editor/review/history.
-- Preserve server lifecycle rules and revision evidence.
+Split list/detail/editor/review/history. Preserve lifecycle rules and revision evidence.
 
 ### AR-07 — Quiz Builder
-
-- Split list/detail/builder/review.
-- Keep question-candidate and publication authority server-side.
-- Move exports into quiz context.
+Split list/detail/builder/review. Keep candidate/publication authority server-side; contextual exports.
 
 ### AR-08 — Students + Access Codes
-
-- Separate student support and code management routes.
-- Humanize entitlement/device/recovery data.
-- Move reports/files into owning access-code context.
+Separate support/code management; humanize entitlement/device/recovery; contextual files/reports.
 
 ### AR-09 — Cleanup + architecture enforcement
-
-- Delete legacy top-level workspaces once parity is verified.
-- Remove orphan API/UI adapters.
-- Add duplication/route/status-map regression coverage.
+Delete verified legacy top-level workspaces, orphan adapters; add duplication/route/status-map coverage.
 
 ### AR-10 — A11y/RTL/performance/visual QA
-
-- keyboard/focus/deep-link pass;
-- responsive RTL pass;
-- request/pagination/polling payload audit;
-- Playwright visual workflow smoke tests;
-- final parity matrix and removal decisions.
+Keyboard/focus/deep-link; responsive RTL; request/pagination/polling audit; Playwright visual smoke; final parity/removal matrix.
 
 ## 11. Explicit backend/security invariants
 
-Must remain server-authoritative unless separately proven wrong:
-
-- Admin authorization is not a frontend-only check.
-- Media/source access cannot expose private storage paths as public authority.
-- AI output does not publish automatically.
-- Human review remains required where current domain rules require it.
-- Question publication requires a resolved/known correct answer.
-- Quiz publication and assessment authority remain server-controlled.
-- Access entitlement/device/recovery rules remain server-controlled.
-- Audit evidence is retained for sensitive changes.
+Admin authorization remains server-side; source access cannot expose private storage paths; AI never auto-publishes; human review remains required; question publication requires resolved correct answer; quiz/assessment authority server-controlled; access/device/recovery server-controlled; audit evidence retained.
 
 ## 12. Complexity audit
 
-Confirmed root causes:
-
-1. `/app/*` is routed to one `App`, while real workspace navigation is local `useState`; deep links do not exist.
-2. Giant workspaces combine unrelated list/create/edit/review/history/export responsibilities.
-3. Normal screens expose implementation details (IDs, hashes, paths, raw statuses, provider/runtime data).
-4. AI authoring requires cross-workspace technical handoff (`jobId` / `outputId`).
-5. OCR review does not show the visual source beside extracted text.
-6. Student support and bulk code operations share one workspace despite being distinct jobs.
-7. Generic Overview metrics reflect data counts more than actionable attention.
-8. Content publication is coupled to ingestion task identity, which does not cover all imported lesson assets.
+Confirmed root causes include state-driven routing, giant workspaces, implementation details in normal screens, technical AI handoffs, missing source beside OCR, mixed student/code jobs, generic Overview metrics, and task-ID-coupled content publication.
 
 ## 13. Verification state at architecture freeze
 
-Verified from source:
+Verified from source: live main/head, Admin router/workspaces, Fastify composition, Admin auth/read models, content publication contract, Question Bank lifecycle API/service, Quiz lifecycle API, operations contract, brand/admin UX guidance.
 
-- live `main` and head SHA;
-- Admin router/App/workspaces;
-- Fastify application wiring;
-- Admin access authorization and read models;
-- content ingestion publication contract;
-- Question Bank lifecycle API/service;
-- Quiz Builder lifecycle API;
-- Operations overview/governance/audit contract;
-- brand/admin UX guidance and prior audit evidence.
+Items remain `NOT YET VERIFIED` until implementing batch evidence proves them.
 
-NOT YET VERIFIED for this rebuild branch:
+## 14. Execution checkpoints
 
-- runtime visual QA after AR-01 changes;
-- branch CI after AR-01 changes;
-- production AI worker wiring re-audit;
-- final exact source-preview transport contract;
-- final exact lesson-level publication endpoint shape;
-- full old-to-new parity after later batches.
+### AR-06 / Batch 1 — route-owned Question detail — VERIFIED, AR-06 remains ACTIVE
 
-These items must not be treated as complete until their implementing batch is verified.
+State received:
+
+- AR-05 already DONE / VERIFIED.
+- Admin branch started this batch at `2ab2e8c8c16deb26eb8c922d884413244e0813aa`.
+- live main was newer because Student work continued independently; no Student/main work was overwritten.
+- no previous Admin CI/batch was active before AR-06 changes.
+
+Inventory/classification:
+
+- **KEEP** Question Bank PostgreSQL/API lifecycle authority, revisions/events, publication validation, approved-AI import/regeneration provenance, filters/pagination and existing integration coverage.
+- **IMPROVE** human state/context, progressive history/source disclosure, error/retry and deep-link ergonomics.
+- **REFACTOR** route/feature ownership into list/detail/editor/review/history.
+- **REBUILD** giant `QuestionBankWorkspace.tsx` composition.
+- **REMOVE from normal UX** raw checksum/OCR/output/internal identifiers and pipeline/stage terminology, while retaining advanced evidence only where justified.
+
+Implemented:
+
+- new route-owned `apps/admin-web/src/admin/questions/QuestionBankDetailPage.tsx`;
+- new `/app/questions/:questionId` route;
+- route detail reads existing canonical Question Bank + curriculum APIs;
+- submit-review, publish and reject remain server-authoritative;
+- normal source evidence shows page/quote/human context rather than checksum/OCR/internal IDs;
+- revision and event histories remain available;
+- legacy `/app/questions` workspace intentionally remains as a temporary parity adapter until create/import/edit/regenerate ownership is migrated.
+
+Code commits:
+
+- `b52147c8a070a2a7e018562b8d80a62fb4a66023` — add route-owned question detail page.
+- `1677770dc6402e4b2825c1b8dd50f546fdf74d0c` — register entity route.
+
+Exact code-head verification on `1677770dc6402e4b2825c1b8dd50f546fdf74d0c`:
+
+- Stage 13E Frontend Preparation `34731668746` — SUCCESS: lint/typecheck/unit/build.
+- Stage 13E Combined Integration `34731668810` — SUCCESS: API/Admin quality, clean PostgreSQL migrations, DB contracts, backend authority/security regressions, deterministic fixtures and real Chromium.
+
+Resume point for the next Admin run:
+
+1. Re-read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and this checkpoint, then confirm current branch HEAD/CI before editing.
+2. Continue AR-06 only; do **not** start AR-07.
+3. Make `/app/questions/:questionId` the normal navigation path from the Question Bank list.
+4. Incrementally move editor/review/history ownership out of `QuestionBankWorkspace.tsx`, preserving manual create, approved AI import, edit and regeneration parity.
+5. Eliminate normal manual technical-ID handoff only when contextual behavior is available; preserve server contracts/authority.
+6. Add direct deep-link + routed lifecycle browser coverage.
+7. Require exact-head verification before closing AR-06.
