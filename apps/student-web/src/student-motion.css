@@ -55,7 +55,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-icon-action, .student-home-card, .student-home-secondary__item, .student-library-card, .student-library-tabs a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option),
+.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-icon-action, .student-home-card, .student-home-secondary__item, .student-library-card, .student-library-tabs a, .student-account-personal-links a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option),
 .student-entry-page :is(.primary-button, .secondary-button, .text-button, .student-auth-switch button),
 .student-session-state :is(.primary-button, .secondary-button) {
   transition:
@@ -66,12 +66,12 @@
     color var(--student-motion-base) var(--student-motion-ease);
 }
 
-.aw-product-shell--student :is(.student-home-card, .student-home-secondary__item, .student-library-card, .future-summary-panel, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option, .downloads-list > li, .student-account-section) {
+.aw-product-shell--student :is(.student-home-card, .student-home-secondary__item, .student-library-card, .student-account-personal-links a, .future-summary-panel, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option, .downloads-list > li, .student-account-section) {
   box-shadow: var(--student-interactive-shadow);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .aw-product-shell--student :is(.student-home-card, .student-home-secondary__item, .student-library-card, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):hover {
+  .aw-product-shell--student :is(.student-home-card, .student-home-secondary__item, .student-library-card, .student-account-personal-links a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):hover {
     transform: translateY(-2px);
     box-shadow: var(--student-interactive-shadow-hover);
   }
@@ -83,7 +83,7 @@
   }
 }
 
-.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-icon-action, .student-home-card, .student-home-secondary__item, .student-library-card, .student-library-tabs a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):active,
+.aw-product-shell--student :is(.primary-button, .secondary-button, .text-button, .student-nav-link, .student-bottom-nav__item, .student-account-entry, .student-icon-action, .student-home-card, .student-home-secondary__item, .student-library-card, .student-library-tabs a, .student-account-personal-links a, .subject-list__link, .lesson-link, .practice-list__link, .quiz-mode-option):active,
 .student-entry-page :is(.primary-button, .secondary-button, .text-button, .student-auth-switch button):active,
 .student-session-state :is(.primary-button, .secondary-button):active {
   transform: scale(0.985);
