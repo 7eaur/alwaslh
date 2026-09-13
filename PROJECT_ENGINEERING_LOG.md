@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-05 verified; AR-06 Batch 2E focused create/import ownership verified; AR-06 remains ACTIVE.**
+Last consolidated: **2026-09-13 — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder is next and has not started.**
 
 ## Project and authority invariants
 
@@ -34,6 +34,7 @@ Last consolidated: **2026-09-13 — AR-01 through AR-05 verified; AR-06 Batch 2E
 - **AD-ADMIN-012:** approved question regeneration is entity-owned while approval/provenance/idempotency stay server-side.
 - **AD-ADMIN-013:** routed Question Bank ownership requires real PostgreSQL + Chromium proof.
 - **AD-ADMIN-014:** manual question creation and approved-AI import are focused creation-flow responsibilities, not responsibilities of a giant list/detail/review workspace.
+- **AD-ADMIN-015:** a legacy workspace is removed once all production route ownership has moved and exact-head compile/API/PostgreSQL/real-browser gates prove no hidden dependency remains.
 
 ## Super Admin stage ledger
 
@@ -55,106 +56,94 @@ Verified checkpoint: `ba74c17902827805d6be0ab91c0ff384fc3e2530`.
 Content-first AI review, contextual apply/import, preserved review/provenance/idempotency authority and browser-proven histories/application behavior.
 
 Verified checkpoint: `cda2c3a683c6101db12f0c7cfad772226c234e0d`.
-
 Runs: Frontend `34729512441`, Admin AI `34729512433`, Combined `34729512404` — SUCCESS.
 
-## AR-06 — Question Bank — ACTIVE
+## AR-06 — Question Bank — DONE / VERIFIED
 
-### Batch 1 — route-owned detail — VERIFIED
+### Previously verified ownership batches
 
-Verified head `1677770dc6402e4b2825c1b8dd50f546fdf74d0c` established `/app/questions/:questionId` with canonical detail/review/history while existing API lifecycle commands remained authoritative.
+- Batch 1 route-owned detail — `1677770dc6402e4b2825c1b8dd50f546fdf74d0c`.
+- Batch 2A focused list/entity routing — `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac`.
+- Batch 2B route-owned edit — `43162f9b4f0468af96ae726f16054a868aff605a`.
+- Batch 2C route-owned approved regeneration — `60cb917e88e92ae8c3e3b64c6a5c8b8e7eb2928e`.
+- Batch 2D explicit routed Chromium ownership — `424bb1054fbd1a21991aa937be0f4338e08c7f09`.
+  - Stage 13F Question Bank `34736985564` — SUCCESS.
+  - Stage 13F Admin Question Bank `34736985648` — SUCCESS.
+- Batch 2E focused Manual Create + Approved AI Import — `0d9b84a4c389ed0cef1a579e7772e2bde75a3cee`.
+  - Frontend `34739142677` — SUCCESS.
+  - Combined `34739142686` — SUCCESS.
 
-### Batch 2A — routed focused list — VERIFIED
+### Batch 2F — legacy ownership cleanup + AR-06 closure — VERIFIED
 
-Verified head `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac` made `/app/questions` the normal list/filter/pagination surface and routed cards to entity detail.
+#### State received
 
-### Batch 2B — route-owned edit — VERIFIED
-
-Verified head `43162f9b4f0468af96ae726f16054a868aff605a` moved current-revision edit UX into entity detail while preserving revision history and review-state restrictions.
-
-### Batch 2C — route-owned approved regeneration — VERIFIED
-
-Verified head `60cb917e88e92ae8c3e3b64c6a5c8b8e7eb2928e` moved approved regeneration to the entity route while keeping approval/provenance/source/current-published-revision/idempotency authority in the existing backend command.
-
-### Batch 2D — explicit routed Chromium ownership — VERIFIED
-
-Verified head `424bb1054fbd1a21991aa937be0f4338e08c7f09` added executable evidence for list→detail, direct deep-link, edit, submit-review/reject/publish, approved regeneration, provenance, session expiry, responsive width and Quiz Builder regression safety.
-
-- Stage 13F Question Bank `34736985564` — SUCCESS.
-- Stage 13F Admin Question Bank `34736985648` — SUCCESS.
-
-### Batch 2E — focused Manual Create + Approved AI Import ownership — VERIFIED
-
-#### State received from A/shared handoff
-
-1. Read `PROJECT_STATUS.md`, this engineering log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before mutation.
-2. Re-fetched `rebuild/super-admin-foundation`; received HEAD was `c7c57905b603b017f915a73bf402566016f24ac9`.
-3. Re-fetched live `main`; direct branch read reported `43be0bfddf6709318912a219b818b35e71d7f9a4`.
+1. Re-read `PROJECT_STATUS.md`, this engineering log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before mutation.
+2. Received feature documentation HEAD `a87c3340ca121eb6973d84090d5f0bcacc1e0c9e`; prior Batch 2E was documented/verified and AR-06 was the only open Admin stage.
+3. Re-read live `main`; the Student track had advanced independently. Final live-main read before closure was `343ff1fd7b3d64d7e990b72606695365f520fa58`. No Student/audit code was modified or rebased into this batch.
 4. Confirmed Draft PR #52 remained Draft.
-5. Re-checked the received-head CI and confirmed the prior AR-06 Batch 2D documentation checkpoint was not hiding an active code batch.
-6. Read the actual frontend/backend contracts before editing: `QuestionBankWorkspace.tsx`, `QuestionBankListPage.tsx`, `App.tsx`, `question-bank-api.ts`, existing Stage13F Question Bank browser coverage, and relevant API/service structure.
+5. Inspected current exact routes and owners instead of trusting the old workspace filename.
 
-#### Finding and classification
+#### Inspection and classification
 
-The backend/domain did **not** need CRUD/schema work. Existing `createManualQuestion` and `importApprovedAiQuestions` already route through the canonical authenticated API/PostgreSQL contracts.
+Actual `App.tsx` routing proved:
 
-- **KEEP:** API/PostgreSQL lifecycle, manual-create and approved-import authority.
-- **KEEP:** question validation semantics and curriculum scope requirements.
-- **REFACTOR:** create/import ownership out of `QuestionBankWorkspace.tsx`.
-- **IMPROVE:** single-purpose create/import loading/error/success composition.
-- **KEEP temporarily:** legacy workspace source file until all duplicate/dead references are proven removable.
-- **NO CHANGE:** migrations, API lifecycle rules, Student workstream.
+- `/app/questions` → `QuestionBankListPage`;
+- `/app/questions/manage` → `QuestionBankCreatePage`;
+- `/app/questions/:questionId` → `QuestionBankDetailPage`.
+
+`QuestionBankCreatePage` already owned the focused Manual Create + Approved AI Import flow. The routed detail page already owned entity detail/edit/review/history/regeneration. `QuestionBankWorkspace.tsx` was therefore no longer a production route owner or required parity adapter.
+
+Classification:
+
+- **KEEP:** `QuestionBankListPage`, `QuestionBankDetailPage`, `QuestionBankCreatePage`.
+- **KEEP:** `/app/questions/manage` because it remains a useful focused create/import route; it was not removed merely to reduce routes.
+- **KEEP:** PostgreSQL/API lifecycle, revisions, publication, review, provenance, validation and idempotency authority.
+- **REMOVE:** orphaned `apps/admin-web/src/QuestionBankWorkspace.tsx` because it duplicated migrated responsibilities and had no production route ownership.
+- **NO CHANGE:** migrations, API business rules, Student/audit workstream.
 
 #### Implementation
 
-1. `5e2bbcb8e402927b6e5b3b43b6f9464b577ede62` — created `apps/admin-web/src/admin/questions/QuestionBankCreatePage.tsx`.
-   - owns only manual question creation and approved AI import;
-   - loads curriculum context;
-   - preserves class/subject/lesson scope requirements;
-   - preserves multiple-choice/true-false/direct-answer validation and normalization;
-   - preserves API success/replay/error semantics;
-   - handles session expiry through the normal Admin session boundary.
-2. `0d9b84a4c389ed0cef1a579e7772e2bde75a3cee` — updated `App.tsx` so `/app/questions/manage` renders `QuestionBankCreatePage` instead of the giant legacy workspace.
-3. Existing browser-visible labels and form semantics were intentionally preserved so the already-real Chromium manual-create/import flows validate replacement ownership instead of silently losing coverage.
-4. No cleanup/deletion of `QuestionBankWorkspace.tsx` was mixed into this batch; replacement was verified first.
+- `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1` — deleted `apps/admin-web/src/QuestionBankWorkspace.tsx` only.
+- No route or navigation semantics changed in this cleanup batch, so existing real Chromium Question Bank scenarios remained the correct executable parity proof.
 
 #### Exact-head verification
 
-Code head: `0d9b84a4c389ed0cef1a579e7772e2bde75a3cee`.
+On code head `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`:
 
-- Stage 13E Frontend Preparation `34739142677` — **SUCCESS**.
+- Stage 13E Frontend Preparation `34740148367` — **SUCCESS**.
   - lint — success;
   - strict typecheck — success;
   - unit tests — success;
   - production build — success.
-- Stage 13E Combined Integration `34739142686` — **SUCCESS**.
-  - API/Admin quality gates — success;
-  - clean PostgreSQL migrations — success;
-  - Stage13E DB contract — success;
-  - backend authority regressions — success;
-  - Stage12/Auth security regressions — success;
-  - deterministic browser fixture — success;
+- Stage 13E Admin AI Operations `34740148382` — **SUCCESS**.
+  - API quality/build — success;
+  - clean PostgreSQL migrations/contracts — success;
+  - authorization/observability/review-race/control tests — success;
+  - Stage12 durable execution + auth security regressions — success.
+- Stage 13E Combined Integration `34740148361` — **SUCCESS**.
+  - API/Admin quality — success;
+  - clean PostgreSQL migrations + DB contract — success;
+  - backend authority/security regressions — success;
+  - deterministic browser fixtures — success;
   - real Admin Chromium suite — success.
 
-Because `/app/questions/manage` now resolves to the new focused page, the existing real browser scenarios for **manual create** and **approved AI import + provenance** execute against the new owner and remained green.
+No hidden import dependency surfaced after deletion; compile/build and the full real-browser integration matrix stayed green.
 
-#### Decision after verification
+#### AR-06 closure decision
 
-Batch 2E is **VERIFIED**. AR-06 remains **ACTIVE** because source cleanup/final ownership closure has not yet been performed. Starting AR-07 now would be premature.
+AR-06 is **DONE / VERIFIED**. The giant Question Bank owner is gone, valid capabilities are owned by focused routes, server authority was preserved, and the final routed structure is green on exact code-head. Starting AR-07 is now allowed only after the documentation closure commits themselves are reconciled.
 
-## Explicit resume point for A / next Admin task
+## Explicit resume point for B / next Admin task
 
-1. Read `PROJECT_STATUS.md`, this log and the Super Admin workstream first.
+1. Re-read `PROJECT_STATUS.md`, this log and the Super Admin workstream first.
 2. Fetch current feature HEAD, live `main`, Draft PR #52 and exact-head CI.
-3. Documentation commits after code head `0d9b84a4…` may have triggered CI; close/inspect those before mutating code.
-4. Continue **AR-06 only**.
-5. Search all imports/routes/tests for `QuestionBankWorkspace.tsx` and `/app/questions/manage`.
-6. Remove dead/duplicate legacy list/detail/edit/review/regeneration/create/import composition only after proving no valid production/test capability depends on it.
-7. Decide from product workflow evidence whether `/app/questions/manage` remains the focused create/import route or should be replaced contextually; do not delete a useful route merely to reduce files.
-8. If route ownership changes, update Chromium assertions accordingly.
-9. Require final exact-head Frontend + PostgreSQL/API/Chromium green before closing AR-06.
-10. Only after documented AR-06 closure proceed to AR-07.
-11. Keep PR #52 Draft; no automatic merge.
+3. The AR-06 documentation closure commits occur after verified code head `02cf24d5…`; inspect any CI they trigger before code mutation.
+4. Treat **AR-06 as closed** unless a real regression is found.
+5. Start **AR-07 — Quiz Builder only**.
+6. Before modifying Quiz Builder, inspect migrations/schema, API/services/routes, frontend owner(s), tests and real browser flows; classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE.
+7. Preserve quiz lifecycle/composition/versioning and server authority; do not mirror tables or weaken tests.
+8. Do not begin AR-08 until AR-07 exact-head green and documentation are synchronized.
+9. Keep PR #52 Draft; no automatic merge.
 
 ## Current audit/findings register
 
@@ -167,11 +156,11 @@ Batch 2E is **VERIFIED**. AR-06 remains **ACTIVE** because source cleanup/final 
 | `ADMIN-005` | P1 | OCR review | missing visible evidence | FIXED / AR-04 |
 | `ADMIN-006` | P1 | AI review | pipeline internals in normal UX | FIXED / AR-05 |
 | `ADMIN-007` | P1 | AI authoring | manual internal-ID handoff | FIXED / AR-05 |
-| `ADMIN-008` | P1 | Question Bank | list/create/edit/review/history in one giant owner | IN PROGRESS / AR-06; route detail/edit/regeneration/create/import ownership verified; cleanup/final closure remains |
+| `ADMIN-008` | P1 | Question Bank | list/create/edit/review/history in one giant owner | FIXED / AR-06 |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track |
 
 ## Remaining Super Admin sequence
 
-`AR-06 cleanup/final exact-head closure → AR-07 Quiz Builder → AR-08 Students + Access Codes → AR-09 Cleanup/architecture enforcement → AR-10 A11y/RTL/performance/visual QA → final release/merge-readiness verification`
+`AR-07 Quiz Builder → AR-08 Students + Access Codes → AR-09 Cleanup/architecture enforcement → AR-10 A11y/RTL/performance/visual QA → final release/merge-readiness verification`
 
 No later AR stage starts before the current stage is verified and documented. PR #52 remains Draft.
