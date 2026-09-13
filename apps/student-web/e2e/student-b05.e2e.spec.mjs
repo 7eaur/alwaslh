@@ -30,6 +30,16 @@ async function capture(page, name) {
   await page.setViewportSize({ width: 390, height: 844 });
 }
 
+async function expectClickable(locator, { minHeight = 44 } = {}) {
+  const facts = await locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    const box = element.getBoundingClientRect();
+    return { cursor: style.cursor, height: box.height };
+  });
+  expect(facts.cursor).toBe("pointer");
+  expect(facts.height).toBeGreaterThanOrEqual(minHeight);
+}
+
 test("Student entry, installed welcome, help and support are learner-facing", async ({ browser }) => {
   const normal = await browser.newContext();
   const normalPage = await normal.newPage();
@@ -88,6 +98,9 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
   await expect(page.getByRole("link", { name: "ملاحظاتي", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "المحفوظات", exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "يحتاج مراجعة", exact: true })).toBeVisible();
+  const firstLibraryCard = page.locator(".student-library-card").first();
+  await expectClickable(firstLibraryCard, { minHeight: 96 });
+  await expect(firstLibraryCard.locator(".student-clickable-card__arrow")).toBeVisible();
   await capture(page, "library-overview");
 
   await page.getByRole("link", { name: "التنزيلات", exact: true }).click();
@@ -95,6 +108,7 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
   await expect(page.getByRole("heading", { name: "الدروس المحفوظة" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "دروس متاحة للتنزيل" })).toBeVisible();
   await expect(page.locator("[data-downloadable-lesson-id]").filter({ hasText: fixture.lessonTitle })).toBeVisible();
+  await expectClickable(page.getByRole("button", { name: "تحديث", exact: true }));
   await capture(page, "library-downloads");
 
   const lessonRow = page.locator("[data-downloadable-lesson-id]").filter({ hasText: fixture.lessonTitle });
@@ -115,9 +129,11 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
 
   await page.goto("/app/library/notes");
   await expect(page.getByRole("heading", { name: "لا توجد ملاحظات بعد" })).toBeVisible();
+  await expectClickable(page.getByRole("link", { name: "العودة إلى التعلّم" }));
   await capture(page, "library-notes-empty");
   await page.goto("/app/library/saved");
   await expect(page.getByRole("heading", { name: "لم تحفظ شيئًا بعد" })).toBeVisible();
+  await expectClickable(page.getByRole("link", { name: "فتح التدريب" }));
   await capture(page, "library-saved-empty");
   await page.goto("/app/library/review");
   await expect(page.getByRole("heading", { name: "لا توجد عناصر للمراجعة الآن" })).toBeVisible();
@@ -126,18 +142,23 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
   await page.goto("/app/notifications");
   await expect(page.getByRole("heading", { name: "ما يحتاج انتباهك" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "لا توجد إشعارات جديدة" })).toBeVisible();
+  await expectClickable(page.getByRole("link", { name: "العودة إلى الرئيسية" }));
   await capture(page, "notifications-empty");
 
   await page.goto("/app/progress");
   await expect(page.getByRole("heading", { name: "شاهد تقدمك بدون أرقام مربكة" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "ابدأ التعلّم ليظهر تقدمك هنا" })).toBeVisible();
+  await expectClickable(page.getByRole("link", { name: "فتح التعلّم" }));
+  const staticAchievementPanel = page.locator(".future-summary-panel--wide");
+  const staticCursor = await staticAchievementPanel.evaluate((element) => getComputedStyle(element).cursor);
+  expect(staticCursor).not.toBe("pointer");
   await capture(page, "progress-empty");
 
   await page.getByRole("link", { name: "حسابي", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/account$/);
   await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "لديك رمز صف جديد؟" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "تسجيل الخروج" })).toBeVisible();
+  await expectClickable(page.getByRole("button", { name: "تسجيل الخروج" }));
   await expect(page.getByRole("link", { name: "التعليمات والمساعدة" })).toBeVisible();
   await expect(page.getByRole("link", { name: "الدعم والتواصل" })).toBeVisible();
   await capture(page, "account");
