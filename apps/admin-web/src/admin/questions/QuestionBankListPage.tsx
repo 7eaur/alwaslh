@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
+import type { FormEvent, ReactNode } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ApiRequestError,
   type AdminCurriculumSnapshot,
@@ -47,6 +47,7 @@ function originLabel(origin: QuestionBankOrigin): string {
 }
 
 export function QuestionBankListPage({ onSessionExpired }: Props) {
+  const navigate = useNavigate();
   const [curriculum, setCurriculum] = useState<AdminCurriculumSnapshot | null>(null);
   const [items, setItems] = useState<QuestionBankListItem[]>([]);
   const [pagination, setPagination] = useState({ total: 0, limit: PAGE_SIZE, offset: 0 });
@@ -131,14 +132,14 @@ export function QuestionBankListPage({ onSessionExpired }: Props) {
   }
 
   return (
-    <section className="workspace-page" aria-labelledby="question-bank-title">
+    <section className="question-bank" aria-labelledby="question-bank-title">
       <header className="workspace-header">
         <div>
           <p className="eyebrow">المحتوى التعليمي</p>
           <h1 id="question-bank-title">بنك الأسئلة</h1>
           <p>ابحث عن السؤال ثم افتح صفحته المستقلة للمراجعة، المصدر، السجل وإجراءات دورة النشر.</p>
         </div>
-        <div className="workspace-header-actions">
+        <div className="qb-header-actions">
           <span className="count-pill">{pagination.total} سؤال</span>
           <button className="secondary-button" type="button" onClick={() => void loadList()} disabled={state === "loading"}>
             تحديث
@@ -225,16 +226,24 @@ export function QuestionBankListPage({ onSessionExpired }: Props) {
         <div className="qb-list-panel">
           <div className="qb-list" aria-label="قائمة الأسئلة">
             {items.map((item) => (
-              <Link className="qb-question-card" key={item.id} to={`/app/questions/${item.id}`}>
-                <div className="qb-question-card-topline">
-                  <span className={`status-chip status-${item.currentRevision?.status ?? "draft"}`}>
+              <button
+                className="qb-question-card"
+                key={item.id}
+                type="button"
+                onClick={() => navigate(`/app/questions/${item.id}`)}
+              >
+                <div className="qb-card-topline">
+                  <span className={`status-chip qb-status-${item.currentRevision?.status ?? "none"}`}>
                     {statusLabel(item.currentRevision?.status)}
                   </span>
-                  <span>{originLabel(item.origin)}</span>
+                  <span className="qb-origin">{originLabel(item.origin)}</span>
                 </div>
                 <strong>{item.currentRevision?.prompt ?? "سؤال بلا نسخة حالية"}</strong>
-                <small>نسخة {item.currentRevision?.revisionNumber ?? "—"} · افتح السؤال لمراجعة التفاصيل والسجل</small>
-              </Link>
+                <div className="qb-card-meta">
+                  <span>نسخة {item.currentRevision?.revisionNumber ?? "—"}</span>
+                  <span>افتح السؤال للمراجعة والتفاصيل</span>
+                </div>
+              </button>
             ))}
           </div>
 
@@ -265,9 +274,9 @@ export function QuestionBankListPage({ onSessionExpired }: Props) {
   );
 }
 
-function StatePanel({ title, body, action }: { title: string; body: string; action?: React.ReactNode }) {
+function StatePanel({ title, body, action }: { title: string; body: string; action?: ReactNode }) {
   return (
-    <div className="workspace-state" role="status">
+    <div className="qb-list-panel" role="status">
       <strong>{title}</strong>
       <p>{body}</p>
       {action}
