@@ -4,8 +4,9 @@
 
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no automatic merge.  
-**Live main reference for this checkpoint:** `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.  
-**Super Admin:** AR-01 through AR-07 DONE / VERIFIED. AR-08 Students + Access Codes is ACTIVE; Batch 1 focused Students route is VERIFIED. AR-09+ NOT STARTED.
+**Live main reference checked in this run:** `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`.  
+**Current code-head before this documentation checkpoint:** `20ed69e46d6693925be42464f0c9f85691cec203`.  
+**Super Admin:** AR-01 through AR-07 DONE / VERIFIED. AR-08 Students + Access Codes ACTIVE; focused Students is VERIFIED and focused Access Codes implementation/legacy cleanup is implemented but awaiting exact-head matrix completion. AR-09+ NOT STARTED.
 
 ## Stage ledger
 
@@ -16,61 +17,62 @@
 - AR-05 — Reviews + AI — DONE / VERIFIED. Final checkpoint `cda2c3a683c6101db12f0c7cfad772226c234e0d`; Frontend `34729512441`, Admin AI `34729512433`, Combined `34729512404` — SUCCESS.
 - AR-06 — Question Bank — DONE / VERIFIED. Final code-head `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
 - AR-07 — Quiz Builder — DONE / VERIFIED. Final code-head `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
-- AR-08 — Students + Access Codes — ACTIVE. Batch 1 focused Students route code-head `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb`; Frontend `34751701107`, Admin AI `34751701104`, Combined `34751701154` — SUCCESS.
+- AR-08 — Students + Access Codes — ACTIVE.
+  - Batch 1 focused Students route — VERIFIED at `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb`; Frontend `34751701107`, Admin AI `34751701104`, Combined `34751701154` — SUCCESS.
+  - Batch 2 focused Access Codes ownership — implementation/parity chain present; final legacy-seam cleanup code-head `20ed69e46d6693925be42464f0c9f85691cec203`; exact-head matrix still being reconciled, so stage is not yet CLOSED.
 - AR-09 — Cleanup / architecture enforcement — NOT STARTED.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
-## AR-07 closure — Quiz Builder — DONE / VERIFIED
+## AR-08 current truth
 
-### Verified ownership sequence
+### What was already present when this run started
 
-- Batch 1 — focused list ownership — VERIFIED. Code `7746000748129a659e098e016d3ffbfd4d5ddc46`, `30d9443ed1c159440d38dc76db61686028c3d028`, `18607a1bf31392f9143a0e68c4531c972d4199d5`; Frontend `34741610234`, Admin AI `34741610225`, Combined `34741610238` — SUCCESS.
-- Batch 2A — canonical quiz entity / deep link — VERIFIED. Code-head `7b3d23812bafeea25d6c86a2b9a593d4dcf01cac`; Frontend `34742505009`, Admin AI `34742505020`, Combined `34742505015` — SUCCESS.
-- Batch 2B — lifecycle/export on entity + routed Chromium — VERIFIED. Code `39f0d1ef961208b0697b1c8b3c80e352723fad82`, `53efb6951b6f30cc95e84646973d974d2fc4536c`; Frontend `34743947733`, Admin AI `34743947732`, Combined `34743947735` — SUCCESS.
-- Batch 2C — entity-owned draft version composition/editing — VERIFIED. Code-head `f9180093617fb4974d1f8652a96b3d1f6fe77fad`; Frontend `34745428055`, Admin AI `34745428031`, Combined `34745428045` — SUCCESS.
-- Batch 2D — real Chromium version-management parity — VERIFIED. Code-head `df73f9d136bc7d84179601a475627ce47e0d1c58`; Frontend `34746324618`, Admin AI `34746324625`, Combined `34746324634` — SUCCESS.
-- Batch 2E — legacy workspace reduced to create-only seam — VERIFIED. Code-head `1081152e6e95a11684de26398661326f50e82bfe`; Frontend `34747560417`, Admin AI `34747560473`, Combined `34747560426` — SUCCESS.
-- Batch 2F — focused create ownership + executable proof + legacy seam removal — VERIFIED. Focused creation lives at `apps/admin-web/src/admin/quizzes/QuizBuilderCreatePage.tsx`; direct routing commit `f62290645360b33e75943c305e69baf49ad4a3a7`; legacy root `apps/admin-web/src/QuizBuilderWorkspace.tsx` removed in final code-head `c5bf37d4d72e341817970c7f95ff25bd771f8e17`.
+The branch had advanced beyond the previous documentation checkpoint without the three continuity files being updated. The unrecorded chain was inspected before any new mutation:
 
-### Final exact-head evidence
+- `5485a2cfb63ba2d664dce0cfa9556b73e43cb042` — added focused `apps/admin-web/src/admin/access-codes/AdminAccessCodesPage.tsx`.
+- `dbb393af86ae040f174c1dee9dad819e59adfccd` — reduced root `AdminStudentAccessWorkspace.tsx` from the giant combined workspace to a one-line Access Codes alias.
+- `bfac1372a2e6e5794e76c35ed1f75f3d10f1d80f` — real Chromium proof for direct focused Access Codes generation/filtering/non-destructive revoke and no legacy tabs.
+- `cbbb7eca0d7b97aed0dd5caef8d7ef2bb4c1b795` — enabled Stage13G verification on the Super Admin rebuild branch.
+- `67981130b1234ea55932e93c136208835572992e`, `91ea77bc1c2222535a94ee288e695c452f665302`, `8f90e6fcfa5fac46f4744ef319397485c64aceff` — aligned existing AI-authoring/export browser assertions with current semantic UI/fixture reality without weakening backend rules.
 
-On final AR-07 code-head `c5bf37d4d72e341817970c7f95ff25bd771f8e17`:
-- Frontend `34750417663` — SUCCESS.
-- Admin AI `34750417642` — SUCCESS.
-- Combined `34750417627` — SUCCESS.
-- Combined job `103705843424` proved API/Admin quality gates, clean PostgreSQL migrations, Stage13E database contract, backend authority regressions, wider Stage12/auth security regressions, deterministic fixture setup and the real Admin Chromium suite all passed on the same code-head.
+Exact-head `8f90e6fcfa5fac46f4744ef319397485c64aceff` was fully green before cleanup:
+- Frontend `34753821850` — SUCCESS.
+- Admin AI `34753821821` — SUCCESS.
+- Combined `34753821791` — SUCCESS.
+- Stage13G Admin Operations `34753821827` — SUCCESS.
 
-### Closure decision
+### Cleanup performed in this run
 
-AR-07 is **DONE / VERIFIED**. The giant Quiz Builder ownership has been replaced by focused list, canonical entity detail/deep-link, entity-owned draft version composition, lifecycle/export, and focused create flow. The temporary root legacy seam has been removed only after executable replacement parity and exact-head green verification. No migration, backend business authority, Question Bank rule, or Student workstream contract was weakened to accomplish the cleanup.
+Inspection confirmed the remaining root `AdminStudentAccessWorkspace.tsx` contained only:
 
-## AR-08 — Students + Access Codes — ACTIVE
+`export { AdminAccessCodesPage as AdminStudentAccessWorkspace } from "./admin/access-codes/AdminAccessCodesPage";`
 
-### Batch 1 — focused Students route ownership — VERIFIED
-
-Evidence-driven finding: both `/app/students` and `/app/access-codes` previously rendered the same `AdminStudentAccessWorkspace`, so the approved IA split existed in navigation but not in actual frontend ownership.
+Classification:
+- **KEEP:** `AdminAccessCodesPage`, server/API/PostgreSQL authority, Students focused page, existing access-code business rules, Student/audit workstream.
+- **IMPROVE:** route `/app/access-codes` should import its true focused owner directly.
+- **REMOVE:** obsolete one-line root alias after executable parity.
+- **NO CHANGE:** migrations, backend validation/auth/access rules, Student-facing contracts.
 
 Implemented:
-- `995203cf9344d5c4c1f3b41b208fdfe2d6bd3507` — added focused `apps/admin-web/src/admin/students/AdminStudentsPage.tsx`, owning only student lookup, inspection, temporary-password support, device rebind, entitlement revocation, devices, redemption history and activity.
-- `6d8ddf181c9eff6f909c11195eb9ecee4529c47e` — routed `/app/students` directly to the focused Students page while leaving `/app/access-codes` on the legacy workspace temporarily for parity-first migration.
-- `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb` — updated real Chromium coverage to prove the focused Students route has no Access Codes tab, preserves student support mutations/session-expiry behavior, and verifies both Students and Access Codes routes at 390px without horizontal overflow.
+- `7e950c0b4898ad27797e9c6312fe2b84c4f98959` — `App.tsx` imports `AdminAccessCodesPage` directly and `/app/access-codes` renders it.
+- `20ed69e46d6693925be42464f0c9f85691cec203` — deleted obsolete `apps/admin-web/src/AdminStudentAccessWorkspace.tsx` alias.
 
-Exact-head verification on `dc8d3b4e44fac90cca23cc21d15e68e90101cbbb`:
-- Frontend/Admin Web quality `34751701107` — SUCCESS.
-- Admin AI `34751701104` — SUCCESS.
-- Combined `34751701154` — SUCCESS.
-- Combined job `103709249693` passed API/Admin quality gates, clean PostgreSQL migrations, DB contract, backend authority regressions, Stage12/auth security regressions, deterministic browser fixtures and real Admin Chromium.
+### Exact-head verification state for `20ed69e...`
 
-No migration, backend validation, access-code issuance/redemption/revocation contract, or Student workstream code was changed. AR-08 remains ACTIVE because Access Codes still needs focused route ownership and the temporary giant workspace must remain until executable parity is proven.
+Run IDs created for the same exact code-head:
+- Frontend `34754057319` — pending at the last observation in this checkpoint.
+- Admin AI `34754057304` — SUCCESS.
+- Combined `34754057322` — in progress at the last observation.
+- Stage13G Admin Operations `34754057370` — in progress at the last observation.
 
-## Shared resume point for B / next AR-08 batch only
+Because not all four gates had completed successfully at documentation time, **AR-08 remains ACTIVE**. Do not interpret the cleanup commit itself as stage closure.
 
-1. Re-read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before mutation.
-2. Fetch current live `main`, feature HEAD, Draft PR #52 and exact-head CI; reconcile documentation-only runs from this checkpoint first if still active.
-3. Continue **AR-08 only**. Do not start AR-09.
-4. Extract Access Codes ownership from `AdminStudentAccessWorkspace` into a focused page under `apps/admin-web/src/admin/access-codes/` and route `/app/access-codes` directly to it.
-5. Preserve the existing backend contracts for code inventory/filtering, full/class-code generation, expiry, redemption state, class association and non-destructive bulk revocation. Do not infer or duplicate business authority in the browser.
-6. Update real Chromium so `/app/access-codes` is directly usable without switching a legacy tab and still proves generation, filtering, bulk revoke and 390px no-overflow.
-7. Only after executable parity is green should the remaining legacy `AdminStudentAccessWorkspace` seam be removed or reduced; shared presentational helpers may be extracted if that reduces duplication without changing behavior.
-8. Require applicable lint/typecheck/unit/build + clean PostgreSQL/backend/security + real Chromium before marking the next sub-batch verified.
-9. Keep PR #52 Draft; no automatic merge. Preserve parallel Student/audit work unchanged.
+## Shared resume point for B — close AR-08 before any AR-09 work
+
+1. Re-read this file, `PROJECT_ENGINEERING_LOG.md` and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` first.
+2. Fetch live `main`, current branch HEAD, Draft PR #52 and CI for both the documented code-head `20ed69e...` and the current documentation HEAD.
+3. Reconcile these exact code-head runs: Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370`.
+4. If every required code-head gate is SUCCESS, verify there is no remaining import/reference to `AdminStudentAccessWorkspace` and that `/app/students` and `/app/access-codes` directly own their separate focused pages.
+5. Only then mark **AR-08 DONE / VERIFIED**, update all three continuity files and PR #52, and stop that batch. Do not begin AR-09 in the same unresolved verification window.
+6. If any run fails, inspect the failing job/log and fix the root cause without weakening tests/backend/business rules; rerun exact-head verification before closure.
+7. Keep PR #52 Draft; no automatic merge. Preserve parallel Student/audit work unchanged.
