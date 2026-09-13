@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — Student main preserved; Super Admin AR-01 through AR-05 verified; AR-06 Batch 2A code verified and AR-06 remains active.**
+Last consolidated: **2026-09-13 — Student main preserved; Super Admin AR-01 through AR-05 verified; AR-06 Batch 2B routed editor verified and AR-06 remains active.**
 
 ## Project understanding
 
@@ -57,14 +57,15 @@ Stable invariants:
 - **AD-ADMIN-008 — approved AI output is applied contextually, never by manual internal-ID handoff.**
 - **AD-ADMIN-009 — Question Bank entity detail is route-owned.** `/app/questions/:questionId` owns canonical detail/review/history while legacy composition may remain only as a temporary mutation adapter.
 - **AD-ADMIN-010 — Question Bank decomposition is parity-first.** List/detail navigation can migrate before create/import/edit/regeneration only if proven mutation capabilities remain reachable and server-authoritative during the transition.
+- **AD-ADMIN-011 — Question editing is entity-owned.** The routed question detail owns current-revision edit UX while the existing API/PostgreSQL revision command remains canonical.
 
 ## Parallel Student/audit state
 
-Live `main` observed at the start of AR-06 Batch 2A:
+Live `main` observed at the start of AR-06 Batch 2B:
 
-`c3734366c132ea3919a925bdd0dd37cfd5d82104`
+`343ff1fd7b3d64d7e990b72606695365f520fa58`
 
-This is newer than the Admin branch's earlier documented Student checkpoint. The Admin rebuild did not merge, reset, overwrite or otherwise modify the Student workstream in this batch.
+This includes the independently merged Student PR #55. The Admin rebuild did not merge, reset, overwrite or otherwise modify the Student workstream in this batch.
 
 Architecture/security audit facts retained:
 
@@ -92,10 +93,10 @@ Architecture/security audit facts retained:
 
 ### AR-03 — DONE / VERIFIED
 
-- correct Curriculum backend/domain contracts preserved;
+- correct Curriculum backend/domain rules preserved;
 - giant composition decomposed into hierarchy browsing, contextual creation and entity actions;
 - secondary rename/status/order controls moved behind contextual/advanced management;
-- API/PostgreSQL/Chromium verification completed.
+- API/PostgreSQL/Chromium curriculum journey verified.
 
 ### AR-04 — DONE / VERIFIED
 
@@ -155,30 +156,28 @@ Verified head: `1677770dc6402e4b2825c1b8dd50f546fdf74d0c`.
 - Frontend `34731668746` — SUCCESS.
 - Combined `34731668810` — SUCCESS including clean migrations, DB contracts, authority/security regressions, deterministic fixtures and real Chromium.
 
-#### Batch 2A — routed list becomes the normal browsing flow — CODE VERIFIED
+#### Batch 2A — routed list becomes the normal browsing flow — VERIFIED
 
 **State received and reconciliation**
 
 1. Re-read `PROJECT_STATUS.md`, this log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before changing code.
-2. Re-fetched live refs: `main@c3734366c132ea3919a925bdd0dd37cfd5d82104`; Admin branch was `68dbda4d3463cb6f04b374815e9dd47a59be7a2b` before new changes.
-3. Confirmed Draft PR #52 remains draft.
-4. Detected that prose still referenced the earlier Student main checkpoint and AR-06 Batch 1 code head, so current refs/commits/CI were inspected before proceeding.
-5. Inspected Question Bank migration `0019_question_bank.sql`, API HTTP/service lifecycle implementation, frontend client/adapters, legacy workspace, route-owned detail page and API unit coverage.
-6. Confirmed no missing backend CRUD problem: PostgreSQL/API already enforce open/published revision uniqueness, lifecycle validation and provenance; the next root problem is frontend composition/route ownership.
+2. Re-fetched live refs and Draft PR #52.
+3. Inspected Question Bank migration `0019_question_bank.sql`, API/service lifecycle implementation, frontend client/adapters, legacy workspace, route-owned detail page and existing tests.
+4. Confirmed no missing backend CRUD problem: PostgreSQL/API already enforce open/published revision uniqueness, lifecycle validation and provenance; the root problem is frontend composition/route ownership.
 
 **Decision/classification for Batch 2A**
 
 - **KEEP:** all existing PostgreSQL/API lifecycle and mutation authority.
-- **KEEP temporarily:** legacy manual create, approved-AI import, edit and regeneration inside the old workspace until each receives contextual route ownership.
+- **KEEP temporarily:** manual create, approved-AI import, edit and regeneration inside the old workspace until each receives contextual route ownership.
 - **IMPROVE/REFACTOR:** `/app/questions` collection ownership and list→entity navigation.
 - **REBUILD incrementally:** giant workspace composition, without a flag-day rewrite.
-- **REMOVE later:** normal split-pane selection/manual technical handoffs only after route-owned parity is complete.
+- **REMOVE later:** normal split-pane/manual technical handoffs only after route-owned parity is complete.
 
 **Code changes**
 
-1. `931254e3b62d4cc8465f0bf7cd503ba1e32ae54c` — added `apps/admin-web/src/admin/questions/QuestionBankListPage.tsx` with focused list/filter/pagination behavior and entity navigation.
-2. `09a84c95b2de59ea318ff43171883756a776a79b` — updated `App.tsx`: `/app/questions` now uses the focused list; `/app/questions/:questionId` remains canonical detail; `/app/questions/manage` temporarily mounts the legacy mutation workspace for parity.
-3. `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac` — aligned the new list with shared styles/types and route navigation behavior.
+1. `931254e3b62d4cc8465f0bf7cd503ba1e32ae54c` — added focused `QuestionBankListPage.tsx` with server-backed list/filter/pagination and entity navigation.
+2. `09a84c95b2de59ea318ff43171883756a776a79b` — `/app/questions` now uses the focused list; `/app/questions/:questionId` remains canonical detail; `/app/questions/manage` temporarily mounts the legacy mutation workspace.
+3. `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac` — aligned the new list with shared styles/types.
 4. No API, service, migration or Student code was changed.
 
 **Verification on exact code head `ed40fafd74baba3934e2ee4834bc0b61c2fe70ac`**
@@ -186,33 +185,67 @@ Verified head: `1677770dc6402e4b2825c1b8dd50f546fdf74d0c`.
 - Stage 13E Admin AI Operations `34733273139` — SUCCESS.
 - Stage 13E Frontend Preparation `34733273136` — SUCCESS.
 - Stage 13E Combined Integration `34733273134` — SUCCESS.
-- Combined includes API/Admin quality gates, all clean PostgreSQL migrations/contracts, backend authority/security regressions, deterministic fixture setup and real Admin Chromium.
 
-**What Batch 2A deliberately did not claim**
+#### Batch 2B — route-owned current-revision editor — VERIFIED
 
-- current-revision editing has **not** yet moved into `QuestionBankDetailPage`;
-- approved regeneration has **not** yet moved into the route-owned detail flow;
-- manual create/import remains in `/app/questions/manage`;
-- direct deep-link + list→detail + routed lifecycle/edit/regeneration browser coverage still needs explicit AR-06 coverage;
-- AR-06 therefore remains **ACTIVE** and AR-07 must not start.
+**State received from the prior A/B handoff**
 
-**Documentation checkpoint**
+1. Read `PROJECT_STATUS.md`, this log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before mutation.
+2. Fetched live refs:
+   - `main@343ff1fd7b3d64d7e990b72606695365f520fa58` (Student PR #55 already merged independently);
+   - Admin branch received at `fec394af52bcd205e260de76ef5e89eff87cef7c`.
+3. Confirmed Draft PR #52 remains open and draft.
+4. Closed the received documentation-head gate before editing:
+   - Stage 13E Admin AI Operations `34733490675` — SUCCESS;
+   - Stage 13E Combined Integration `34733490658` — SUCCESS.
+5. Inspected `QuestionBankDetailPage.tsx`, legacy `QuestionBankWorkspace.tsx`, and `question-bank-api.ts` to compare the existing edit contract and validation behavior.
+6. Confirmed editing is already a mature server-owned operation: the UI sends the edited question through `editQuestionBankItem`; the API/PostgreSQL command creates a new revision rather than rewriting historical content. The existing UI restriction is that review-state questions are not edited.
 
-- `PROJECT_STATUS.md` updated after the verified code head; its documentation commit is `90ea787484983fe170ac93fa5630e735dfd6ca6d`.
-- This log and the workstream file are updated as the same handoff sequence; because documentation commits advance HEAD, the next task must inspect the final documentation-head CI before changing code.
+**Batch 2B decision**
+
+- **KEEP:** the existing `PATCH /v1/admin/question-bank/:itemId` API command, PostgreSQL revision/history authority and review restriction.
+- **REFACTOR:** current-revision edit ownership from the legacy all-in-one workspace into the route-owned question entity.
+- **IMPROVE:** feedback/error presentation and canonical reload after mutation.
+- **KEEP temporarily:** approved regeneration and manual create/import in `/app/questions/manage` until their focused ownership is separately verified.
+- **NO CHANGE:** migrations, backend lifecycle rules and Student code.
+
+**Code change**
+
+`43162f9b4f0468af96ae726f16054a868aff605a` — `refactor(admin): move question editing into routed detail`
+
+- `QuestionBankDetailPage` now owns edit state and the human editor for draft/published questions;
+- validation mirrors the existing contract: non-empty prompt, four complete MCQ options, canonical true/false shape, direct-question answer rules and answer-state handling;
+- normalization trims question content and derives canonical answer text consistently;
+- saving calls the existing `editQuestionBankItem` command and then reloads canonical detail/history from the server;
+- review-state edit remains unavailable;
+- historical revisions are not mutated by the browser.
+
+**Exact-head verification on `43162f9b4f0468af96ae726f16054a868aff605a`**
+
+- Stage 13E Frontend Preparation `34733906701` — SUCCESS.
+- Stage 13E Admin AI Operations `34733906692` — SUCCESS.
+- Stage 13E Combined Integration `34733906716` — SUCCESS.
+- Combined includes API/Admin quality gates, clean PostgreSQL migrations/contracts, backend authority/security regressions and the real Chromium regression suite.
+
+**What Batch 2B does not claim**
+
+- it does not claim dedicated routed-editor Chromium coverage yet; Combined proves no regression in the existing suite, not explicit ownership coverage for the new editor;
+- approved regeneration is still legacy-owned;
+- manual create/import remain under `/app/questions/manage`;
+- the legacy workspace cannot be removed yet;
+- AR-06 remains **ACTIVE** and AR-07 must not start.
 
 #### Explicit resume point for the next Admin task
 
 **Do not start AR-07. Continue AR-06 only.**
 
-1. Read `PROJECT_STATUS.md`, this log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`; fetch live `main`, branch HEAD, Draft PR #52 and latest exact-head CI.
-2. If documentation-head CI is active, finish observing it before changing code.
-3. Move `editQuestionBankItem` / current-revision editor ownership into `QuestionBankDetailPage` while preserving server lifecycle authority and review restrictions.
-4. Then move approved regeneration contextually to the question entity flow.
-5. Keep manual create/import in `/app/questions/manage` until a separate focused ownership path is implemented and verified.
-6. Add explicit browser coverage for direct deep-link, `/app/questions` list→detail navigation and routed lifecycle/edit/regeneration behavior.
-7. Do not remove legacy workspace until all mutation parity is covered.
-8. Require exact-head Frontend + API/PostgreSQL/Chromium evidence before declaring AR-06 COMPLETE.
+1. Re-read the three canonical handoff documents and fetch live `main`, Admin branch HEAD, Draft PR #52 and exact-head CI.
+2. Because documentation commits advance branch HEAD after the verified code commit, first close/record CI for the final documentation head before code mutation.
+3. Move approved question regeneration into `QuestionBankDetailPage` contextually while retaining server approval/provenance/idempotency/source validation.
+4. Keep manual create/import in `/app/questions/manage` until focused ownership is implemented and verified.
+5. Add explicit browser coverage for direct `/app/questions/:questionId`, `/app/questions` list→detail, routed edit, routed regeneration, and review/publish/reject lifecycle authority.
+6. Do not remove the legacy workspace until create/import/edit/regeneration parity is proven.
+7. Require exact-head Frontend + API/PostgreSQL/Chromium evidence that explicitly covers routed workflows before declaring AR-06 COMPLETE.
 
 ## Audit findings
 
@@ -232,7 +265,7 @@ Verified head: `1677770dc6402e4b2825c1b8dd50f546fdf74d0c`.
 | `ADMIN-005` | P1 | OCR review | text lacked visible source evidence | protected source preview | FIXED / AR-04 |
 | `ADMIN-006` | P1 | AI review | normal review exposed pipeline internals | content-first review | FIXED / AR-05 |
 | `ADMIN-007` | P1 | AI authoring | manual output-ID handoff | contextual apply/import | FIXED / AR-05 |
-| `ADMIN-008` | P1 | Question Bank IA | list/editor/review/history combined | route-owned list/detail + staged mutation decomposition | IN PROGRESS / AR-06 |
+| `ADMIN-008` | P1 | Question Bank IA | list/editor/review/history combined | route-owned list/detail/editor + staged mutation decomposition | IN PROGRESS / AR-06 |
 | `UX-COPY-101` | P1 | Downloads/Account | technical Student copy remains | Student UX workstream | OPEN |
 | `STUDENT-016I` | P1 | Offline/PWA | cold-start offline Reader not closed | normal roadmap | PAUSED |
 | `AI-012..AI-019` | P2 | AI | live provider readiness not proven | live verification | NOT YET VERIFIED |
