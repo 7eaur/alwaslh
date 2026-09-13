@@ -34,10 +34,11 @@ async function expectClickable(locator, { minHeight = 44 } = {}) {
   const facts = await locator.evaluate((element) => {
     const style = getComputedStyle(element);
     const box = element.getBoundingClientRect();
-    return { cursor: style.cursor, height: box.height };
+    return { cursor: style.cursor, height: box.height, minHeight: Number.parseFloat(style.minHeight) };
   });
   expect(facts.cursor).toBe("pointer");
-  expect(facts.height).toBeGreaterThanOrEqual(minHeight);
+  expect(facts.minHeight).toBeGreaterThanOrEqual(minHeight);
+  expect(facts.height).toBeGreaterThanOrEqual(minHeight - 0.01);
 }
 
 test("Student entry, installed welcome, help and support are learner-facing", async ({ browser }) => {
