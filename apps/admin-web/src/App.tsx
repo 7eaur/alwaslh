@@ -13,6 +13,7 @@ import { AdminAiAuthoringWorkspace } from "./AdminAiAuthoringWorkspace";
 import { AdminReportsWorkspace } from "./AdminReportsWorkspace";
 import { AiOperationsPage } from "./AiOperationsPage";
 import { AdminAccessCodesPage } from "./admin/access-codes/AdminAccessCodesPage";
+import { LessonAuthoringParityPanel } from "./admin/content/LessonAuthoringParityPanel";
 import { AdminOverviewPage } from "./admin/overview/AdminOverviewPage";
 import { AdminNotificationsPage } from "./admin/operations/AdminNotificationsPage";
 import { AdminOperationsAuditPage } from "./admin/operations/AdminOperationsAuditPage";
@@ -30,7 +31,6 @@ import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
-import { LessonAuthoringParityPanel } from "./LessonAuthoringParityPanel";
 import { LoginScreen } from "./LoginScreen";
 
 function errorMessage(error: unknown): string {
