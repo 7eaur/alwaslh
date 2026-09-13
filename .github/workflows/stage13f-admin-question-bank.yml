@@ -68,6 +68,7 @@ jobs:
       STAGE13F_ADMIN_IDENTIFIER: stage13f-admin-ui
       STAGE13F_ADMIN_PASSWORD: Stage13fAdminUiPass123!
       STAGE13F_E2E_OUTPUT_ID: 13000000-0000-4000-8000-000000000004
+      STAGE13F_E2E_REGEN_OUTPUT_ID: 13000000-0000-4000-8000-000000000007
       STAGE13E_E2E_API_BASE_URL: http://127.0.0.1:3000
       STAGE13E_E2E_ADMIN_ORIGIN: http://127.0.0.1:5175
     steps:
@@ -127,8 +128,10 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_revisions where prompt='سؤال الصفحة الثانية في بنك الأسئلة' and status='draft'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_revisions where prompt='أي الخيارات يمثل وحدة قياس الطاقة؟' and status='review'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_revisions where prompt='ما تعريف الطاقة في هذا الاختبار؟' and status='published'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_revision_sources s join question_bank_revisions r on r.id=s.revision_id where r.prompt='سؤال تجريبي رقم 30 لملء الصفحة الأولى' and r.status='published'")" = "1"
           test "$(psql "$DATABASE_URL" -Atqc "select action::text from ai_output_review_events where ai_output_id='$STAGE13F_E2E_OUTPUT_ID' order by revision desc limit 1")" = "approve"
-          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_ai_imports where ai_output_id='$STAGE13F_E2E_OUTPUT_ID'")" = "0"
+          test "$(psql "$DATABASE_URL" -Atqc "select action::text from ai_output_review_events where ai_output_id='$STAGE13F_E2E_REGEN_OUTPUT_ID' order by revision desc limit 1")" = "approve"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_ai_imports where ai_output_id in ('$STAGE13F_E2E_OUTPUT_ID','$STAGE13F_E2E_REGEN_OUTPUT_ID')")" = "0"
       - name: Install Chromium
         run: npx --prefix apps/admin-web playwright install --with-deps chromium
       - name: Run Stage13F real Admin Chromium suite
