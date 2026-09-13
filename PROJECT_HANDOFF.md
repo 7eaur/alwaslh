@@ -1,233 +1,208 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> هذه الوثيقة هي نقطة البداية للمحادثة الهندسية التالية. لا تعتمد على ذاكرة المحادثات السابقة بدل المستودع. الكود + PostgreSQL migrations + الاختبارات/CI + verified runtime + الوثائق الحالية هي Source of Truth.
+> نقطة البداية للمحادثة الهندسية التالية. لا تعتمد على ذاكرة المحادثات السابقة بدل المستودع. الكود + PostgreSQL migrations + الاختبارات/CI + verified runtime + الوثائق الحالية هي Source of Truth.
 
-Last synchronized: **2026-09-13 — PR #55 exact-head closure in progress; stale browser acceptance repaired.**
+Last synchronized: **2026-09-13 — active batch `STUDENT-016I` on `stage16/student-016i`.**
 
 ## 1. Start here — mandatory
 
 قبل أي تعديل جديد:
 
 1. Confirm repository: `7eaur/alwaslh`.
-2. Live-check `main` HEAD and open PRs. Do not assume SHAs in prose are still latest.
-3. Read, in this order:
-   - `PROJECT_HANDOFF.md` — this file;
-   - `PROJECT_STATUS.md` — immediate execution truth;
-   - `PROJECT_ENGINEERING_LOG.md` — decisions/findings/evidence;
-   - `docs/product/CURRENT_PRODUCT_OVERRIDES.md`;
-   - `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md` — binding Student IA/UX architecture;
-   - `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md` — Stage17–19 pre-integration surface rules;
-   - `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md` — active PR #55 Library decision.
-4. For current work, inspect actual changed code/tests before editing.
-5. Anything not inspected or executed = `NOT YET VERIFIED`.
+2. Live-check `main`, open PRs and exact-head CI.
+3. Read in order:
+   - `PROJECT_HANDOFF.md`
+   - `PROJECT_STATUS.md`
+   - `PROJECT_ENGINEERING_LOG.md`
+   - `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
+   - `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
+   - `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
+   - `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
+   - `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`
+4. Inspect actual changed code/tests before editing.
+5. Anything not inspected/executed = `NOT YET VERIFIED`.
 
 ---
 
-## 2. Verified merged Student baseline
+## 2. Latest verified merged baseline
 
-### PR #53 — Student Experience Rebuild
+### PR #53
 
-MERGED / VERIFIED.
+- MERGED / VERIFIED;
+- accepted head `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
+- **23/23 workflows SUCCESS**;
+- merge commit `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
 
-- accepted head: `4c94063c5f09934353f5dbe1e2bb9509286e2812`;
-- exact-head matrix: **23/23 SUCCESS**;
-- merge commit: `d8ccb0b7ba004618cbcbdd96937d5cded47161dc`.
+### PR #54
 
-Established Welcome/Auth/Recovery/Help/Support, unified shell, Home/Learn/Reader, Practice/Assessment/Result, Downloads/Account, learner-safe errors and reduced-motion-safe interaction.
+- MERGED / VERIFIED;
+- accepted head `4b6f24c5cb9bd0da525ecfebc59b1ebbf156c903`;
+- **23/23 workflows SUCCESS**;
+- Visual QA accepted;
+- merge commit `c3734366c132ea3919a925bdd0dd37cfd5d82104`.
 
-### PR #54 — Future Student Surfaces
+### PR #55 — Library Overview Refinement
 
-MERGED / VERIFIED.
+- **MERGED / VERIFIED**;
+- accepted exact head `8ceb4d5a5f70f7896f6cb358e05605479942d442`;
+- exact-head matrix **23/23 SUCCESS**;
+- B05 phone/desktop Visual QA artifact inspected and accepted;
+- stale B02 old-heading selector repaired without weakening navigation/focus/history/offline/no-overflow coverage;
+- merge commit / current Stage16 base: `343ff1fd7b3d64d7e990b72606695365f520fa58`.
 
-- accepted head: `4b6f24c5cb9bd0da525ecfebc59b1ebbf156c903`;
-- exact-head matrix: **23/23 SUCCESS**;
-- merge commit/current pre-PR55 baseline: `c3734366c132ea3919a925bdd0dd37cfd5d82104`;
-- phone/desktop Visual QA accepted.
+Library is now summary-first, has one destination grid, real Downloads count, no duplicate tabs and honest zero-state future collections.
 
-Final Student primary navigation is:
+---
+
+## 3. ACTIVE NOW — `STUDENT-016I`
+
+Branch: `stage16/student-016i`
+
+Base: `main@343ff1fd7b3d64d7e990b72606695365f520fa58`
+
+Goal: close the **true cold-start offline Reader** gap without creating a fake server session or weakening device/content authorization.
+
+### Corrected Stage16 reality
+
+The older Stage16 handoff is stale on three points. Direct inspection of current code proves these are already implemented:
+
+- durable non-secret active scope (`profileId + deviceId`) persisted in localStorage;
+- ES256/P-256 signed canonical lesson authorization reverified on protected use;
+- stored blob byte-size + SHA-256 reverified on protected use.
+
+Do **not** rebuild those layers.
+
+The actual missing integration was:
+
+1. `App.tsx` blocked the entire app at startup when offline;
+2. `student-learning.tsx` required an online curriculum catalog before reaching a lesson route;
+3. `student-reader.tsx` could not render a verified stored package;
+4. Downloads had no direct `فتح الدرس` action.
+
+### Current implementation on active branch
+
+- `App.tsx`
+  - restores a bounded local Student presentation identity only from the previously verified durable scope when bootstrap cannot reach the server;
+  - does not persist or fabricate a server session/token;
+  - online server authority remains unchanged.
+- `student-learning.tsx`
+  - offline lesson deep-links bypass the online catalog requirement and enter the stored Reader path only for lesson routes.
+- `student-reader.tsx`
+  - `StudentOfflineLessonReaderPage` calls `loadUsableOfflineLessonPackage(...)`;
+  - protected content renders only after lease/scope/signature/time/blob verification succeeds;
+  - invalid/tampered/expired packages fail closed with learner-safe copy;
+  - local images use temporary object URLs after verification.
+- `student-offline-downloads.tsx`
+  - saved lessons now expose a direct `فتح الدرس` action.
+- `.github/workflows/stage16-student-pwa.yml`
+  - Stage16 Chromium gate now includes the cold-start Reader acceptance.
+
+### New executable acceptance
+
+`apps/student-web/e2e/offline-reader-cold-start.e2e.spec.mjs`
+
+Required flow:
+
+`download online → service-worker shell ready → clear HTTP session cookie → close Chromium → relaunch same persistent browser profile → set browser offline → direct-link to saved lesson → verified Reader renders`.
+
+The same browser acceptance also rejects:
+
+- corrupted stored ES256 signature;
+- same-size blob corruption;
+- different profile scope;
+- different device scope;
+- client clock rollback beyond tolerance;
+- authorization expiry.
+
+This is the merge gate. Do not weaken it merely to obtain green CI.
+
+### Current verification state
+
+- owning code/security discovery — COMPLETE;
+- first coherent implementation batch — COMMITTED;
+- top-level documentation — synchronized on branch;
+- local execution in this environment — `NOT YET VERIFIED`;
+- exact-head PR CI — `NOT YET VERIFIED`;
+- merge readiness — **NO** until PR exact-head checks are green.
+
+### Exact next action
+
+1. synchronize `docs/workstreams/STAGE16_STUDENT_HANDOFF.md` with the corrected implementation reality;
+2. open a focused PR to `main`;
+3. inspect exact-head CI, especially `Stage16 Student PWA`;
+4. fix any lint/type/build/browser failures in the owning layer without weakening security acceptance;
+5. require all triggered workflows SUCCESS on the final head;
+6. merge with expected-head SHA guard only after acceptance;
+7. then continue immediately to `STUDENT-016R`.
+
+---
+
+## 4. Binding Student architecture
+
+Final primary navigation:
 
 1. `الرئيسية` — `/app/home`
 2. `التعلّم` — `/app/learn`
 3. `التدريب` — `/app/practice`
 4. `مكتبتي` — `/app/library`
 
-Secondary global destinations: Notifications, Account and Progress. Library/Notifications/Progress future surfaces are prebuilt but must never fabricate learner data.
+Secondary destinations: Notifications, Progress, Account.
 
-Student destination features remain lazily loaded; do not regress the accepted initial-bundle reduction by eagerly importing feature trees into the shell.
-
----
-
-## 3. ACTIVE NOW — PR #55 Library Overview Refinement
-
-PR: **#55 — `refactor(student): redesign Library overview hierarchy`**
-
-Branch: `ux/student-library-overview`
-
-Base when opened: `main@c3734366c132ea3919a925bdd0dd37cfd5d82104`
-
-State: **OPEN / final exact-head CI + Visual QA required before merge**.
-
-### Approved Library hierarchy
-
-`/app/library` is a personal overview, not a duplicated section switcher:
-
-1. concise page heading;
-2. `ملخص مكتبتي` — honest informational statistics;
-3. `أقسام مكتبتي` — one destination grid;
-4. child sections expose one explicit return-to-Library action instead of repeating all destinations.
-
-Collections remain Downloads / Notes / Saved / Needs Review.
-
-### Statistics truth
-
-- Downloads count is real and read from the existing offline package store for the active profile/device.
-- Browser acceptance saves a real lesson and must observe Downloads `٠ → ١`.
-- Notes / Saved / Needs Review remain honest zero states until Stage17 repositories exist.
-- No fake progress, activity, streaks, recommendations, achievements or engagement metrics.
-
-### Visual rules
-
-- one quiet divided summary surface, not four KPI cards;
-- summary/stat cells are static/non-clickable;
-- destination cards are clearly clickable before hover;
-- phone uses compact 2×2 summary + one-column destinations;
-- desktop keeps a one-glance summary + destination grid;
-- no duplicate Library tabs;
-- no decorative gradient/card wall;
-- >=44px interactive targets and reduced-motion behavior remain binding.
-
-### Exact-head CI evidence already inspected
-
-Head inspected: `aca9a2f72ecede120d1d87889f9a3fb0660ea712`.
-
-Result: **20/23 workflows SUCCESS**.
-
-Failures:
-
-- UX B02 Student Shell and Navigation;
-- Stage14 Student Product;
-- Rebuild Stage Verification.
-
-Classification:
-
-- B02 quality/build/migrations/Chromium setup passed; its Playwright step still expected old Library heading `كل ما يخص تعلمك في مكان واحد` after PR #55 intentionally changed it to `محتواك الشخصي، مرتب في مكان واحد`.
-- Stage14 quality succeeded and failed only in full `npm run test:e2e`.
-- Rebuild backend/build/migration stages succeeded and only Stage8 browser full `npm run test:e2e` failed.
-- Those aggregate suites include the stale B02 spec, so they necessarily inherit its failure.
-- This evidence does not show a backend/PostgreSQL/auth/access/curriculum/offline-integrity regression.
-
-Repair applied:
-
-- `apps/student-web/e2e/student-shell-navigation.e2e.spec.mjs` was aligned with the approved current Library heading only.
-- navigation, focus, history, actionable offline state and no-overflow assertions remain unchanged.
-- B05 and offline-download integrity coverage remain intact.
-
-Because this fix and documentation commits moved the branch head, **the `aca9a2f...` matrix cannot be used as merge evidence**.
-
-### Exact next action
-
-1. live-fetch current PR #55 head and live `main`;
-2. require every triggered workflow SUCCESS on that exact head;
-3. inspect exact-head B05 Visual QA artifact at phone and desktop sizes;
-4. verify no duplicate Library tabs;
-5. verify real Downloads statistic updates `0 → 1` after saving a real lesson;
-6. verify statistics remain static/non-clickable and collection cards remain obvious actions;
-7. verify no horizontal overflow, learner-safe copy and reduced-motion acceptance;
-8. merge PR #55 only with expected-head SHA guard after acceptance;
-9. after merge, return immediately to normal roadmap at `STUDENT-016I`.
-
-Do not redesign Library again without new evidence.
-
----
-
-## 4. Binding Student architecture
-
-Canonical docs:
-
-- `docs/product/STUDENT_PRODUCT_ARCHITECTURE.md`
-- `docs/product/STUDENT_FUTURE_SURFACES_SPEC.md`
-- `docs/product/STUDENT_LIBRARY_OVERVIEW_REDESIGN.md`
+Student is an educational application, not an Admin dashboard. Never expose raw IDs, crypto/storage jargon, roadmap vocabulary, fake metrics, fake badges or unsupported account/security controls.
 
 Binding design order:
 
 **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
 
-Acceptance:
-
-**Functional + Clear + Easy + Comfortable + Consistent + Fast + Maintainable + Professional**
-
-Student is an educational application, not an Admin dashboard. Do not expose raw IDs, device keys/crypto terms, storage/service-worker jargon, roadmap/stage vocabulary, fake metrics, fake notification badges or unsupported account/security controls.
+Student feature trees remain destination-lazy. Preserve the accepted initial bundle reduction.
 
 ---
 
 ## 5. Stable backend/security authorities
 
-Preserve unless new evidence explicitly changes them:
+Preserve unless new executable evidence explicitly changes them:
 
 - API + PostgreSQL own canonical state;
-- browser is not durable business authority;
-- Auth/Authz/Entitlements server-owned;
+- Auth/Authz/Entitlements are server-owned;
 - returning Student uses password + bound device proof;
 - Full Code = 6 digits; Class Code = 7 digits;
 - curriculum: Class → Subject Offering → optional Section → Lesson;
 - `media ready != published`;
-- protected Reader/media remains server-authorized;
+- protected Reader/media remains authorized content;
 - raw storage keys never become frontend contract;
-- AI output never auto-publishes learner content/questions;
+- AI never auto-publishes learner content/questions;
 - Question Bank publication + immutable Quiz version remain delivery authority;
-- Assessment scoring/finalization/history server-owned;
+- Assessment scoring/finalization/history remain server-owned;
 - `/v1` never becomes Service Worker Cache authority;
-- offline authorization/signature/checksum/device/session contracts remain security authority;
-- no password/session token/device private key is persisted as offline learning content.
+- offline access remains bounded by active scope + stored lease + signed manifest + expiry + blob integrity;
+- no password/session token/device private key is persisted as offline learning data.
+
+Offline mode is a continuation of previously authorized learning only. It must never convert an explicit online 401/403/revocation into offline authorization.
 
 ---
 
-## 6. Roadmap return after PR #55
+## 6. Roadmap after `016I`
 
-The final Student UI locations are established, but Stage17–19 backend/service work is not complete.
-
-Normal return sequence:
-
-`STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
-
-### `STUDENT-016I`
-
-Exact return point after PR #55. It owns the **true cold-start offline Reader** closure: a previously saved authorized lesson must remain safely readable after app/browser restart while the network is unavailable, using durable non-secret scope recovery plus existing signed package/blob integrity authority. Inspect current Stage16 code/tests/docs before implementing; do not assume older prose is fully current.
-
-### Later Stage16
+`STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
 
 - `016R` — reconnect revalidation/purge;
 - `016S` — revision/tombstone/cursor/delta synchronization;
-- conditional `016O` — bounded outbox only if later offline writes actually require it;
-- `016G` — Stage16 closure matrix.
+- conditional `016O` — bounded outbox only if future offline writes require it;
+- `016G` — Stage16 closure matrix;
+- Stage17 — authoritative Notes / Saved / Needs Review;
+- Stage18 — Notifications authority;
+- Stage19 — trusted Progress / Statistics / Achievements.
 
-### Stage17–19
-
-- Stage17 connects authoritative Notes/Saved/Needs Review ownership, CRUD/provenance and offline/sync rules into the already-built Library surfaces.
-- Stage18 connects Notifications feed/unread/deep links/lifecycle.
-- Stage19 connects only server-defined trusted Progress/Statistics/Achievements.
-
-Do not claim Stage16 closed merely because Downloads UI works.
+Do not claim Stage16 closed at `016I`.
 
 ---
 
 ## 7. Super Admin governance
 
-Do not implement legacy B06–B14 Admin batches from the Student branch. Dedicated Super Admin Product Rebuild owns Admin product architecture, workflows, API/data visibility, IA, frontend architecture and UX/UI.
+Super Admin remains owned by its dedicated rebuild workstream. Do not restart legacy Admin batches from this Student branch.
 
 ---
 
-## 8. Specialized docs when relevant
+## 8. Continuation rule
 
-- Railway/deployment: `docs/operations/RAILWAY_LIVE_STATE.md`
-- imported content: `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
-- broad historical recovery: `docs/workstreams/UNIFIED_PROJECT_RESUME_PROTOCOL.md`, `PROJECT_RESUME_SNAPSHOT.md`, `PROJECT_INTEGRATION_CONTINUITY.md`, `PROJECT_EXECUTION_QUEUE.md`
-- original feature coverage: `PRODUCT_FEATURE_PARITY_MATRIX.md`, `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
-
-For current Student continuation, the top-level handoff/status/log plus current Student product docs outrank stale historical stage prose.
-
----
-
-## 9. Continuation rule
-
-A replacement engineer should read evidence, live-check refs/CI, continue from the exact active batch, update documentation during work, preserve contracts, fix proven problems in the owning layer, and avoid both blind rewrite and preserving bad UX merely because it already exists.
+A replacement engineer must read evidence, live-check refs/CI, continue from the exact active batch, update documentation during work, preserve contracts, and fix proven problems in the owning layer. No blind rewrite, and no preservation of bad UX merely because it already exists.
