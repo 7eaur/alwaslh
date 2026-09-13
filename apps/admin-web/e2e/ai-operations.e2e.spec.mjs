@@ -50,25 +50,25 @@ async function login(page) {
 
 async function openAiWorkspace(page) {
   await page.goto("/app/reviews/ai");
-  await expect(page.getByRole("heading", { name: "عمليات AI", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مراجعات الذكاء الاصطناعي", exact: true })).toBeVisible();
 }
 
 async function openJob(page, jobType) {
-  const card = page.locator(".ai-job-card").filter({ hasText: jobType }).first();
+  const card = page.locator(`.ai-review-job[data-job-type="${jobType}"]`).first();
   await expect(card).toBeVisible();
   await card.click();
-  await expect(page.getByRole("heading", { name: jobType })).toBeVisible();
+  await expect(page.locator(".ai-review-job-detail")).toBeVisible();
 }
 
 async function openSeededJob(page) {
   await openJob(page, requireFixture());
 }
 
-test("Admin AI operations navigate complete durable job, unit and attempt history", async ({ page }) => {
+test("Admin AI review navigates complete durable job, result and execution history without exposing pipeline labels", async ({ page }) => {
   await login(page);
   await openAiWorkspace(page);
 
-  const jobsPagination = page.getByRole("navigation", { name: "صفحات سجل مهام AI" });
+  const jobsPagination = page.getByRole("navigation", { name: "صفحات مهام مراجعة الذكاء الاصطناعي" });
   await expect(jobsPagination).toContainText("1–30 من");
   await jobsPagination.getByRole("button", { name: "التالي" }).click();
   await openJob(page, requirePaginationFixture());
@@ -76,21 +76,25 @@ test("Admin AI operations navigate complete durable job, unit and attempt histor
   await jobsPagination.getByRole("button", { name: "السابق" }).click();
   await openSeededJob(page);
 
-  const unitsPagination = page.getByRole("navigation", { name: "صفحات وحدات مهمة AI" });
+  const unitsPagination = page.getByRole("navigation", { name: "صفحات نتائج مهمة الذكاء الاصطناعي" });
   await expect(unitsPagination).toContainText("1–50 من 51");
   await unitsPagination.getByRole("button", { name: "التالي" }).click();
-  await expect(page.locator(".ai-unit-card").filter({ hasText: "الوحدة 51" })).toBeVisible();
+  await expect(page.locator(".ai-review-unit").filter({ hasText: "النتيجة 51" })).toBeVisible();
 
   await unitsPagination.getByRole("button", { name: "السابق" }).click();
-  await page.locator(".ai-unit-card").first().click();
+  await page.locator(".ai-review-unit").first().click();
 
-  const attemptsPagination = page.getByRole("navigation", { name: "صفحات محاولات وحدة AI" });
+  await page.getByText("سجل التنفيذ (51)", { exact: true }).click();
+  const attemptsPagination = page.getByRole("navigation", { name: "صفحات سجل تنفيذ النتيجة" });
   await expect(attemptsPagination).toContainText("1–50 من 51");
   await attemptsPagination.getByRole("button", { name: "التالي" }).click();
-  await expect(page.getByText("المحاولة 1", { exact: true })).toBeVisible();
+  await expect(page.getByText(/المحاولة 1 —/)).toBeVisible();
+
+  await expect(page.getByText("fixture-provider", { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/fixture-route-/)).toHaveCount(0);
 });
 
-test("Admin AI operations keep canonical review authority while navigating the full audit and survive reload", async ({ page }) => {
+test("Admin AI review keeps canonical human-review authority and survives reload", async ({ page }) => {
   await login(page);
   await openAiWorkspace(page);
   await openSeededJob(page);
@@ -103,12 +107,12 @@ test("Admin AI operations keep canonical review authority while navigating the f
   await page.getByRole("button", { name: "استئناف" }).click();
   await expect(page.getByRole("button", { name: "إيقاف مؤقت" })).toBeVisible();
 
-  const unit = page.locator(".ai-unit-card").first();
+  const unit = page.locator(".ai-review-unit").first();
   await expect(unit).toBeVisible();
   await unit.click();
-  await expect(page.getByRole("heading", { name: "مراجعة المخرَج" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مراجعة النتيجة" })).toBeVisible();
 
-  const reviewPagination = page.getByRole("navigation", { name: "صفحات سجل مراجعة مخرج AI" });
+  const reviewPagination = page.getByRole("navigation", { name: "صفحات سجل مراجعة النتيجة" });
   await expect(reviewPagination).toContainText("1–50 من 101");
   await reviewPagination.getByRole("button", { name: "التالي" }).click();
   await expect(reviewPagination).toContainText("51–100 من 101");
@@ -123,18 +127,18 @@ test("Admin AI operations keep canonical review authority while navigating the f
   await expect(approve).toBeEnabled();
   await approve.click();
   await expect(page.getByText("معتمد بعد المراجعة", { exact: true })).toBeVisible();
-  await expect(page.getByText("لا توجد إجراءات مراجعة متاحة.", { exact: true })).toBeVisible();
+  await expect(page.getByText("لا توجد إجراءات أخرى متاحة لهذه النتيجة.", { exact: true })).toBeVisible();
   await expect(reviewPagination).toContainText("101–102 من 102");
 
   await page.reload();
-  await expect(page.getByRole("heading", { name: "عمليات AI", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مراجعات الذكاء الاصطناعي", exact: true })).toBeVisible();
   await openSeededJob(page);
-  await page.locator(".ai-unit-card").first().click();
+  await page.locator(".ai-review-unit").first().click();
   await expect(page.getByText("معتمد بعد المراجعة", { exact: true })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "صفحات سجل مراجعة مخرج AI" })).toContainText("1–50 من 102");
+  await expect(page.getByRole("navigation", { name: "صفحات سجل مراجعة النتيجة" })).toContainText("1–50 من 102");
 });
 
-test("Admin AI operations return to login after the real Admin session expires", async ({ page }) => {
+test("Admin AI review returns to login after the real Admin session expires", async ({ page }) => {
   await login(page);
   await openAiWorkspace(page);
   const refresh = page.getByRole("button", { name: "تحديث الحالة" });
@@ -144,20 +148,20 @@ test("Admin AI operations return to login after the real Admin session expires",
   await refresh.click();
 
   await expect(page.getByRole("heading", { name: "دخول المدير" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "عمليات AI", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "مراجعات الذكاء الاصطناعي", exact: true })).toHaveCount(0);
 });
 
-test("Admin AI operations refresh canonical review state after a real 409 race", async ({ page }) => {
+test("Admin AI review refreshes canonical review state after a real 409 race", async ({ page }) => {
   const jobType = requireRaceFixture();
   await login(page);
   const fixture = await findTerminalOpenReviewFixture(page, jobType);
   await openAiWorkspace(page);
   await openJob(page, jobType);
 
-  const unit = page.locator(".ai-unit-card").nth(fixture.unitIndex);
+  const unit = page.locator(".ai-review-unit").nth(fixture.unitIndex);
   await expect(unit).toBeVisible();
   await unit.click();
-  await expect(page.getByRole("heading", { name: "مراجعة المخرَج" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مراجعة النتيجة" })).toBeVisible();
 
   const staleApprove = page.getByRole("button", { name: "اعتماد بعد المراجعة" });
   await expect(staleApprove).toBeVisible();
@@ -167,21 +171,21 @@ test("Admin AI operations refresh canonical review state after a real 409 race",
   await staleApprove.click();
 
   await expect(
-    page.getByText("سبق أن تغيرت حالة المراجعة أو لم يعد القرار صالحًا. تم تحديث المخرج من الخادم.", { exact: true }),
+    page.getByText("سبق أن تغيرت حالة المراجعة أو لم يعد القرار صالحًا. تم تحديث النتيجة من الخادم.", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText("مرفوض", { exact: true })).toBeVisible();
-  await expect(page.getByText("لا توجد إجراءات مراجعة متاحة.", { exact: true })).toBeVisible();
+  await expect(page.getByText("لا توجد إجراءات أخرى متاحة لهذه النتيجة.", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "اعتماد بعد المراجعة" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "رفض المخرَج" })).toHaveCount(0);
 });
 
-test("Admin AI operations stay within a 390px viewport", async ({ page }) => {
+test("Admin AI review stays within a 390px viewport", async ({ page }) => {
   requireFixture();
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
   await openAiWorkspace(page);
   await openSeededJob(page);
-  await page.locator(".ai-unit-card").first().click();
+  await page.locator(".ai-review-unit").first().click();
   const dimensions = await page.evaluate(() => ({
     viewport: window.innerWidth,
     documentWidth: document.documentElement.scrollWidth,
