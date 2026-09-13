@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder is next and has not started.**
+Last consolidated: **2026-09-13 — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder ACTIVE / Batch 1 exact-head CI pending.**
 
 ## Project and authority invariants
 
@@ -35,6 +35,7 @@ Last consolidated: **2026-09-13 — AR-01 through AR-06 DONE / VERIFIED. AR-07 Q
 - **AD-ADMIN-013:** routed Question Bank ownership requires real PostgreSQL + Chromium proof.
 - **AD-ADMIN-014:** manual question creation and approved-AI import are focused creation-flow responsibilities, not responsibilities of a giant list/detail/review workspace.
 - **AD-ADMIN-015:** a legacy workspace is removed once all production route ownership has moved and exact-head compile/API/PostgreSQL/real-browser gates prove no hidden dependency remains.
+- **AD-ADMIN-016:** Quiz Builder migration is parity-first: server-owned lifecycle, published-question revision references, immutable published snapshots and export constraints must survive frontend decomposition unchanged.
 
 ## Super Admin stage ledger
 
@@ -111,39 +112,74 @@ Classification:
 On code head `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`:
 
 - Stage 13E Frontend Preparation `34740148367` — **SUCCESS**.
-  - lint — success;
-  - strict typecheck — success;
-  - unit tests — success;
-  - production build — success.
 - Stage 13E Admin AI Operations `34740148382` — **SUCCESS**.
-  - API quality/build — success;
-  - clean PostgreSQL migrations/contracts — success;
-  - authorization/observability/review-race/control tests — success;
-  - Stage12 durable execution + auth security regressions — success.
 - Stage 13E Combined Integration `34740148361` — **SUCCESS**.
-  - API/Admin quality — success;
-  - clean PostgreSQL migrations + DB contract — success;
-  - backend authority/security regressions — success;
-  - deterministic browser fixtures — success;
-  - real Admin Chromium suite — success.
 
 No hidden import dependency surfaced after deletion; compile/build and the full real-browser integration matrix stayed green.
 
 #### AR-06 closure decision
 
-AR-06 is **DONE / VERIFIED**. The giant Question Bank owner is gone, valid capabilities are owned by focused routes, server authority was preserved, and the final routed structure is green on exact code-head. Starting AR-07 is now allowed only after the documentation closure commits themselves are reconciled.
+AR-06 is **DONE / VERIFIED**. The giant Question Bank owner is gone, valid capabilities are owned by focused routes, server authority was preserved, and the final routed structure is green on exact code-head.
 
-## Explicit resume point for B / next Admin task
+## AR-07 — Quiz Builder — ACTIVE
+
+### Batch 1 — focused list ownership + parity-preserving management route — IN VERIFICATION
+
+#### State received
+
+1. Read `PROJECT_STATUS.md`, this log and `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` before editing.
+2. Feature HEAD was `ea6c0a07fddeaf0a219440cca277e68f7fa9587b`, an explicit documentation handoff to AR-07; AR-06 was already closed.
+3. Re-read live `main` at `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`; no Student/audit files were changed.
+4. Draft PR #52 remained Draft.
+5. Exact-head transition workflows had no unresolved code blocker before AR-07 inventory began.
+
+#### Inventory / source-of-truth findings
+
+Frontend:
+
+- `QuizBuilderWorkspace.tsx` still owns list + create + detail + version editor + lifecycle + export in one component.
+- `quiz-builder-api.ts` already exposes focused server commands/read models (`fetchQuizzes`, `fetchQuiz`, candidate lookup, create/update, version add/replace/remove, submit/reject/publish/archive, export).
+- `/app/quizzes` previously pointed directly to the giant workspace; `/app/quizzes/metadata` is separate.
+
+Backend/executable contracts inspected:
+
+- `apps/api/src/quiz-builder/http.ts` and `service.ts` retain lifecycle/business authority.
+- `apps/api/tests/integration/quiz-builder.integration.test.ts` proves that Quiz Builder accepts only published Question Bank revisions, snapshots referenced questions into quiz versions, allows export only in valid lifecycle states, freezes published versions, and relies on database integrity to reject mutation of frozen snapshots.
+
+Classification:
+
+- **KEEP:** PostgreSQL/API lifecycle, question-revision linkage, published snapshot immutability, export authority.
+- **KEEP TEMPORARILY:** `QuizBuilderWorkspace.tsx` as a parity adapter while responsibilities move.
+- **REFACTOR:** list ownership out of the giant workspace.
+- **NEXT REFACTOR:** route-owned entity/detail and creation/version management after list parity is verified.
+- **NO CHANGE:** backend business rules, migrations and Student workstream in Batch 1.
+
+#### Implementation
+
+- `7746000748129a659e098e016d3ffbfd4d5ddc46` — created `apps/admin-web/src/admin/quizzes/QuizBuilderListPage.tsx` with server-backed search/status filtering, pagination, loading/error/empty states and entry into the management workflow.
+- `30d9443ed1c159440d38dc76db61686028c3d028` — routed `/app/quizzes` to the focused list and moved the existing all-capabilities workspace to `/app/quizzes/manage` as an explicit temporary parity-preserving route.
+- No quiz API, migration, lifecycle or Student code changed.
+
+#### Exact code-head verification state
+
+CI triggered for `30d9443ed1c159440d38dc76db61686028c3d028`:
+
+- Stage 13E Frontend Preparation `34741455324` — **IN PROGRESS** at checkpoint.
+- Stage 13E Admin AI Operations `34741455298` — **PENDING** at checkpoint.
+- Stage 13E Combined Integration `34741455320` — **PENDING** at checkpoint.
+
+No additional code batch was started while these runs were active. Batch 1 is not yet VERIFIED.
+
+## Explicit resume point for A / next Admin task
 
 1. Re-read `PROJECT_STATUS.md`, this log and the Super Admin workstream first.
-2. Fetch current feature HEAD, live `main`, Draft PR #52 and exact-head CI.
-3. The AR-06 documentation closure commits occur after verified code head `02cf24d5…`; inspect any CI they trigger before code mutation.
-4. Treat **AR-06 as closed** unless a real regression is found.
-5. Start **AR-07 — Quiz Builder only**.
-6. Before modifying Quiz Builder, inspect migrations/schema, API/services/routes, frontend owner(s), tests and real browser flows; classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE.
-7. Preserve quiz lifecycle/composition/versioning and server authority; do not mirror tables or weaken tests.
-8. Do not begin AR-08 until AR-07 exact-head green and documentation are synchronized.
-9. Keep PR #52 Draft; no automatic merge.
+2. Fetch current branch HEAD, live `main`, Draft PR #52 and exact-head CI.
+3. Because documentation commits follow code head `30d9443e…`, first reconcile runs `34741455324`, `34741455298`, `34741455320` and any newer exact-head documentation-only runs.
+4. If the code-head runs fail, inspect the failing job/log and fix root cause only. Do not weaken tests or undo the list split merely to preserve stale browser ownership.
+5. If code-head runs are green, mark **AR-07 Batch 1 VERIFIED**.
+6. Continue **AR-07 only**: next target is route-owned quiz detail/management decomposition and explicit list→entity/deep-link browser parity while lifecycle/version/export authority stays server-owned.
+7. Do not start AR-08 until AR-07 exact-head green and documentation are synchronized.
+8. Keep PR #52 Draft; no automatic merge.
 
 ## Current audit/findings register
 
@@ -157,6 +193,7 @@ AR-06 is **DONE / VERIFIED**. The giant Question Bank owner is gone, valid capab
 | `ADMIN-006` | P1 | AI review | pipeline internals in normal UX | FIXED / AR-05 |
 | `ADMIN-007` | P1 | AI authoring | manual internal-ID handoff | FIXED / AR-05 |
 | `ADMIN-008` | P1 | Question Bank | list/create/edit/review/history in one giant owner | FIXED / AR-06 |
+| `ADMIN-009` | P1 | Quiz Builder | list/create/detail/version/lifecycle/export in one giant owner | ACTIVE / AR-07 |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track |
 
 ## Remaining Super Admin sequence
