@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history, merged PRs, Issue #16 and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder ACTIVE / Batch 1 exact-head CI pending.**
+Last consolidated: **2026-09-13 — AR-01 through AR-06 DONE / VERIFIED. AR-07 Quiz Builder ACTIVE / Batch 1 VERIFIED.**
 
 ## Project and authority invariants
 
@@ -36,6 +36,7 @@ Last consolidated: **2026-09-13 — AR-01 through AR-06 DONE / VERIFIED. AR-07 Q
 - **AD-ADMIN-014:** manual question creation and approved-AI import are focused creation-flow responsibilities, not responsibilities of a giant list/detail/review workspace.
 - **AD-ADMIN-015:** a legacy workspace is removed once all production route ownership has moved and exact-head compile/API/PostgreSQL/real-browser gates prove no hidden dependency remains.
 - **AD-ADMIN-016:** Quiz Builder migration is parity-first: server-owned lifecycle, published-question revision references, immutable published snapshots and export constraints must survive frontend decomposition unchanged.
+- **AD-ADMIN-017:** Quiz Builder list ownership is route-owned independently from entity/version/lifecycle management; legacy management may remain only as a temporary parity adapter until entity/deep-link ownership is executable and verified.
 
 ## Super Admin stage ledger
 
@@ -123,7 +124,7 @@ AR-06 is **DONE / VERIFIED**. The giant Question Bank owner is gone, valid capab
 
 ## AR-07 — Quiz Builder — ACTIVE
 
-### Batch 1 — focused list ownership + parity-preserving management route — IN VERIFICATION
+### Batch 1 — focused list ownership + parity-preserving management route — VERIFIED
 
 #### State received
 
@@ -137,9 +138,9 @@ AR-06 is **DONE / VERIFIED**. The giant Question Bank owner is gone, valid capab
 
 Frontend:
 
-- `QuizBuilderWorkspace.tsx` still owns list + create + detail + version editor + lifecycle + export in one component.
-- `quiz-builder-api.ts` already exposes focused server commands/read models (`fetchQuizzes`, `fetchQuiz`, candidate lookup, create/update, version add/replace/remove, submit/reject/publish/archive, export).
-- `/app/quizzes` previously pointed directly to the giant workspace; `/app/quizzes/metadata` is separate.
+- `QuizBuilderWorkspace.tsx` still owned list + create + detail + version editor + lifecycle + export in one component.
+- `quiz-builder-api.ts` already exposed focused server commands/read models (`fetchQuizzes`, `fetchQuiz`, candidate lookup, create/update, version add/replace/remove, submit/reject/publish/archive, export).
+- `/app/quizzes` previously pointed directly to the giant workspace; `/app/quizzes/metadata` was already separate.
 
 Backend/executable contracts inspected:
 
@@ -160,26 +161,40 @@ Classification:
 - `30d9443ed1c159440d38dc76db61686028c3d028` — routed `/app/quizzes` to the focused list and moved the existing all-capabilities workspace to `/app/quizzes/manage` as an explicit temporary parity-preserving route.
 - No quiz API, migration, lifecycle or Student code changed.
 
-#### Exact code-head verification state
+#### First exact-head failure and root cause
 
-CI triggered for `30d9443ed1c159440d38dc76db61686028c3d028`:
+Initial Stage 13E Frontend Preparation run `34741455324` failed during strict TypeScript checking, while lint had already passed. The failure was local to `QuizBuilderListPage.tsx`: inside the render branch where `state` was already narrowed to `"ready"`, two pagination-button expressions still compared `state === "loading"`, producing `TS2367` impossible-comparison errors.
 
-- Stage 13E Frontend Preparation `34741455324` — **IN PROGRESS** at checkpoint.
-- Stage 13E Admin AI Operations `34741455298` — **PENDING** at checkpoint.
-- Stage 13E Combined Integration `34741455320` — **PENDING** at checkpoint.
+Decision:
 
-No additional code batch was started while these runs were active. Batch 1 is not yet VERIFIED.
+- do **not** revert route ownership;
+- do **not** weaken TypeScript or tests;
+- do **not** change backend/business behavior;
+- remove only the impossible comparisons because the branch cannot be loading by construction.
+
+`18607a1bf31392f9143a0e68c4531c972d4199d5` — root-cause fix: pagination buttons now depend only on `canPrevious` / `canNext` after the render-state narrowing.
+
+#### Exact-head verification
+
+On exact code head `18607a1bf31392f9143a0e68c4531c972d4199d5`:
+
+- Stage 13E Frontend Preparation `34741610234` — **SUCCESS**: lint, strict typecheck, unit tests and production build.
+- Stage 13E Admin AI Operations `34741610225` — **SUCCESS**: API quality, clean PostgreSQL migrations/contracts, authorization/observability/review/security regressions.
+- Stage 13E Combined Integration `34741610238` — **SUCCESS**: API/Admin quality, clean PostgreSQL, DB contract, backend authority/security regressions, deterministic fixtures and real Admin Chromium.
+
+The real Chromium suite stayed green after the list split, so Batch 1 is **VERIFIED**. AR-07 itself remains ACTIVE because entity/detail/version/lifecycle/export ownership is not yet fully decomposed.
 
 ## Explicit resume point for A / next Admin task
 
 1. Re-read `PROJECT_STATUS.md`, this log and the Super Admin workstream first.
 2. Fetch current branch HEAD, live `main`, Draft PR #52 and exact-head CI.
-3. Because documentation commits follow code head `30d9443e…`, first reconcile runs `34741455324`, `34741455298`, `34741455320` and any newer exact-head documentation-only runs.
-4. If the code-head runs fail, inspect the failing job/log and fix root cause only. Do not weaken tests or undo the list split merely to preserve stale browser ownership.
-5. If code-head runs are green, mark **AR-07 Batch 1 VERIFIED**.
-6. Continue **AR-07 only**: next target is route-owned quiz detail/management decomposition and explicit list→entity/deep-link browser parity while lifecycle/version/export authority stays server-owned.
-7. Do not start AR-08 until AR-07 exact-head green and documentation are synchronized.
-8. Keep PR #52 Draft; no automatic merge.
+3. Documentation commits follow verified code head `18607a1bf31392f9143a0e68c4531c972d4199d5`; reconcile any documentation-only CI still ACTIVE before editing code.
+4. Continue **AR-07 only — Batch 2**: establish route-owned quiz entity/detail/management behavior and explicit list→entity/deep-link ownership.
+5. Preserve server authority for lifecycle, version snapshots, published Question Bank revision eligibility and export constraints.
+6. Add or update real Chromium coverage for `/app/quizzes` → entity/deep-link behavior. Do not revert the route split to satisfy stale giant-workspace assumptions.
+7. Keep `QuizBuilderWorkspace.tsx` only while it owns legitimate unmigrated create/version/lifecycle/export capability; remove/split it only after replacement ownership is executable and verified.
+8. Do not start AR-08 until AR-07 is fully exact-head green and closure documentation is synchronized.
+9. Keep PR #52 Draft; no automatic merge.
 
 ## Current audit/findings register
 
@@ -193,7 +208,7 @@ No additional code batch was started while these runs were active. Batch 1 is no
 | `ADMIN-006` | P1 | AI review | pipeline internals in normal UX | FIXED / AR-05 |
 | `ADMIN-007` | P1 | AI authoring | manual internal-ID handoff | FIXED / AR-05 |
 | `ADMIN-008` | P1 | Question Bank | list/create/edit/review/history in one giant owner | FIXED / AR-06 |
-| `ADMIN-009` | P1 | Quiz Builder | list/create/detail/version/lifecycle/export in one giant owner | ACTIVE / AR-07 |
+| `ADMIN-009` | P1 | Quiz Builder | list/create/detail/version/lifecycle/export in one giant owner | ACTIVE / AR-07; list ownership FIXED in Batch 1 |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track |
 
 ## Remaining Super Admin sequence
