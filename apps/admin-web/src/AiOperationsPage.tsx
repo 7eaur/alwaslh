@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiRequestError, isMissingSessionError } from "./admin-api";
-import { AiOperationsWorkspace } from "./AiOperationsWorkspace";
+import { applyApprovedLessonOutput, applyApprovedQuizOutput } from "./admin-ai-authoring-api";
+import { fetchAiApplicationCapability, type AiApplicationCapability } from "./ai-application-api";
 import {
   fetchAiJobDetail,
   fetchAiJobs,
@@ -24,6 +25,7 @@ import type {
   AiOperationsFeedback,
   AiOperationsWorkspaceModel,
 } from "./ai-operations-view-model";
+import { AiReviewWorkspace } from "./AiReviewWorkspace";
 
 interface Props {
   onSessionExpired: () => void;
@@ -187,9 +189,12 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
       const detail = await fetchAiUnitDetail(unitId, ATTEMPT_PAGE_SIZE, requestedAttemptOffset);
       let output = null;
       if (detail.unit.output?.id) {
-        output = mapAiOutputDetail(
-          await fetchAiOutputDetail(detail.unit.output.id, REVIEW_PAGE_SIZE, requestedReviewOffset),
-        );
+        const outputId = detail.unit.output.id;
+        const [outputDetail, capability] = await Promise.all([
+          fetchAiOutputDetail(outputId, REVIEW_PAGE_SIZE, requestedReviewOffset),
+          fetchAiApplicationCapability(outputId),
+        ]);
+        output = { ...mapAiOutputDetail(outputDetail), application: capability.application };
       }
       if (sequence !== unitSequence.current || selectedUnitIdRef.current !== unitId) return;
       attemptOffsetRef.current = detail.attemptPagination.offset;
@@ -303,7 +308,7 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
     try {
       await reviewAiOutput(outputId, input);
       await refreshCanonical(selectedJobIdRef.current, selectedUnitIdRef.current);
-      setFeedback({ kind: "success", message: "تم حفظ قرار المراجعة وتحديث المخرج من المصدر الموثوق." });
+      setFeedback({ kind: "success", message: "تم حفظ قرار المراجعة وتحديث النتيجة من المصدر الموثوق." });
       return true;
     } catch (error) {
       if (isMissingSessionError(error)) {
@@ -312,11 +317,48 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
       }
       if (isAiConflictError(error)) {
         await refreshCanonical(selectedJobIdRef.current, selectedUnitIdRef.current);
-        setFeedback({ kind: "error", message: "سبق أن تغيرت حالة المراجعة أو لم يعد القرار صالحًا. تم تحديث المخرج من الخادم." });
+        setFeedback({ kind: "error", message: "سبق أن تغيرت حالة المراجعة أو لم يعد القرار صالحًا. تم تحديث النتيجة من الخادم." });
         return false;
       }
       setFeedback({ kind: "error", message: messageFor(error) });
       return false;
+    }
+  }, [onSessionExpired, refreshCanonical]);
+
+  const applyOutput = useCallback(async (outputId: string, kind: AiApplicationCapability["kind"]): Promise<void> => {
+    setFeedback({ kind: "busy", message: "جارٍ تطبيق النتيجة المعتمدة عبر الخادم…" });
+    try {
+      if (kind === "lesson") {
+        const result = await applyApprovedLessonOutput(outputId);
+        const pieces = [
+          result.summaryApplied ? "تم تحديث ملخص الدرس" : null,
+          result.questionBankItemIds.length > 0 ? `أضيفت ${result.questionBankItemIds.length} مسودة إلى بنك الأسئلة` : null,
+        ].filter(Boolean);
+        setFeedback({
+          kind: "success",
+          message: `${pieces.join("، ") || "تم تطبيق محتوى الدرس"}. لا يتم نشر الأسئلة تلقائيًا.`,
+        });
+      } else {
+        const result = await applyApprovedQuizOutput(outputId);
+        setFeedback({
+          kind: "success",
+          message: result.readyForVersion
+            ? "تم تطبيق النتيجة وتركيب نموذج الاختبار وفق الأسئلة المنشورة."
+            : `تم استيراد ${result.questionBankItemIds.length} سؤالًا كمسودات. راجعها وانشرها في بنك الأسئلة ثم أعد تطبيق النتيجة لتركيب النموذج.`,
+        });
+      }
+      await refreshCanonical(selectedJobIdRef.current, selectedUnitIdRef.current);
+    } catch (error) {
+      if (isMissingSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      if (isAiConflictError(error)) {
+        await refreshCanonical(selectedJobIdRef.current, selectedUnitIdRef.current);
+        setFeedback({ kind: "error", message: "لم يعد التطبيق صالحًا وفق الحالة الحالية. تم تحديث البيانات من الخادم." });
+        return;
+      }
+      setFeedback({ kind: "error", message: messageFor(error) });
     }
   }, [onSessionExpired, refreshCanonical]);
 
@@ -351,7 +393,7 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
   ]);
 
   return (
-    <AiOperationsWorkspace
+    <AiReviewWorkspace
       model={model}
       onRefresh={() => void refreshCanonical(selectedJobIdRef.current, selectedUnitIdRef.current)}
       onSelectJob={(jobId) => void loadJob(jobId)}
@@ -362,6 +404,7 @@ export function AiOperationsPage({ onSessionExpired }: Props) {
       onReviewPageChange={changeReviewPage}
       onJobAction={(jobId, action) => void runJobAction(jobId, action)}
       onReviewSubmit={submitReview}
+      onApplyOutput={applyOutput}
     />
   );
 }
