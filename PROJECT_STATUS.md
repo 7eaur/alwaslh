@@ -6,7 +6,7 @@
 **Draft PR:** #52 — remains Draft; no merge or auto-merge authorized.  
 **Live main checked this run:** `5b6fbfecade3abd52a5c4203e47c4f5b69444a86` — parallel Student workstream; untouched.  
 **Current stage:** AR-09 Cleanup / architecture enforcement — ACTIVE.  
-**Current Batch 8A production code-head:** `3ad8750b65e357e13b99529d59a751172be9e26b`.
+**Current production code-head:** `24b066cbfa846fc789da01929f495bdc267d96c0`.
 
 ## Super Admin stage ledger
 
@@ -22,68 +22,71 @@
   - Batch 1 — Quiz metadata ownership relocation — VERIFIED.
   - Batch 2 — Lesson authoring tools ownership relocation — VERIFIED.
   - Batch 3 — Access-code reports ownership relocation — VERIFIED.
-  - Batch 4A — AI review ownership relocation — VERIFIED.
+  - Batch 4A — AI review page ownership relocation — VERIFIED.
   - Batch 5A — Curriculum ownership + root seam removal — VERIFIED.
   - Batch 6A — Content review ownership + root seam removal — VERIFIED.
   - Batch 7A — Content ingestion ownership + root seam removal — VERIFIED.
-  - Batch 8A — Lesson Publication ownership relocation — **ACTIVE / ROOT SEAM REMOVED / EXACT-HEAD DELETION PARITY RUNNING**.
+  - Batch 8A — Lesson Publication ownership + root seam removal — **DONE / VERIFIED**.
+  - Batch 9A — AI review presentation ownership — **ACTIVE / ADAPTER CREATED / CALLER SWITCH PENDING**.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
-## Batch 8A reconciliation in this run
+## Batch 8A closure verified this run
 
-Before any mutation, live `main`, branch HEAD `d6d5dc3da9777e16d9c88848a30cc75273e8f67e`, all three continuity files, recent commits, Draft PR #52 and exact-head CI were re-read.
+Before mutation, live `main`, branch HEAD `998ab1efa5ede52cead73b075d890542e1d5adba`, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`, recent commits, Draft PR #52 and exact-head CI were re-read.
 
-The inherited caller-switch production code-head was `e5d3ebc837284e8f185e0d2e8c422e88be2a1db4`.
+The seam-removal production code-head `3ad8750b65e357e13b99529d59a751172be9e26b` had executable runs cancelled only because required documentation descendants advanced the branch. The latest descendant `998ab1efa5ede52cead73b075d890542e1d5adba` carries the identical production tree and completed:
+- Admin AI `34783495895` — SUCCESS;
+- Combined `34783495898` — SUCCESS;
+- Stage13G `34783495896` — SUCCESS.
 
-Caller-switch verification resolved as follows:
-- Frontend `34782291937` — SUCCESS on `e5d3ebc...`;
-- Admin AI `34782291934` — SUCCESS on `e5d3ebc...`;
-- Combined `34782291938` — CANCELLED after subsequent documentation commits superseded it; no test failure was observed;
-- documentation descendant `d6d5dc...` carrying the identical production code completed Admin AI `34782412500`, Combined `34782412491`, and Stage13G `34782412434` — SUCCESS.
+The earlier caller-switch Frontend gate was already SUCCESS and no code failure was observed. Batch 8A is therefore **DONE / VERIFIED**.
 
-Caller proof before deletion showed:
-- root `apps/admin-web/src/LessonPublicationPanel.tsx` contained only the compatibility re-export to `./admin/content/LessonPublicationPanel`;
-- `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` already imported `./LessonPublicationPanel` directly;
-- `apps/admin-web/src/App.tsx` did not import the root seam;
-- the real implementation remains under the Content feature owner.
+## Fresh AR-09 inventory and decision
 
-Classification remains:
-- **KEEP:** publication lifecycle, confirmation, review-blocking, session handling, canonical server/PostgreSQL authority and current tests.
-- **IMPROVE:** Content feature ownership and dependency direction.
-- **REFACTOR:** direct Content-owned caller path.
+Fresh inventory inspected `App.tsx`, root `src` surfaces, `src/admin/*` owners, `admin/reviews/AiOperationsPage.tsx`, and `AiReviewWorkspace.tsx`.
+
+Evidence found a justified established-owner seam:
+- `/app/reviews/ai` is owned by `apps/admin-web/src/admin/reviews/AiOperationsPage.tsx`;
+- that feature page still imports `AiReviewWorkspace` from root `apps/admin-web/src/AiReviewWorkspace.tsx`;
+- therefore Reviews feature ownership is incomplete even though the route owner is already established.
+
+Classification:
+- **KEEP:** AI review behavior, polling, mutation/review/apply flows, API contracts, server/PostgreSQL authority, auth/session behavior and current tests.
+- **IMPROVE:** dependency direction inside the established Reviews owner.
+- **REFACTOR:** move the presentation dependency behind `src/admin/reviews/` parity-first.
 - **REBUILD:** none.
-- **REMOVE:** root compatibility re-export after caller-switch parity and caller proof.
-- **NO CHANGE:** backend, migrations, API contract, auth/security, Student workstream and test strength.
+- **REMOVE:** no root file yet; deletion is forbidden until caller-switch and relocation parity prove it safe.
+- **NO CHANGE:** backend, migrations, API contracts, Student workstream and test strength.
 
 ## Code changed this run
 
-Commit `3ad8750b65e357e13b99529d59a751172be9e26b` — `refactor(admin): remove lesson publication root seam`
+Commit `24b066cbfa846fc789da01929f495bdc267d96c0` — `refactor(admin): add reviews ai workspace owner seam`
 
-Deleted only:
-- `apps/admin-web/src/LessonPublicationPanel.tsx`
+Added only:
+- `apps/admin-web/src/admin/reviews/AiReviewWorkspace.tsx`
 
-No behavior, props, publication commands, backend code, migration, API contract, Student code or test was changed.
+Current adapter content re-exports the existing root implementation. No route, behavior, API, backend, migration, Student code or test changed.
 
 ## Exact-head verification state
 
-For seam-removal production code-head `3ad8750b65e357e13b99529d59a751172be9e26b` the fresh matrix is:
-- Frontend `34783395314` — QUEUED at checkpoint;
-- Admin AI `34783395106` — IN PROGRESS at checkpoint;
-- Combined `34783395476` — IN PROGRESS at checkpoint;
-- Stage13G `34783395190` — IN PROGRESS at checkpoint.
+Fresh matrix on `24b066cbfa846fc789da01929f495bdc267d96c0` started immediately:
+- Frontend `34784977628` — IN PROGRESS at checkpoint;
+- Admin AI `34784977631` — IN PROGRESS at checkpoint;
+- Combined `34784977632` — IN PROGRESS at checkpoint;
+- Stage13G `34784977612` — IN PROGRESS at checkpoint.
 
-No failure was observed. Because exact-head deletion parity is active, Batch 8A is not COMPLETE and no further production mutation is permitted.
+Because this exact-head CI is active, no caller-switch or further production mutation is permitted in this run.
 
 ## Current blocker / explicit next step
 
-The only blocker is completion of the seam-removal exact-head matrix above.
+The only blocker is completion of the Batch 9A adapter exact-head matrix above.
 
 Next task A/B must:
-1. re-fetch live `main`, branch HEAD, all three continuity docs, Draft PR #52 and exact-head CI;
-2. resolve `34783395314`, `34783395106`, `34783395476`, `34783395190` first, or explicitly reconcile any of them if superseded by required documentation descendants carrying the identical production tree;
-3. mark Batch 8A DONE / VERIFIED only when the seam-removal production state has a fully green executable matrix;
-4. after Batch 8A closes, perform a fresh AR-09 inventory and do not invent speculative cleanup;
-5. if no justified established-owner seam remains, run final AR-09 exact-head verification and close AR-09;
-6. begin AR-10 only after formal AR-09 closure.
+1. re-fetch live `main`, current branch HEAD, all three continuity docs, recent commits, Draft PR #52 and exact-head CI;
+2. resolve `34784977628`, `34784977631`, `34784977632`, `34784977612` first, or reconcile a later documentation descendant carrying the identical production tree if required continuity updates supersede them;
+3. if green, switch `apps/admin-web/src/admin/reviews/AiOperationsPage.tsx` from `../../AiReviewWorkspace` to `./AiReviewWorkspace` only;
+4. run exact-head parity for that caller switch before relocating the real implementation or deleting any root seam;
+5. continue the same Batch 9A only after green parity; do not open another cleanup track;
+6. keep AR-10 blocked until AR-09 is formally closed.
 
 Preserve Student isolation, backend/PostgreSQL authority and test strength. Keep PR #52 Draft; no merge or auto-merge.
