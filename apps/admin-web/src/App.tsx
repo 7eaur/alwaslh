@@ -14,6 +14,7 @@ import { AiOperationsPage } from "./admin/reviews/AiOperationsPage";
 import { ContentOperationsPage } from "./admin/reviews/ContentOperationsPage";
 import { AdminAccessCodesPage } from "./admin/access-codes/AdminAccessCodesPage";
 import { AdminAccessCodeReportsPage } from "./admin/access-codes/AdminAccessCodeReportsPage";
+import { ContentIngestionPage } from "./admin/content/ContentIngestionPage";
 import { LessonAuthoringParityPanel } from "./admin/content/LessonAuthoringParityPanel";
 import { CurriculumWorkspace } from "./admin/curriculum/CurriculumWorkspace";
 import { AdminOverviewPage } from "./admin/overview/AdminOverviewPage";
@@ -30,7 +31,6 @@ import { QuizBuilderListPage } from "./admin/quizzes/QuizBuilderListPage";
 import { QuizMetadataPanel } from "./admin/quizzes/QuizMetadataPanel";
 import { AdminStudentsPage } from "./admin/students/AdminStudentsPage";
 import "./ai-operations-review.css";
-import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { LoginScreen } from "./LoginScreen";
 
 function errorMessage(error: unknown): string {
@@ -197,7 +197,7 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
               { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
             ]}
           >
-            <ContentIngestionWorkspace onSessionExpired={onSessionExpired} />
+            <ContentIngestionPage onSessionExpired={onSessionExpired} />
           </WorkspaceWithRelatedActions>
         }
       />
