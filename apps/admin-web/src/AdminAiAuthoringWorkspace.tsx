@@ -12,8 +12,6 @@ import {
   type LessonGenerationMode,
   type QuizGenerationMode,
   type QuizPrintVariant,
-  applyApprovedLessonOutput,
-  applyApprovedQuizOutput,
   archiveQuestionBankItem,
   enqueueLessonGeneration,
   enqueueQuestionRegeneration,
@@ -95,7 +93,6 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
   const [lessonTarget, setLessonTarget] = useState<AiQuestionTarget>({ ...emptyTarget });
   const [lessonExpectedCount, setLessonExpectedCount] = useState(5);
 
-  const [applyOutputId, setApplyOutputId] = useState("");
   const [quizId, setQuizId] = useState("");
   const [quizDetail, setQuizDetail] = useState<QuizBuilderDetail | null>(null);
   const [quizMode, setQuizMode] = useState<QuizGenerationMode>("question_generation");
@@ -200,44 +197,8 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
       });
       setFeedback({
         kind: "success",
-        text: `أُنشئت مهمة من ${result.totalUnits} وحدة. Job: ${result.jobId}. راجع المخرجات في «عمليات AI والمراجعة» قبل التطبيق.`,
+        text: `بدأ تجهيز ${result.totalUnits} نتيجة. راجعها في «مراجعات AI»؛ وعند اعتماد نتيجة قابلة للتطبيق سيظهر الإجراء هناك مباشرة.`,
       });
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function applyOutput(kind: "lesson" | "quiz") {
-    const outputId = applyOutputId.trim();
-    if (!outputId) return;
-
-    setBusy(true);
-    setFeedback(null);
-    try {
-      if (kind === "lesson") {
-        const result = await applyApprovedLessonOutput(outputId);
-        const parts = [
-          result.summaryApplied ? "طُبق الملخص" : null,
-          result.questionBankItemIds.length > 0
-            ? `أُضيف ${result.questionBankItemIds.length} سؤال كمسودة`
-            : null,
-        ].filter(Boolean);
-        setFeedback({
-          kind: "success",
-          text: `${parts.join("، ")}. لم يُنشر أي سؤال تلقائيًا.`,
-        });
-      } else {
-        const result = await applyApprovedQuizOutput(outputId);
-        setFeedback({
-          kind: "success",
-          text: result.readyForVersion
-            ? `تم تركيب النموذج داخل الاختبار${result.versionReplayed ? " دون تكرار" : ""}.`
-            : `أُضيف ${result.questionBankItemIds.length} سؤال كمسودة. راجعها وانشرها في بنك الأسئلة ثم أعد تطبيق المخرج نفسه لتركيب النموذج.`,
-        });
-      }
-      await load();
     } catch (error) {
       handleError(error);
     } finally {
@@ -303,7 +264,7 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
       });
       setFeedback({
         kind: "success",
-        text: `أُنشئت ${result.totalUnits} وحدة، واحدة لكل نموذج بإعداداته ومصادره. Job: ${result.jobId}. بعد اعتماد كل Output استخدم «تطبيق على اختبار».`,
+        text: `بدأ تجهيز ${result.totalUnits} نموذج. راجع النتائج في «مراجعات AI» ثم طبّق النتيجة المعتمدة من شاشة المراجعة نفسها.`,
       });
     } catch (error) {
       handleError(error);
@@ -318,13 +279,13 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
     setBusy(true);
     setFeedback(null);
     try {
-      const result = await enqueueQuestionRegeneration(questionId, {
+      await enqueueQuestionRegeneration(questionId, {
         clientRequestId: crypto.randomUUID(),
         subjectDomain: domain,
       });
       setFeedback({
         kind: "success",
-        text: `بدأت إعادة التوليد ضمن مصدر revision المنشور. Job: ${result.jobId}.`,
+        text: "بدأت إعادة توليد السؤال من مصدره المعتمد. راجع النتيجة الجديدة في «مراجعات AI» قبل اعتمادها.",
       });
     } catch (error) {
       handleError(error);
@@ -411,7 +372,7 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
     return (
       <section className="workspace-state" aria-live="polite">
         <h1>جارٍ تحميل أدوات التوليد</h1>
-        <p>نقرأ المنهج والاختبارات وبنك الأسئلة من السلطات الحالية.</p>
+        <p>نجهز المنهج والاختبارات وبنك الأسئلة المتاح للتأليف.</p>
       </section>
     );
   }
@@ -420,11 +381,11 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
     <section className="authoring-workspace">
       <header className="page-header authoring-header">
         <div>
-          <p className="eyebrow">Stage 13G · G-D</p>
+          <p className="eyebrow">إنشاء ومساعدة ذكية</p>
           <h1>توليد المحتوى بالذكاء الاصطناعي</h1>
           <p className="page-description">
-            أدوات مرتبطة بالدرس والاختبار فوق نظام AI الحالي. التوليد لا يعني النشر: كل سؤال
-            يمر بالمراجعة ثم بنك الأسئلة قبل snapshot الطالب.
+            ابدأ التوليد من الدرس أو الاختبار، ثم راجع النتيجة بشريًا قبل اعتمادها. الأسئلة
+            الناتجة تبقى مسودات حتى تمر بمراجعة بنك الأسئلة ولا تُنشر تلقائيًا للطلاب.
           </p>
         </div>
         <button
@@ -444,12 +405,12 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
       ) : null}
 
       <section className="authoring-step-strip" aria-label="مسار الاعتماد">
-        <strong>المسار الآمن:</strong>
+        <strong>مسار الاعتماد:</strong>
         <span>١. إنشاء المهمة</span>
-        <span>٢. مراجعة AI</span>
-        <span>٣. تطبيق المخرج</span>
-        <span>٤. مراجعة/نشر بنك الأسئلة</span>
-        <span>٥. snapshot داخل الاختبار</span>
+        <span>٢. مراجعة النتيجة</span>
+        <span>٣. تطبيق النتيجة المعتمدة</span>
+        <span>٤. مراجعة أسئلة البنك</span>
+        <span>٥. النشر أو تركيب نموذج الاختبار</span>
       </section>
 
       <div className="authoring-grid">
@@ -484,52 +445,13 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
           onSubmit={submitLessonGeneration}
         />
 
-        <section className="authoring-panel" aria-labelledby="apply-output-title">
-          <div className="authoring-panel-heading">
-            <div>
-              <p className="section-kicker">Reviewed output</p>
-              <h2 id="apply-output-title">تطبيق مخرج معتمد</h2>
-            </div>
-          </div>
-          <p className="authoring-note">
-            أدخل Output ID بعد اعتماده. مخرج الدرس يحدّث الملخص أو ينشئ مسودات أسئلة. مخرج
-            الاختبار ينشئ المسودات أولًا، وبعد نشرها يعيد التطبيق لتركيب النموذج مرة واحدة.
-          </p>
-          <label className="authoring-select-block">
-            <span>Output ID</span>
-            <input
-              value={applyOutputId}
-              onChange={(event) => setApplyOutputId(event.target.value)}
-              placeholder="UUID"
-            />
-          </label>
-          <div className="authoring-actions">
-            <button
-              className="primary-button"
-              type="button"
-              disabled={busy || !applyOutputId.trim()}
-              onClick={() => void applyOutput("lesson")}
-            >
-              تطبيق على درس
-            </button>
-            <button
-              className="secondary-button"
-              type="button"
-              disabled={busy || !applyOutputId.trim()}
-              onClick={() => void applyOutput("quiz")}
-            >
-              تطبيق على اختبار
-            </button>
-          </div>
-        </section>
-
         <section
           className="authoring-panel authoring-wide"
           aria-labelledby="quiz-authoring-title"
         >
           <div className="authoring-panel-heading">
             <div>
-              <p className="section-kicker">Quiz Builder</p>
+              <p className="section-kicker">الاختبارات</p>
               <h2 id="quiz-authoring-title">توليد نماذج بإعدادات مستقلة</h2>
             </div>
             <span className="count-pill">حتى 20 نموذجًا</span>
@@ -617,7 +539,7 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
         <section className="authoring-panel" aria-labelledby="question-tools-title">
           <div className="authoring-panel-heading">
             <div>
-              <p className="section-kicker">Question Bank</p>
+              <p className="section-kicker">بنك الأسئلة</p>
               <h2 id="question-tools-title">إعادة التوليد والأرشفة</h2>
             </div>
           </div>
@@ -659,7 +581,7 @@ export function AdminAiAuthoringWorkspace({ onSessionExpired }: Props) {
         >
           <div className="authoring-panel-heading">
             <div>
-              <p className="section-kicker">Exports</p>
+              <p className="section-kicker">التصدير</p>
               <h2 id="special-export-title">تصدير نماذج الاختبار</h2>
             </div>
           </div>
@@ -810,7 +732,7 @@ function LessonGenerationPanel({
     <section className="authoring-panel" aria-labelledby="lesson-authoring-title">
       <div className="authoring-panel-heading">
         <div>
-          <p className="section-kicker">Lessons</p>
+          <p className="section-kicker">الدروس</p>
           <h2 id="lesson-authoring-title">درس أو مجموعة دروس</h2>
         </div>
         <span className="count-pill">حتى 32</span>
