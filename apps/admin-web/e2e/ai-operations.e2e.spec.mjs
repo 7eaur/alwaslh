@@ -89,6 +89,7 @@ test("Admin AI review navigates complete durable job, result and execution histo
   const attemptsPagination = page.getByRole("navigation", { name: "صفحات سجل تنفيذ النتيجة" });
   await expect(attemptsPagination).toContainText("1–50 من 51");
   await attemptsPagination.getByRole("button", { name: "التالي" }).click();
+  await page.getByText("سجل التنفيذ (51)", { exact: true }).click();
   await expect(page.getByText(/المحاولة 1 —/)).toBeVisible();
 
   await expect(page.getByText("fixture-provider", { exact: true })).toHaveCount(0);
@@ -113,14 +114,15 @@ test("Admin AI review keeps canonical human-review authority and survives reload
   await unit.click();
   await expect(page.getByRole("heading", { name: "مراجعة النتيجة" })).toBeVisible();
 
+  await page.getByText("سجل المراجعة (101)", { exact: true }).click();
   const reviewPagination = page.getByRole("navigation", { name: "صفحات سجل مراجعة النتيجة" });
   await expect(reviewPagination).toContainText("1–50 من 101");
   await reviewPagination.getByRole("button", { name: "التالي" }).click();
+  await page.getByText("سجل المراجعة (101)", { exact: true }).click();
   await expect(reviewPagination).toContainText("51–100 من 101");
   await reviewPagination.getByRole("button", { name: "التالي" }).click();
-  await expect(reviewPagination).toContainText("101–101 من 101");
-
   await page.getByText("سجل المراجعة (101)", { exact: true }).click();
+  await expect(reviewPagination).toContainText("101–101 من 101");
   await expect(page.getByText("stage13e-e2e-review-1", { exact: true })).toBeVisible();
 
   const approve = page.getByRole("button", { name: "اعتماد بعد المراجعة" });
@@ -129,6 +131,7 @@ test("Admin AI review keeps canonical human-review authority and survives reload
   await approve.click();
   await expect(page.getByText("معتمد بعد المراجعة", { exact: true })).toBeVisible();
   await expect(page.getByText("لا توجد إجراءات أخرى متاحة لهذه النتيجة.", { exact: true })).toBeVisible();
+  await page.getByText("سجل المراجعة (102)", { exact: true }).click();
   await expect(reviewPagination).toContainText("101–102 من 102");
 
   await page.reload();
@@ -136,6 +139,7 @@ test("Admin AI review keeps canonical human-review authority and survives reload
   await openSeededJob(page);
   await page.locator(".ai-review-unit").first().click();
   await expect(page.getByText("معتمد بعد المراجعة", { exact: true })).toBeVisible();
+  await page.getByText("سجل المراجعة (102)", { exact: true }).click();
   await expect(page.getByRole("navigation", { name: "صفحات سجل مراجعة النتيجة" })).toContainText("1–50 من 102");
 });
 
@@ -163,7 +167,7 @@ test("Admin AI review applies an approved lesson result without copying internal
     (lesson) => lesson.slug === "stage13e-ai-apply-lesson",
   );
   expect(appliedLesson?.summary).toBe("ملخص درس معتمد عبر مراجعات AI");
-  expect(appliedLesson?.contentRevision).toBe(1);
+  expect(appliedLesson?.contentRevision).toBe("2");
 });
 
 test("Admin AI review returns to login after the real Admin session expires", async ({ page }) => {
