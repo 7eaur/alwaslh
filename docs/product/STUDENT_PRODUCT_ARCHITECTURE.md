@@ -5,81 +5,60 @@ Status: ACTIVE PRODUCT ARCHITECTURE FOR STUDENT UX/UI
 
 ## 1. Purpose
 
-This document defines the future-complete Student product structure so current UX/UI refoundation does not optimize only for the features already implemented today.
+This document defines the future-complete Student product structure so the application is not repeatedly restructured as later roadmap capabilities arrive.
 
-The current UI is evidence for behavior and contracts, not a visual preservation target. The architecture must accommodate verified legacy/product capabilities without exposing unfinished destinations prematurely.
+The Product Owner has explicitly confirmed that no production learner will use the Student app before the remaining product roadmap is complete. Therefore **final UI surfaces and navigation for verified future product capabilities may be built before their backend integration**, provided they do not fabricate data, authority or business behavior.
+
+Binding implementation principle:
+
+**Build the final surface now; connect authoritative data later.**
+
+`docs/product/STUDENT_FUTURE_SURFACES_SPEC.md` is the detailed pre-integration specification for Library/Notes/Saved/Needs Review, Notifications, Progress and Account integration.
 
 ### Binding design priority
 
-Every Student screen must be judged in this order:
-
 **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish.**
 
-The interface must feel calm, obvious and comfortable for sustained study. A visually attractive screen that is harder to understand or use is a design failure.
+Acceptance is:
 
-Acceptance rules:
+**Functional + Clear + Easy + Comfortable + Consistent + Fast + Maintainable + Professional.**
 
-- the learner should understand the screen purpose and next action within seconds;
-- hierarchy must be clear without relying on excessive bold text, borders, cards or decoration;
-- spacing, line length, contrast and typography must support long reading sessions without visual fatigue;
-- navigation and actions must feel predictable between screens;
-- primary actions are obvious, secondary actions are quieter, destructive actions are clearly separated;
-- mobile touch targets and one-handed use are first-class requirements;
-- RTL composition must feel native rather than mirrored mechanically;
-- visual density must match the task: calm for learning/reading, focused for assessment, compact but clear for personal libraries;
-- avoid card walls, duplicated headings, persistent status chrome, decorative metrics, excessive shadows, gradients, glow and animation;
-- remove anything that does not help orientation, learning, decision-making or a real action;
-- loading, empty, error, offline, denied, success and recovery states must preserve the same calm visual system;
-- no screen is accepted only because it is functional; final acceptance is **Functional + Clear + Easy + Comfortable + Consistent + Fast + Maintainable + Professional**.
+The learner should understand screen purpose and next action within seconds. Avoid excessive bold text, cards, borders, persistent status chrome, decorative metrics, heavy shadows, gradients, glow or motion. RTL, touch targets, loading/empty/error/offline/denied/success states and sustained reading comfort are first-class requirements.
 
 Source-of-truth precedence remains:
 
 1. current Product Owner direction;
 2. live code, PostgreSQL contracts, executable tests/CI and verified runtime;
 3. security/offline/assessment/publication authority contracts;
-4. PRODUCT_FEATURE_PARITY_MATRIX.md, MASTER_REBUILD_ROADMAP.md and docs/prd.md;
-5. this document for Student information placement and UX composition.
+4. roadmap/parity/PRD;
+5. this architecture for Student placement/composition.
 
-## 2. Product inventory relevant to Student architecture
+## 2. Pre-integration rule
 
-### Implemented / active today
+A Student surface may now exist before its service contract is connected when all of the following are true:
 
-- Activation / returning login / recovery / device binding.
-- Home shell.
-- Learn → Subject → Lesson hierarchy.
-- Protected Reader with image-page display, search and text-to-speech.
-- Practice → Quiz → Attempt → Result.
-- Downloads/offline package management foundation.
-- Account access/entitlement/class-code operations.
+- the capability belongs to the approved product roadmap/parity;
+- its final information-architecture location is known;
+- the screen can render an honest zero-data/empty state;
+- no fake values, counts, records or business outcomes are shown;
+- actions requiring missing backend authority remain absent or inert only where clearly non-actionable; no fake save/sync behavior;
+- the UI does not claim the roadmap stage itself is complete.
 
-### Planned and contractually preserved
+Forbidden fabricated content includes:
 
-The following capabilities are not optional decoration; they exist in the product parity/roadmap and therefore must have an intentional place in the final Student IA:
+- fake notes;
+- fake unread notification counts;
+- fake progress percentages;
+- fake scores/statistics;
+- fake achievements/rankings/streaks;
+- invented recommendations;
+- invented security/account controls.
 
-- local personal notes;
-- text/image/camera/audio notes;
-- notes linked to lesson/source context;
-- saved/bookmarked questions;
-- Favorites / Needs Review personal-learning collections where Stage17 formalizes them;
-- learning statistics;
-- achievements;
-- recent practice/history detail;
-- notifications feed, unread state and future deep links;
-- Reader summary;
-- Reader interactive questions;
-- Reader notes access;
-- Reader zoom/pan;
-- Reader previous/next lesson;
-- Reader font-size/readability preferences;
-- Reader theme/read mode where supported;
-- offline Reader after Stage16 closure;
-- account/security/recovery/preferences capabilities when backed by real contracts.
-
-Do not render a destination until its implementation exists. The IA is future-complete; the visible product remains capability-aware.
+Backend implementation and product-surface implementation are therefore tracked separately.
 
 ## 3. Final global Student navigation
 
-The Student app should keep four primary destinations on narrow screens:
+Primary mobile navigation is fixed to four destinations:
 
 1. **الرئيسية** — `/app/home`
 2. **التعلّم** — `/app/learn`
@@ -88,22 +67,16 @@ The Student app should keep four primary destinations on narrow screens:
 
 Secondary global actions:
 
-- **الإشعارات** — notification bell in app bar when Stage18 is implemented;
-- **الحساب** — profile/account action in app bar, not a fifth bottom-nav item;
-- contextual connection/offline state only when it requires attention.
+- **الإشعارات** — app-bar bell → `/app/notifications`;
+- **الحساب** — app-bar profile/account action → `/app/account`;
+- **تقدمي** — Home/Account and desktop secondary navigation → `/app/progress`;
+- connection state appears only when degraded/actionable.
 
-Why `مكتبتي` instead of a permanent top-level `Downloads` destination:
+Focused Reader and active Assessment may suppress global navigation.
 
-- Downloads are one type of learner-owned content, not the whole personal-learning area.
-- Stage17 adds Notes, Favorites/Saved Questions and Needs Review.
-- A single Library destination prevents bottom-navigation growth and keeps personal resources together.
-- Existing `/app/downloads` must remain compatible while migration happens; it may later redirect to `/app/library/downloads` after executable parity exists.
-
-No fake `Library`, `Notifications`, `Progress` or other routes may be exposed before their underlying capabilities exist.
+`/app/downloads` remains a compatibility route while the canonical visual home for downloads is `/app/library/downloads`.
 
 ## 4. Route architecture
-
-Future-complete route tree:
 
 ```text
 /app
@@ -117,239 +90,202 @@ Future-complete route tree:
 ├── library
 │   ├── downloads
 │   ├── notes
-│   │   └── :noteId
-│   └── saved
-├── progress
+│   │   └── :noteId          # when Stage17 CRUD exists
+│   ├── saved
+│   └── review
 ├── notifications
+├── progress
 └── account
-    ├── access
-    ├── security
-    └── preferences
+    ├── access               # reserved until useful as a distinct route
+    ├── security             # only when real contract exists
+    └── preferences          # only when persistence contract exists
 ```
 
-Route rules:
-
-- only implemented children are visible in navigation;
-- unsupported account subroutes are not placeholders;
-- existing `/app/downloads` remains supported until Stage17/IA migration has executable verification;
-- URLs never grant authority; backend authorization remains canonical.
+URLs never grant authority. API/PostgreSQL remain canonical.
 
 ## 5. Home
 
-Home answers: **what should I do now?**
+Home answers: **ماذا أفعل الآن؟**
 
-Preferred composition when data contracts exist:
+Primary choices:
 
-1. compact greeting/context;
-2. primary continue/recent-learning action;
-3. current subjects or next useful learning destination;
-4. relevant Practice shortcut;
-5. concise progress summary after Stage19;
-6. latest meaningful notification preview after Stage18;
-7. offline/download attention only when action is required.
+- Learn;
+- Practice;
+- Library.
 
-Do not put account forms, full curriculum, full quiz catalog, full notes, decorative KPIs, fake streaks or unsupported recommendations on Home.
+Secondary personal destinations:
 
-## 6. Learn and browsing
+- Progress;
+- Notifications.
 
-`Learn` owns discovery and curriculum browsing:
+Future real data may add a concise continue-learning action or small meaningful preview, but Home must not become a dashboard containing the whole product.
 
-- class context only when needed;
-- subjects;
-- sections;
-- ordered lessons;
-- stable lesson thumbnails when media supports them;
-- saved/offline indicators where available;
-- clear empty/access states.
+## 6. Learn / Reader
 
-Browsing should remain hierarchical and calm. Search may be added only if the real catalog size justifies it.
+Learn owns curriculum browsing: class context, subjects, sections and ordered lessons.
 
-## 7. Reader
+Reader is the focused learning workspace. Its future tool architecture includes, as contracts become available:
 
-Reader is the core learning workspace and should be designed as a focused app surface, not a generic document page.
-
-### Primary content
-
-- lesson title/context;
-- lesson pages/media;
-- controlled reading width;
-- previous/next lesson where stable ordering exists;
-- page position/context.
-
-### Reader tools
-
-Reader actions should be contextual, compact and progressively disclosed:
-
-- zoom/pan;
-- search inside lesson;
+- previous/next lesson;
+- search;
 - listen/read aloud;
+- zoom/readability;
+- add/view notes;
 - summary;
 - interactive questions;
-- add/view notes;
-- save question when in question context;
-- offline/download state;
-- font/readability preferences;
-- theme/read mode if supported.
+- save question;
+- download/offline state;
+- reading preferences.
 
-Do not make every tool a permanent large tab/bar on small phones. Prefer a small contextual toolbar + bottom sheet/drawer/menu where appropriate.
+Phone Reader should use a compact toolbar/progressive disclosure rather than permanently displaying every tool.
 
-### Notes inside Reader
+Notes opened from Reader and Notes browsed in Library use one Stage17 data model and retain source provenance.
 
-Notes have two entry points but one data model:
-
-- create/view a note in lesson context from Reader;
-- browse/search all notes from Library.
-
-Notes remain local/private according to the current product rule unless a future explicit business decision changes ownership.
-
-## 8. Practice
+## 7. Practice / Assessment
 
 Practice remains:
 
-`Library of activities → Quiz detail/choice → Focused attempt → Result/review`.
+`Catalog → Quiz choice → Focused attempt → Result/review`.
 
-Saved/bookmarked question action belongs inside question/result context and writes to the Stage17 personal-learning repository. It must retain stable lesson/page/question provenance.
+Future saved/Needs Review actions live in question/result context and write to Stage17 personal-learning data. Client UI does not invent weakness/mastery authority.
 
-`Needs Review` should be treated as a personal collection/state in Library, not a second Practice catalog.
+## 8. My Library — مكتبتي
 
-## 9. My Library — مكتبتي
-
-Library is the final home for learner-owned/offline resources.
+Library is the home of learner-owned resources:
 
 ### Downloads
 
-- downloaded lessons;
-- update/remove;
-- storage status in human language;
-- open offline lesson after Stage16 makes that contract real.
+Existing Stage16 storage/signing/checksum/device/session authority remains unchanged. Library changes placement only.
 
 ### Notes
 
-- all local notes;
-- text/image/audio/camera types;
-- search;
-- filter/group by lesson;
+Prebuilt surface exists now with honest empty state. Stage17 later connects:
+
 - create/edit/delete;
-- direct link back to source lesson when source still exists.
+- source provenance;
+- text/image/camera/audio kinds where contract supports them;
+- source navigation;
+- offline/sync/conflict rules.
 
-### Saved / Favorites
+### Saved / Bookmarks
 
-Initial guaranteed capability is saved/bookmarked questions.
+Initial guaranteed future entity is saved/bookmarked questions. Use **المحفوظات** rather than claiming generic lesson favorites before contracts support them.
 
-- human question preview;
-- subject/lesson/page provenance;
-- search/filter;
-- remove from saved;
-- open source question/lesson where contract permits.
+### Needs Review
 
-Do not claim generic lesson favorites until Stage17 contract explicitly supports them. The UI name `المحفوظات` is safer than pretending every entity type is already favorite-able.
+A learner-owned review collection/state, not a duplicate Practice catalog and not a client-computed diagnosis.
 
-## 10. Notifications
+## 9. Notifications
 
-Notifications are a secondary global system, not a primary bottom-nav destination.
+Notifications are secondary global UI, not a bottom-nav item.
 
-Final pattern:
+The bell and `/app/notifications` surface may exist before Stage18 data connection with a truthful zero-data state and **no fake badge**.
 
-- bell in app bar;
-- unread badge based on real unread/last-seen state;
-- `/app/notifications` full feed;
-- importance/time hierarchy;
-- cached offline feed where Stage18 implements it;
-- deep links only when real target/action schema exists;
-- no persistent intrusive banner for ordinary notifications.
+Stage18 later supplies authoritative:
 
-## 11. Progress / Statistics / Achievements
+- feed schema;
+- unread/last-seen state;
+- classification/importance;
+- supported deep-link target schema;
+- any offline caching policy.
 
-Stage19 should own `/app/progress`.
+No raw event/provider/type/ID language is shown to the learner.
 
-It may surface from Home and Account but should not automatically become a fifth global navigation destination.
+## 10. Progress / Statistics / Achievements
 
-Composition should include only trusted metrics with clear meaning:
+`/app/progress` may exist before Stage19 data connection with an honest pre-integration state and no invented metrics.
 
-- completed lessons/practice;
-- answered/correct interactive questions;
-- average score/completion metrics according to canonical formulas;
-- recent practice;
-- achievements when server rules exist;
-- ranking only under the approved privacy/trust contract.
+When Stage19 contracts arrive, only server-defined trusted metrics may be shown, such as completed learning, attempts, correct answers, canonical averages, achievements and approved ranking/privacy behavior.
 
-No decorative charts or invented streaks.
+No decorative charts, fake streaks or browser-calculated mastery claims.
 
-## 12. Account
+## 11. Account
 
-Account should be a clean management surface, not a duplicate dashboard.
+Account is the personal management hub, not another Home.
 
-### Visible now when implemented
+Current/approved placement:
 
-- current access/activated classes;
+- learner identity/display name;
+- current access;
 - add class code;
-- logout;
-- recovery guidance/status where actual action exists.
+- Library link;
+- Progress link;
+- Notifications link;
+- Help;
+- Support;
+- logout.
 
-### Future sections only when real contracts exist
+Security/password/device/session management and persistent preferences appear only when backed by real contracts. Never expose device keys, cryptography, fingerprints, UUIDs or tokens.
 
-- Security: password change/recovery/session/device operations;
-- Preferences: Reader/app preferences that genuinely persist;
-- Support/help if product contract requires it.
-
-Avoid low-level device keys, cryptography, storage, fingerprints, UUIDs and session internals.
-
-## 13. Shell redesign rules
-
-The final Student shell must remove accumulated chrome from earlier batches.
+## 12. Shell and responsive rules
 
 ### Mobile
 
 - one compact App Bar;
-- page title only where necessary, no repeated title stack;
-- optional notification bell;
-- account/profile action;
-- four-item bottom nav;
-- connection state appears only when offline/degraded/actionable;
-- Reader and active Assessment use focused shells and may suppress global nav.
+- notification/account actions;
+- four-item bottom navigation;
+- offline state only when actionable;
+- no desktop-table patterns;
+- focused Reader/Assessment may suppress shell navigation.
 
 ### Tablet/Desktop
 
-- one coherent rail/top-shell, never logo/header duplicated in multiple layers;
-- same semantic destinations as mobile;
-- Library/Notes/Progress may use split/list-detail layouts when useful;
-- Reader preserves readable width.
+- one coherent rail/top-shell;
+- same semantic primary destinations as mobile;
+- Progress and Account may live in secondary rail section;
+- Library may later use list/detail layouts when real data warrants it;
+- Reader keeps readable line/viewport width.
 
-## 14. Accumulation cleanup requirements
+## 13. Motion / interaction
 
-Before Student UX is called visually closed:
+Motion is functional affordance, not decoration:
 
-- remove stage-named production styles such as `stage14.css` where responsibilities have migrated;
-- consolidate `assessment.css` / `assessment-polish.css` or other layered override chains into owned feature styles;
-- remove selectors whose only purpose is hiding earlier composition mistakes;
-- keep one shell owner and one route owner per responsibility;
-- no duplicated account/access/download state;
-- route-level code splitting should be evaluated for the current monolithic Student bundle;
-- remove dead legacy components/classes only after E2E parity proves no behavior loss;
-- shared state/empty/error/status primitives should be reused only where semantics truly match.
+- short surface entry;
+- subtle hover/elevation where pointer exists;
+- press feedback;
+- clear save/remove feedback;
+- no continuous decorative animation;
+- `prefers-reduced-motion` wins.
 
-## 15. Execution dependency
+## 14. Performance architecture
 
-This architecture does **not** authorize premature implementation of roadmap stages.
+The Student application must not grow as one monolithic initial JavaScript bundle.
 
-Required dependency order remains:
+Destination-level features are loaded lazily:
 
-1. close current UX-B05 and Student visual/architecture cleanup that does not change deferred business contracts;
-2. synchronize with Super Admin rebuild for shared design foundations;
-3. close shared cross-product responsive/RTL/accessibility/visual regression work;
-4. return to Stage16 at `STUDENT-016I` and close offline authority/Reader;
-5. Stage17 implements Personal Learning Data (Notes/Favorites/Needs Review);
-6. Stage18 implements Notifications;
-7. Stage19 implements Progress/Statistics/Achievements.
+- Learn/Reader;
+- Practice/Assessment;
+- Library and personal surfaces;
+- Account.
 
-When Stage17–19 begin, their screens must follow this placement instead of inventing new top-level navigation ad hoc.
+Shell/Home remains immediately available. Dynamic imports are preferred before manual chunk configuration. Loading fallback copy is learner-facing (`جاري فتح الصفحة`) and must remain calm/accessibility-safe.
 
-## 16. Current verification labels
+Bundle size is verified from production build output after structural changes.
 
-- Notes/favorites/saved-question final implementation: **NOT YET VERIFIED — Stage17 required**.
-- Notification final implementation: **NOT YET VERIFIED — Stage18 required**.
-- Progress/statistics/achievements final implementation: **NOT YET VERIFIED — Stage19 required**.
-- True cold-start offline Reader: **NOT YET VERIFIED — Stage16 closure required**.
-- Student account self-service password/security settings beyond currently verified recovery/device contracts: **NOT YET VERIFIED**.
+## 15. Accumulation rules
 
-The architecture reserves correct locations for these capabilities without presenting them as completed product features.
+- one shell owner;
+- one route/destination owner per responsibility;
+- no duplicated access/download state;
+- avoid stage-named production CSS;
+- remove historical override chains after executable parity;
+- reuse state primitives only where semantics match;
+- do not preserve legacy UI solely because tests once targeted its text/DOM.
+
+## 16. Roadmap / integration distinction
+
+Prebuilding these surfaces **does not complete Stage17–19 backend work**.
+
+Backend roadmap remains:
+
+`STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
+
+At Stage17–19, implementation should connect authoritative contracts into the already-built surfaces rather than invent new top-level navigation.
+
+Current labels:
+
+- Notes/Saved/Needs Review UI architecture: **PREBUILT / DATA CONTRACT NOT YET CONNECTED**.
+- Notifications UI architecture: **PREBUILT / STAGE18 DATA NOT YET CONNECTED**.
+- Progress/Statistics/Achievements UI architecture: **PREBUILT / STAGE19 DATA NOT YET CONNECTED**.
+- true cold-start offline Reader: **NOT YET VERIFIED — Stage16 closure required**.
+- self-service account security/preferences beyond verified current contracts: **NOT YET VERIFIED**.
