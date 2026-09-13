@@ -20,7 +20,8 @@
 - AR-09 — Cleanup / architecture enforcement — **ACTIVE**.
   - Batch 1 — Quiz metadata feature ownership relocation — VERIFIED.
   - Batch 2 — Lesson authoring tools feature ownership relocation — VERIFIED.
-  - Batch 3 — Access-code reports feature ownership relocation — **VERIFIED** on exact code-head `3b1eb104fef1ac70035dcd9875d9807f95bf2009`.
+  - Batch 3 — Access-code reports feature ownership relocation — VERIFIED on exact code-head `3b1eb104fef1ac70035dcd9875d9807f95bf2009`.
+  - Batch 4A — AI review route feature ownership adapter — **ACTIVE / exact-head CI running** on `069858ace554e2be51e21b128e76e6089f26edef`.
 - AR-10 — A11y / RTL / performance / visual QA — NOT STARTED.
 
 ## AR-09 Batch 3 — verified closure
@@ -60,13 +61,21 @@ For exact code-head `3b1eb104fef1ac70035dcd9875d9807f95bf2009`:
   - Stage13G backend + clean PostgreSQL migrations/contracts/regressions — SUCCESS.
   - Stage13G Real API + PostgreSQL + Chromium job `103737110446` — SUCCESS, including the real Admin Chromium suite.
 
-**Decision: AR-09 Batch 3 is VERIFIED. AR-09 itself remains ACTIVE. AR-10 remains blocked.**
+## AR-09 Batch 4A — AI review route ownership — ACTIVE
 
-## Shared resume point for task A/B — AR-09 next cleanup batch only
+- Inherited documentation HEAD `1077fe0c0074976831f1708a61e9372c81cc8386` was reconciled first: Admin AI `34762502501`, Combined `34762502390`, Stage13G `34762502493` all completed SUCCESS, including Real API + PostgreSQL + Chromium.
+- Fresh inventory confirmed `/app/reviews/ai` was still importing root `AiOperationsPage` directly while Reviews is an established feature owner.
+- Classification: KEEP behavior/server authority/tests; IMPROVE route ownership; REFACTOR through a feature-owned adapter first; REBUILD none; REMOVE root seam only after exact-head parity; NO CHANGE backend/migrations/Student.
+- `9427649f29e3bf69d2143dc4b12235652bcefc6b` added `apps/admin-web/src/admin/reviews/AiOperationsPage.tsx` as a temporary parity adapter.
+- `069858ace554e2be51e21b128e76e6089f26edef` routed `App.tsx` through that feature owner.
+- Exact-head CI is currently active: Frontend `34763851152`, Admin AI `34763851138`, Combined `34763851147`, Stage13G `34763851137`.
+- No implementation relocation or root deletion is allowed until those runs are green.
 
-1. Fetch live `main`, current branch HEAD, these three continuity files, recent commits, Draft PR #52 and exact-head CI before any mutation.
-2. Reconcile CI created by the documentation commits from this checkpoint before starting another seam.
-3. Re-inventory the remaining root route-owned surfaces and inspect callers/tests/contracts before selecting anything. Known candidates from the previous inventory include `AdminAiAuthoringWorkspace`, `AiOperationsPage`, `ContentIngestionWorkspace`, `ContentOperationsWorkspace`, and `CurriculumWorkspace`; root location alone is not evidence for relocation/removal.
-4. Choose **one smallest bounded seam only**, classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE, and preserve backend/PostgreSQL/Student authority.
-5. Do not begin AR-10 until AR-09 has no remaining architecture-enforcement work and its final exact-head matrix is green.
+## Shared resume point for task A/B — AR-09 Batch 4A only
+
+1. Re-fetch live `main`, branch HEAD, the three continuity files, PR #52 and CI before mutation.
+2. Reconcile all four exact-head runs for `069858ace554e2be51e21b128e76e6089f26edef`.
+3. If green, continue the **same seam only**: move the actual `AiOperationsPage` implementation under `src/admin/reviews/`, adjust only relative imports, preserve `AiReviewWorkspace`/API authority, then remove the root compatibility file after parity.
+4. If any run fails, fix the root cause without weakening tests or backend contracts.
+5. Do not begin another AR-09 seam or AR-10 while Batch 4A is unresolved.
 6. Keep PR #52 Draft; no merge or auto-merge.
