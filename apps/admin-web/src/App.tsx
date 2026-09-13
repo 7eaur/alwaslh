@@ -18,6 +18,7 @@ import { AdminNotificationsPage } from "./admin/operations/AdminNotificationsPag
 import { AdminOperationsAuditPage } from "./admin/operations/AdminOperationsAuditPage";
 import { AdminOperationsDiagnosticsPage } from "./admin/operations/AdminOperationsDiagnosticsPage";
 import { AdminOperationsHealthPage } from "./admin/operations/AdminOperationsHealthPage";
+import { QuestionBankDetailPage } from "./admin/questions/QuestionBankDetailPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
@@ -229,6 +230,7 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
           </WorkspaceWithRelatedActions>
         }
       />
+      <Route path="questions/:questionId" element={<QuestionBankDetailPage onSessionExpired={onSessionExpired} />} />
       <Route
         path="quizzes"
         element={
