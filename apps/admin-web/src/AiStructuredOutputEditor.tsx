@@ -109,7 +109,7 @@ function normalizeQuestionType(questionValue: AiQuestionApi, type: AiQuestionTyp
       type,
       options,
       correctOptionIndex,
-      answerText: correctOptionIndex === null ? null : options[correctOptionIndex],
+      answerText: correctOptionIndex === null ? null : (options[correctOptionIndex] ?? null),
     };
   }
   return {
