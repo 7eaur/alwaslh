@@ -30,12 +30,12 @@
 }
 
 .student-shell .text-button {
-  min-height: 2.45rem;
+  min-height: 2.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.38rem;
-  padding: 0.42rem 0.72rem;
+  padding: 0.5rem 0.78rem;
   border: 1px solid color-mix(in srgb, var(--aw-color-primary, #00b5a9) 32%, #dbe5e6);
   border-radius: 0.72rem;
   background: color-mix(in srgb, var(--aw-color-primary, #00b5a9) 7%, #fff);
@@ -59,8 +59,8 @@
 }
 
 .student-shell .student-compact-action {
-  min-height: 2.35rem;
-  padding: 0.38rem 0.68rem;
+  min-height: 2.75rem;
+  padding: 0.48rem 0.72rem;
   font-size: 0.9rem;
 }
 
