@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Repository code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history, merged work and specialized workstream documents.
 
-Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 NOT STARTED.**
+Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 ACTIVE.**
 
 ## Project and authority invariants
 
@@ -25,7 +25,8 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 N
 - AD-ADMIN-016..025 — Quiz Builder decomposition preserves lifecycle/version/export authority and removes legacy seams only after executable parity.
 - AD-ADMIN-026 — Students and Access Codes are separate task owners: `/app/students` owns individual account support/inspection while `/app/access-codes` owns code inventory, issuance and bulk lifecycle; server access/auth authority remains unchanged.
 - AD-ADMIN-027 — once focused Access Codes parity is executable, `/app/access-codes` imports its focused owner directly and the root `AdminStudentAccessWorkspace` alias is removed; aliases are not retained as architecture once they serve no compatibility caller.
-- **AD-ADMIN-028 — AR-08 closure requires both route ownership and exact-head executable parity; documentation-only commits do not replace verification of the code-head they describe.**
+- AD-ADMIN-028 — AR-08 closure requires both route ownership and exact-head executable parity; documentation-only commits do not replace verification of the code-head they describe.
+- **AD-ADMIN-029 — once a route-specific Admin surface has an established feature owner and no compatibility caller requires a root seam, its implementation belongs under `apps/admin-web/src/admin/<feature>/`; ownership relocation must preserve behavior/contracts and removal waits until the route imports the feature-owned implementation.**
 
 ## Super Admin stage ledger
 
@@ -36,8 +37,8 @@ Last consolidated: **2026-09-13 — AR-01 through AR-08 DONE / VERIFIED. AR-09 N
 - AR-05 — DONE / VERIFIED. `cda2c3a683c6101db12f0c7cfad772226c234e0d`; Frontend `34729512441`, Admin AI `34729512433`, Combined `34729512404` — SUCCESS.
 - AR-06 — DONE / VERIFIED. `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
 - AR-07 — DONE / VERIFIED. `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
-- AR-08 — **DONE / VERIFIED**. Final code-head `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
-- AR-09 — NOT STARTED.
+- AR-08 — DONE / VERIFIED. Final code-head `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
+- AR-09 — **ACTIVE**. Batch 1 code-head `20c128bb4a2b7166ad1d04d24e4672c93422d38e`; Frontend `34756904661` SUCCESS, Admin AI `34756904665` RUNNING, Combined `34756904664` RUNNING, Stage13G `34756904668` RUNNING at checkpoint.
 - AR-10 — NOT STARTED.
 
 ## AR-08 — Students + Access Codes
@@ -86,50 +87,67 @@ Final ownership cleanup already implemented:
 
 The preceding documentation checkpoint `5aaddd7e2ddb88472c26f07642acb4b1a37db28f` deliberately left AR-08 ACTIVE because some exact-head workflows were still running.
 
-#### Verification performed in this closure run
+#### Verification performed in closure
 
-Read before mutation:
-- `PROJECT_STATUS.md`;
-- `PROJECT_ENGINEERING_LOG.md`;
-- `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`;
-- `.agents/skills/alwaslh-product-engineering/SKILL.md`;
-- current `apps/admin-web/src/App.tsx`;
-- Draft PR #52;
-- live `main` and current feature branch metadata.
-
-Fresh references:
-- live `main`: `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`;
-- feature HEAD on arrival: `5aaddd7e2ddb88472c26f07642acb4b1a37db28f`;
-- authoritative AR-08 code-head under verification: `20ed69e46d6693925be42464f0c9f85691cec203`;
-- Draft PR #52: open, Draft, unmerged.
-
-Reconciled exact-head runs for `20ed69e...`:
+Exact-head `20ed69e...`:
 - Frontend `34754057319` — SUCCESS.
 - Admin AI `34754057304` — SUCCESS.
 - Combined `34754057322` — SUCCESS.
 - Stage13G Admin Operations `34754057370` — SUCCESS.
 
-Reconciled the later docs-only checkpoint `5aaddd7e...` to ensure there was no still-running newer work:
-- Admin AI `34754224070` — SUCCESS.
-- Combined `34754224068` — SUCCESS.
-- Stage13G `34754224060` — SUCCESS.
+Current-tree ownership confirmed focused Students/Access Codes owners and no root `AdminStudentAccessWorkspace.tsx`.
 
-Current-tree ownership inspection:
-- `App.tsx` directly imports both `AdminStudentsPage` and `AdminAccessCodesPage`.
-- `/app/students` directly renders `AdminStudentsPage`.
-- `/app/access-codes` directly renders `AdminAccessCodesPage`.
-- fetching `apps/admin-web/src/AdminStudentAccessWorkspace.tsx` at the current branch returns 404, confirming the obsolete alias file is absent.
+**Decision: AR-08 DONE / VERIFIED.**
 
-Classification at closure:
-- KEEP focused Students/Access Codes ownership and all existing server/API/PostgreSQL authority.
-- KEEP Student/audit work untouched.
-- IMPROVE/REFACTOR items were already completed in the verified code-head.
-- REMOVE item was already completed by deleting the legacy alias.
-- NO CHANGE to migrations/backend validation/auth/access/business rules.
+## AR-09 — Cleanup / architecture enforcement
 
-No production code was changed in this closure run because there was no remaining root-cause defect after CI reconciliation and ownership inspection.
+### Batch 1 — Quiz metadata feature ownership relocation — ACTIVE / exact-head CI in progress
 
-**Decision: AR-08 Batch 2 VERIFIED. AR-08 DONE / VERIFIED.**
+#### Pre-mutation reconciliation
+
+Read literally before mutation:
+- `PROJECT_STATUS.md`;
+- `PROJECT_ENGINEERING_LOG.md`;
+- `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md`;
+- current `apps/admin-web/src/App.tsx`;
+- Draft PR #52;
+- current root `apps/admin-web/src` inventory.
+
+Fresh repository state:
+- live `main`: `c5ccbc9b0d0e88ef8798bbae6a3cc0bf933b5a7e`;
+- feature HEAD received: `a0ea9466becb1c2ba24971e2df8d7a46e8b531b1`;
+- Draft PR #52: open, Draft, unmerged;
+- AR-08 documentation/executable state reconciled green, so AR-09 was the first incomplete legal stage.
+
+#### Inventory finding and decision
+
+`App.tsx` still imported several root-level workspaces/components. The smallest unambiguous route-owned seam was `QuizMetadataPanel.tsx`: `/app/quizzes/metadata` used it directly while all primary Quiz Builder owners already lived under `apps/admin-web/src/admin/quizzes/`.
+
+Classification before mutation:
+- **KEEP:** route `/app/quizzes/metadata`, existing metadata UX, `fetchQuizzes`, `fetchQuiz`, `updateQuiz`, server status/lifecycle authority.
+- **REFACTOR:** move `QuizMetadataPanel` to Quiz feature ownership.
+- **REMOVE:** root-level seam after the route imports the focused owner.
+- **NO CHANGE:** migrations/backend/PostgreSQL/auth/Student workstream and all quiz lifecycle/publication rules.
+
+#### Implementation
+
+1. `adc85a6c21eece93560a85febdb2c37e64fe3727` — created `apps/admin-web/src/admin/quizzes/QuizMetadataPanel.tsx` with behavior identical to the prior root component and only relative imports adjusted.
+2. `6a6360f5c37f96984fe95907783a5ab6e4962557` — changed `apps/admin-web/src/App.tsx` to import the feature-owned panel for the existing metadata route.
+3. `20c128bb4a2b7166ad1d04d24e4672c93422d38e` — deleted obsolete root `apps/admin-web/src/QuizMetadataPanel.tsx`.
+
+No API or server code changed. No test was removed, skipped or relaxed.
+
+#### Verification checkpoint
+
+Exact code-head: `20c128bb4a2b7166ad1d04d24e4672c93422d38e`.
+
+Workflow state captured before documentation mutation:
+- Stage 13E Frontend Preparation `34756904661` — **SUCCESS**.
+- Stage 13E Admin AI Operations `34756904665` — **RUNNING**.
+- Stage 13E Combined Integration `34756904664` — **RUNNING**.
+- Stage 13G Admin Operations `34756904668` — **RUNNING**.
+
+Per the non-overlap rule, no additional AR-09 code seam was started while these exact-head workflows remained active. Batch 1 is therefore ACTIVE, not VERIFIED, at this checkpoint.
 
 ## Findings register
 
@@ -145,15 +163,15 @@ No production code was changed in this closure run because there was no remainin
 | `ADMIN-008` | P1 | Question Bank | giant list/create/edit/review/history owner | FIXED / AR-06 |
 | `ADMIN-009` | P1 | Quiz Builder | giant list/create/detail/version/lifecycle/export owner | FIXED / AR-07 |
 | `ADMIN-010` | P1 | Students + Access | duplicated giant workspace under two routes | FIXED / AR-08 |
+| `ADMIN-011` | P2 | Admin architecture | root-level route-owned components remain outside feature ownership | ACTIVE / AR-09 |
 | `FPA-013` | P2 | Student Reader | active search match lacks DOM focus | OPEN / Student-audit track; out of Admin scope |
 
-## Explicit resume point for task A — AR-09 only
+## Explicit resume point for task B — AR-09 only
 
-1. Read all three continuity files and fetch live main/current branch/PR #52/current CI before mutation.
-2. If CI from this documentation checkpoint is still ACTIVE/RUNNING, reconcile it first and do not start a parallel batch.
-3. Start **AR-09 Cleanup / architecture enforcement** with an inventory of remaining root-level Admin workspaces, temporary aliases, obsolete routes, duplicated route ownership, dead compatibility shims and structural violations of `src/admin/<feature>/...` ownership.
-4. Inspect real callers and tests before removing anything. Classify KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE.
-5. Implement one small reviewable cleanup batch only; do not weaken tests or server authority and do not touch Student workstream unless a verified shared contract requires it.
-6. Run applicable lint/typecheck/unit/integration/build/Chromium checks and require exact-head green before declaring a batch verified.
-7. AR-10 remains blocked until AR-09 is fully DONE / VERIFIED.
-8. PR #52 remains Draft. No automatic merge.
+1. Fetch current feature HEAD before doing anything. Reconcile any commits newer than this documentation sequence instead of assuming exclusive ownership.
+2. Reconcile exact code-head `20c128bb...` runs: Frontend `34756904661` is SUCCESS; Admin AI `34756904665`, Combined `34756904664`, Stage13G `34756904668` were RUNNING at checkpoint.
+3. If any required run fails, inspect the exact failing job/log and fix the root cause without weakening tests or server authority.
+4. If all become SUCCESS, mark AR-09 Batch 1 VERIFIED in `PROJECT_STATUS.md`, this log, the workstream and PR #52 before beginning another code cleanup.
+5. Continue AR-09 by re-inventorying remaining root-level Admin owners/aliases/routes and checking real callers/tests. Choose one small safe cleanup seam; do not infer removability from filename/location alone.
+6. AR-10 remains blocked until AR-09 is fully DONE / VERIFIED.
+7. PR #52 remains Draft. No merge or auto-merge.
