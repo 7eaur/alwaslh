@@ -50,5 +50,5 @@ test("Quiz Builder create route creates a real quiz and lands on canonical entit
   expect(response.ok()).toBeTruthy();
   const payload = await response.json();
   expect(payload.quiz.title).toBe(title);
-  expect(payload.quiz.lessonIds).toContain(scope.lessonId);
+  expect(payload.lessons.map((lesson) => lesson.id)).toContain(scope.lessonId);
 });
