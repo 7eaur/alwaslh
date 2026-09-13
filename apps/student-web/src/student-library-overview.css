@@ -132,8 +132,7 @@
 }
 
 .student-library-card__copy em::after {
-  content: "←";
-  margin-inline-start: 0.3rem;
+  content: none;
 }
 
 .student-library-backbar {
@@ -175,46 +174,94 @@
 }
 
 @media (max-width: 760px) {
+  .student-library__heading {
+    margin-bottom: 0.7rem;
+  }
+
+  .student-library__heading h1 {
+    font-size: clamp(1.55rem, 7.4vw, 2rem);
+    line-height: 1.35;
+  }
+
+  .student-library__heading > p:last-child {
+    margin-top: 0.4rem;
+    line-height: 1.65;
+  }
+
   .student-library-summary {
-    padding: 0.9rem;
+    gap: 0.65rem;
+    padding: 0.75rem;
     border-radius: 1rem;
+    box-shadow: 0 4px 18px rgb(18 60 67 / 4%);
+  }
+
+  .student-library-summary__intro {
+    padding: 0;
+  }
+
+  .student-library-summary__intro h2 {
+    margin-bottom: 0;
+    font-size: 1.05rem;
+  }
+
+  .student-library-summary__intro > p:last-child {
+    display: none;
+  }
+
+  .student-library-stat {
+    min-height: 4.55rem;
+    padding: 0.62rem 0.72rem;
+  }
+
+  .student-library-stat span {
+    font-size: 0.72rem;
+  }
+
+  .student-library-stat small {
+    font-size: 0.67rem;
+  }
+
+  .student-library-stat strong {
+    font-size: 1.35rem;
   }
 
   .student-library-sections {
-    margin-top: 1rem;
+    margin-top: 0.85rem;
   }
 
   .student-library-sections__heading {
     display: block;
+    margin-bottom: 0.6rem;
+  }
+
+  .student-library-sections__heading h2 {
+    margin-bottom: 0.2rem;
   }
 
   .student-library-sections__heading > p {
-    margin-top: 0.35rem;
+    margin-top: 0.2rem;
     text-align: start;
+    line-height: 1.55;
   }
 
   .student-library-card {
-    min-height: 6.9rem;
+    min-height: 6.4rem;
   }
 
   .student-library-card__copy em {
-    margin-top: 0.4rem;
+    margin-top: 0.3rem;
   }
 }
 
 @media (max-width: 430px) {
   .student-library-stat {
-    padding: 0.75rem;
-  }
-
-  .student-library-stat strong {
-    font-size: 1.55rem;
+    padding: 0.58rem 0.65rem;
   }
 
   .student-library-card {
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 0.75rem;
-    padding: 0.9rem;
+    padding: 0.82rem 0.9rem;
   }
 
   .student-library-card__icon {
@@ -223,7 +270,7 @@
   }
 
   .student-library-card small {
-    line-height: 1.55;
+    line-height: 1.5;
   }
 
   .student-library-backbar {
