@@ -160,7 +160,7 @@ export function QuizBuilderListPage({ onSessionExpired }: Props) {
             <button
               className="secondary-button small-button"
               type="button"
-              disabled={!canPrevious || state === "loading"}
+              disabled={!canPrevious}
               onClick={() => setOffset((value) => Math.max(0, value - PAGE_SIZE))}
             >
               السابق
@@ -173,7 +173,7 @@ export function QuizBuilderListPage({ onSessionExpired }: Props) {
             <button
               className="secondary-button small-button"
               type="button"
-              disabled={!canNext || state === "loading"}
+              disabled={!canNext}
               onClick={() => setOffset((value) => value + PAGE_SIZE)}
             >
               التالي
