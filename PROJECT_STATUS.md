@@ -2,19 +2,19 @@
 
 > Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-13 — Grade 9 English full technical import verified**.
+Last synchronized: **2026-09-14 — reviewed Grade 9 English Unit 2 Lessons published and runtime-verified**.
 
 ## Current state
 
-**CURRENT USER PRIORITY: Content Rebuild — Grade 9 English full import**
+**CURRENT USER PRIORITY: Content Rebuild — review and publish verified Grade 9 English content**
 
-The hourly roadmap automation is disabled. Student PR #57 remains a separate open workstream and was not merged as part of this content run.
+The hourly roadmap automation is disabled. Student PR #57 remains a separate workstream and was not merged as part of this content run.
 
-### Grade 9 English — FULL IMPORT COMPLETE / UNPUBLISHED
+### Grade 9 English — FULL TECHNICAL IMPORT COMPLETE / PARTIALLY PUBLISHED BY REVIEW
 
-The full RAW-backed Grade 9 English Pupil's Book 3 source corpus is now present in modern PostgreSQL and has passed inspect → rollback-only gate → controlled apply → committed-state verification.
+The full RAW-backed Grade 9 English Pupil's Book 3 corpus is present in modern PostgreSQL and previously passed inspect → rollback gate → controlled apply → committed-state verification.
 
-Verified scope:
+Verified imported scope:
 
 - RAW-backed pages: `69/69`
 - RAW images verified by SHA-256: `69/69`
@@ -22,9 +22,8 @@ Verified scope:
 - ready Media Assets: `69/69`
 - Lesson Assets: `69/69`
 - recovered Units/Sections: `8/8`
-- live Lesson identities owning the 69 assets: `59`
 - Question Revisions preserved: `104/104`
-- manifest-only final page 70: `1`, preserved as evidence-only because it has no RAW identity
+- manifest-only page 70: evidence-only because it has no RAW identity
 
 Recovered Units:
 
@@ -37,79 +36,117 @@ Recovered Units:
 7. `Unit 7 - Communications`
 8. `Unit 8 - Winning medals`
 
-Bulk mutation boundary:
-
-- missing Sections created: `6`
-- existing Sections reused: `2`
-- Lessons assigned to recovered Section: `54`
-- existing correct Lesson assignments reused: `5`
-- RAW mutations: `0`
-- media-binary mutations: `0`
-- Question mutations: `0`
-- unrelated mutations: `0`
-- publication changes: `0`
-
-Publication state remains intentionally closed:
-
-- published Lessons: `0`
-- published Lesson Assets: `0`
-- published Questions: `0`
-
-Runtime evidence:
+Bulk-import runtime evidence remains:
 
 - content source commit: `9e58ab3e882b883bddd016099949881801eedc28`
 - Railway deployment: `de7f9883-b2f0-483d-a7c1-ffbfb15ac30c` — `SUCCESS`
 - markers: `BULK_G9_EN_INSPECT_PASS`, `BULK_G9_EN_TRANSACTION_GATE_PASS`, `BULK_G9_EN_APPLY_PASS`, `BULK_G9_EN_VERIFY_PASS`, `BULK_G9_EN_RUNNER_PASS`
-- canonical report: `7eaur/alwaslh-go@content/legacy-staging-rebuild/content-staging/BULK_GRADE9_ENGLISH_IMPORT_REPORT.md`
 
-### Source authority clarification
+Do not rerun the bulk import.
 
-`7eaur/alwaslh-go@master` contains a different Third Secondary/Pupil's Book 6 corpus and was not used as Grade 9 authority.
+## Reviewed Unit 2 publication — DONE / COMMITTED_STATE_VERIFIED_AND_PUBLISHED
 
-Grade 9 English authority for this import is the immutable legacy Supabase reconstruction plus `content-staging/curated/grade-9/english/pupil-book-3/reconstruction-candidates.json`.
+The user explicitly authorized publication only for the Lessons/questions that completed review.
 
-The count `59` is the observed live Lesson identity count after prior reviewed curation/reassignment. It is **not** derived using the prohibited `69 -> 62` heuristic. Every RAW-backed page/image remains represented exactly once.
+Published Lesson 1:
 
-The technical/data-completeness import is complete. A later pedagogical cleanup may merge/rename already-imported Lesson identities, but that is semantic refinement rather than missing content/media import work.
+- `curated-english9-pb3-u2-describing-people-and-animals`
+- `Describing people and animals`
+- pages `5..8`
+- published Lesson Assets: `4`
+- published reviewed Question Revisions: `12`
+
+Published Lesson 2:
+
+- `curated-english9-pb3-u2-time-and-meeting`
+- `Telling time and arranging a meeting`
+- pages `9..10`
+- published Lesson Assets: `2`
+- published reviewed Question Revisions: `7`
+
+Question review result:
+
+- reviewed: `19`
+- approved unchanged: `18`
+- corrected before publication: `1`
+
+Corrected page-10 question now asks:
+
+`When is Fuad helping Dad on Saturday?`
+
+with answer `at six o'clock` and a matching reviewed explanation.
+
+Publication runner evidence:
+
+- publisher commit: `ea5a19b7086eb8779701be2b1f47fc073b38aa12`
+- reviewed correction/final execution head: `7d17e19bef37835d500de492053e728f0cdb9f1b`
+- Railway deployment: `5024b218-32e0-49fe-b9f8-20ee82c5bcd0` — `SUCCESS`
+- markers: `G9_U2_PUBLISH_APPLY_PASS`, `G9_U2_PUBLISH_FULL_PASS`
+- final status: `COMMITTED_STATE_VERIFIED_AND_PUBLISHED`
+
+Verified Grade 9 English publication totals after this gate:
+
+- published Lessons: `2`
+- published Lesson Assets: `6`
+- published Question Revisions: `19`
+- target Reader-eligible assets: `6`
+- target published/known Question Revisions eligible for Quiz Builder: `19`
+
+Those exact totals prove the rest of the imported Grade 9 English corpus remains Draft/unpublished.
+
+Student delivery semantics:
+
+- the two reviewed Lessons satisfy Student Reader publication predicates, subject to normal auth/entitlement rules;
+- their 19 reviewed Question Revisions are published in Question Bank and linked to the two modern Lessons (`12 + 7`);
+- no standalone student Quiz/version is claimed to have been created or published by this gate. Quiz construction/publication is separate if required.
+
+Isolation:
+
+- RAW mutations: `0`
+- media-binary mutations: `0`
+- unrelated publication: `0`
+- page 70 fabrication: `0`
+- prohibited `69 -> 62` heuristic: not used
+
+Canonical report:
+
+`7eaur/alwaslh-go@content/legacy-staging-rebuild/content-staging/GRADE9_UNIT2_REVIEWED_PUBLICATION_REPORT.md`
+
+## Source authority clarification
+
+The exact original Grade 9 reference exists in `7eaur/alwaslh-go@master` under `تاسع انجليزي/الانجليزي_تاسع` and may be used for structural/page/title cross-checking. `master` also contains unrelated corpora such as Third Secondary/Pupil's Book 6, so the exact Grade 9 path must be resolved before use.
+
+Immutable RAW, the reconstruction manifest and live PostgreSQL remain the write/import authority. The legacy `69 -> 62` heuristic is prohibited.
 
 ## Content Rebuild checkpoints retained
 
 - `BATCH-001 = DONE / COMMITTED_STATE_VERIFIED`
 - `STRUCTURE-001 = DONE / SECTION_BOUNDARY_VERIFIED`
 - `STRUCTURE-002 = DONE / SECTION_BOUNDARY_VERIFIED`
-- `CURATION-001 = DONE / LESSON_BOUNDARY_VERIFIED`
-- `CURATION-002 = DONE / LESSON_BOUNDARY_VERIFIED`
+- `CURATION-001 = DONE / COMMITTED_STATE_VERIFIED / PUBLISHED`
+- `CURATION-002 = DONE / COMMITTED_STATE_VERIFIED / PUBLISHED`
 - `CONTENT-GAPS-001 = DONE / GAP_INVENTORY_VERIFIED`
 - `MEDIA-001 = DONE / MEDIA_PROFILE_VERIFIED_PARTIAL_ACCEPTANCE`
 - `IMPORT-001 = DONE / COMMITTED_STATE_VERIFIED`
 - `VERIFY-001 = DONE / DELIVERY_ISOLATION_AND_PROVENANCE_VERIFIED`
 - `ROADMAP-RETURN = DONE / STUDENT-016I_HANDOFF_VERIFIED`
-- `FULL-GRADE9-ENGLISH-BULK-IMPORT = DONE / FULL_ASSET_COVERAGE_VERIFIED / UNPUBLISHED`
+- `FULL-GRADE9-ENGLISH-BULK-IMPORT = DONE / FULL_ASSET_COVERAGE_VERIFIED`
+- `REVIEWED-UNIT2-PUBLICATION = DONE / COMMITTED_STATE_VERIFIED_AND_PUBLISHED`
 
 ## Student workstream retained
 
-PR #57 — `feat(student): close cold-start offline Reader gap` remains open on branch `stage16/student-016i`.
+PR #57 — `feat(student): close cold-start offline Reader gap` remains a separate `STUDENT-016I` workstream on `stage16/student-016i`.
 
-Last live head checked during this content run:
+Last checked head in the prior Student run:
 
 `ce97ef2524cd3735a0200ee0f15fa6e6e224e01e`
 
-It is not merged. Do not infer current CI state without re-fetching exact-head checks when Student work resumes.
+Do not infer current PR/CI state without re-fetching live exact-head evidence when Student work resumes.
 
-## Remaining roadmap
+Remaining Student roadmap stays repository-controlled; re-read live roadmap before continuing.
 
-Student roadmap remains:
+## Required startup / next Content action
 
-`STUDENT-016I → STUDENT-016R → STUDENT-016S → conditional STUDENT-016O → STUDENT-016G → Stage17 → Stage18 → Stage19`
+Read live heads first, then `PROJECT_HANDOFF.md`, this file, `PROJECT_ENGINEERING_LOG.md`, relevant product docs, and the live Content Rebuild status/handoff in `alwaslh-go`.
 
-Content publication is a separate explicit gate. Do not expose the imported Grade 9 English content to students merely because the technical import is complete.
-
-## Required startup
-
-Read live heads first, then:
-
-1. `PROJECT_HANDOFF.md`
-2. `PROJECT_STATUS.md`
-3. `PROJECT_ENGINEERING_LOG.md`
-4. relevant product architecture documents
-5. for Content Rebuild, the live `CONTENT_REBUILD_EXECUTION_STATUS.md` and `CONTENT_REBUILD_HANDOFF.md` in `7eaur/alwaslh-go@content/legacy-staging-rebuild`
+For Content: do not republish these two Lessons or rerun the bulk import. Continue from the first unresolved evidence-backed pedagogical boundary; future Lessons/questions remain unpublished until they complete review and an explicit rollback-gated publication pass.
