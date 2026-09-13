@@ -19,6 +19,7 @@ import { AdminOperationsAuditPage } from "./admin/operations/AdminOperationsAudi
 import { AdminOperationsDiagnosticsPage } from "./admin/operations/AdminOperationsDiagnosticsPage";
 import { AdminOperationsHealthPage } from "./admin/operations/AdminOperationsHealthPage";
 import { QuestionBankDetailPage } from "./admin/questions/QuestionBankDetailPage";
+import { QuestionBankListPage } from "./admin/questions/QuestionBankListPage";
 import "./ai-operations-review.css";
 import { ContentIngestionWorkspace } from "./ContentIngestionWorkspace";
 import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
@@ -225,7 +226,20 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
       <Route
         path="questions"
         element={
-          <WorkspaceWithRelatedActions actions={[{ label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" }]}>
+          <WorkspaceWithRelatedActions
+            actions={[
+              { label: "إنشاء واستيراد", to: "/app/questions/manage" },
+              { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
+            ]}
+          >
+            <QuestionBankListPage onSessionExpired={onSessionExpired} />
+          </WorkspaceWithRelatedActions>
+        }
+      />
+      <Route
+        path="questions/manage"
+        element={
+          <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى بنك الأسئلة", to: "/app/questions" }]}>
             <QuestionBankWorkspace onSessionExpired={onSessionExpired} />
           </WorkspaceWithRelatedActions>
         }
