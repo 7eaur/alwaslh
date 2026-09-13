@@ -21,6 +21,7 @@ import { AdminOperationsHealthPage } from "./admin/operations/AdminOperationsHea
 import { QuestionBankCreatePage } from "./admin/questions/QuestionBankCreatePage";
 import { QuestionBankDetailPage } from "./admin/questions/QuestionBankDetailPage";
 import { QuestionBankListPage } from "./admin/questions/QuestionBankListPage";
+import { QuizBuilderCreatePage } from "./admin/quizzes/QuizBuilderCreatePage";
 import { QuizBuilderDetailPage } from "./admin/quizzes/QuizBuilderDetailPage";
 import { QuizBuilderListPage } from "./admin/quizzes/QuizBuilderListPage";
 import "./ai-operations-review.css";
@@ -29,7 +30,6 @@ import { ContentOperationsWorkspace } from "./ContentOperationsWorkspace";
 import { CurriculumWorkspace } from "./CurriculumWorkspace";
 import { LessonAuthoringParityPanel } from "./LessonAuthoringParityPanel";
 import { LoginScreen } from "./LoginScreen";
-import { QuizBuilderWorkspace } from "./QuizBuilderWorkspace";
 import { QuizMetadataPanel } from "./QuizMetadataPanel";
 
 function errorMessage(error: unknown): string {
@@ -265,7 +265,7 @@ function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
         path="quizzes/manage"
         element={
           <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى الاختبارات", to: "/app/quizzes" }]}>
-            <QuizBuilderWorkspace onSessionExpired={onSessionExpired} />
+            <QuizBuilderCreatePage onSessionExpired={onSessionExpired} />
           </WorkspaceWithRelatedActions>
         }
       />
