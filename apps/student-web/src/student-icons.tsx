@@ -15,6 +15,7 @@ export type StudentIconName =
   | "saved"
   | "review"
   | "result"
+  | "search"
   | "chevron";
 
 const common: SVGProps<SVGSVGElement> = {
@@ -44,5 +45,6 @@ export function StudentIcon({ name, ...props }: { name: StudentIconName } & SVGP
   if (name === "saved") return <svg {...svgProps}><path d="M7 4h10v17l-5-3-5 3z" /></svg>;
   if (name === "review") return <svg {...svgProps}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
   if (name === "result") return <svg {...svgProps}><path d="M5 19V9M12 19V5M19 19v-7" /></svg>;
+  if (name === "search") return <svg {...svgProps}><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>;
   return <svg {...svgProps}><path d="m9 5 7 7-7 7" /></svg>;
 }
