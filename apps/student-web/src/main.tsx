@@ -4,6 +4,7 @@ import "@alwaslh/brand/tokens.css";
 import "@alwaslh/ui/styles.css";
 import { BrowserRouter } from "react-router-dom";
 import "./styles.css";
+import "./student-theme-v2.css";
 import "./student-shell.css";
 import "./student-learning.css";
 import "./foundation.css";
