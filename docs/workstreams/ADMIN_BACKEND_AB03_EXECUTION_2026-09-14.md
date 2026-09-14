@@ -45,46 +45,48 @@ Direct live-code inspection established:
 - Curriculum presentation under `apps/admin-web/src/admin/curriculum/*` consumed its full contract from root `admin-api.ts`.
 - root `admin-api.ts` implemented Curriculum records/snapshot plus `/v1/admin/curriculum*` requests while also re-exporting generic transport/auth symbols.
 - `ContentIngestionWorkspace.tsx` consumed Curriculum through that root facade.
-- root `content-ingestion-api.ts` separately owns Content ingestion transport and still imports `adminApiRequest` through `admin-api.ts`; that remains a separate concern and must not be automatically combined with Curriculum ownership migration.
+- root `content-ingestion-api.ts` separately owned Content ingestion transport and imported generic transport through the root facade; this was selected as a separate bounded concern after Curriculum ownership closure.
 - backend Curriculum and Content modules are already bounded, and PostgreSQL already has explicit learning/content/media/OCR migration history.
-- no backend/schema mutation was justified before correcting frontend ownership.
 
 ### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Worker A sequence 45 established feature implementation ownership:
+Implementation ownership moved to `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts`, with narrow consumer access through `features/curriculum/public`. `CurriculumWorkspace.tsx` and the intended Content-ingestion Curriculum consumer were migrated to that boundary. A root compatibility re-export remains intentionally transitional because strict executable typecheck proved legitimate later-slice consumers.
 
-1. created `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts` and moved Curriculum-specific types plus request implementations there;
-2. created `apps/admin-web/src/features/curriculum/public/index.ts` as the narrow consumer boundary;
-3. migrated `CurriculumWorkspace.tsx` to consume Curriculum from that public boundary and generic API error/session helpers directly from `shared/api/client`;
-4. kept a transitional root re-export facade for consumers not yet migrated.
+Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
 
-Worker B sequence 46 performed the next bounded consumer migration:
+Required closure evidence: Architecture Guard `34887051028`; Frontend Preparation `34887051091`; Admin AI Operations `34887416193`; Combined Integration `34887416088`; Stage13G Admin Operations `34887416108` — all SUCCESS.
 
-1. migrated `ContentIngestionWorkspace.tsx` Curriculum symbols to `features/curriculum/public`;
-2. migrated its generic API error/session helpers to `shared/api/client`;
-3. deliberately did not migrate root `content-ingestion-api.ts`, move pages, restructure CSS, redesign OCR/AI, or change backend/schema;
-4. preserved endpoint URLs, request payloads, response shapes, auth/session semantics and UI behavior.
+### AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-A first cleanup attempt removed the root Curriculum compatibility exports at `af4a131b1b039883a318ebb41b7ec5e5146f126d`. Stage13G `34886697753` rejected that assumption at Admin strict typecheck: live Curriculum subcomponents plus Access Codes, AI authoring, Question Bank, Quiz Builder and `admin-api.test.ts` still consume the root facade. Its backend/PostgreSQL job nevertheless passed API quality, clean migrations, DB contract, integration and auth regressions. No test or validation was weakened.
+Worker A sequence 48 completed the smallest bounded Content ingestion ownership correction:
 
-The correct smallest repair was to restore only the transitional re-export facade, not Curriculum implementation ownership. The Content-ingestion consumer remains migrated to the feature boundary. Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
+1. moved Content ingestion transport/types implementation to `apps/admin-web/src/features/content/api/content-ingestion-api.ts`;
+2. exposed the narrow consumer contract through `apps/admin-web/src/features/content/public/index.ts`;
+3. retained root `apps/admin-web/src/content-ingestion-api.ts` only as a transitional compatibility facade rather than a second implementation owner;
+4. preserved API paths, payloads, response shapes and auth/session semantics;
+5. made no backend/Fastify, PostgreSQL/migration, security, OCR/AI, or Student frontend implementation change;
+6. detected and restored an accidental intermediate workspace divergence before establishing the corrected source checkpoint, without weakening typecheck/tests/validation.
 
-Worker C sequence 47 re-verified that the difference from `4cd3daf...` to handoff HEAD `926013d1af3824cc50836660ca85615bb2ec8593` is documentation/state only. Required source-tree-equivalent closure evidence is green:
+Corrected executable/source checkpoint: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
 
-- Architecture Guard `34887051028` — SUCCESS;
-- Frontend Preparation `34887051091` — SUCCESS;
-- Admin AI Operations `34887416193` — SUCCESS;
-- Combined Integration `34887416088` — SUCCESS;
-- Stage13G Admin Operations `34887416108` — SUCCESS.
+Worker B sequence 49 verified that later branch changes were documentation/state only and waited for replacement source-equivalent CI. Worker C sequence 50 observed the final green closure set:
 
-AB-03.2.1 is therefore closed. The root Curriculum compatibility facade remains intentional migration debt until its owning later slices migrate their legitimate consumers; it must not be deleted through a cross-slice bulk migration.
+- Architecture Guard `34891198234` — SUCCESS on exact corrected source checkpoint;
+- Admin AI Operations `34892857039` — SUCCESS;
+- Combined Integration `34892857011` — SUCCESS;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34892857278` — SUCCESS.
+
+The later CI heads differ from `4ba7106f...` only by documentation/state changes, so source equivalence is intact and AB-03.2.2 is closed.
+
+Live-main reconciliation during closure also found that current `main` `d43fe2afe29b02093510177b921c0407e21a3de9` differs from the prior baseline only in Student frontend/PWA workflow files, with no overlapping Admin/API/PostgreSQL/shared-contract implementation change.
 
 ### Exact next smallest step
 
-Fresh AB-03.2 discovery only:
+Fresh AB-03.2 discovery only inside the remaining **Content + OCR** scope:
 
-1. inspect live Curriculum + Content + OCR ownership across Admin frontend, API/backend, PostgreSQL/security and existing tests;
-2. select one smallest root-cause ownership/workflow correction from current code evidence;
-3. do not bulk-migrate Access Codes/AI/Question Bank/Quiz Builder consumers merely to delete compatibility;
-4. do not begin the AI slice until Curriculum + Content + OCR is actually complete;
-5. verify any chosen increment with Architecture Guard plus all relevant Admin/API/PostgreSQL/integration/Chromium gates.
+1. inspect current Content/OCR Admin frontend ownership and workflow states/actions;
+2. inspect backend/API boundaries, PostgreSQL provenance/integrity, security/authorization and existing tests;
+3. select at most one smallest root-cause ownership/workflow correction from current code evidence;
+4. do not bulk-migrate unrelated compatibility-facade consumers;
+5. do not begin the AI slice until Curriculum + Content + OCR is actually complete;
+6. verify any chosen increment with Architecture Guard plus all relevant Admin/API/PostgreSQL/integration/Chromium gates.
