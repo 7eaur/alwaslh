@@ -76,26 +76,22 @@ Green closure evidence: Architecture Guard `34891198234`; Admin AI Operations `3
 
 #### AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
 
-The implementation/types now live in `apps/admin-web/src/features/content/api/content-operations-api.ts` and the feature public boundary exposes the required contract. `OcrSourcePreview.tsx` consumes the feature boundary directly. Root `apps/admin-web/src/content-operations-api.ts` is no longer an implementation owner; it is a transitional compatibility re-export because `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` still imports it. API paths, payload/response semantics, backend/PostgreSQL/security authority, routes and UI behavior were preserved.
+The implementation/types live in `apps/admin-web/src/features/content/api/content-operations-api.ts` and the feature public boundary exposes the required contract. `OcrSourcePreview.tsx` consumes the feature boundary directly. Root `apps/admin-web/src/content-operations-api.ts` was compatibility-only before AB-03.2.4.
 
 Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
 
-Exact-head green closure evidence:
+Exact-head green closure evidence: Architecture Guard `34898665849`; Frontend Preparation `34898665740`; Admin AI Operations `34898665783`; Combined Integration `34898665724`; Stage13G Admin Operations / PostgreSQL / Chromium `34898665675`.
 
-- Architecture Guard `34898665849` — SUCCESS;
-- Frontend Preparation `34898665740` — SUCCESS;
-- Admin AI Operations `34898665783` — SUCCESS;
-- Combined Integration `34898665724` — SUCCESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — SUCCESS.
+#### AB-03.2.4 Content operations compatibility facade retirement — IMPLEMENTED / WAITING_FOR_CI
 
-#### AB-03.2 closure discovery — DONE / DOC-ONLY
+`ContentOperationsPage.tsx` now consumes `../../features/content/public` directly and root `apps/admin-web/src/content-operations-api.ts` has been deleted. No API, PostgreSQL, security, route, UI behavior or Student frontend implementation changed.
 
-Worker C sequence 54 directly inspected the compatibility facade, `ContentOperationsPage.tsx`, `OcrSourcePreview.tsx`, and `features/content/public`. The root `content-operations-api.ts` is a pure re-export facade; `OcrSourcePreview.tsx` already consumes `features/content/public`, while `ContentOperationsPage.tsx` remains the confirmed stale root-facade consumer. The executable tree from `866912f...` through the observed start head `707e52a...` differs only in canonical docs/state, so the exact-head green evidence above remains source-tree-equivalent for this discovery.
+Executable/source checkpoint: `ca8381c45cab7ae6a8500c88325042451fbed20f`.
 
-**Exact next smallest step:** `AB-03.2.4 — retire the Content operations compatibility facade`. Repoint only `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` from `../../content-operations-api` to `../../features/content/public`, delete root `apps/admin-web/src/content-operations-api.ts`, then require strict Admin typecheck/Architecture Guard to prove no hidden consumer remains before closure. Do not bulk-move pages/CSS or begin AI in the same increment.
+Current exact-head CI: Architecture Guard `34906963160` — SUCCESS; Frontend Preparation `34906963113` — QUEUED; Admin AI Operations `34906963149` — IN PROGRESS; Combined Integration `34906963163` — IN PROGRESS; Stage13G Admin Operations / PostgreSQL / Chromium `34906963142` — PENDING. Do not mark AB-03.2.4 DONE until required gates are green.
 
 ## Remaining roadmap
 
-Finish Curriculum + Content + OCR closure → AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Close AB-03.2.4 exact-head verification, then perform fresh Content/OCR closure discovery before advancing to AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
