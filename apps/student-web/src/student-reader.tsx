@@ -7,6 +7,12 @@ import {
   type StudentLessonReader,
   type StudentReaderAsset,
 } from "./auth-api";
+import {
+  loadUsableOfflineLessonPackage,
+  type StoredOfflineLessonAsset,
+  type StoredOfflineLessonPackage,
+} from "./offline-content-store";
+import { getActiveOfflineScope } from "./offline-session";
 import { studentErrorMessage } from "./student-error-copy";
 import { studentSubjectHref, type StudentLessonContext } from "./student-learning-model";
 
@@ -15,6 +21,11 @@ type ReaderState =
   | { status: "ready"; reader: StudentLessonReader }
   | { status: "offline" }
   | { status: "error"; message: string };
+
+type OfflineReaderState =
+  | { status: "loading" }
+  | { status: "ready"; lesson: StoredOfflineLessonPackage }
+  | { status: "unavailable" };
 
 function requestMessage(error: unknown): string {
   return studentErrorMessage(error, "reader");
@@ -48,6 +59,101 @@ function ReaderMedia({ asset }: { asset: StudentReaderAsset }) {
       <img src={`${studentAssetContentUrl(asset.id)}?retry=${retryVersion}`} alt={pageLabel} width={asset.width ?? undefined} height={asset.height ?? undefined} loading="lazy" onError={() => setFailed(true)} />
       <figcaption>{pageLabel}</figcaption>
     </figure>
+  );
+}
+
+function StoredReaderMedia({ asset }: { asset: StoredOfflineLessonAsset }) {
+  const [source, setSource] = useState<string | null>(null);
+  const isImage = asset.mimeType.startsWith("image/");
+  const pageLabel = asset.sourcePageNumber ? `صفحة ${asset.sourcePageNumber}` : `محتوى ${asset.position + 1}`;
+
+  useEffect(() => {
+    if (!isImage) return;
+    const objectUrl = URL.createObjectURL(asset.blob);
+    setSource(objectUrl);
+    return () => {
+      setSource(null);
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [asset.blob, isImage]);
+
+  if (!isImage) {
+    return <div className="reader-media-unsupported" role="status"><strong>{pageLabel}</strong><p>لا يمكن عرض هذا المحتوى داخل القارئ حاليًا.</p></div>;
+  }
+
+  if (!source) {
+    return <div className="reader-media" role="status" aria-live="polite"><span className="sr-only">جاري تجهيز {pageLabel}</span></div>;
+  }
+
+  return (
+    <figure className="reader-media">
+      <img src={source} alt={pageLabel} width={asset.width ?? undefined} height={asset.height ?? undefined} loading="lazy" />
+      <figcaption>{pageLabel}</figcaption>
+    </figure>
+  );
+}
+
+export function StudentOfflineLessonReaderPage({ lessonId }: { lessonId: string }) {
+  const [state, setState] = useState<OfflineReaderState>({ status: "loading" });
+
+  useEffect(() => {
+    let current = true;
+    void (async () => {
+      const scope = getActiveOfflineScope();
+      if (!scope) {
+        if (current) setState({ status: "unavailable" });
+        return;
+      }
+      try {
+        const lesson = await loadUsableOfflineLessonPackage(scope.profileId, scope.deviceId, lessonId);
+        if (current) setState(lesson ? { status: "ready", lesson } : { status: "unavailable" });
+      } catch {
+        if (current) setState({ status: "unavailable" });
+      }
+    })();
+    return () => { current = false; };
+  }, [lessonId]);
+
+  if (state.status === "loading") {
+    return <div className="reader-skeleton" role="status" aria-live="polite" aria-busy="true"><span className="sr-only">جاري فتح الدرس المحفوظ</span><span /><span /></div>;
+  }
+
+  if (state.status === "unavailable") {
+    return (
+      <div className="reader-state reader-state--offline" role="status">
+        <strong>هذا الدرس المحفوظ غير متاح الآن</strong>
+        <p>قد يحتاج إلى تحديث أو إعادة اتصال للتأكد من استمرار وصولك. لن نعرض نسخة لا يمكن التحقق منها.</p>
+        <Link className="secondary-button reader-state__action" to="/app/library/downloads">العودة إلى التنزيلات</Link>
+      </div>
+    );
+  }
+
+  const lesson = state.lesson;
+  return (
+    <article className="reader-shell" aria-labelledby="reader-title" data-offline-reader="ready">
+      <header className="reader-shell__header">
+        <div className="reader-shell__context">
+          <Link className="reader-back-link" to="/app/library/downloads"><span aria-hidden="true">→</span>العودة إلى التنزيلات</Link>
+          <p>محفوظ على هذا الجهاز · بدون إنترنت</p>
+          <h1 id="reader-title">{lesson.title}</h1>
+          {lesson.summary ? <p className="reader-shell__summary">{lesson.summary}</p> : null}
+        </div>
+      </header>
+      <div className="reader-shell__body">
+        {lesson.assets.length === 0 ? (
+          <div className="empty-state"><strong>لا يوجد محتوى محفوظ لهذا الدرس</strong><p>اتصل بالإنترنت ثم حدّث تنزيل الدرس.</p></div>
+        ) : (
+          <div className="reader-pages" aria-label={`محتوى ${lesson.title}`}>
+            {lesson.assets.map((asset) => (
+              <article className="reader-page" key={asset.id} data-reader-asset-id={asset.id}>
+                <StoredReaderMedia asset={asset} />
+                {asset.text ? <div className="reader-text"><p>{asset.text}</p></div> : <div className="reader-text is-muted" role="status">لا يوجد نص لهذه الصفحة.</div>}
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 
@@ -114,7 +220,7 @@ export function StudentLessonReaderPage({ context, online, onSessionExpired }: {
       {state.status === "loading" ? (
         <div className="reader-skeleton" role="status" aria-live="polite" aria-busy="true"><span className="sr-only">جاري فتح الدرس</span><span /><span /></div>
       ) : state.status === "offline" ? (
-        <div className="reader-state reader-state--offline" role="status"><strong>أنت غير متصل</strong><p>يحتاج هذا الدرس اتصالًا الآن. يمكنك فتح التنزيلات لإدارة المحتوى المحفوظ على هذا الجهاز.</p><Link className="secondary-button reader-state__action" to="/app/downloads">فتح التنزيلات</Link></div>
+        <div className="reader-state reader-state--offline" role="status"><strong>أنت غير متصل</strong><p>إذا سبق أن حفظت هذا الدرس فافتحه من التنزيلات.</p><Link className="secondary-button reader-state__action" to="/app/library/downloads">فتح التنزيلات</Link></div>
       ) : state.status === "error" ? (
         <div className="reader-state reader-state--error" role="alert"><strong>تعذر فتح الدرس</strong><p>{state.message}</p><button className="secondary-button" type="button" onClick={() => void loadReader()} disabled={!online}>إعادة المحاولة</button></div>
       ) : (
