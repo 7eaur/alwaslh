@@ -4,11 +4,11 @@ import type { SessionProfile } from "./auth-api";
 import { StudentAppShell } from "./app/layout/StudentAppShell";
 import { isFocusedStudentReaderPath, studentDestinationFromPath } from "./app/routing/student-route-meta";
 import { StudentHomeOverview } from "./features/home/StudentHomeOverview";
+import { invalidateStudentRuntimeCache } from "./shared/data/student-runtime-cache";
 import { FeatureLoading } from "./shared/ui/FeatureLoading";
-import { invalidateStudentRuntimeCache } from "./student-runtime-cache";
 
 const StudentAccountExperience = lazy(() =>
-  import("./student-account").then((module) => ({ default: module.StudentAccountExperience })),
+  import("./features/account/StudentAccountExperience").then((module) => ({ default: module.StudentAccountExperience })),
 );
 const StudentAssessmentSection = lazy(() =>
   import("./student-assessment").then((module) => ({ default: module.StudentAssessmentSection })),
