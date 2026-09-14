@@ -43,7 +43,7 @@ Migration law:
 
 ## Branch reconciliation
 
-Current live `main` observed during Worker A sequence 14: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the Student Experience V2 merge checkpoint. No overlapping Admin/API/migration change was introduced by that main movement for the current AB-01 seam, and no structural phase boundary is being crossed.
+Current live `main` observed during Worker B sequence 15: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the Student Experience V2 merge checkpoint. No overlapping Admin/API/migration change was introduced by that main movement for the current AB-01 seam, and no structural phase boundary is being crossed.
 
 ## AB-00 — DONE
 
@@ -72,23 +72,22 @@ Closed seams:
 - CORS/preflight — DONE, source `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 - health/readiness — DONE, source `a302871b3486ae95810cea40dccca68363a29055`.
 - public not-found/error handling — DONE, source `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
+- Fastify instance construction/options — **DONE**, source `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
 
-Current fourth seam: **Fastify instance construction/options — IMPLEMENTED / WAITING FOR REQUIRED CI**.
+Fastify construction owner: `apps/api/src/app/create-fastify-instance.ts` with `createFastifyInstance(config)`.
 
-Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
+`apps/api/src/app.ts` calls that owner and no longer imports `Fastify` as a value or embeds constructor options. Existing logger behavior, request logging, trust proxy, body limit, request timeout, one-instance-per-build semantics and downstream composition ordering remain unchanged.
 
-Owner created: `apps/api/src/app/create-fastify-instance.ts` with `createFastifyInstance(config)`.
+Closure evidence for the Fastify construction seam:
 
-`apps/api/src/app.ts` now calls that owner and no longer imports `Fastify` as a value or embeds the constructor options. Existing logger behavior, request logging, trust proxy, body limit, request timeout, one-instance-per-build semantics and downstream composition ordering were preserved exactly. No service graph, business route, database lifecycle, config default, migration/schema or Student frontend change occurred.
+- Architecture Guard `34820842164` — **SUCCESS** on source implementation HEAD.
+- Original source-head Combined/Stage13G/Admin-AI runs were cancelled by later documentation commits, not by a demonstrated code failure.
+- Compare `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d...248ce58053bca9d97498d41fdda57aec1ace4033` changes only five canonical documentation files; no source, migration, workflow or test file changed.
+- Admin AI `34821032274` — **SUCCESS** including API lint/typecheck/unit/build, clean PostgreSQL, DB contracts, authorization/review controls and auth/security regressions.
+- Combined Integration `34821032272` — **SUCCESS** including API/Admin quality, clean PostgreSQL, DB contracts, backend/auth regressions and real Admin Chromium.
+- Stage13G `34821032271` — **SUCCESS** including Admin/API quality, clean PostgreSQL, all Stage13G integration/auth regressions and real API + PostgreSQL + Chromium.
 
-Verification at current handoff:
-
-- Architecture Guard `34820842164` — **SUCCESS**.
-- Combined Integration `34820842196` — **IN PROGRESS**.
-- Stage13G `34820842163` — **IN PROGRESS**.
-- Admin AI `34820842245` — **QUEUED**.
-
-Do not mark this seam DONE or start a fifth seam until required affected gates are green.
+No fifth seam has been selected yet.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -112,4 +111,4 @@ No merge/readiness before AB-08 exact-head green. After verified AB-08 completio
 
 ## Immediate next action
 
-Inspect runs `34820842196`, `34820842163`, `34820842245`. If green, close the Fastify construction seam in all canonical docs before discovering any fifth seam. If any fails, repair only its root cause before advancing.
+Perform **discovery only** for the fifth AB-01.4 composition seam: re-read live `apps/api/src/app.ts` and its tests/contracts, select the smallest evidence-backed remaining composition responsibility, document current owner/target owner/contracts/order/non-goals/gates, and do not implement that fifth seam in the same discovery run.
