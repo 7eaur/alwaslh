@@ -8,6 +8,7 @@ import "./student-theme-v2.css";
 import "./student-shell.css";
 import "./student-learning.css";
 import "./student-learning-v2.css";
+import "./student-reader-v2.css";
 import "./foundation.css";
 import "./assessment-integration.css";
 import "./student-entry.css";
