@@ -89,7 +89,6 @@ export function StudentAccessSection({ profile, online, onSessionExpired, onLogg
         {destination === "progress" ? <StudentProgressExperience /> : null}
         {destination === "account" ? (
           <StudentAccountExperience
-            profile={profile}
             online={online}
             onSessionExpired={onSessionExpired}
             onAccessChanged={handleAccessChanged}
