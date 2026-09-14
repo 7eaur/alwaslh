@@ -11,8 +11,8 @@ export {
   loginAdmin,
   logoutAdmin,
   restoreAdminSession,
-} from "./features/auth/api/admin-auth-api";
-export type { AdminProfile } from "./features/auth/api/admin-auth-api";
+} from "./features/auth/public";
+export type { AdminProfile } from "./features/auth/public";
 
 export type CurriculumRecordStatus = "active" | "inactive" | "archived";
 
