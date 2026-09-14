@@ -30,26 +30,21 @@ Source implementation checkpoint: `0d07a24aa062ad569ff654524bdc13a4e368f399`.
 
 Owner: `apps/admin-web/src/app/layouts/AdminShell.tsx`.
 
-Closure evidence:
+Closure evidence: Architecture Guard `34838037118`, Frontend Preparation `34838037114`, Combined `34838123077`, Stage13G `34838123143` — SUCCESS.
 
-- Architecture Guard `34838037118` — SUCCESS;
-- Frontend Preparation `34838037114` — SUCCESS;
-- Combined Integration `34838123077` — SUCCESS;
-- Stage13G `34838123143` — SUCCESS.
-
-## Seam 2 — Inner Admin route-table ownership — IMPLEMENTED / WAITING_FOR_CI
+## Seam 2 — Inner Admin route-table ownership — DONE
 
 ### Source checkpoint
 
 `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`
 
-### New owner
+### Owner
 
 `apps/admin-web/src/app/router/AdminRoutes.tsx`
 
 ### What moved
 
-- the complete existing inner `/app/*` route table;
+- complete existing inner `/app/*` route table;
 - route-local redirect/not-found composition;
 - `ReviewArea`;
 - `WorkspaceWithRelatedActions`;
@@ -64,29 +59,28 @@ Closure evidence:
 
 ### Explicit non-changes
 
-- all workflow imports remain transitional under `src/admin/*`;
+- workflow imports remain transitional under `src/admin/*`;
 - routes remain eager; no `lazy()`/Suspense introduced;
 - no route URL or redirect changed;
 - `onSessionExpired` remains the route-table contract;
-- outer `apps/admin-web/src/router.tsx` and `RouteFocus` are untouched;
+- outer `apps/admin-web/src/router.tsx` and `RouteFocus` remain untouched;
 - no feature-folder migration;
 - no workflow UI/CSS/business behavior change;
 - no API, PostgreSQL, migration or Student frontend implementation change.
 
-### Verification state
+### Closure evidence
 
-Exact-head Actions started for `732555cb…`. At the sequence-25 handoff they were not all complete:
+- Architecture Guard `34840954071` — SUCCESS on source checkpoint;
+- Frontend Preparation `34840953959` — SUCCESS on source checkpoint;
+- source-tree-equivalent Admin AI `34841142948` — SUCCESS;
+- source-tree-equivalent Combined Integration `34841142987` — SUCCESS, including API/Admin quality, clean PostgreSQL, DB contract, backend authority/auth regressions and real Chromium;
+- source-tree-equivalent Stage13G `34841142975` — SUCCESS, including Admin/API quality, clean PostgreSQL, integrations/auth and real API + PostgreSQL + Chromium.
 
-- Architecture Guard run `34840954071` — queued when inspected;
-- Stage13G run `34840953847` — queued/in-progress;
-- Stage13E Admin Web quality run `34840953959` — queued;
-- Stage13E Admin AI run `34840953862` — queued.
+Comparison `732555cb… → 2c2fcb6c…` includes documentation files only, so equivalent-head green CI verifies the same implementation tree. No source correction was needed to close this seam.
 
-Inspect exact commit check-runs for the complete set. This seam remains `WAITING_FOR_CI`; do not mark DONE until required source-head/source-tree-equivalent Architecture Guard + Admin quality + route/auth/focus + Combined/Stage13G real API/PostgreSQL/Chromium evidence is green.
+## Next AB-02 step — DISCOVERY ONLY
 
-## Later AB-02 candidates — NOT YET AUTHORIZED
-
-Only after seam 2 closes, inspect evidence before selecting one smallest next seam among:
+Before authorizing another implementation seam, inspect current composition and select one smallest bounded concern. Candidates:
 
 - feature public/routes entry points;
 - substantial route lazy boundaries/Suspense;
@@ -95,4 +89,4 @@ Only after seam 2 closes, inspect evidence before selecting one smallest next se
 - navigation definition ownership;
 - error-boundary composition.
 
-Do not combine these prematurely.
+For the selected candidate record current owner, target owner, preserved contracts, non-goals, tests/gates and deletion condition. Do not combine multiple candidates in one batch and do not mass-migrate `src/admin/*` feature ownership during AB-02.
