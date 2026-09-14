@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
-import { StudentOfflineDownloadsSection } from "../../student-offline-downloads";
 import { StudentIcon } from "../../shared/icons/StudentIcon";
 import { EmptyState } from "../../shared/ui/EmptyState";
+import { StudentOfflineDownloadsSection } from "./StudentOfflineDownloads";
 
 type LibrarySection = "overview" | "downloads" | "notes" | "saved" | "review";
 
