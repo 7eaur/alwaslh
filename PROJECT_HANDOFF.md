@@ -2,32 +2,27 @@
 
 > نقطة البداية للمحادثة الهندسية التالية. Source of Truth = live repository + PostgreSQL migrations + executable tests/CI + verified runtime + current documentation.
 
-Last synchronized: **2026-09-14 — Student Experience V2 approved and active on PR #58**.
+Last synchronized: **2026-09-14 — Student Experience V2 active on Draft PR #58; architecture frozen, broad frontend migration underway, exact-head CI repair still active**.
 
 ## 1. Current priority
 
-The user explicitly switched the active Student priority to:
+The active Student priority is:
 
-**Student Experience V2 — establish a clean, scalable, mobile-first Student UI/UX and code foundation before layering unfinished backend-dependent capabilities.**
+**Student Experience V2 — clean, scalable, mobile-first Student UX + code foundation before unfinished backend-dependent capabilities are layered on top.**
 
-Work branch:
+Branch: `ux/student-experience-v2`
 
-`ux/student-experience-v2`
+PR: `#58 — refactor(student): establish Student Experience V2 foundation` — **DRAFT / NOT MERGED**.
 
-Draft PR:
+Do not mark V2 complete or merge until executable + browser/mobile visual gates pass.
 
-`#58 — refactor(student): establish Student Experience V2 foundation`
+## 2. Mandatory startup
 
-Do not merge PR #58 until executable + visual gates pass.
-
-## 2. Mandatory startup for Student V2
-
-Before editing:
+Before changing Student V2:
 
 1. live-check `main`;
-2. live-check PR #58 exact head and CI;
-3. live-check PR #57 exact head/state because it overlaps Student Learn/Reader files;
-4. read:
+2. live-check PR #58 exact head / mergeability / CI;
+3. read:
    - `PROJECT_STATUS.md`
    - `PROJECT_HANDOFF.md`
    - `docs/product/STUDENT_EXPERIENCE_V2.md`
@@ -36,66 +31,68 @@ Before editing:
    - `docs/product/STUDENT_V2_IMPLEMENTATION_RULES.md`
    - `docs/product/STUDENT_DATA_RESIDENCY_AND_CACHE_V2.md`
    - `docs/workstreams/STUDENT_V2_EXECUTION_LOG.md`
-5. inspect executable evidence before claiming completion; anything unverified stays `NOT YET VERIFIED`.
+4. inspect executable evidence before claiming completion.
 
-## 3. Fixed V2 product decisions
+Anything not executed/verified remains `NOT YET VERIFIED`.
+
+## 3. Fixed product/UX decisions
 
 - phone primary navigation: `الرئيسية / التعلم / التدريب / مكتبتي` only;
 - Home alone shows official الوسيلة الذكية logo + name in App Bar;
 - other top-level pages show page title in App Bar;
-- nested pages use back + current entity title;
+- nested subject pages use the shared App Bar title channel instead of duplicating large in-page H1 structures;
 - no assumed student name;
-- no fixed student grade on Home/account summary;
-- Home is an overview, not a duplicate navigation menu;
-- Library statistics live on Home when backed by real data;
-- Library body becomes direct access to Downloads / Notes / Saved / Needs Review;
-- Learn scales to many classes/subjects/units/lessons using progressive disclosure;
-- Reader and active Assessment use focused shell variants;
-- Summary / Lesson Questions / Models / Notes / Saved / Review are placed in the architecture but never fabricated before their contracts/data exist.
+- no fixed grade on Home/account card;
+- Home = learner overview, not duplicate navigation;
+- real Library counters belong on Home; Library body = direct access;
+- Learn scales through list/search/accordion patterns;
+- Reader = focused/content-first;
+- active assessment = focused task flow;
+- Summary / Lesson Questions / Models / Notes / Saved / Review are architecturally reserved but never faked before real contracts/data exist.
 
-## 4. Fixed V2 visual decisions
+## 4. Fixed visual decisions
 
 - neutral-first composition;
 - teal = brand/action/selected state, not every title/border;
-- primary text = charcoal; secondary text = neutral gray;
-- Cairo-first typography contract; approved weights 400/500/600/700;
+- charcoal primary text + neutral gray secondary text;
+- Cairo-first typography contract with 400/500/600/700 weights;
 - unified outline icon registry;
 - restrained radius/shadows;
 - no gradient/glow/glass/3D functional chrome;
 - short functional motion only;
 - `prefers-reduced-motion` mandatory;
 - touch targets >=44px;
-- safe areas owned by App Shell, not patched per page.
+- safe areas owned by App Shell.
 
-## 5. Fixed V2 code architecture
+## 5. Fixed code architecture
 
-Mandatory direction:
+Direction:
 
 `app → features → shared`
 
-Target ownership:
+Ownership:
 
-- `app/layout` — App Shell/App Bar/Bottom Nav/Desktop Nav/safe areas;
-- `shared/ui` — domain-agnostic reusable UI primitives;
-- `shared/icons` — one icon registry;
+- `app/layout` — App Shell / App Bar / Bottom Nav / Desktop Nav / safe area;
+- `app/routing` + `app/session` — app-level composition;
+- `shared/ui` — reusable presentation primitives;
+- `shared/icons` + `shared/brand` — shared visual assets/boundaries;
 - `shared/data` — runtime cache/read-through/invalidation;
-- `shared/storage` — scoped storage adapters;
-- `features/*` — feature-owned pages/components/query adapters/state.
+- `shared/storage` — scoped persistence adapters;
+- `features/*` — feature pages/components/query adapters/state.
 
-Rules:
+Mandatory rules:
 
-- no giant flat files mixing routing + API + storage + cache + large JSX;
-- no duplicated App Bar/Bottom Nav/icons/common button/empty state/search/list row;
-- pages compose; they do not own every layer;
-- shared UI remains domain-agnostic;
-- no feature-to-feature internal imports;
+- no giant flat file mixing routing + API + storage + cache + large JSX;
+- no duplicated App Bar/Bottom Nav/icon implementations/common UI;
+- page/orchestrator files stay thin;
+- shared UI stays domain-agnostic;
+- no feature-to-feature internals;
 - no circular dependencies;
-- no stage-number CSS in final product UI;
 - migration is incremental, not Big Bang.
 
 ## 6. Data/cache architecture
 
-Current approved runtime cache:
+Approved runtime cache:
 
 - curriculum: 2 min memory TTL;
 - quiz catalog: 1 min;
@@ -103,103 +100,97 @@ Current approved runtime cache:
 - profile-scoped;
 - concurrent identical reads deduplicated;
 - access changes invalidate curriculum/practice;
-- quiz completion invalidates attempt/Home summary;
-- logout/session expiry clears active profile cache in final integration.
+- future assessment completion should invalidate recent attempts/Home summary.
 
-Stage16 verified offline lesson packages remain the only lesson-download storage path.
+Stage16 verified offline package store remains the single lesson-download storage path.
 
-Target local-first datasets when Stage17 ownership rules are ready:
+Target local-first personal data when Stage17 contracts become authoritative:
 
 - Notes;
 - Saved/bookmarked items;
 - Needs Review;
 - safe reader/UI preferences.
 
-Do not persist plaintext passwords, reusable auth secrets, fake progress/entitlement authority, or arbitrary `/v1` responses as business cache.
+Never persist plaintext passwords, reusable auth secrets, fabricated progress/entitlement authority, or arbitrary `/v1` responses as hidden backend state.
 
-## 7. Current V2 implementation state
+## 7. Current implementation state
 
-`V2-00 Architecture Freeze = DONE`
+Completed/implemented on PR #58 so far:
 
-`V2-01 Foundation / Shell / Home = IN PROGRESS`
+- V2 architecture/docs;
+- V2 theme and visual foundation;
+- shared icon/brand boundaries;
+- shared App Shell / App Bar / Bottom Nav / Desktop Nav;
+- shared UI primitives;
+- profile-scoped read-through cache;
+- Home V2 using available real curriculum/quiz/attempt/download data;
+- modular Welcome / Activation / Login / Recovery / Help / Support;
+- V2 Account / Library / Notifications / Progress ownership;
+- Learn landing / subject hierarchy with search and units/lessons progressive disclosure;
+- dynamic subject title through shared App Bar context;
+- Reader V2 visual layer;
+- Practice V2 visual layer;
+- Stage16 cold-start Offline Reader behavior reconciled into V2.
 
-Already started on PR #58:
+Important remaining structural debt:
 
-- V2 visual/theme foundation;
-- unified Student icon registry;
-- profile-scoped runtime cache;
-- App Bar contract;
-- safe-area aware four-item Bottom Nav;
-- Home rebuilt with real curriculum/quiz/attempt/download data;
-- duplicated Home destination-card wall removed;
-- relevant read-model invalidation started.
+- `student-assessment.tsx` is still too large and owns catalog + quiz detail + attempt workspace + network orchestration; split it before V2 is considered structurally complete;
+- Reader implementation ownership is still partly legacy-flat and should be migrated only without weakening Stage16 offline integrity semantics;
+- legacy duplicate CSS/files must be removed only after reference/test audit.
 
-Next implementation order:
+## 8. Stage16 offline boundary
 
-1. shared layout/navigation extraction;
-2. shared reused UI primitives extraction;
-3. Welcome/Auth V2;
-4. reconcile PR #57;
-5. Learn/Subject scalable hierarchy;
-6. Reader;
-7. Practice/Models/Results;
-8. Library/Account/Notifications/Progress/Help;
-9. Notes/Saved/Review local repositories when allowed;
-10. persistent read-model snapshots only after revision/delta contracts;
-11. full visual/performance/accessibility QA.
+The cold-start Offline Reader behavior from PR #57 has been reconciled into the V2 workstream.
 
-## 8. PR #57 overlap boundary
+Preserve:
 
-PR #57:
+- verified durable profile/device scope;
+- signed/verified offline package semantics;
+- tamper rejection;
+- profile/device isolation;
+- bounded time validity;
+- no synthetic server session or fake entitlement while offline.
 
-`feat(student): close cold-start offline Reader gap`
+Do not replace the Stage16 package store with a second download cache.
 
-branch:
+## 9. Current CI truth
 
-`stage16/student-016i`
+Earlier exact-head CI found frontend blockers before browser checks. The most recent concrete blocker was:
 
-last checked head:
+`StudentAccountExperience.tsx` unused `_profile` → ESLint failure.
 
-`ce97ef2524cd3735a0200ee0f15fa6e6e224e01e`
+That dependency has now been removed from the Account feature and caller.
 
-It overlaps Student files including `App.tsx`, `student-learning.tsx`, `student-reader.tsx`.
+A fresh exact-head CI run is required/active after the fix. Until relevant Student checks are green:
 
-Do not broadly rewrite Learn/Reader on V2 until #57 is explicitly reconciled. Preserve its signed-manifest / lease / integrity / offline authorization behavior.
+`V2 = NOT YET VERIFIED`
 
-## 9. Quality gate
+Do not confuse infrastructure queue/cancel events with successful verification.
 
-No V2 batch is `DONE` from appearance alone.
+## 10. Exact next implementation order
 
-Required as relevant:
+1. consume current exact-head CI feedback and fix blockers first;
+2. close Learn/Reader compile + browser checks;
+3. structurally split Practice into feature-owned catalog/detail/attempt modules;
+4. route Practice catalog/attempt reads through shared cache where authoritative/safe;
+5. complete focused attempt and result visual polish;
+6. audit/clean legacy duplicates;
+7. run phone/tablet/desktop, RTL, safe-area, focus/keyboard, reduced-motion, contrast and duplicate-network-read QA;
+8. only then consider PR #58 ready for review/merge.
 
-- lint;
-- typecheck;
-- tests;
-- build;
-- route smoke;
-- mobile browser verification;
-- iPhone safe area;
-- Android Chrome;
-- RTL;
-- focus/keyboard;
-- reduced motion;
-- contrast/readability;
-- duplicate-network-read check;
-- visual QA against V2 architecture.
-
-## 10. Content work retained but not current priority
+## 11. Content work retained but not current priority
 
 Grade 9 English technical import remains completed and partially published by review.
 
-Verified retained publication totals:
+Retained published totals:
 
-- published Lessons: `2`;
+- Lessons: `2`;
 - Lesson Assets: `6`;
-- published Question Revisions: `19`.
+- Question Revisions: `19`.
 
-Do not rerun the completed Grade 9 bulk import or republish closed reviewed Unit 2 checkpoints.
+Do not rerun the completed bulk import or republish closed Unit 2 checkpoints.
 
-## 11. Stable system boundaries
+## 12. Stable boundaries
 
 - API + PostgreSQL own canonical business state.
 - Auth/Authz/Entitlements remain server-owned.
