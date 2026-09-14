@@ -9,7 +9,6 @@ import {
   normalizeAccessCode,
   redeemStudentAccess,
   type EntitlementView,
-  type SessionProfile,
 } from "../../auth-api";
 import { FormAlert } from "../../shared/ui/FormAlert";
 import { studentErrorMessage } from "../../student-error-copy";
@@ -26,13 +25,11 @@ function expiryLabel(expiresAt: string | null): string {
 }
 
 export function StudentAccountExperience({
-  profile: _profile,
   online,
   onSessionExpired,
   onAccessChanged,
   onLoggedOut,
 }: {
-  profile: SessionProfile;
   online: boolean;
   onSessionExpired: () => void;
   onAccessChanged: () => void;
