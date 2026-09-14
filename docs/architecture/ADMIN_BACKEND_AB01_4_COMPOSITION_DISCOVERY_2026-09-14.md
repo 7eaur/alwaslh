@@ -1,7 +1,7 @@
 # AB-01.4 — Backend App Composition Discovery
 
 Date: **2026-09-14**  
-Status: **TWO EXTRACTIONS VERIFIED — THIRD SEAM DISCOVERY NEXT**  
+Status: **THIRD SEAM SELECTED — IMPLEMENTATION NEXT**  
 Branch: `rebuild/super-admin-foundation`  
 Initial discovery starting HEAD: `60151da0cdcf56d61f5d68ea5cdd3d329523f2a9`
 
@@ -84,6 +84,91 @@ Implementation constraints satisfied:
 
 Conclusion: second health/readiness extraction is behavior-preserving and **DONE**.
 
+## Third seam — public error + not-found HTTP handling — SELECTED / IMPLEMENTATION NEXT
+
+### Current owner
+
+`apps/api/src/app.ts` still owns two adjacent global HTTP concerns inline after all business/health route registration:
+
+- `app.setNotFoundHandler(...)` producing the public 404 envelope;
+- `app.setErrorHandler(...)` converting thrown errors through `toPublicError(error)`, logging server-side failures at 5xx, and sending the canonical public error body/status.
+
+These are app-level HTTP presentation concerns. They do not own business rules, database transactions, module services or route-specific authorization.
+
+### Target owner
+
+Create:
+
+`apps/api/src/app/http/public-errors.ts`
+
+with one narrow registration function:
+
+`registerPublicErrorHandlers(app)`
+
+The target owner should import/use the existing `toPublicError` implementation rather than moving or duplicating error-domain semantics.
+
+### Existing parity evidence
+
+Direct contract in `apps/api/tests/app.test.ts`:
+
+- `unknown routes use the public error envelope` asserts `GET /missing` returns 404 and `error.code === "NOT_FOUND"`.
+
+Broader API/integration/auth/security suites already exercise errors flowing through the global Fastify error handler; those remain regression evidence for the error envelope and security behavior.
+
+Exact-head evidence before this documentation-only discovery was green on `e592535b082c9284ecf88f19e60cb70821e8aa16`:
+
+- Admin AI `34813851669` — SUCCESS;
+- Combined Integration `34813851671` — SUCCESS;
+- Stage13G `34813851684` — SUCCESS.
+
+### Dependency / ordering constraints
+
+- register after all business routes and `registerHealthRoutes(...)`, matching current relative placement;
+- register before returning the app;
+- do not combine database lifecycle into this helper;
+- preserve `toPublicError` as the single existing public-error mapping authority;
+- preserve 5xx logging exactly: `request.log.error({ err: error }, "request failed")` only when mapped status is >= 500;
+- preserve exact 404 body `{ error: { code: "NOT_FOUND", message: "المسار غير موجود" } }`;
+- preserve status codes and body shapes for all existing thrown errors.
+
+### Impact assessment
+
+- database/schema: none;
+- business rules: none;
+- auth/authorization semantics: none expected; regression suites must confirm;
+- Student-facing backend contracts: HTTP error envelopes are shared server contracts, so full API/auth/integration regression evidence is required even though no Student frontend restructuring is permitted;
+- Admin frontend: no intended change; real Chromium remains closure evidence.
+
+### Explicit non-goals
+
+Do not in this seam:
+
+- move or redesign `errors.ts` / `toPublicError`;
+- change error codes, Arabic messages, HTTP statuses or logging policy;
+- extract `onClose`/database lifecycle;
+- create generic HTTP plugin frameworks;
+- change Fastify construction/options;
+- create a service container or route registry;
+- move any business route/module/service;
+- touch migrations/schema or Student frontend.
+
+### Switch / deletion condition
+
+The seam is complete only when both inline handlers are removed from `apps/api/src/app.ts`, `registerPublicErrorHandlers(app)` is called once at the same relative composition point, no duplicate handler ownership remains, and required gates are green.
+
+### Required implementation closure gates
+
+At minimum:
+
+1. Architecture Guard;
+2. API lint + strict typecheck + unit tests + build;
+3. unchanged direct `apps/api/tests/app.test.ts` not-found contract;
+4. relevant auth/security/integration regressions;
+5. clean PostgreSQL migration verification from the established combined gates;
+6. Combined real Admin Chromium;
+7. Stage13G real API + PostgreSQL + Chromium;
+8. documentation/state synchronization.
+
 ## Rejected broad moves remain rejected
 
 - giant `createServices()` container;
@@ -93,26 +178,11 @@ Conclusion: second health/readiness extraction is behavior-preserving and **DONE
 - bundle DB/error ownership with unrelated composition work;
 - schema changes for folder restructuring.
 
-No evidence from the first two seams changes those decisions.
+No evidence from the first three discoveries changes those decisions.
 
-## Third seam discovery — NEXT / NOT YET SELECTED
+## Exact next step
 
-The next coherent increment is **discovery only**. It must inspect the remaining inline responsibilities in current `apps/api/src/app.ts` after CORS and health/readiness extraction and select exactly one smallest evidence-backed app-level composition boundary.
-
-Required discovery output:
-
-1. current inline owner/responsibility;
-2. target owner/file/function;
-3. authoritative tests/contracts proving parity;
-4. dependency and ordering constraints;
-5. business/security/Student impact assessment;
-6. explicit non-goals;
-7. switch/deletion condition;
-8. exact gates required for implementation closure.
-
-Do **not** implement the third seam in the same discovery increment.
-
-Candidate areas may include public error/not-found handling, database-close lifecycle, or another smaller app-level composition concern, but no candidate is authorized until current code/tests prove it is the smallest correct next seam. Broad service-container or all-route extraction remains rejected.
+Implement **only** the selected public-error/not-found seam. Do not combine it with database-close lifecycle or any service/route composition move.
 
 ## Permanent AB-01.4 law
 
