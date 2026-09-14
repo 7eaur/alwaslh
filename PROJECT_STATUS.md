@@ -32,7 +32,7 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 Live `main` latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-AB-02 → AB-03 phase-boundary reconciliation is complete. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed at Worker B sequence 40 startup.
+AB-02 → AB-03 phase-boundary reconciliation is complete. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker C sequence 41.
 
 ## AB-00 — DONE
 
@@ -56,15 +56,21 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 **AB-03.1.2 Operations frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.**
 
-**AB-03.1.3 Operations presentation-model ownership — IMPLEMENTED / WAITING_FOR_CI.**
+**AB-03.1.3 Operations presentation-model ownership — DONE / EXACT-SOURCE VERIFIED.**
 
-Source checkpoint: `25ce968ea90e67240e5e6bffd12b0d52cb37e8b1`.
+Final source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
-Worker B sequence 40 moved `operations-model.ts` and its test from the legacy `admin/operations` owner to `features/operations/model`, exported the required presentation helpers through `features/operations/public`, switched Overview and Operations Health consumers to that public boundary, and deleted the legacy model/test owners. UI copy, routes, CSS, API/transport contracts, session behavior, backend/PostgreSQL/security authority and Student frontend behavior were intentionally unchanged.
+Worker C sequence 41 found that the first moved-model checkpoint still left two stale relative imports in `AdminNotificationsPage.tsx` and `AdminOperationsAuditPage.tsx`. Those were the root cause of Frontend Preparation typecheck failure. Both consumers now import the presentation helpers through `features/operations/public`; no UI behavior, routes, CSS, API/transport contracts, PostgreSQL/schema/migrations, security/session behavior, backend authority or Student frontend behavior changed.
 
-Exact-head CI on the source checkpoint was started automatically. Architecture Guard `34874655955` is **SUCCESS**. Frontend Preparation `34874655918`, Admin AI Operations `34874655925`, Combined Integration `34874655884`, and Stage13G Admin Operations `34874655953` were still pending/running at handoff, so AB-03.1.3 must not be marked DONE yet.
+Exact-source verification on `7eda86f...` is green:
 
-**Exact next step:** verification/closure only for AB-03.1.3. Confirm the remaining exact-head or source-tree-equivalent Admin/API/PostgreSQL/security/integration/Chromium gates are green, then re-run the AB-03.1 slice-closure decision. Do not begin Curriculum + Content + OCR before this closure.
+- Architecture Guard `34876404251` — **SUCCESS**;
+- Frontend Preparation `34876404345` — **SUCCESS**;
+- Admin AI Operations `34876404287` — **SUCCESS**;
+- Combined Integration `34876404314` — **SUCCESS**, including real Admin Chromium;
+- Stage13G Admin Operations `34876404237` — **SUCCESS**, including Admin quality, API quality, clean PostgreSQL, operations/security/auth integrations and Real API + PostgreSQL + Chromium.
+
+**Exact next step:** fresh **AB-03.1 slice-closure discovery only**. Re-inspect Overview + Operations ownership/jobs/contracts and decide whether one further evidence-backed correction remains. If none remains, close AB-03.1 and only then hand off Curriculum + Content + OCR. Do not invent additional work.
 
 ## Remaining roadmap
 
