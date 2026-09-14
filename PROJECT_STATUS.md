@@ -32,7 +32,7 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 Live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-Relative to prior reconciled main `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, implementation changes remain Student-focused and do not touch `apps/admin-web`, `apps/api`, or `database/migrations`. Shared project docs changed on main and require deliberate reconciliation before a structural phase boundary.
+Latest implementation changes on main remain Student-focused and do not touch `apps/admin-web`, `apps/api`, or `database/migrations`. Shared project docs changed on main and require deliberate reconciliation before a structural phase boundary.
 
 ## AB-00 — DONE
 
@@ -58,22 +58,18 @@ Closure: Architecture Guard `34838037118`, Frontend Preparation `34838037114`, C
 Source checkpoint: `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`.  
 Owner: `apps/admin-web/src/app/router/AdminRoutes.tsx`.
 
-The inner `/app/*` route table and route-local wrappers/not-found composition moved out of `App.tsx`; URLs, redirects, session-expiry behavior, eager loading, workflow UI/business rules and outer `router.tsx`/`RouteFocus` were preserved.
+Closure evidence: Architecture Guard `34840954071`, Frontend Preparation `34840953959`, Admin AI `34841142948`, Combined `34841142987`, Stage13G `34841142975` — SUCCESS on source/source-tree-equivalent heads.
 
-Closure evidence:
+### AB-02.3 Substantial workflow route lazy boundaries — SELECTED / NEXT IMPLEMENTATION
 
-- Architecture Guard `34840954071` — SUCCESS on source checkpoint;
-- Frontend Preparation `34840953959` — SUCCESS on source checkpoint;
-- source-tree-equivalent Admin AI `34841142948` — SUCCESS;
-- source-tree-equivalent Combined Integration `34841142987` — SUCCESS, including API/Admin quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
-- source-tree-equivalent Stage13G `34841142975` — SUCCESS, including Admin/API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+Discovery confirmed `AdminRoutes.tsx` still statically imports every major Admin workflow. The AB-00 baseline was one `968.68 kB / 193.92 kB gzip` JS chunk with a Vite warning; latest verified Stage13G build is improved to one `446.30 kB / 117.48 kB gzip` JS chunk, but still contains the major workflow graph eagerly.
 
-Comparison from `732555cb…` to verification head `2c2fcb6c…` contains documentation files only; therefore the successful source-tree-equivalent gates verify the same source tree.
+Target: keep route ownership in `AdminRoutes.tsx`, convert substantial workflow destinations to `React.lazy()` dynamic boundaries, and use one existing `PageState kind="loading"` Suspense fallback. Preserve URLs, redirects, `onSessionExpired`, deep links, focus/session behavior and all workflow business/UI behavior. Do not combine with feature migration, navigation/auth redesign or manual chunk tuning.
+
+Required closure: Architecture Guard + Admin quality/build + measured dynamic chunk evidence + direct/deep-link/session-expiry verification + Combined + Stage13G real Chromium.
 
 ## Remaining roadmap
 
-AB-02 remains active. The next worker must perform **discovery only** for one smallest next AB-02 seam before implementation. Candidate areas include feature public/routes entry points, substantial route lazy boundaries/Suspense, outer-router/presentation ownership, auth presentation ownership, navigation definition ownership, or error-boundary composition. Do not combine concerns.
-
-Then: AB-03 vertical slices → AB-04 remaining backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Complete AB-02.3 and any further evidence-backed shell/router seams, then AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
