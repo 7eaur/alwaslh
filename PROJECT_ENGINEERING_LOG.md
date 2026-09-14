@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — fourth AB-01.4 Fastify construction seam verified and closed; fifth-seam discovery is next.**
+Last consolidated: **2026-09-14 — fifth AB-01.4 database lifecycle seam selected; implementation is next.**
 
 ## Durable invariants
 
@@ -21,7 +21,7 @@ Admin initial JS **968.68 kB / 193.92 kB gzip**; CSS **91.38 kB / 13.68 kB gzip*
 
 Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the live serial handoff. Never auto-merge or rewrite shared history.
 
-Current live `main` observed in Worker B sequence 15: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; this is the Student Experience V2 merge checkpoint and does not overlap the current AB-01 API seam.
+Current live `main` observed in Worker C sequence 16: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; this is the Student Experience V2 merge checkpoint and does not overlap the current AB-01 API seam.
 
 ## Architecture decisions
 
@@ -65,32 +65,38 @@ Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
 
 Owner: `apps/api/src/app/create-fastify-instance.ts` with narrow `createFastifyInstance(config: AppConfig): FastifyInstance` responsibility.
 
-`apps/api/src/app.ts` now delegates Fastify construction/options to that owner and no longer imports Fastify as a value or embeds constructor options.
+Preserved exactly: logger mode, request logging, trust proxy, body limit, request timeout, one instance per `buildApp()`, downstream service/route/plugin/error/health/database-close ordering. Service graph, business routes, DB lifecycle, config defaults, migrations/schema and Student frontend were untouched.
 
-Preserved exactly:
+Closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — successful/source-tree-equivalent green. Fourth seam closed.
 
-- silent logger → `false`, otherwise `{ level: config.LOG_LEVEL }`;
-- `disableRequestLogging: false`;
-- `trustProxy: true`;
-- `bodyLimit: 1_048_576`;
-- `requestTimeout: 15_000`;
-- one instance per `buildApp()`;
-- all downstream service construction, route/plugin/error/health registration and database-close ordering.
+#### Fifth seam — database lifecycle registration — SELECTED / NOT IMPLEMENTED
 
-Explicitly untouched: service graph, business routes, DB lifecycle, config defaults, migrations/schema and Student frontend.
+Worker C sequence 16 inspected live `apps/api/src/app.ts`, `apps/api/tests/app.test.ts`, `apps/api/src/db.ts` and `apps/api/src/server.ts`.
 
-Closure evidence:
+Current owner is the inline `app.addHook("onClose", ...)` in `app.ts` that awaits `database.close()`.
 
-- Architecture Guard `34820842164` — SUCCESS on source implementation HEAD.
-- Source-head Combined `34820842196`, Stage13G `34820842163`, Admin AI `34820842245` were cancelled by later documentation commits; no code-failure evidence was observed.
-- Compare `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d...248ce58053bca9d97498d41fdda57aec1ace4033` contains only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`, and `ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`.
-- Admin AI `34821032274` — SUCCESS: API lint/typecheck/unit/build, clean PostgreSQL, DB contracts, authorization/review controls, Stage12 regressions and auth security regression.
-- Combined `34821032272` — SUCCESS: API/Admin quality, clean PostgreSQL, DB contract, backend authority/auth-security regressions, deterministic fixtures and real Admin Chromium.
-- Stage13G `34821032271` — SUCCESS: Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, Accounts+Access, Notifications+Operations, Reports+Settings+Security+Audit, AI authoring, Access/Auth regressions and real API + PostgreSQL + Chromium.
+Target owner: `apps/api/src/app/plugins/database-lifecycle.ts` with one narrow `registerDatabaseLifecycle(app, database)` responsibility.
 
-Conclusion: switch/deletion condition is satisfied; fourth seam is closed.
+Evidence:
 
-No fifth seam was implemented or selected in Worker B sequence 15.
+- `Database.close(): Promise<void>` is an explicit infrastructure contract.
+- `server.ts` relies on `app.close()` during SIGTERM/SIGINT and listen failure, so the hook is a real application lifecycle boundary.
+- legacy startup failure closes the database directly before `buildApp()` exists; that path must remain unchanged.
+- `app.test.ts` closes every built app but does not explicitly assert database-close delegation, so implementation should add one focused parity assertion.
+
+Preserve exactly:
+
+- already-created `Database` injected into `buildApp()`;
+- `app.close()` awaits database close without swallowing error;
+- registration remains on the same app after route/health/error composition;
+- server signal/startup-failure behavior unchanged;
+- pool config, queries, transactions, migrations/schema unchanged.
+
+Non-goals: database creation, signal abstraction, startup batch, service graph/container, route registry, infrastructure-adapter bundle, transaction/query changes, Student frontend.
+
+Switch condition: narrow owner is sole database-close hook registrar; `app.ts` no longer embeds it; focused lifecycle unit coverage is added; `server.ts` unchanged; Architecture Guard/API quality/clean PostgreSQL/relevant integration/real API+Chromium green.
+
+After this seam, current evidence does not justify broad service/container/route-registry extraction. Reassess AB-01.4 closure instead of forcing a sixth seam.
 
 ### AB-01.5 — PENDING
 
@@ -102,6 +108,6 @@ Foundation exact-head closure gate.
 
 ## Exact continuation
 
-Perform fifth AB-01.4 seam **discovery only**: inspect live `apps/api/src/app.ts`, current tests/contracts and remaining responsibilities; select one smallest evidence-backed owner boundary; document contracts/order/non-goals/gates; do not implement the fifth seam in the discovery run.
+Implement only the selected fifth AB-01.4 database lifecycle seam and focused parity test, then run required gates. Do not move database creation, server signals, service construction, routes or startup behavior. After green closure, assess whether AB-01.4 should end and advance to AB-01.5.
 
 Remaining roadmap: AB-02 thin Admin shell/router/providers/lazy routes → AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final full verification/reconciliation.
