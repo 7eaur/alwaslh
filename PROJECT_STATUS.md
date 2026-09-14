@@ -32,7 +32,7 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 Live `main` latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-AB-02 → AB-03 phase-boundary reconciliation is complete. The live-main-only implementation delta is Student frontend/workflow plus Student-specific CI/docs; no `apps/admin-web`, `apps/api`, or `database/migrations` implementation overlap was found. Shared project docs diverge and remain branch-local workstream authority until final reconciliation.
+AB-02 → AB-03 phase-boundary reconciliation is complete. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed at Worker B sequence 40 startup.
 
 ## AB-00 — DONE
 
@@ -46,11 +46,6 @@ Shared Admin transport/session/product-state foundations, bounded backend app-co
 
 Canonical record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 
-- AB-02.1 Global shell/layout ownership — DONE.
-- AB-02.2 Inner Admin route-table ownership — DONE.
-- AB-02.3 Substantial workflow route lazy boundaries — DONE.
-- AB-02.4 Auth login presentation ownership — DONE.
-
 ## AB-03 — ACTIVE
 
 Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
@@ -59,21 +54,17 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 **AB-03.1.1 Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.**
 
-Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`. Closure evidence: Architecture Guard `34859593842` — SUCCESS; Admin AI `34860142887` — SUCCESS; Combined `34860142983` — SUCCESS; Stage13G `34860143008` — SUCCESS.
-
 **AB-03.1.2 Operations frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.**
 
-Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
+**AB-03.1.3 Operations presentation-model ownership — IMPLEMENTED / WAITING_FOR_CI.**
 
-The Operations transport/types now belong to `apps/admin-web/src/features/operations/api/admin-operations-api.ts` and are exposed through the narrow `features/operations/public` boundary. All stale root-owner imports/tests were corrected without changing endpoint, payload, response, session, backend/API, PostgreSQL, security, route/style, or Student frontend behavior.
+Source checkpoint: `25ce968ea90e67240e5e6bffd12b0d52cb37e8b1`.
 
-Closure evidence: Architecture Guard `34870253383`, Frontend Preparation `34870253413`, Admin AI Operations `34870253417`, Combined Integration `34870253434`, Stage13G Admin Operations `34870253431` — **SUCCESS**.
+Worker B sequence 40 moved `operations-model.ts` and its test from the legacy `admin/operations` owner to `features/operations/model`, exported the required presentation helpers through `features/operations/public`, switched Overview and Operations Health consumers to that public boundary, and deleted the legacy model/test owners. UI copy, routes, CSS, API/transport contracts, session behavior, backend/PostgreSQL/security authority and Student frontend behavior were intentionally unchanged.
 
-**AB-03.1 discovery decision — COMPLETE.**
+Exact-head CI on the source checkpoint was started automatically. Architecture Guard `34874655955` is **SUCCESS**. Frontend Preparation `34874655918`, Admin AI Operations `34874655925`, Combined Integration `34874655884`, and Stage13G Admin Operations `34874655953` were still pending/running at handoff, so AB-03.1.3 must not be marked DONE yet.
 
-Fresh repository inspection found one remaining justified ownership seam before slice closure: `apps/admin-web/src/admin/operations/operations-model.ts` plus its test still own Operations presentation/model policy outside `features/operations`, while Overview and Health consume that legacy owner. The feature currently owns only API/public transport. Backend HTTP/application/PostgreSQL/security authority is already coherent and no schema/API correction is justified by this discovery.
-
-**Exact next step: AB-03.1.3 Operations presentation-model ownership.** Move `operations-model.ts` and its test under `features/operations/model`, expose only the required helpers/types through `features/operations/public`, and switch existing Overview/Operations consumers to that public boundary without UI copy, routes, API, DB, security, CSS, or Student frontend behavior changes. Verify Architecture Guard + Admin quality/unit/build + relevant Operations integration/Chromium gates before closing. Do not move the pages/styles in the same increment.
+**Exact next step:** verification/closure only for AB-03.1.3. Confirm the remaining exact-head or source-tree-equivalent Admin/API/PostgreSQL/security/integration/Chromium gates are green, then re-run the AB-03.1 slice-closure decision. Do not begin Curriculum + Content + OCR before this closure.
 
 ## Remaining roadmap
 
