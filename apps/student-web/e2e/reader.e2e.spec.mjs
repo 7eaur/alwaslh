@@ -35,13 +35,12 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
 
   await page.goto("/");
   await expect(page).toHaveURL(/\/app\/home$/);
-  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مرحبًا بك" })).toBeVisible();
   await page.getByRole("link", { name: "التعلّم", exact: true }).first().click();
   await expect(page).toHaveURL(/\/app\/learn$/);
-  await expect(page.getByRole("heading", { name: "موادك ودروسك" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/Stage16|PWA|authority/);
 
-  await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
   const subjectLink = page.getByRole("link", { name: new RegExp(fixture.subjectName) });
   await expect(subjectLink).toBeVisible();
   await subjectLink.click();
