@@ -90,25 +90,25 @@ Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSession
 
 Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`. The minimum proven loading/error/retry presentation shell is shared; feature state machines and server semantics remain feature-owned.
 
-### AB-01.4 Backend app composition foundation — ACTIVE / SECOND SEAM IMPLEMENTED / WAITING_FOR_CI
+### AB-01.4 Backend app composition foundation — ACTIVE / TWO SEAMS DONE
 
 Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
 **First seam — CORS/preflight extraction — DONE.** Source implementation HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`; Architecture Guard `34808159011`, Admin AI `34809211720`, Combined `34809211704`, Stage13G `34809211707` all SUCCESS.
 
-**Second seam — health/readiness HTTP extraction — IMPLEMENTED / WAITING_FOR_CI.**
-
-Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
+**Second seam — health/readiness HTTP extraction — DONE.** Source implementation HEAD `a302871b3486ae95810cea40dccca68363a29055`.
 
 - owner: `apps/api/src/app/http/health.ts`;
 - `registerHealthRoutes(app, database)` owns the existing `/health` and `/ready` handlers;
-- `app.ts` now retains one composition call at the same relative position;
 - existing paths/statuses/bodies, process-only health behavior, `database.ping()` readiness and failure log semantics are unchanged;
-- public-error/not-found handlers, DB close lifecycle, service construction, `server.ts`, migrations/schema and Student frontend were not changed;
-- Architecture Guard `34811642661` — SUCCESS;
-- Combined `34811642693`, Stage13G `34811642622`, Admin AI `34811642629` were still pending/running at this handoff.
+- Architecture Guard `34811642661` — SUCCESS on source HEAD;
+- direct source Combined `34811642693` was cancelled only after documentation-only commits superseded it;
+- compare from `a302871b...` to `b095741e...` proves only status/log/handoff/AB-01/state documentation changed;
+- Admin AI `34811809959` — SUCCESS;
+- Combined `34811809962` — SUCCESS including API/Admin quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
+- Stage13G `34811810021` — SUCCESS including Admin/API quality, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
 
-Do not mark this seam DONE or select a third composition seam until the required integration/PostgreSQL/real Chromium gates are green on the source tree.
+**Next:** third AB-01.4 seam discovery only. Inspect remaining `apps/api/src/app.ts` responsibilities and select one smallest evidence-backed composition boundary; do not implement it in the same discovery increment.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -134,4 +134,4 @@ No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: inspect the pending exact-source-tree gates for health/readiness extraction; if green, mark the second AB-01.4 seam DONE. If any gate fails, fix the root cause within this seam. Do not select a third seam before closure.
+Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: perform **discovery only** for the third AB-01.4 app-composition seam. Do not implement that seam in the same increment.
