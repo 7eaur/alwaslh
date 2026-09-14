@@ -14,9 +14,10 @@ import { AdminAiAuthoringService } from "./ai/admin-authoring.js";
 import { registerAdminAiAuthoringRoutes } from "./ai/admin-authoring-http.js";
 import { AdminAiOperationsService } from "./ai/admin-operations.js";
 import { registerAdminAiOperationsRoutes } from "./ai/admin-operations-http.js";
+import { registerCorsPolicy } from "./app/plugins/cors.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
-import { type AppConfig, allowedOrigins } from "./config.js";
+import type { AppConfig } from "./config.js";
 import { AdminContentOperationsService } from "./content/admin-operations.js";
 import { registerAdminContentOperationsRoutes } from "./content/admin-operations-http.js";
 import { AdminContentPreviewService } from "./content/admin-preview.js";
@@ -30,7 +31,7 @@ import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authori
 import { CurriculumService } from "./curriculum/service.js";
 import { StudentReaderService } from "./curriculum/student-reader.js";
 import type { Database } from "./db.js";
-import { AppError, toPublicError } from "./errors.js";
+import { toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
 import { registerNotificationRoutes } from "./notifications/http.js";
 import { NotificationService } from "./notifications/service.js";
@@ -65,7 +66,6 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
     bodyLimit: 1_048_576,
     requestTimeout: 15_000,
   });
-  const origins = allowedOrigins(config);
   const auth = new AuthService(database, config.SESSION_TTL_HOURS);
   const access = new AccessService(database);
   const accessImport = new AccessCodeImportService(database);
@@ -99,23 +99,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const aiAuthoring = new AdminAiAuthoringService(database, questionBank, quizBuilder);
   const quizSpecializedExports = new QuizSpecializedExportService(quizBuilder, database, mediaStorage);
 
-  app.addHook("onRequest", async (request, reply) => {
-    const origin = request.headers.origin;
-    if (origin && origins.has(origin)) {
-      reply.header("Access-Control-Allow-Origin", origin);
-      reply.header("Access-Control-Allow-Credentials", "true");
-      reply.header("Vary", "Origin");
-    }
-
-    if (request.method === "OPTIONS") {
-      if (!origin || !origins.has(origin)) {
-        throw new AppError("FORBIDDEN", "مصدر الطلب غير مسموح", 403);
-      }
-      reply.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-      reply.header("Access-Control-Allow-Headers", "Content-Type");
-      return reply.code(204).send();
-    }
-  });
+  registerCorsPolicy(app, config);
 
   registerAuthRoutes(app, config, auth);
   registerStudentActivationRoutes(app, config, auth, activation);
