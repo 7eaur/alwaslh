@@ -4,9 +4,9 @@ import { ApiRequestError, isMissingSessionError } from "../../admin-api";
 import { AdminProductState } from "../../shared/ui/AdminProductState";
 import {
   type OperationsAttentionSummary,
+  buildAttentionItems,
   fetchAdminOperationsAttention,
 } from "../../features/operations/public";
-import { buildAttentionItems } from "./operations-model";
 import "./operations-pages.css";
 
 type LoadState = "loading" | "ready" | "error";
