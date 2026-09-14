@@ -4,6 +4,10 @@
 The guard intentionally does not require legacy debt to disappear in one commit.
 It compares imports against the frozen AB-00.2 baseline and rejects *new* debt while
 allowing recorded legacy seams to be removed incrementally.
+
+IMPORTANT: after an accepted structural cleanup reaches exact-head green, advance
+BASELINE_SHA in a dedicated architecture-guard update so removed legacy debt cannot
+silently become an allowed baseline again later.
 """
 
 from __future__ import annotations
@@ -38,10 +42,11 @@ LEGACY_API_MODULES = {
     "student-assessment",
 }
 
-IMPORT_RE = re.compile(
+STATIC_IMPORT_RE = re.compile(
     r"(?:^|\n)\s*(?:import|export)\s+(?:type\s+)?(?:[^;\n]*?\s+from\s+)?[\"']([^\"']+)[\"']",
     re.MULTILINE,
 )
+DYNAMIC_IMPORT_RE = re.compile(r"\bimport\s*\(\s*[\"']([^\"']+)[\"']\s*\)")
 
 
 @dataclass(frozen=True)
@@ -64,7 +69,7 @@ def run_git(*args: str, check: bool = True) -> str:
 
 
 def imports_from(text: str) -> set[str]:
-    return set(IMPORT_RE.findall(text))
+    return set(STATIC_IMPORT_RE.findall(text)) | set(DYNAMIC_IMPORT_RE.findall(text))
 
 
 def baseline_text(path: str) -> str:
@@ -106,6 +111,30 @@ def admin_feature_owner(path: str) -> tuple[str, str] | None:
     return None
 
 
+def admin_feature_relative(resolved: str, owner: tuple[str, str]) -> str | None:
+    kind, feature = owner
+    prefix = f"{ADMIN_SRC}{kind}/{feature}/"
+    if not resolved.startswith(prefix):
+        return None
+    return resolved[len(prefix) :]
+
+
+def is_public_admin_feature_import(
+    resolved: str,
+    owner: tuple[str, str],
+    *,
+    allow_routes: bool,
+) -> bool:
+    rel = admin_feature_relative(resolved, owner)
+    if rel is None:
+        return False
+    if rel == "public" or rel.startswith("public/"):
+        return True
+    if allow_routes and (rel == "routes" or rel.startswith("routes/")):
+        return True
+    return False
+
+
 def backend_module_owner(path: str) -> tuple[str, str] | None:
     if not path.startswith(API_SRC):
         return None
@@ -132,6 +161,8 @@ def check_admin_import(path: str, specifier: str) -> str | None:
         return None
 
     rel = path[len(ADMIN_SRC) :] if path.startswith(ADMIN_SRC) else ""
+    target_owner = admin_feature_owner(resolved)
+
     if rel.startswith("shared/") and (
         resolved.startswith(f"{ADMIN_SRC}features/") or resolved.startswith(f"{ADMIN_SRC}app/")
     ):
@@ -140,12 +171,16 @@ def check_admin_import(path: str, specifier: str) -> str | None:
     if rel.startswith("features/") and resolved.startswith(f"{ADMIN_SRC}app/"):
         return f"feature code may not import app internals: {specifier}"
 
+    if rel.startswith("app/") and target_owner and target_owner[0] == "features":
+        if not is_public_admin_feature_import(resolved, target_owner, allow_routes=True):
+            return (
+                f"app composition may not import private feature internals: {specifier}; "
+                "import the feature public/routes entry point"
+            )
+
     source_owner = admin_feature_owner(path)
-    target_owner = admin_feature_owner(resolved)
     if source_owner and target_owner and source_owner[1] != target_owner[1]:
-        # Cross-feature collaboration must go through an explicit public entry point.
-        target_rel = resolved.split(f"/{target_owner[0]}/{target_owner[1]}/", 1)[-1]
-        if target_rel != "public" and not target_rel.startswith("public/"):
+        if not is_public_admin_feature_import(resolved, target_owner, allow_routes=False):
             return (
                 f"private cross-feature import {source_owner[1]} -> {target_owner[1]}: {specifier}; "
                 "use a public feature contract or app orchestration"
@@ -158,8 +193,16 @@ def check_backend_import(path: str, specifier: str) -> str | None:
     if resolved is None:
         return None
 
-    source_owner = backend_module_owner(path)
     target_owner = backend_module_owner(resolved)
+
+    if path.startswith(f"{API_SRC}app/") and target_owner and target_owner[0] == "modules":
+        if not is_public_module_import(resolved, target_owner):
+            return (
+                f"app composition may not import private module internals: {specifier}; "
+                "import the module public composition/application contract"
+            )
+
+    source_owner = backend_module_owner(path)
     if source_owner and resolved.startswith(f"{API_SRC}app/"):
         return f"backend module may not import app composition internals: {specifier}"
 
@@ -233,6 +276,7 @@ def validate() -> list[Violation]:
 def self_test() -> None:
     assert imports_from('import { x } from "../alpha/service.js";') == {"../alpha/service.js"}
     assert imports_from('export type { X } from "./types";') == {"./types"}
+    assert imports_from('const Page = lazy(() => import("../alpha/Page"));') == {"../alpha/Page"}
 
     admin_private = check_admin_import(
         "apps/admin-web/src/features/overview/page.tsx",
@@ -245,6 +289,18 @@ def self_test() -> None:
         "../operations/public",
     )
     assert admin_public is None
+
+    app_private = check_admin_import(
+        "apps/admin-web/src/app/router/index.tsx",
+        "../../features/questions/pages/QuestionBankPage",
+    )
+    assert app_private and "app composition" in app_private
+
+    app_routes = check_admin_import(
+        "apps/admin-web/src/app/router/index.tsx",
+        "../../features/questions/routes",
+    )
+    assert app_routes is None
 
     shared_bad = check_admin_import(
         "apps/admin-web/src/shared/ui/Table.tsx",
@@ -263,6 +319,18 @@ def self_test() -> None:
         "../../question-bank/public",
     )
     assert backend_public is None
+
+    backend_app_private = check_backend_import(
+        "apps/api/src/app/composition/admin.ts",
+        "../../modules/question-bank/application/service",
+    )
+    assert backend_app_private and "app composition" in backend_app_private
+
+    backend_app_public = check_backend_import(
+        "apps/api/src/app/composition/admin.ts",
+        "../../modules/question-bank/public",
+    )
+    assert backend_app_public is None
 
     print("architecture boundary self-test: OK")
 
