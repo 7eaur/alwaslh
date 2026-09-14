@@ -32,7 +32,7 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 Live `main` latest observation: `d43fe2afe29b02093510177b921c0407e21a3de9`.
 
-Comparison from the prior Admin/backend reconciliation baseline `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0` to current live `main` contains only Student frontend/PWA workflow files under `apps/student-web` plus `.github/workflows/stage16-student-pwa.yml`. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change is present for the AB-03.2.2 closure.
+Comparison from the prior Admin/backend reconciliation baseline `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0` to current live `main` contains only Student frontend/PWA workflow files under `apps/student-web` plus `.github/workflows/stage16-student-pwa.yml`. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change is present for the current AB-03.2 discovery.
 
 ## AB-00 — DONE
 
@@ -81,7 +81,11 @@ Source-equivalent green closure evidence:
 
 The later CI heads differ from the source checkpoint only by documentation/state changes, so executable source equivalence is preserved.
 
-**Exact next smallest step:** fresh discovery only inside the remaining **Content + OCR** portion of AB-03.2. Inspect current frontend/backend/API/PostgreSQL/security/test ownership and choose at most one smallest root-cause seam. Do not begin the AI slice and do not bulk-migrate unrelated compatibility-facade consumers.
+#### AB-03.2.3 Content operations + OCR frontend API ownership — NEXT / DISCOVERY COMPLETE
+
+Worker A sequence 51 inspected the remaining Content/OCR frontend boundary without changing executable source. Evidence shows root `apps/admin-web/src/content-operations-api.ts` still owns Content operations/OCR transport and types while `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` and root `apps/admin-web/src/OcrSourcePreview.tsx` consume that root owner. This is the next proven split-ownership seam now that `features/content` already owns Content-ingestion transport.
+
+**Exact next smallest step:** move only the `content-operations-api.ts` implementation/types into `apps/admin-web/src/features/content/api`, expose the minimum required contract through `features/content/public`, and update the proven Content/OCR consumers. Preserve API paths, payloads, response semantics, routes, page/CSS behavior, backend/PostgreSQL/security authority and Student frontend. Keep a root compatibility re-export only if an actual remaining consumer proves it necessary. Do not begin the AI slice.
 
 ## Remaining roadmap
 
