@@ -7,8 +7,8 @@ import {
   createAdminNotification,
   deleteAdminNotification,
   fetchAdminNotifications,
+  formatAdminDate,
 } from "../../features/operations/public";
-import { formatAdminDate } from "./operations-model";
 import "../../admin-operations.css";
 import "./operations-pages.css";
 
