@@ -30,8 +30,6 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - never force-reset or force-push shared history;
 - live `main` latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-AB-02 → AB-03 phase-boundary reconciliation found no Admin/API/PostgreSQL implementation overlap from live main. Shared top-level docs remain subject to deliberate final reconciliation.
-
 ## Current phase
 
 - AB-00 — DONE
@@ -40,55 +38,46 @@ AB-02 → AB-03 phase-boundary reconciliation found no Admin/API/PostgreSQL impl
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — ACTIVE
   - AB-03.1.1 Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.1.2 Operations frontend API ownership — IMPLEMENTED / WAITING_FOR_CI
+  - AB-03.1.2 Operations frontend API ownership — ROOT FIX APPLIED / WAITING_FOR_CI
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
-## Last closed correction
-
-AB-03.1.1 source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`.
-
-- `apps/api/src/admin-operations/attention-application.ts` owns `loadOperationsAttention(...)`;
-- HTTP owns admin authorization, query validation and application invocation only for that endpoint;
-- API path/query bounds/response shape, SQL, migrations/schema and security behavior remained unchanged;
-- dedicated application-owner test added;
-- closure evidence: Guard `34859593842`, Admin AI `34860142887`, Combined `34860142983`, Stage13G `34860143008` — SUCCESS.
-
 ## Current implementation awaiting closure
 
-AB-03.1.2 source checkpoint: `75cab6ca1067f5866a259ad079279757218e805f`.
+Current AB-03.1.2 source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
-Worker A sequence 36 moved only Operations frontend transport ownership:
+Worker A sequence 36 moved Operations frontend transport/types under `features/operations` and exposed the narrow `features/operations/public` boundary. Worker B sequence 37 then inspected the failed Stage13G Admin UI job and confirmed a real strict-typecheck regression rather than CI concurrency noise: three consumers/tests still referenced the deleted root `admin-operations-api` module.
 
-- `apps/admin-web/src/features/operations/api/admin-operations-api.ts` now owns the existing Operations request functions and response/type contracts;
-- `apps/admin-web/src/features/operations/public/index.ts` exposes the narrow feature contract;
-- Overview, Operations Health, Audit, Diagnostics and Notifications now consume that public boundary;
-- root `apps/admin-web/src/admin-operations-api.ts` was deleted;
-- exported names, endpoints, query/body construction and session-expiry behavior were preserved;
-- pages/models/styles/routes, backend/API, PostgreSQL/schema/migrations and Student frontend implementation were not changed.
+Worker B corrected exactly that root ownership defect:
 
-Verification observed on source checkpoint:
+- `admin/operations/operations-model.ts` now consumes Operations contracts through `features/operations/public`;
+- `admin/operations/operations-model.test.ts` uses the same public feature boundary;
+- the API transport test now lives with its owner at `features/operations/api/admin-operations-api.test.ts`;
+- the stale root `admin-operations-api.test.ts` was removed;
+- endpoints, query/body/response contracts, credentials/session-expiry behavior, pages/routes/styles, backend/API/PostgreSQL/security and Student frontend behavior were not changed.
 
-- Architecture Guard `34866606170` — **SUCCESS**;
-- Frontend Preparation `34866606173` — pending/not fully closed;
-- Admin AI Operations `34866606148` — in progress/not fully closed;
-- Combined Integration `34866606220` — pending/not fully closed;
-- Stage13G Admin Operations `34866606179` — pending/not fully closed.
+Exact source-head evidence at handoff:
+
+- Architecture Guard `34868596586` — **SUCCESS**;
+- Frontend Preparation `34868596646` — **SUCCESS**;
+- Admin AI Operations `34868596701` — **SUCCESS**;
+- Combined Integration `34868596865` — **IN PROGRESS** at last observation;
+- Stage13G Admin Operations `34868596682` — **IN PROGRESS** at last observation.
 
 ## Exact continuation
 
 Do **verification/closure only** for AB-03.1.2:
 
-1. inspect the source-head runs above; if documentation-only commits caused concurrency cancellation, use the newest source-tree-equivalent runs after confirming no executable source/test/migration/workflow drift from `75cab6ca...`;
-2. require Architecture Guard, Admin quality, Combined Integration and Stage13G real API + PostgreSQL + Chromium evidence to be green;
-3. if any real failure appears, fix only its root cause inside this ownership seam;
-4. if all required gates are green, mark AB-03.1.2 DONE and perform a fresh discovery-only pass inside Overview + Operations;
+1. inspect Combined `34868596865` and Stage13G `34868596682`; if documentation-only commits supersede/cancel them, use the newest source-tree-equivalent runs only after proving no executable source/test/migration/workflow drift from `abe4f2c...`;
+2. require Combined Integration green plus Stage13G Admin/API quality, clean PostgreSQL/contracts, relevant regression suites and real API + PostgreSQL + Chromium green;
+3. fix only a genuine root regression inside this same seam if one appears;
+4. when all required evidence is green, mark AB-03.1.2 DONE and only then perform a fresh discovery-only pass inside Overview + Operations;
 5. do not start another ownership seam or Curriculum/Content/OCR before closure.
 
 ## Main reconciliation need
 
-`NOT REQUIRED NOW`. Live `main` remains `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; repeat reconciliation if live `main` gains overlapping Admin/API/PostgreSQL/shared-contract changes or at the next structural phase boundary.
+`NOT REQUIRED NOW`. Live `main` latest observation remains `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; repeat reconciliation if live `main` gains overlapping Admin/API/PostgreSQL/shared-contract changes or at the next structural phase boundary.
 
 ## Remaining roadmap
 
