@@ -38,7 +38,9 @@ Workers A/B/C share one branch and ordered roadmap. If another worker is active,
 
 ## Branch reconciliation
 
-Live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`. Compared with the prior reconciled main checkpoint `3053640cc5bb0699cfa7456cf646e8997f6aa81b`, the only new commit is the Student Experience V2 merge. No `apps/api`, `apps/admin-web`, or `database/migrations` path appears in that main-only delta. No scoped reconciliation is required before continuing AB-02 unless `main` moves again.
+Live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+
+Compared with prior reconciled main `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the implementation delta remains Student frontend/workflow focused; it does not touch `apps/admin-web`, `apps/api`, or `database/migrations`. Shared `PROJECT_STATUS.md` / `PROJECT_HANDOFF.md` also changed on main as part of the Student workstream, so future reconciliation must preserve this scoped Admin+Backend authority rather than overwrite it mechanically.
 
 ## AB-00 — DONE
 
@@ -62,28 +64,24 @@ Source checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
 ### AB-01.4 Backend app composition foundation — DONE
 
-Five bounded technical app seams are closed: CORS, health/readiness, public errors, Fastify construction/options and database lifecycle. Broad service/module composition remains for AB-03/AB-04 rather than a giant container/registry abstraction.
+Five bounded technical app seams are closed: CORS, health/readiness, public errors, Fastify construction/options and database lifecycle.
 
 ### AB-01.5 Common backend technical ownership — DONE
 
-Generic request validation owner:
-
-`apps/api/src/shared/http/request-validation.ts`
+Generic request validation owner: `apps/api/src/shared/http/request-validation.ts`.
 
 Complete implementation checkpoint: `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`.
 
-Verification HEAD `16c7ac34078d75b990422374954f30631ebbee45` differs from that source checkpoint only by documentation. Evidence:
+Closure evidence:
 
 - Architecture Guard `34834714337` — SUCCESS;
 - Stage13E Admin AI `34834945644` — SUCCESS;
 - Stage13E Combined Integration `34834945655` — SUCCESS;
 - Stage13G `34834945649` — SUCCESS.
 
-Stage13G proves Admin/API quality, clean PostgreSQL migrations, database contract, relevant integration/security/auth regressions and real API + PostgreSQL + Chromium.
-
 ### AB-01.6 Foundation closure gate — PASS / DONE
 
-No further shared-foundation extraction is authorized. Foundation ownership is sufficiently explicit and guarded for the next phase.
+No further shared-foundation extraction is authorized.
 
 ## AB-02 — ACTIVE
 
@@ -97,18 +95,33 @@ Source implementation checkpoint: `0d07a24aa062ad569ff654524bdc13a4e368f399`.
 
 Owner: `apps/admin-web/src/app/layouts/AdminShell.tsx`.
 
-`App.tsx` no longer owns sidebar/navigation/account/logout markup. Current-head closure evidence:
+Closure evidence:
 
 - Architecture Guard `34838037118` — SUCCESS;
 - Frontend Preparation `34838037114` — SUCCESS;
 - Combined Integration `34838123077` — SUCCESS;
-- Stage13G `34838123143` — SUCCESS, including Admin/API quality, clean PostgreSQL, backend/auth/security integration and real API + PostgreSQL + Chromium.
+- Stage13G `34838123143` — SUCCESS.
 
-### AB-02.2 Inner Admin route-table ownership — DISCOVERED / NEXT
+### AB-02.2 Inner Admin route-table ownership — IMPLEMENTED / WAITING_FOR_CI
 
-Live `App.tsx` still owns the full inner `/app/*` route table, eager workflow imports and route-only wrappers. `apps/admin-web/src/app/` has no router owner yet, and only Auth has migrated into `features/*`.
+Source implementation checkpoint: `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`.
 
-Next smallest seam: create `apps/admin-web/src/app/router/AdminRoutes.tsx` and move only the existing inner route-table composition + route-only wrappers/not-found state into that owner. Preserve current `src/admin/*` page imports, URLs and behavior. Do **not** combine this with feature migration, lazy loading, URL changes or workflow redesign.
+New owner:
+
+`apps/admin-web/src/app/router/AdminRoutes.tsx`
+
+The complete inner `/app/*` route table and route-local wrappers/not-found composition moved out of `App.tsx`. `App.tsx` now keeps session/provider/auth-state composition plus `AdminShell + AdminRoutes`.
+
+Deliberately unchanged:
+
+- transitional `src/admin/*` workflow ownership;
+- route URLs and redirects;
+- eager workflow imports/lazy-loading behavior;
+- `onSessionExpired` contract;
+- outer `apps/admin-web/src/router.tsx` + `RouteFocus`;
+- workflow UI/CSS and business behavior.
+
+Exact-head checks started on `732555cb…`; Architecture Guard, Stage13G/Admin UI/backend, Stage13E Admin Web quality/Admin AI and other required checks were still queued/in-progress at handoff. Do not mark AB-02.2 DONE until required source-head/source-tree-equivalent gates are green.
 
 ## Remaining roadmap
 
@@ -124,4 +137,4 @@ No merge/readiness before AB-08 exact-head green. After verified AB-08 completio
 
 ## Immediate next action
 
-Implement **AB-02.2 only**: extract the current inner Admin route table from `App.tsx` into `app/router/AdminRoutes.tsx` with no behavior/URL/lazy-loading/feature-ownership change. Then run Architecture Guard + Admin quality + relevant route/auth/focus tests + Stage13G real Chromium/Combined verification before marking the seam DONE.
+Inspect the exact-head/source-tree-equivalent checks for `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`. If all required Admin/Architecture/Combined/Stage13G evidence is green, close **AB-02.2 only**. If any check fails, fix its root cause before advancing. Do not begin lazy-loading or feature route migrations while AB-02.2 remains unverified.
