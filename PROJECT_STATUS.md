@@ -2,17 +2,19 @@
 
 > Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-14 — Student Experience V2 implementation advanced through Auth / Shell / Home / Learn / Reader visual foundation / secondary surfaces; CI repair active on PR #58**.
+Last synchronized: **2026-09-14 — Student Experience V2 reached green exact-head Student gates after architecture migration, Stage16 reconciliation, Practice split, visual QA fixes and legacy cleanup.**
 
 ## Current state
 
-**CURRENT USER PRIORITY: Student Experience V2 — establish the clean, scalable Student UI/UX and frontend architecture before layering unfinished backend-dependent capabilities.**
+**CURRENT USER PRIORITY: close Student Experience V2 safely, then return to the roadmap without rebuilding the approved Student foundation.**
 
 Active branch: `ux/student-experience-v2`
 
 Active PR: `#58 — refactor(student): establish Student Experience V2 foundation` — **DRAFT / NOT MERGED**.
 
-Current exact head at this synchronization: `8f0ad2d718191e3c9b8263384eb6b645ac61e2b9`.
+Last fully verified implementation head before this documentation synchronization:
+
+`1dd6222bc21cab615ca9b93416666bfa16d1bf04`
 
 Authoritative V2 docs:
 
@@ -26,87 +28,120 @@ Authoritative V2 docs:
 ## V2 execution checkpoint
 
 - `V2-00 Architecture Freeze = DONE`
-- Foundation/theme/tokens = implemented on branch
-- App Shell / App Bar / Bottom Nav / Desktop Nav extraction = implemented
-- Home V2 = implemented using available real data only
-- Welcome / Activation / Login / Recovery / Help / Support = migrated to modular V2 feature ownership
-- Account / Library / Notifications / Progress = migrated to focused V2 feature ownership
-- Learn landing + scalable Subject hierarchy = implemented on V2 branch
-- Reader V2 visual layer = started and wired
-- Practice V2 visual layer = started
-- Stage16 cold-start Offline Reader work from PR #57 = reconciled into V2 behavior instead of being overwritten
-- exact-head CI = **ACTIVE / NOT GREEN YET**
+- Foundation/theme/tokens = implemented
+- App Shell / App Bar / Bottom Nav / Desktop Nav = implemented
+- Home V2 = implemented using authoritative available data only
+- Welcome / Activation / Login / Recovery / Help / Support = modularized
+- Account / Library / Notifications / Progress = feature-owned V2 surfaces
+- Learn landing + scalable Subject hierarchy = implemented
+- Reader V2 visual/focused behavior = implemented while preserving Stage16 integrity semantics
+- Practice/Models = split into feature-owned Catalog / Quiz Detail / Attempt orchestration; old assessment monolith removed
+- Stage16 cold-start Offline Reader behavior from PR #57 = reconciled into V2
+- Downloads now reuse the shared profile-scoped curriculum read-through cache
+- Reader and Downloads expose feature boundaries under `features/*` while security-critical legacy internals remain unchanged
+- obsolete Library overview stylesheet removed; future-surface stylesheet pruned to live selectors
+- phone Practice visual QA was reviewed from exact-head artifacts and the attempt/result action layout overlap was fixed
+
+## Exact-head Student verification
+
+On implementation head `1dd6222bc21cab615ca9b93416666bfa16d1bf04`, the following completed successfully:
+
+- `UX B01 Shared Frontend Foundation`
+- `UX B02 Student Shell and Navigation`
+- `UX B03 Student Learning and Reader`
+- `UX B04 Student Practice and Assessment`
+- `UX B05 Student Downloads and Account`
+- `Stage14 Student Product`
+- `Stage15 Student Assessment`
+- `Stage16 Student PWA`
+
+Stage14 Student lint/typecheck/unit/build passed, followed by the real Chromium auth/access/curriculum suite at `390px`.
+
+The latest B04 visual artifact was manually inspected. Phone attempt/result layouts no longer show the previous overlap between previous/next controls, remaining-question status and finish action.
+
+A prior Stage12 AI-control failure was unrelated to Student UI and passed on a later exact-head run without Student business-rule changes.
+
+`STUDENT V2 CORE IMPLEMENTATION = VERIFIED ON 1dd6222...`
+
+Any documentation-only commit after that head must still receive normal CI before PR #58 is merged.
 
 ## Fixed Student V2 decisions
 
-- phone navigation remains exactly: Home / Learn / Practice / Library;
+- phone navigation is exactly: Home / Learn / Practice / Library;
 - Home alone shows official الوسيلة الذكية mark + name;
 - other top-level pages show page title in App Bar;
-- nested Learn subject title can be supplied through shared App Bar context instead of page-owned duplicate headers;
-- no assumed learner name and no fixed learner grade on Home/account card;
-- Home is an overview using authoritative available data, not a duplicate menu;
-- Library body is direct access, while useful real Library counts belong on Home;
-- Learn scales through lists/search/accordion rather than card nesting;
+- nested Learn subject title uses shared App Bar context;
+- no assumed learner name and no fixed permanent grade on Home/account card;
+- Home is an overview, not duplicate navigation;
+- Library is direct access, not a dashboard article;
+- Learn scales through compact lists/search/accordion rather than nested card walls;
 - Reader and active assessment use focused UI patterns;
-- Summary / Lesson Questions / Models / Notes / Saved / Review have reserved architecture but are not fabricated before their authoritative contracts/data exist;
-- no fake progress/streak/completion/ranking values.
+- quiz versions are presented as learner-facing Models without inventing a second backend authority;
+- Summary / Lesson Questions / Notes / Saved / Needs Review remain honest until authoritative contracts/data exist;
+- no fabricated progress/streak/completion/ranking values.
 
 ## Frontend architecture now enforced
 
-Target ownership:
+Direction: `app → features → shared`.
+
+Ownership:
 
 - `app/layout` — shell/appbar/bottom-nav/desktop navigation;
 - `app/routing` / `app/session` — app-level routing/session composition;
 - `shared/ui` — reusable primitives;
-- `shared/icons` / `shared/brand` — one reusable visual boundary;
+- `shared/icons` / `shared/brand` — one visual boundary;
 - `shared/data` — runtime read-through cache + invalidation;
 - `shared/storage` — scoped persistence adapters;
-- `features/*` — feature-owned pages/components/state/query adapters.
+- `features/*` — feature pages/components/state/query boundaries.
 
 Rules remain mandatory:
 
 - no giant page files mixing routing + API + cache + storage + large JSX;
 - no duplicated app chrome, icon implementations, common rows/buttons/empty states;
-- pages compose shared components;
-- no feature-to-feature internals;
-- incremental migration, not Big Bang rewrite.
+- shared UI stays domain-agnostic;
+- no feature-to-feature private internals;
+- incremental migration only when executable gates remain green.
 
 ## Data/cache truth
 
-Current runtime cache behavior:
+Runtime read-through cache:
 
 - curriculum: 2 min memory TTL;
 - quiz catalog: 1 min;
 - recent attempts: 30 sec;
 - profile-scoped;
-- concurrent duplicate reads deduplicated;
-- access changes invalidate affected curriculum/practice read models.
+- duplicate concurrent reads deduplicated;
+- access changes invalidate affected curriculum/practice read models;
+- assessment completion invalidates attempt summaries;
+- Downloads reuses the same curriculum cache instead of creating a second catalog request path.
 
 Stage16 offline package storage remains the single lesson-download authority.
 
-Notes / Saved / Needs Review remain targeted for account-scoped local-first persistence when Stage17 ownership and synchronization contracts become authoritative. Do not persist passwords, reusable auth tokens, synthetic entitlements, or arbitrary `/v1` responses as business authority.
+Notes / Saved / Needs Review remain targeted for account-scoped local-first persistence only when Stage17 ownership and synchronization contracts become authoritative. Do not persist passwords, reusable auth tokens, synthetic entitlements, or arbitrary `/v1` responses as hidden business authority.
 
 ## Stage16 reconciliation
 
-PR #57 previously owned the cold-start Offline Reader gap. Its important behavior has now been reconciled into Student V2 rather than ignored:
+Preserved behavior from the separate PR #57 workstream:
 
-- bounded startup from verified durable offline profile/device scope;
+- bounded startup from verified durable profile/device scope;
 - verified stored lesson package path;
 - direct opening from Downloads;
-- integrity/tamper/isolation/time-bound acceptance remains required;
-- offline startup never creates synthetic server authorization.
+- signature/integrity/tamper/profile-device/time-bound checks;
+- cold-start Reader acceptance;
+- no synthetic server session or fake offline authorization authority.
 
-Do not weaken these semantics while polishing Reader V2.
+Do not weaken these semantics while moving remaining Reader internals.
 
-## CI truth at current checkpoint
+## Remaining V2 closure work
 
-Previous exact-head runs exposed frontend quality failures before browser verification. One concrete lint blocker was an unused Account profile dependency; the dependency has now been removed from `StudentAccountExperience` and its caller.
+The large product redesign/migration is no longer the blocker. Remaining work is closure-only:
 
-The new exact-head CI triggered after that fix is still running. Therefore:
-
-`STUDENT V2 RELEASE READINESS = NOT YET VERIFIED`
-
-Do not merge PR #58 until relevant Student workflows are green and mobile/RTL/safe-area visual verification is complete.
+1. let CI complete on the documentation synchronization head;
+2. inspect any final exact-head failure rather than assuming green from the previous head;
+3. keep security-critical Reader/Offline internals stable unless there is evidence-driven reason to move them;
+4. finish final documentation/PR readiness synchronization;
+5. when all required checks are green, take PR #58 out of Draft and merge through the repository's normal protected flow if permissions/tools permit;
+6. after merge, resume the product roadmap from the next unclosed Student item instead of redesigning V2 again.
 
 ## Grade 9 English content truth retained
 
@@ -129,13 +164,3 @@ Do not rerun the completed Grade 9 bulk import or republish those closed review 
 - AI/legacy output never auto-publishes learner content/questions.
 - Question Bank publication + immutable Quiz version remain assessment delivery authority.
 - `/v1` never becomes Service Worker business-cache authority.
-
-## Exact next Student action
-
-1. wait for the current exact-head compile/lint/test feedback and repair blockers before new large refactors;
-2. complete Learn/Reader executable verification;
-3. split Practice ownership away from the remaining large `student-assessment.tsx` monolith into feature-level catalog/detail/attempt units without changing assessment business contracts;
-4. connect Practice reads to the shared profile-scoped cache where safe;
-5. finish Reader/Practice mobile visual polish;
-6. remove obsolete legacy duplicates only after reference/test audit;
-7. run full phone/tablet/desktop RTL + safe-area + a11y + network-read QA before PR #58 leaves Draft.
