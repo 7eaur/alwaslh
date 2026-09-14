@@ -49,7 +49,7 @@ Direct live-code inspection established:
 - backend Curriculum and Content modules are already bounded, and PostgreSQL already has explicit learning/content/media/OCR migration history.
 - no backend/schema mutation was justified before correcting frontend ownership.
 
-### AB-03.2.1 Curriculum frontend API ownership — IMPLEMENTED / WAITING_FOR_CI
+### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
 Worker A sequence 45 established feature implementation ownership:
 
@@ -69,26 +69,22 @@ A first cleanup attempt removed the root Curriculum compatibility exports at `af
 
 The correct smallest repair was to restore only the transitional re-export facade, not Curriculum implementation ownership. The Content-ingestion consumer remains migrated to the feature boundary. Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
 
-### Verification state
-
-Corrected-source evidence at the latest observation:
+Worker C sequence 47 re-verified that the difference from `4cd3daf...` to handoff HEAD `926013d1af3824cc50836660ca85615bb2ec8593` is documentation/state only. Required source-tree-equivalent closure evidence is green:
 
 - Architecture Guard `34887051028` — SUCCESS;
-- Frontend Preparation `34887051091` — pending/in progress;
-- Admin AI Operations `34887051031` — pending;
-- Combined Integration `34887051068` — pending;
-- Stage13G Admin Operations `34887051059` — pending/in progress.
+- Frontend Preparation `34887051091` — SUCCESS;
+- Admin AI Operations `34887416193` — SUCCESS;
+- Combined Integration `34887416088` — SUCCESS;
+- Stage13G Admin Operations `34887416108` — SUCCESS.
 
-AB-03.2.1 is therefore not declared DONE yet. Documentation-only descendants are source-tree-equivalent and may provide remaining evidence if exact-source runs are superseded/cancelled.
+AB-03.2.1 is therefore closed. The root Curriculum compatibility facade remains intentional migration debt until its owning later slices migrate their legitimate consumers; it must not be deleted through a cross-slice bulk migration.
 
 ### Exact next smallest step
 
-Verification/closure only:
+Fresh AB-03.2 discovery only:
 
-1. confirm no executable drift from corrected checkpoint `4cd3daf...`;
-2. require green Architecture Guard/Admin quality/build plus relevant API/PostgreSQL/integration evidence, Combined real Admin Chromium, and Stage13G real API + PostgreSQL + Chromium;
-3. if green, close this bounded consumer migration;
-4. then perform fresh AB-03.2 discovery and select one smallest Content/OCR/Curriculum ownership seam based on live code evidence;
-5. do not bulk-migrate future-slice Access Codes/AI/Question Bank/Quiz Builder consumers merely to delete a compatibility facade.
-
-Do not begin AI, Question Bank, Quiz Builder, Students or Access Codes before the canonical order reaches them.
+1. inspect live Curriculum + Content + OCR ownership across Admin frontend, API/backend, PostgreSQL/security and existing tests;
+2. select one smallest root-cause ownership/workflow correction from current code evidence;
+3. do not bulk-migrate Access Codes/AI/Question Bank/Quiz Builder consumers merely to delete compatibility;
+4. do not begin the AI slice until Curriculum + Content + OCR is actually complete;
+5. verify any chosen increment with Architecture Guard plus all relevant Admin/API/PostgreSQL/integration/Chromium gates.
