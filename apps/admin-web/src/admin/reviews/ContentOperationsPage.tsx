@@ -10,7 +10,7 @@ import {
   fetchContentOperations,
   fetchOcrExtraction,
   reviewOcrExtraction,
-} from "../../content-operations-api";
+} from "../../features/content/public";
 import "../../content-operations.css";
 import { OcrSourcePreview } from "../../OcrSourcePreview";
 
