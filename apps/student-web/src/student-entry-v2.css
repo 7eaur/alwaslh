@@ -1,5 +1,6 @@
 /* Student Experience V2 entry/auth visual contract. */
 .student-entry-page {
+  overflow-x: clip;
   background: var(--student-canvas, #f8fbfb);
   color: var(--student-text, #1f2937);
 }
@@ -53,6 +54,7 @@
 .student-welcome-panel {
   position: relative;
   width: min(100%, 32rem);
+  max-width: 100%;
   min-height: 24rem;
   display: grid;
   align-content: center;
