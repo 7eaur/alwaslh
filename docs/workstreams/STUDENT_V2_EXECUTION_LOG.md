@@ -101,15 +101,52 @@ Created:
 
 `student-access.tsx` was reduced to route/feature orchestration and no longer owns the App Bar, Bottom Navigation, adaptive navigation, route metadata, Home data loading or Home presentation.
 
-This is the first concrete application of:
-
-> shared layout once + thin page/orchestrator + feature-owned UI/data composition.
-
 No Learn/Reader implementation was rewritten in this batch because PR #57 still owns overlapping Stage16 offline Reader changes.
 
-Latest implementation head after extraction: `8e88bc02a1130c1dfa603460edafa3d73b057c82`.
+## 2026-09-14 — shared primitives + entry/auth extraction batch
 
-CI for that exact head was triggered and is pending/queued; this batch is **NOT YET VERIFIED** until the relevant workflows finish green.
+The second extraction batch continued the same architecture instead of adding more code to legacy flat files.
+
+Shared boundaries added:
+
+- `shared/icons/StudentIcon.tsx` — shared icon import boundary;
+- `shared/data/student-runtime-cache.ts` — shared cache import boundary;
+- `shared/brand/StudentBrandLockup.tsx` — one brand lockup using the official app icon asset;
+- `shared/ui/Surface.tsx`;
+- `shared/ui/SectionHeader.tsx`;
+- `shared/ui/StatStrip.tsx`;
+- `shared/ui/ListRow.tsx`;
+- `shared/ui/FormAlert.tsx`;
+- `shared/ui/LoadingSpinner.tsx`.
+
+Home now composes `StatStrip`, `SectionHeader` and `ListRow` instead of manually reproducing those structures.
+
+Shell App Bar / Bottom Nav / Desktop Nav now consume the shared icon boundary, and the App Bar/Desktop Nav consume the shared brand lockup.
+
+Session loading/unavailable/offline views were extracted from `App.tsx` to:
+
+`app/session/StudentSessionStates.tsx`
+
+A new modular entry/auth feature was created at:
+
+`features/auth/StudentEntryExperience.tsx`
+
+It owns:
+
+- Welcome;
+- Activation;
+- Login;
+- forced password-change flow;
+- Recovery;
+- Help;
+- Support;
+- public Help/Support pages.
+
+`App.tsx` and `router.tsx` now route through this V2 auth feature instead of the legacy `student-entry.tsx` implementation. The legacy file remains temporarily for safe incremental removal after reference/test audit.
+
+A new visual override layer `student-entry-v2.css` reduces editorial spacing, removes the welcome feature-list wall, shrinks auth hierarchy, uses calmer surfaces, and improves mobile safe-area spacing without changing backend/auth contracts.
+
+This batch also preserves the existing auth/device-proof/security flow; it only changes ownership/composition and UX copy/presentation.
 
 ## Workstream overlap
 
@@ -121,8 +158,8 @@ Rule: do not rewrite overlapping Learn/Reader files in V2 until #57 is reconcile
 
 1. V2-00 architecture freeze — DONE.
 2. V2-01 foundation / shell / Home — IN PROGRESS.
-3. shared layout/primitives extraction — STARTED.
-4. Welcome/Auth redesign.
+3. shared layout/primitives extraction — ACTIVE.
+4. Welcome/Auth redesign — ACTIVE / V2 FEATURE WIRED.
 5. PR #57 reconciliation.
 6. Learn/Subject scalable hierarchy.
 7. Reader.
@@ -131,6 +168,10 @@ Rule: do not rewrite overlapping Learn/Reader files in V2 until #57 is reconcile
 10. local personal data.
 11. durable read-model caching when contracts allow.
 12. full visual/performance/a11y QA.
+
+## Verification state
+
+The workstream remains **NOT YET VERIFIED** until the latest exact-head CI finishes and relevant browser/mobile/RTL/safe-area visual checks are complete.
 
 ## Done criteria
 
