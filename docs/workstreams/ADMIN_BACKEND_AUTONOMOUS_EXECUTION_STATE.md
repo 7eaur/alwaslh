@@ -1,88 +1,94 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `WAITING_FOR_CI`
 Sequence: `49`
-Last worker: `A`
-Active worker: `B`
+Last worker: `B`
+Active worker: `NONE`
 Start time: `2026-09-14T23:22:23+03:00`
 Observed starting HEAD: `fb5e31c7ba74b68475ffdbc83286c07683f0f7a3`
 Ending executable/source HEAD: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`
-Observed live `main`: `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`
+Observed live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`
 Active task: `AB-03.2.2 — verification/closure of Content ingestion frontend API ownership`
-Outcome: `RUNNING — VERIFY EXACT/SOURCE-EQUIVALENT CI AND RECONCILE LIVE MAIN BEFORE ANY NEW SEAM`
+Outcome: `WAITING_FOR_CI — SOURCE-EQUIVALENT COMBINED + STAGE13G STILL RUNNING`
 
-## Worker B sequence 49 — startup lease
-
-- took over from sequence 48 state `WAITING_FOR_CI`, active worker `NONE`;
-- observed branch HEAD `fb5e31c7ba74b68475ffdbc83286c07683f0f7a3` from live Draft PR #52;
-- observed live PR base/main `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`, newer than the prior documented `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`;
-- this run is restricted first to AB-03.2.2 CI closure plus deliberate main reconciliation; no new source seam may begin until those facts are resolved;
-- PR #52 remains Draft / open / unmerged / no auto-merge.
-
-## Worker A sequence 48 — handoff
+## Worker B sequence 49 — handoff
 
 ### Startup / anti-collision
 
-- inherited state was `READY_FOR_NEXT`, sequence 47, active worker `NONE`;
-- branch HEAD at takeover was `541d7b05ee732650667f1b9417bbe4ce0c9ea6ad`;
-- live `main` was and remains `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0` at that run's observation;
-- no active-worker collision occurred;
-- PR #52 remains Draft / unmerged / no auto-merge.
+- took over from sequence 48 state `WAITING_FOR_CI`, active worker `NONE`;
+- observed branch HEAD `fb5e31c7ba74b68475ffdbc83286c07683f0f7a3` before the lease mutation;
+- no competing active worker was recorded, so Worker B acquired the shared lease;
+- PR #52 remains Draft / open / unmerged / no auto-merge.
 
-### What changed
+### Main reconciliation correction
 
-Discovery found that Content ingestion transport/types were still implemented by root `apps/admin-web/src/content-ingestion-api.ts`, while Curriculum transport ownership had already moved behind its feature boundary.
+- the PR metadata exposed stale `base_sha` `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`; this is **not** the live `main` ref;
+- direct `refs/heads/main` verification shows live `main` remains `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`;
+- therefore there is no new main drift introduced during this run and no new Admin/API/PostgreSQL overlap to reconcile before closing AB-03.2.2;
+- continue to reconcile live `main` again before the next structural phase boundary as required by protocol.
 
-The smallest root-cause ownership correction was therefore applied:
+### Source-equivalence proof
 
-- actual Content ingestion transport/types implementation now lives at `apps/admin-web/src/features/content/api/content-ingestion-api.ts`;
-- `apps/admin-web/src/features/content/public/index.ts` is the narrow feature boundary;
-- root `apps/admin-web/src/content-ingestion-api.ts` is now a transitional compatibility facade only, not an implementation owner;
-- API paths, payloads and response contracts are unchanged;
-- no backend/Fastify, PostgreSQL/migration, security, OCR/AI, or Student frontend implementation was changed.
-
-An intermediate edit at `c183f270a3a4e1d990c04fe0ccecfa0fde80e9c1` accidentally replaced unrelated `ContentIngestionWorkspace.tsx` behavior. Frontend typecheck exposed the mistake immediately. The workspace was then restored byte-for-byte from the pre-run blob at corrected source checkpoint `4ba7106f910098841a7026114dcfa2f2cd1f83bf`. This preserves the existing `LessonPublicationPanel` contract and avoids an unrelated UI/workflow mutation.
+- corrected executable/source checkpoint remains `4ba7106f910098841a7026114dcfa2f2cd1f83bf`;
+- after the Worker B lease, branch HEAD became `821a1d8a2d5afa01c678e00b8955680e5e495847`;
+- comparison `4ba7106f... → 821a1d8a...` contains only `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`;
+- therefore the replacement CI on `821a1d8a...` is source-tree-equivalent to the corrected AB-03.2.2 implementation.
 
 ### Verification / CI evidence
-
-Intermediate checkpoint `c183f270a3a4e1d990c04fe0ccecfa0fde80e9c1`:
-
-- Architecture Guard passed;
-- Frontend Preparation `34890787264` failed strict typecheck because of the accidental workspace divergence (`LessonPublicationPanel` prop mismatch and implicit `any`);
-- that intermediate source is superseded and is **not** the handoff checkpoint.
 
 Corrected source checkpoint `4ba7106f910098841a7026114dcfa2f2cd1f83bf`:
 
 - Architecture Guard `34891198234` — `SUCCESS`;
-- Frontend Preparation `34891198165` — `IN_PROGRESS` at handoff;
-- Admin AI Operations `34891198171` — `IN_PROGRESS` at handoff;
-- Combined Integration `34891198233` — `IN_PROGRESS` at handoff;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34891198157` — `IN_PROGRESS` at handoff.
+- the originally launched Frontend/Combined/Stage13G runs were superseded/cancelled by later documentation-only commits, not by a source failure.
 
-Because the required exact-head gates are still running, this increment is **not** marked DONE/READY yet.
+Source-tree-equivalent documentation head `821a1d8a2d5afa01c678e00b8955680e5e495847`:
+
+- Admin AI Operations `34892631850` — `SUCCESS`;
+- Combined Integration `34892631714` — `IN_PROGRESS` at handoff;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34892631791` — `IN_PROGRESS` at handoff;
+- Architecture Guard remains valid from the exact corrected source checkpoint because the only later difference is the shared-state documentation file.
+
+Because Combined and Stage13G have not yet completed, AB-03.2.2 is **not** marked DONE and the canonical closure docs are intentionally not advanced.
+
+### What changed in this Worker B run
+
+- no Admin/API/PostgreSQL/source/test/workflow implementation was mutated;
+- only the shared execution lease/state was updated;
+- corrected the mistaken startup interpretation of the PR `base_sha` by verifying live `main` directly;
+- verified that the current replacement CI head is source-tree-equivalent to `4ba7106f...`.
 
 ### Exact next smallest step
 
-**Verification/closure only for AB-03.2.2. Do not start a new seam yet.**
+**Verification/closure only for AB-03.2.2. Do not start a new source seam yet.**
 
-1. inspect the exact-head runs above, or their source-tree-equivalent replacements if later documentation commits supersede/cancel them;
-2. if Frontend Preparation, Admin AI, Combined and Stage13G/Chromium all pass with Architecture Guard, close AB-03.2.2;
-3. only after closure, perform fresh discovery inside the remaining Content + OCR part of AB-03.2;
-4. do not start the AI slice and do not bulk-migrate unrelated compatibility-facade consumers merely to delete facades.
+1. inspect Combined `34892631714` and Stage13G `34892631791` (or later source-tree-equivalent replacements if a documentation-only commit supersedes them);
+2. require both to finish `SUCCESS`, including PostgreSQL/integration/real Chromium coverage supplied by those workflows;
+3. with Architecture Guard `34891198234` and Admin AI `34892631850` already green, close AB-03.2.2 and update `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and the AB-03 canonical workstream record;
+4. only after that closure, perform fresh discovery inside the remaining **Content + OCR** portion of AB-03.2; do not open the AI slice or bulk-migrate unrelated compatibility-facade consumers.
 
 ### Risks / blockers
 
-- no known source blocker remains after restoring the workspace;
-- the root Content ingestion facade is deliberate transitional compatibility debt; it is no longer an implementation owner;
-- exact-head CI completion is the only current blocker to closure.
+- no known source blocker exists at the corrected checkpoint;
+- the transitional root Content ingestion facade remains deliberate compatibility debt, not an implementation owner;
+- current blocker is CI completion only: Combined and Stage13G are still running;
+- no PR #52 comment was added because this run produced no completed milestone or significant new blocker.
 
 ### Main reconciliation need
 
-`REQUIRED NOW` — Worker B sequence 49 observed live main/base `f44d5f72eaeb0acd8ca5c67d2816a56596761f21`, newer than sequence 48's `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`. Inspect main-only changes for overlap before any new source mutation.
+`NONE FOR THIS CLOSURE` — live `main` was directly verified at `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`, matching the prior reconciliation baseline. Re-check before the next structural phase boundary.
 
 ### Canonical documentation note
 
-`PROJECT_STATUS.md` remains truthfully at `AB-03.2 Curriculum + Content + OCR — ACTIVE`. `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and the AB-03 workstream record are intentionally not advanced to closure while the corrected exact-head gates are still running; the shared execution state is the authoritative pending-CI handoff for this increment. Update those canonical closure records once the required gates resolve.
+`PROJECT_STATUS.md` correctly remains at `AB-03.2 Curriculum + Content + OCR — ACTIVE`. `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and the AB-03 workstream record are intentionally left unchanged until the required source-equivalent Combined + Stage13G gates are green.
+
+## Worker A sequence 48 — implementation handoff summary
+
+- moved actual Content ingestion transport/types implementation to `apps/admin-web/src/features/content/api/content-ingestion-api.ts`;
+- `apps/admin-web/src/features/content/public/index.ts` is the narrow feature boundary;
+- root `apps/admin-web/src/content-ingestion-api.ts` is a transitional compatibility facade only;
+- API paths, payloads and response contracts are unchanged;
+- no backend/Fastify, PostgreSQL/migration, security, OCR/AI, or Student frontend implementation changed;
+- an intermediate accidental workspace divergence was caught by strict frontend typecheck and restored byte-for-byte before corrected source checkpoint `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
 
 ## Safety constraints
 
