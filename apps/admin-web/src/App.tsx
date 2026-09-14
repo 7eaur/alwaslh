@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 import { Link, Navigate, NavLink, Route, Routes } from "react-router-dom";
-import { ADMIN_NAVIGATION } from "./admin-navigation";
 import { AdminAiAuthoringWorkspace } from "./admin/ai-authoring/AdminAiAuthoringWorkspace";
 import { AiOperationsPage } from "./admin/reviews/AiOperationsPage";
 import { ContentOperationsPage } from "./admin/reviews/ContentOperationsPage";
@@ -22,10 +21,10 @@ import { QuizBuilderDetailPage } from "./admin/quizzes/QuizBuilderDetailPage";
 import { QuizBuilderListPage } from "./admin/quizzes/QuizBuilderListPage";
 import { QuizMetadataPanel } from "./admin/quizzes/QuizMetadataPanel";
 import { AdminStudentsPage } from "./admin/students/AdminStudentsPage";
+import { AdminBrandBlock, AdminShell } from "./app/layouts/AdminShell";
 import {
   AdminSessionProvider,
   useAdminSession,
-  type AdminProfile,
 } from "./features/auth/public";
 import "./ai-operations-review.css";
 import { LoginScreen } from "./LoginScreen";
@@ -69,11 +68,9 @@ function AdminSessionBoundary() {
   }
 
   return (
-    <AdminShell
-      profile={session.profile}
-      onSessionExpired={session.expire}
-      onLogout={session.logout}
-    />
+    <AdminShell profile={session.profile} onLogout={session.logout}>
+      <AdminRoutes onSessionExpired={session.expire} />
+    </AdminShell>
   );
 }
 
@@ -81,73 +78,12 @@ function FullPageState({ title, body, children }: { title: string; body: string;
   return (
     <main className="auth-page">
       <section className="auth-card" aria-live="polite">
-        <BrandBlock auth />
+        <AdminBrandBlock auth />
         <h1>{title}</h1>
         <p>{body}</p>
         {children}
       </section>
     </main>
-  );
-}
-
-function BrandBlock({ auth = false }: { auth?: boolean }) {
-  return (
-    <div className={auth ? "brand-block auth-brand" : "brand-block"}>
-      <span className="brand-mark" aria-hidden="true">
-        و
-      </span>
-      <div>
-        <strong>الوسيلة الذكية</strong>
-        <small>{auth ? "لوحة الإدارة" : "إدارة المحتوى والتشغيل"}</small>
-      </div>
-    </div>
-  );
-}
-
-function AdminShell({
-  profile,
-  onLogout,
-  onSessionExpired,
-}: {
-  profile: AdminProfile;
-  onLogout: () => Promise<void>;
-  onSessionExpired: () => void;
-}) {
-  return (
-    <div className="admin-shell">
-      <aside className="admin-sidebar" aria-label="التنقل الرئيسي">
-        <BrandBlock />
-        <nav className="admin-nav" aria-label="أقسام الإدارة">
-          {ADMIN_NAVIGATION.map((group) => (
-            <section className="admin-nav-group" key={group.label} aria-label={group.label}>
-              <p className="admin-nav-label">{group.label}</p>
-              <div className="admin-nav-links">
-                {group.items.map((item) => (
-                  <NavLink
-                    className={({ isActive }) => `nav-item${isActive ? " is-active" : ""}`}
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                  >
-                    {item.label}
-                  </NavLink>
-                ))}
-              </div>
-            </section>
-          ))}
-        </nav>
-        <div className="sidebar-account">
-          <span>الحساب الحالي</span>
-          <strong>{profile.displayName ?? "مدير النظام"}</strong>
-          <button className="sidebar-button" type="button" onClick={() => void onLogout()}>
-            تسجيل الخروج
-          </button>
-        </div>
-      </aside>
-      <main className="admin-main">
-        <AdminRoutes onSessionExpired={onSessionExpired} />
-      </main>
-    </div>
   );
 }
 
