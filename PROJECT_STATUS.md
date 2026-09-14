@@ -90,34 +90,25 @@ Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSession
 
 Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`. The minimum proven loading/error/retry presentation shell is shared; feature state machines and server semantics remain feature-owned.
 
-### AB-01.4 Backend app composition foundation — ACTIVE / SECOND SEAM SELECTED
+### AB-01.4 Backend app composition foundation — ACTIVE / SECOND SEAM IMPLEMENTED / WAITING_FOR_CI
 
 Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
-**First seam — CORS/preflight extraction — DONE.**
+**First seam — CORS/preflight extraction — DONE.** Source implementation HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`; Architecture Guard `34808159011`, Admin AI `34809211720`, Combined `34809211704`, Stage13G `34809211707` all SUCCESS.
 
-Source implementation HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
+**Second seam — health/readiness HTTP extraction — IMPLEMENTED / WAITING_FOR_CI.**
 
-- owner: `apps/api/src/app/plugins/cors.ts`;
-- `registerCorsPolicy(app, config)` preserves the existing global CORS/preflight behavior and registration scope;
-- Architecture Guard `34808159011` — SUCCESS;
-- Admin AI `34809211720` — SUCCESS;
-- Combined Integration `34809211704` — SUCCESS;
-- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
+Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 
-**Second seam — health/readiness HTTP extraction — DISCOVERY DONE / IMPLEMENTATION NEXT.**
+- owner: `apps/api/src/app/http/health.ts`;
+- `registerHealthRoutes(app, database)` owns the existing `/health` and `/ready` handlers;
+- `app.ts` now retains one composition call at the same relative position;
+- existing paths/statuses/bodies, process-only health behavior, `database.ping()` readiness and failure log semantics are unchanged;
+- public-error/not-found handlers, DB close lifecycle, service construction, `server.ts`, migrations/schema and Student frontend were not changed;
+- Architecture Guard `34811642661` — SUCCESS;
+- Combined `34811642693`, Stage13G `34811642622`, Admin AI `34811642629` were still pending/running at this handoff.
 
-Selected target ownership:
-
-- current owner: inline `GET /health` and `GET /ready` handlers in `apps/api/src/app.ts`;
-- target owner: `apps/api/src/app/http/health.ts`;
-- target composition function: `registerHealthRoutes(app, database)`;
-- direct parity authority: three existing tests in `apps/api/tests/app.test.ts` covering process-only health, ready=200 and ready=503;
-- implementation must preserve the existing readiness log/status/body semantics and current composition position.
-
-Explicitly out of this seam: public error/not-found handlers, database close lifecycle, service construction, all-route extraction, `server.ts`, migrations, business/security contracts and Student frontend.
-
-The next worker implements **this seam only**, then runs the required Architecture Guard/API/integration/Chromium gates before any third composition seam is selected.
+Do not mark this seam DONE or select a third composition seam until the required integration/PostgreSQL/real Chromium gates are green on the source tree.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -143,4 +134,4 @@ No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: implement **only** the selected AB-01.4 health/readiness extraction into `apps/api/src/app/http/health.ts`, preserve the three direct parity behaviors, then verify before selecting any third seam.
+Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: inspect the pending exact-source-tree gates for health/readiness extraction; if green, mark the second AB-01.4 seam DONE. If any gate fails, fix the root cause within this seam. Do not select a third seam before closure.
