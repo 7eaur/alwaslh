@@ -109,9 +109,12 @@ test("offline delta is entitlement-scoped, cursor-bounded and backed by tombston
     };
   }>().delta;
   assert.equal(initialDelta.hasMore, false);
-  assert.ok(initialDelta.entries.some((entry) =>
-    entry.entityType === "lesson" && entry.lessonId === f.lessonId && entry.changeType === "upsert"
-  ));
+  assert.ok(
+    initialDelta.entries.some(
+      (entry) =>
+        entry.entityType === "lesson" && entry.lessonId === f.lessonId && entry.changeType === "upsert",
+    ),
+  );
   const firstCursor = initialDelta.nextCursor;
   assert.match(firstCursor, /^\d+$/);
 
@@ -122,10 +125,10 @@ test("offline delta is entitlement-scoped, cursor-bounded and backed by tombston
   );
   const otherClassId = otherClassRows[0]?.id;
   assert.ok(otherClassId);
-  await f.db.query(
-    "insert into subject_class_links (class_id, subject_id, position) values ($1, $2, 0)",
-    [otherClassId, f.subjectId],
-  );
+  await f.db.query("insert into subject_class_links (class_id, subject_id, position) values ($1, $2, 0)", [
+    otherClassId,
+    f.subjectId,
+  ]);
   await f.db.query(
     `insert into lessons (class_id, subject_id, slug, title, status, published_at)
      values ($1, $2, $3, 'Other published lesson', 'active', now())`,
@@ -165,7 +168,9 @@ test("offline delta is entitlement-scoped, cursor-bounded and backed by tombston
   const deleteDelta = deleteResponse.json<{
     delta: { entries: Array<{ lessonId: string; changeType: string; revision: string }> };
   }>().delta;
-  const deletion = deleteDelta.entries.find((entry) => entry.lessonId === f.lessonId && entry.changeType === "delete");
+  const deletion = deleteDelta.entries.find(
+    (entry) => entry.lessonId === f.lessonId && entry.changeType === "delete",
+  );
   assert.ok(deletion);
   assert.equal(deletion.revision, tombstones[0]?.deleted_revision);
 
