@@ -52,17 +52,26 @@ export function SubjectPage({ catalog, subjectId }: { catalog: StudentCurriculum
   const filteredUnsectioned = subject.unsectionedLessons.filter((lesson) => lessonMatches(lesson, normalizedQuery));
   const filteredSections = subject.sections
     .map((section) => ({ ...section, lessons: section.lessons.filter((lesson) => lessonMatches(lesson, normalizedQuery)) }))
-    .filter((section) => section.lessons.length > 0 || !normalizedQuery);
+    // Empty units stay out of the primary learner flow. They remain authoritative
+    // catalog structure, but should not dominate the page before content is published.
+    .filter((section) => section.lessons.length > 0);
   const resultCount = filteredUnsectioned.length + filteredSections.reduce((count, section) => count + section.lessons.length, 0);
-  const firstPopulatedSectionIndex = filteredSections.findIndex((section) => section.lessons.length > 0);
 
   let lessonIndex = 0;
 
   return (
     <article className="subject-v2" aria-label={subject.name}>
-      <header className="subject-v2__summary">
-        <Link className="subject-v2__back" to="/app/learn"><span aria-hidden="true">→</span> التعلّم</Link>
-        <p>{classRecord.name} · {new Intl.NumberFormat("ar-YE").format(total)} درس{subject.sections.length > 0 ? ` · ${new Intl.NumberFormat("ar-YE").format(subject.sections.length)} وحدات` : ""}</p>
+      <header className="subject-v2__hero">
+        <Link className="subject-v2__back" to="/app/learn"><span aria-hidden="true">→</span> العودة إلى التعلّم</Link>
+        <div className="subject-v2__hero-copy">
+          <p>{classRecord.name}</p>
+          <h1>{subject.name}</h1>
+          <span>
+            {new Intl.NumberFormat("ar-YE").format(total)} درس
+            {subject.sections.length > 0 ? ` · ${new Intl.NumberFormat("ar-YE").format(subject.sections.length)} وحدات` : ""}
+          </span>
+          {subject.description ? <small>{subject.description}</small> : null}
+        </div>
       </header>
 
       {searchable ? (
@@ -97,14 +106,14 @@ export function SubjectPage({ catalog, subjectId }: { catalog: StudentCurriculum
               <details
                 className="subject-v2-unit"
                 key={section.id}
-                open={normalizedQuery ? section.lessons.length > 0 : sectionIndex === firstPopulatedSectionIndex}
+                open={normalizedQuery ? true : sectionIndex === 0}
               >
                 <summary>
                   <span><strong>{section.title}</strong>{section.description ? <small>{section.description}</small> : null}</span>
                   <span className="subject-v2-unit__meta">{new Intl.NumberFormat("ar-YE").format(section.lessons.length)} درس</span>
                 </summary>
                 <div className="subject-v2-lessons">
-                  {section.lessons.length === 0 ? <p className="learn-v2-inline-empty">لا توجد دروس في هذه الوحدة.</p> : section.lessons.map((lesson, offset) => <LessonRow key={lesson.id} lesson={lesson} index={startIndex + offset} />)}
+                  {section.lessons.map((lesson, offset) => <LessonRow key={lesson.id} lesson={lesson} index={startIndex + offset} />)}
                 </div>
               </details>
             );
