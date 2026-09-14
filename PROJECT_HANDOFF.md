@@ -39,7 +39,7 @@ Main implementation delta remains Student-focused with no Admin/API/migration ov
 - AB-02 — ACTIVE
   - AB-02.1 Global Admin shell/layout ownership — DONE
   - AB-02.2 Inner Admin route-table ownership — DONE
-  - AB-02.3 Substantial workflow route lazy boundaries — IMPLEMENTED / WAITING_FOR_CI
+  - AB-02.3 Substantial workflow route lazy boundaries — DONE
 - AB-03..AB-08 — PENDING
 
 Canonical AB-02 record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
@@ -52,39 +52,38 @@ Source checkpoint `0d07a24aa062ad569ff654524bdc13a4e368f399`; owner `apps/admin-
 
 Source checkpoint `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`; owner `apps/admin-web/src/app/router/AdminRoutes.tsx`. Guard `34840954071`, Frontend Preparation `34840953959`, Admin AI `34841142948`, Combined `34841142987`, Stage13G `34841142975` — SUCCESS on source/source-tree-equivalent heads.
 
-## AB-02.3 implementation
+## AB-02.3 closure
 
 Source checkpoint: `f60d3d0d163c9f31dead139cc36406396f795a7e`.
 
-`apps/admin-web/src/app/router/AdminRoutes.tsx` now lazy-loads the substantial workflow destinations through explicit `React.lazy()` boundaries. Named exports remain unchanged and are mapped only at import boundaries. One route-level `Suspense` fallback uses the existing shared `AdminProductState` loading presentation.
+`apps/admin-web/src/app/router/AdminRoutes.tsx` lazy-loads substantial workflow destinations through explicit `React.lazy()` boundaries. Existing named exports remain unchanged and are adapted only at import boundaries. One route-level `Suspense` fallback uses the existing shared `AdminProductState` loading presentation.
 
-Preserved contracts: all `/app/*` URLs/redirects, `onSessionExpired`, `ReviewArea`, `WorkspaceWithRelatedActions`, not-found composition, outer `router.tsx`/`RouteFocus`, session outcomes and workflow UI/business behavior. No feature migration, navigation/auth redesign, bundler threshold/manualChunks tuning, API/DB/migration or Student frontend change was included.
+Preserved contracts: all `/app/*` URLs/redirects, `onSessionExpired`, route wrappers, not-found composition, outer `router.tsx`/`RouteFocus`, session outcomes and workflow behavior. No feature migration, navigation/auth redesign, bundler threshold/manualChunks tuning, API/DB/migration or Student frontend change was included.
 
-Source-head evidence at handoff:
+Closure evidence:
 
-- Architecture Guard `34849322458` — SUCCESS;
+- Guard `34849322458` — SUCCESS;
 - Frontend Preparation `34849322443` — SUCCESS;
-- Admin AI `34849322533` — running at documentation handoff;
-- Combined Integration `34849322335` — running at documentation handoff;
-- Stage13G `34849322551` — running at documentation handoff.
+- Admin AI `34849322533` — SUCCESS;
+- source-tree-equivalent Combined `34849829516` — SUCCESS;
+- source-tree-equivalent Stage13G `34849829576` — SUCCESS, including clean PostgreSQL/contracts/integrations/auth and Real API + PostgreSQL + Chromium.
 
-Because required CI had not completed, AB-02.3 is intentionally `WAITING_FOR_CI`, not DONE.
+Measured production build: initial JS **196.84 kB / 64.11 kB gzip**, down from verified pre-seam **446.30 kB / 117.48 kB gzip**. Substantial workflows now emit independent chunks; largest observed workflow chunk is AI Operations at **41.23 kB / 10.82 kB gzip**. No threshold/manualChunks tuning was used.
+
+Comparison from source checkpoint through the closure documentation contains documentation files only, so the later green CI verifies the same Admin implementation tree.
 
 ## Exact continuation
 
-Perform **AB-02.3 verification/closure only**:
+Perform **remaining AB-02 discovery only**:
 
-1. inspect source-head runs above and any later source-tree-equivalent runs caused by documentation-only commits;
-2. confirm Admin lint/typecheck/unit/build and record actual dynamic Vite chunk topology/sizes against prior single `446.30 kB / 117.48 kB gzip` evidence;
-3. confirm representative lazy-route direct/deep links, redirects, session expiry and accessible focus/loading behavior through executable/Chromium evidence;
-4. require Combined + Stage13G real API/PostgreSQL/Chromium green;
-5. if any gate fails, fix the root cause inside this seam and re-run relevant verification;
-6. only after green closure mark AB-02.3 DONE and select at most one next AB-02 concern from evidence.
-
-Do not start another seam while AB-02.3 remains waiting.
+1. re-read live `apps/admin-web/src/App.tsx`, `src/app/router/*`, providers/layout ownership and architecture guard evidence;
+2. identify at most one remaining shell/router/provider concern that is materially justified by current code;
+3. if no meaningful concern remains, close AB-02 instead of inventing abstractions;
+4. before entering AB-03, reconcile live `main` because this is a structural phase boundary;
+5. do not combine the discovery with an AB-03 workflow migration.
 
 ## Remaining roadmap
 
-Finish AB-02 shell/router/providers/lazy routes → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Finish/close AB-02 → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
