@@ -1,0 +1,122 @@
+/* Student Experience V2 — app-specific visual foundation.
+   Keep semantic authority in shared brand tokens while giving Student a calm,
+   touch-first composition without affecting Admin density. */
+
+.aw-product-shell--student,
+.student-entry-page,
+.student-session-state {
+  --student-canvas: #f7faf9;
+  --student-surface: #ffffff;
+  --student-surface-muted: #f3f7f6;
+  --student-surface-selected: #e6f7f6;
+  --student-text: #1f2937;
+  --student-heading: #123c43;
+  --student-text-secondary: #5f6c72;
+  --student-text-muted: #7a878c;
+  --student-accent: #00b5a9;
+  --student-accent-strong: #007f78;
+  --student-accent-ink: #0a625e;
+  --student-border: #dfe8e7;
+  --student-border-strong: #c8d8d6;
+  --student-danger: #a13a3a;
+  --student-danger-soft: #fff4f4;
+  --student-shadow-sm: 0 1px 2px rgb(18 60 67 / 0.05);
+  --student-shadow-md: 0 8px 24px rgb(18 60 67 / 0.07);
+  --student-radius-control: 0.75rem;
+  --student-radius-surface: 1rem;
+  --student-radius-large: 1.25rem;
+  --student-space-1: 0.25rem;
+  --student-space-2: 0.5rem;
+  --student-space-3: 0.75rem;
+  --student-space-4: 1rem;
+  --student-space-5: 1.25rem;
+  --student-space-6: 1.5rem;
+  --student-space-8: 2rem;
+  --student-space-10: 2.5rem;
+  --student-touch: 2.75rem;
+  --student-appbar-height: 3.5rem;
+  --student-bottom-nav-height: 4.5rem;
+  --student-content-max: 72rem;
+  --student-reader-max: 52rem;
+  color: var(--student-text);
+  font-family: "Cairo", "Tajawal", "Noto Sans Arabic", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.aw-product-shell--student {
+  background: var(--student-canvas);
+}
+
+.aw-product-shell--student :is(h1, h2, h3, h4, strong),
+.student-entry-page :is(h1, h2, h3, h4, strong),
+.student-session-state :is(h1, h2, h3, h4, strong) {
+  color: var(--student-heading);
+}
+
+.aw-product-shell--student :is(p, small),
+.student-entry-page :is(p, small),
+.student-session-state :is(p, small) {
+  text-wrap: pretty;
+}
+
+.student-v2-surface {
+  border: 1px solid var(--student-border);
+  border-radius: var(--student-radius-surface);
+  background: var(--student-surface);
+  box-shadow: var(--student-shadow-sm);
+}
+
+.student-v2-section-title {
+  margin: 0;
+  color: var(--student-heading);
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.student-v2-secondary {
+  color: var(--student-text-secondary);
+}
+
+.student-v2-row {
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  gap: var(--student-space-3);
+  color: inherit;
+  text-decoration: none;
+}
+
+.student-v2-row + .student-v2-row {
+  border-top: 1px solid var(--student-border);
+}
+
+.student-v2-icon-button {
+  width: var(--student-touch);
+  height: var(--student-touch);
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--student-text-secondary);
+  text-decoration: none;
+}
+
+.student-v2-icon-button:hover,
+.student-v2-icon-button.is-active {
+  background: var(--student-surface-selected);
+  color: var(--student-accent-strong);
+}
+
+.student-v2-icon-button svg {
+  width: 1.4rem;
+  height: 1.4rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aw-product-shell--student *,
+  .aw-product-shell--student *::before,
+  .aw-product-shell--student *::after {
+    scroll-behavior: auto !important;
+  }
+}
