@@ -37,7 +37,7 @@ Current backend authority:
 - `apps/api/src/admin-operations/attention.ts` owns the pure actionable projection used by Overview.
 - No schema or migration change is justified for the first correction.
 
-### AB-03.1.1 — Attention application ownership — IMPLEMENTED / WAITING_FOR_CI
+### AB-03.1.1 — Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
 Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`.
 
@@ -50,18 +50,20 @@ Root correction:
 - added `apps/api/tests/admin-operations-attention-application.test.ts` to prove orchestration inputs and projected output;
 - changed no Admin frontend, Student frontend, PostgreSQL migrations/schema or external API contract.
 
-Verification at handoff:
+Closure evidence:
 
-- Architecture Guard `34859593842` — **SUCCESS** on implementation tree `fe2f3e8811e78e03662a759127dd35fe3588b336`; source checkpoint `5c363658...` adds only the dedicated API test.
-- Admin AI `34859616706` — **SUCCESS** on exact source checkpoint.
-- Combined Integration `34859616648` — **IN PROGRESS** at handoff.
-- Stage13G Admin Operations `34859617164` — **IN PROGRESS** at handoff; this is the required gate carrying Admin/API/PostgreSQL/integration/real API + PostgreSQL + Chromium evidence for this slice.
+- Architecture Guard `34859593842` — **SUCCESS** on implementation tree `fe2f3e8811e78e03662a759127dd35fe3588b336`; source checkpoint `5c363658...` adds only the dedicated application test.
+- Source-tree-equivalent verification head `d350ce8d1ec9d7fdedc8c466c1a4ca4657ca546e` differs from `5c363658...` only in canonical/shared documentation files; no source, test, migration or workflow drift exists.
+- Admin AI `34860142887` — **SUCCESS**.
+- Combined Integration `34860142983` — **SUCCESS**, including API/Admin quality gates, clean PostgreSQL migrations, DB contract, backend-authority regressions, Stage12/auth security regressions and real Admin Chromium.
+- Stage13G Admin Operations `34860143008` — **SUCCESS**, including Admin lint/typecheck/unit/build, API lint/typecheck/unit/build, clean PostgreSQL, DB contract, accounts/access, notifications/operations, reports/settings/security/audit, AI authoring, auth regression and real API + PostgreSQL + Chromium.
 
-Therefore AB-03.1.1 is not marked DONE yet. Shared state remains `WAITING_FOR_CI` until the remaining required source-head gates are green.
+AB-03.1.1 is therefore closed without further source mutation.
 
 ## Exact continuation
 
-1. Verify `34859616648` and `34859617164` against source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43` (or a source-tree-equivalent verification head if documentation concurrency supersedes them).
-2. If green, close AB-03.1.1 and continue AB-03.1 discovery only.
-3. Next likely ownership seam must be chosen from evidence in Overview/Operations frontend/API ownership; do not start Curriculum/Content/OCR.
-4. Do not introduce schema/framework changes without domain evidence.
+1. Continue **AB-03.1 Overview + Operations discovery only** from live code and tests.
+2. Choose exactly one smallest next ownership correction based on demonstrated duplication/private ownership/HTTP-or-frontend orchestration debt.
+3. Strong candidates to inspect, not pre-decided targets: root transitional `apps/admin-web/src/admin-operations-api.ts`, legacy Overview/Operations feature ownership, and remaining backend Operations HTTP/application seams.
+4. Do not start Curriculum/Content/OCR in the same increment.
+5. Do not introduce schema/framework changes without domain evidence.
