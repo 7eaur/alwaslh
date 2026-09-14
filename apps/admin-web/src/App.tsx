@@ -83,6 +83,9 @@ export function App() {
         onAuthenticated={(profile) => {
           setSession(profile);
           setSessionState("signed_in");
+          window.requestAnimationFrame(() => {
+            document.getElementById("route-content")?.focus({ preventScroll: true });
+          });
         }}
       />
     );
