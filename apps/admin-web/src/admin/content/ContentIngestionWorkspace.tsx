@@ -4,7 +4,6 @@ import {
   type AdminCurriculumSnapshot,
   fetchAdminCurriculum,
 } from "../../features/curriculum/public";
-import { ApiRequestError, isMissingSessionError } from "../../shared/api/client";
 import {
   archiveContentIngestionTask,
   createContentIngestionTask,
@@ -16,7 +15,8 @@ import {
   linkContentIngestionTask,
   processContentIngestionTask,
   uploadContentIngestionItem,
-} from "../../content-ingestion-api";
+} from "../../features/content/public";
+import { ApiRequestError, isMissingSessionError } from "../../shared/api/client";
 import { LessonPublicationPanel } from "./LessonPublicationPanel";
 
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
@@ -119,47 +119,23 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
       });
       setLessonContentRefreshToken((value) => value + 1);
     } catch (error) {
-      if (isMissingSessionError(error)) {
-        onSessionExpired();
-        return;
-      }
       setLoadState("error");
-      setFeedback({ kind: "error", message: errorMessage(error) });
+      handleError(error);
     }
-  }, [includeArchived, onSessionExpired]);
+  }, [handleError, includeArchived]);
 
   useEffect(() => {
     void refresh();
   }, [refresh]);
 
-  const classById = useMemo(
-    () => new Map(curriculum?.classes.map((record) => [record.id, record.name]) ?? []),
+  const activeLessons = useMemo(
+    () => curriculum?.lessons.filter((lesson) => lesson.status !== "archived") ?? [],
     [curriculum],
   );
-  const subjectById = useMemo(
-    () => new Map(curriculum?.subjects.map((record) => [record.id, record.name]) ?? []),
-    [curriculum],
-  );
-  const lessonOptions = useMemo(
-    () =>
-      (curriculum?.lessons ?? [])
-        .filter((lesson) => lesson.status !== "archived")
-        .map((lesson) => ({
-          id: lesson.id,
-          label: `${classById.get(lesson.classId) ?? "صف"} · ${subjectById.get(lesson.subjectId) ?? "مادة"} · ${lesson.title}`,
-        })),
-    [classById, curriculum, subjectById],
-  );
-
-  const refreshHistory = useCallback(async () => {
-    const next = await fetchContentIngestionHistory({ includeArchived, limit: 50 });
-    setHistory(next);
-  }, [includeArchived]);
 
   const openTask = useCallback(
     async (taskId: string) => {
       try {
-        setFeedback({ kind: "info", message: "جارٍ تحميل تفاصيل مهمة الرفع…" });
         const task = await fetchContentIngestionTask(taskId);
         setSelectedTask(task);
         setSelectedLessonId(task.lessonId);
@@ -171,371 +147,304 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
     [handleError],
   );
 
-  const handleFiles = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextFiles = Array.from(event.target.files ?? []);
-    setFiles(nextFiles);
-    setUploadedFileCount(0);
-    const validation = validateFiles(nextFiles);
-    setFeedback(validation ? { kind: "error", message: validation } : null);
-  };
-
-  const handleUpload = async (event: FormEvent<HTMLFormElement>) => {
+  async function createTask(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const validation = validateFiles(files);
-    if (!selectedLessonId) {
-      setFeedback({ kind: "error", message: "اختر الدرس الذي ستُربط به الوسائط." });
+    const validationError = validateFiles(files);
+    if (validationError) {
+      setFeedback({ kind: "error", message: validationError });
       return;
     }
-    if (validation) {
-      setFeedback({ kind: "error", message: validation });
+    if (!selectedLessonId) {
+      setFeedback({ kind: "error", message: "اختر درسًا قبل بدء الرفع." });
       return;
     }
 
     setBusyAction("uploading");
     setUploadedFileCount(0);
-    setFeedback({ kind: "info", message: "جارٍ إنشاء مهمة رفع دائمة…" });
+    setFeedback({ kind: "info", message: "يتم إنشاء مهمة الرفع الآن..." });
     try {
       let task = await createContentIngestionTask({
         lessonId: selectedLessonId,
         clientRequestId: crypto.randomUUID(),
         items: files.map((file) => ({ filename: file.name, mimeType: file.type, byteSize: file.size })),
       });
-      setSelectedTask(task);
 
-      const orderedItems = [...task.items].sort((a, b) => a.position - b.position);
-      for (let index = 0; index < orderedItems.length; index += 1) {
-        const item = orderedItems[index];
+      for (let index = 0; index < files.length; index += 1) {
+        const item = task.items[index];
         const file = files[index];
-        if (!item || !file) throw new Error("upload_contract_mismatch");
-        setFeedback({ kind: "info", message: `جارٍ رفع ${file.name} (${index + 1}/${files.length})…` });
+        if (!item || !file) continue;
         task = await uploadContentIngestionItem(task.id, item.id, file);
-        setSelectedTask(task);
         setUploadedFileCount(index + 1);
       }
-      await refreshHistory();
-      setFeedback({
-        kind: "success",
-        message: "اكتمل رفع الملفات بالترتيب المحدد. ابدأ المعالجة عندما تكون جاهزًا.",
-      });
+
+      setSelectedTask(task);
       setFiles([]);
+      setFeedback({ kind: "success", message: "اكتمل الرفع. المهمة جاهزة للمعالجة." });
+      await refresh();
     } catch (error) {
       handleError(error);
     } finally {
       setBusyAction("idle");
     }
-  };
-
-  const runTaskAction = useCallback(
-    async (
-      action: BusyAction,
-      work: (taskId: string) => Promise<ContentIngestionTaskDetail>,
-      successMessage: string,
-    ) => {
-      if (!selectedTask) return;
-      setBusyAction(action);
-      setFeedback({ kind: "info", message: "جارٍ تنفيذ العملية…" });
-      try {
-        const task = await work(selectedTask.id);
-        setSelectedTask(task);
-        await refreshHistory();
-        if (action === "linking") setLessonContentRefreshToken((value) => value + 1);
-        setFeedback({ kind: "success", message: successMessage });
-      } catch (error) {
-        handleError(error);
-      } finally {
-        setBusyAction("idle");
-      }
-    },
-    [handleError, refreshHistory, selectedTask],
-  );
-
-  const isBusy = busyAction !== "idle";
-
-  if (loadState === "loading" && !curriculum) {
-    return <WorkspaceState title="جارٍ تحميل مساحة الرفع" body="نقرأ الدروس وسجل الرفع الدائم من الخادم." />;
   }
 
-  if (loadState === "error" && !curriculum) {
-    return (
-      <WorkspaceState title="تعذر تحميل مساحة الرفع" body={feedback?.message ?? "تعذر تحميل البيانات."}>
-        <button className="primary-button" type="button" onClick={() => void refresh()}>
-          إعادة المحاولة
-        </button>
-      </WorkspaceState>
-    );
+  async function runTaskAction(action: "process" | "link" | "archive") {
+    if (!selectedTask) return;
+    setBusyAction(action === "process" ? "processing" : action === "link" ? "linking" : "archiving");
+    setFeedback(null);
+    try {
+      const nextTask =
+        action === "process"
+          ? await processContentIngestionTask(selectedTask.id)
+          : action === "link"
+            ? await linkContentIngestionTask(selectedTask.id)
+            : await archiveContentIngestionTask(selectedTask.id);
+      setSelectedTask(nextTask);
+      setFeedback({
+        kind: "success",
+        message:
+          action === "process"
+            ? "اكتملت معالجة الملفات."
+            : action === "link"
+              ? "تم ربط المخرجات بالدرس."
+              : "تمت أرشفة المهمة.",
+      });
+      await refresh();
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setBusyAction("idle");
+    }
   }
+
+  const currentTaskStatus = selectedTask ? taskStatusLabel(selectedTask.status) : null;
 
   return (
-    <>
-      <header className="page-header">
+    <section className="workspace-stack" aria-labelledby="content-ingestion-title">
+      <header className="workspace-header">
         <div>
-          <p className="eyebrow">إدخال المحتوى</p>
-          <h1>رفع المحتوى ومعالجته</h1>
-          <p className="page-description">
-            ارفع الصور وPDF، تابع المعالجة، ثم اربط النتائج بالدرس كمسودة. قرار المراجعة والنشر منفصل ويُدار على مستوى محتوى الدرس نفسه.
-          </p>
+          <p className="workspace-eyebrow">المحتوى</p>
+          <h1 id="content-ingestion-title">إدخال المحتوى</h1>
+          <p>ارفع المصادر، راقب المعالجة، ثم اربط المخرجات بالدرس المناسب.</p>
         </div>
-        <button className="secondary-button" type="button" onClick={() => void refresh()} disabled={isBusy}>
-          تحديث السجل
+        <button className="secondary-button" type="button" onClick={() => void refresh()} disabled={loadState === "loading"}>
+          تحديث
         </button>
       </header>
 
-      {feedback ? (
-        <div className={`ingestion-feedback is-${feedback.kind}`} role={feedback.kind === "error" ? "alert" : "status"}>
-          {feedback.message}
-        </div>
-      ) : null}
+      {feedback ? <p className={`feedback feedback--${feedback.kind}`}>{feedback.message}</p> : null}
 
-      <section className="ingestion-layout" aria-label="رفع المحتوى وإدارة المهام">
-        <div className="ingestion-primary-column">
-          <section className="ingestion-panel" aria-labelledby="new-ingestion-title">
-            <div className="ingestion-panel-heading">
-              <div>
-                <p className="section-kicker">رفع جديد</p>
-                <h2 id="new-ingestion-title">مهمة رفع جديدة</h2>
-              </div>
-              <span className="ingestion-policy-note">JPG · PNG · WebP · PDF</span>
-            </div>
-
-            <form className="ingestion-upload-form" onSubmit={(event) => void handleUpload(event)}>
-              <label>
-                <span>الدرس</span>
-                <select
-                  value={selectedLessonId}
-                  onChange={(event) => setSelectedLessonId(event.target.value)}
-                  disabled={isBusy || lessonOptions.length === 0}
-                  required
-                >
-                  {lessonOptions.length === 0 ? <option value="">لا توجد دروس متاحة</option> : null}
-                  {lessonOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="file-picker">
-                <span>الملفات بالترتيب المطلوب</span>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,application/pdf"
-                  multiple
-                  onChange={handleFiles}
-                  disabled={isBusy}
-                  aria-describedby="ingestion-file-help"
-                />
-                <small id="ingestion-file-help">
-                  يتم الحفاظ على ترتيب الاختيار. الصورة حتى 50 MB وPDF حتى 100 MB، وبحد أقصى 100 ملف للمهمة.
-                </small>
-              </label>
-
-              {files.length > 0 ? (
-                <ol className="selected-file-list" aria-label="ترتيب الملفات المختارة">
-                  {files.map((file, index) => (
-                    <li key={`${file.name}-${file.size}-${index}`}>
-                      <span>{index + 1}</span>
-                      <strong>{file.name}</strong>
-                      <small>{formattedBytes(file.size)}</small>
-                    </li>
-                  ))}
-                </ol>
-              ) : null}
-
-              {busyAction === "uploading" && files.length > 0 ? (
-                <div className="upload-progress" aria-live="polite">
-                  <span>رفع الملفات</span>
-                  <progress value={uploadedFileCount} max={files.length} />
-                  <strong>
-                    {uploadedFileCount}/{files.length}
-                  </strong>
-                </div>
-              ) : null}
-
-              <button className="primary-button" type="submit" disabled={isBusy || lessonOptions.length === 0}>
-                {busyAction === "uploading" ? "جارٍ الرفع…" : "إنشاء المهمة ورفع الملفات"}
-              </button>
-            </form>
-          </section>
-
-          <LessonPublicationPanel
-            lessonId={selectedLessonId}
-            refreshToken={lessonContentRefreshToken}
-            disabled={isBusy}
-            onSessionExpired={onSessionExpired}
-          />
-
-          {selectedTask ? (
-            <TaskDetail
-              task={selectedTask}
-              isBusy={isBusy}
-              onProcess={() =>
-                void runTaskAction(
-                  "processing",
-                  processContentIngestionTask,
-                  "اكتملت محاولة المعالجة. راجع النتيجة قبل الربط.",
-                )
-              }
-              onLink={() =>
-                void runTaskAction(
-                  "linking",
-                  linkContentIngestionTask,
-                  "تم ربط الوسائط بالدرس كمسودة. يمكنك الآن إدارة مراجعة محتوى الدرس ونشره من لوحة قرار النشر.",
-                )
-              }
-              onArchive={() =>
-                void runTaskAction("archiving", archiveContentIngestionTask, "تمت أرشفة المهمة مع الاحتفاظ بتاريخها.")
-              }
-            />
-          ) : (
-            <WorkspaceState
-              title="لا توجد مهمة مفتوحة"
-              body="أنشئ مهمة جديدة أو افتح مهمة من السجل لمراجعة الرفع والمعالجة والربط."
-            />
-          )}
-        </div>
-
-        <aside className="ingestion-history" aria-labelledby="ingestion-history-title">
-          <div className="ingestion-panel-heading">
-            <div>
-              <p className="section-kicker">السجل</p>
-              <h2 id="ingestion-history-title">سجل الرفع</h2>
-            </div>
-            <label className="archive-toggle">
-              <input
-                type="checkbox"
-                checked={includeArchived}
-                onChange={(event) => setIncludeArchived(event.target.checked)}
-                disabled={isBusy}
-              />
-              إظهار المؤرشف
-            </label>
+      <section className="workspace-panel" aria-labelledby="content-upload-title">
+        <div className="workspace-panel__heading">
+          <div>
+            <p className="workspace-eyebrow">مصدر جديد</p>
+            <h2 id="content-upload-title">رفع ملفات للمعالجة</h2>
           </div>
+          <span className="status-chip">JPEG / PNG / WebP / PDF</span>
+        </div>
 
-          {history?.tasks.length ? (
-            <ul className="ingestion-history-list">
-              {history.tasks.map((task) => (
-                <li key={task.id}>
-                  <button
-                    className={selectedTask?.id === task.id ? "history-task is-selected" : "history-task"}
-                    type="button"
-                    onClick={() => void openTask(task.id)}
-                    disabled={isBusy}
-                  >
-                    <span className={`ingestion-status status-${task.status}`}>{taskStatusLabel(task.status)}</span>
-                    <strong>{task.lessonTitle}</strong>
-                    <small>
-                      {task.uploadedCount}/{task.itemCount} مرفوع · {task.mediaAssetCount} وسيط
-                    </small>
-                    {task.archivedAt ? <small>مؤرشفة</small> : null}
-                  </button>
+        <form className="workspace-form" onSubmit={createTask}>
+          <label>
+            الدرس
+            <select value={selectedLessonId} onChange={(event) => setSelectedLessonId(event.target.value)} required>
+              <option value="">اختر درسًا</option>
+              {activeLessons.map((lesson) => (
+                <option key={lesson.id} value={lesson.id}>
+                  {lesson.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            الملفات
+            <input
+              type="file"
+              multiple
+              accept="image/jpeg,image/png,image/webp,application/pdf"
+              onChange={(event: ChangeEvent<HTMLInputElement>) => setFiles(Array.from(event.target.files ?? []))}
+            />
+          </label>
+          <p className="workspace-hint">
+            الحد الأعلى 100 ملف. الصور حتى 50MB للملف وPDF حتى 100MB. تحفظ المهمة قبل بدء المعالجة.
+          </p>
+          {files.length > 0 ? (
+            <ul className="compact-list">
+              {files.map((file) => (
+                <li key={`${file.name}-${file.lastModified}`}>
+                  <strong>{file.name}</strong>
+                  <span>{formattedBytes(file.size)}</span>
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="empty-copy">لا توجد مهام رفع ضمن هذا العرض.</p>
-          )}
-        </aside>
+          ) : null}
+          <button className="primary-button" type="submit" disabled={busyAction !== "idle" || activeLessons.length === 0}>
+            {busyAction === "uploading" ? `جارٍ الرفع ${uploadedFileCount}/${files.length}` : "إنشاء مهمة ورفع الملفات"}
+          </button>
+        </form>
       </section>
-    </>
-  );
-}
 
-function TaskDetail({
-  task,
-  isBusy,
-  onProcess,
-  onLink,
-  onArchive,
-}: {
-  task: ContentIngestionTaskDetail;
-  isBusy: boolean;
-  onProcess: () => void;
-  onLink: () => void;
-  onArchive: () => void;
-}) {
-  const allUploaded = task.uploadedCount === task.itemCount;
-  const canProcess = !task.archivedAt && (task.status === "ready" || task.status === "failed") && allUploaded;
-  const canLink = !task.archivedAt && task.status === "completed" && !task.linkedAt && task.mediaAssetCount > 0;
-
-  return (
-    <section className="ingestion-panel task-detail" aria-labelledby="active-ingestion-title">
-      <div className="ingestion-panel-heading">
-        <div>
-          <p className="section-kicker">مهمة الرفع</p>
-          <h2 id="active-ingestion-title">{task.lessonTitle}</h2>
+      <section className="workspace-panel" aria-labelledby="content-history-title">
+        <div className="workspace-panel__heading">
+          <div>
+            <p className="workspace-eyebrow">السجل</p>
+            <h2 id="content-history-title">مهام الإدخال</h2>
+          </div>
+          <label className="inline-control">
+            <input
+              type="checkbox"
+              checked={includeArchived}
+              onChange={(event) => setIncludeArchived(event.target.checked)}
+            />
+            إظهار المؤرشف
+          </label>
         </div>
-        <div className="task-badges">
-          <span className={`ingestion-status status-${task.status}`}>{taskStatusLabel(task.status)}</span>
-        </div>
-      </div>
 
-      <div className="task-metrics" aria-label="تقدم المهمة">
-        <Metric label="الملفات" value={`${task.uploadedCount}/${task.itemCount}`} />
-        <Metric label="تمت معالجتها" value={`${task.processedItemCount}/${task.itemCount}`} />
-        <Metric label="الوسائط الناتجة" value={String(task.mediaAssetCount)} />
-        <Metric label="الفشل" value={String(task.failedItemCount)} />
-      </div>
+        {loadState === "loading" ? <p className="workspace-state">جارٍ تحميل مهام المحتوى...</p> : null}
+        {loadState === "error" ? (
+          <div className="workspace-state workspace-state--error">
+            <p>تعذر تحميل سجل المحتوى.</p>
+            <button className="secondary-button" type="button" onClick={() => void refresh()}>
+              إعادة المحاولة
+            </button>
+          </div>
+        ) : null}
+        {loadState === "ready" && history?.tasks.length === 0 ? (
+          <p className="workspace-state">لا توجد مهام إدخال محتوى حتى الآن.</p>
+        ) : null}
+        {history?.tasks.length ? (
+          <div className="data-table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>الدرس</th>
+                  <th>الحالة</th>
+                  <th>الملفات</th>
+                  <th>المخرجات</th>
+                  <th>آخر تحديث</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.tasks.map((task) => (
+                  <tr key={task.id}>
+                    <td>{task.lessonTitle}</td>
+                    <td>{taskStatusLabel(task.status)}</td>
+                    <td>{task.uploadedCount}/{task.itemCount}</td>
+                    <td>{task.mediaAssetCount}</td>
+                    <td>{new Date(task.updatedAt).toLocaleString("ar-YE")}</td>
+                    <td>
+                      <button className="text-button" type="button" onClick={() => void openTask(task.id)}>
+                        فتح
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </section>
 
-      {task.lastErrorMessage ? (
-        <div className="task-error" role="alert">
-          <strong>تعذر إكمال المعالجة</strong>
-          <span>{task.lastErrorMessage}</span>
-        </div>
-      ) : null}
-
-      <ol className="task-item-list" aria-label="ملفات المهمة">
-        {task.items.map((item) => (
-          <li key={item.id}>
-            <span className="item-position">{item.position + 1}</span>
+      {selectedTask ? (
+        <section className="workspace-panel" aria-labelledby="content-task-title">
+          <div className="workspace-panel__heading">
             <div>
-              <strong>{item.filename}</strong>
-              <small>
-                {formattedBytes(item.declaredByteSize)}
-                {item.outputCount > 0 ? ` · ${item.outputCount} ناتج` : ""}
-              </small>
-              {item.lastErrorMessage ? <small className="item-error">{item.lastErrorMessage}</small> : null}
+              <p className="workspace-eyebrow">المهمة الحالية</p>
+              <h2 id="content-task-title">{selectedTask.lessonTitle}</h2>
             </div>
-            <span className={`item-state state-${item.status}`}>{itemStatusLabel(item.status)}</span>
-          </li>
-        ))}
-      </ol>
+            {currentTaskStatus ? <span className="status-chip">{currentTaskStatus}</span> : null}
+          </div>
 
-      <div className="task-actions" aria-label="إجراءات مهمة الرفع">
-        <button className="primary-button" type="button" onClick={onProcess} disabled={isBusy || !canProcess}>
-          {task.status === "failed" ? "إعادة محاولة المعالجة" : "بدء المعالجة"}
-        </button>
-        <button className="secondary-button" type="button" onClick={onLink} disabled={isBusy || !canLink}>
-          ربط بالدرس كمسودة
-        </button>
-        <button
-          className="secondary-button"
-          type="button"
-          onClick={onArchive}
-          disabled={isBusy || Boolean(task.archivedAt) || task.status === "processing"}
-        >
-          أرشفة المهمة
-        </button>
-      </div>
-    </section>
-  );
-}
+          <dl className="summary-grid">
+            <div>
+              <dt>الملفات المرفوعة</dt>
+              <dd>{selectedTask.uploadedCount}/{selectedTask.itemCount}</dd>
+            </div>
+            <div>
+              <dt>المعالجة</dt>
+              <dd>{selectedTask.processedItemCount}/{selectedTask.itemCount}</dd>
+            </div>
+            <div>
+              <dt>المخرجات</dt>
+              <dd>{selectedTask.mediaAssetCount}</dd>
+            </div>
+            <div>
+              <dt>الفشل</dt>
+              <dd>{selectedTask.failedItemCount}</dd>
+            </div>
+          </dl>
 
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="task-metric">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
+          {selectedTask.lastErrorMessage ? (
+            <div className="workspace-state workspace-state--error">
+              <strong>{selectedTask.lastErrorCode ?? "تعذر إكمال العملية"}</strong>
+              <p>{selectedTask.lastErrorMessage}</p>
+            </div>
+          ) : null}
 
-function WorkspaceState({ title, body, children }: { title: string; body: string; children?: React.ReactNode }) {
-  return (
-    <section className="workspace-state" aria-live="polite">
-      <h2>{title}</h2>
-      <p>{body}</p>
-      {children}
+          <div className="workspace-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => void runTaskAction("process")}
+              disabled={busyAction !== "idle" || !["ready", "failed"].includes(selectedTask.status)}
+            >
+              {busyAction === "processing" ? "جارٍ المعالجة..." : "معالجة الملفات"}
+            </button>
+            <button
+              className="primary-button"
+              type="button"
+              onClick={() => void runTaskAction("link")}
+              disabled={busyAction !== "idle" || selectedTask.status !== "completed" || Boolean(selectedTask.linkedAt)}
+            >
+              {busyAction === "linking" ? "جارٍ الربط..." : selectedTask.linkedAt ? "تم الربط" : "ربط المخرجات بالدرس"}
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              onClick={() => void runTaskAction("archive")}
+              disabled={busyAction !== "idle" || Boolean(selectedTask.archivedAt)}
+            >
+              {busyAction === "archiving" ? "جارٍ الأرشفة..." : "أرشفة المهمة"}
+            </button>
+          </div>
+
+          <div className="data-table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>الملف</th>
+                  <th>الحالة</th>
+                  <th>الحجم</th>
+                  <th>المخرجات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedTask.items.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.position + 1}</td>
+                    <td>{item.filename}</td>
+                    <td>{itemStatusLabel(item.status)}</td>
+                    <td>{formattedBytes(item.byteSize ?? item.declaredByteSize)}</td>
+                    <td>{item.outputCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <LessonPublicationPanel
+            task={selectedTask}
+            refreshToken={lessonContentRefreshToken}
+            onSessionExpired={onSessionExpired}
+            onTaskChanged={(task) => {
+              setSelectedTask(task);
+              setLessonContentRefreshToken((value) => value + 1);
+              void refresh();
+            }}
+          />
+        </section>
+      ) : null}
     </section>
   );
 }
