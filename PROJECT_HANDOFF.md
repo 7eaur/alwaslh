@@ -45,7 +45,7 @@ Priority: **Clarity → Ease of use → Flow → Visual comfort → Consistency 
 - AB-01.1 shared Admin API transport/error boundary — DONE
 - AB-01.2 Auth/session ownership + SessionProvider — DONE
 - AB-01.3 minimum proven shared product-state primitive — DONE
-- **AB-01.4 backend app composition foundation — ACTIVE / FIRST CORS SEAM DONE**
+- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS SELECTED**
 - AB-01.5 justified common backend technical foundations — PENDING
 - AB-01.6 foundation gate — PENDING
 
@@ -53,30 +53,51 @@ Priority: **Clarity → Ease of use → Flow → Visual comfort → Consistency 
 
 Source implementation HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 
-`apps/api/src/app/plugins/cors.ts` now owns the existing global CORS/preflight policy through `registerCorsPolicy(app, config)`. Direct `app.addHook("onRequest")` scope and ordering remain unchanged. `app.ts` composes the helper before route registration. No health/readiness, error, database lifecycle, service graph, route-registration, migration or Student frontend behavior was moved.
+`apps/api/src/app/plugins/cors.ts` now owns the existing global CORS/preflight policy through `registerCorsPolicy(app, config)`. Direct `app.addHook("onRequest")` scope and ordering remain unchanged. `app.ts` composes the helper before route registration.
 
-Verification over the same source tree:
+Closure evidence:
 
 - Architecture Guard `34808159011` — SUCCESS;
-- source-to-verification compare through `3d281eddcdaf4a8d75d810dc0e5ded5a35392cad` — documentation-only;
 - Admin AI `34809211720` — SUCCESS;
-- Combined `34809211704` — SUCCESS including clean PostgreSQL, backend/auth regressions and real Admin Chromium;
-- Stage13G `34809211707` — SUCCESS including Admin/API quality, clean PostgreSQL, listed integrations/auth and real API + PostgreSQL + Chromium.
+- Combined `34809211704` — SUCCESS;
+- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
 
 Therefore the first CORS/preflight extraction is **DONE**.
 
-## 9. Exact next engineering task
+## 9. Second AB-01.4 seam decision
 
-Perform **second AB-01.4 composition discovery only**:
+Discovery inspected live `apps/api/src/app.ts` plus direct contracts in `apps/api/tests/app.test.ts`, `apps/api/src/db.ts` and `apps/api/src/server.ts`.
 
-1. read live state/HEAD/main and inspect remaining `apps/api/src/app.ts` responsibilities after CORS removal;
-2. inspect only collaborators required to understand the candidate seam;
-3. choose the next single smallest app-level technical/composition owner with real value;
-4. record current owner, target owner, ordering/dependencies, parity tests, Student/server impact, and required gates;
-5. reject broad service-container/all-routes/combined-error-DB moves unless new evidence proves otherwise;
-6. do **not** implement the selected seam in the same discovery increment.
+Selected seam:
 
-## 10. Remaining roadmap
+- current owner: inline `GET /health` and `GET /ready` handlers in `apps/api/src/app.ts`;
+- target owner: `apps/api/src/app/http/health.ts`;
+- target composition function: `registerHealthRoutes(app, database)`.
+
+Required exact behavior:
+
+- `/health` remains process-only and returns 200 `{ status: "ok", service: "alwaslh-api" }` even when PostgreSQL is unavailable;
+- `/ready` uses only `database.ping()` and returns 200 `{ status: "ready" }` on success;
+- failed ping preserves the readiness failure log and returns 503 `{ status: "not_ready" }`;
+- current route paths/methods/bodies/statuses and composition position stay intact.
+
+Direct parity authority already exists in the three health/readiness tests in `apps/api/tests/app.test.ts`.
+
+Explicit non-goals for this implementation: do not move not-found/public-error handlers, DB close lifecycle, database creation/config, `server.ts` startup/signals, service graph, all business routes, migrations/schema or Student frontend.
+
+## 10. Exact next engineering task
+
+Implement **only** the selected health/readiness seam:
+
+1. re-read live execution state and confirm no active worker conflict;
+2. create `apps/api/src/app/http/health.ts` with `registerHealthRoutes(app, database)`;
+3. move only the two operational route handlers from `app.ts` into that owner;
+4. leave one composition call in `app.ts` at the same relative position;
+5. run/observe Architecture Guard, API lint/typecheck/unit/build, clean PostgreSQL/integration regressions and real API + PostgreSQL + Chromium gates;
+6. mark the seam DONE only after exact-head or proven source-tree-equivalent green evidence;
+7. do not select a third seam until this one is verified.
+
+## 11. Remaining roadmap
 
 AB-02 thin Admin shell/router/providers/lazy routes; AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes; AB-04 remaining backend debt; AB-05 UX/UI convergence; AB-06 performance/delivery; AB-07 legacy deletion + hard enforcement; AB-08 final full verification + live-main reconciliation.
 
