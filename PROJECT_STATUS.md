@@ -32,7 +32,7 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 Live `main` latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-AB-02 → AB-03 phase-boundary reconciliation is complete. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker B sequence 46 startup.
+AB-02 → AB-03 phase-boundary reconciliation is complete. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker C sequence 47 startup.
 
 ## AB-00 — DONE
 
@@ -58,23 +58,28 @@ Authoritative green evidence: Architecture Guard `34876404251`; Frontend Prepara
 
 ### AB-03.2 Curriculum + Content + OCR — ACTIVE
 
-Worker B sequence 46 performed only the remaining bounded Content-ingestion Curriculum consumer migration:
+#### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-- `ContentIngestionWorkspace.tsx` now consumes `AdminCurriculumSnapshot` and `fetchAdminCurriculum` from `features/curriculum/public`;
-- generic `ApiRequestError` and `isMissingSessionError` now come directly from canonical `shared/api/client`;
-- endpoint, payload, session/UI behavior, backend, PostgreSQL, security, OCR, AI and Student frontend behavior were unchanged;
-- root `content-ingestion-api.ts` was intentionally not migrated.
+Feature implementation ownership lives in `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts` with narrow consumer access through `features/curriculum/public`. `CurriculumWorkspace.tsx` and the intended Content-ingestion Curriculum consumer use that boundary; generic API error/session helpers come from `shared/api/client`.
 
-An attempted deletion of the root Curriculum compatibility re-exports at `af4a131b1b039883a318ebb41b7ec5e5146f126d` exposed real remaining consumers through Stage13G strict typecheck (`34886697753`): Curriculum subcomponents plus Access Codes, AI authoring, Question Bank, Quiz Builder and the root transport test still consume the facade. The backend/PostgreSQL Stage13G job itself stayed green. The correct smallest fix was therefore to restore only the compatibility re-export facade while keeping Curriculum implementation ownership in `features/curriculum` and keeping the Content-ingestion consumer migrated.
+The root Curriculum compatibility re-export facade remains intentionally transitional because executable strict typecheck proved legitimate remaining consumers in later canonical slices. This is compatibility debt only, not duplicate implementation ownership; those consumers must migrate incrementally in their own slices.
 
 Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
 
-Architecture Guard `34887051028` is green on that corrected exact source HEAD. Frontend Preparation `34887051091`, Admin AI `34887051031`, Combined Integration `34887051068`, and Stage13G `34887051059` were still pending/in progress at the last observation, so this increment remains `WAITING_FOR_CI` rather than falsely DONE.
+Source-tree equivalence to Worker B handoff HEAD `926013d1af3824cc50836660ca85615bb2ec8593` was re-verified: only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`, and the shared execution-state file differ.
 
-**Exact next smallest step:** verification/closure only for the corrected source checkpoint. Do not start another AB-03.2 concern until Admin quality/build, relevant API/PostgreSQL/integration, Combined Chromium and Stage13G real API + PostgreSQL + Chromium are green. After closure, perform fresh AB-03.2 discovery; do not mass-migrate later-slice facade consumers merely to delete a compatibility export.
+Green closure evidence on the equivalent current tree:
+
+- Architecture Guard `34887051028` — SUCCESS;
+- Frontend Preparation `34887051091` — SUCCESS;
+- Admin AI Operations `34887416193` — SUCCESS;
+- Combined Integration `34887416088` — SUCCESS;
+- Stage13G Admin Operations `34887416108` — SUCCESS.
+
+**Exact next smallest step:** fresh AB-03.2 discovery only. Inspect live Curriculum + Content + OCR ownership and choose one smallest root-cause correction from current code evidence. Do not bulk-migrate Access Codes/AI/Question Bank/Quiz Builder facade consumers and do not begin later roadmap slices.
 
 ## Remaining roadmap
 
-AB-03 slices in canonical order: Curriculum + Content + OCR → AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+AB-03 slices in canonical order: finish Curriculum + Content + OCR → AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
