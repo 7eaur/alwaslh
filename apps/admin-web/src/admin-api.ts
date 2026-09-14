@@ -7,14 +7,14 @@ export {
   isMissingSessionError,
 } from "./shared/api/client";
 export type { ApiErrorCode } from "./shared/api/client";
+export {
+  loginAdmin,
+  logoutAdmin,
+  restoreAdminSession,
+} from "./features/auth/api/admin-auth-api";
+export type { AdminProfile } from "./features/auth/api/admin-auth-api";
 
 export type CurriculumRecordStatus = "active" | "inactive" | "archived";
-
-export interface AdminProfile {
-  id: string;
-  role: "admin";
-  displayName: string | null;
-}
 
 export interface CurriculumClass {
   id: string;
@@ -83,27 +83,8 @@ export interface AdminCurriculumSnapshot {
   lessons: CurriculumLesson[];
 }
 
-interface ProfileResponse {
-  profile: AdminProfile;
-}
-
 interface CurriculumResponse {
   curriculum: AdminCurriculumSnapshot;
-}
-
-export function loginAdmin(identifier: string, password: string): Promise<AdminProfile> {
-  return request<ProfileResponse>("/v1/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ identifier, password }),
-  }).then((result) => result.profile);
-}
-
-export function restoreAdminSession(): Promise<AdminProfile> {
-  return request<ProfileResponse>("/v1/admin/me").then((result) => result.profile);
-}
-
-export async function logoutAdmin(): Promise<void> {
-  await request<void>("/v1/auth/logout", { method: "POST" });
 }
 
 export function fetchAdminCurriculum(): Promise<AdminCurriculumSnapshot> {
