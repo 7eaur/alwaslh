@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-03 started with first Overview + Operations backend ownership correction; verification pending.**
+Last consolidated: **2026-09-14 — AB-03.1.1 attention application ownership closed with source-tree-equivalent green CI.**
 
 ## Durable invariants
 
@@ -17,7 +17,7 @@ Last consolidated: **2026-09-14 — AB-03 started with first Overview + Operatio
 
 Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the serial handoff authority. Never auto-merge or rewrite shared history.
 
-Live main at AB-03 startup: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+Live main at AB-03 startup and latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
 AB-02 → AB-03 phase-boundary reconciliation compared live main against the work branch. The live-main-only implementation delta is confined to Student frontend/workflow and Student-specific CI/product documentation; no `apps/admin-web`, `apps/api`, or `database/migrations` implementation overlap was found. Shared top-level docs diverge and must continue to be reconciled deliberately.
 
@@ -79,13 +79,13 @@ Findings:
 - outer router owns `/app`, focus and outer not-found behavior;
 - remaining `src/admin/*` workflow pages are deliberate AB-03 migration targets, not evidence for another AB-02 abstraction.
 
-No material AB-02 shell/router/provider debt remains. Comparing verification head `080b8e...` to the current documentation-only handoff chain shows only the five canonical/shared documentation files changed; no Admin/API/migration/test/workflow source changed. Therefore the existing green source-tree-equivalent Guard/Combined/Stage13G evidence remains valid for AB-02 closure.
+No material AB-02 shell/router/provider debt remains. Comparing verification head `080b8e...` to the documentation-only handoff chain shows only the five canonical/shared documentation files changed; no Admin/API/migration/test/workflow source changed. Therefore the existing green source-tree-equivalent Guard/Combined/Stage13G evidence remains valid for AB-02 closure.
 
 ## AB-03 — ACTIVE
 
 Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
-### AB-03.1.1 — Operations attention application ownership — IMPLEMENTED / WAITING_FOR_CI
+### AB-03.1.1 — Operations attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
 Discovery established that `AdminOverviewPage` consumes `/v1/admin/operations/attention`, while PostgreSQL-backed governance/audit authority lives in `apps/api/src/admin-operations/service.ts`. The route in `admin-operations/http.ts` was still orchestrating two application reads and building the Overview projection itself.
 
@@ -99,17 +99,18 @@ Root correction at source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43`:
 - preserved API path, SQL/PostgreSQL authority, response contract and security behavior;
 - changed no migrations/schema, Admin frontend or Student frontend.
 
-Verification evidence at handoff:
+Closure evidence:
 
-- Architecture Guard `34859593842` — SUCCESS on implementation tree `fe2f3e8811e78e03662a759127dd35fe3588b336`; the final source checkpoint adds only the dedicated test;
-- exact-source Admin AI `34859616706` — SUCCESS;
-- exact-source Combined `34859616648` — IN PROGRESS at handoff;
-- exact-source Stage13G `34859617164` — IN PROGRESS at handoff, carrying Admin/API/PostgreSQL/integration and Real API + PostgreSQL + Chromium evidence.
+- Architecture Guard `34859593842` — SUCCESS on implementation tree `fe2f3e8811e78e03662a759127dd35fe3588b336`; final source checkpoint adds only the dedicated application test.
+- Compare `5c363658...` → `d350ce8...` shows only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`, and `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`; therefore the verification head is source-tree equivalent.
+- Admin AI `34860142887` — SUCCESS.
+- Combined `34860142983` — SUCCESS: API/Admin quality gates, clean PostgreSQL migrations, DB contract, backend-authority regressions, Stage12/auth security regressions, real Admin Chromium.
+- Stage13G `34860143008` — SUCCESS: Admin/API lint/typecheck/unit/build, clean PostgreSQL, database contract, accounts/access, notifications/operations, reports/settings/security/audit, AI authoring, auth regression and real API + PostgreSQL + Chromium.
 
-This increment must not be marked DONE until the remaining required verification is green.
+No source mutation was required to close the increment.
 
 ## Exact continuation
 
-Verify/close **AB-03.1.1 only** first. If Combined and Stage13G are green on source checkpoint `5c363658...` or a documentation-only source-tree-equivalent head, record closure. Then continue AB-03.1 discovery and choose the next smallest Overview + Operations ownership seam. Do not start Curriculum/Content/OCR in the same increment.
+Run one **AB-03.1 Overview + Operations discovery-only** increment next. Re-read live Overview/Operations frontend and backend owners and tests, then choose exactly one smallest root ownership correction. Inspect the root transitional `apps/admin-web/src/admin-operations-api.ts`, legacy `src/admin/overview` / `src/admin/operations` ownership, and remaining Operations HTTP/application seams as candidates; do not pre-commit to a target without evidence. Do not start Curriculum/Content/OCR in the same increment.
 
 Remaining roadmap: AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final full verification/reconciliation.
