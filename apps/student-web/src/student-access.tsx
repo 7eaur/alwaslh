@@ -2,7 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import type { SessionProfile } from "./auth-api";
 import { StudentAppShell } from "./app/layout/StudentAppShell";
-import { isFocusedStudentReaderPath, studentDestinationFromPath } from "./app/routing/student-route-meta";
+import { isFocusedStudentPath, studentDestinationFromPath } from "./app/routing/student-route-meta";
 import { StudentHomeOverview } from "./features/home/StudentHomeOverview";
 import { invalidateStudentRuntimeCache } from "./shared/data/student-runtime-cache";
 import { FeatureLoading } from "./shared/ui/FeatureLoading";
@@ -34,7 +34,7 @@ export function StudentAccessSection({ profile, online, onSessionExpired, onLogg
 }) {
   const location = useLocation();
   const destination = studentDestinationFromPath(location.pathname);
-  const focusedReader = isFocusedStudentReaderPath(location.pathname);
+  const focused = isFocusedStudentPath(location.pathname);
   const atLearnRoot = location.pathname === "/app/learn" || location.pathname === "/app/learn/";
   const [curriculumRefreshKey, setCurriculumRefreshKey] = useState(0);
   const activatedAccess = Boolean((location.state as { accessActivated?: boolean } | null)?.accessActivated);
@@ -47,7 +47,7 @@ export function StudentAccessSection({ profile, online, onSessionExpired, onLogg
   };
 
   return (
-    <StudentAppShell destination={destination} online={online} focused={focusedReader}>
+    <StudentAppShell destination={destination} online={online} focused={focused}>
       {destination === "home" ? (
         <StudentHomeOverview profileId={profile.id} online={online} onSessionExpired={onSessionExpired} />
       ) : null}
