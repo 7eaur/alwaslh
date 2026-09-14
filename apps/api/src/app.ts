@@ -14,6 +14,7 @@ import { AdminAiAuthoringService } from "./ai/admin-authoring.js";
 import { registerAdminAiAuthoringRoutes } from "./ai/admin-authoring-http.js";
 import { AdminAiOperationsService } from "./ai/admin-operations.js";
 import { registerAdminAiOperationsRoutes } from "./ai/admin-operations-http.js";
+import { registerHealthRoutes } from "./app/http/health.js";
 import { registerCorsPolicy } from "./app/plugins/cors.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
@@ -123,20 +124,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerQuizVersionExportRoutes(app, config, auth, quizExports);
   registerQuizSpecializedExportRoutes(app, config, auth, quizSpecializedExports);
 
-  app.get("/health", async () => ({
-    status: "ok",
-    service: "alwaslh-api",
-  }));
-
-  app.get("/ready", async (_request, reply) => {
-    try {
-      await database.ping();
-      return { status: "ready" };
-    } catch (error) {
-      app.log.error({ err: error }, "database readiness check failed");
-      return reply.code(503).send({ status: "not_ready" });
-    }
-  });
+  registerHealthRoutes(app, database);
 
   app.setNotFoundHandler((_request, reply) => {
     return reply.code(404).send({ error: { code: "NOT_FOUND", message: "المسار غير موجود" } });
