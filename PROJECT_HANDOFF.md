@@ -1,6 +1,6 @@
 # PROJECT HANDOFF — الوسيلة الذكية — Admin + Backend Rebuild
 
-Date: **2026-09-14**  
+Date: **2026-09-15**  
 Purpose: resume the scoped Super Admin + Backend rebuild without relying on chat memory.
 
 ## Mandatory startup
@@ -30,7 +30,7 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - never force-reset or force-push shared history;
 - live `main` latest observation: `d43fe2afe29b02093510177b921c0407e21a3de9`.
 
-The latest `main` drift from baseline `62a148e...` is confined to Student frontend/PWA work; no overlapping Admin/API/PostgreSQL/shared-contract implementation change was found for the current discovery.
+The latest proven `main` drift remains confined to Student frontend/PWA work; no overlapping Admin/API/PostgreSQL/shared-contract implementation change is currently proven for AB-03.2.
 
 ## Current phase
 
@@ -42,38 +42,46 @@ The latest `main` drift from baseline `62a148e...` is confined to Student fronte
   - AB-03.2 Curriculum + Content + OCR — ACTIVE
   - AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.2.3 Content operations + OCR frontend API ownership — NEXT / DISCOVERY COMPLETE
+  - AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker A sequence 51 performed discovery only; no executable source was changed. The corrected executable checkpoint remains `4ba7106f910098841a7026114dcfa2f2cd1f83bf` with source-tree-equivalent green evidence: Architecture Guard `34891198234`, Admin AI `34892857039`, Combined `34892857011`, Stage13G/PostgreSQL/Chromium `34892857278`.
+Worker B sequence 53 reconciled the stale sequence-52 lease against actual repository truth and closed AB-03.2.3 without opening another executable seam.
 
-Discovery confirmed the next bounded ownership seam: root `apps/admin-web/src/content-operations-api.ts` still owns Content operations/OCR transport and types, while `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` and `apps/admin-web/src/OcrSourcePreview.tsx` consume that root owner. With Content-ingestion transport already owned under `features/content`, this is the next proven split-ownership seam.
+The Content operations/OCR transport and type implementation is owned by `apps/admin-web/src/features/content/api/content-operations-api.ts`, exposed through `features/content/public`. `OcrSourcePreview.tsx` consumes the feature boundary directly. Root `apps/admin-web/src/content-operations-api.ts` is now compatibility-only because `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains a proven consumer; there is no permanent dual implementation ownership.
 
-No evidence in this discovery justified changing backend/Fastify, PostgreSQL/schema, security contracts, routes, page/CSS behavior, Student frontend or starting AI.
+Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
+
+Exact-head closure evidence:
+
+- Architecture Guard `34898665849` — SUCCESS;
+- Frontend Preparation `34898665740` — SUCCESS;
+- Admin AI Operations `34898665783` — SUCCESS;
+- Combined Integration `34898665724` — SUCCESS;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — SUCCESS.
+
+No source/backend/PostgreSQL/security/route/UI semantics were changed during sequence 53; this run only closed and documented the already-verified increment.
 
 ## Exact continuation
 
-Execute **AB-03.2.3 — Content operations + OCR frontend API ownership** only:
+Perform **AB-03.2 Content/OCR closure discovery only**:
 
-1. move the implementation/types from root `content-operations-api.ts` into `apps/admin-web/src/features/content/api`;
-2. expose only the minimum required contract via `apps/admin-web/src/features/content/public`;
-3. update the proven Content/OCR consumers to the feature public boundary;
-4. keep a root compatibility re-export only if an actual remaining consumer proves it necessary;
-5. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority, routes and UI behavior;
-6. run Architecture Guard plus relevant Admin/API/PostgreSQL/integration/Chromium gates; if exact/source-equivalent required CI is still running, hand off `WAITING_FOR_CI` rather than claiming DONE.
-
-Do not begin the AI slice.
+1. inspect remaining imports and owners around Content/OCR;
+2. verify whether `ContentOperationsPage.tsx` is the final legitimate consumer of root `content-operations-api.ts`;
+3. if zero other consumers are proven, the next smallest executable seam may repoint only `ContentOperationsPage.tsx` to `features/content/public` and delete the compatibility facade;
+4. do not bulk-move pages/CSS or unrelated facades for neatness;
+5. do not begin AI until AB-03.2 closure is proven;
+6. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority and Student frontend exclusion.
 
 ## Main reconciliation need
 
-`NONE FOR THIS DISCOVERY`. Current live `main` drift is Student-only and outside the structural frontend scope owned here. Re-check before the next structural phase boundary or whenever overlapping Admin/API/PostgreSQL/shared-contract changes appear.
+`NONE FOR THIS CLOSURE`. Current live `main` observation is `d43fe2afe29b02093510177b921c0407e21a3de9`; no overlapping scoped drift is currently proven. Re-check before the next structural phase boundary or whenever Admin/API/PostgreSQL/shared-contract overlap appears.
 
 ## Remaining roadmap
 
-Finish Curriculum + Content + OCR → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Finish Curriculum + Content + OCR closure → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
