@@ -1,140 +1,235 @@
-import type { ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { Link, Navigate, NavLink, Route, Routes } from "react-router-dom";
-import { AdminAiAuthoringWorkspace } from "../../admin/ai-authoring/AdminAiAuthoringWorkspace";
-import { AdminAccessCodeReportsPage } from "../../admin/access-codes/AdminAccessCodeReportsPage";
-import { AdminAccessCodesPage } from "../../admin/access-codes/AdminAccessCodesPage";
-import { ContentIngestionPage } from "../../admin/content/ContentIngestionPage";
-import { LessonAuthoringParityPanel } from "../../admin/content/LessonAuthoringParityPanel";
-import { CurriculumWorkspace } from "../../admin/curriculum/CurriculumWorkspace";
-import { AdminOverviewPage } from "../../admin/overview/AdminOverviewPage";
-import { AdminNotificationsPage } from "../../admin/operations/AdminNotificationsPage";
-import { AdminOperationsAuditPage } from "../../admin/operations/AdminOperationsAuditPage";
-import { AdminOperationsDiagnosticsPage } from "../../admin/operations/AdminOperationsDiagnosticsPage";
-import { AdminOperationsHealthPage } from "../../admin/operations/AdminOperationsHealthPage";
-import { QuestionBankCreatePage } from "../../admin/questions/QuestionBankCreatePage";
-import { QuestionBankDetailPage } from "../../admin/questions/QuestionBankDetailPage";
-import { QuestionBankListPage } from "../../admin/questions/QuestionBankListPage";
-import { QuizBuilderCreatePage } from "../../admin/quizzes/QuizBuilderCreatePage";
-import { QuizBuilderDetailPage } from "../../admin/quizzes/QuizBuilderDetailPage";
-import { QuizBuilderListPage } from "../../admin/quizzes/QuizBuilderListPage";
-import { QuizMetadataPanel } from "../../admin/quizzes/QuizMetadataPanel";
-import { AiOperationsPage } from "../../admin/reviews/AiOperationsPage";
-import { ContentOperationsPage } from "../../admin/reviews/ContentOperationsPage";
-import { AdminStudentsPage } from "../../admin/students/AdminStudentsPage";
+import { AdminProductState } from "../../shared/ui/AdminProductState";
+
+const AdminAiAuthoringWorkspace = lazy(() =>
+  import("../../admin/ai-authoring/AdminAiAuthoringWorkspace").then((module) => ({
+    default: module.AdminAiAuthoringWorkspace,
+  })),
+);
+const AdminAccessCodeReportsPage = lazy(() =>
+  import("../../admin/access-codes/AdminAccessCodeReportsPage").then((module) => ({
+    default: module.AdminAccessCodeReportsPage,
+  })),
+);
+const AdminAccessCodesPage = lazy(() =>
+  import("../../admin/access-codes/AdminAccessCodesPage").then((module) => ({
+    default: module.AdminAccessCodesPage,
+  })),
+);
+const ContentIngestionPage = lazy(() =>
+  import("../../admin/content/ContentIngestionPage").then((module) => ({
+    default: module.ContentIngestionPage,
+  })),
+);
+const LessonAuthoringParityPanel = lazy(() =>
+  import("../../admin/content/LessonAuthoringParityPanel").then((module) => ({
+    default: module.LessonAuthoringParityPanel,
+  })),
+);
+const CurriculumWorkspace = lazy(() =>
+  import("../../admin/curriculum/CurriculumWorkspace").then((module) => ({
+    default: module.CurriculumWorkspace,
+  })),
+);
+const AdminOverviewPage = lazy(() =>
+  import("../../admin/overview/AdminOverviewPage").then((module) => ({
+    default: module.AdminOverviewPage,
+  })),
+);
+const AdminNotificationsPage = lazy(() =>
+  import("../../admin/operations/AdminNotificationsPage").then((module) => ({
+    default: module.AdminNotificationsPage,
+  })),
+);
+const AdminOperationsAuditPage = lazy(() =>
+  import("../../admin/operations/AdminOperationsAuditPage").then((module) => ({
+    default: module.AdminOperationsAuditPage,
+  })),
+);
+const AdminOperationsDiagnosticsPage = lazy(() =>
+  import("../../admin/operations/AdminOperationsDiagnosticsPage").then((module) => ({
+    default: module.AdminOperationsDiagnosticsPage,
+  })),
+);
+const AdminOperationsHealthPage = lazy(() =>
+  import("../../admin/operations/AdminOperationsHealthPage").then((module) => ({
+    default: module.AdminOperationsHealthPage,
+  })),
+);
+const QuestionBankCreatePage = lazy(() =>
+  import("../../admin/questions/QuestionBankCreatePage").then((module) => ({
+    default: module.QuestionBankCreatePage,
+  })),
+);
+const QuestionBankDetailPage = lazy(() =>
+  import("../../admin/questions/QuestionBankDetailPage").then((module) => ({
+    default: module.QuestionBankDetailPage,
+  })),
+);
+const QuestionBankListPage = lazy(() =>
+  import("../../admin/questions/QuestionBankListPage").then((module) => ({
+    default: module.QuestionBankListPage,
+  })),
+);
+const QuizBuilderCreatePage = lazy(() =>
+  import("../../admin/quizzes/QuizBuilderCreatePage").then((module) => ({
+    default: module.QuizBuilderCreatePage,
+  })),
+);
+const QuizBuilderDetailPage = lazy(() =>
+  import("../../admin/quizzes/QuizBuilderDetailPage").then((module) => ({
+    default: module.QuizBuilderDetailPage,
+  })),
+);
+const QuizBuilderListPage = lazy(() =>
+  import("../../admin/quizzes/QuizBuilderListPage").then((module) => ({
+    default: module.QuizBuilderListPage,
+  })),
+);
+const QuizMetadataPanel = lazy(() =>
+  import("../../admin/quizzes/QuizMetadataPanel").then((module) => ({
+    default: module.QuizMetadataPanel,
+  })),
+);
+const AiOperationsPage = lazy(() =>
+  import("../../admin/reviews/AiOperationsPage").then((module) => ({
+    default: module.AiOperationsPage,
+  })),
+);
+const ContentOperationsPage = lazy(() =>
+  import("../../admin/reviews/ContentOperationsPage").then((module) => ({
+    default: module.ContentOperationsPage,
+  })),
+);
+const AdminStudentsPage = lazy(() =>
+  import("../../admin/students/AdminStudentsPage").then((module) => ({
+    default: module.AdminStudentsPage,
+  })),
+);
 
 export function AdminRoutes({ onSessionExpired }: { onSessionExpired: () => void }) {
   return (
-    <Routes>
-      <Route index element={<AdminOverviewPage onSessionExpired={onSessionExpired} />} />
-      <Route path="curriculum" element={<CurriculumWorkspace onSessionExpired={onSessionExpired} />} />
-      <Route
-        path="content"
-        element={
-          <WorkspaceWithRelatedActions
-            actions={[
-              { label: "ملخص الدرس والتصدير", to: "/app/content/lesson-tools" },
-              { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
-            ]}
-          >
-            <ContentIngestionPage onSessionExpired={onSessionExpired} />
-          </WorkspaceWithRelatedActions>
-        }
-      />
-      <Route
-        path="content/lesson-tools"
-        element={
-          <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى المحتوى", to: "/app/content" }]}>
-            <LessonAuthoringParityPanel onSessionExpired={onSessionExpired} />
-          </WorkspaceWithRelatedActions>
-        }
-      />
-      <Route path="reviews" element={<Navigate replace to="/app/reviews/content" />} />
-      <Route
-        path="reviews/content"
-        element={
-          <ReviewArea current="content">
-            <ContentOperationsPage onSessionExpired={onSessionExpired} />
-          </ReviewArea>
-        }
-      />
-      <Route
-        path="reviews/ai"
-        element={
-          <ReviewArea current="ai">
-            <AiOperationsPage onSessionExpired={onSessionExpired} />
-          </ReviewArea>
-        }
-      />
-      <Route
-        path="questions"
-        element={
-          <WorkspaceWithRelatedActions
-            actions={[
-              { label: "إنشاء واستيراد", to: "/app/questions/manage" },
-              { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
-            ]}
-          >
-            <QuestionBankListPage onSessionExpired={onSessionExpired} />
-          </WorkspaceWithRelatedActions>
-        }
-      />
-      <Route
-        path="questions/manage"
-        element={
-          <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى بنك الأسئلة", to: "/app/questions" }]}>
-            <QuestionBankCreatePage onSessionExpired={onSessionExpired} />
-          </WorkspaceWithRelatedActions>
-        }
-      />
-      <Route path="questions/:questionId" element={<QuestionBankDetailPage onSessionExpired={onSessionExpired} />} />
-      <Route
-        path="quizzes"
-        element={
-          <WorkspaceWithRelatedActions
-            actions={[
-              { label: "إنشاء وإدارة", to: "/app/quizzes/manage" },
-              { label: "بيانات الاختبار", to: "/app/quizzes/metadata" },
-              { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
-            ]}
-          >
-            <QuizBuilderListPage onSessionExpired={onSessionExpired} />
-          </WorkspaceWithRelatedActions>
-        }
-      />
-      <Route
-        path="quizzes/manage"
-        element={
-          <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى الاختبارات", to: "/app/quizzes" }]}>
-            <QuizBuilderCreatePage onSessionExpired={onSessionExpired} />
-          </WorkspaceWithRelatedActions>
-        }
-      />
-      <Route
-        path="quizzes/metadata"
-        element={
-          <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى الاختبارات", to: "/app/quizzes" }]}>
-            <QuizMetadataPanel onSessionExpired={onSessionExpired} />
-          </WorkspaceWithRelatedActions>
-        }
-      />
-      <Route path="quizzes/:quizId" element={<QuizBuilderDetailPage onSessionExpired={onSessionExpired} />} />
-      <Route path="students" element={<AdminStudentsPage onSessionExpired={onSessionExpired} />} />
-      <Route
-        path="access-codes"
-        element={
-          <WorkspaceWithRelatedActions actions={[{ label: "الملفات والتقارير", to: "/app/access-codes/reports" }]}>
-            <AdminAccessCodesPage onSessionExpired={onSessionExpired} />
-          </WorkspaceWithRelatedActions>
-        }
-      />
-      <Route path="operations" element={<AdminOperationsHealthPage onSessionExpired={onSessionExpired} />} />
-      <Route path="operations/audit" element={<AdminOperationsAuditPage onSessionExpired={onSessionExpired} />} />
-      <Route path="operations/diagnostics" element={<AdminOperationsDiagnosticsPage onSessionExpired={onSessionExpired} />} />
-      <Route path="operations/notifications" element={<AdminNotificationsPage onSessionExpired={onSessionExpired} />} />
-      <Route path="tools/ai-authoring" element={<AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />} />
-      <Route path="access-codes/reports" element={<AdminAccessCodeReportsPage onSessionExpired={onSessionExpired} />} />
-      <Route path="*" element={<AdminRouteNotFound />} />
-    </Routes>
+    <Suspense
+      fallback={
+        <AdminProductState
+          title="جاري تحميل مساحة العمل"
+          body="سيتم عرض الوجهة المطلوبة فور اكتمال تحميلها."
+        />
+      }
+    >
+      <Routes>
+        <Route index element={<AdminOverviewPage onSessionExpired={onSessionExpired} />} />
+        <Route path="curriculum" element={<CurriculumWorkspace onSessionExpired={onSessionExpired} />} />
+        <Route
+          path="content"
+          element={
+            <WorkspaceWithRelatedActions
+              actions={[
+                { label: "ملخص الدرس والتصدير", to: "/app/content/lesson-tools" },
+                { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
+              ]}
+            >
+              <ContentIngestionPage onSessionExpired={onSessionExpired} />
+            </WorkspaceWithRelatedActions>
+          }
+        />
+        <Route
+          path="content/lesson-tools"
+          element={
+            <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى المحتوى", to: "/app/content" }]}>
+              <LessonAuthoringParityPanel onSessionExpired={onSessionExpired} />
+            </WorkspaceWithRelatedActions>
+          }
+        />
+        <Route path="reviews" element={<Navigate replace to="/app/reviews/content" />} />
+        <Route
+          path="reviews/content"
+          element={
+            <ReviewArea current="content">
+              <ContentOperationsPage onSessionExpired={onSessionExpired} />
+            </ReviewArea>
+          }
+        />
+        <Route
+          path="reviews/ai"
+          element={
+            <ReviewArea current="ai">
+              <AiOperationsPage onSessionExpired={onSessionExpired} />
+            </ReviewArea>
+          }
+        />
+        <Route
+          path="questions"
+          element={
+            <WorkspaceWithRelatedActions
+              actions={[
+                { label: "إنشاء واستيراد", to: "/app/questions/manage" },
+                { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
+              ]}
+            >
+              <QuestionBankListPage onSessionExpired={onSessionExpired} />
+            </WorkspaceWithRelatedActions>
+          }
+        />
+        <Route
+          path="questions/manage"
+          element={
+            <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى بنك الأسئلة", to: "/app/questions" }]}>
+              <QuestionBankCreatePage onSessionExpired={onSessionExpired} />
+            </WorkspaceWithRelatedActions>
+          }
+        />
+        <Route path="questions/:questionId" element={<QuestionBankDetailPage onSessionExpired={onSessionExpired} />} />
+        <Route
+          path="quizzes"
+          element={
+            <WorkspaceWithRelatedActions
+              actions={[
+                { label: "إنشاء وإدارة", to: "/app/quizzes/manage" },
+                { label: "بيانات الاختبار", to: "/app/quizzes/metadata" },
+                { label: "أدوات التأليف بالذكاء الاصطناعي", to: "/app/tools/ai-authoring" },
+              ]}
+            >
+              <QuizBuilderListPage onSessionExpired={onSessionExpired} />
+            </WorkspaceWithRelatedActions>
+          }
+        />
+        <Route
+          path="quizzes/manage"
+          element={
+            <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى الاختبارات", to: "/app/quizzes" }]}>
+              <QuizBuilderCreatePage onSessionExpired={onSessionExpired} />
+            </WorkspaceWithRelatedActions>
+          }
+        />
+        <Route
+          path="quizzes/metadata"
+          element={
+            <WorkspaceWithRelatedActions actions={[{ label: "العودة إلى الاختبارات", to: "/app/quizzes" }]}>
+              <QuizMetadataPanel onSessionExpired={onSessionExpired} />
+            </WorkspaceWithRelatedActions>
+          }
+        />
+        <Route path="quizzes/:quizId" element={<QuizBuilderDetailPage onSessionExpired={onSessionExpired} />} />
+        <Route path="students" element={<AdminStudentsPage onSessionExpired={onSessionExpired} />} />
+        <Route
+          path="access-codes"
+          element={
+            <WorkspaceWithRelatedActions actions={[{ label: "الملفات والتقارير", to: "/app/access-codes/reports" }]}>
+              <AdminAccessCodesPage onSessionExpired={onSessionExpired} />
+            </WorkspaceWithRelatedActions>
+          }
+        />
+        <Route path="operations" element={<AdminOperationsHealthPage onSessionExpired={onSessionExpired} />} />
+        <Route path="operations/audit" element={<AdminOperationsAuditPage onSessionExpired={onSessionExpired} />} />
+        <Route path="operations/diagnostics" element={<AdminOperationsDiagnosticsPage onSessionExpired={onSessionExpired} />} />
+        <Route path="operations/notifications" element={<AdminNotificationsPage onSessionExpired={onSessionExpired} />} />
+        <Route path="tools/ai-authoring" element={<AdminAiAuthoringWorkspace onSessionExpired={onSessionExpired} />} />
+        <Route path="access-codes/reports" element={<AdminAccessCodeReportsPage onSessionExpired={onSessionExpired} />} />
+        <Route path="*" element={<AdminRouteNotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
 
