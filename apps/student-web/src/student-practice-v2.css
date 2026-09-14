@@ -404,6 +404,53 @@
   border-radius: .7rem;
 }
 
+.attempt-step-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+  margin-top: .7rem;
+}
+
+.attempt-step-actions > * {
+  min-width: 0;
+}
+
+.attempt-finish-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .8rem;
+  margin-top: 1rem;
+  padding-top: .9rem;
+  border-top: 1px solid var(--student-border, #e5e7eb);
+}
+
+.attempt-finish-bar > div {
+  min-width: 0;
+}
+
+.attempt-finish-bar strong,
+.attempt-finish-bar small {
+  display: block;
+}
+
+.attempt-finish-bar strong {
+  color: var(--student-heading, #123c43);
+  font-size: .82rem;
+}
+
+.attempt-finish-bar small {
+  margin-top: .12rem;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .72rem;
+  line-height: 1.55;
+}
+
+.attempt-finish-bar .primary-button {
+  min-width: 8.5rem;
+  white-space: nowrap;
+}
+
 @media (max-width: 40rem) {
   .practice-page-heading {
     grid-template-columns: 1fr;
@@ -446,6 +493,26 @@
     margin-top: .2rem;
     white-space: normal;
     text-align: start;
+  }
+
+  .attempt-step-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .attempt-finish-bar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .attempt-finish-bar .primary-button {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 28rem) {
+  .attempt-step-actions {
+    grid-template-columns: 1fr;
   }
 }
 
