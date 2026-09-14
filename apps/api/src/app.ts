@@ -18,6 +18,7 @@ import { createFastifyInstance } from "./app/create-fastify-instance.js";
 import { registerHealthRoutes } from "./app/http/health.js";
 import { registerPublicErrorHandlers } from "./app/http/public-errors.js";
 import { registerCorsPolicy } from "./app/plugins/cors.js";
+import { registerDatabaseLifecycle } from "./app/plugins/database-lifecycle.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
 import type { AppConfig } from "./config.js";
@@ -121,10 +122,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
 
   registerHealthRoutes(app, database);
   registerPublicErrorHandlers(app);
-
-  app.addHook("onClose", async () => {
-    await database.close();
-  });
+  registerDatabaseLifecycle(app, database);
 
   return app;
 }
