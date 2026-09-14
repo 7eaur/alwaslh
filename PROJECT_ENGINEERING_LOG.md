@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — third AB-01.4 public-error composition seam implemented; required runtime/integration gates pending.**
+Last consolidated: **2026-09-14 — third AB-01.4 public-error composition seam verified and closed; next increment is discovery only.**
 
 ## Durable authority invariants
 
@@ -59,7 +59,7 @@ Source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`; Architecture Guard `3480
 
 Source HEAD `a302871b3486ae95810cea40dccca68363a29055`; target owner `apps/api/src/app/http/health.ts`. Closure evidence: Architecture Guard `34811642661`; source-tree-equivalent Admin AI `34811809959`, Combined `34811809962`, Stage13G `34811810021` — SUCCESS.
 
-#### Third seam — public error / not-found — IMPLEMENTED / WAITING_FOR_CI
+#### Third seam — public error / not-found — DONE
 
 Source implementation HEAD: `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
 
@@ -82,14 +82,15 @@ Preserved behavior:
 - only mapped 5xx errors log `request.log.error({ err: error }, "request failed")`;
 - mapped status/body behavior remains unchanged.
 
-Verification evidence at Worker A handoff:
+Closure evidence:
 
-- Architecture Guard `34816433721` — SUCCESS;
-- source-head Admin AI `34816433699` was cancelled after later documentation commits superseded the head before completion, so it is not closure evidence;
-- source-head Combined `34816433773` and Stage13G `34816433715` were still active/pending when documentation began;
-- later documentation-only heads contain the same implementation tree for affected source files; exact/source-tree-equivalent gates must be checked by the next worker before marking the seam DONE.
+- Architecture Guard `34816433721` — SUCCESS on source implementation HEAD;
+- compare `001d45892bf4a17458f3beaeaaa1a7430be49b44...068ee06cf7fec442b95ddada2667d8aac5d1c2a2` contains only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`, proving no affected source file changed after implementation;
+- source-tree-equivalent Admin AI `34816613371` — SUCCESS;
+- Combined `34816613431` — SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend authority, auth/security regressions and real Admin Chromium;
+- Stage13G `34816613493` — SUCCESS including Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, Accounts/Access + Notifications/Operations + Reports/Settings/Security/Audit + AI authoring integration, Access/Auth regression, and real API + PostgreSQL + Chromium.
 
-Deletion/switch condition is structurally satisfied (single owner, no duplicate handler ownership), but completion remains gated on runtime/integration evidence.
+Conclusion: deletion/switch condition and runtime/integration gates are satisfied. Third seam is **DONE**.
 
 ### AB-01.5 — PENDING
 
@@ -109,4 +110,4 @@ AB-01 active → AB-02 thin Admin shell/router/providers/layouts/lazy routes →
 
 ## Exact continuation
 
-Verify the implemented third AB-01.4 public-error/not-found seam using required exact/source-tree-equivalent Architecture Guard, API quality, auth/security/integration, clean PostgreSQL, Combined Chromium and Stage13G real API/PostgreSQL/Chromium gates. If green, mark this seam DONE before selecting/implementing another composition concern. If a gate fails, fix its root cause only.
+Perform **discovery only** for the next smallest bounded AB-01.4 responsibility remaining in `apps/api/src/app.ts`. Document current owner, target owner, authoritative contracts/tests, ordering/dependency constraints, explicit non-goals and required closure gates. Do not implement the newly selected seam in that same discovery increment.
