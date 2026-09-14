@@ -33,56 +33,32 @@ Closed bounded seams:
 4. Fastify instance construction/options — `apps/api/src/app/create-fastify-instance.ts`;
 5. database lifecycle registration — `apps/api/src/app/plugins/database-lifecycle.ts`.
 
-### Database lifecycle closure
+Source+test checkpoint for the fifth seam: `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`.
 
-Source+test implementation HEAD:
+Closure evidence includes Architecture Guard `34825750566`, Admin AI `34826063345`, Combined `34826063326`, and Stage13G `34826063330` — SUCCESS. Broad service construction/route composition intentionally remains for workflow-driven AB-03/AB-04 work; no giant service container or route registry is authorized.
 
-`101f61a9c25e3de116d0074a3ef7e2f760eb98a7`
+## AB-01.5 — Common backend technical ownership — DISCOVERY COMPLETE / IMPLEMENTATION NEXT
 
-The narrow owner `registerDatabaseLifecycle(app, database)` registers only the existing Fastify `onClose` behavior that awaits `database.close()`.
+Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_5_TECHNICAL_OWNERSHIP_DISCOVERY_2026-09-14.md`.
 
-Preserved:
+One bounded correction is selected: the generic Zod→public-BAD_REQUEST request-validation adapter currently exported as `parseBody` from private Auth HTTP ownership.
 
-- `buildApp()` still receives an already-created `Database`;
-- `server.ts` continues to use `app.close()` for SIGTERM/SIGINT and listen failure;
-- legacy pre-app startup failure direct DB close is unchanged;
-- database creation/pool/query/transactions/migrations/schema are unchanged;
-- service graph/business routes and Student frontend are unchanged.
+Current evidence:
 
-Focused `apps/api/tests/app.test.ts` coverage proves `app.close()` delegates to supplied database close exactly once.
+- `apps/api/src/auth/http.ts` owns `parseBody`, but the helper itself performs no authentication/session behavior;
+- `apps/api/src/question-bank/http.ts` imports it from `../auth/http.js` for params/query/body parsing;
+- `apps/api/src/quiz-builder/http.ts` does the same;
+- `currentProfile` is intentionally **not** included because it invokes AuthService/session authentication and is therefore materially Auth-owned.
 
-Closure evidence:
+Target owner:
 
-- Architecture Guard `34825750566` — SUCCESS on affected source composition;
-- compare `101f61a9...e6140065` contains only canonical documentation files, so later successful runs are source-tree-equivalent;
-- Admin AI `34826063345` — SUCCESS;
-- Combined `34826063326` — SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend authority/auth-security regressions and real Admin Chromium;
-- Stage13G `34826063330` — SUCCESS including Admin/API quality, clean PostgreSQL, all listed integration/auth regressions and real API + PostgreSQL + Chromium.
+`apps/api/src/app/http/request-validation.ts`
 
-### AB-01.4 stop decision
+Implementation must preserve the exact contract: `safeParse` input, return parsed data on success, and throw `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)` on failure. Before editing, search for every current caller and migrate only real callers.
 
-The remaining `app.ts` responsibilities are broad module/service construction, cross-service composites, multi-consumer infrastructure construction and whole-product route registration. They are not extracted wholesale here.
+Explicit non-goals: no auth/session/cookie/role redesign; no schema registry; no AppError move; no root config/db/media/observability folder normalization; no Question Bank/AI contract correction; no broad module HTTP rewrite.
 
-Rejected as unjustified foundation abstractions:
-
-- giant `createServices()` container;
-- giant route registry;
-- generic infrastructure bundle;
-- DI/service locator/interface ceremony.
-
-Workflow-driven module normalization belongs in AB-03; residual backend normalization belongs in AB-04. AB-01.4 therefore ends after the fifth bounded seam.
-
-## AB-01.5 — Common backend technical ownership — NEXT
-
-Discovery must start from evidence. Inspect only genuinely cross-cutting technical concerns such as generic HTTP/auth helpers, public error plumbing, DB technical ownership, observability and media infrastructure.
-
-Rules:
-
-- fix one real duplicated/misowned technical seam at most;
-- do not move domain/business rules into shared;
-- do not reopen broad app composition;
-- do not create an abstraction because the target folder diagram suggests one;
-- if no move is justified, document that and continue to AB-01.6.
+After this single correction is exact-head verified, **stop AB-01.5** and proceed to AB-01.6 rather than manufacturing more shared infrastructure.
 
 ## AB-01.6 — Foundation closure gate — PENDING
 
