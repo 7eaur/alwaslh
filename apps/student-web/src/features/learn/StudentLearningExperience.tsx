@@ -1,7 +1,7 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { findStudentLesson } from "../../student-learning-model";
-import { StudentLessonReaderPage, StudentOfflineLessonReaderPage } from "../../student-reader";
 import { FeatureLoading } from "../../shared/ui/FeatureLoading";
+import { StudentLessonReaderPage, StudentOfflineLessonReaderPage } from "../reader";
 import { LearnLanding } from "./LearnLanding";
 import { SubjectPage } from "./SubjectPage";
 import { useStudentCurriculum } from "./useStudentCurriculum";
