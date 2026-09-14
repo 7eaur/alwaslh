@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-00 closed; AB-01 foundations active; alternating scheduled execution governance added.**
+Last consolidated: **2026-09-14 — AB-01.1 transport and AB-01.2 auth/session foundations verified and closed; AB-01.3 next.**
 
 ## A. Durable authority invariants
 
@@ -15,58 +15,60 @@ Last consolidated: **2026-09-14 — AB-00 closed; AB-01 foundations active; alte
 - Auth/authorization/entitlement/publication/revision/provenance/audit/assessment/offline authority remains server-owned.
 - Tests represent production contracts; validation/security is never weakened to satisfy fixtures.
 
-## B. Historical verified Admin safety baseline retained
+## B. Historical safety baseline
 
-- AR-01..AR-04 — DONE / VERIFIED historical foundation.
-- AR-05..AR-09 — completed with exact-head successful Admin/API/Combined verification at their recorded historical checkpoints.
-- AR-10 auth route-focus correction remains valid; Stage13G `34793896054` fully green at historical checkpoint.
-- Former AR-10 “smallest polish only” constraint is superseded by the scoped architecture rebuild.
+Historical AR foundations remain retained as safety evidence. Frozen AB baseline before rebuild:
+
+- Admin initial JS: **968.68 kB / 193.92 kB gzip**;
+- Admin CSS: **91.38 kB / 13.68 kB gzip**;
+- Admin unit tests: **71/71**;
+- API unit tests: **66/66**;
+- clean PostgreSQL 16 migration sequence: green;
+- baseline real Chromium Admin acceptance: **9/9 green**.
 
 ## C. Root architecture findings
 
-### AB-ARCH-001 — P1 — Admin composition root too broad
+### AB-ARCH-001 — Admin composition root too broad
 
-Historical `App.tsx` owned session/auth state, shell/navigation/account behavior, full route table, route wrappers and eager imports of major Admin workspaces.
+Historical `App.tsx` owned session/auth state, shell/navigation/account behavior, full route table, route wrappers and eager imports of major workspaces.
 
-Decision: rebuild into app providers/router/layout + feature public route modules.
+Decision: rebuild toward app providers/router/layout plus feature public route modules.
 
-### AB-ARCH-002 — P1 — Admin initial bundle architecture
+### AB-ARCH-002 — Initial bundle architecture
 
-Frozen baseline: Admin initial JS **968.68 kB / 193.92 kB gzip**, Vite >500 kB warning.
-
-Cause: eager static imports of major workflows.
+Cause of oversized initial Admin bundle: eager static imports of major workflows.
 
 Decision: substantial route-level lazy boundaries; never suppress warning thresholds to hide debt.
 
-### AB-ARCH-003 — P1 — Feature ownership incomplete
+### AB-ARCH-003 — Feature ownership incomplete
 
-Feature pages exist, but API adapters/CSS/tests/session lifecycle were rooted/shared inconsistently.
+Feature pages existed while API adapters/CSS/tests/session lifecycle were rooted/shared inconsistently.
 
-Decision: feature-local ownership + narrow truly shared primitives/adapters; no mechanical folder move.
+Decision: feature-local ownership plus narrow truly shared primitives/adapters; no mechanical folder moves.
 
-### AB-ARCH-004 — P1 — Cross-feature coupling
+### AB-ARCH-004 — Cross-feature coupling
 
-Confirmed Overview → Operations private model/CSS import and other legitimate reference-data needs.
+Confirmed Overview → Operations private model/CSS import and other legitimate reference-data dependencies.
 
-Decision: explicit public contracts/app orchestration; do not promote whole feature internals to shared.
+Decision: explicit public contracts or app orchestration; do not promote whole feature internals to shared.
 
-### AB-ARCH-005 — P1 — Large internal feature compositions
+### AB-ARCH-005 — Large feature compositions
 
 Content Ingestion, Students, Access Codes, Reviews and AI Authoring combine orchestration/presentation concerns.
 
-Decision: rebuild internal composition where needed; moving giant files unchanged is not architecture completion.
+Decision: rebuild internal composition where needed; moving giant files unchanged is not completion.
 
-### AB-ARCH-101 — P1 — Backend root composition hotspot
+### AB-ARCH-101 — Backend root composition hotspot
 
 `apps/api/src/app.ts` manually constructs/registers most of the service graph and mixes Fastify setup with business-module composition.
 
-Decision: extract app/plugin/composition boundaries while preserving behavior.
+Decision: extract real app/plugin/composition boundaries while preserving behavior.
 
-### AB-ARCH-102 — P1 — Backend private cross-module coupling
+### AB-ARCH-102 — Backend private cross-module coupling
 
-Examples include AI Authoring concrete dependencies on Question Bank/Quiz Builder services, cross-domain SQL, Question Bank HTTP importing AI internals, and module HTTP importing generic helpers from Auth HTTP.
+Known examples include AI Authoring concrete dependencies on Question Bank/Quiz Builder services, cross-domain SQL, Question Bank HTTP importing AI internals, and module HTTP importing generic helpers from Auth HTTP.
 
-Decision: narrow public application/read contracts and genuinely generic shared HTTP infrastructure. Preserve legitimate orchestration; do not force artificial zero coupling.
+Decision: narrow public application/read contracts and genuinely generic shared HTTP infrastructure where justified.
 
 ## D. AB-00 — CLOSED
 
@@ -85,62 +87,44 @@ Implemented:
 - `scripts/verify-architecture-boundaries.py`;
 - `.github/workflows/admin-backend-architecture-guard.yml`.
 
-Guard capabilities include:
+Guard capabilities include static/dynamic import detection, no new Admin root dumping, shared→app/features prohibition, feature→app prohibition, app→private feature prohibition, private cross-feature prohibition, backend app→private module prohibition, private cross-module prohibition, and a transitional ratchet for known legacy debt.
 
-- static and dynamic import detection;
-- no new Admin root feature dumping;
-- shared → app/features prohibition;
-- feature → app prohibition;
-- app → private feature internals prohibition;
-- private cross-feature import prohibition;
-- backend app → private new-module internals prohibition;
-- private cross-module import prohibition;
-- transitional baseline ratchet for known legacy debt.
-
-Advance ratchet baseline only after accepted exact-head-green cleanup.
+Advance the ratchet baseline only after accepted exact-head-green cleanup.
 
 ## F. Branch governance
 
 Scoped work continues on `rebuild/super-admin-foundation`, PR #52 Draft.
 
-Rules:
-
 - never auto-merge;
 - never force-reset/force-push shared history;
-- never import separate Student frontend implementation into this branch;
-- before structural phase boundaries compare live `main` for Admin/API/migrations/shared-contract changes;
-- if live main introduces overlapping scoped changes, pause and reconcile deliberately.
+- never import separate Student frontend implementation;
+- compare live `main` before structural phase boundaries;
+- if `main` introduces overlapping Admin/API/migrations/shared-contract changes, pause and reconcile.
+
+Latest Worker A sequence 1 reconciliation observed `main` at `3053640cc5bb0699cfa7456cf646e8997f6aa81b`, unchanged from prior AB-01 reconciliation.
 
 ## G. Confirmed architecture/product decisions
 
-- KEEP one Fastify modular monolith.
-- KEEP PostgreSQL/API canonical authority.
-- KEEP feature-owned Admin + thin app composition target.
-- KEEP user-job IA and attention-first Overview.
-- KEEP route-level code splitting for substantial workflows.
-- KEEP existing Design System/brand authority; no second design system.
-- KEEP RTL/a11y/responsive/reduced-motion/product states as architecture acceptance.
-- KEEP controlled replacement with legacy deletion after parity.
-- `packages/ui` = cross-product primitives only; Admin `shared/ui` = Admin-only patterns.
-- backend layers are selective dependency boundaries, not mandatory empty folders/interfaces.
-- preserve verified `/app` base unless runtime/deployment evidence justifies changing it.
-- performance budgets are evidence-based, not arbitrary.
+- one Fastify modular monolith;
+- PostgreSQL/API canonical authority;
+- feature-owned Admin + thin app composition target;
+- user-job IA and attention-first Overview;
+- substantial route-level code splitting;
+- existing Design System/brand authority;
+- RTL/a11y/responsive/reduced-motion/product states as architecture acceptance;
+- controlled replacement with legacy deletion after parity;
+- `packages/ui` only for genuinely cross-product primitives; Admin `shared/ui` for Admin-only patterns;
+- backend layers selective, not ceremony;
+- verified `/app` base preserved unless runtime evidence changes the decision;
+- performance budgets evidence-based.
 
-Explicitly rejected without evidence:
+Rejected without evidence: microservices, DI/service locator, generic repositories everywhere, new global state/query library, styling-stack rewrite, artificial tiny-component splitting and big-bang rewrite.
 
-- microservices;
-- DI framework/service locator;
-- repository/interface ceremony everywhere;
-- new global state/query library;
-- wholesale Tailwind/CSS-in-JS/styling-stack replacement;
-- tiny-component lazy splitting for fake chunk counts;
-- big-bang rewrite.
+## H. AB-01 implementation ledger
 
-## H. AB-01 implementation progress
+### AB-01.1 — Shared API transport boundary — DONE
 
-### AB-01.1 — Shared API transport boundary — IMPLEMENTED
-
-Created owner:
+Owner:
 
 `apps/admin-web/src/shared/api/client.ts`
 
@@ -152,11 +136,11 @@ Responsibility:
 - `ApiRequestError`;
 - missing-session classification.
 
-Root `admin-api.ts` compatibility re-exports are transitional only and must be deleted once all feature owners move.
+Root `admin-api.ts` compatibility re-exports are transitional only and have a deletion condition.
 
-### AB-01.2 — Auth/session ownership — IMPLEMENTED
+### AB-01.2 — Auth/session ownership — DONE
 
-Created/established:
+Owners:
 
 - `apps/admin-web/src/features/auth/api/admin-auth-api.ts`;
 - `apps/admin-web/src/features/auth/model/AdminSessionProvider.tsx`;
@@ -164,70 +148,76 @@ Created/established:
 
 `App.tsx` no longer owns session state, restore/logout API calls or auth error interpretation.
 
-Latest verified code checkpoint before protocol-documentation commits:
+#### Closure evidence
 
-- Architecture Guard on code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a` — SUCCESS, run `34799891149`.
-- Later documentation commits advanced branch HEAD, so scheduled/manual execution must always re-check live exact-head gates before marking AB-01.1/AB-01.2 final DONE.
+Verified implementation checkpoint: `d955a34087552377dc8b426ec1712e57f59fd8f6`.
 
-### AB-01.3 — NEXT after exact-head gate
+- Stage13E Admin AI `34800888706` — SUCCESS.
+- Stage13E Combined Integration `34800888690` — SUCCESS.
+- Stage13G `34800888723` — SUCCESS.
+  - Admin lint/typecheck/unit/build — SUCCESS.
+  - API lint/typecheck/unit/build — SUCCESS.
+  - clean PostgreSQL migrations — SUCCESS.
+  - Accounts/Access, Notifications/Operations, Reports/Settings/Security/Audit, AI authoring and auth regressions — SUCCESS.
+  - real API + PostgreSQL + Chromium — SUCCESS.
+- Architecture Guard `34799891149` — SUCCESS on last code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a`.
+- Compare `e0b90cd..d955a340` contains documentation-only changes; no Admin/API/source change occurred after the successful guard.
 
-Purpose: extract only the minimum product-state primitives proven by real duplication. Do not create a generic mega-component.
+Conclusion: AB-01.1 and AB-01.2 are final **DONE**.
 
-Observed duplication exists between Overview/Operations loading/error/retry states; inspect current live code again before implementation.
+### AB-01.3 — NEXT
 
-## I. Alternating scheduled execution governance
+Purpose: extract only the minimum Admin product-state primitive proven by real duplication.
 
-Created binding protocol:
+Known current evidence before next-run reinspection:
+
+- Overview and Operations duplicate local loading/error/retry state containers;
+- shared Admin UI currently has no general state-pattern owner;
+- no generic mega-component is authorized;
+- server error truth/copy remains feature-owned.
+
+Next run must re-read current source and select one smallest coherent shared primitive only.
+
+### AB-01.4 — PENDING
+
+Backend app composition extraction from `apps/api/src/app.ts`, preserving business rules and modular-monolith behavior.
+
+### AB-01.5 — PENDING
+
+Only justified common backend technical ownership.
+
+### AB-01.6 — PENDING
+
+Full foundation closure gate after remaining AB-01 work.
+
+## I. Alternating execution governance
+
+Binding protocol:
 
 `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md`
 
-Created live handoff/state:
+Live handoff state:
 
 `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
 
-Operating model:
-
-- Worker A at the top of each hour;
-- Worker B at half past each hour;
-- each worker runs hourly, staggered 30 minutes;
-- both continue one ordered roadmap, not separate workstreams;
-- each run performs one smallest coherent increment;
-- next worker reads state + repo + CI and continues exactly from prior handoff;
-- active-worker collision means no overlapping mutation;
-- every run documents starting/ending HEAD, changed owners/files, verification, CI, state and exact next step.
-
-Allowed terminal handoff states per run:
-
-- `READY_FOR_NEXT`;
-- `WAITING_FOR_CI`;
-- `BLOCKED`;
-- `COMPLETE`.
+Worker A and B share one roadmap and branch, execute one smallest coherent increment per run, and leave `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE` with exact HEAD/CI/next-step evidence.
 
 ## J. Full roadmap
 
 - AB-00 — DONE
 - AB-01 — shared foundations — ACTIVE
 - AB-02 — thin Admin shell/router/providers/layouts + major lazy routes
-- AB-03 — end-to-end slices in order:
-  1. Overview + Operations
-  2. Curriculum + Content + OCR
-  3. AI Jobs + AI Review + contextual authoring transitions
-  4. Question Bank
-  5. Quiz Builder
-  6. Students
-  7. Access Codes
+- AB-03 — vertical slices: Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes
 - AB-04 — remaining backend modular-monolith normalization
 - AB-05 — Admin design/interaction convergence audit
 - AB-06 — performance/delivery validation and evidence-based budgets
 - AB-07 — legacy deletion + hard dependency enforcement
-- AB-08 — final full Admin + Backend verification and live-main reconciliation
+- AB-08 — final Admin + Backend verification and live-main reconciliation
 
-## K. Exact continuation rule
+## K. Exact continuation
 
-Never hard-code the next mutation from this log because scheduled workers continuously advance it.
-
-Read first:
+Never infer the next mutation from this log alone. Read first:
 
 `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
 
-Then inspect live branch/main HEADs and exact-head Actions before mutation.
+Current durable continuation after Worker A sequence 1: **AB-01.3 minimum proven Admin product-state primitives**.
