@@ -13,6 +13,7 @@ import {
   type StudentEntryNotice,
 } from "./features/auth/StudentEntryExperience";
 import { clearActiveOfflineLease, getActiveOfflineScope } from "./offline-session";
+import { clearStudentRuntimeCache } from "./shared/data/student-runtime-cache";
 import { StudentAccessSection } from "./student-access";
 
 type SessionPhase = "checking" | "anonymous" | "authenticated" | "offline" | "unavailable";
@@ -62,11 +63,13 @@ export default function App() {
       const restored = await restoreStudentSession();
       if (restored.role !== "student") {
         await logoutStudent().catch(() => undefined);
+        if (profile) clearStudentRuntimeCache(profile.id);
         setProfile(null); setPhase("anonymous"); return;
       }
       setProfile(restored); setPhase("authenticated");
     } catch (error) {
       if (isMissingSessionError(error)) {
+        if (profile) clearStudentRuntimeCache(profile.id);
         setProfile(null);
         setPhase("anonymous");
       } else if (error instanceof ApiRequestError && error.code === "SERVICE_UNAVAILABLE") {
@@ -86,6 +89,7 @@ export default function App() {
   useEffect(() => { void checkSession(); }, []);
 
   function handleSessionExpired() {
+    if (profile) clearStudentRuntimeCache(profile.id);
     void clearActiveOfflineLease().catch(() => undefined);
     setProfile(null);
     setNotice({ message: "انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة.", tone: "info" });
@@ -94,6 +98,7 @@ export default function App() {
   }
 
   async function handleLogout() {
+    if (profile) clearStudentRuntimeCache(profile.id);
     if (online) await logoutStudent().catch(() => undefined);
     await clearActiveOfflineLease().catch(() => undefined);
     setProfile(null); setNotice(null); setMode("login"); setPhase("anonymous");
