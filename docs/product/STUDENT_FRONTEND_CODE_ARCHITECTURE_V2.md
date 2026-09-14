@@ -121,12 +121,32 @@ apps/student-web/src/
 
 Feature لا ينسخ Button/Icon/EmptyState/Shell من Feature آخر.
 
+## Dependency direction
+
+المسار المسموح:
+
+`app → features → shared`
+
+و:
+
+`features → shared`
+
+غير مسموح:
+
+- `shared` يستورد Feature؛
+- Feature يستورد internals من Feature آخر؛
+- circular dependency؛
+- `app/layout` يستورد Curriculum/Quiz business logic.
+
+أي cross-feature dependency يجب أن يمر عبر shared contract/read model أو public feature boundary واضح.
+
 ## قاعدة الملفات
 
 - Page component: orchestration/composition فقط.
 - لا نضع routing + API + UI + storage + formatting في ملف واحد.
 - إذا تجاوز الملف تقريبًا 250–350 سطر بسبب أكثر من مسؤولية، يجب تقسيمه بدل الاستمرار في التكديس.
 - الحجم وحده ليس المعيار؛ **عدد المسؤوليات** هو المعيار الأساسي.
+- لا نقسم الملف إلى أجزاء صغيرة بلا معنى؛ كل ملف يجب أن يمثل ownership واضحًا.
 
 ## Data flow
 
@@ -183,6 +203,7 @@ Registry واحد.
 - feature stylesheet لا يعدل global navigation selectors.
 - لا stage-number CSS في المنتج النهائي.
 - لا override chain لحل مشكلة كان يمكن حلها من المكون الأصلي.
+- shared component owns its base style؛ feature may compose but not fork it silently.
 
 ## Local storage architecture
 
@@ -212,6 +233,7 @@ features/library/data/
 - images/media lazy load.
 - avoid duplicated state copies.
 - avoid mounting hidden expensive views.
+- cached route transitions should not flash first-load skeletons.
 
 ## Testing contract
 
@@ -222,6 +244,7 @@ features/library/data/
 3. route smoke test.
 4. mobile visual verification.
 5. no duplicate network reads regression for shared read models.
+6. RTL/focus/reduced-motion checks when UI chrome changes.
 
 ## Migration rule
 
@@ -237,6 +260,18 @@ features/library/data/
 6. Practice.
 7. Library/Account/secondary pages.
 8. remove obsolete flat files only after references reach zero.
+
+## Review rejection rules
+
+يرفض أي PR إذا أعاد:
+
+- duplicated app chrome؛
+- copied functional SVG icons؛
+- feature-local cache لنفس shared read model؛
+- hard-coded visual values بدل tokens الموجودة؛
+- page component يجمع business/data/storage/presentation بلا فصل؛
+- feature-to-feature internal dependency؛
+- new permanent browser persistence بدون lifecycle/scope policy.
 
 ## Definition of clean
 
