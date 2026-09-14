@@ -9,6 +9,16 @@ export {
   fetchAdminOperationsOverview,
 } from "../api/admin-operations-api";
 
+export {
+  attentionTotal,
+  auditSubject,
+  buildAttentionItems,
+  eventLabel,
+  formatAdminDate,
+  resourceLabel,
+  sourceLabel,
+} from "../model/operations-model";
+
 export type {
   AdminNotification,
   NotificationPage,
