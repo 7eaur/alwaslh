@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ApiRequestError, isMissingSessionError } from "./admin-api";
-import { fetchOcrSourcePreview } from "./content-operations-api";
+import { fetchOcrSourcePreview } from "./features/content/public";
 
 interface Props {
   extractionId: string;
