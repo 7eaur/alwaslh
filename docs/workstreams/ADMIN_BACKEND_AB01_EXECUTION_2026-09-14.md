@@ -75,35 +75,33 @@ Three original source-head workflows were cancelled by later documentation pushe
 
 Conclusion: AB-01.3 is **DONE**. No source mutation was required during the verification/closure run.
 
-### AB-01.4 — Backend app composition foundation — NEXT
+### AB-01.4 — Backend app composition foundation — DISCOVERY COMPLETE / IMPLEMENTATION NEXT
 
-Refactor `apps/api/src/app.ts` without changing business rules. The next run must begin with **discovery only before mutation**:
+Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
-1. inspect current `apps/api/src/app.ts` and its direct composition/config/plugin collaborators;
-2. map construction/registration order and behavior-sensitive dependencies;
-3. classify actual app-level responsibilities versus module-owned logic;
-4. identify the smallest real extraction seam;
-5. only then implement one coherent extraction in a later/continued bounded increment if evidence is sufficient.
+Discovery established that `apps/api/src/app.ts` currently owns Fastify construction, global CORS/preflight policy, infrastructure adapters, the broad service graph, cross-service composites, all route registrations, health/readiness, public error/not-found handling and database-close lifecycle.
 
-Constraints:
+Behavior-sensitive dependency edges were recorded, including media-storage consumers, offline download composition, AI authoring dependencies and quiz export dependencies. `server.ts` remains the owner of config/database creation, startup batch, listen and process signals.
+
+The **single smallest real first extraction** is now fixed:
+
+- create `apps/api/src/app/plugins/cors.ts`;
+- move only the existing CORS/preflight `onRequest` registration into `registerCorsPolicy(app, config)`;
+- invoke it at the same lifecycle point, after Fastify construction and before business routes;
+- preserve direct `app.addHook` semantics rather than introducing `app.register()` encapsulation;
+- do not move health/readiness, errors, database lifecycle, service construction or route registration in the same increment.
+
+Direct parity authority is `apps/api/tests/app.test.ts`; exact-head verification after implementation requires Architecture Guard, API lint/typecheck/unit/build, and current integration/real-browser gates because CORS is global browser-facing transport policy.
+
+Rejected for the first seam: giant `createServices()` container, moving all routes at once, empty target folder scaffolding, or bundling DB/error ownership into the same change.
+
+Constraints remain:
 - keep one Fastify modular monolith;
 - preserve plugin/route/service construction order where behavior depends on it;
 - no DI framework;
 - no repository/interface ceremony;
 - no database migration merely for folder structure;
 - create only folders/files that own real responsibility.
-
-Conceptual target remains:
-
-```text
-apps/api/src/app/
-  build-app.ts
-  composition/
-  config/
-  plugins/
-```
-
-This is a responsibility model, not permission to create empty architecture folders.
 
 ### AB-01.5 — Common backend technical ownership — PENDING
 
