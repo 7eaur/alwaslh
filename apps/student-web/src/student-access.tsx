@@ -14,7 +14,7 @@ const StudentAssessmentSection = lazy(() =>
   import("./student-assessment").then((module) => ({ default: module.StudentAssessmentSection })),
 );
 const StudentLearningExperience = lazy(() =>
-  import("./student-learning").then((module) => ({ default: module.StudentLearningExperience })),
+  import("./features/learn/StudentLearningExperience").then((module) => ({ default: module.StudentLearningExperience })),
 );
 const StudentLibraryExperience = lazy(() =>
   import("./features/library/StudentLibraryExperience").then((module) => ({ default: module.StudentLibraryExperience })),
@@ -61,6 +61,7 @@ export function StudentAccessSection({ profile, online, onSessionExpired, onLogg
               </div>
             ) : null}
             <StudentLearningExperience
+              profileId={profile.id}
               online={online}
               refreshKey={curriculumRefreshKey}
               onSessionExpired={onSessionExpired}
