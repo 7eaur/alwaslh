@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-01 shared foundations closed exact-head green; AB-02 shell/router discovery is next.**
+Last consolidated: **2026-09-14 — AB-02 shell/layout ownership closed green; inner route-table ownership is next.**
 
 ## Durable invariants
 
@@ -94,12 +94,60 @@ No further AB-01 foundation extraction is authorized.
 
 ## AB-02 — ACTIVE
 
-Next responsibility: thin Admin shell/router/providers/layouts and substantial lazy route boundaries.
+Canonical execution record:
 
-Begin with evidence only: current `App.tsx`, shell/navigation/session ownership, route table, feature public/routes boundaries, route focus/history/deep-link behavior, current tests and bundle composition. Define one smallest migration seam before changing code. Preserve auth/session outcomes and defer business workflow redesign to AB-03.
+`docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`
+
+### AB-02.1 — Global shell/layout ownership — DONE
+
+Worker B implemented the first bounded seam at source checkpoint:
+
+`0d07a24aa062ad569ff654524bdc13a4e368f399`
+
+New owner:
+
+`apps/admin-web/src/app/layouts/AdminShell.tsx`
+
+Responsibilities moved from `App.tsx`:
+
+- global Admin sidebar/navigation chrome;
+- account/profile display;
+- logout action;
+- shared Admin brand block used by shell/auth states;
+- authenticated layout around route children.
+
+Deliberately unchanged in this seam:
+
+- inner route table;
+- outer `router.tsx` + `RouteFocus` + product-shell semantics;
+- workflow pages under transitional `src/admin/*`;
+- navigation-definition ownership;
+- CSS architecture;
+- lazy loading.
+
+Closure evidence after later documentation pushes:
+
+- Architecture Guard `34838037118` — SUCCESS;
+- Frontend Preparation `34838037114` — SUCCESS;
+- Combined Integration `34838123077` — SUCCESS;
+- Stage13G `34838123143` — SUCCESS.
+
+Stage13G current-head verification includes Admin lint/typecheck/unit/build, API/backend verification, clean PostgreSQL, integrations/auth/security and real API + PostgreSQL + Chromium. Earlier source-head long runs were cancelled by later pushes, not by a product regression; current-head equivalent required coverage is green.
+
+### AB-02.2 — Inner route-table ownership — DISCOVERED / NEXT
+
+Live evidence:
+
+- `App.tsx` still eagerly imports every major workflow surface and owns the full inner `/app/*` route table;
+- route-only wrappers `ReviewArea`, `WorkspaceWithRelatedActions` and inner not-found composition live in `App.tsx`;
+- `apps/admin-web/src/app/` currently has only `layouts/`;
+- `features/` currently has only migrated Auth; all other workflow pages remain transitional `src/admin/*`;
+- outer `router.tsx` already owns product-level `/`, `/app/*`, outer not-found and `RouteFocus`.
+
+Decision: next smallest seam is an ownership extraction only. Create `apps/admin-web/src/app/router/AdminRoutes.tsx` and move the existing inner route table plus route-only wrappers/not-found state into it. Preserve current transitional page imports, URLs, session-expiry props and behavior. Do not combine with feature migration, lazy-loading, route redesign or outer-router changes.
 
 ## Exact continuation
 
-Perform AB-02 discovery, document the current root composition and target first seam, then implement at most one coherent shell/router increment with Architecture Guard + Admin quality + relevant real Chromium parity.
+Implement AB-02.2 only, then run Architecture Guard + Admin lint/typecheck/unit/build + relevant route/auth/focus checks + Stage13G real Chromium and Combined verification. Mark DONE only with exact-head-equivalent green evidence.
 
 Remaining roadmap: AB-02 thin Admin shell/router/providers/lazy routes → AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final full verification/reconciliation.
