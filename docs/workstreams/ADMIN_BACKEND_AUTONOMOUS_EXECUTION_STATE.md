@@ -1,77 +1,53 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `WAITING_FOR_CI`
-Sequence: `43`
+Status: `RUNNING`
+Sequence: `44`
 Last worker: `B`
-Active worker: `—`
-Start time: `2026-09-14T21:20:54+03:00`
-End time: `2026-09-14T21:23:10+03:00`
-Starting HEAD: `83dd513006764949516babbe825587dd63b926b4`
-Ending handoff parent HEAD: `9780792bcba10d37fabf183ba040914eb68f9360`
+Active worker: `C`
+Start time: `2026-09-14T21:37:11+03:00`
+End time: `—`
+Starting HEAD: `694473bfbc8754ac46578214087e6ed8c6219641`
+Ending handoff parent HEAD: `—`
 Current live `main` observed: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`
-Active increment: `AB-03.1 Overview + Operations exact-head documentation-equivalent CI closure verification only`
+Active increment: `AB-03.2 Curriculum + Content + OCR discovery only`
 Source implementation checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`
-Verification head: `9780792bcba10d37fabf183ba040914eb68f9360` — documentation-only relative to the executable checkpoint; fresh required branch gates are still running.
+Verification head: `694473bfbc8754ac46578214087e6ed8c6219641` — documentation-only relative to the executable checkpoint; latest Stage13G, Combined Integration and Admin AI checks are green.
 
-## Worker B sequence 43 — VERIFICATION PERFORMED / WAITING FOR CI
+## Worker C sequence 44 — RUNNING
 
-### What changed
+### Startup verification
 
-Worker B performed only the inherited AB-03.1 CI-closure verification. No Curriculum/Content/OCR source mutation was started.
+- branch HEAD observed: `694473bfbc8754ac46578214087e6ed8c6219641`;
+- live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`;
+- inherited state was `WAITING_FOR_CI` with no active worker;
+- exact-head documentation-equivalent checks on `694473bf...` are complete and green:
+  - Stage13G Admin Operations `34880448862` — SUCCESS;
+  - Combined Integration `34880448851` — SUCCESS;
+  - Admin AI Operations `34880448853` — SUCCESS;
+  - Architecture Guard remains authoritative from executable checkpoint `7eda86f...`, run `34876404251` — SUCCESS, because later commits are documentation-only and the guard is path-filtered.
+- PR #52 remains Draft / unmerged / no auto-merge.
 
-The executable checkpoint remains `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`. Compare `7eda86f... → 83dd513...` contains only these five documentation files:
+### Intended smallest step
 
-- `PROJECT_STATUS.md`
-- `PROJECT_ENGINEERING_LOG.md`
-- `PROJECT_HANDOFF.md`
-- `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`
-- `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
+Perform discovery only for `AB-03.2 Curriculum + Content + OCR`:
 
-Therefore there is no executable Admin/API/PostgreSQL/test/workflow drift after the exact-source checkpoint.
-
-The inherited documentation head `83dd513006764949516babbe825587dd63b926b4` completed its relevant branch checks successfully, including:
-
-- Stage13G Admin Operations run `34878654500` — SUCCESS; its Admin UI quality and Real API + PostgreSQL + Chromium jobs are SUCCESS.
-- Combined Integration run `34878654524` — SUCCESS; real Admin Chromium integration job is SUCCESS.
-- Admin AI Operations run `34878654612` — SUCCESS.
-- Architecture Guard remains authoritative from executable source checkpoint run `34876404251` — SUCCESS; the guard workflow is path-filtered to Admin/API/guard source and does not trigger on documentation-only commits.
-
-PR #52 was rechecked and remains Draft, open, unmerged and without auto-merge.
-
-### Current exact-head verification / CI
-
-Worker B's mandatory RUNNING lease update created documentation-only head `9780792bcba10d37fabf183ba040914eb68f9360`. Fresh checks on that head were still running at handoff:
-
-- Stage13G Admin Operations `34880319720` — IN PROGRESS; Admin UI quality job already SUCCESS, backend/real-browser stages still running.
-- Combined Integration `34880320031` — IN PROGRESS.
-- Admin AI Operations `34880319782` — IN PROGRESS.
-- Architecture Guard — not triggered because the commit changes documentation only; source-equivalent guard evidence remains `34876404251` SUCCESS.
-
-Because required exact-head/current documentation-head gates are still running, this run intentionally remains `WAITING_FOR_CI` rather than advancing to AB-03.2.
-
-### Exact next smallest step
-
-Verification/closure only:
-
-1. fetch current branch/main heads and this shared state;
-2. verify the latest documentation-equivalent head's Stage13G, Combined and Admin quality/AI checks to completion;
-3. confirm no executable drift from source checkpoint `7eda86f...`;
-4. if green, mark AB-03.1 closure handoff `READY_FOR_NEXT` and hand off **AB-03.2 Curriculum + Content + OCR discovery only**;
-5. do not mutate Curriculum/Content/OCR until this closure verification is complete.
+1. map operator jobs/routes and current Admin frontend ownership;
+2. map API/application/domain/infrastructure ownership and cross-module seams;
+3. map PostgreSQL publication/revision/provenance/media/OCR integrity;
+4. map security/audit boundaries and Student-facing server consumers where relevant;
+5. inspect existing unit/integration/security/Chromium evidence;
+6. select exactly one smallest evidence-backed root correction for the next worker/run;
+7. do not mutate Curriculum/Content/OCR production source, tests or migrations in this discovery increment.
 
 ### Risks / blockers
 
-- No known source blocker.
-- Current blocker is CI completion only.
-- Do not invent further Overview/Operations migration.
-- Do not move presentation files solely for folder purity.
-- PR #52 remains Draft / unmerged / no auto-merge.
+- No active worker collision observed.
+- No known CI blocker remains from AB-03.1 closure.
+- Do not combine the AI slice or broad folder restructuring into this discovery.
 
 ### Main reconciliation need
 
-`NOT REQUIRED NOW`.
-
-Live `main` is still `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; no fresh scoped implementation overlap was observed.
+`NOT REQUIRED NOW` unless discovery reveals overlapping scoped changes.
 
 ## Safety constraints
 
