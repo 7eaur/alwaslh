@@ -78,7 +78,12 @@ describe("applyOfflineContentDelta", () => {
 
     expect(mocks.removePackage).toHaveBeenCalledWith("profile-1", "device-1", "lesson-1");
     expect(mocks.writeCursor).toHaveBeenCalledWith("profile-1", "device-1", "7");
-    expect(mocks.removePackage.mock.invocationCallOrder[0]).toBeLessThan(mocks.writeCursor.mock.invocationCallOrder[0]);
+    const removeOrder = mocks.removePackage.mock.invocationCallOrder[0];
+    const cursorOrder = mocks.writeCursor.mock.invocationCallOrder[0];
+    if (removeOrder === undefined || cursorOrder === undefined) {
+      throw new Error("expected offline delta application and cursor persistence calls");
+    }
+    expect(removeOrder).toBeLessThan(cursorOrder);
     expect(result).toEqual({ pages: 1, entries: 1, removed: 1, nextCursor: "7", hasMore: false });
   });
 
