@@ -4,7 +4,7 @@
 
 **Active branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — Draft / unmerged / no auto-merge.  
-**Current stage:** `AB-02 — Thin Admin shell + routing`.
+**Current stage:** `AB-03 — End-to-end Admin vertical slices` (next executable phase; no AB-03 source mutation has started yet).
 
 ## Scope
 
@@ -12,7 +12,7 @@ This workstream owns the complete Super Admin plus full Fastify backend/API, Pos
 
 ## Continuation authority
 
-Read first: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`, then the autonomous protocol, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
+Read first: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`, then the autonomous protocol, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and the active workstream record.
 
 Workers A/B/C share one branch and ordered roadmap. Never overlap an active worker. Every run performs one smallest coherent increment.
 
@@ -32,7 +32,7 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 Live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-Latest implementation changes on main remain Student-focused and do not touch `apps/admin-web`, `apps/api`, or `database/migrations`. Shared project docs changed on main and require deliberate reconciliation before the AB-03 structural phase boundary.
+AB-02 → AB-03 phase-boundary reconciliation is complete. The live-main-only implementation delta is Student frontend/workflow plus Student-specific CI/docs; no `apps/admin-web`, `apps/api`, or `database/migrations` implementation overlap was found. Shared project docs diverge and remain branch-local workstream authority until final reconciliation.
 
 ## AB-00 — DONE
 
@@ -42,9 +42,9 @@ Architecture baseline, inventories, guardrails and readiness gate are closed.
 
 Shared Admin transport/session/product-state foundations, bounded backend app-composition seams and shared request-validation ownership are closed.
 
-## AB-02 — ACTIVE
+## AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Canonical execution record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
+Canonical record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 
 ### AB-02.1 Global Admin shell/layout ownership — DONE
 
@@ -60,12 +60,24 @@ Source checkpoint: `f60d3d0d163c9f31dead139cc36406396f795a7e`. Closure: Guard `3
 
 ### AB-02.4 Auth login presentation ownership — DONE
 
-Source checkpoint `d4c3c7896043ea6b1cc4cac1dd404d7912131916` moved the transitional root login presentation into `features/auth/ui/LoginScreen.tsx`, exposed it through `features/auth/public`, updated `App.tsx` to consume the public contract, and removed the root file with no login/session behavior change.
+Source checkpoint `d4c3c7896043ea6b1cc4cac1dd404d7912131916` moved login presentation into `features/auth/ui/LoginScreen.tsx`, exposed it through `features/auth/public`, updated `App.tsx` to consume the public contract, and removed the transitional root file with no login/session behavior change.
 
-Source-tree-equivalent verification head `080b8e131da72b0795f647809239a815d4604210` differs from the source checkpoint only by canonical/shared documentation. Closure evidence: Architecture Guard `34853562192` — SUCCESS; Admin AI `34853935899` — SUCCESS; Combined Integration `34853935696` — SUCCESS; Stage13G `34853935720` — SUCCESS, including Admin/API quality, clean PostgreSQL migrations/contracts, auth/security/integration regressions, and Real API + PostgreSQL + Chromium.
+Source-tree-equivalent verification head `080b8e131da72b0795f647809239a815d4604210` differs from the implementation checkpoint only by canonical/shared documentation. Closure evidence: Architecture Guard `34853562192` — SUCCESS; Admin AI `34853935899` — SUCCESS; Combined Integration `34853935696` — SUCCESS; Stage13G `34853935720` — SUCCESS, including Admin/API quality, clean PostgreSQL migrations/contracts, auth/security/integration regressions, and Real API + PostgreSQL + Chromium.
+
+### AB-02 final closure inspection — DONE
+
+Live inspection confirms:
+
+- `App.tsx` composes session/provider/authenticated shell only;
+- `AdminShell` is the single global chrome/navigation owner;
+- `AdminRoutes` owns the inner `/app/*` table, redirects/not-found wrappers and route-level Suspense/lazy boundaries;
+- auth/session internals are consumed only through `features/auth/public` at app composition boundaries;
+- remaining legacy `src/admin/*` workflow ownership is intentionally deferred to AB-03 vertical slices, not an AB-02 blocker.
+
+No additional shell/router/provider abstraction is justified.
 
 ## Remaining roadmap
 
-Perform one final AB-02 closure inspection only. If no further material shell/router/provider debt is proven, close AB-02 rather than inventing abstraction. Reconcile live `main` before entering AB-03. Then continue AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Next: AB-03 vertical slices in canonical order: Overview + Operations → Curriculum + Content + OCR → AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
