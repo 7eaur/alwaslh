@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-02.4 auth login presentation ownership implemented; awaiting exact-head/source-tree-equivalent integration/browser closure.**
+Last consolidated: **2026-09-14 — AB-02.4 auth login presentation ownership closed with source-tree-equivalent exact evidence; final AB-02 closure inspection remains.**
 
 ## Durable invariants
 
@@ -43,9 +43,7 @@ Source checkpoint `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`; closure Guard `348
 
 Source checkpoint `f60d3d0d163c9f31dead139cc36406396f795a7e`; closure Guard `34849322458`, Frontend Preparation `34849322443`, Admin AI `34849322533`, source-tree-equivalent Combined `34849829516`, Stage13G `34849829576` — SUCCESS. Verified initial JS is **196.84 kB / 64.11 kB gzip**, with independent lazy workflow chunks and no artificial warning/manualChunks tuning.
 
-### AB-02.4 — Auth login presentation ownership — IMPLEMENTED / WAITING_FOR_CI
-
-Discovery found one explicitly assigned AB-02 debt from the AB-01 canonical record: root `apps/admin-web/src/LoginScreen.tsx` was documented as transitional auth presentation debt.
+### AB-02.4 — Auth login presentation ownership — DONE
 
 Source implementation checkpoint: `d4c3c7896043ea6b1cc4cac1dd404d7912131916`.
 
@@ -56,18 +54,18 @@ Correction:
 - changed `App.tsx` to compose `LoginScreen` through the auth public boundary;
 - deleted the transitional root `LoginScreen.tsx`.
 
-No behavior change was introduced: same credentials form, browser validation attributes, pending/error behavior, `loginAdmin` call, profile callback, session acceptance and post-auth focus. No API/PostgreSQL/migration/Student frontend implementation changed.
+Behavior remained unchanged: same credentials form, browser validation attributes, pending/error behavior, `loginAdmin` call, profile callback, session acceptance and post-auth focus.
 
-Verification at source checkpoint:
+Closure evidence:
 
+- source checkpoint → verification head `080b8e131da72b0795f647809239a815d4604210` changes only canonical/shared documentation;
 - Architecture Guard `34853562192` — SUCCESS;
-- Stage13G `34853562095` — IN PROGRESS at observation;
-- Combined `34853562292` — PENDING at observation.
-
-The seam remains open until relevant Admin/API/PostgreSQL/integration/Chromium gates are green on the source or a documented source-tree-equivalent head.
+- Admin AI `34853935899` — SUCCESS;
+- Combined Integration `34853935696` — SUCCESS;
+- Stage13G `34853935720` — SUCCESS, including Admin lint/typecheck/unit/build, API lint/typecheck/unit/build, clean PostgreSQL migrations, DB contract, accounts/access/operations/security/audit/AI integration, auth regression and Real API + PostgreSQL + Chromium.
 
 ## Exact continuation
 
-Verify and close AB-02.4 only. Then perform one final shell/router/provider closure inspection; if no material debt remains, close AB-02 instead of inventing abstraction. Reconcile live `main` before entering AB-03. Do not combine closure with an AB-03 workflow migration.
+Perform one final AB-02 shell/router/provider closure inspection only. If no material architecture debt remains in AB-02 scope, close AB-02 instead of inventing abstraction. Reconcile live `main` before entering AB-03. Do not combine AB-02 closure with an AB-03 workflow migration.
 
 Remaining roadmap: AB-02 → AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final full verification/reconciliation.
