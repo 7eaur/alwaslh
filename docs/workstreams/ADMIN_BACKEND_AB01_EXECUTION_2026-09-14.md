@@ -92,9 +92,32 @@ Closure evidence:
 
 Conclusion: third AB-01.4 seam is **DONE**.
 
+### Fourth seam — Fastify instance construction/options — SELECTED / IMPLEMENTATION NEXT
+
+Discovery checkpoint: starting branch HEAD `2722de7d1d4d09f2eae7e3f9dc35624255f392fa`; Worker C reservation commit `0b522a7de907c5bcbcc1af78a6db33db8fc6cbae`.
+
+Target owner: `apps/api/src/app/create-fastify-instance.ts` via a narrow `createFastifyInstance(config: AppConfig): FastifyInstance` helper.
+
+The extraction must preserve exactly:
+
+- silent log level disables logger; other supported levels use `{ level: config.LOG_LEVEL }`;
+- `disableRequestLogging: false`;
+- `trustProxy: true`;
+- `bodyLimit: 1_048_576`;
+- `requestTimeout: 15_000`;
+- one instance per `buildApp()` call and current downstream composition/registration ordering.
+
+Evidence: live `app.ts` still owns the constructor/options; `apps/api/tests/app.test.ts` exercises `buildApp()` as the bootstrap contract but does not authorize option tuning. Therefore extraction and tuning are intentionally separate concerns.
+
+Non-goals: no service container/DI; no service graph or business route move; no DB lifecycle move; no config/default change; no schema/migration/Student frontend change.
+
+Switch condition: the new helper becomes the single value owner of `Fastify(...)`; `app.ts` no longer imports Fastify as a value or embeds those option literals; `buildApp()` contract and all downstream behavior/order remain unchanged; required source-head/exact-head gates are green.
+
+Required closure gates: Architecture Guard, API lint/typecheck/unit/build including existing `app.test.ts`, clean PostgreSQL, relevant integration/auth/security regressions, and the workstream real API/PostgreSQL/Chromium/combined gates.
+
 ### Next AB-01.4 action
 
-Perform **discovery only** for the next bounded app-composition seam still owned by `apps/api/src/app.ts`. Select one smallest responsibility backed by existing contracts/tests and explicit non-goals. Document target owner, dependency/order constraints, switch/deletion condition and closure gates. Do not implement the newly selected seam in the same discovery increment.
+Implement **only** the selected Fastify instance construction/options seam. Do not discover or combine a fifth seam until that implementation has passed the required gates and been documented closed.
 
 ## AB-01.5 — Common backend technical ownership — PENDING
 
