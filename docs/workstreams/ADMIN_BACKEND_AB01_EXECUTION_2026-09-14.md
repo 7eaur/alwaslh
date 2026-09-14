@@ -61,23 +61,28 @@ Verification:
 
 Conclusion: first AB-01.4 seam is **DONE**.
 
-### Second seam — HEALTH/READINESS DISCOVERY DONE / IMPLEMENTATION NEXT
+### Second seam — HEALTH/READINESS IMPLEMENTED / WAITING_FOR_CI
 
-Discovery selected the next smallest bounded app-level responsibility:
+Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 
-- current owner: inline `GET /health` and `GET /ready` handlers in `apps/api/src/app.ts`;
-- target owner: `apps/api/src/app/http/health.ts`;
-- target composition call: `registerHealthRoutes(app, database)`;
-- direct parity authority: the three existing health/readiness tests in `apps/api/tests/app.test.ts`;
-- `/health` must remain process-only and healthy even when PostgreSQL is unavailable;
-- `/ready` must continue using only `database.ping()`, return the same 200/503 bodies, and preserve the database readiness failure log semantics;
-- no business/auth/security/Student/schema contract changes are authorized.
+Implemented exactly the selected bounded app-level responsibility:
 
-Implementation must preserve the current route registration position and must **not** include public-error handlers, not-found handling, database-close lifecycle, service construction, all-route extraction, `server.ts`, migrations or Student frontend changes.
+- created `apps/api/src/app/http/health.ts`;
+- `registerHealthRoutes(app, database)` now owns `GET /health` and `GET /ready`;
+- `apps/api/src/app.ts` imports and invokes the health owner at the same relative position after business route registration and before not-found/error/onClose handling;
+- `/health` still returns `{ status: "ok", service: "alwaslh-api" }` without calling PostgreSQL;
+- `/ready` still uses only `database.ping()`, returns `{ status: "ready" }` on success, logs `database readiness check failed` on ping failure, and returns 503 `{ status: "not_ready" }`;
+- the existing three direct health/readiness tests remain unchanged as parity authority;
+- public error/not-found handlers, database-close lifecycle, database construction/config, `server.ts`, service graph, migrations/schema and Student frontend were untouched.
 
-Required closure gates: Architecture Guard, API lint/typecheck/unit/build, clean PostgreSQL/integration regressions, Combined/equivalent backend authority evidence, and Stage13G/equivalent real API + PostgreSQL + Chromium evidence.
+Verification status on the source HEAD:
 
-The next increment is implementation of **this seam only**. No third composition seam may be selected until health/readiness extraction is verified.
+- Architecture Guard `34811642661` — **SUCCESS**;
+- Stage13E Combined Integration `34811642693` — running/pending at this handoff;
+- Stage13G `34811642622` — running/pending at this handoff;
+- Stage13E Admin AI `34811642629` — running at this handoff.
+
+Therefore the second seam is **not DONE yet**. Required closure still needs the pending API/integration/PostgreSQL/real Chromium evidence to become green on the source tree. No third composition seam may be selected before that closure.
 
 ## AB-01.5 — Common backend technical ownership — PENDING
 
