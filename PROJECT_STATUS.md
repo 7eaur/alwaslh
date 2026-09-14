@@ -19,7 +19,7 @@ Read in this order before mutation:
 3. `PROJECT_ENGINEERING_LOG.md`
 4. `PROJECT_HANDOFF.md`
 5. `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`
-6. `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`
+6. `docs/architecture/ADMIN_BACKEND_AB01_5_TECHNICAL_OWNERSHIP_DISCOVERY_2026-09-14.md`
 7. active architecture/product docs listed by those authorities.
 
 Workers A/B/C share one branch and ordered roadmap. If another worker is active, do not create overlapping mutations. Every run performs one smallest coherent increment and ends `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE`.
@@ -37,13 +37,9 @@ Workers A/B/C share one branch and ordered roadmap. If another worker is active,
 - Tests/security/validation are never weakened to make migration pass.
 - No permanent dual ownership.
 
-Migration law:
-
-`job/use case → DB/API/security contracts → current owner → target owner → states/flow → backend seam correction → replacement → outcome verification → switch → legacy deletion → exact-head gates → documentation`
-
 ## Branch reconciliation
 
-Current live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the Student Experience V2 merge checkpoint. It does not overlap the just-closed AB-01.4 API composition seams. Reconcile again at the next structural phase boundary.
+Live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`. Compared with the prior reconciled main checkpoint `3053640cc5bb0699cfa7456cf646e8997f6aa81b`, the only new commit is the Student Experience V2 merge. No `apps/api`, `apps/admin-web`, or `database/migrations` path appears in that main-only delta. No scoped reconciliation is required before AB-01.5 implementation.
 
 ## AB-00 — DONE
 
@@ -67,29 +63,19 @@ Source checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
 ### AB-01.4 Backend app composition foundation — DONE
 
-Closed bounded seams:
+Five bounded technical app seams are closed: CORS, health/readiness, public errors, Fastify construction/options and database lifecycle. Fifth seam source+test checkpoint: `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`; Architecture Guard, Admin AI, Combined and Stage13G closure evidence are green. Broad service/module composition remains for AB-03/AB-04 rather than a giant container/registry abstraction.
 
-- CORS/preflight — source `dbdc9245f2d0e283d047d7e1254748e55f890a55`;
-- health/readiness — source `a302871b3486ae95810cea40dccca68363a29055`;
-- public not-found/error handling — source `001d45892bf4a17458f3beaeaaa1a7430be49b44`;
-- Fastify instance construction/options — source `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`;
-- database lifecycle registration — source+test `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`.
+### AB-01.5 Common backend technical ownership — DISCOVERY COMPLETE / IMPLEMENTATION NEXT
 
-Database lifecycle owner: `apps/api/src/app/plugins/database-lifecycle.ts`. `apps/api/src/app.ts` no longer embeds the database `onClose` hook; focused app test coverage proves `app.close()` delegates to the supplied `database.close()` exactly once.
+Selected single correction: move the generic request-validation adapter (`parseBody`) out of private `auth/http.ts` ownership into:
 
-Closure evidence for the fifth seam/source-equivalent tree:
+`apps/api/src/app/http/request-validation.ts`
 
-- Architecture Guard `34825750566` — SUCCESS on source composition commit;
-- compare `101f61a9c25e3de116d0074a3ef7e2f760eb98a7...e61400652267a4c836c40abf35a58a434b0fff08` changes only canonical documentation files;
-- Admin AI `34826063345` — SUCCESS;
-- Combined Integration `34826063326` — SUCCESS including API/Admin quality, clean PostgreSQL, database contract, backend authority/auth-security regressions and real Admin Chromium;
-- Stage13G `34826063330` — SUCCESS including Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+Evidence: Question Bank and Quiz Builder currently import this generic Zod→`AppError(BAD_REQUEST)` helper from Auth HTTP. The helper does not perform authentication/session behavior. `currentProfile` is explicitly excluded from this correction because it invokes AuthService/session authentication and remains Auth-owned.
 
-AB-01.4 closes here. Remaining broad service construction, cross-service composites, multi-consumer infrastructure construction and whole-product route registration stay in `app.ts` for now. Moving them wholesale would create a giant container/registry without evidence; workflow-driven normalization belongs in AB-03 and residual backend cleanup in AB-04.
+Implementation contract: preserve `safeParse` semantics and exact invalid-input mapping `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)`; migrate every real current caller and nothing more. No auth/session/authorization redesign, no AppError/config/db/media move, no schema registry, no broad HTTP rewrite.
 
-### AB-01.5 Common backend technical ownership — NEXT
-
-Normalize only proven cross-cutting technical concerns. Domain/business rules remain with module owners. Discovery must identify an actual duplicated/misowned technical concern before any extraction.
+After exact-head verification of this one correction, AB-01.5 stops and AB-01.6 begins.
 
 ### AB-01.6 Foundation closure gate — PENDING
 
@@ -109,4 +95,4 @@ No merge/readiness before AB-08 exact-head green. After verified AB-08 completio
 
 ## Immediate next action
 
-Begin **AB-01.5 discovery only**: inspect currently duplicated/misowned cross-cutting backend technical concerns (HTTP/auth/error/db/observability/media infrastructure) and select at most one small evidence-backed ownership correction. Do not invent shared abstractions, containers or framework layers. If no AB-01.5 move is justified, document that and proceed to AB-01.6 rather than manufacturing work.
+Implement **only** the AB-01.5 request-validation ownership correction documented in `docs/architecture/ADMIN_BACKEND_AB01_5_TECHNICAL_OWNERSHIP_DISCOVERY_2026-09-14.md`: search all current branch callers, create the small `app/http/request-validation.ts` owner, switch real callers, remove `parseBody` ownership from Auth HTTP, then run Architecture Guard + API quality + relevant auth/Question Bank/Quiz Builder/PostgreSQL/integration/Chromium gates. Do not start AB-01.6 until that exact-head evidence is green.
