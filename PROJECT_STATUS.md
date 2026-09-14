@@ -60,18 +60,30 @@ Owner: `apps/admin-web/src/app/router/AdminRoutes.tsx`.
 
 Closure evidence: Architecture Guard `34840954071`, Frontend Preparation `34840953959`, Admin AI `34841142948`, Combined `34841142987`, Stage13G `34841142975` — SUCCESS on source/source-tree-equivalent heads.
 
-### AB-02.3 Substantial workflow route lazy boundaries — IMPLEMENTED / WAITING_FOR_CI
+### AB-02.3 Substantial workflow route lazy boundaries — DONE
 
 Source checkpoint: `f60d3d0d163c9f31dead139cc36406396f795a7e`.
 
-`AdminRoutes.tsx` now owns explicit `React.lazy()` boundaries for substantial Admin workflow destinations and one route-level `Suspense` fallback using the existing shared `AdminProductState` primitive. URLs, redirects, wrappers, `onSessionExpired`, outer router/focus behavior and workflow contracts were preserved. No feature migration, navigation/auth redesign, API/DB/migration or Student frontend change was included.
+`AdminRoutes.tsx` now owns explicit `React.lazy()` boundaries for substantial Admin workflow destinations and one route-level `Suspense` fallback using the existing shared `AdminProductState` primitive. URLs, redirects, wrappers, `onSessionExpired`, outer router/focus behavior and workflow contracts remain unchanged. No feature migration, navigation/auth redesign, API/DB/migration or Student frontend change was included.
 
-Source-head evidence so far: Architecture Guard `34849322458` — SUCCESS; Frontend Preparation `34849322443` — SUCCESS. Stage13G `34849322551`, Combined `34849322335` and Admin AI `34849322533` were still running at handoff, so this seam is not marked DONE yet.
+Closure evidence:
 
-Required closure remains: green Admin quality/build with measured dynamic chunk output, representative deep-link/session/focus evidence, Combined and Stage13G real API/PostgreSQL/Chromium.
+- Architecture Guard `34849322458` — SUCCESS on source checkpoint.
+- Frontend Preparation `34849322443` — SUCCESS on source checkpoint.
+- Admin AI `34849322533` — SUCCESS on source checkpoint.
+- Source-tree-equivalent Combined Integration `34849829516` — SUCCESS.
+- Source-tree-equivalent Stage13G `34849829576` — SUCCESS, including Admin/API quality, clean PostgreSQL/contracts/integrations/auth regression and Real API + PostgreSQL + Chromium.
+- Comparison `f60d3d0d… → c1ac48f0…` contains documentation files only after the source checkpoint, so the later green runs verify the same implementation tree.
+
+Measured production build after the seam:
+
+- initial JS: **196.84 kB / 64.11 kB gzip**, down from verified pre-seam **446.30 kB / 117.48 kB gzip**;
+- substantial workflow chunks are emitted independently; largest observed lazy workflow chunk is `AiOperationsPage` at **41.23 kB / 10.82 kB gzip**;
+- representative chunks include Curriculum **21.78/5.05**, AI Authoring **18.09/5.27**, Content Ingestion **17.28/5.41**, Question Detail **16.94/4.78**, Quiz Detail **15.25/4.50**, Students **12.74/4.08** kB/gzip;
+- no warning-threshold or `manualChunks` tuning was used to manufacture this result.
 
 ## Remaining roadmap
 
-Close AB-02.3 after required CI evidence, then select at most one further evidence-backed AB-02 seam. Continue AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Select at most one further evidence-backed AB-02 seam from live repository evidence; if no further shell/router concern is justified, perform the AB-02 closure gate instead of inventing abstraction. Then continue AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
