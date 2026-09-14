@@ -90,7 +90,7 @@ Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSession
 
 Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`. The minimum proven loading/error/retry presentation shell is shared; feature state machines and server semantics remain feature-owned.
 
-### AB-01.4 Backend app composition foundation — ACTIVE / FIRST SEAM DONE
+### AB-01.4 Backend app composition foundation — ACTIVE / SECOND SEAM SELECTED
 
 Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
@@ -98,21 +98,26 @@ Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVE
 
 Source implementation HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 
-- owner created: `apps/api/src/app/plugins/cors.ts`;
-- `registerCorsPolicy(app, config)` owns the existing global `onRequest` CORS/preflight behavior;
-- direct `app.addHook()` semantics and registration order are preserved;
-- `apps/api/src/app.ts` now composes the CORS policy instead of owning its mechanics;
-- health/readiness, public error handling, DB close lifecycle, service graph and route registration were not moved.
-
-Verification evidence over the same source tree:
-
-- Architecture Guard `34808159011` — SUCCESS on source HEAD;
-- verification HEAD `3d281eddcdaf4a8d75d810dc0e5ded5a35392cad` differs from source HEAD only in `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`;
+- owner: `apps/api/src/app/plugins/cors.ts`;
+- `registerCorsPolicy(app, config)` preserves the existing global CORS/preflight behavior and registration scope;
+- Architecture Guard `34808159011` — SUCCESS;
 - Admin AI `34809211720` — SUCCESS;
-- Combined Integration `34809211704` — SUCCESS including API/Admin quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
-- Stage13G `34809211707` — SUCCESS including Admin/API quality, clean PostgreSQL, all listed integration/auth regressions and real API + PostgreSQL + Chromium.
+- Combined Integration `34809211704` — SUCCESS;
+- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
 
-The next AB-01.4 action is **discovery only**: re-inspect the remaining `apps/api/src/app.ts` responsibilities and choose the next single technical composition seam. Do not bundle service graph, all routes, errors, DB lifecycle or unrelated concerns.
+**Second seam — health/readiness HTTP extraction — DISCOVERY DONE / IMPLEMENTATION NEXT.**
+
+Selected target ownership:
+
+- current owner: inline `GET /health` and `GET /ready` handlers in `apps/api/src/app.ts`;
+- target owner: `apps/api/src/app/http/health.ts`;
+- target composition function: `registerHealthRoutes(app, database)`;
+- direct parity authority: three existing tests in `apps/api/tests/app.test.ts` covering process-only health, ready=200 and ready=503;
+- implementation must preserve the existing readiness log/status/body semantics and current composition position.
+
+Explicitly out of this seam: public error/not-found handlers, database close lifecycle, service construction, all-route extraction, `server.ts`, migrations, business/security contracts and Student frontend.
+
+The next worker implements **this seam only**, then runs the required Architecture Guard/API/integration/Chromium gates before any third composition seam is selected.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -138,4 +143,4 @@ No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: perform the **second AB-01.4 composition discovery** only, select one smallest justified seam with parity/verification contract, document it, and leave implementation to the next coherent increment.
+Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: implement **only** the selected AB-01.4 health/readiness extraction into `apps/api/src/app/http/health.ts`, preserve the three direct parity behaviors, then verify before selecting any third seam.
