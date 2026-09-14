@@ -1,11 +1,14 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `WAITING_FOR_CI`
 Sequence: `8`
-Last worker: `C`
-Active worker: `A`
+Last worker: `A`
+Active worker: `NONE`
 Start time: `2026-09-14T08:57:59+03:00`
+End time: `2026-09-14T09:04:30+03:00`
 Starting HEAD: `997bf46df44c22c64feaf23f8e2527d11dea9202`
+Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`
+Documentation checkpoint before final handoff update: `d5329684fc7155c58a92491c7e4dafabefe03b7c`
 Latest live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`
 
 ## Active roadmap position
@@ -15,47 +18,77 @@ Latest live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`
 - AB-01.1 — DONE
 - AB-01.2 — DONE
 - AB-01.3 — DONE
-- **AB-01.4 — ACTIVE / CORS SEAM DONE / HEALTH-READINESS IMPLEMENTATION RUNNING**
+- **AB-01.4 — ACTIVE / CORS SEAM DONE / HEALTH-READINESS IMPLEMENTED / WAITING_FOR_CI**
 - AB-01.5 — PENDING
 - AB-01.6 — PENDING
 
-## Worker A sequence 8 active task
+## Worker A sequence 8 completed increment
 
-Implement exactly one bounded increment: the selected **AB-01.4 health/readiness HTTP extraction**.
+Implemented exactly the selected second AB-01.4 seam: **health/readiness HTTP ownership extraction**.
 
-### Intended change
+### Source changes
 
-1. create `apps/api/src/app/http/health.ts`;
-2. implement `registerHealthRoutes(app, database)` using the existing Fastify instance and existing `Database` dependency;
-3. move only `GET /health` and `GET /ready` from `apps/api/src/app.ts`;
-4. leave a single `registerHealthRoutes(app, database)` composition call at the same relative position;
-5. preserve exact paths/statuses/bodies, process-only liveness, `database.ping()` readiness and readiness failure logging;
-6. do not touch public-error/not-found handlers, DB close lifecycle, database construction, server startup/signals, service graph, migrations/schema or Student frontend.
+- created `apps/api/src/app/http/health.ts`;
+- added `registerHealthRoutes(app, database)` as the sole owner of `GET /health` and `GET /ready`;
+- updated `apps/api/src/app.ts` to import and invoke that owner at the same relative location;
+- removed the duplicate inline route handlers from `app.ts`.
 
-## Startup verification
+### Preserved behavior
 
-- branch HEAD observed: `997bf46df44c22c64feaf23f8e2527d11dea9202`;
-- main HEAD observed: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`;
-- previous state was `READY_FOR_NEXT`, worker C sequence 7, with no active lease;
-- exact-head pre-mutation workflows inspected; available Stage13E Admin AI and Combined runs on `997bf46...` are green;
-- canonical status/log/handoff/protocol/AB-01/discovery docs and direct app parity tests were read before mutation.
+- `GET /health` remains process-only, returns 200 `{ status: "ok", service: "alwaslh-api" }`, and does not depend on PostgreSQL reachability;
+- `GET /ready` still calls only `database.ping()`;
+- ready success remains 200 `{ status: "ready" }`;
+- readiness failure still logs `database readiness check failed` with the error and returns 503 `{ status: "not_ready" }`;
+- the existing three parity tests in `apps/api/tests/app.test.ts` were not weakened or rewritten.
 
-## Required closure evidence
+### Explicitly untouched
 
-- Architecture Guard;
-- API lint/typecheck/unit/build, including the three existing `apps/api/tests/app.test.ts` health/readiness behaviors;
-- clean PostgreSQL/integration regressions;
-- Stage13E Combined/equivalent backend authority evidence;
-- Stage13G/equivalent real API + PostgreSQL + Chromium evidence.
+- public error/not-found handling;
+- database close lifecycle;
+- database construction/config;
+- `server.ts` startup/signals;
+- service/composite graph;
+- migrations/schema;
+- Student frontend.
 
-If required gates remain active after implementation, close this run as `WAITING_FOR_CI`, not DONE.
+## Verification / CI
+
+Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
+
+Observed:
+
+- Architecture Guard `34811642661` — **SUCCESS**;
+- Stage13E Combined Integration `34811642693` — pending/running at handoff;
+- Stage13G Admin Operations `34811642622` — pending/running at handoff;
+- Stage13E Admin AI `34811642629` — running at handoff.
+
+Required API lint/typecheck/unit/build, clean PostgreSQL/integration regressions and real API + PostgreSQL + Chromium evidence are therefore not yet fully closed. This seam is **not DONE** until those gates are green on the same source tree or a proven documentation-only equivalent.
+
+## Documentation updated this run
+
+- `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`;
+- `PROJECT_STATUS.md`;
+- `PROJECT_ENGINEERING_LOG.md`;
+- `PROJECT_HANDOFF.md`;
+- this execution-state file.
+
+No PR #52 comment was added because this is an implementation checkpoint awaiting verification, not a completed milestone/blocker.
+
+## Exact next smallest step — Worker B
+
+1. re-fetch live branch/main and this state; respect anti-collision lease;
+2. inspect source runs `34811642693`, `34811642622`, `34811642629` and any newer source-tree-equivalent runs triggered by documentation-only commits;
+3. confirm API lint/typecheck/unit/build, clean PostgreSQL/integration regressions and real API + PostgreSQL + Chromium all pass;
+4. if green, mark the health/readiness seam DONE in state/status/log/handoff/AB-01 documentation;
+5. if any gate fails, fix only the root cause within this health/readiness seam and re-run verification;
+6. do **not** select or implement a third AB-01.4 composition seam until this one is closed.
 
 ## Risks / blockers
 
-- No current blocker.
-- This seam is deliberately narrow and has direct parity tests.
-- No third composition seam may be selected in this run.
+- No code blocker identified.
+- Only verification completion remains.
+- Documentation commits after the source implementation may supersede/cancel some source-head workflows; use source-tree equivalence only when the diff is documentation-only and prove it before closure.
 
 ## Main reconciliation
 
-`main` remains `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; current delta is the previously reconciled Student V2 merge. Main reconciliation required now: `NO` unless main advances during this run.
+`main` remains `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; no new scoped overlap was observed in this run. Main reconciliation required now: `NO` unless main advances before the next mutation.
