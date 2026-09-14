@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — second AB-01.4 composition seam implemented; verification still active.**
+Last consolidated: **2026-09-14 — second AB-01.4 composition seam closed with green source-tree-equivalent verification.**
 
 ## A. Durable authority invariants
 
@@ -69,28 +69,33 @@ Source HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 - `registerCorsPolicy(app, config)` preserves direct `onRequest` behavior, origin filtering, credentials, `Vary`, methods/headers and rejected-preflight semantics;
 - Architecture Guard `34808159011`, Admin AI `34809211720`, Combined `34809211704`, Stage13G `34809211707` — SUCCESS.
 
-#### Second composition seam — health/readiness — IMPLEMENTED / WAITING_FOR_CI
+#### Second composition seam — health/readiness — DONE
 
 Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 
 Implemented:
 
-- created `apps/api/src/app/http/health.ts`;
-- `registerHealthRoutes(app, database)` is now the sole owner of `/health` and `/ready` handlers;
+- `apps/api/src/app/http/health.ts` owns `GET /health` and `GET /ready` through `registerHealthRoutes(app, database)`;
 - `apps/api/src/app.ts` retains one composition call at the same relative position;
 - liveness remains process-only and independent from PostgreSQL;
 - readiness still calls only `database.ping()` and preserves the same success body, failure log message, 503 status and `not_ready` body;
-- direct tests in `apps/api/tests/app.test.ts` remain unchanged as parity authority;
-- public errors/not-found, DB close lifecycle, database setup, server startup/signals, service graph, migrations/schema and Student frontend were intentionally untouched.
+- direct tests in `apps/api/tests/app.test.ts` remained unchanged;
+- public errors/not-found, DB close lifecycle, database setup, server startup/signals, service graph, migrations/schema and Student frontend were untouched.
 
-Verification observed at handoff:
+Closure evidence:
 
-- Architecture Guard `34811642661` — SUCCESS;
-- Combined Integration `34811642693` — pending/running;
-- Stage13G `34811642622` — pending/running;
-- Admin AI `34811642629` — running.
+- Architecture Guard `34811642661` — SUCCESS on source implementation HEAD;
+- direct source Combined `34811642693` was cancelled after newer documentation commits superseded it;
+- compare `a302871b3486ae95810cea40dccca68363a29055...b095741e621f9241ff3eed0de86b4e64048604bf` shows only five documentation files changed, proving source-tree equivalence;
+- Admin AI `34811809959` — SUCCESS;
+- Combined Integration `34811809962` — SUCCESS including API/Admin quality gates, clean PostgreSQL, backend authority/auth regressions and real Admin Chromium;
+- Stage13G `34811810021` — SUCCESS including Admin/API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
 
-The second seam is not DONE until the pending API/PostgreSQL/integration/real Chromium evidence is green on the source tree. No third seam is authorized before closure.
+Conclusion: second seam is **DONE** with no behavior/schema/Student-frontend change.
+
+#### Third composition seam — DISCOVERY NEXT
+
+The next increment must inspect remaining `apps/api/src/app.ts` responsibilities and choose one smallest evidence-backed app-level composition boundary. Discovery and implementation stay separate: do not mutate the third seam in the same discovery run.
 
 ### AB-01.5 — PENDING
 
@@ -110,4 +115,4 @@ AB-01 active → AB-02 thin Admin shell/router/providers/layouts/lazy routes →
 
 ## J. Exact continuation
 
-Read the live execution-state file first. Current durable continuation: **inspect the source-tree gates for the health/readiness extraction; close the seam only if green, otherwise fix the root cause. Do not select a third composition seam before closure.**
+Read the live execution-state file first. Current durable continuation: **perform discovery only for the third AB-01.4 app-composition seam; select one bounded responsibility with existing tests/contracts and explicit non-goals, but do not implement it in that same increment.**
