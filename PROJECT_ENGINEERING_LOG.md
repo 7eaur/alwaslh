@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — fourth AB-01.4 Fastify construction seam implemented; required runtime/integration CI still active.**
+Last consolidated: **2026-09-14 — fourth AB-01.4 Fastify construction seam verified and closed; fifth-seam discovery is next.**
 
 ## Durable invariants
 
@@ -21,7 +21,7 @@ Admin initial JS **968.68 kB / 193.92 kB gzip**; CSS **91.38 kB / 13.68 kB gzip*
 
 Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the live serial handoff. Never auto-merge or rewrite shared history.
 
-Current live `main` observed in sequence 14: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; this is the Student Experience V2 merge checkpoint and does not overlap the current AB-01 API seam.
+Current live `main` observed in Worker B sequence 15: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; this is the Student Experience V2 merge checkpoint and does not overlap the current AB-01 API seam.
 
 ## Architecture decisions
 
@@ -59,17 +59,13 @@ Source `a302871b3486ae95810cea40dccca68363a29055`; owner `apps/api/src/app/http/
 
 Source `001d45892bf4a17458f3beaeaaa1a7430be49b44`; owner `apps/api/src/app/http/public-errors.ts`; full source-tree-equivalent gates green.
 
-#### Fastify construction/options — IMPLEMENTED / WAITING FOR REQUIRED CI
+#### Fastify construction/options — DONE
 
-Worker A sequence 14 source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
+Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
 
-Created `apps/api/src/app/create-fastify-instance.ts` with narrow `createFastifyInstance(config: AppConfig): FastifyInstance` ownership.
+Owner: `apps/api/src/app/create-fastify-instance.ts` with narrow `createFastifyInstance(config: AppConfig): FastifyInstance` responsibility.
 
-Changed `apps/api/src/app.ts` only enough to:
-
-- import `FastifyInstance` as a type;
-- call `createFastifyInstance(config)`;
-- remove direct Fastify value construction/options.
+`apps/api/src/app.ts` now delegates Fastify construction/options to that owner and no longer imports Fastify as a value or embeds constructor options.
 
 Preserved exactly:
 
@@ -83,14 +79,18 @@ Preserved exactly:
 
 Explicitly untouched: service graph, business routes, DB lifecycle, config defaults, migrations/schema and Student frontend.
 
-Verification at handoff:
+Closure evidence:
 
-- Architecture Guard `34820842164` — **SUCCESS**.
-- Combined `34820842196` — **IN PROGRESS**.
-- Stage13G `34820842163` — **IN PROGRESS**.
-- Admin AI `34820842245` — **QUEUED**.
+- Architecture Guard `34820842164` — SUCCESS on source implementation HEAD.
+- Source-head Combined `34820842196`, Stage13G `34820842163`, Admin AI `34820842245` were cancelled by later documentation commits; no code-failure evidence was observed.
+- Compare `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d...248ce58053bca9d97498d41fdda57aec1ace4033` contains only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`, and `ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`.
+- Admin AI `34821032274` — SUCCESS: API lint/typecheck/unit/build, clean PostgreSQL, DB contracts, authorization/review controls, Stage12 regressions and auth security regression.
+- Combined `34821032272` — SUCCESS: API/Admin quality, clean PostgreSQL, DB contract, backend authority/auth-security regressions, deterministic fixtures and real Admin Chromium.
+- Stage13G `34821032271` — SUCCESS: Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, Accounts+Access, Notifications+Operations, Reports+Settings+Security+Audit, AI authoring, Access/Auth regressions and real API + PostgreSQL + Chromium.
 
-The seam is not DONE until required affected gates finish green.
+Conclusion: switch/deletion condition is satisfied; fourth seam is closed.
+
+No fifth seam was implemented or selected in Worker B sequence 15.
 
 ### AB-01.5 — PENDING
 
@@ -102,6 +102,6 @@ Foundation exact-head closure gate.
 
 ## Exact continuation
 
-Inspect runs `34820842196`, `34820842163`, `34820842245`. If all relevant gates are green, document Fastify construction/options as DONE before performing discovery for any fifth AB-01.4 seam. If one fails, inspect its failing step/log and repair only the root cause of this extraction.
+Perform fifth AB-01.4 seam **discovery only**: inspect live `apps/api/src/app.ts`, current tests/contracts and remaining responsibilities; select one smallest evidence-backed owner boundary; document contracts/order/non-goals/gates; do not implement the fifth seam in the discovery run.
 
 Remaining roadmap: AB-02 thin Admin shell/router/providers/lazy routes → AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final full verification/reconciliation.
