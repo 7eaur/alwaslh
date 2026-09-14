@@ -17,3 +17,11 @@ export function studentDestinationFromPath(pathname: string): StudentDestination
 export function isFocusedStudentReaderPath(pathname: string): boolean {
   return /^\/app\/learn\/lessons\/[^/]+\/?$/.test(pathname);
 }
+
+export function isFocusedStudentAssessmentPath(pathname: string): boolean {
+  return /^\/app\/practice\/attempts\/[^/]+\/?$/.test(pathname);
+}
+
+export function isFocusedStudentPath(pathname: string): boolean {
+  return isFocusedStudentReaderPath(pathname) || isFocusedStudentAssessmentPath(pathname);
+}
