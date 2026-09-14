@@ -21,6 +21,19 @@ async function expectNoHorizontalOverflow(page) {
   expect(metrics.scrollWidth).toBeLessThanOrEqual(metrics.clientWidth + 1);
 }
 
+async function captureVisual(page, name) {
+  for (const viewport of [
+    { suffix: "phone", width: 390, height: 844 },
+    { suffix: "tablet", width: 768, height: 1024 },
+    { suffix: "desktop", width: 1366, height: 900 },
+  ]) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await expectNoHorizontalOverflow(page);
+    await page.screenshot({ path: `test-results/ux-b03-${name}-${viewport.suffix}.png`, fullPage: false });
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+}
+
 test("authorized Learn hierarchy opens a focused protected Reader with direct-route parity", async ({ page }) => {
   const fixture = createReaderFixture();
   await page.context().addCookies([
@@ -46,6 +59,7 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
   await subjectLink.click();
   await expect(page).toHaveURL(/\/app\/learn\/subjects\/[^/]+$/);
   await expect(page.getByRole("article", { name: fixture.subjectName })).toBeVisible();
+  await captureVisual(page, "subject");
 
   const lessonLink = page.getByRole("link", { name: new RegExp(fixture.lessonTitle) });
   await lessonLink.focus();
@@ -86,6 +100,7 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
   await expect(image).toBeVisible();
   expect(await image.evaluate((element) => element.naturalWidth)).toBeGreaterThan(0);
   await expectNoHorizontalOverflow(page);
+  await captureVisual(page, "reader");
 
   const search = page.getByLabel("بحث داخل الدرس");
   await search.fill("الحركة");

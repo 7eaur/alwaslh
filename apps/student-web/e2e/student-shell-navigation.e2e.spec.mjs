@@ -69,8 +69,8 @@ test("Student shell adapts navigation for tablet and desktop without overflow", 
   await expect(page.getByRole("navigation", { name: "التنقل الرئيسي للطالب على الهاتف" })).toBeHidden();
   await expect(adaptiveNav.getByRole("link", { name: "الرئيسية" })).toHaveAttribute("aria-current", "page");
   await expect(adaptiveNav.getByRole("link", { name: "مكتبتي" })).toBeVisible();
-  await expect(adaptiveNav.getByRole("link", { name: "تقدمي" })).toBeVisible();
-  await expect(adaptiveNav.getByRole("link", { name: "الحساب" })).toBeVisible();
+  await expect(adaptiveNav.getByRole("link", { name: "تقدمي" })).toHaveCount(0);
+  await expect(adaptiveNav.getByRole("link", { name: "الحساب" })).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
 
   await adaptiveNav.getByRole("link", { name: "التدريب" }).click();
@@ -83,6 +83,8 @@ test("Student shell adapts navigation for tablet and desktop without overflow", 
   const navBox = await adaptiveNav.boundingBox();
   expect(navBox).not.toBeNull();
   expect(navBox.height).toBeGreaterThan(navBox.width);
+  await expect(adaptiveNav.getByRole("link", { name: "تقدمي" })).toBeVisible();
+  await expect(adaptiveNav.getByRole("link", { name: "الحساب" })).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
   await adaptiveNav.getByRole("link", { name: "مكتبتي" }).click();

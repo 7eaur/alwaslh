@@ -2,49 +2,49 @@
 
 > Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-14 — Student Experience V2 reached green exact-head Student gates after architecture migration, Stage16 reconciliation, Practice split, visual QA fixes and legacy cleanup.**
+Last synchronized: **2026-09-14 — Student Experience V2 is merged; the follow-up full visual-parity rollout is functionally green and has completed artifact-backed visual QA on the verified implementation head.**
 
 ## Current state
 
-**CURRENT USER PRIORITY: close Student Experience V2 safely, then return to the roadmap without rebuilding the approved Student foundation.**
+**CURRENT USER PRIORITY: close the approved Student visual parity safely, merge it, then resume the roadmap without rebuilding the Student foundation.**
 
-Active branch: `ux/student-experience-v2`
+Merged foundation:
+- PR `#58 — refactor(student): establish Student Experience V2 foundation`
+- merged to `main` as `258c5bc2c09a049afb57c0593b5b6ca9db532c62`
 
-Active PR: `#58 — refactor(student): establish Student Experience V2 foundation` — **DRAFT / NOT MERGED**.
+Active visual branch: `fix/student-reader-visual-parity`
 
-Last fully verified implementation head before this documentation synchronization:
+Active PR: `#60 — feat(student): full visual parity rollout` — **DRAFT / NOT MERGED** at the time of this documentation commit.
 
-`1dd6222bc21cab615ca9b93416666bfa16d1bf04`
+Last fully verified implementation head before this documentation-only synchronization:
 
-Authoritative V2 docs:
+`ebb0434b80c192c610731a946ceaeb563683b15c`
 
-- `docs/product/STUDENT_EXPERIENCE_V2.md`
-- `docs/product/STUDENT_EXPERIENCE_V2_EXECUTION_PLAN.md`
-- `docs/product/STUDENT_FRONTEND_CODE_ARCHITECTURE_V2.md`
-- `docs/product/STUDENT_V2_IMPLEMENTATION_RULES.md`
-- `docs/product/STUDENT_DATA_RESIDENCY_AND_CACHE_V2.md`
-- `docs/workstreams/STUDENT_V2_EXECUTION_LOG.md`
+Visual source of truth:
+- `docs/product/STUDENT_VISUAL_SOURCE_OF_TRUTH.md`
+- `docs/workstreams/STUDENT_VISUAL_PARITY_PLAN.md`
+- `docs/workstreams/STUDENT_VISUAL_PARITY_EXECUTION_LOG.md`
 
-## V2 execution checkpoint
+## Visual parity checkpoint
 
-- `V2-00 Architecture Freeze = DONE`
-- Foundation/theme/tokens = implemented
-- App Shell / App Bar / Bottom Nav / Desktop Nav = implemented
-- Home V2 = implemented using authoritative available data only
-- Welcome / Activation / Login / Recovery / Help / Support = modularized
-- Account / Library / Notifications / Progress = feature-owned V2 surfaces
-- Learn landing + scalable Subject hierarchy = implemented
-- Reader V2 visual/focused behavior = implemented while preserving Stage16 integrity semantics
-- Practice/Models = split into feature-owned Catalog / Quiz Detail / Attempt orchestration; old assessment monolith removed
-- Stage16 cold-start Offline Reader behavior from PR #57 = reconciled into V2
-- Downloads now reuse the shared profile-scoped curriculum read-through cache
-- Reader and Downloads expose feature boundaries under `features/*` while security-critical legacy internals remain unchanged
-- obsolete Library overview stylesheet removed; future-surface stylesheet pruned to live selectors
-- phone Practice visual QA was reviewed from exact-head artifacts and the attempt/result action layout overlap was fixed
+Implemented V01–V09 and closed V10 visual defects found during artifact review:
+- shared canvas/App Bar/bottom-nav/desktop-rail visual family;
+- Home reference-style hierarchy using authoritative data only;
+- Welcome / Activation / Login visual alignment;
+- Learn subject rows and scalable hierarchy;
+- Subject hero + compact lesson rows; empty units no longer dominate the screen;
+- focused Reader with no heavy canonical-media card framing;
+- Practice/catalog/detail/attempt visual family;
+- Library grouped-list visual family;
+- Account/Help/Notifications/Progress alignment without fabricated data;
+- fixed a real 390px Welcome horizontal overflow;
+- fixed a real phone bottom-navigation positioning regression introduced by a visual layer;
+- removed unintended tablet-only `تقدمي / الحساب` adaptive-nav links while retaining them in the desktop rail;
+- B03 now captures repeatable Subject + Reader screenshots at phone/tablet/desktop sizes.
 
-## Exact-head Student verification
+## Exact-head verification
 
-On implementation head `1dd6222bc21cab615ca9b93416666bfa16d1bf04`, the following completed successfully:
+On implementation head `ebb0434b80c192c610731a946ceaeb563683b15c`, all returned PR-triggered workflows completed successfully, including:
 
 - `UX B01 Shared Frontend Foundation`
 - `UX B02 Student Shell and Navigation`
@@ -54,113 +54,74 @@ On implementation head `1dd6222bc21cab615ca9b93416666bfa16d1bf04`, the following
 - `Stage14 Student Product`
 - `Stage15 Student Assessment`
 - `Stage16 Student PWA`
+- `Rebuild Stage Verification`
+- Stage 9–13 verification workflows triggered for the PR
 
-Stage14 Student lint/typecheck/unit/build passed, followed by the real Chromium auth/access/curriculum suite at `390px`.
+Exact-head visual artifacts were manually inspected:
+- B03: Subject + Reader at `390x844`, `768x1024`, `1366x900`;
+- B04: Practice attempt/result/catalog/detail phone + desktop;
+- B05: Welcome/Auth/Library/Account/secondary surfaces phone + desktop.
 
-The latest B04 visual artifact was manually inspected. Phone attempt/result layouts no longer show the previous overlap between previous/next controls, remaining-question status and finish action.
+Verified visual outcomes:
+- phone bottom navigation is fixed at the bottom and does not float over Subject content;
+- tablet adaptive navigation contains the four primary destinations only;
+- desktop rail contains the primary destinations plus secondary `تقدمي / الحساب` links;
+- focused Reader hides global navigation and decorative app-shell botanical framing;
+- canonical lesson media remains backend-published authority and is not replaced by decorative mockups;
+- Practice phone attempt/result controls do not overlap;
+- Welcome no longer horizontally overflows at 390px.
 
-A prior Stage12 AI-control failure was unrelated to Student UI and passed on a later exact-head run without Student business-rule changes.
+`STUDENT VISUAL PARITY IMPLEMENTATION = VERIFIED ON ebb0434...`
 
-`STUDENT V2 CORE IMPLEMENTATION = VERIFIED ON 1dd6222...`
+This documentation synchronization occurs after that verified implementation head and does not change Student runtime behavior.
 
-Any documentation-only commit after that head must still receive normal CI before PR #58 is merged.
+## Fixed Student decisions
 
-## Fixed Student V2 decisions
+- phone navigation is exactly: `الرئيسية / التعلم / التدريب / مكتبتي`;
+- Account is an App Bar action, not a fifth bottom destination;
+- Home alone shows the official الوسيلة الذكية brand lockup;
+- no assumed learner name or fabricated permanent grade identity;
+- Learn uses compact list/search/disclosure patterns;
+- Reader and active assessment are focused experiences;
+- real quiz versions are learner-facing `نماذج`;
+- Notes / Saved / Needs Review / Notifications / Progress stay honest until authoritative contracts/data exist;
+- no fabricated progress, streak, completion, mastery or ranking values.
 
-- phone navigation is exactly: Home / Learn / Practice / Library;
-- Home alone shows official الوسيلة الذكية mark + name;
-- other top-level pages show page title in App Bar;
-- nested Learn subject title uses shared App Bar context;
-- no assumed learner name and no fixed permanent grade on Home/account card;
-- Home is an overview, not duplicate navigation;
-- Library is direct access, not a dashboard article;
-- Learn scales through compact lists/search/accordion rather than nested card walls;
-- Reader and active assessment use focused UI patterns;
-- quiz versions are presented as learner-facing Models without inventing a second backend authority;
-- Summary / Lesson Questions / Notes / Saved / Needs Review remain honest until authoritative contracts/data exist;
-- no fabricated progress/streak/completion/ranking values.
+## Frontend architecture
 
-## Frontend architecture now enforced
+Direction remains mandatory: `app → features → shared`.
 
-Direction: `app → features → shared`.
+- `app/layout` owns shared chrome/safe areas;
+- `app/routing` + `app/session` own app-level composition;
+- `shared/ui`, `shared/icons`, `shared/brand`, `shared/data`, `shared/storage` remain centralized reusable boundaries;
+- `features/*` owns feature composition/data/state.
 
-Ownership:
+No page may collapse routing + API + cache + storage + icons + large JSX into a new monolith.
 
-- `app/layout` — shell/appbar/bottom-nav/desktop navigation;
-- `app/routing` / `app/session` — app-level routing/session composition;
-- `shared/ui` — reusable primitives;
-- `shared/icons` / `shared/brand` — one visual boundary;
-- `shared/data` — runtime read-through cache + invalidation;
-- `shared/storage` — scoped persistence adapters;
-- `features/*` — feature pages/components/state/query boundaries.
+## Data/offline boundaries
 
-Rules remain mandatory:
+- API + PostgreSQL own canonical business state.
+- Auth/Authz/Entitlements remain server-owned.
+- Stage16 verified offline package store remains the single lesson-download authority.
+- Downloads reuse the profile-scoped curriculum cache.
+- no synthetic offline server session/entitlement authority.
+- `/v1` responses never become hidden Service Worker business authority.
 
-- no giant page files mixing routing + API + cache + storage + large JSX;
-- no duplicated app chrome, icon implementations, common rows/buttons/empty states;
-- shared UI stays domain-agnostic;
-- no feature-to-feature private internals;
-- incremental migration only when executable gates remain green.
+## Remaining closure work
 
-## Data/cache truth
-
-Runtime read-through cache:
-
-- curriculum: 2 min memory TTL;
-- quiz catalog: 1 min;
-- recent attempts: 30 sec;
-- profile-scoped;
-- duplicate concurrent reads deduplicated;
-- access changes invalidate affected curriculum/practice read models;
-- assessment completion invalidates attempt summaries;
-- Downloads reuses the same curriculum cache instead of creating a second catalog request path.
-
-Stage16 offline package storage remains the single lesson-download authority.
-
-Notes / Saved / Needs Review remain targeted for account-scoped local-first persistence only when Stage17 ownership and synchronization contracts become authoritative. Do not persist passwords, reusable auth tokens, synthetic entitlements, or arbitrary `/v1` responses as hidden business authority.
-
-## Stage16 reconciliation
-
-Preserved behavior from the separate PR #57 workstream:
-
-- bounded startup from verified durable profile/device scope;
-- verified stored lesson package path;
-- direct opening from Downloads;
-- signature/integrity/tamper/profile-device/time-bound checks;
-- cold-start Reader acceptance;
-- no synthetic server session or fake offline authorization authority.
-
-Do not weaken these semantics while moving remaining Reader internals.
-
-## Remaining V2 closure work
-
-The large product redesign/migration is no longer the blocker. Remaining work is closure-only:
-
-1. let CI complete on the documentation synchronization head;
-2. inspect any final exact-head failure rather than assuming green from the previous head;
-3. keep security-critical Reader/Offline internals stable unless there is evidence-driven reason to move them;
-4. finish final documentation/PR readiness synchronization;
-5. when all required checks are green, take PR #58 out of Draft and merge through the repository's normal protected flow if permissions/tools permit;
-6. after merge, resume the product roadmap from the next unclosed Student item instead of redesigning V2 again.
+1. synchronize PR #60 body with final implementation/verification evidence;
+2. move PR #60 out of Draft when repository state still matches the verified implementation;
+3. merge through the normal protected flow using expected-head protection;
+4. verify resulting `main` SHA/state;
+5. resume the next unclosed Student roadmap item; do not reopen this redesign without new evidence.
 
 ## Grade 9 English content truth retained
 
-The RAW-backed Grade 9 English Pupil's Book 3 import and reviewed Unit 2 publication remain closed technical checkpoints.
+The technical RAW-backed import remains a separate content workstream and must not be inferred complete from the UI.
 
-Retained verified publication totals:
-
+Retained published totals from the closed reviewed checkpoint:
 - published Lessons: `2`
 - Lesson Assets: `6`
 - published Question Revisions: `19`
 
-Do not rerun the completed Grade 9 bulk import or republish those closed review checkpoints.
-
-## Stable system boundaries
-
-- API + PostgreSQL own canonical business state.
-- Auth/Authz/Entitlements remain server-owned.
-- browser storage is not hidden backend authority.
-- `media ready != published`.
-- AI/legacy output never auto-publishes learner content/questions.
-- Question Bank publication + immutable Quiz version remain assessment delivery authority.
-- `/v1` never becomes Service Worker business-cache authority.
+Do not rerun the completed bulk import or republish closed review checkpoints merely because the visual rollout is closing.

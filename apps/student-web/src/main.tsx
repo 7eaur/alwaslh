@@ -21,6 +21,8 @@ import "./student-future.css";
 import "./student-library-v2.css";
 import "./student-affordance.css";
 import "./student-motion.css";
+import "./student-visual-parity.css";
+import "./student-visual-parity-qa.css";
 import { registerStudentServiceWorker } from "./pwa";
 import { StudentRouter } from "./router";
 

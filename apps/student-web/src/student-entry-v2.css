@@ -1,42 +1,46 @@
-/* Student Experience V2 entry/auth visual contract.
-   This layer intentionally overrides legacy entry presentation while feature extraction proceeds. */
+/* Student Experience V2 entry/auth visual contract. */
 .student-entry-page {
-  background: var(--student-canvas, #f7faf9);
+  overflow-x: clip;
+  background: var(--student-canvas, #f8fbfb);
   color: var(--student-text, #1f2937);
 }
 
 .student-entry-shell {
-  width: min(100%, 40rem);
+  width: min(100%, 42rem);
   min-height: calc(100dvh - 2rem);
-  gap: 1.25rem;
+  gap: 1.15rem;
 }
 
 .student-entry-topbar {
-  min-height: 3.5rem;
+  min-height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .student-brand {
   display: inline-flex;
   align-items: center;
-  gap: .65rem;
+  gap: .7rem;
 }
 
 .student-brand__asset {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.65rem;
+  height: 2.65rem;
   flex: none;
-  border-radius: .75rem;
+  border-radius: .82rem;
+  box-shadow: 0 6px 18px rgb(18 60 67 / .07);
 }
 
 .student-brand__copy strong {
   color: var(--student-heading, #123c43);
   font-size: 1rem;
-  font-weight: 700;
+  font-weight: 750;
 }
 
 .student-brand__copy small {
   color: var(--student-text-muted, #6b7280);
-  font-size: .75rem;
+  font-size: .74rem;
 }
 
 .student-entry-main {
@@ -48,122 +52,209 @@
 }
 
 .student-welcome-panel {
-  width: min(100%, 31rem);
+  position: relative;
+  width: min(100%, 32rem);
+  max-width: 100%;
+  min-height: 24rem;
+  display: grid;
+  align-content: center;
+  justify-items: center;
   margin-inline: auto;
+  padding: 2rem 1rem;
   text-align: center;
 }
 
-.student-welcome-panel .eyebrow {
-  display: none;
+.student-welcome-panel::before,
+.student-welcome-panel::after {
+  content: "";
+  position: absolute;
+  width: 10rem;
+  aspect-ratio: 8 / 9;
+  background: url('/student-botanical.svg') center / contain no-repeat;
+  pointer-events: none;
+  opacity: .48;
+}
+
+.student-welcome-panel::before {
+  inset-inline-start: -3rem;
+  top: -.75rem;
+}
+
+.student-welcome-panel::after {
+  inset-inline-end: -3.5rem;
+  bottom: -.5rem;
+  transform: rotate(180deg) scale(.8);
+  opacity: .32;
+}
+
+.student-entry-page--welcome .student-entry-topbar {
+  justify-content: center;
+}
+
+.student-entry-page--welcome .student-brand {
+  flex-direction: column;
+  gap: .6rem;
+  text-align: center;
+}
+
+.student-entry-page--welcome .student-brand__asset {
+  width: 4.4rem;
+  height: 4.4rem;
+  border-radius: 1.25rem;
+}
+
+.student-entry-page--welcome .student-brand__copy strong {
+  font-size: 1.12rem;
+}
+
+.student-entry-page--welcome .student-brand__copy small {
+  display: block;
 }
 
 .student-welcome-panel > h1 {
-  max-width: none;
+  position: relative;
+  z-index: 1;
   margin: 0;
   color: var(--student-heading, #123c43);
-  font-size: clamp(1.8rem, 7vw, 2.35rem);
-  font-weight: 700;
-  line-height: 1.45;
-  letter-spacing: -.015em;
+  font-size: clamp(1.9rem, 7vw, 2.45rem);
+  font-weight: 800;
+  line-height: 1.42;
+  letter-spacing: -.018em;
+}
+
+.student-welcome-panel > h1::after {
+  content: "";
+  display: block;
+  width: 3.2rem;
+  height: .22rem;
+  margin: .7rem auto 0;
+  border-radius: 999px;
+  background: var(--student-accent, #00b5a9);
 }
 
 .student-welcome-panel > p {
-  max-width: 29rem;
-  margin: .75rem auto 0;
+  position: relative;
+  z-index: 1;
+  max-width: 26rem;
+  margin: .8rem auto 0;
   color: var(--student-text-secondary, #64748b);
-  font-size: .98rem;
+  font-size: .96rem;
   line-height: 1.85;
 }
 
-.student-welcome-points {
-  display: none;
-}
-
 .student-entry-actions {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr;
-  gap: .65rem;
+  gap: .7rem;
   width: min(100%, 22rem);
-  margin: 1.7rem auto 0;
+  margin: 1.8rem auto 0;
 }
 
 .student-entry-actions .primary-button,
 .student-entry-actions .secondary-button {
   width: 100%;
   min-height: 3.25rem;
+  border-radius: .9rem;
 }
 
 .student-entry-help-link {
+  position: relative;
+  z-index: 1;
   margin-top: .85rem;
   color: var(--student-text-secondary, #64748b);
 }
 
 .student-auth-surface {
-  padding: clamp(1rem, 4vw, 1.4rem);
-  border: 1px solid var(--student-border, #e5e7eb);
-  border-radius: var(--student-radius-large, 1rem);
-  background: var(--student-surface, #fff);
-  box-shadow: 0 10px 30px rgb(18 60 67 / .05);
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.05rem, 4vw, 1.5rem);
+  border: 1px solid rgb(18 60 67 / .09);
+  border-radius: 1.15rem;
+  background: rgb(255 255 255 / .97);
+  box-shadow: 0 14px 38px rgb(18 60 67 / .07);
+}
+
+.student-auth-surface::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -2.7rem;
+  top: -3rem;
+  width: 8rem;
+  aspect-ratio: 8 / 9;
+  background: url('/student-botanical.svg') center / contain no-repeat;
+  opacity: .14;
+  pointer-events: none;
+}
+
+.student-auth-surface > * {
+  position: relative;
+  z-index: 1;
 }
 
 .student-auth-switch {
   gap: .25rem;
-  margin-bottom: 1.15rem;
+  margin-bottom: 1.2rem;
   padding: .25rem;
+  border-radius: .86rem;
   background: var(--student-surface-subtle, #f3f6f5);
 }
 
 .student-auth-switch button {
-  min-height: 2.65rem;
+  min-height: 2.75rem;
   border-radius: .7rem;
   color: var(--student-text-secondary, #64748b);
   font-size: .9rem;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .student-auth-switch button.is-active {
   color: var(--student-accent-strong, #007f78);
   background: var(--student-surface, #fff);
-  box-shadow: 0 2px 10px rgb(18 60 67 / .06);
+  box-shadow: 0 3px 12px rgb(18 60 67 / .065);
 }
 
 .student-auth-heading {
   margin-bottom: 1.15rem;
-}
-
-.student-auth-heading .eyebrow {
-  display: none;
+  text-align: center;
 }
 
 .student-auth-heading h1 {
   margin: 0;
   color: var(--student-heading, #123c43);
-  font-size: 1.55rem;
-  font-weight: 700;
-  line-height: 1.5;
+  font-size: 1.58rem;
+  font-weight: 800;
+  line-height: 1.45;
 }
 
 .student-auth-heading > p:last-child {
-  margin-top: .35rem;
+  margin-top: .38rem;
   color: var(--student-text-secondary, #64748b);
   font-size: .9rem;
   line-height: 1.75;
 }
 
 .student-entry-form {
-  gap: .9rem;
+  gap: .92rem;
 }
 
 .student-entry-page .text-input {
-  min-height: 3.15rem;
-  border-color: var(--student-border, #e5e7eb);
-  border-radius: .75rem;
+  min-height: 3.2rem;
+  border-color: rgb(18 60 67 / .12);
+  border-radius: .82rem;
   background: #fff;
 }
 
 .student-entry-page .text-input:focus {
   border-color: var(--student-accent-strong, #007f78);
   box-shadow: 0 0 0 3px rgb(0 127 120 / .1);
+}
+
+.student-entry-page .primary-button.full-width,
+.student-entry-page .secondary-button.full-width {
+  min-height: 3.15rem;
+  border-radius: .88rem;
 }
 
 .student-entry-footer {
@@ -177,7 +268,7 @@
 
 @media (max-width: 40rem) {
   .student-entry-page {
-    padding: max(.85rem, env(safe-area-inset-top, 0px)) .85rem max(.85rem, env(safe-area-inset-bottom, 0px));
+    padding: max(.8rem, env(safe-area-inset-top, 0px)) .85rem max(.9rem, env(safe-area-inset-bottom, 0px));
   }
 
   .student-entry-shell {
@@ -185,10 +276,42 @@
   }
 
   .student-entry-topbar {
-    align-items: center;
+    min-height: 3.4rem;
   }
 
   .student-brand__copy small {
     display: none;
+  }
+
+  .student-entry-page--welcome .student-brand__copy small {
+    display: block;
+  }
+
+  .student-welcome-panel {
+    min-height: 21rem;
+    padding-inline: .25rem;
+  }
+
+  .student-welcome-panel::before {
+    inset-inline-start: -4.2rem;
+    width: 9rem;
+  }
+
+  .student-welcome-panel::after {
+    inset-inline-end: -4rem;
+    width: 8rem;
+  }
+
+  .student-auth-surface {
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-welcome-panel::before,
+  .student-welcome-panel::after,
+  .student-auth-surface::before {
+    transition: none !important;
   }
 }

@@ -112,18 +112,21 @@ export function StudentHomeOverview({ profileId, online, onSessionExpired }: {
   return (
     <section className="student-home" aria-labelledby="student-home-title">
       <header className="student-home__welcome">
-        <h1 id="student-home-title">مرحبًا بك</h1>
-        <p>كل ما تحتاجه للتعلّم والمراجعة، مرتب لتصل إليه بسرعة.</p>
+        <div className="student-home__welcome-copy">
+          <h1 id="student-home-title">مرحبًا بك</h1>
+          <p>مستمرون في رحلتك التعليمية.. خطوة صغيرة اليوم تصنع فرقًا غدًا.</p>
+        </div>
+        <p className="student-home__quote" aria-hidden="true">كل تعلّم اليوم<br />يقربك من غدٍ أفضل</p>
       </header>
 
-      <section className="student-home-section" aria-labelledby="home-quick-title">
+      <section className="student-home-section student-home-section--quick" aria-labelledby="home-quick-title">
         <SectionHeader id="home-quick-title" title="نظرة سريعة" />
         <StatStrip items={quickStats} ariaLabel="ملخص المحتوى المتاح" />
       </section>
 
       {snapshot.downloadCount !== null ? (
         <section className="student-home-section" aria-labelledby="home-library-title">
-          <SectionHeader id="home-library-title" title="مكتبتي" action={<Link to="/app/library">فتح مكتبتي</Link>} />
+          <SectionHeader id="home-library-title" title="مكتبتي" action={<Link to="/app/library">كل التفاصيل</Link>} />
           <ListRow
             className="student-home-library-stat student-v2-surface"
             to="/app/library/downloads"
