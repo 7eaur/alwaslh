@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { z } from "zod";
 import { AppError } from "../../errors.js";
 
 export function parseBody<TSchema extends z.ZodTypeAny>(schema: TSchema, body: unknown): z.output<TSchema> {
