@@ -198,7 +198,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   await expect(page.getByRole("heading", { name: classAccess.className })).toBeVisible();
   const subjectLink = page.getByRole("link", { name: new RegExp(classAccess.subjectName) });
   await subjectLink.click();
-  await expect(page.getByRole("heading", { name: classAccess.subjectName })).toBeVisible();
+  await expect(page.getByRole("article", { name: classAccess.subjectName })).toBeVisible();
   await expect(page.getByText("درس غير منشور يجب ألا يظهر", { exact: true })).toHaveCount(0);
   await expect(page.locator(".subject-v2-lesson__copy strong")).toHaveText(classAccess.lessonTitles);
 
