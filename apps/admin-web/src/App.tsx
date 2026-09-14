@@ -1,13 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, Navigate, NavLink, Route, Routes } from "react-router-dom";
-import {
-  ApiRequestError,
-  type AdminProfile,
-  isMissingSessionError,
-  logoutAdmin,
-  restoreAdminSession,
-} from "./admin-api";
 import { ADMIN_NAVIGATION } from "./admin-navigation";
 import { AdminAiAuthoringWorkspace } from "./admin/ai-authoring/AdminAiAuthoringWorkspace";
 import { AiOperationsPage } from "./admin/reviews/AiOperationsPage";
@@ -30,59 +22,44 @@ import { QuizBuilderDetailPage } from "./admin/quizzes/QuizBuilderDetailPage";
 import { QuizBuilderListPage } from "./admin/quizzes/QuizBuilderListPage";
 import { QuizMetadataPanel } from "./admin/quizzes/QuizMetadataPanel";
 import { AdminStudentsPage } from "./admin/students/AdminStudentsPage";
+import type { AdminProfile } from "./features/auth/api/admin-auth-api";
+import {
+  AdminSessionProvider,
+  useAdminSession,
+} from "./features/auth/model/AdminSessionProvider";
 import "./ai-operations-review.css";
 import { LoginScreen } from "./LoginScreen";
 
-function errorMessage(error: unknown): string {
-  if (error instanceof ApiRequestError) return error.message;
-  return "حدث خطأ غير متوقع. أعد المحاولة، وإذا استمر الخطأ راجع سجل التشغيل.";
+export function App() {
+  return (
+    <AdminSessionProvider>
+      <AdminSessionBoundary />
+    </AdminSessionProvider>
+  );
 }
 
-export function App() {
-  const [session, setSession] = useState<AdminProfile | null>(null);
-  const [sessionState, setSessionState] = useState<"restoring" | "signed_out" | "signed_in" | "error">("restoring");
-  const [sessionError, setSessionError] = useState("");
+function AdminSessionBoundary() {
+  const session = useAdminSession();
 
-  const restore = useCallback(async () => {
-    setSessionState("restoring");
-    setSessionError("");
-    try {
-      const profile = await restoreAdminSession();
-      setSession(profile);
-      setSessionState("signed_in");
-    } catch (error) {
-      setSession(null);
-      if (isMissingSessionError(error)) {
-        setSessionState("signed_out");
-        return;
-      }
-      setSessionError(errorMessage(error));
-      setSessionState("error");
-    }
-  }, []);
-
-  useEffect(() => {
-    void restore();
-  }, [restore]);
-
-  if (sessionState === "restoring") {
+  if (session.state === "restoring") {
     return <FullPageState title="جارٍ التحقق من جلسة الإدارة" body="نراجع الجلسة الآمنة قبل عرض أي بيانات إدارية." />;
   }
-  if (sessionState === "error") {
+
+  if (session.state === "error") {
     return (
-      <FullPageState title="تعذر الوصول إلى خدمة الإدارة" body={sessionError}>
-        <button className="primary-button" type="button" onClick={() => void restore()}>
+      <FullPageState title="تعذر الوصول إلى خدمة الإدارة" body={session.error}>
+        <button className="primary-button" type="button" onClick={() => void session.restore()}>
           إعادة المحاولة
         </button>
       </FullPageState>
     );
   }
-  if (sessionState === "signed_out" || !session) {
+
+  if (session.state === "signed_out" || !session.profile) {
     return (
       <LoginScreen
         onAuthenticated={(profile) => {
-          setSession(profile);
-          setSessionState("signed_in");
+          session.acceptAuthenticated(profile);
           window.requestAnimationFrame(() => {
             document.getElementById("route-content")?.focus({ preventScroll: true });
           });
@@ -93,21 +70,9 @@ export function App() {
 
   return (
     <AdminShell
-      profile={session}
-      onSessionExpired={() => {
-        setSession(null);
-        setSessionState("signed_out");
-      }}
-      onLogout={async () => {
-        try {
-          await logoutAdmin();
-          setSession(null);
-          setSessionState("signed_out");
-        } catch (error) {
-          setSessionError(errorMessage(error));
-          setSessionState("error");
-        }
-      }}
+      profile={session.profile}
+      onSessionExpired={session.expire}
+      onLogout={session.logout}
     />
   );
 }
