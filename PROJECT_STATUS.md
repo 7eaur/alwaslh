@@ -6,75 +6,54 @@
 **Draft PR:** #52 — Draft / unmerged / no auto-merge.  
 **Current stage:** `AB-01 — Shared foundations`.
 
-## Binding responsibility
+## Scope
 
-This workstream owns the complete Super Admin product plus the full backend/server product, PostgreSQL/migrations/integrity, security and shared/server contracts consumed by Admin or Student, and the CI/integration/browser evidence needed to prove them.
+This workstream owns the complete Super Admin plus full Fastify backend/API, PostgreSQL/migrations/integrity, security and server/shared contracts consumed by Admin or Student. The only structural exclusion is `apps/student-web` frontend implementation itself.
 
-The only structural exclusion is `apps/student-web` frontend implementation itself. Student-facing backend capability remains in scope; Student frontend code/tests may be inspected only as consumer-regression evidence when shared/server contracts change.
+## Continuation authority
 
-## Canonical active authorities
+Read in this order before mutation:
 
-Read in this order:
+1. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
+2. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md`
+3. `PROJECT_ENGINEERING_LOG.md`
+4. `PROJECT_HANDOFF.md`
+5. `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`
+6. `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`
+7. active architecture/product docs listed by those authorities.
 
-1. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` — live continuation point and worker handoff;
-2. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md` — binding alternating execution rules;
-3. `docs/architecture/ADMIN_BACKEND_ARCHITECTURE_REVIEW_2026-09-14.md`;
-4. `docs/workstreams/ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md`;
-5. `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`;
-6. `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`;
-7. `docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`;
-8. `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`;
-9. `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`;
-10. `docs/architecture/ADMIN_BACKEND_BASELINE_2026-09-14.md`;
-11. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`;
-12. `docs/product/DESIGN_SYSTEM_SPEC.md`;
-13. `.agents/skills/alwaslh-product-engineering/SKILL.md`.
+Workers A/B/C share one branch and ordered roadmap. If another worker is active, do not create overlapping mutations. Every run performs one smallest coherent increment and ends `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE`.
 
-## Scheduled continuation law
+## Permanent rules
 
-Workers A, B and C continue the same ordered roadmap on the same branch, staggered by 20 minutes (`:00`, `:20`, `:40`). Every run reads live state/current branch/main HEADs/exact-head CI/canonical docs before mutation; performs one smallest coherent increment; verifies it; and records ending HEAD, evidence and the exact next step. If another worker is still active, do not create overlapping mutations.
-
-Normal handoff states: `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, `COMPLETE`. After verified AB-08 completion and state `COMPLETE`, the proving worker disables all three scheduled tasks.
-
-## Branch reconciliation
-
-Latest live `main` observed by Worker C during fourth-seam discovery: `258c855ace396a3f834199708c926411a3d65f79`. No structural phase boundary is being crossed in this discovery increment; current AB-01 work remains isolated from Student frontend implementation.
-
-## Permanent architecture/product rules
-
-- PostgreSQL/API remain canonical business authority.
-- Backend remains one Fastify modular monolith; no microservices.
-- Student-facing backend security/business authority remains server-owned and protected.
-- Admin `app` composes only; features own workflows/routes/API adapters/models/tests.
-- App imports features through supported public/routes boundaries only.
-- Feature internals are private; cross-feature work uses narrow public contracts or app orchestration.
-- `packages/ui` owns cross-product primitives only; Admin `shared/ui` owns Admin-only reusable patterns.
-- `shared` never becomes a dumping ground and cannot import feature/app internals.
-- No new feature files in Admin root `src/`.
-- Substantial workflow routes lazy-load by default; no artificial tiny-chunk splitting.
-- One Admin shell owns global chrome/navigation.
-- Keep verified `/app` base unless runtime evidence justifies changing it.
-- No global state/query framework, DI/service locator, microservices or styling-stack rewrite without evidence.
-- Database changes require domain/integrity need, never folder restructuring.
-- No fabricated metrics/counts/progress/health/outcomes/actions.
+- PostgreSQL/API are canonical business authority.
+- Backend stays one Fastify modular monolith; no microservices/DI/service locator without evidence.
+- Admin `app` composes only; features own workflows and expose narrow public/routes boundaries.
+- Feature internals stay private; shared cannot import app/features.
+- No new global state/query framework or styling-stack rewrite without evidence.
+- No fabricated metrics/outcomes/actions.
 - Loading/Empty/Error/Permission/Conflict/Unavailable/Long-running/Success/Recovery are first-class states.
 - Arabic-first RTL, keyboard/focus, responsive/no-overflow and reduced-motion are architecture requirements.
 - Tests/security/validation are never weakened to make migration pass.
-- No permanent dual ownership: every compatibility bridge has a deletion condition.
+- No permanent dual ownership.
 
 Migration law:
 
-`job/use case → DB/API/security contracts → current owner → target owner → states/flow → backend seam correction where needed → replacement → outcome verification → switch → legacy deletion → exact-head gates → documentation`
+`job/use case → DB/API/security contracts → current owner → target owner → states/flow → backend seam correction → replacement → outcome verification → switch → legacy deletion → exact-head gates → documentation`
 
-## AB-00 — CLOSED
+## Branch reconciliation
 
-AB-00.1 ownership map — DONE; AB-00.2 dependency inventory — DONE; AB-00.3 Architecture Guard — DONE/ratchet active; AB-00.4 measured baseline — DONE; AB-00.5 readiness — PASS.
+Current live `main` observed during Worker A sequence 14: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the Student Experience V2 merge checkpoint. No overlapping Admin/API/migration change was introduced by that main movement for the current AB-01 seam, and no structural phase boundary is being crossed.
+
+## AB-00 — DONE
+
+Ownership map, dependency inventory, Architecture Guard, measured baseline and readiness gate are closed.
 
 Frozen baseline: Admin JS **968.68 kB / 193.92 kB gzip**, Admin CSS **91.38 kB / 13.68 kB gzip**, Admin unit **71/71**, API unit **66/66**, clean PostgreSQL 16 migrations green, baseline real Chromium **9/9**.
 
 ## AB-01 — ACTIVE
 
-### AB-01.1 Shared API transport boundary — DONE
+### AB-01.1 Shared API transport — DONE
 
 Owner: `apps/admin-web/src/shared/api/client.ts`.
 
@@ -82,48 +61,55 @@ Owner: `apps/admin-web/src/shared/api/client.ts`.
 
 Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSessionProvider.tsx`, public boundary `features/auth/public/index.ts`.
 
-### AB-01.3 Product-state primitives — DONE
+### AB-01.3 Product-state primitive — DONE
 
-Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
+Source checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
-### AB-01.4 Backend app composition foundation — ACTIVE
+### AB-01.4 Backend app composition — ACTIVE
 
-Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
+Closed seams:
 
-- CORS/preflight seam — DONE; source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
-- health/readiness seam — DONE; source HEAD `a302871b3486ae95810cea40dccca68363a29055`.
-- public not-found + global public-error HTTP seam — DONE; source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
-- fourth seam **Fastify instance construction/options — SELECTED / IMPLEMENTATION NEXT**.
-- target owner: `apps/api/src/app/create-fastify-instance.ts` via narrow `createFastifyInstance(config: AppConfig): FastifyInstance`.
-- preserve exactly: logger silent/non-silent semantics, `disableRequestLogging: false`, `trustProxy: true`, `bodyLimit: 1_048_576`, `requestTimeout: 15_000`, one instance per `buildApp()` and all downstream composition ordering.
-- evidence: `apps/api/tests/app.test.ts` treats `buildApp({ config, database })` as bootstrap contract; no evidence authorizes option tuning, so extraction and tuning remain separate concerns.
-- non-goals: no DI/service container, service graph move, broad route move, database `onClose` move, config/default change, schema/migration change or Student frontend change.
-- switch condition: the new helper becomes the single owner of `Fastify(...)`; `app.ts` no longer imports Fastify as a value or embeds those option literals; source-head/exact-head gates pass.
+- CORS/preflight — DONE, source `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
+- health/readiness — DONE, source `a302871b3486ae95810cea40dccca68363a29055`.
+- public not-found/error handling — DONE, source `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
 
-**Next:** implement only the selected Fastify instance construction/options seam, verify it, close it, and only then discover a fifth seam.
+Current fourth seam: **Fastify instance construction/options — IMPLEMENTED / WAITING FOR REQUIRED CI**.
+
+Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
+
+Owner created: `apps/api/src/app/create-fastify-instance.ts` with `createFastifyInstance(config)`.
+
+`apps/api/src/app.ts` now calls that owner and no longer imports `Fastify` as a value or embeds the constructor options. Existing logger behavior, request logging, trust proxy, body limit, request timeout, one-instance-per-build semantics and downstream composition ordering were preserved exactly. No service graph, business route, database lifecycle, config default, migration/schema or Student frontend change occurred.
+
+Verification at current handoff:
+
+- Architecture Guard `34820842164` — **SUCCESS**.
+- Combined Integration `34820842196` — **IN PROGRESS**.
+- Stage13G `34820842163` — **IN PROGRESS**.
+- Admin AI `34820842245` — **QUEUED**.
+
+Do not mark this seam DONE or start a fifth seam until required affected gates are green.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
-Normalize only proven cross-cutting technical concerns.
+Only justified cross-cutting technical foundations.
 
 ### AB-01.6 Foundation closure gate — PENDING
 
-Requires architecture guard, Admin/API quality, clean PostgreSQL, real Chromium and docs/code consistency after remaining AB-01 work.
+Requires Architecture Guard, Admin/API quality, clean PostgreSQL, relevant integration/security/auth and real Chromium evidence with docs/code consistency.
 
-## Full roadmap
+## Remaining roadmap
 
-- AB-00 — DONE
-- AB-01 — shared foundations — ACTIVE
-- AB-02 — thin Admin shell/router/providers/layouts + major lazy routes
+- AB-02 — thin Admin shell/router/providers/layouts + substantial lazy routes
 - AB-03 — vertical slices: Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes
 - AB-04 — remaining backend modular-monolith normalization
-- AB-05 — Admin design/interaction convergence audit
-- AB-06 — frontend/backend performance and delivery validation + evidence-based budgets
+- AB-05 — Admin design/interaction convergence
+- AB-06 — performance/delivery validation
 - AB-07 — legacy removal + hard dependency enforcement
-- AB-08 — final Super Admin + full Backend verification and live-main reconciliation
+- AB-08 — final full verification + live-main reconciliation
 
-No merge/readiness before AB-08 exact-head green.
+No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and state `COMPLETE`, disable all three scheduled workers.
 
-## Immediate continuation authority
+## Immediate next action
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next engineering increment is **implementation only of the selected fourth AB-01.4 Fastify instance construction/options seam**. Do not combine a fifth seam until this one is verified and documented closed.
+Inspect runs `34820842196`, `34820842163`, `34820842245`. If green, close the Fastify construction seam in all canonical docs before discovering any fifth seam. If any fails, repair only its root cause before advancing.
