@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-15 — Worker A sequence 55 implemented AB-03.2.4 Content operations compatibility facade retirement; exact-head verification is still running.**
+Last consolidated: **2026-09-15 — Worker B sequence 56 corrected AB-03.2.4 test ownership after exact-head typecheck exposed a stale root dependency; corrected verification is running.**
 
 ## Durable invariants
 
@@ -53,22 +53,14 @@ Content ingestion implementation ownership is under `features/content/api/conten
 
 Implementation/types live in `apps/admin-web/src/features/content/api/content-operations-api.ts` and are exposed through `apps/admin-web/src/features/content/public`. Executable/source checkpoint `866912f4640aa4696b896a1d897bff7ad67024f4` is covered by Architecture Guard `34898665849`, Frontend Preparation `34898665740`, Admin AI Operations `34898665783`, Combined Integration `34898665724`, and Stage13G Admin Operations / PostgreSQL / Chromium `34898665675`, all SUCCESS.
 
-#### AB-03.2.4 Content operations compatibility facade retirement — IMPLEMENTED / WAITING_FOR_CI
+#### AB-03.2.4 Content operations compatibility facade retirement — CORRECTED / WAITING_FOR_CI
 
-Worker A sequence 55 performed one bounded ownership cleanup:
+Worker A sequence 55 repointed `ContentOperationsPage.tsx` to `features/content/public` and deleted root `apps/admin-web/src/content-operations-api.ts`. Exact-head Frontend Preparation `34906963113` then failed Admin typecheck with TS2307 because the root test still imported the deleted facade.
 
-- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` now imports the Content operations/OCR contract from `../../features/content/public`;
-- root `apps/admin-web/src/content-operations-api.ts` was deleted;
-- no endpoint, payload/response contract, backend/Fastify owner, PostgreSQL schema/migration, security rule, route, UI behavior or Student frontend implementation changed.
+Worker B sequence 56 fixed the root ownership issue without restoring compatibility code: `apps/admin-web/src/content-operations-api.test.ts` was moved unchanged to `apps/admin-web/src/features/content/api/content-operations-api.test.ts`, beside the transport implementation it verifies. No production API/PostgreSQL/security/UI/Student contract changed.
 
-Executable/source checkpoint: `ca8381c45cab7ae6a8500c88325042451fbed20f`.
+Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
 
-Verification evidence so far:
+Verification evidence so far: Architecture Guard `34908457279` — SUCCESS; Frontend Preparation `34908457311` — SUCCESS; Admin AI `34908457270` — IN PROGRESS; Combined `34908457265` — IN PROGRESS; Stage13G Admin Operations / PostgreSQL / Chromium `34908457306` — IN PROGRESS.
 
-- Architecture Guard `34906963160` — SUCCESS, proving the structural dependency guard accepts the facade removal;
-- Frontend Preparation `34906963113` — QUEUED;
-- Admin AI Operations `34906963149` — IN PROGRESS;
-- Combined Integration `34906963163` — IN PROGRESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34906963142` — PENDING.
-
-AB-03.2.4 must remain open until required exact-head gates finish green. The next worker must verify these runs or their source-tree-equivalent successors before starting another seam.
+AB-03.2.4 remains open until remaining required gates finish green. The next worker must verify these exact-source runs or source-tree-equivalent successors before starting another seam.
