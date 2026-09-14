@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiRequestError, isMissingSessionError } from "../../admin-api";
+import { AdminProductState } from "../../shared/ui/AdminProductState";
 import {
   type OperationsAttentionSummary,
   fetchAdminOperationsAttention,
@@ -62,9 +63,9 @@ export function AdminOperationsHealthPage({ onSessionExpired }: { onSessionExpir
       </nav>
 
       {state === "loading" ? (
-        <OperationsState title="جارٍ فحص الحالة" body="نقرأ المشكلات الحالية من الخادم." />
+        <AdminProductState title="جارٍ فحص الحالة" body="نقرأ المشكلات الحالية من الخادم." />
       ) : state === "error" || !summary ? (
-        <OperationsState title="تعذر تحميل حالة التشغيل" body={message} onRetry={() => void load()} />
+        <AdminProductState title="تعذر تحميل حالة التشغيل" body={message} onRetry={() => void load()} />
       ) : (
         <>
           <section className="operations-attention-section" aria-labelledby="operations-issues-title">
@@ -115,8 +116,4 @@ export function AdminOperationsHealthPage({ onSessionExpired }: { onSessionExpir
       )}
     </section>
   );
-}
-
-function OperationsState({ title, body, onRetry }: { title: string; body: string; onRetry?: () => void }) {
-  return <div className="operations-page-state" role="status"><strong>{title}</strong><p>{body}</p>{onRetry ? <button className="secondary-button" type="button" onClick={onRetry}>إعادة المحاولة</button> : null}</div>;
 }
