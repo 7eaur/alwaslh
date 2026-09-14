@@ -38,16 +38,6 @@ Authoritative green evidence: Architecture Guard `34876404251`; Frontend Prepara
 
 ## AB-03.2 — Curriculum + Content + OCR — ACTIVE
 
-### Discovery — Worker C sequence 44
-
-Direct live-code inspection established:
-
-- Curriculum presentation under `apps/admin-web/src/admin/curriculum/*` consumed its full contract from root `admin-api.ts`.
-- root `admin-api.ts` implemented Curriculum records/snapshot plus `/v1/admin/curriculum*` requests while also re-exporting generic transport/auth symbols.
-- `ContentIngestionWorkspace.tsx` consumed Curriculum through that root facade.
-- root `content-ingestion-api.ts` separately owned Content ingestion transport and imported generic transport through the root facade; this was selected as a separate bounded concern after Curriculum ownership closure.
-- backend Curriculum and Content modules are already bounded, and PostgreSQL already has explicit learning/content/media/OCR migration history.
-
 ### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
 Implementation ownership moved to `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts`, with narrow consumer access through `features/curriculum/public`. `CurriculumWorkspace.tsx` and the intended Content-ingestion Curriculum consumer were migrated to that boundary. A root compatibility re-export remains intentionally transitional because strict executable typecheck proved legitimate later-slice consumers.
@@ -58,40 +48,45 @@ Required closure evidence: Architecture Guard `34887051028`; Frontend Preparatio
 
 ### AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Worker A sequence 48 completed the smallest bounded Content ingestion ownership correction:
-
-1. moved Content ingestion transport/types implementation to `apps/admin-web/src/features/content/api/content-ingestion-api.ts`;
-2. exposed the narrow consumer contract through `apps/admin-web/src/features/content/public/index.ts`;
-3. retained root `apps/admin-web/src/content-ingestion-api.ts` only as a transitional compatibility facade rather than a second implementation owner;
-4. preserved API paths, payloads, response shapes and auth/session semantics;
-5. made no backend/Fastify, PostgreSQL/migration, security, OCR/AI, or Student frontend implementation change;
-6. detected and restored an accidental intermediate workspace divergence before establishing the corrected source checkpoint, without weakening typecheck/tests/validation.
+Content ingestion transport/types implementation moved to `apps/admin-web/src/features/content/api/content-ingestion-api.ts`, exposed through `apps/admin-web/src/features/content/public/index.ts`. Root `apps/admin-web/src/content-ingestion-api.ts` remains a transitional compatibility facade rather than a second implementation owner. API paths, payloads, response shapes and auth/session semantics were preserved.
 
 Corrected executable/source checkpoint: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
 
-Final green closure set:
+Final green closure evidence: Architecture Guard `34891198234`; Admin AI Operations `34892857039`; Combined Integration `34892857011`; Stage13G Admin Operations / PostgreSQL / Chromium `34892857278`.
 
-- Architecture Guard `34891198234` — SUCCESS on exact corrected source checkpoint;
-- Admin AI Operations `34892857039` — SUCCESS;
-- Combined Integration `34892857011` — SUCCESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34892857278` — SUCCESS.
+### AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
 
-The later CI heads differ from `4ba7106f...` only by documentation/state changes, so source equivalence is intact and AB-03.2.2 is closed.
+Worker B sequence 52 executed the bounded ownership correction selected by Worker A discovery, and Worker B sequence 53 reconciled the stale lease against repository/CI truth before closure.
 
-### Worker A sequence 51 discovery — AB-03.2.3 selected
+Final ownership after this increment:
 
-Worker A performed discovery only; executable source stayed at `4ba7106f...`.
+- `apps/admin-web/src/features/content/api/content-operations-api.ts` owns Content operations/OCR transport and types;
+- `apps/admin-web/src/features/content/public/index.ts` exposes the narrow required consumer contract;
+- `apps/admin-web/src/OcrSourcePreview.tsx` consumes the feature boundary directly;
+- root `apps/admin-web/src/content-operations-api.ts` is compatibility-only and no longer owns implementation;
+- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains the proven reason the root compatibility facade cannot yet be deleted blindly.
 
-The remaining Content/OCR frontend boundary has one concrete split owner: root `apps/admin-web/src/content-operations-api.ts` still owns Content operations/OCR transport and types while `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` and root `apps/admin-web/src/OcrSourcePreview.tsx` consume it. Because `features/content` already owns Content-ingestion transport, the next coherent root fix is to consolidate the Content operations/OCR transport under that same feature rather than preserve another root implementation owner.
+No backend/Fastify, PostgreSQL/migration, security, route, page/CSS behavior, AI or Student frontend implementation semantics were changed by this owner move.
 
-No evidence in this bounded discovery requires backend/Fastify, PostgreSQL/schema, security, route, page/CSS, Student frontend or AI changes.
+Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
 
-### Exact next smallest step — AB-03.2.3
+Exact-head green closure set:
 
-1. move only the implementation/types from root `content-operations-api.ts` into `apps/admin-web/src/features/content/api`;
-2. expose the minimum required contract through `apps/admin-web/src/features/content/public`;
-3. update only the proven Content/OCR consumers to the feature public boundary;
-4. retain a root compatibility re-export only if a real remaining consumer proves it necessary;
-5. preserve API paths, payloads, response semantics, routes, UI behavior and server/PostgreSQL/security authority;
-6. do not start AI yet;
-7. verify Architecture Guard plus all relevant Admin/API/PostgreSQL/integration/Chromium gates before closure.
+- Architecture Guard `34898665849` — SUCCESS;
+- Frontend Preparation `34898665740` — SUCCESS;
+- Admin AI Operations `34898665783` — SUCCESS;
+- Combined Integration `34898665724` — SUCCESS;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — SUCCESS.
+
+This closes AB-03.2.3 without weakening any gate or preserving duplicate implementation ownership.
+
+### Exact next smallest step — AB-03.2 closure discovery
+
+Perform discovery only before starting AI:
+
+1. inspect remaining Content/OCR imports and ownership boundaries;
+2. confirm whether `ContentOperationsPage.tsx` is the final legitimate consumer of root `content-operations-api.ts`;
+3. if and only if zero other consumers are proven, select the smallest follow-up seam: switch that one page to `features/content/public` and delete the compatibility facade;
+4. do not bulk-move page/CSS ownership merely for folder neatness;
+5. do not begin AI until the Content/OCR closure check is complete;
+6. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority, product behavior and Student frontend exclusion.
