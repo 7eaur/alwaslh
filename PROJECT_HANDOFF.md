@@ -37,58 +37,52 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
-  - AB-03.2 Curriculum + Content + OCR — ACTIVE / DISCOVERY NEXT
+  - AB-03.2 Curriculum + Content + OCR — ACTIVE / DISCOVERY COMPLETE
+  - next increment: AB-03.2.1 Curriculum frontend API ownership
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker A sequence 42 performed the explicit AB-03.1 slice-closure discovery. No additional evidence-backed correction was found inside Overview + Operations, so the slice is closed rather than manufacturing another migration.
+Worker C sequence 44 completed the required AB-03.2 discovery without touching production source, tests or migrations.
 
-Final executable source checkpoint remains:
+Direct evidence:
 
-`7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
-
-Current ownership is coherent:
-
-- Overview/Operations presentation consumes Operations through `features/operations/public`;
-- Operations transport and presentation model are feature-owned;
-- backend HTTP owns admin authorization/query validation;
-- attention application owns attention orchestration;
-- `AdminOperationsService` remains PostgreSQL-backed operational/governance/audit authority;
-- no PostgreSQL/schema/security change is justified for closure.
-
-Compare from the source checkpoint to pre-run HEAD `4452d246...` contained documentation only, so exact-source green evidence remains authoritative.
-
-## Verification state
-
-Exact-source verification on `7eda86f...`:
-
-- Architecture Guard `34876404251` — SUCCESS;
-- Frontend Preparation `34876404345` — SUCCESS;
-- Admin AI Operations `34876404287` — SUCCESS;
-- Combined Integration `34876404314` — SUCCESS, including real Admin Chromium;
-- Stage13G Admin Operations `34876404237` — SUCCESS, including Admin/API quality, clean PostgreSQL, operations/security/auth integrations and Real API + PostgreSQL + Chromium.
-
-This closure run changed documentation only after inspecting live source; CI triggered by documentation commits does not supersede the exact-source executable evidence above.
+- `apps/admin-web/src/admin/curriculum/CurriculumWorkspace.tsx` consumes Curriculum types and mutations from root `apps/admin-web/src/admin-api.ts`.
+- `admin-api.ts` owns the full Curriculum snapshot/record types plus `/v1/admin/curriculum*` requests while also re-exporting generic transport/auth contracts, so Curriculum frontend ownership is still mixed at the root.
+- `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` also consumes Curriculum from that root facade and Content ingestion from root `content-ingestion-api.ts`.
+- `content-ingestion-api.ts` unnecessarily obtains `adminApiRequest` through `admin-api.ts` instead of the canonical shared API client.
+- Backend already has bounded Curriculum and Content modules; PostgreSQL already has explicit learning/content/media/OCR migration history, and no schema/backend mutation was justified by this discovery.
+- Curriculum has a server-side `student-reader.ts`; Student frontend remains out of scope and its server contract must stay compatible.
 
 ## Exact continuation
 
-Begin **AB-03.2 Curriculum + Content + OCR with discovery only**:
+Execute **AB-03.2.1 Curriculum frontend API ownership only**:
 
-1. fetch branch/main heads and shared execution state;
-2. inspect Curriculum/Content/OCR operator jobs and routes;
-3. map frontend feature/page/API/model ownership;
-4. map backend HTTP/application/domain/infrastructure owners and cross-module seams;
-5. inspect PostgreSQL migrations/schema for publication, revision, provenance, media/ingestion and OCR integrity;
-6. inspect authorization/security and Student-facing server consumers where relevant;
-7. inspect existing tests/CI/browser evidence;
-8. choose exactly one smallest root correction only after direct evidence; do not perform broad restructuring during discovery.
+1. fetch branch/main/state and confirm no active worker collision;
+2. move only Curriculum-specific types/request functions from root `apps/admin-web/src/admin-api.ts` to `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts`;
+3. create/use `apps/admin-web/src/features/curriculum/public/index.ts` as the narrow consumer boundary;
+4. update Curriculum consumers and legitimate Content ingestion Curriculum imports to that public boundary;
+5. keep generic transport owned by `shared/api/client` and preserve endpoint/payload/session/UI semantics;
+6. do not combine root `content-ingestion-api.ts` migration, page/folder moves, CSS changes, OCR/AI redesign, backend service changes or PostgreSQL migrations;
+7. verify with Architecture Guard, Admin quality/unit/build, relevant Curriculum/API/PostgreSQL integrations, Combined real Chromium and Stage13G real API + PostgreSQL + Chromium;
+8. if required exact-head CI remains running, hand off `WAITING_FOR_CI` rather than claiming DONE.
+
+## Verification state
+
+Worker C sequence 44 was documentation-only. Existing executable evidence remains green:
+
+- Architecture Guard `34876404251` — SUCCESS on executable checkpoint `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`;
+- Combined Integration `34880448851` — SUCCESS on documentation-equivalent head `694473bfbc8754ac46578214087e6ed8c6219641`;
+- Stage13G Admin Operations `34880448862` — SUCCESS on the same documentation-equivalent head;
+- Admin AI Operations `34880448853` — SUCCESS on the same documentation-equivalent head.
+
+Fresh verification is mandatory after AB-03.2.1 executable mutation.
 
 ## Main reconciliation need
 
-`NOT REQUIRED NOW`. Live `main` remained `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; no fresh overlapping scoped implementation change was observed in this run.
+`NOT REQUIRED NOW`. Live `main` remained `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; no fresh overlapping scoped implementation change was observed in Worker C sequence 44.
 
 ## Remaining roadmap
 
