@@ -69,7 +69,7 @@ Worker A sequence 48 completed the smallest bounded Content ingestion ownership 
 
 Corrected executable/source checkpoint: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
 
-Worker B sequence 49 verified that later branch changes were documentation/state only and waited for replacement source-equivalent CI. Worker C sequence 50 observed the final green closure set:
+Final green closure set:
 
 - Architecture Guard `34891198234` — SUCCESS on exact corrected source checkpoint;
 - Admin AI Operations `34892857039` — SUCCESS;
@@ -78,15 +78,20 @@ Worker B sequence 49 verified that later branch changes were documentation/state
 
 The later CI heads differ from `4ba7106f...` only by documentation/state changes, so source equivalence is intact and AB-03.2.2 is closed.
 
-Live-main reconciliation during closure also found that current `main` `d43fe2afe29b02093510177b921c0407e21a3de9` differs from the prior baseline only in Student frontend/PWA workflow files, with no overlapping Admin/API/PostgreSQL/shared-contract implementation change.
+### Worker A sequence 51 discovery — AB-03.2.3 selected
 
-### Exact next smallest step
+Worker A performed discovery only; executable source stayed at `4ba7106f...`.
 
-Fresh AB-03.2 discovery only inside the remaining **Content + OCR** scope:
+The remaining Content/OCR frontend boundary has one concrete split owner: root `apps/admin-web/src/content-operations-api.ts` still owns Content operations/OCR transport and types while `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` and root `apps/admin-web/src/OcrSourcePreview.tsx` consume it. Because `features/content` already owns Content-ingestion transport, the next coherent root fix is to consolidate the Content operations/OCR transport under that same feature rather than preserve another root implementation owner.
 
-1. inspect current Content/OCR Admin frontend ownership and workflow states/actions;
-2. inspect backend/API boundaries, PostgreSQL provenance/integrity, security/authorization and existing tests;
-3. select at most one smallest root-cause ownership/workflow correction from current code evidence;
-4. do not bulk-migrate unrelated compatibility-facade consumers;
-5. do not begin the AI slice until Curriculum + Content + OCR is actually complete;
-6. verify any chosen increment with Architecture Guard plus all relevant Admin/API/PostgreSQL/integration/Chromium gates.
+No evidence in this bounded discovery requires backend/Fastify, PostgreSQL/schema, security, route, page/CSS, Student frontend or AI changes.
+
+### Exact next smallest step — AB-03.2.3
+
+1. move only the implementation/types from root `content-operations-api.ts` into `apps/admin-web/src/features/content/api`;
+2. expose the minimum required contract through `apps/admin-web/src/features/content/public`;
+3. update only the proven Content/OCR consumers to the feature public boundary;
+4. retain a root compatibility re-export only if a real remaining consumer proves it necessary;
+5. preserve API paths, payloads, response semantics, routes, UI behavior and server/PostgreSQL/security authority;
+6. do not start AI yet;
+7. verify Architecture Guard plus all relevant Admin/API/PostgreSQL/integration/Chromium gates before closure.
