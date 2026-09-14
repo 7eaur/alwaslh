@@ -210,6 +210,233 @@
   border-radius: .82rem;
 }
 
+/* V07 — Practice visual family */
+.practice-library,
+.quiz-detail {
+  position: relative;
+}
+
+.practice-page-heading {
+  position: relative;
+  min-height: 8.25rem;
+  align-items: end;
+  overflow: hidden;
+  padding: .55rem .2rem 1rem;
+}
+
+.practice-page-heading::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -1.8rem;
+  top: -.8rem;
+  width: 10.5rem;
+  aspect-ratio: 8 / 9;
+  background: url('/student-botanical.svg') center / contain no-repeat;
+  opacity: .38;
+  pointer-events: none;
+}
+
+.practice-page-heading > * {
+  position: relative;
+  z-index: 1;
+}
+
+.practice-page-heading > div {
+  width: min(100%, 34rem);
+  margin-inline-start: auto;
+}
+
+.practice-page-heading h1 {
+  font-size: clamp(1.55rem, 5.8vw, 2.05rem);
+  font-weight: 800;
+}
+
+.practice-page-heading .eyebrow {
+  color: var(--student-accent-strong);
+  font-size: .76rem;
+}
+
+.practice-filter-bar {
+  border-color: rgb(18 60 67 / .08);
+  background: rgb(255 255 255 / .84);
+  box-shadow: 0 5px 18px rgb(18 60 67 / .035);
+}
+
+.practice-list,
+.practice-history ul,
+.quiz-mode-option {
+  border-color: rgb(18 60 67 / .09);
+  background: rgb(255 255 255 / .96);
+  box-shadow: 0 7px 22px rgb(18 60 67 / .045);
+}
+
+.practice-list__link {
+  min-height: 4.6rem;
+}
+
+.practice-list__context {
+  color: var(--student-accent-strong);
+}
+
+.quiz-detail__hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 7rem;
+  display: grid;
+  align-content: center;
+  padding: .6rem .1rem;
+}
+
+.quiz-detail__hero::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -2.6rem;
+  top: -1.5rem;
+  width: 9rem;
+  aspect-ratio: 8 / 9;
+  background: url('/student-botanical.svg') center / contain no-repeat;
+  opacity: .24;
+  pointer-events: none;
+}
+
+.quiz-detail__hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.quiz-mode-option {
+  border-radius: 1rem;
+}
+
+.quiz-mode-option__icon {
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: .82rem;
+}
+
+/* V08 — Library */
+.student-library-v2 {
+  position: relative;
+  padding-top: .35rem;
+}
+
+.student-library-v2::before {
+  content: "";
+  display: block;
+  height: 5.4rem;
+  margin-bottom: .4rem;
+  background: url('/student-botanical.svg') left center / 8.5rem auto no-repeat;
+  opacity: .38;
+  pointer-events: none;
+}
+
+.student-library-v2__list {
+  border-color: rgb(18 60 67 / .09);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / .96);
+  box-shadow: 0 7px 22px rgb(18 60 67 / .05);
+}
+
+.student-library-v2__row {
+  min-height: 4.65rem;
+  padding-block: .78rem;
+  transition: background-color 150ms ease, transform 90ms ease;
+}
+
+.student-library-v2__row:hover {
+  background: var(--student-surface-subtle, #f6f8f7);
+}
+
+.student-library-v2__row:active {
+  transform: scale(.996);
+}
+
+.student-library-v2__icon {
+  width: 2.65rem;
+  height: 2.65rem;
+  border-radius: .82rem;
+}
+
+.student-v2-empty-state {
+  position: relative;
+  overflow: hidden;
+  min-height: 15rem;
+  display: grid;
+  align-content: center;
+}
+
+.student-v2-empty-state::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -2.4rem;
+  bottom: -2rem;
+  width: 9rem;
+  aspect-ratio: 8 / 9;
+  background: url('/student-botanical.svg') center / contain no-repeat;
+  opacity: .2;
+  pointer-events: none;
+}
+
+.student-v2-empty-state > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* V09 — Account / secondary surfaces */
+.student-account-v2__section {
+  border-color: rgb(18 60 67 / .09);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / .96);
+  box-shadow: 0 7px 22px rgb(18 60 67 / .045);
+}
+
+.student-account-v2__section:first-child {
+  position: relative;
+  overflow: hidden;
+  padding-top: 1.15rem;
+}
+
+.student-account-v2__section:first-child::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -2.6rem;
+  top: -3rem;
+  width: 8.2rem;
+  aspect-ratio: 8 / 9;
+  background: url('/student-botanical.svg') center / contain no-repeat;
+  opacity: .14;
+  pointer-events: none;
+}
+
+.student-account-v2__section:first-child > * {
+  position: relative;
+  z-index: 1;
+}
+
+.student-account-v2__links {
+  border-color: rgb(18 60 67 / .08);
+  border-radius: .9rem;
+}
+
+.student-account-v2__links > a {
+  min-height: 4.2rem;
+  background: rgb(255 255 255 / .96);
+  transition: background-color 150ms ease, transform 90ms ease;
+}
+
+.student-account-v2__links > a:hover {
+  background: var(--student-surface-subtle, #f6f8f7);
+}
+
+.student-account-v2__links > a:active {
+  transform: scale(.997);
+}
+
+.student-guidance,
+.student-support-contact {
+  border-color: rgb(18 60 67 / .09);
+}
+
 @media (max-width: 40rem) {
   .student-shell:not(.is-focused-reader)::before {
     inset-inline-start: -3.2rem;
@@ -243,6 +470,26 @@
     font-size: .73rem;
     line-height: 1.7;
   }
+
+  .practice-page-heading {
+    min-height: 7.4rem;
+  }
+
+  .practice-page-heading::before {
+    inset-inline-start: -3rem;
+    width: 9rem;
+    opacity: .3;
+  }
+
+  .practice-page-heading > div {
+    width: 72%;
+  }
+
+  .student-library-v2::before {
+    height: 4.7rem;
+    background-size: 7.4rem auto;
+    opacity: .3;
+  }
 }
 
 @media (max-width: 24rem) {
@@ -259,6 +506,10 @@
   .student-home__quote {
     display: none;
   }
+
+  .practice-page-heading > div {
+    width: 82%;
+  }
 }
 
 @media (min-width: 68rem) {
@@ -272,7 +523,9 @@
   .student-shell:not(.is-focused-reader)::before,
   .student-shell:not(.is-focused-reader)::after,
   .student-entry-page::before,
-  .student-entry-page::after {
+  .student-entry-page::after,
+  .student-library-v2__row,
+  .student-account-v2__links > a {
     transition: none !important;
   }
 }
