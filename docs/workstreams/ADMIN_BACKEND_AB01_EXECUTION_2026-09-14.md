@@ -22,56 +22,31 @@ Evidence:
 - Stage13E Combined Integration run `34800888690` — SUCCESS;
 - Stage13G run `34800888723` — SUCCESS, including Admin lint/typecheck/unit/build, API lint/typecheck/unit/build, clean PostgreSQL migrations, integration/auth regressions, and real API + PostgreSQL + Chromium;
 - Architecture Guard run `34799891149` — SUCCESS on last code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a`;
-- compare `e0b90cd..d955a340` contains documentation-only changes, so no Admin/API/source mutation occurred after the successful architecture guard.
+- compare `e0b90cd..d955a340` contains documentation-only changes.
 
-Therefore AB-01.1 and AB-01.2 are closed as **DONE**. Documentation-only commits after this checkpoint do not introduce a second implementation owner and do not reopen these subtasks unless later source changes regress their contracts.
+Therefore AB-01.1 and AB-01.2 are **DONE**.
 
 ## AB-01 sequence
 
 ### AB-01.1 — Shared API transport boundary — DONE
 
-Target owner:
+Target owner: `apps/admin-web/src/shared/api/client.ts`.
 
-`apps/admin-web/src/shared/api/client.ts`
-
-Owns only:
-- base URL resolution;
-- credentialed fetch;
-- JSON/body parsing;
-- public API error normalization;
-- blob transport;
-- network/service-unavailable translation;
-- missing-session error classification.
-
-Must not own feature contracts or business semantics.
-
-Compatibility:
-- root `admin-api.ts` may re-export transport symbols temporarily;
-- removal condition: all feature adapters consume shared transport directly and root compatibility is unused.
+Owns only base URL resolution, credentialed fetch, JSON/body parsing, public API error normalization, blob transport, network/service-unavailable translation, and missing-session classification. Root `admin-api.ts` compatibility re-exports remain transitional until feature adapters consume shared transport directly.
 
 ### AB-01.2 — Auth/session ownership — DONE
 
-Target owner:
+Target owner: `apps/admin-web/src/features/auth/`.
 
-`apps/admin-web/src/features/auth/`
-
-Structure:
 - `api/admin-auth-api.ts` — login/restore/logout HTTP contract adapter;
 - `model/AdminSessionProvider.tsx` — restore/signed-out/signed-in/error lifecycle and logout/expiry orchestration;
-- `public/index.ts` — only supported external contract.
+- `public/index.ts` — supported external contract.
 
-Verified result:
-- `App.tsx` no longer owns session state, restore logic, logout API calls or auth error interpretation.
+`App.tsx` no longer owns session state, restore logic, logout API calls or auth error interpretation. Root `LoginScreen.tsx` remains transitional presentation debt to close before AB-02 finishes.
 
-Compatibility:
-- root `admin-api.ts` re-exports auth symbols through the feature public boundary temporarily;
-- root `LoginScreen.tsx` is still transitional presentation debt and will move under Auth before AB-02 closes.
+### AB-01.3 — Product-state primitives — DONE
 
-### AB-01.3 — Product-state primitives — IMPLEMENTED / WAITING_FOR_CI
-
-Source implementation checkpoint:
-
-`cfa2016e056f6dc4f9669236414a7acbd9551011`
+Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
 The smallest proven reusable Admin-only state pattern was loading/error/retry presentation shared by Overview and Operations.
 
@@ -83,44 +58,42 @@ Implemented ownership:
 - duplicate local state components were removed;
 - legacy `.operations-page-state` CSS ownership was removed from Operations.
 
-Deliberately left feature-owned:
+Deliberately feature-owned: `LoadState` state machines, feature/server-specific error copy, API calls/server truth, session-expiry behavior, retry callbacks and recovery semantics. Empty/permission/conflict/unavailable/success were not generalized without independent duplication/semantic evidence.
 
-- `LoadState` state machines;
-- feature/server-specific error copy;
-- API calls and server truth;
-- session-expiry behavior;
-- retry callbacks and recovery semantics.
+#### Closure evidence
 
-Not generalized in this batch:
+Exact source-head evidence:
 
-- empty;
-- permission/denied;
-- conflict/unavailable;
-- success/confirmation.
+- Architecture Guard `34804704619` — SUCCESS on `cfa2016e...`;
+- Stage13E Frontend Preparation `34804704759` — SUCCESS on `cfa2016e...`.
 
-Those require independent duplication/semantic evidence before a shared owner is justified. No mega-component or generic copy was introduced.
+Three original source-head workflows were cancelled by later documentation pushes rather than test failures. A compare from `cfa2016e...` to verification head `06127e90a859917ee4d62e33b85f6a8eae0fa769` proved every intervening change was documentation-only, so the superseding runs exercise the same Admin/API source tree:
 
-Verification required before DONE:
+- Stage13E Admin AI `34805721218` — SUCCESS;
+- Stage13E Combined Integration `34805721217` — SUCCESS, including API/Admin quality, clean PostgreSQL, backend/auth regressions, deterministic fixtures and real Admin Chromium;
+- Stage13G Admin Operations `34805721226` — SUCCESS, including Admin lint/typecheck/unit/build, API lint/typecheck/unit/build, clean PostgreSQL, all listed integration/auth regressions, and real API + PostgreSQL + Chromium.
 
-- Architecture Guard `34804704619` — running at handoff;
-- Stage13E Admin AI `34804704717` — pending at handoff;
-- Stage13E Frontend Preparation `34804704759` — pending at handoff;
-- Stage13E Combined Integration `34804704721` — pending at handoff;
-- Stage13G Admin Operations `34804704756` — pending at handoff.
+Conclusion: AB-01.3 is **DONE**. No source mutation was required during the verification/closure run.
 
-If these required source-head gates are green, close AB-01.3 as DONE in a verification/documentation increment. If any fails, root-fix that regression only.
+### AB-01.4 — Backend app composition foundation — NEXT
 
-### AB-01.4 — Backend app composition foundation — PENDING
+Refactor `apps/api/src/app.ts` without changing business rules. The next run must begin with **discovery only before mutation**:
 
-Refactor `apps/api/src/app.ts` without changing business rules:
-- extract configuration/composition responsibilities that are genuinely app-level;
-- keep Fastify modular monolith;
+1. inspect current `apps/api/src/app.ts` and its direct composition/config/plugin collaborators;
+2. map construction/registration order and behavior-sensitive dependencies;
+3. classify actual app-level responsibilities versus module-owned logic;
+4. identify the smallest real extraction seam;
+5. only then implement one coherent extraction in a later/continued bounded increment if evidence is sufficient.
+
+Constraints:
+- keep one Fastify modular monolith;
 - preserve plugin/route/service construction order where behavior depends on it;
 - no DI framework;
 - no repository/interface ceremony;
-- no database migration merely for folder structure.
+- no database migration merely for folder structure;
+- create only folders/files that own real responsibility.
 
-First target shape:
+Conceptual target remains:
 
 ```text
 apps/api/src/app/
@@ -130,68 +103,35 @@ apps/api/src/app/
   plugins/
 ```
 
-Only create folders/files that hold real responsibility. Do not start source mutation until AB-01.3 is formally closed; first inspect current `app.ts` and identify the smallest real extraction seam.
+This is a responsibility model, not permission to create empty architecture folders.
 
-### AB-01.5 — Common backend technical ownership
+### AB-01.5 — Common backend technical ownership — PENDING
 
-Normalize only proven cross-cutting technical concerns:
-- error/public error mapping;
-- authentication/session helpers;
-- PostgreSQL connection/transaction helpers;
-- observability hooks;
-- media technical helpers when genuinely shared.
+Normalize only proven cross-cutting technical concerns such as public error mapping, auth/session helpers, PostgreSQL connection/transaction helpers, observability hooks, or media technical helpers when genuinely shared. Domain/business rules stay with module owners.
 
-Domain/business rules stay with their module owners.
+### AB-01.6 — Foundation closure gate — PENDING
 
-### AB-01.6 — Foundation closure gate
-
-AB-01 closes only when:
-- Admin transport has one owner;
-- auth/session has one feature owner and public contract;
-- root `App.tsx` no longer owns auth lifecycle;
-- common product states have explicit reusable ownership;
-- backend app composition is thinner without behavior loss;
-- no new cross-feature/module private imports;
-- compatibility bridges have explicit deletion conditions;
-- Architecture Guard passes;
-- Admin lint/typecheck/unit/build passes;
-- API lint/typecheck/unit/build passes;
-- clean PostgreSQL migrations pass;
-- real API + PostgreSQL + Chromium auth/session/operator regression passes;
-- docs match code.
+AB-01 closes only when Admin transport has one owner, auth/session has one feature owner/public contract, common product states have explicit reusable ownership, backend app composition is thinner without behavior loss, no new private dependency violations exist, compatibility bridges have removal conditions, Architecture Guard passes, Admin/API quality passes, clean PostgreSQL passes, real API + PostgreSQL + Chromium passes, and docs match code.
 
 ## After AB-01
 
 ### AB-02 — Thin Admin shell + router
 
-- move bootstrap/providers/layout/router to `app/`;
-- move Auth presentation to its feature;
-- one global shell owner;
-- route modules owned by features;
-- major workflow routes lazy-loaded;
-- Suspense/error/focus/history boundaries;
-- remove feature imports/route table from root `App.tsx`.
+Move bootstrap/providers/layout/router to `app/`, move Auth presentation to its feature, establish one global shell owner, feature public route entry points, substantial route lazy-loading, Suspense/error/focus/history boundaries, and remove feature imports/route table knowledge from root `App.tsx` while preserving real auth/session behavior.
 
 ### AB-03 — End-to-end business slices
 
-Order:
-1. Overview + Operations
-2. Curriculum + Content + OCR
-3. AI Jobs + Review + contextual authoring
-4. Question Bank
-5. Quiz Builder
-6. Students
-7. Access Codes
+Order: Overview + Operations → Curriculum + Content + OCR → AI Jobs + Review + contextual authoring → Question Bank → Quiz Builder → Students → Access Codes.
 
 Each slice fixes its frontend owner and the backend seam it actually uses, verifies parity, switches ownership, then removes replaced legacy owners.
 
 ### AB-04 — Remaining backend normalization
 
-Close server-only and Student-facing backend seams not naturally closed by AB-03, while preserving all authoritative contracts.
+Close server-only and Student-facing backend seams not naturally closed by AB-03 while preserving authoritative contracts.
 
 ### AB-05 — Design/interaction convergence
 
-Audit remaining visual/state/accessibility/RTL/responsive drift after slices already applied the design rules.
+Audit remaining visual/state/accessibility/RTL/responsive drift after slices already apply design rules.
 
 ### AB-06 — Performance/delivery
 
