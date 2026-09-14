@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-01.5 discovery selected one bounded generic request-validation ownership correction.**
+Last consolidated: **2026-09-14 — AB-01.5 request-validation ownership implementation complete; exact-head integration/browser verification still running.**
 
 ## Durable invariants
 
@@ -59,45 +59,54 @@ Fifth seam source+test implementation HEAD: `101f61a9c25e3de116d0074a3ef7e2f760e
 
 Closure evidence: Architecture Guard `34825750566`, Admin AI `34826063345`, Combined `34826063326`, Stage13G `34826063330` — SUCCESS. Broad service construction/route registration remains for AB-03/AB-04 rather than a giant container/registry abstraction.
 
-### AB-01.5 — DISCOVERY COMPLETE / IMPLEMENTATION NEXT
+### AB-01.5 — IMPLEMENTED / WAITING FOR EXACT-HEAD CI
 
 Canonical discovery:
 
 `docs/architecture/ADMIN_BACKEND_AB01_5_TECHNICAL_OWNERSHIP_DISCOVERY_2026-09-14.md`
 
-#### Evidence
+#### Ownership correction
 
-`apps/api/src/auth/http.ts` exports `parseBody(schema, body)` which only:
+Generic Zod request validation is now owned by:
 
-- calls Zod `safeParse`;
-- returns parsed data;
-- maps invalid input to `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)`.
+`apps/api/src/shared/http/request-validation.ts`
 
-It performs no session lookup/authentication/cookie/role behavior, so Auth HTTP is an incidental owner.
+The first implementation placed it under `app/http`, but Architecture Guard correctly rejected module→app composition imports. The correction moved the helper to generic shared HTTP infrastructure; no guard exception was added.
 
-Verified private cross-module callers:
+`parseBody` no longer belongs to private `auth/http.ts`. Auth retains `currentProfile`, `sessionToken` and all authentication/session/cookie/role behavior. Invalid input semantics remain exactly `safeParse` → `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)`.
 
-- `apps/api/src/question-bank/http.ts` imports `parseBody` from `../auth/http.js` and uses it for params/query/body validation;
-- `apps/api/src/quiz-builder/http.ts` imports and uses it likewise.
+#### CI-driven caller audit correction
 
-Both modules also import `currentProfile`, but that is intentionally outside this correction because `currentProfile` invokes AuthService/session authentication. Moving both concerns together would blend generic request parsing with an authorization redesign.
+The initial caller audit was incomplete. Exact-head Stage13E Admin AI run `34833103100` on `cba5de4bd37c9382efff91820866e7c3c2937915` failed API typecheck and proved eight remaining modules still imported `parseBody` from Auth. Worker C migrated only those compiler-proven imports:
 
-#### Decision
+- curriculum HTTP;
+- lesson-authoring export HTTP;
+- notifications HTTP;
+- offline HTTP;
+- Question Bank regeneration HTTP;
+- Quiz version export HTTP;
+- Quiz specialized export HTTP;
+- Student assessment HTTP.
 
-Move only the generic request-validation adapter to:
+No business schema, auth/session behavior, migration, PostgreSQL authority or Student frontend implementation changed.
 
-`apps/api/src/app/http/request-validation.ts`
+Source implementation checkpoint: `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`.
 
-Preserve exact invalid-input semantics. Search all current branch callers before implementation and migrate only real callers. Do not rename/move AppError, config/db/media/observability, auth/session/cookies/roles or domain schemas in the same batch.
+Current verification:
 
-This is the **only** AB-01.5 technical ownership correction authorized. After implementation + exact-head verification, stop AB-01.5 and proceed to AB-01.6.
+- Architecture Guard `34834714337` — SUCCESS;
+- Stage13G `34834714355` — running; Admin lint/typecheck/unit green and API lint/typecheck/unit green, proving the prior TypeScript ownership regression is fixed;
+- Admin AI `34834714335` — running;
+- Combined/real-browser `34834714325` — running.
+
+AB-01.5 remains open until clean PostgreSQL, relevant integration/security/auth and real Chromium evidence close green on the source checkpoint.
 
 ### AB-01.6 — PENDING
 
-Foundation exact-head closure gate.
+Foundation exact-head closure gate. Do not start it until AB-01.5 is fully green.
 
 ## Exact continuation
 
-Implement the single AB-01.5 request-validation ownership correction. Verify Architecture Guard, API lint/typecheck/unit/build, relevant auth/security and Question Bank/Quiz Builder integrations, clean PostgreSQL/DB contract and canonical real API + PostgreSQL + Chromium gates. If those are green, close AB-01.5 and begin AB-01.6; do not manufacture further shared-infrastructure moves.
+Inspect exact-head runs `34834714355`, `34834714335`, and `34834714325` for source checkpoint `d0352917...`. Fix only failures attributable to the request-validation ownership batch. If all required gates close green, mark AB-01.5 DONE and begin AB-01.6 Foundation Closure Gate. Do not manufacture any further shared-infrastructure extraction.
 
 Remaining roadmap: AB-02 thin Admin shell/router/providers/lazy routes → AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final full verification/reconciliation.
