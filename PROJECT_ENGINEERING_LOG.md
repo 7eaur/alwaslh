@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-15 — Worker B sequence 53 reconciled the stale lease and closed AB-03.2.3 with exact-head green evidence.**
+Last consolidated: **2026-09-15 — Worker C sequence 54 completed AB-03.2 Content/OCR closure discovery and selected one bounded compatibility-facade retirement seam.**
 
 ## Durable invariants
 
@@ -51,22 +51,18 @@ Content ingestion implementation ownership is under `features/content/api/conten
 
 #### AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
 
-Worker B sequence 52 completed the bounded ownership correction and sequence 53 reconciled the stale lease plus exact-head CI before closure.
+Implementation/types live in `apps/admin-web/src/features/content/api/content-operations-api.ts` and are exposed through `apps/admin-web/src/features/content/public`. Root `apps/admin-web/src/content-operations-api.ts` is compatibility-only. Executable/source checkpoint `866912f4640aa4696b896a1d897bff7ad67024f4` is covered by Architecture Guard `34898665849`, Frontend Preparation `34898665740`, Admin AI Operations `34898665783`, Combined Integration `34898665724`, and Stage13G Admin Operations / PostgreSQL / Chromium `34898665675`, all SUCCESS.
 
-Implementation/types now live in `apps/admin-web/src/features/content/api/content-operations-api.ts` and are exposed through `apps/admin-web/src/features/content/public`. `OcrSourcePreview.tsx` consumes the feature boundary directly. The root `apps/admin-web/src/content-operations-api.ts` is a compatibility re-export only because `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains a proven consumer. There is no second Content/OCR transport implementation owner.
+#### AB-03.2 closure discovery — DONE / DOC-ONLY
 
-No backend/Fastify, PostgreSQL/schema, security, route, page/CSS, AI or Student frontend implementation semantics were changed by this ownership move.
+Worker C sequence 54 inspected the live root facade, the remaining `ContentOperationsPage.tsx` consumer, `OcrSourcePreview.tsx`, and `features/content/public`.
 
-Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
+Findings:
 
-Exact-head green evidence:
+- root `content-operations-api.ts` is a pure re-export, not an implementation owner;
+- `OcrSourcePreview.tsx` already imports `fetchOcrSourcePreview` from `features/content/public`;
+- `ContentOperationsPage.tsx` still imports Content operations/OCR types and functions from `../../content-operations-api`;
+- `features/content/public` already exposes the same required contract;
+- compare `866912f...` → observed start `707e52a...` contains only `PROJECT_*` and canonical workstream/state docs, so no executable drift invalidates the existing green source evidence.
 
-- Architecture Guard `34898665849` — SUCCESS;
-- Frontend Preparation `34898665740` — SUCCESS;
-- Admin AI Operations `34898665783` — SUCCESS;
-- Combined Integration `34898665724` — SUCCESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — SUCCESS.
-
-This closes AB-03.2.3.
-
-**Exact continuation:** perform AB-03.2 Content/OCR closure discovery only. Verify remaining imports/owners and determine whether `ContentOperationsPage.tsx` is the final legitimate consumer of the root compatibility facade. If so, the next bounded root fix may switch only that consumer to `features/content/public` and delete the facade after zero-consumer proof. Do not begin AI or bulk-move presentation/CSS merely for folder neatness.
+**Exact continuation:** `AB-03.2.4 — retire Content operations compatibility facade`. Change only `ContentOperationsPage.tsx` to consume `../../features/content/public`, delete root `content-operations-api.ts`, and use strict Admin typecheck + Architecture Guard as zero-hidden-consumer proof before running the remaining required Admin/API/PostgreSQL/integration/Chromium gates. Do not start AI or bulk-move presentation/CSS in the same increment.
