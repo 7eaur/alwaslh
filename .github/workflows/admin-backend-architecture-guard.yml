@@ -1,0 +1,36 @@
+name: Admin + Backend Architecture Guard
+
+on:
+  push:
+    paths:
+      - "apps/admin-web/src/**"
+      - "apps/api/src/**"
+      - "scripts/verify-architecture-boundaries.py"
+      - ".github/workflows/admin-backend-architecture-guard.yml"
+  pull_request:
+    paths:
+      - "apps/admin-web/src/**"
+      - "apps/api/src/**"
+      - "scripts/verify-architecture-boundaries.py"
+      - ".github/workflows/admin-backend-architecture-guard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  architecture-boundaries:
+    name: Dependency ratchet
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify guard self-test
+        run: python scripts/verify-architecture-boundaries.py --self-test
+      - name: Verify Admin + Backend dependency boundaries
+        run: python scripts/verify-architecture-boundaries.py --check
