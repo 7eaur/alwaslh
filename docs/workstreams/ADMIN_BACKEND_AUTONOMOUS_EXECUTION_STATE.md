@@ -1,14 +1,13 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `WAITING_FOR_CI`
-Sequence: `1`
+Status: `RUNNING`
+Sequence: `2`
 Last worker: `A`
-Active worker: `NONE`
-Started at: `2026-09-14T06:01:06+03:00`
+Active worker: `A`
+Started at: `2026-09-14T07:01:04+03:00`
 Last handoff at: `2026-09-14T06:04:07+03:00`
-Starting HEAD for Worker A sequence 1: `d955a34087552377dc8b426ec1712e57f59fd8f6`
-Ending documentation HEAD before Worker A handoff-state commit: `1e957d7433909466c5338dc832e9ee057cb2f995`
-Scheduler protocol updated to three workers at documentation commit: `05d12826b26a8970e965e51140f4fcb6af3267b5`
+Starting HEAD for Worker A sequence 2: `e62bce32b6c43695738540031ce39321c2bb3eef`
+Latest live `main` observed: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`
 
 ## Scheduler topology — ACTIVE
 
@@ -22,85 +21,42 @@ Serial order:
 
 `A → B → C → A → B → C → ...`
 
-The workers do not own separate code areas. Every run must read this file and the binding protocol before mutation, honor the active-worker lease, execute only one smallest coherent increment, verify it, and hand off here.
-
 Automatic shutdown: after AB-08 is fully complete with required exact-head green evidence and this state is changed to `COMPLETE`, the proving worker must disable all three scheduled tasks `Alwaslh Worker A`, `Alwaslh Worker B`, and `Alwaslh Worker C` immediately.
 
 ## Active roadmap position
 
 - AB-00 — DONE
 - AB-01 — ACTIVE
-- AB-01.1 — **DONE**
-- AB-01.2 — **DONE**
-- AB-01.3 — NEXT after current documentation-head CI settles green
+- AB-01.1 — DONE
+- AB-01.2 — DONE
+- AB-01.3 — ACTIVE
 - AB-01.4 — PENDING
 - AB-01.5 — PENDING
 - AB-01.6 — PENDING
 
-## Worker A sequence 1 — completed increment
+## Worker A sequence 2 — active increment
 
-One coherent increment only: close the already-implemented AB-01.1 shared transport boundary and AB-01.2 auth/session ownership after verifying their implementation evidence. No AB-01.3 source mutation was started.
+Smallest coherent increment: implement the minimum proven Admin-only loading/error/retry product-state primitive for AB-01.3 and adopt it only where current duplication proves ownership, without starting AB-01.4.
 
-### Final implementation checkpoint used for closure
+### Pre-mutation evidence
 
-`d955a34087552377dc8b426ec1712e57f59fd8f6`
+- Live branch HEAD before lease: `e62bce32b6c43695738540031ce39321c2bb3eef`.
+- Exact-head Stage13E Admin AI `34802658825` — SUCCESS.
+- Exact-head Stage13E Combined Integration `34802658781` — SUCCESS.
+- Exact-head Stage13G `34802658768` — SUCCESS.
+- Live `main` advanced to `258c5bc2c09a049afb57c0593b5b6ca9db532c62` through Student V2 merge #58.
+- Path-level compare from prior main checkpoint shows Student frontend/workflow/docs changes only; no Admin/API/migrations/shared implementation overlap. Shared root project docs changed on main, but this branch keeps its scoped Admin/backend canonical docs and no implementation reconciliation is required for this increment.
+- No active worker lease existed at start.
 
-Verification evidence:
+## Intended exact next step
 
-- Stage13E Admin AI run `34800888706` — SUCCESS.
-- Stage13E Combined Integration run `34800888690` — SUCCESS.
-- Stage13G run `34800888723` — SUCCESS.
-  - Admin lint — SUCCESS.
-  - Admin strict typecheck — SUCCESS.
-  - Admin unit tests — SUCCESS.
-  - Admin build — SUCCESS.
-  - API lint — SUCCESS.
-  - API strict typecheck — SUCCESS.
-  - API unit tests — SUCCESS.
-  - API build — SUCCESS.
-  - clean PostgreSQL migrations — SUCCESS.
-  - Stage13G DB contract — SUCCESS.
-  - Accounts + Access integration — SUCCESS.
-  - Notifications + Operations integration — SUCCESS.
-  - Reports + Settings + Security + Audit integration — SUCCESS.
-  - AI authoring integration — SUCCESS.
-  - Access/Auth regression — SUCCESS.
-  - Real API + PostgreSQL + Chromium — SUCCESS.
-- Architecture Guard run `34799891149` — SUCCESS on last source-code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a`.
-- Comparison `e0b90cd..d955a340` contained documentation-only changes; no Admin/API/source mutation occurred after that successful Architecture Guard.
-
-### Documentation updated by Worker A
-
-- `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md` — AB-01.1 and AB-01.2 marked DONE with exact evidence.
-- `PROJECT_STATUS.md` — same closure and next AB-01.3 state recorded.
-- `PROJECT_ENGINEERING_LOG.md` — durable verification ledger recorded.
-- `PROJECT_HANDOFF.md` — exact AB-01.3 continuation instructions recorded.
-- this shared execution state — handoff recorded.
-
-## Why status is WAITING_FOR_CI
-
-The implementation closure is valid on the verified checkpoint above. Documentation/handoff commits created newer branch HEADs and fresh workflows. The next worker must inspect the **live** branch HEAD and Actions rather than infer health from this static record.
-
-The later three-worker scheduler/protocol commits are documentation-only and do not alter Admin/API runtime behavior, but they still advance branch HEAD and may trigger workflows.
-
-## Exact next smallest step
-
-1. Fetch live branch HEAD and `main` HEAD.
-2. Confirm `Active worker: NONE` or otherwise honor the lease.
-3. Inspect workflows for the live documentation-only HEAD.
-4. If required gates are green, move state to `RUNNING` with the executing worker identity and begin AB-01.3.
-5. Re-read current Overview and Operations implementations plus nearby repeated state patterns.
-6. Choose exactly one smallest reusable Admin-only product-state primitive proven by duplication, beginning with loading/error/retry only if current evidence still supports it.
-7. Keep feature/server-specific copy and recovery semantics feature-owned.
-8. Do not create a generic mega-component; do not start backend AB-01.4 in the same increment.
-9. Verify resulting source change with Architecture Guard plus relevant Admin/API/PostgreSQL/Chromium gates.
-10. Update this same state with ending HEAD, evidence and exact next step.
-
-## Risks / blockers
-
-- No engineering blocker identified.
-- Current wait is CI synchronization caused by documentation/handoff/scheduler commits, not a known runtime regression.
-- `main` reconciliation required now: `NO` at Worker A sequence 1; every later worker must re-check live `main`.
+1. Re-read current Overview and Operations loading/error/retry implementations and nearby state patterns.
+2. Confirm duplication semantics and existing CSS ownership.
+3. Create one Admin-only shared UI primitive only if evidence still supports it.
+4. Adopt it in the smallest duplicated set only.
+5. Keep feature-specific copy/retry callbacks feature-owned.
+6. Verify with Architecture Guard and relevant Admin/API/PostgreSQL/Chromium gates.
+7. Hand off with exact ending HEAD and CI state.
 
 ## Safety constraints
 
