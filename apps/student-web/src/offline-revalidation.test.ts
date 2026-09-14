@@ -70,7 +70,8 @@ function envelope(value = manifest()): StudentOfflineLessonManifestEnvelope {
   return { manifest: value, authorization: authorization() };
 }
 
-function dependencies(fetchManifest: (lessonId: string) => Promise<StudentOfflineLessonManifestEnvelope>) {
+function dependencies(fetch: (lessonId: string) => Promise<StudentOfflineLessonManifestEnvelope>) {
+  const fetchManifest = vi.fn(fetch);
   const removePackage = vi.fn(async () => undefined);
   const savePackage = vi.fn(async (value: StudentOfflineLessonManifest) => storedPackage({
     title: value.lesson.title,
