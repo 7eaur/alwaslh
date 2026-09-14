@@ -11,90 +11,131 @@
 
 ## Binding scope
 
-The active architecture rebuild is now intentionally limited to:
+Active implementation scope:
 
 - `apps/admin-web`
 - `apps/api`
 - `database/migrations`
-- shared packages only where they serve Admin/API contracts or Admin design-system ownership
-- Admin UX/UI architecture, routing, data flow, accessibility, RTL, responsive behavior, performance and visual consistency
-- backend modular-monolith boundaries, PostgreSQL integrity, HTTP/application contracts and integration/security behavior
+- shared packages only where they genuinely serve Admin/API contracts or Admin design-system ownership
+- Admin product architecture + UX/UI + IA + routing + data flow + accessibility + RTL + responsive + performance
+- backend modular-monolith boundaries + PostgreSQL integrity + HTTP/application contracts + integration/security behavior
 
-`apps/student-web` is **OUT OF SCOPE for implementation/refactor/design**. Student code/tests may be read or executed only as regression evidence when an API/security contract consumed by Student is affected. No Student migration work is authorized.
+Student frontend remains a separate workstream (`stage16/student-016i` / PR #57 at last reconciliation). `apps/student-web` is not refactored or redesigned here. Student tests/code may be used only as consumer regression evidence when a shared API/security contract is affected.
 
 Canonical scoped workstream:
 
 `docs/workstreams/ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md`
 
-Migration law:
+Canonical Admin product/design rules:
 
-`understand scenario → map API/database contracts → classify current owner → declare target owner → build replacement → verify → switch → delete old owner → exact-head gates → document`
+`docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`
 
-Existing implementation is behavioral evidence, not the target architecture.
+## Binding decision order
 
-## Permanent rules
+**Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
+
+with:
+
+- correct ownership before convenience;
+- verified contracts before visual preservation.
+
+Acceptance target:
+
+**Functional + Clear + Easy + Predictable + Comfortable + Consistent + Fast + Maintainable + Professional**
+
+Legacy Admin presentation is not a preservation contract. Preserve valid behavior/contracts, not presentation debt.
+
+## Permanent architecture/product rules
 
 - PostgreSQL/API remain canonical business authority.
 - backend remains a modular monolith; no microservice split is authorized.
-- Admin `app` composes; feature owners own workflows/routes/API adapters/models/tests.
+- Admin `app` composes; features own workflows/routes/API adapters/models/tests.
+- one route/page has one dominant operator job and one primary feature owner.
+- independent workflows are not hidden inside giant tabs/cards/accordions.
+- Overview is attention-first, not duplicated navigation or decorative KPI cards.
+- only authoritative real operational values may be shown; no fabricated metrics/trends/health scores.
+- loading/empty/error/permission/conflict/unavailable/success states are first-class product states.
+- backend error truth stays server-owned; Admin explains what happened, meaning, and next action.
+- technical IDs/provider/runtime/storage/raw JSON details are progressive/advanced unless required for the decision.
+- primary/secondary/destructive actions must be visually distinct and obvious.
 - no cross-feature private imports.
 - `shared` never becomes a dumping ground.
 - no new feature dumping into Admin `src/` root.
 - route-level Admin features lazy-load by default once shell migration starts.
+- browser tests assert operator outcomes/contracts, not obsolete copy/selectors/DOM shape.
+- one Admin shell owns global chrome/navigation.
 - design ownership is `brand tokens → primitives → components → patterns → feature compositions`.
 - RTL/accessibility/responsive/reduced-motion are architecture requirements, not late patches.
 - tests/validation/security contracts are never weakened to make migration pass.
 - no permanent dual ownership: replacement ends with legacy deletion after parity.
-- Student implementation remains untouched by this workstream.
+
+Migration law:
+
+`understand operator job → map API/database contracts → classify owner → define target owner → design states/flow → build replacement → verify outcome → switch → delete old owner → exact-head gates → document`
 
 ## AB-00 detailed state
 
-### AB-00.1 — Ownership & boundary map — **DONE**
+### AB-00.1 — Ownership & boundary map — DONE
 
-Initial PA-00 ownership work remains useful for Admin/backend, but Student ownership is no longer an execution target. The scoped authority is now `ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md`.
+Admin/backend ownership and target boundaries are established. Student frontend ownership remains external to this workstream.
 
-### AB-00.2 — Current-file migration inventory — **ACTIVE / FIRST BASELINE COMMITTED**
+### AB-00.2 — Current-file + dependency migration inventory — ACTIVE
 
-Created:
+Canonical inventory:
 
 `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`
 
-The first-wave inventory defines exact current → target → classification → preserved contract → removal condition decisions for:
+The first baseline already covers:
 
 - Admin app/root composition;
-- all Admin feature owners;
+- Admin feature owners;
 - backend app/config/db/error composition;
 - backend business modules;
-- explicit Student isolation.
+- Student frontend isolation.
 
-Next inside AB-00.2: inspect concrete imports/dependencies and record cross-feature/internal-module violations before writing the automated guard.
+Next: inspect actual Admin imports and backend cross-module/internal dependencies and record concrete violations/exceptions before architecture enforcement is written.
 
 ### AB-00.3 — Automated architecture guard — PENDING
 
-Add deterministic checks for protected Admin roots, shared→feature violations, cross-feature private imports and backend boundary rules after current exceptions are explicitly enumerated.
+Add deterministic placement/dependency checks after existing exceptions are explicitly inventoried.
 
 ### AB-00.4 — Admin/backend baselines — PENDING
 
-Record reproducible Admin bundle/runtime evidence and backend composition hotspots. Student bundle work is removed from this stage.
+Record reproducible Admin bundle/runtime evidence and backend composition hotspots. No Student bundle work here.
 
 ### AB-00.5 — Foundation readiness — PENDING
 
-No structural migration starts until ownership inventory, dependency audit, guardrails, baseline evidence and exact-head CI are coherent.
+No structural migration starts until ownership inventory, dependency audit, guardrails, baselines and exact-head CI are coherent.
 
 ## Scoped roadmap
 
 - `AB-00` — architecture baseline + ownership/dependency guardrails — **ACTIVE**.
-- `AB-01` — shared Admin foundation and stable API transport/error conventions.
-- `AB-02` — thin Admin shell/router/providers/layouts/lazy boundaries.
-- `AB-03` — Admin vertical-slice rebuild.
+- `AB-01` — Admin design-system/product-state foundation + stable API transport/error conventions.
+- `AB-02` — thin Admin shell/router/providers/layouts/lazy boundaries + route focus/history.
+- `AB-03` — Admin vertical-slice rebuild by operator workflow.
 - `AB-04` — backend modular-monolith boundary standardization.
-- `AB-05` — Admin design/interaction convergence.
-- `AB-06` — Admin performance/delivery architecture.
+- `AB-05` — final Admin design/interaction convergence audit (rules apply during every earlier slice, not only here).
+- `AB-06` — Admin performance/delivery validation and budgets.
 - `AB-07` — legacy removal + hard dependency enforcement.
 - `AB-08` — final Admin + Backend verification.
 
+## Proven principles adopted from the independent Student workstream
+
+Adopted as principles only, not implementation:
+
+- preserve contracts, not presentation debt;
+- clarity/ease/flow before visual polish;
+- one shell owns global chrome;
+- outcome-based browser acceptance;
+- honest data only;
+- failure/unavailable states are first-class;
+- route-level code splitting;
+- obvious interaction affordance;
+- overview/summary surfaces do not duplicate navigation;
+- restrained reduced-motion-safe animation.
+
 ## Immediate next action
 
-Continue **AB-00.2 only** by auditing actual Admin cross-feature/root imports and backend cross-module/internal dependencies. Do not start random file movement or cosmetic redesign before those dependency seams are mapped.
+Continue **AB-00.2 only**: audit concrete Admin cross-feature/root imports and backend cross-module/internal dependencies. The audit must also flag UX architecture debt that creates duplicated navigation, mixed primary jobs or technical-detail leakage, because those are now binding architecture findings rather than late design polish.
 
 PR #52 stays Draft. Never auto-merge.
