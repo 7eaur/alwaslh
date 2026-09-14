@@ -1,7 +1,7 @@
 # AB-01.4 — Backend App Composition Discovery
 
 Date: **2026-09-14**  
-Status: **THREE SEAMS CLOSED — NEXT DISCOVERY REQUIRED**  
+Status: **THREE SEAMS CLOSED — FOURTH SEAM SELECTED / IMPLEMENTATION NEXT**  
 Branch: `rebuild/super-admin-foundation`  
 Initial discovery starting HEAD: `60151da0cdcf56d61f5d68ea5cdd3d329523f2a9`
 
@@ -108,18 +108,103 @@ The helper owns only:
 
 Conclusion: switch/deletion condition is satisfied and the third seam is **DONE**.
 
+## Fourth seam — Fastify instance construction/options — SELECTED / IMPLEMENTATION NEXT
+
+Discovery checkpoint starts from branch HEAD `2722de7d1d4d09f2eae7e3f9dc35624255f392fa`; Worker C reserved discovery at `0b522a7de907c5bcbcc1af78a6db33db8fc6cbae`.
+
+### Evidence
+
+Live `apps/api/src/app.ts` still constructs the Fastify instance directly before all service construction and route/plugin registration. `apps/api/tests/app.test.ts` uses `buildApp({ config, database })` as the bootstrap contract and verifies health/readiness, CORS and public-error outcomes, but there is no dedicated test authorizing different Fastify construction values. Therefore the existing options are treated as behavioral configuration to preserve exactly, not as tuning opportunities.
+
+Current construction contract:
+
+```ts
+Fastify({
+  logger: config.LOG_LEVEL === "silent" ? false : { level: config.LOG_LEVEL },
+  disableRequestLogging: false,
+  trustProxy: true,
+  bodyLimit: 1_048_576,
+  requestTimeout: 15_000,
+})
+```
+
+### Current owner
+
+`apps/api/src/app.ts` owns both composition and low-level Fastify instance options.
+
+### Target owner
+
+Create the narrow app-composition helper:
+
+`apps/api/src/app/create-fastify-instance.ts`
+
+with a small function such as:
+
+`createFastifyInstance(config: AppConfig): FastifyInstance`
+
+The helper owns **only** Fastify construction/options. `buildApp()` remains the composition entry point and continues to construct services, register routes/policies and return the instance.
+
+### Contracts that must remain exact
+
+- `LOG_LEVEL === "silent"` disables the Fastify logger exactly as today;
+- all other supported log levels continue as `{ level: config.LOG_LEVEL }`;
+- `disableRequestLogging: false`;
+- `trustProxy: true`;
+- `bodyLimit: 1_048_576` bytes;
+- `requestTimeout: 15_000` ms;
+- one Fastify instance per `buildApp()` call;
+- the instance exists before service construction and every hook/route/error registration;
+- no change to config parsing/defaults, HTTP surface, auth/security behavior, database behavior or registration order after construction.
+
+### Explicit non-goals
+
+This implementation must **not**:
+
+- tune logger/request/body/proxy options;
+- change `AppConfig` parsing or defaults;
+- create a DI container/service locator;
+- move service graph construction;
+- move business route registration;
+- move database `onClose` lifecycle;
+- bundle another app-composition seam into the same change;
+- change migrations/schema;
+- modify Student frontend.
+
+### Switch/deletion condition
+
+The fourth seam is switched only when:
+
+1. the new helper is the single owner of `Fastify(...)` construction/options;
+2. `apps/api/src/app.ts` no longer imports `Fastify` as a value or embeds those option literals;
+3. `buildApp()` still returns the same `FastifyInstance` contract and composes the same downstream owners/order;
+4. source-head/exact-head verification is green.
+
+### Required implementation verification
+
+At minimum:
+
+- Architecture Guard;
+- API lint + strict typecheck + unit tests + build;
+- existing `apps/api/tests/app.test.ts` bootstrap/HTTP outcomes;
+- clean PostgreSQL and relevant integration/auth/security regressions;
+- real API + PostgreSQL + Chromium/combined gates used by this workstream.
+
+A focused construction test may be added only if it asserts durable behavior rather than private implementation shape; no test should authorize changing the preserved values in the extraction batch.
+
+### Shared / Student impact
+
+No HTTP/database/shared contract is intentionally changed. Student frontend is untouched. Student-facing server behavior remains covered by the unchanged `buildApp()` bootstrap and existing integration/security gates.
+
 ## Remaining app-composition responsibility classes
 
-After the first three closures, discovery must re-inspect the live `apps/api/src/app.ts` before selecting another seam. Remaining classes from the original inventory may include:
+After the first three closures and fourth-seam selection, the remaining inventory still includes:
 
-- Fastify instance construction/options;
-- infrastructure adapter construction;
-- broad module/service construction;
-- cross-service composite construction;
+- infrastructure adapter/service graph construction;
+- broad module/service and cross-service composite construction;
 - whole-product route registration;
 - database `onClose` lifecycle.
 
-This list is an inventory, **not** permission to extract any item mechanically. The next seam must be selected from live code evidence, existing tests/contracts and a bounded ownership improvement.
+This remains an inventory, **not** permission to extract any item mechanically. The next seam after the Fastify construction extraction must be freshly discovered only after the fourth seam is verified closed.
 
 ## Rejected broad moves remain rejected
 
@@ -134,12 +219,13 @@ No evidence from the first three closures changes those decisions.
 
 ## Exact next step
 
-Perform **discovery only**:
+Implement **only** the selected Fastify construction/options seam:
 
-1. re-read live `apps/api/src/app.ts` and relevant direct tests/contracts;
-2. identify the smallest remaining responsibility with a real owner boundary;
-3. document current owner, target owner, dependency/ordering constraints, behavior contracts, Student/shared impact, explicit non-goals, switch/deletion condition and required verification gates;
-4. do **not** implement the newly selected seam in the same discovery increment.
+1. create `apps/api/src/app/create-fastify-instance.ts`;
+2. preserve the current options and config semantics exactly;
+3. have `buildApp()` call that owner while leaving service graph, routes and DB lifecycle untouched;
+4. run the required source-head/exact-head gates;
+5. document closure before discovering any fifth seam.
 
 ## Permanent AB-01.4 law
 
