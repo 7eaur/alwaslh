@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
+import { parseBody } from "../app/http/request-validation.js";
 import { type AppConfig, allowedOrigins } from "../config.js";
 import { AppError } from "../errors.js";
 import type { AuthService, SessionProfile } from "./service.js";
@@ -53,12 +54,6 @@ export function sessionCookie(config: AppConfig, token: string, maxAgeSeconds: n
 
 function clearSessionCookie(config: AppConfig): string {
   return sessionCookie(config, "", 0);
-}
-
-export function parseBody<TSchema extends z.ZodTypeAny>(schema: TSchema, body: unknown): z.output<TSchema> {
-  const parsed = schema.safeParse(body);
-  if (!parsed.success) throw new AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400);
-  return parsed.data;
 }
 
 export async function currentProfile(
