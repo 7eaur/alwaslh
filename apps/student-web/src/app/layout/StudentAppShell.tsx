@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { StudentAppBar } from "./StudentAppBar";
 import { StudentAppBarTitleProvider } from "./StudentAppBarContext";
 import { StudentBottomNav } from "./StudentBottomNav";
@@ -28,7 +29,12 @@ export function StudentAppShell({
         data-reader-focused={focused || undefined}
       >
         {focused ? (
-          !online ? <div className="student-focused-offline" role="status">غير متصل</div> : null
+          !online ? (
+            <div className="student-focused-offline" role="status">
+              <span>أنت غير متصل</span>
+              <Link to="/app/library/downloads">فتح التنزيلات</Link>
+            </div>
+          ) : null
         ) : (
           <>
             <StudentAppBar destination={destination} online={online} title={title} />
