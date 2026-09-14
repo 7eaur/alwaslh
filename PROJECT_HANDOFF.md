@@ -43,43 +43,47 @@ The latest proven `main` drift remains confined to Student frontend/PWA work; no
   - AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
-  - AB-03.2 closure discovery — DONE / DOC-ONLY
+  - AB-03.2.4 Content operations compatibility facade retirement — IMPLEMENTED / WAITING_FOR_CI
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker C sequence 54 completed the requested Content/OCR closure discovery without changing executable source.
+Worker A sequence 55 executed only AB-03.2.4:
 
-Direct inspection established:
+- repointed `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` from the root compatibility facade to `../../features/content/public`;
+- deleted root `apps/admin-web/src/content-operations-api.ts`;
+- preserved endpoint/payload semantics, backend/PostgreSQL/security authority, routes, UI behavior and Student frontend exclusion.
 
-- root `apps/admin-web/src/content-operations-api.ts` is a pure compatibility re-export of the feature implementation;
-- `apps/admin-web/src/features/content/public/index.ts` already exposes the required Content operations/OCR contract;
-- `apps/admin-web/src/OcrSourcePreview.tsx` already consumes that feature boundary directly;
-- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains the confirmed stale consumer importing `../../content-operations-api`.
+Executable/source checkpoint: `ca8381c45cab7ae6a8500c88325042451fbed20f`.
 
-The compare from executable checkpoint `866912f4640aa4696b896a1d897bff7ad67024f4` to the observed sequence-54 start head `707e52a2f28e7028c4ee3fd19ca737e092f260f6` contains only canonical documentation/state files, so AB-03.2.3 exact-head green evidence remains source-tree-equivalent for this discovery.
+Exact-head verification at handoff:
 
-Authoritative executable checkpoint remains `866912f4640aa4696b896a1d897bff7ad67024f4`, covered by Architecture Guard `34898665849`, Frontend Preparation `34898665740`, Admin AI Operations `34898665783`, Combined Integration `34898665724`, and Stage13G Admin Operations / PostgreSQL / Chromium `34898665675`, all SUCCESS.
+- Architecture Guard `34906963160` — SUCCESS;
+- Frontend Preparation `34906963113` — QUEUED;
+- Admin AI Operations `34906963149` — IN PROGRESS;
+- Combined Integration `34906963163` — IN PROGRESS;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34906963142` — PENDING.
+
+Because required exact-head CI is incomplete, this increment is not DONE yet.
 
 ## Exact continuation
 
-Execute **AB-03.2.4 — retire the Content operations compatibility facade** only:
+Do not start a new seam first. Verify/close **AB-03.2.4** only:
 
-1. repoint `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` from `../../content-operations-api` to `../../features/content/public`;
-2. delete root `apps/admin-web/src/content-operations-api.ts`;
-3. run strict Admin typecheck plus Architecture Guard first; successful resolution is required evidence that no hidden importer remains;
-4. then run all relevant Admin/API/PostgreSQL/integration/Chromium gates on the exact source head;
-5. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority and UI behavior;
-6. do not bulk-move page/CSS ownership and do not begin AI in the same increment.
+1. inspect the five exact-source runs above or source-tree-equivalent successors if documentation pushes superseded them;
+2. require Frontend Preparation/typecheck, Combined Integration and Stage13G/PostgreSQL/Chromium to finish green, with Architecture Guard remaining green;
+3. if green, mark AB-03.2.4 DONE and perform fresh AB-03.2 closure discovery before selecting any AI work;
+4. if any gate fails, fix only the root cause within this same facade-retirement scope;
+5. keep PR #52 Draft and unmerged.
 
 ## Main reconciliation need
 
-`NONE FOR THIS DISCOVERY`. Current live `main` observation is `d43fe2afe29b02093510177b921c0407e21a3de9`; no overlapping scoped drift is currently proven. Re-check before the next structural phase boundary or whenever Admin/API/PostgreSQL/shared-contract overlap appears.
+`NONE CURRENTLY`. Current live `main` remains `d43fe2afe29b02093510177b921c0407e21a3de9`; no overlapping scoped drift is proven. Re-check before the next structural phase boundary or whenever Admin/API/PostgreSQL/shared-contract overlap appears.
 
 ## Remaining roadmap
 
-Finish Curriculum + Content + OCR closure → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Close AB-03.2.4 verification → fresh Content/OCR closure discovery → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
