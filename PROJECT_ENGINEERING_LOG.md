@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-03.1.2 Operations frontend API ownership selected by live discovery.**
+Last consolidated: **2026-09-14 — AB-03.1.2 Operations frontend API ownership implemented; awaiting full affected-scope CI.**
 
 ## Durable invariants
 
@@ -39,25 +39,37 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 Source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43` moved governance/audit orchestration from HTTP into `admin-operations/attention-application.ts`, retained HTTP authorization/query validation, added a dedicated application-owner test and preserved API/PostgreSQL/security behavior. Closure: Guard `34859593842`, Admin AI `34860142887`, Combined `34860142983`, Stage13G `34860143008` — SUCCESS.
 
-### AB-03.1.2 — Operations frontend API ownership — DISCOVERED / NEXT
+### AB-03.1.2 — Operations frontend API ownership — IMPLEMENTED / WAITING_FOR_CI
 
-Worker C sequence 35 inspected the live Admin Overview/Operations ownership and found one smallest root correction:
+Worker A sequence 36 implemented only the previously selected transport ownership seam.
 
-- root `apps/admin-web/src/admin-operations-api.ts` still contains feature-specific Operations response types plus all transport calls for attention, overview, governance, diagnostics, audit and notifications;
-- `AdminOverviewPage`, `AdminOperationsHealthPage`, `AdminOperationsAuditPage` and sibling Operations pages consume this adapter;
-- `AdminRoutes.tsx` still points at legacy page locations, but moving all pages/models/styles at once would mix concerns and violate the smallest-increment rule;
-- the adapter is therefore the clean first frontend ownership seam for this vertical slice.
+Source checkpoint: `75cab6ca1067f5866a259ad079279757218e805f`.
 
-Target increment:
+Changes:
 
-1. move the adapter unchanged into `apps/admin-web/src/features/operations/api/`;
-2. expose required contracts/functions through `apps/admin-web/src/features/operations/public/index.ts`;
-3. update existing Overview/Operations consumers to use the public feature boundary;
-4. delete root `apps/admin-web/src/admin-operations-api.ts` after all imports switch;
-5. do not move pages/models/CSS, alter route IA, redesign UX, or change request/response/session/backend/PostgreSQL behavior.
+- moved the Operations-specific transport/types from root `apps/admin-web/src/admin-operations-api.ts` to `apps/admin-web/src/features/operations/api/admin-operations-api.ts`;
+- added `apps/admin-web/src/features/operations/public/index.ts` as the feature public contract;
+- switched `AdminOverviewPage`, `AdminOperationsHealthPage`, `AdminOperationsAuditPage`, `AdminOperationsDiagnosticsPage`, and `AdminNotificationsPage` to import the adapter through the public feature boundary;
+- deleted the root transitional adapter after consumers switched;
+- preserved all exported type/function names and endpoint/query/body/session behavior;
+- changed no Overview/Operations page ownership, model, style, route structure, backend/API implementation, PostgreSQL schema/migration, security authority or Student frontend implementation.
 
-Verification after implementation: Architecture Guard; Admin lint/typecheck/unit/build; focused Overview/Operations tests; Combined Integration; Stage13G real API + PostgreSQL + Chromium. No migration is expected.
+Verification on the implementation HEAD:
+
+- Architecture Guard `34866606170` — **SUCCESS**.
+- Frontend Preparation `34866606173` — pending/not fully closed at handoff.
+- Admin AI Operations `34866606148` — in progress/not fully closed at handoff.
+- Combined Integration `34866606220` — pending/not fully closed at handoff.
+- Stage13G Admin Operations `34866606179` — pending/not fully closed at handoff.
+
+Because required affected-scope CI is not fully green yet, this subtask remains `WAITING_FOR_CI`; no second architecture seam was started.
 
 ## Exact continuation
 
-Implement **AB-03.1.2 only**. After green affected-scope evidence, close it and run a fresh Overview + Operations discovery pass. Do not start Curriculum/Content/OCR in the same increment.
+Verification/closure of **AB-03.1.2 only**:
+
+1. inspect the remaining exact implementation-head runs, or source-tree-equivalent runs if documentation-only commits supersede them;
+2. require Admin quality plus Combined and Stage13G real API + PostgreSQL + Chromium to be green;
+3. if a real failure appears, fix its root cause within AB-03.1.2 only;
+4. if all required evidence is green, close AB-03.1.2 and then perform a fresh discovery-only pass inside Overview + Operations;
+5. do not begin Curriculum/Content/OCR in the same increment.
