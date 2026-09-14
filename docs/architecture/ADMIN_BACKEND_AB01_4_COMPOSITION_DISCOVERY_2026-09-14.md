@@ -1,7 +1,7 @@
 # AB-01.4 — Backend App Composition Discovery
 
 Date: **2026-09-14**  
-Status: **FIRST EXTRACTION VERIFIED — SECOND SEAM SELECTED / IMPLEMENTATION NEXT**  
+Status: **TWO EXTRACTIONS VERIFIED — THIRD SEAM DISCOVERY NEXT**  
 Branch: `rebuild/super-admin-foundation`  
 Initial discovery starting HEAD: `60151da0cdcf56d61f5d68ea5cdd3d329523f2a9`
 
@@ -24,93 +24,34 @@ Incrementally thin `apps/api/src/app.ts` without changing business rules, HTTP c
 
 Behavior-sensitive dependencies include media storage → content/reader consumers; quiz builder → exports; offline + reader + signer → offline downloads; Question Bank + Quiz Builder → AI authoring; quiz builder + database + media storage → specialized exports. `server.ts` separately owns config/database creation, startup batch, process signals and listen.
 
-## First seam decision — CORS/preflight policy
-
-Chosen because it is pure app-level HTTP policy with direct parity tests, no service-graph or route-contract change, no database change, and meaningful root ownership reduction.
+## First seam — CORS/preflight policy — DONE
 
 Target owner: `apps/api/src/app/plugins/cors.ts`.
 
-Required semantics were:
-
-- reuse existing `allowedOrigins(config)`;
-- direct `app.addHook("onRequest", ...)` rather than encapsulated `app.register()`;
-- preserve allowed-origin response headers, credentials and `Vary: Origin`;
-- preserve OPTIONS methods/headers;
-- preserve rejected preflight `AppError("FORBIDDEN", "مصدر الطلب غير مسموح", 403)`;
-- invoke from `buildApp()` before business route registration.
-
-## First seam implementation — DONE
-
 Source implementation HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 
-Implemented:
+Implemented `registerCorsPolicy(app, config)` with the existing `allowedOrigins(config)` contract and direct `onRequest` hook. Existing allowed-origin headers, credentials, `Vary`, OPTIONS methods/headers and rejected-preflight `AppError("FORBIDDEN", "مصدر الطلب غير مسموح", 403)` semantics were preserved. Health/readiness, public errors, DB close lifecycle, services/composites, routes, migrations and Student frontend were untouched.
 
-- created `apps/api/src/app/plugins/cors.ts`;
-- moved the exact CORS/preflight registration into `registerCorsPolicy(app, config)`;
-- `apps/api/src/app.ts` now imports and invokes that owner at the same lifecycle point;
-- only now-unused CORS-specific root imports were removed;
-- health/readiness, public errors, database-close lifecycle, services/composites, routes, migrations and Student frontend remained untouched.
+Closure evidence:
 
-Code inspection confirms `registerCorsPolicy()` still derives origins via `allowedOrigins(config)`, installs direct `onRequest`, sets the same headers and throws the same forbidden preflight error. `app.ts` calls it after service construction and before route registration, preserving global request scope.
+- Architecture Guard `34808159011` — SUCCESS;
+- Admin AI `34809211720` — SUCCESS;
+- Combined Integration `34809211704` — SUCCESS;
+- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
 
-## First seam verification — DONE
+## Second seam — health/readiness HTTP surface — DONE
 
-Direct parity authority remained `apps/api/tests/app.test.ts` CORS behavior.
+Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 
-Evidence:
+Target owner implemented: `apps/api/src/app/http/health.ts` with `registerHealthRoutes(app, database)`.
 
-- Architecture Guard `34808159011` — SUCCESS on source implementation HEAD;
-- `dbdc9245...` → verification HEAD `3d281eddcdaf4a8d75d810dc0e5ded5a35392cad` compare contains only `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` changes, so verification exercises the same API/Admin source tree;
-- Stage13E Admin AI `34809211720` — SUCCESS;
-- Stage13E Combined Integration `34809211704` — SUCCESS: API/Admin quality, clean PostgreSQL, backend authority/auth regressions, deterministic fixtures and real Admin Chromium all passed;
-- Stage13G `34809211707` — SUCCESS: Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, database contracts, Accounts+Access, Notifications+Operations, Reports+Settings+Security+Audit, AI authoring, Access/Auth regression and real API + PostgreSQL + Chromium all passed.
-
-Conclusion: the first CORS/preflight composition extraction is behavior-preserving and **DONE**.
-
-## Rejected broad moves remain rejected
-
-- giant `createServices()` container;
-- move all route registrations at once;
-- create empty target architecture folders;
-- DI framework/service locator/interface ceremony;
-- bundle DB/error ownership with unrelated composition work;
-- schema changes for folder restructuring.
-
-No evidence from the first seam changes those decisions.
-
-# Second seam discovery — health/readiness HTTP surface
-
-Discovery checkpoint started from live branch HEAD `5478083233516cbd9495a4092511b94c3b50829d` with `main` at `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
-
-The second seam is **selected but NOT implemented in this discovery increment**.
-
-## Why this seam is next
-
-After the CORS extraction, the smallest remaining self-contained app-level responsibility with direct executable parity is the operational health/readiness HTTP surface:
-
-- `GET /health` — process-only liveness, intentionally independent from PostgreSQL reachability;
-- `GET /ready` — readiness derived only from `Database.ping()`, returning `200 { status: "ready" }` or logging the database failure and returning `503 { status: "not_ready" }`.
-
-This is a better next extraction than service construction, all-route registration, public-error handling or database-close lifecycle because:
-
-1. it is one coherent technical responsibility;
-2. it has no business-module dependencies;
-3. it does not alter security/auth/entitlement/domain authority;
-4. it requires no schema/config changes;
-5. three direct parity tests already prove its externally visible behavior;
-6. extracting it genuinely removes operational HTTP mechanics from `buildApp()` rather than merely renaming a service graph.
-
-## Current owner
-
-`apps/api/src/app.ts` currently owns both route definitions inline after business route registration and before not-found/error/lifecycle handlers.
-
-Current behavior that MUST remain exact:
+Preserved contracts:
 
 ```text
 GET /health
 → 200
 → { status: "ok", service: "alwaslh-api" }
-→ MUST NOT fail merely because PostgreSQL is unavailable
+→ process-only; PostgreSQL reachability does not determine liveness
 
 GET /ready when database.ping() resolves
 → 200
@@ -122,109 +63,59 @@ GET /ready when database.ping() throws
 → { status: "not_ready" }
 ```
 
-## Target owner
+Implementation constraints satisfied:
 
-Proposed owner:
+- same Fastify instance and existing `Database` dependency are reused;
+- readiness still calls only `database.ping()`;
+- route paths/methods/statuses/bodies and failure log semantics are unchanged;
+- registration remains at the same relative app composition position;
+- no coupling to AuthService/business services/CORS internals/server process signals was introduced;
+- public error/not-found, DB close lifecycle, database construction/config, `server.ts`, service/composite graph, migrations/schema and Student frontend remain untouched;
+- the three direct parity tests in `apps/api/tests/app.test.ts` were not weakened or rewritten.
 
-`apps/api/src/app/http/health.ts`
+### Second seam verification — DONE
 
-Proposed public app-level composition function:
+- Architecture Guard `34811642661` — SUCCESS on source implementation HEAD;
+- direct source Combined `34811642693` was cancelled when newer documentation-only commits superseded it;
+- compare `a302871b3486ae95810cea40dccca68363a29055...b095741e621f9241ff3eed0de86b4e64048604bf` contains only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`, and `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`, proving the later runs exercised the same API/Admin source tree;
+- Admin AI `34811809959` — SUCCESS;
+- Combined Integration `34811809962` — SUCCESS including API/Admin quality, clean PostgreSQL, backend authority/auth regressions, deterministic fixtures and real Admin Chromium;
+- Stage13G `34811810021` — SUCCESS including Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, database/integration/auth regressions and real API + PostgreSQL + Chromium.
 
-`registerHealthRoutes(app, database)`
+Conclusion: second health/readiness extraction is behavior-preserving and **DONE**.
 
-Reasoning:
+## Rejected broad moves remain rejected
 
-- these are app/runtime operational endpoints, not a business module;
-- `http/health.ts` gives them explicit HTTP ownership without turning them into a fake domain module;
-- `app.ts` should retain only the composition call;
-- the target file has a real responsibility immediately and is not empty scaffolding.
+- giant `createServices()` container;
+- move all route registrations at once;
+- create empty target architecture folders;
+- DI framework/service locator/interface ceremony;
+- bundle DB/error ownership with unrelated composition work;
+- schema changes for folder restructuring.
 
-## Dependency and ordering constraints
+No evidence from the first two seams changes those decisions.
 
-The implementation increment MUST:
+## Third seam discovery — NEXT / NOT YET SELECTED
 
-1. receive the existing `FastifyInstance` and existing `Database` dependency; do not construct a second database owner;
-2. continue calling only `database.ping()` for readiness;
-3. preserve the readiness failure log through `app.log.error({ err: error }, "database readiness check failed")` or equivalent same logger/message semantics;
-4. register the routes directly on the same Fastify instance;
-5. preserve the current route paths, methods, status codes and response bodies exactly;
-6. keep registration before the final not-found/error/lifecycle handlers as the current composition does;
-7. avoid coupling the health owner to AuthService, business services, CORS policy internals or server process-signal handling.
+The next coherent increment is **discovery only**. It must inspect the remaining inline responsibilities in current `apps/api/src/app.ts` after CORS and health/readiness extraction and select exactly one smallest evidence-backed app-level composition boundary.
 
-There is no evidence that route ordering relative to business routes currently changes behavior, but the implementation should preserve the current composition position to minimize change surface.
+Required discovery output:
 
-## Direct parity tests / contracts
+1. current inline owner/responsibility;
+2. target owner/file/function;
+3. authoritative tests/contracts proving parity;
+4. dependency and ordering constraints;
+5. business/security/Student impact assessment;
+6. explicit non-goals;
+7. switch/deletion condition;
+8. exact gates required for implementation closure.
 
-Existing direct authority: `apps/api/tests/app.test.ts`.
+Do **not** implement the third seam in the same discovery increment.
 
-Required unchanged tests:
+Candidate areas may include public error/not-found handling, database-close lifecycle, or another smaller app-level composition concern, but no candidate is authorized until current code/tests prove it is the smallest correct next seam. Broad service-container or all-route extraction remains rejected.
 
-1. `GET /health is process health only`;
-2. `GET /ready returns 200 when PostgreSQL is reachable`;
-3. `GET /ready returns 503 when PostgreSQL is unavailable`.
+## Permanent AB-01.4 law
 
-The test fixture proves the important distinction that `/health` stays healthy even when the fake database `ping()` would fail.
+For every seam:
 
-No new product test is required merely for moving ownership if these direct behavior tests remain unchanged and green. Add a focused unit test only if implementation introduces logic not already exercised—which is not expected.
-
-## Business / security / Student impact
-
-Expected impact: **none** beyond preserving operational endpoints.
-
-- no business rules change;
-- no auth/session/authorization behavior change;
-- no Student frontend implementation change;
-- no Student-facing API contract change;
-- no PostgreSQL schema/migration change;
-- no entitlement/publication/assessment/offline authority change.
-
-Because `/health` and `/ready` are server operational surfaces, the implementation still requires broad app regression evidence even though Student consumer-specific regression is not newly required by this extraction alone.
-
-## Required implementation gates
-
-For the source implementation HEAD, require at minimum:
-
-- Architecture Guard;
-- API lint;
-- API strict typecheck;
-- API unit tests including `apps/api/tests/app.test.ts`;
-- API build;
-- clean PostgreSQL migration verification through the standard integration gates;
-- Stage13E Combined Integration / equivalent backend authority + auth regression evidence;
-- Stage13G / equivalent real API + PostgreSQL + Chromium evidence.
-
-If documentation commits supersede the source HEAD, source-tree equivalence must be demonstrated before using later green runs as closure evidence.
-
-## Explicit non-goals for the implementation increment
-
-Do NOT combine this seam with:
-
-- `app.setNotFoundHandler()` extraction;
-- `app.setErrorHandler()` / `toPublicError()` extraction;
-- `app.addHook("onClose")` database-close extraction;
-- database creation/config ownership changes;
-- `server.ts` process signal/startup changes;
-- service/composite construction changes;
-- moving all business route registration;
-- module boundary normalization;
-- migrations/schema changes;
-- Student frontend changes.
-
-Those remain separate decisions and require separate evidence.
-
-## Switch / deletion condition
-
-The seam is complete only when:
-
-1. `apps/api/src/app/http/health.ts` is the sole owner of the two operational route handlers;
-2. `apps/api/src/app.ts` contains only the explicit `registerHealthRoutes(app, database)` composition call for this responsibility;
-3. no duplicate inline `/health` or `/ready` handlers remain in `app.ts`;
-4. all direct parity tests remain green;
-5. required exact-head or source-tree-equivalent integration/Chromium gates are green;
-6. canonical status/log/handoff/discovery documents record the verified implementation evidence.
-
-## Exact next increment — IMPLEMENT SECOND SEAM ONLY
-
-The next coherent worker should implement **only** this selected health/readiness extraction, then run/observe the required gates and document closure before selecting any third composition seam.
-
-Do not select or implement a third seam until this one is verified.
+`inspect current responsibility → select one bounded owner → document contracts/non-goals → implement only that seam → verify exact/source-tree-equivalent gates → close it → only then discover the next seam`
