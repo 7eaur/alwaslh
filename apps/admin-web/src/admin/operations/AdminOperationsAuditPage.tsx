@@ -4,7 +4,7 @@ import {
   type OperationsAuditEntry,
   type OperationsAuditSource,
   fetchAdminOperationsAudit,
-} from "../../admin-operations-api";
+} from "../../features/operations/public";
 import {
   auditSubject,
   eventLabel,
