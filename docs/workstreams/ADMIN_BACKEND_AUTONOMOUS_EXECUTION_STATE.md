@@ -1,14 +1,15 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `READY_FOR_NEXT`
 Sequence: `27`
-Last worker: `B`
-Active worker: `C`
+Last worker: `C`
+Active worker: `NONE`
 Start time: `2026-09-14T15:45:36+03:00`
+End time: `2026-09-14T15:51:00+03:00`
 Starting HEAD: `5905ff6bbd8d0e3338b4a4ef22981046032ed620`
+Ending documentation HEAD before final state handoff: `4ffbbe26fb374a72e9312d6df3364578b8bc9430`
 Current live `main` observed: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`
-Active task: `AB-02 next seam discovery only`
-Intended smallest step: `Inspect current Admin composition/bundle ownership and select one bounded next AB-02 seam; do not implement it in this run.`
+Completed task: `AB-02 next seam discovery — AB-02.3 substantial workflow route lazy boundaries selected`
 
 ## Active roadmap position
 
@@ -17,19 +18,40 @@ Intended smallest step: `Inspect current Admin composition/bundle ownership and 
 - AB-02 — ACTIVE
   - AB-02.1 Global Admin shell/layout ownership — DONE
   - AB-02.2 Inner Admin route-table ownership — DONE
-  - Next AB-02 seam — DISCOVERY ACTIVE
+  - AB-02.3 Substantial workflow route lazy boundaries — SELECTED / NEXT IMPLEMENTATION
 - AB-03..AB-08 — PENDING
 
-## Current evidence
+## Worker C sequence 27 completed
 
-- No active-worker collision existed at takeover.
-- Branch HEAD at takeover: `5905ff6bbd8d0e3338b4a4ef22981046032ed620`.
-- Live main: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; latest implementation change is Student-focused.
-- No pull-request-triggered Actions are attached to the documentation-only takeover HEAD; AB-02.2 source/equivalent verification remains recorded green in canonical docs.
+- Re-read live branch/main, shared state, status, engineering log, handoff, autonomous protocol and AB-02 execution record; no active-worker collision existed.
+- Inspected current `App.tsx`, `app/layouts/AdminShell.tsx`, `app/router/AdminRoutes.tsx`, outer `router.tsx`, presentation foundation and Admin package versions.
+- Confirmed `AdminRoutes.tsx` still statically imports every major Admin workflow destination.
+- Re-checked original AB-00 bundle evidence: one `968.68 kB / 193.92 kB gzip` JavaScript chunk with Vite >500 kB warning.
+- Inspected latest source-tree-equivalent Stage13G Admin build `34841142975`, job `103966179619`: 116 transformed modules, one JS chunk `446.30 kB / 117.48 kB gzip`, build success. The size is improved but substantial workflow routes remain eager.
+- Selected AB-02.3 as the next bounded seam: convert substantial workflow destinations to `React.lazy()` dynamic route boundaries and use one existing `PageState kind="loading"` Suspense fallback.
+- Explicitly kept feature ownership migration, navigation/auth changes, error-boundary redesign, bundler threshold/manualChunks tuning, API/DB changes and Student frontend work out of this seam.
+- Updated `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`, `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and `PROJECT_HANDOFF.md`.
+- No production source, test, API, migration or Student frontend file changed in this discovery run; no CI rerun is required for documentation-only changes.
 
 ## Exact next smallest step
 
-Discovery only: inspect `App.tsx`, `app/layouts/AdminShell.tsx`, `app/router/AdminRoutes.tsx`, outer `router.tsx`, route imports and bundle evidence; choose one smallest AB-02 seam and document current owner, target owner, preserved contracts, non-goals, required gates and deletion condition.
+Implement **AB-02.3 only**:
+
+1. In `apps/admin-web/src/app/router/AdminRoutes.tsx`, replace static substantial workflow page imports with explicit `React.lazy(() => import(...))` boundaries; adapt named exports at the import boundary without changing workflow exports.
+2. Add one route-level `Suspense` fallback using existing `PageState kind="loading"` so loading is accessible and announced.
+3. Preserve every current route URL/redirect, `onSessionExpired`, route wrapper, deep-link/focus behavior, auth/session behavior and workflow business/UI contract.
+4. Do not migrate `src/admin/*` ownership or change navigation/auth/error-boundary design in the same batch.
+5. Run Architecture Guard + Admin lint/typecheck/unit/build and record actual emitted chunk topology/sizes against current `446.30 kB / 117.48 kB gzip` single-chunk evidence.
+6. Verify representative direct deep links, session expiry from a lazy workflow, route focus/loading behavior, then Combined + Stage13G real API/PostgreSQL/Chromium.
+7. Only after those gates are green mark AB-02.3 DONE and select any next AB-02 seam.
+
+## Risks / blockers
+
+- No known source blocker.
+- Main reconciliation is required before the next structural phase boundary because shared project docs diverged on main, but current main implementation still has no Admin/API/migration overlap.
+- Lazy-loading must not become a reason to hide chunk debt with threshold/manualChunks tuning or to combine workflow ownership migration prematurely.
+
+Main reconciliation required before next structural phase boundary: `YES`.
 
 ## Safety constraints
 
