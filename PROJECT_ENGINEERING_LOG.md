@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-02.3 lazy workflow route seam selected after code + current build evidence review.**
+Last consolidated: **2026-09-14 — AB-02.3 substantial workflow lazy-route boundaries implemented; closure waiting on required CI.**
 
 ## Durable invariants
 
@@ -39,31 +39,30 @@ Source checkpoint `0d07a24aa062ad569ff654524bdc13a4e368f399`; owner `apps/admin-
 
 Source checkpoint `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`; owner `apps/admin-web/src/app/router/AdminRoutes.tsx`. Closure: Guard `34840954071`, Frontend Preparation `34840953959`, Admin AI `34841142948`, Combined `34841142987`, Stage13G `34841142975` — SUCCESS on source/source-tree-equivalent heads.
 
-### AB-02.3 — Substantial workflow route lazy boundaries — SELECTED
+### AB-02.3 — Substantial workflow route lazy boundaries — IMPLEMENTED / WAITING_FOR_CI
 
-Discovery findings:
+Source checkpoint: `f60d3d0d163c9f31dead139cc36406396f795a7e`.
 
-- `AdminRoutes.tsx` statically imports all major workflow destinations: Overview, Curriculum, Content/Lesson Tools, Reviews, Questions, Quizzes, Students, Access Codes, Operations and AI Authoring.
-- AB-00 measured one `968.68 kB / 193.92 kB gzip` JavaScript chunk and Vite >500 kB warning.
-- Latest verified Stage13G Admin build `34841142975`, job `103966179619`, transformed 116 modules and emitted one JavaScript chunk: `446.30 kB / 117.48 kB gzip`.
-- The current size is materially improved and under the former warning threshold, but route/workflow code is still eager; warning disappearance is not equivalent to route-level code splitting.
-- Existing `PageState kind="loading"` can provide an accessible Suspense fallback; no new loading primitive or dependency is justified.
+Implementation:
 
-Decision:
+- replaced eager imports of substantial workflow destinations in `apps/admin-web/src/app/router/AdminRoutes.tsx` with explicit `React.lazy()` dynamic boundaries;
+- preserved named exports by adapting them only at the lazy import boundary;
+- wrapped the inner route table with one `Suspense` loading fallback backed by existing shared `AdminProductState`;
+- preserved all route URLs/redirects, wrappers, `onSessionExpired`, not-found behavior, outer `router.tsx`/`RouteFocus` and transitional `src/admin/*` ownership;
+- changed no workflow business logic, API, PostgreSQL/migrations or Student frontend implementation.
 
-- keep route-table ownership in `app/router/AdminRoutes.tsx`;
-- convert substantial workflow page imports to `React.lazy()` dynamic boundaries;
-- use one route-level `Suspense` fallback using existing product-state presentation;
-- adapt named exports only at import boundaries; do not rewrite workflow exports merely for lazy loading.
+Verification at handoff:
 
-Preserve URLs/redirects, `onSessionExpired`, route focus/deep links, auth/session behavior, workflow UI/business logic and transitional `src/admin/*` ownership.
+- Architecture Guard `34849322458` — SUCCESS on source checkpoint;
+- Frontend Preparation `34849322443` — SUCCESS on source checkpoint;
+- Stage13G `34849322551` — still running when documentation handoff began;
+- Combined Integration `34849322335` — still running when documentation handoff began;
+- Admin AI `34849322533` — still running when documentation handoff began.
 
-Explicitly exclude feature migration, navigation/auth redesign, error-boundary redesign, manual chunk tuning, warning-threshold changes and Student/API/DB changes from this batch.
-
-Closure requires Architecture Guard, Admin lint/typecheck/unit/build, measured dynamic chunk output, representative deep links/session expiry, Combined and Stage13G real Chromium.
+The source batch is therefore not closed yet. Required remaining evidence is successful Admin quality/build with recorded dynamic chunk topology/sizes, representative lazy deep-link/session/focus behavior, Combined and Stage13G real API/PostgreSQL/Chromium. Documentation commits after the source checkpoint do not change the Admin implementation tree; use exact-source-head evidence when it completes or a demonstrably source-tree-equivalent later head.
 
 ## Exact continuation
 
-Implement AB-02.3 only. After green source/equivalent-head gates and measured chunk evidence, close the seam before selecting any additional AB-02 concern.
+Verification/closure only for AB-02.3: inspect the listed source-head or source-tree-equivalent gates; record actual Vite chunk output; close the seam only when all required evidence is green. If any gate fails, fix its root cause within AB-02.3. Do not select or implement another AB-02 seam before closure.
 
 Remaining roadmap: AB-02 → AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final full verification/reconciliation.
