@@ -12,7 +12,7 @@ import {
   type StudentEntryMode,
   type StudentEntryNotice,
 } from "./features/auth/StudentEntryExperience";
-import { clearActiveOfflineLease } from "./offline-session";
+import { clearActiveOfflineLease, getActiveOfflineScope } from "./offline-session";
 import { StudentAccessSection } from "./student-access";
 
 type SessionPhase = "checking" | "anonymous" | "authenticated" | "offline" | "unavailable";
@@ -37,6 +37,12 @@ function useOnlineStatus(): boolean {
   return online;
 }
 
+function offlineProfile(): SessionProfile | null {
+  const scope = getActiveOfflineScope();
+  if (!scope) return null;
+  return { id: scope.profileId, role: "student", displayName: null };
+}
+
 export default function App() {
   const online = useOnlineStatus();
   const [phase, setPhase] = useState<SessionPhase>("checking");
@@ -45,7 +51,12 @@ export default function App() {
   const [notice, setNotice] = useState<StudentEntryNotice | null>(null);
 
   async function checkSession() {
-    if (!navigator.onLine) { setPhase("offline"); return; }
+    if (!navigator.onLine) {
+      const localProfile = offlineProfile();
+      setProfile(localProfile);
+      setPhase("offline");
+      return;
+    }
     setPhase("checking");
     try {
       const restored = await restoreStudentSession();
@@ -55,9 +66,20 @@ export default function App() {
       }
       setProfile(restored); setPhase("authenticated");
     } catch (error) {
-      if (isMissingSessionError(error)) { setProfile(null); setPhase("anonymous"); }
-      else if (error instanceof ApiRequestError && error.code === "SERVICE_UNAVAILABLE") setPhase(navigator.onLine ? "unavailable" : "offline");
-      else setPhase("unavailable");
+      if (isMissingSessionError(error)) {
+        setProfile(null);
+        setPhase("anonymous");
+      } else if (error instanceof ApiRequestError && error.code === "SERVICE_UNAVAILABLE") {
+        const localProfile = offlineProfile();
+        if (localProfile) {
+          setProfile(localProfile);
+          setPhase("offline");
+        } else {
+          setPhase(navigator.onLine ? "unavailable" : "offline");
+        }
+      } else {
+        setPhase("unavailable");
+      }
     }
   }
 
@@ -78,6 +100,9 @@ export default function App() {
   }
 
   if (phase === "checking") return <StudentSessionLoading />;
+  if (phase === "offline" && profile) {
+    return <div className="app-frame"><StudentAccessSection profile={profile} online={false} onSessionExpired={handleSessionExpired} onLoggedOut={() => void handleLogout()} /></div>;
+  }
   if (phase === "offline") return <StudentConnectionGate kind="offline" onRetry={() => void checkSession()} />;
   if (phase === "unavailable") return <StudentConnectionGate kind="unavailable" onRetry={() => void checkSession()} />;
 
