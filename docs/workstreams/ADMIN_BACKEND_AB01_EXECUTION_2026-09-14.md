@@ -41,40 +41,59 @@ Source `001d45892bf4a17458f3beaeaaa1a7430be49b44`; owner `apps/api/src/app/http/
 
 Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
 
-Implemented owner:
+Owner: `apps/api/src/app/create-fastify-instance.ts` with narrow `createFastifyInstance(config: AppConfig): FastifyInstance` responsibility.
 
-`apps/api/src/app/create-fastify-instance.ts`
+Preserved logger mode, request logging, trust proxy, body limit, request timeout, one instance per build and all downstream composition ordering. Service graph, business routes, DB lifecycle, config defaults, migrations/schema and Student frontend remained untouched.
 
-with narrow `createFastifyInstance(config: AppConfig): FastifyInstance` responsibility.
+Closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — successful/source-tree-equivalent green. Seam closed.
 
-`apps/api/src/app.ts` calls that owner and no longer imports `Fastify` as a value or embeds constructor options.
+### Database lifecycle registration — SELECTED / IMPLEMENTATION NEXT
 
-Preserved exactly:
+Worker C sequence 16 selected the smallest remaining bounded app-composition responsibility: the inline Fastify `onClose` hook that awaits the supplied `Database.close()`.
 
-- silent log level disables logger, otherwise `{ level: config.LOG_LEVEL }`;
-- `disableRequestLogging: false`;
-- `trustProxy: true`;
-- `bodyLimit: 1_048_576`;
-- `requestTimeout: 15_000`;
-- one Fastify instance per `buildApp()` invocation;
-- all downstream service construction, plugin/route registration, health/error registration and database close ordering.
+Target owner:
 
-Non-goals remained untouched: service graph/container/DI, business route registry, DB lifecycle, config/default tuning, migrations/schema and Student frontend.
+`apps/api/src/app/plugins/database-lifecycle.ts`
 
-Closure evidence:
+with one narrow registration function such as:
 
-- Architecture Guard `34820842164` — SUCCESS on source implementation HEAD.
-- Original source-head Combined `34820842196`, Stage13G `34820842163`, and Admin AI `34820842245` were cancelled by later documentation commits rather than a demonstrated code failure.
-- Compare `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d...248ce58053bca9d97498d41fdda57aec1ace4033` contains only five canonical documentation files; no source/migration/workflow/test file changed.
-- Admin AI `34821032274` — SUCCESS including API quality, clean PostgreSQL, contracts, authorization/review controls, Stage12 and auth security regressions.
-- Combined Integration `34821032272` — SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend/auth regressions and real Admin Chromium.
-- Stage13G `34821032271` — SUCCESS including Admin/API quality, clean PostgreSQL, all Stage13G integration/auth regressions and real API + PostgreSQL + Chromium.
+`registerDatabaseLifecycle(app: FastifyInstance, database: Database): void`
 
-Switch/deletion condition is satisfied; this seam is closed.
+Preserve exactly:
 
-### Exact next AB-01.4 action
+- `buildApp()` receives an already-created database;
+- the same Fastify instance owns the hook;
+- `await app.close()` awaits database close and does not swallow a close error;
+- registration stays after business routes, health and public error handlers;
+- `server.ts` continues to call `app.close()` for SIGTERM/SIGINT and listen failure;
+- legacy startup failure before app creation continues direct database close;
+- database creation/pool/query/transaction/migration/schema behavior remains unchanged.
 
-Perform **discovery only** for a fifth seam. Re-read live `apps/api/src/app.ts`, remaining composition responsibilities and current tests/contracts. Select one smallest evidence-backed boundary, document current/target owner, exact preserved contracts/order, non-goals, switch condition and gates. Do not implement it in the discovery run. If no further small seam is justified, document why AB-01.4 should close instead of forcing extraction.
+Required implementation parity coverage:
+
+- add one focused `apps/api/tests/app.test.ts` assertion proving app close delegates to the supplied fake database close operation;
+- do not introduce a general lifecycle manager/framework.
+
+Explicit non-goals:
+
+- database creation/configuration move;
+- process-signal abstraction;
+- startup-batch changes;
+- service graph/container/DI extraction;
+- whole-route registry extraction;
+- multi-consumer infrastructure bundle;
+- query/transaction/schema changes;
+- Student frontend changes.
+
+Switch/deletion condition:
+
+1. `database-lifecycle.ts` becomes the single owner of the Fastify database-close hook registration;
+2. `app.ts` no longer embeds that hook and delegates in the same composition position;
+3. focused lifecycle unit coverage is green;
+4. `server.ts` behavior remains unchanged;
+5. Architecture Guard + API lint/typecheck/unit/build + clean PostgreSQL + relevant integration/real API + Chromium gates are green.
+
+After this fifth seam closes, reassess AB-01.4 for closure. Current evidence does not justify a sixth broad service-container, route-registry or infrastructure-bundle extraction.
 
 ## AB-01.5 — Common backend technical ownership — PENDING
 
