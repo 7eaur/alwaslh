@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — reviewed Grade 9 English Unit 2 Lessons/questions published and post-verified**.
+Last consolidated: **2026-09-14 — Student Experience V2 core implementation verified on exact head `1dd6222...`; documentation/merge closure active**.
 
 ## Stable architecture authority
 
@@ -15,6 +15,119 @@ Last consolidated: **2026-09-14 — reviewed Grade 9 English Unit 2 Lessons/ques
 - AI/legacy output never auto-publishes learner content/questions
 - RAW/provenance/checksum authority must be preserved
 - browser is not canonical durable business authority
+
+## 2026-09-14 — Student Experience V2 verified implementation checkpoint
+
+Active branch:
+
+`ux/student-experience-v2`
+
+PR:
+
+`#58 — refactor(student): establish Student Experience V2 foundation`
+
+Last fully verified implementation head before documentation-only synchronization:
+
+`1dd6222bc21cab615ca9b93416666bfa16d1bf04`
+
+### Product/UX foundation delivered
+
+- four primary phone destinations fixed to Home / Learn / Practice / Library;
+- official Student brand in Home App Bar;
+- shared App Bar title contract for other destinations/nested subject context;
+- Home rebuilt as authoritative overview rather than duplicate navigation;
+- Library rebuilt as direct access rather than article/dashboard;
+- scalable Learn hierarchy with adaptive search + accordion units/sections;
+- focused Reader and focused Assessment flows;
+- no fabricated learner name, permanent grade identity, progress, streak, rank or library counts;
+- real quiz versions presented as learner-facing Models without inventing new backend authority.
+
+### Frontend architecture delivered
+
+Direction:
+
+`app → features → shared`
+
+Implemented boundaries include:
+
+- `app/layout/*` for App Shell / App Bar / Bottom Nav / Desktop Nav;
+- `app/routing/*` + `app/session/*` for app composition;
+- `shared/ui/*` for reusable presentation primitives;
+- `shared/icons/*` + `shared/brand/*` for canonical visual boundaries;
+- `shared/data/student-runtime-cache.ts` for profile-scoped read-through caching;
+- `features/auth/*`, `features/home/*`, `features/learn/*`, `features/reader/*`, `features/practice/*`, `features/library/*`, `features/account/*`, `features/notifications/*`, `features/progress/*` for feature ownership.
+
+Practice was split out of the old root assessment monolith into catalog/detail/attempt feature modules; the replaced `student-assessment.tsx` was removed after executable evidence.
+
+Reader and Downloads now have feature boundaries while security-critical Stage16 storage/materialization implementation remains stable rather than being moved only for folder aesthetics.
+
+### Runtime/cache behavior
+
+- curriculum TTL: 120s;
+- quiz catalog TTL: 60s;
+- recent attempts TTL: 30s;
+- cache profile-scoped;
+- duplicate concurrent reads deduplicated;
+- access changes invalidate affected read models;
+- successful assessment completion invalidates recent attempts;
+- logout/session expiry clears active-profile runtime cache;
+- Downloads reuses shared curriculum caching rather than issuing an independent catalog path.
+
+Stage16 remains the only lesson-download storage authority.
+
+### Stage16 reconciliation
+
+The cold-start Offline Reader behavior previously isolated in PR #57 was reconciled into V2 without weakening auth/security boundaries:
+
+- durable verified profile/device scope;
+- signed/verified stored package semantics;
+- integrity/tamper/time/scope checks;
+- direct open from Downloads;
+- cold-start Reader acceptance;
+- no synthetic server session/token/entitlement authority while offline.
+
+### Visual QA
+
+B04 screenshot artifacts were manually inspected.
+
+A real phone issue was found after code-level tests passed: attempt previous/next controls, remaining-question status and finish action compressed/touched each other at 390px.
+
+The layout was repaired with stable grid composition + narrow-screen stacking/full-width finish CTA. A later exact-head B04 artifact was inspected and the overlap was gone in attempt and result views.
+
+### Exact-head evidence
+
+On `1dd6222bc21cab615ca9b93416666bfa16d1bf04`, the following Student workflows completed successfully:
+
+- `UX B01 Shared Frontend Foundation`
+- `UX B02 Student Shell and Navigation`
+- `UX B03 Student Learning and Reader`
+- `UX B04 Student Practice and Assessment`
+- `UX B05 Student Downloads and Account`
+- `Stage14 Student Product`
+- `Stage15 Student Assessment`
+- `Stage16 Student PWA`
+
+Stage14 lint/typecheck/unit/build and real Chromium auth/access/curriculum acceptance at 390px passed.
+
+A Stage12 AI-control failure seen on an earlier head was unrelated to Student UI and passed on a later exact-head run without Student business-rule changes.
+
+### Cleanup
+
+Removed after reference/test evidence:
+
+- old root assessment monolith;
+- obsolete root compatibility implementations for migrated Student surfaces;
+- temporary root icon/runtime-cache wrappers;
+- obsolete Library overview stylesheet;
+- dead future-surface CSS rules.
+
+Remaining legacy CSS/root internals are not assumed dead; several still support Reader/Downloads/Stage16 contracts and must only be removed with executable evidence.
+
+### Closure status
+
+`STUDENT V2 CORE IMPLEMENTATION = VERIFIED ON 1dd6222...`
+
+PR #58 remains Draft while documentation-only synchronization commits receive their normal exact-head CI. After that, normal protected-branch PR review/merge is the next action; the approved V2 foundation should not be redesigned again without new evidence.
 
 ## 2026-09-14 — Reviewed Grade 9 Unit 2 publication
 
@@ -175,11 +288,7 @@ The historical live `59` asset-owning Lesson identities were not derived from th
 
 ## Student workstream retained
 
-PR #57 remains a separate Student `STUDENT-016I` workstream. Last previously inspected head:
-
-`ce97ef2524cd3735a0200ee0f15fa6e6e224e01e`
-
-Re-fetch live PR/exact-head CI when Student work resumes; this Content run did not merge PR #57.
+PR #57 remains a separate Student `STUDENT-016I` workstream, but its required cold-start Offline Reader behavior has been reconciled into PR #58's V2 branch. Re-fetch live PR #57 before deciding whether it should be closed as superseded or contains any remaining unique change.
 
 ## Continuation rule
 
