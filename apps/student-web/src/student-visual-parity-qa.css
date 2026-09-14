@@ -1,0 +1,46 @@
+/* V10 visual QA fixes.
+   Keep this layer narrowly scoped to verified cross-surface regressions. */
+
+/* The visual framing layer raises shell children above decoration. Restore
+   chrome that intentionally owns fixed/sticky positioning. */
+.student-bottom-nav {
+  position: fixed;
+  z-index: 30;
+  inset-inline: 0;
+  bottom: 0;
+}
+
+.student-focused-offline {
+  position: fixed;
+  top: max(.65rem, env(safe-area-inset-top, 0px));
+  inset-inline-end: .75rem;
+  z-index: 40;
+}
+
+/* Secondary destinations belong to the desktop rail only. A legacy rule
+   otherwise exposes Progress/Account beside the tablet top navigation. */
+.student-adaptive-nav__secondary {
+  display: none;
+}
+
+@media (min-width: 68rem) {
+  .student-adaptive-nav__secondary {
+    display: grid;
+  }
+}
+
+/* Reader is a focused experience: suppress decorative app-canvas shapes. */
+.aw-product-shell--student:has(.student-shell.is-focused-reader) {
+  background-image: none;
+}
+
+.student-shell.is-focused-reader {
+  background: #f8fbfb;
+}
+
+/* Keep Subject decoration as framing instead of competing with the title. */
+@media (max-width: 67.99rem) {
+  .subject-v2__hero::before {
+    opacity: .24;
+  }
+}
