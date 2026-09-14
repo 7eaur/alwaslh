@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ApiRequestError, isMissingSessionError } from "../../shared/api/client";
 import {
-  ApiRequestError,
   type AdminCurriculumSnapshot,
   createCurriculumClass,
   createCurriculumLesson,
@@ -8,13 +8,12 @@ import {
   createCurriculumSubject,
   createSubjectOffering,
   fetchAdminCurriculum,
-  isMissingSessionError,
   updateCurriculumClass,
   updateCurriculumLesson,
   updateCurriculumSection,
   updateCurriculumSubject,
   updateSubjectOffering,
-} from "../../admin-api";
+} from "../../features/curriculum/public";
 import {
   CurriculumContextCreateActions,
   CurriculumRootCreateActions,
