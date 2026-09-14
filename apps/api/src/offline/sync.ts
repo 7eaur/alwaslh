@@ -18,6 +18,7 @@ export interface StudentOfflineDeltaPage {
   version: 1;
   after: string;
   nextCursor: string;
+  latestCursor: string;
   hasMore: boolean;
   entries: StudentOfflineDeltaEntry[];
 }
@@ -70,6 +71,7 @@ export class StudentOfflineSyncService {
         version: 1,
         after,
         nextCursor: upperBound,
+        latestCursor: upperBound,
         hasMore: false,
         entries: [],
       };
@@ -103,6 +105,7 @@ export class StudentOfflineSyncService {
       version: 1,
       after,
       nextCursor,
+      latestCursor: upperBound,
       hasMore,
       entries: pageRows.map((row) => ({
         revision: row.revision,
