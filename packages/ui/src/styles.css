@@ -33,6 +33,8 @@
 
 .aw-skip-link:focus-visible {
   transform: translateY(0);
+  outline: 3px solid var(--brand-primary-400, #71c6d2);
+  outline-offset: 3px;
 }
 
 .aw-page-state {
