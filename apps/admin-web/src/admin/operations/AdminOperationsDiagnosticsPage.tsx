@@ -3,7 +3,7 @@ import { ApiRequestError, isMissingSessionError } from "../../admin-api";
 import {
   type OperationsGovernanceOverview,
   fetchAdminOperationsDiagnostics,
-} from "../../admin-operations-api";
+} from "../../features/operations/public";
 import "./operations-pages.css";
 
 type LoadState = "loading" | "ready" | "error";
