@@ -12,16 +12,9 @@ This workstream owns the complete Super Admin plus full Fastify backend/API, Pos
 
 ## Continuation authority
 
-Read in this order before mutation:
+Read first: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`, then the autonomous protocol, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 
-1. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
-2. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md`
-3. `PROJECT_ENGINEERING_LOG.md`
-4. `PROJECT_HANDOFF.md`
-5. `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`
-6. active architecture/product docs listed by those authorities.
-
-Workers A/B/C share one branch and ordered roadmap. If another worker is active, do not create overlapping mutations. Every run performs one smallest coherent increment and ends `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE`.
+Workers A/B/C share one branch and ordered roadmap. Never overlap an active worker. Every run performs one smallest coherent increment.
 
 ## Permanent rules
 
@@ -31,110 +24,56 @@ Workers A/B/C share one branch and ordered roadmap. If another worker is active,
 - Feature internals stay private; shared cannot import app/features.
 - No new global state/query framework or styling-stack rewrite without evidence.
 - No fabricated metrics/outcomes/actions.
-- Loading/Empty/Error/Permission/Conflict/Unavailable/Long-running/Success/Recovery are first-class states.
-- Arabic-first RTL, keyboard/focus, responsive/no-overflow and reduced-motion are architecture requirements.
-- Tests/security/validation are never weakened to make migration pass.
+- Product states, Arabic-first RTL, keyboard/focus, responsive/no-overflow and reduced-motion are first-class requirements.
+- Tests/security/validation are never weakened.
 - No permanent dual ownership.
 
 ## Branch reconciliation
 
 Live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-Compared with prior reconciled main `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the implementation delta remains Student frontend/workflow focused; it does not touch `apps/admin-web`, `apps/api`, or `database/migrations`. Shared `PROJECT_STATUS.md` / `PROJECT_HANDOFF.md` also changed on main as part of the Student workstream, so future reconciliation must preserve this scoped Admin+Backend authority rather than overwrite it mechanically.
+Relative to prior reconciled main `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, implementation changes remain Student-focused and do not touch `apps/admin-web`, `apps/api`, or `database/migrations`. Shared project docs changed on main and require deliberate reconciliation before a structural phase boundary.
 
 ## AB-00 — DONE
 
-Ownership map, dependency inventory, Architecture Guard, measured baseline and readiness gate are closed.
-
-Frozen baseline: Admin JS **968.68 kB / 193.92 kB gzip**, Admin CSS **91.38 kB / 13.68 kB gzip**, Admin unit **71/71**, API unit **66/66**, clean PostgreSQL 16 migrations green, baseline real Chromium **9/9**.
+Architecture baseline, inventories, guardrails and readiness gate are closed.
 
 ## AB-01 — DONE / EXACT-HEAD VERIFIED
 
-### AB-01.1 Shared API transport — DONE
-
-Owner: `apps/admin-web/src/shared/api/client.ts`.
-
-### AB-01.2 Auth/session ownership — DONE
-
-Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSessionProvider.tsx`, public boundary `features/auth/public/index.ts`.
-
-### AB-01.3 Product-state primitive — DONE
-
-Source checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
-
-### AB-01.4 Backend app composition foundation — DONE
-
-Five bounded technical app seams are closed: CORS, health/readiness, public errors, Fastify construction/options and database lifecycle.
-
-### AB-01.5 Common backend technical ownership — DONE
-
-Generic request validation owner: `apps/api/src/shared/http/request-validation.ts`.
-
-Complete implementation checkpoint: `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`.
-
-Closure evidence:
-
-- Architecture Guard `34834714337` — SUCCESS;
-- Stage13E Admin AI `34834945644` — SUCCESS;
-- Stage13E Combined Integration `34834945655` — SUCCESS;
-- Stage13G `34834945649` — SUCCESS.
-
-### AB-01.6 Foundation closure gate — PASS / DONE
-
-No further shared-foundation extraction is authorized.
+Shared Admin transport/session/product-state foundations, bounded backend app-composition seams and shared request-validation ownership are closed.
 
 ## AB-02 — ACTIVE
 
-Canonical execution record:
-
-`docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`
+Canonical execution record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 
 ### AB-02.1 Global Admin shell/layout ownership — DONE
 
-Source implementation checkpoint: `0d07a24aa062ad569ff654524bdc13a4e368f399`.
-
+Source checkpoint: `0d07a24aa062ad569ff654524bdc13a4e368f399`.  
 Owner: `apps/admin-web/src/app/layouts/AdminShell.tsx`.
+
+Closure: Architecture Guard `34838037118`, Frontend Preparation `34838037114`, Combined `34838123077`, Stage13G `34838123143` — SUCCESS.
+
+### AB-02.2 Inner Admin route-table ownership — DONE
+
+Source checkpoint: `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`.  
+Owner: `apps/admin-web/src/app/router/AdminRoutes.tsx`.
+
+The inner `/app/*` route table and route-local wrappers/not-found composition moved out of `App.tsx`; URLs, redirects, session-expiry behavior, eager loading, workflow UI/business rules and outer `router.tsx`/`RouteFocus` were preserved.
 
 Closure evidence:
 
-- Architecture Guard `34838037118` — SUCCESS;
-- Frontend Preparation `34838037114` — SUCCESS;
-- Combined Integration `34838123077` — SUCCESS;
-- Stage13G `34838123143` — SUCCESS.
+- Architecture Guard `34840954071` — SUCCESS on source checkpoint;
+- Frontend Preparation `34840953959` — SUCCESS on source checkpoint;
+- source-tree-equivalent Admin AI `34841142948` — SUCCESS;
+- source-tree-equivalent Combined Integration `34841142987` — SUCCESS, including API/Admin quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
+- source-tree-equivalent Stage13G `34841142975` — SUCCESS, including Admin/API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
 
-### AB-02.2 Inner Admin route-table ownership — IMPLEMENTED / WAITING_FOR_CI
-
-Source implementation checkpoint: `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`.
-
-New owner:
-
-`apps/admin-web/src/app/router/AdminRoutes.tsx`
-
-The complete inner `/app/*` route table and route-local wrappers/not-found composition moved out of `App.tsx`. `App.tsx` now keeps session/provider/auth-state composition plus `AdminShell + AdminRoutes`.
-
-Deliberately unchanged:
-
-- transitional `src/admin/*` workflow ownership;
-- route URLs and redirects;
-- eager workflow imports/lazy-loading behavior;
-- `onSessionExpired` contract;
-- outer `apps/admin-web/src/router.tsx` + `RouteFocus`;
-- workflow UI/CSS and business behavior.
-
-Exact-head checks started on `732555cb…`; Architecture Guard, Stage13G/Admin UI/backend, Stage13E Admin Web quality/Admin AI and other required checks were still queued/in-progress at handoff. Do not mark AB-02.2 DONE until required source-head/source-tree-equivalent gates are green.
+Comparison from `732555cb…` to verification head `2c2fcb6c…` contains documentation files only; therefore the successful source-tree-equivalent gates verify the same source tree.
 
 ## Remaining roadmap
 
-- AB-02 — thin Admin shell/router/providers/layouts + substantial lazy routes — **ACTIVE**
-- AB-03 — vertical slices: Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes
-- AB-04 — remaining backend modular-monolith normalization
-- AB-05 — Admin design/interaction convergence
-- AB-06 — performance/delivery validation
-- AB-07 — legacy removal + hard dependency enforcement
-- AB-08 — final full verification + live-main reconciliation
+AB-02 remains active. The next worker must perform **discovery only** for one smallest next AB-02 seam before implementation. Candidate areas include feature public/routes entry points, substantial route lazy boundaries/Suspense, outer-router/presentation ownership, auth presentation ownership, navigation definition ownership, or error-boundary composition. Do not combine concerns.
 
-No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and state `COMPLETE`, disable all three scheduled workers.
+Then: AB-03 vertical slices → AB-04 remaining backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
-## Immediate next action
-
-Inspect the exact-head/source-tree-equivalent checks for `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`. If all required Admin/Architecture/Combined/Stage13G evidence is green, close **AB-02.2 only**. If any check fails, fix its root cause before advancing. Do not begin lazy-loading or feature route migrations while AB-02.2 remains unverified.
+No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
