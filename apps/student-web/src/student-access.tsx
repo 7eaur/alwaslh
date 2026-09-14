@@ -17,7 +17,7 @@ const StudentLearningExperience = lazy(() =>
   import("./student-learning").then((module) => ({ default: module.StudentLearningExperience })),
 );
 const StudentLibraryExperience = lazy(() =>
-  import("./student-future-surfaces").then((module) => ({ default: module.StudentLibraryExperience })),
+  import("./features/library/StudentLibraryExperience").then((module) => ({ default: module.StudentLibraryExperience })),
 );
 const StudentNotificationsExperience = lazy(() =>
   import("./student-future-surfaces").then((module) => ({ default: module.StudentNotificationsExperience })),
