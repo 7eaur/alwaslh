@@ -6,8 +6,25 @@ Last worker: `A`
 Active worker: `NONE`
 Started at: `2026-09-14T06:01:06+03:00`
 Last handoff at: `2026-09-14T06:04:07+03:00`
-Starting HEAD: `d955a34087552377dc8b426ec1712e57f59fd8f6`
-Ending documentation HEAD before this handoff-state commit: `1e957d7433909466c5338dc832e9ee057cb2f995`
+Starting HEAD for Worker A sequence 1: `d955a34087552377dc8b426ec1712e57f59fd8f6`
+Ending documentation HEAD before Worker A handoff-state commit: `1e957d7433909466c5338dc832e9ee057cb2f995`
+Scheduler protocol updated to three workers at documentation commit: `05d12826b26a8970e965e51140f4fcb6af3267b5`
+
+## Scheduler topology — ACTIVE
+
+Three workers continue the same roadmap on the same branch and same state file:
+
+- Worker A — every hour at `:00`;
+- Worker B — every hour at `:20`;
+- Worker C — every hour at `:40`.
+
+Serial order:
+
+`A → B → C → A → B → C → ...`
+
+The workers do not own separate code areas. Every run must read this file and the binding protocol before mutation, honor the active-worker lease, execute only one smallest coherent increment, verify it, and hand off here.
+
+Automatic shutdown: after AB-08 is fully complete with required exact-head green evidence and this state is changed to `COMPLETE`, the proving worker must disable all three scheduled tasks `Alwaslh Worker A`, `Alwaslh Worker B`, and `Alwaslh Worker C` immediately.
 
 ## Active roadmap position
 
@@ -52,7 +69,7 @@ Verification evidence:
 - Architecture Guard run `34799891149` — SUCCESS on last source-code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a`.
 - Comparison `e0b90cd..d955a340` contained documentation-only changes; no Admin/API/source mutation occurred after that successful Architecture Guard.
 
-### Documentation updated this run
+### Documentation updated by Worker A
 
 - `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md` — AB-01.1 and AB-01.2 marked DONE with exact evidence.
 - `PROJECT_STATUS.md` — same closure and next AB-01.3 state recorded.
@@ -62,32 +79,28 @@ Verification evidence:
 
 ## Why status is WAITING_FOR_CI
 
-The implementation closure is valid on the verified checkpoint above. However, the documentation/handoff commits created a newer branch HEAD and triggered fresh workflows. At the last observation before this state commit:
+The implementation closure is valid on the verified checkpoint above. Documentation/handoff commits created newer branch HEADs and fresh workflows. The next worker must inspect the **live** branch HEAD and Actions rather than infer health from this static record.
 
-- Stage13E Combined on documentation HEAD `1e957d7433909466c5338dc832e9ee057cb2f995`: run `34801293773` — PENDING.
-- Stage13G on the same documentation HEAD: run `34801293795` — PENDING.
-- a third Stage13E workflow was also triggered for that HEAD and must be checked by the next worker from live Actions rather than inferred from this static record.
-
-This handoff-state update itself creates one additional documentation-only HEAD. Therefore the next worker MUST fetch the live branch HEAD and its Actions before mutation. Do not assume the SHA above remains branch tip.
+The later three-worker scheduler/protocol commits are documentation-only and do not alter Admin/API runtime behavior, but they still advance branch HEAD and may trigger workflows.
 
 ## Exact next smallest step
 
 1. Fetch live branch HEAD and `main` HEAD.
-2. Confirm no active worker lease and no unexpected source changes occurred after this handoff.
+2. Confirm `Active worker: NONE` or otherwise honor the lease.
 3. Inspect workflows for the live documentation-only HEAD.
-4. If they are green (or if only harmless superseded/cancelled runs exist and a later exact-head equivalent is green with no source delta), move state to `RUNNING` and begin AB-01.3.
+4. If required gates are green, move state to `RUNNING` with the executing worker identity and begin AB-01.3.
 5. Re-read current Overview and Operations implementations plus nearby repeated state patterns.
 6. Choose exactly one smallest reusable Admin-only product-state primitive proven by duplication, beginning with loading/error/retry only if current evidence still supports it.
 7. Keep feature/server-specific copy and recovery semantics feature-owned.
 8. Do not create a generic mega-component; do not start backend AB-01.4 in the same increment.
 9. Verify resulting source change with Architecture Guard plus relevant Admin/API/PostgreSQL/Chromium gates.
-10. Update this same state with ending HEAD, evidence and next step.
+10. Update this same state with ending HEAD, evidence and exact next step.
 
 ## Risks / blockers
 
 - No engineering blocker identified.
-- Current wait is CI synchronization caused by documentation/handoff commits, not a known regression.
-- `main` reconciliation required now: `NO` — live main remained `3053640cc5bb0699cfa7456cf646e8997f6aa81b` during this run.
+- Current wait is CI synchronization caused by documentation/handoff/scheduler commits, not a known runtime regression.
+- `main` reconciliation required now: `NO` at Worker A sequence 1; every later worker must re-check live `main`.
 
 ## Safety constraints
 
@@ -98,3 +111,4 @@ This handoff-state update itself creates one additional documentation-only HEAD.
 - Never force reset/force push shared history.
 - Never advance on stale chat assumptions; re-read repository truth every run.
 - If another worker appears active, do not create overlapping mutations.
+- One worker run = one smallest coherent increment.
