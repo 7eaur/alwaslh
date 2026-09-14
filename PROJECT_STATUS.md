@@ -58,14 +58,14 @@ Source checkpoint: `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`. Closure: Guard `3
 
 Source checkpoint: `f60d3d0d163c9f31dead139cc36406396f795a7e`. Closure: Guard `34849322458`, Frontend Preparation `34849322443`, Admin AI `34849322533`, source-tree-equivalent Combined `34849829516`, Stage13G `34849829576` — SUCCESS. Verified initial JS became **196.84 kB / 64.11 kB gzip** with real lazy workflow chunks and no warning-threshold/manualChunks tuning.
 
-### AB-02.4 Auth login presentation ownership — IMPLEMENTED / WAITING_FOR_CI
+### AB-02.4 Auth login presentation ownership — DONE
 
-AB-01 had explicitly left root `LoginScreen.tsx` as transitional AB-02 presentation debt. Source checkpoint `d4c3c7896043ea6b1cc4cac1dd404d7912131916` moves the login presentation to `features/auth/ui/LoginScreen.tsx`, exports it through `features/auth/public`, updates `App.tsx` to consume that public contract, and removes the root file. Login/session behavior is unchanged; no API/DB/migration/Student frontend implementation changed.
+Source checkpoint `d4c3c7896043ea6b1cc4cac1dd404d7912131916` moved the transitional root login presentation into `features/auth/ui/LoginScreen.tsx`, exposed it through `features/auth/public`, updated `App.tsx` to consume the public contract, and removed the root file with no login/session behavior change.
 
-Current evidence: Architecture Guard `34853562192` — SUCCESS; Stage13G `34853562095` — in progress; Combined `34853562292` — pending at observation. Therefore AB-02.4 is not DONE yet.
+Source-tree-equivalent verification head `080b8e131da72b0795f647809239a815d4604210` differs from the source checkpoint only by canonical/shared documentation. Closure evidence: Architecture Guard `34853562192` — SUCCESS; Admin AI `34853935899` — SUCCESS; Combined Integration `34853935696` — SUCCESS; Stage13G `34853935720` — SUCCESS, including Admin/API quality, clean PostgreSQL migrations/contracts, auth/security/integration regressions, and Real API + PostgreSQL + Chromium.
 
 ## Remaining roadmap
 
-First close AB-02.4 with green exact-head/source-tree-equivalent evidence, then perform a final AB-02 closure inspection. If no further material shell/router/provider debt is proven, close AB-02 rather than inventing abstraction. Reconcile live `main` before entering AB-03. Then continue AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Perform one final AB-02 closure inspection only. If no further material shell/router/provider debt is proven, close AB-02 rather than inventing abstraction. Reconcile live `main` before entering AB-03. Then continue AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
