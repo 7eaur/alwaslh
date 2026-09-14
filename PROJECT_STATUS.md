@@ -5,71 +5,96 @@
 **Branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — remains Draft; no merge or auto-merge authorized.  
 **Live main checked:** `3053640cc5bb0699cfa7456cf646e8997f6aa81b` — parallel Student/content workstream; do not overwrite.  
-**Architecture baseline before pivot:** `302127c3223d00715f1d960f37c7d25044b6b20e`.  
-**Latest verified Admin runtime gate:** Stage13G `34793896054` — Admin UI, backend, migrations/integration, Real API + PostgreSQL + Chromium all SUCCESS.  
+**Architecture pivot baseline:** `302127c3223d00715f1d960f37c7d25044b6b20e`.  
+**Latest verified Admin runtime gate before pivot:** Stage13G `34793896054` — Admin UI, backend, migrations/integration, Real API + PostgreSQL + Chromium SUCCESS.  
 **Current stage:** Platform Architecture Rebuild — `PA-00 Architecture baseline and guardrails` — **ACTIVE**.
 
-## Direction change — 2026-09-14
+## Binding architecture direction
 
-The former AR-10 contract limited work to small evidence-driven accessibility/RTL/performance/visual fixes and explicitly avoided redesign/rebuild of already-working surfaces.
+The former AR-10 “smallest polish only” rule is superseded. The platform is now being rebuilt structurally from first principles while preserving verified business/security/data contracts.
 
-That constraint is now **SUPERSEDED**.
+This is not patching and not a blind big-bang rewrite.
 
-The new binding direction is to evaluate the platform from first principles and rebuild its structure into a clear, feature-owned, scalable architecture rather than continuing to improve the current shape merely because it exists.
+Migration law:
 
-Canonical plan:
+`understand scenario → map contracts → declare target owner → build/move/rebuild → verify → switch → delete old owner → exact-head gates → document`
 
-`docs/workstreams/PLATFORM_ARCHITECTURE_REBUILD_2026-09-14.md`
+Existing implementation is behavioral evidence, not the target architecture.
 
-This is a controlled structural rebuild, not patching and not an unsafe big-bang rewrite. Existing behavior/CI remains executable evidence until each replacement slice proves parity, then the superseded owner is removed.
+## Canonical architecture documents
 
-## Verified history retained
+- `docs/workstreams/PLATFORM_ARCHITECTURE_REBUILD_2026-09-14.md`
+- `docs/workstreams/PLATFORM_ARCHITECTURE_DECISIONS_2026-09-14.md`
+- `docs/architecture/PLATFORM_OWNERSHIP_BOUNDARIES_2026-09-14.md`
+- `docs/workstreams/PLATFORM_ARCHITECTURE_EXECUTION_RULES_2026-09-14.md`
+- product/UX authority remains:
+  - `docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md`
+  - `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
+  - `docs/product/DESIGN_SYSTEM_SPEC.md`
+  - `docs/product/CONTENT_LANGUAGE_RULES.md`
 
-- Super Admin AR-01 through AR-09 — DONE / VERIFIED.
-- AR-10 accessibility work produced valid improvements and exposed/fixed a real authentication focus gap.
-- Final AR-10 accessibility/runtime baseline before the architecture pivot: commit `302127c3223d00715f1d960f37c7d25044b6b20e`, Stage13G `34793896054` — SUCCESS across Admin UI, backend/integration and Real API + PostgreSQL + Chromium.
-- The old AR-10 “smallest polish only” continuation is no longer the active roadmap.
+## Permanent rules
 
-## Current architecture findings
+- PostgreSQL/API remain canonical business authority.
+- Auth/authorization/entitlement/publication/review/assessment/offline security remain server-owned.
+- frontend `app` composes; feature owners own workflows/routes/API adapters/models/tests.
+- no cross-feature private imports.
+- `shared` never imports application features and never becomes a dumping ground.
+- no new feature dumping into frontend `src/` roots.
+- route-level features lazy-load by default once shell migration starts.
+- backend remains a modular monolith; no microservice split is authorized.
+- design ownership is `tokens → primitives → components → patterns → feature compositions`.
+- RTL/accessibility/responsive/reduced-motion are architecture requirements, not later patches.
+- tests/validation/security contracts are never weakened to make migration pass.
+- no permanent dual ownership: replacement must end with legacy deletion after parity.
 
-### Preserve
+## PA-00 detailed state
 
-- `apps/student-web`, `apps/admin-web`, `apps/api` product separation.
-- Fastify API + PostgreSQL canonical authority.
-- migrations/integrity/business/security contracts.
-- backend domain grouping and real CI/browser coverage.
-- verified product behavior unless explicitly replaced by a documented architecture/product decision.
+### PA-00.1 — Ownership & boundary map — **DONE**
 
-### Rebuild / standardize
+Commit `c7b221de2386a4e8fb6b92de3a781aecbc03e9da` established:
 
-- Both frontend composition roots are too broad; Admin and Student `App.tsx` files own too many responsibilities.
-- Admin eagerly imports major feature workspaces; verified build baseline produced ~`968.58 kB` minified JS (`193.92 kB` gzip) in one main chunk.
-- source-root API/CSS/test ownership remains inconsistent and only partially feature-owned.
-- shared `domain` / `validation` packages cover only a subset of platform contracts.
-- API domain grouping is useful, but app composition and internal module layer conventions/dependency boundaries require standardization.
-- design-system ownership must become explicit: tokens → primitives → components → patterns → feature compositions.
+- application/package authority map;
+- Admin feature ownership and target owners;
+- Student feature ownership and target owners;
+- backend module ownership;
+- shared-package promotion rules;
+- mandatory `KEEP / MOVE / STANDARDIZE / REBUILD / REMOVE` classification;
+- root-fix migration protocol and legacy-removal condition.
 
-## Active roadmap
+Execution rules were then frozen in commit `04eb55a99e7b6be1e63d5d7a071b28cd23129d5b`.
 
-- `PA-00` — Architecture baseline + ADRs + dependency/ownership rules — **ACTIVE**.
-- `PA-01` — Shared design + contract foundation.
-- `PA-02` — Thin frontend app shells, providers/router/layout/auth boundaries, route code splitting.
-- `PA-03` — Admin feature vertical-slice migration.
-- `PA-04` — Student feature vertical-slice migration reconciled against current live `main`.
+### PA-00.2 — Current-file migration inventory — **NEXT**
+
+Build exact `current → target → classification → contract → removal condition` inventory for first-wave Admin/Student/API ownership and identify duplicate/legacy seams.
+
+### PA-00.3 — Automated architecture guard — PENDING
+
+Add deterministic checks for protected roots, shared→feature/app dependency violations, and cross-feature private imports after the accepted baseline is explicit.
+
+### PA-00.4 — Reproducible baselines — PENDING
+
+Record Admin/Student bundle/runtime evidence and architecture hotspots from reproducible repository commands/workflows.
+
+### PA-00.5 — Foundation readiness gate — PENDING
+
+PA-01/PA-02 cannot start until ownership decisions, guardrails, baseline evidence and exact-head CI are coherent.
+
+## Roadmap
+
+- `PA-00` — Architecture baseline + ownership/dependency guardrails — **ACTIVE; PA-00.1 DONE**.
+- `PA-01` — Shared design + proven shared contracts.
+- `PA-02` — Thin frontend app shells/router/providers/layouts/lazy boundaries.
+- `PA-03` — Admin vertical-slice migration.
+- `PA-04` — Student vertical-slice migration reconciled against fresh live `main`.
 - `PA-05` — Backend modular-monolith boundary standardization.
 - `PA-06` — Design/interaction convergence.
 - `PA-07` — Performance/delivery architecture.
-- `PA-08` — Legacy removal + dependency enforcement.
+- `PA-08` — Legacy removal + hard dependency enforcement.
 - `PA-09` — Full platform verification.
 
-## Immediate execution rule
+## Immediate next action
 
-Do not resume the old AR-10 polish loop. Continue with `PA-00` only:
-
-1. classify current code/files by owner and KEEP / MOVE / REBUILD / REMOVE / STANDARDIZE;
-2. record architecture decisions for frontend boundaries, backend module boundaries, data authority and design-system layers;
-3. define/enforce dependency rules where practical;
-4. baseline current bundle/runtime characteristics;
-5. only then start PA-01/PA-02 foundation work.
+Execute **PA-00.2 only**. Do not begin random file movement or visual changes. First produce the exact migration inventory from current code, then use it to build the automated guard and choose the first structural implementation slice.
 
 PR #52 stays Draft. Never auto-merge.
