@@ -30,8 +30,6 @@ Read in this order:
 12. `docs/product/DESIGN_SYSTEM_SPEC.md`;
 13. `.agents/skills/alwaslh-product-engineering/SKILL.md`.
 
-Older platform-wide architecture documents are historical rationale only and are superseded for execution by the scoped AB workstream.
-
 ## Scheduled continuation law
 
 Workers A, B and C continue the same ordered roadmap on the same branch, staggered by 20 minutes (`:00`, `:20`, `:40`). Every run reads live state/current branch/main HEADs/exact-head CI/canonical docs before mutation; performs one smallest coherent increment; verifies it; and records ending HEAD, evidence and the exact next step. If another worker is still active, do not create overlapping mutations.
@@ -76,39 +74,31 @@ Frozen baseline: Admin JS **968.68 kB / 193.92 kB gzip**, Admin CSS **91.38 kB /
 
 ## AB-01 — ACTIVE
 
-Detailed authority: `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`.
-
 ### AB-01.1 Shared API transport boundary — DONE
 
-Owner: `apps/admin-web/src/shared/api/client.ts`. Root compatibility re-export remains bounded debt until feature adapters migrate.
+Owner: `apps/admin-web/src/shared/api/client.ts`.
 
 ### AB-01.2 Auth/session ownership — DONE
 
-Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSessionProvider.tsx`, public boundary `features/auth/public/index.ts`. `App.tsx` no longer owns session lifecycle.
+Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSessionProvider.tsx`, public boundary `features/auth/public/index.ts`.
 
 ### AB-01.3 Product-state primitives — DONE
 
-Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`. The minimum proven loading/error/retry presentation shell is shared; feature state machines and server semantics remain feature-owned.
+Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
-### AB-01.4 Backend app composition foundation — ACTIVE / TWO SEAMS DONE
+### AB-01.4 Backend app composition foundation — ACTIVE / THIRD SEAM SELECTED
 
 Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
-**First seam — CORS/preflight extraction — DONE.** Source implementation HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`; Architecture Guard `34808159011`, Admin AI `34809211720`, Combined `34809211704`, Stage13G `34809211707` all SUCCESS.
+- CORS/preflight seam — DONE; source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
+- health/readiness seam — DONE; source HEAD `a302871b3486ae95810cea40dccca68363a29055`.
+- **third seam selected:** public not-found + global public-error HTTP handling.
+- target owner: `apps/api/src/app/http/public-errors.ts` with `registerPublicErrorHandlers(app)`.
+- preserve current `toPublicError` authority, 404 envelope, statuses/bodies and 5xx logging; do not bundle DB close lifecycle or business/service composition.
+- direct parity evidence includes `apps/api/tests/app.test.ts` unknown-route public-envelope test plus broader API/auth/integration regressions.
+- starting exact-head `e592535b082c9284ecf88f19e60cb70821e8aa16` had Admin AI `34813851669`, Combined `34813851671`, Stage13G `34813851684` — all SUCCESS.
 
-**Second seam — health/readiness HTTP extraction — DONE.** Source implementation HEAD `a302871b3486ae95810cea40dccca68363a29055`.
-
-- owner: `apps/api/src/app/http/health.ts`;
-- `registerHealthRoutes(app, database)` owns the existing `/health` and `/ready` handlers;
-- existing paths/statuses/bodies, process-only health behavior, `database.ping()` readiness and failure log semantics are unchanged;
-- Architecture Guard `34811642661` — SUCCESS on source HEAD;
-- direct source Combined `34811642693` was cancelled only after documentation-only commits superseded it;
-- compare from `a302871b...` to `b095741e...` proves only status/log/handoff/AB-01/state documentation changed;
-- Admin AI `34811809959` — SUCCESS;
-- Combined `34811809962` — SUCCESS including API/Admin quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
-- Stage13G `34811810021` — SUCCESS including Admin/API quality, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
-
-**Next:** third AB-01.4 seam discovery only. Inspect remaining `apps/api/src/app.ts` responsibilities and select one smallest evidence-backed composition boundary; do not implement it in the same discovery increment.
+**Next:** implement only this selected third seam, then run Architecture Guard + API quality + integration/auth/security + clean PostgreSQL + real Chromium gates before calling it DONE.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -134,4 +124,4 @@ No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: perform **discovery only** for the third AB-01.4 app-composition seam. Do not implement that seam in the same increment.
+Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: **implement only the selected third AB-01.4 public-error/not-found composition seam**; do not combine it with DB-close lifecycle, service-container, route-registry or schema work.
