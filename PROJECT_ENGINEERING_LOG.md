@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-03.1 Overview + Operations closed after slice-closure discovery found no further evidence-backed correction.**
+Last consolidated: **2026-09-14 — AB-03.2 Curriculum + Content + OCR discovery completed; Curriculum frontend API ownership selected as the next smallest correction.**
 
 ## Durable invariants
 
@@ -17,7 +17,7 @@ Last consolidated: **2026-09-14 — AB-03.1 Overview + Operations closed after s
 
 Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the serial handoff authority. Never auto-merge or rewrite shared history.
 
-Live main latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`. No overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker A sequence 42.
+Live main latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`. No overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker C sequence 44.
 
 ## AB-00 — DONE
 
@@ -59,6 +59,19 @@ Compare `7eda86f...` → pre-run HEAD `4452d246...` contained only the four proj
 - Combined Integration `34876404314` — SUCCESS;
 - Stage13G Admin Operations `34876404237` — SUCCESS, including clean PostgreSQL and real API + PostgreSQL + Chromium.
 
-### AB-03.2 Curriculum + Content + OCR — ACTIVE / DISCOVERY NEXT
+### AB-03.2 Curriculum + Content + OCR — ACTIVE / DISCOVERY COMPLETE
 
-Next run must perform discovery only first: map operator jobs, frontend owners, API/application/domain/infrastructure boundaries, PostgreSQL publication/provenance/OCR integrity, security permissions, compatibility consumers and existing tests. Only after evidence is collected may the smallest correction be selected.
+Worker C sequence 44 inspected the live slice without production/test/migration mutation.
+
+Findings:
+
+- Curriculum presentation is already grouped under `apps/admin-web/src/admin/curriculum/*`, but its workspace imports the entire Curriculum contract from root `apps/admin-web/src/admin-api.ts`.
+- Root `admin-api.ts` currently owns both generic/shared exports and the complete Curriculum contract: Curriculum record types/snapshot plus all fetch/create/update requests. This violates single feature ownership and leaves an overly broad transitional root facade.
+- Content ingestion is grouped under `apps/admin-web/src/admin/content/*`, but `ContentIngestionWorkspace.tsx` imports Curriculum from root `admin-api.ts` and ingestion/publication from root `content-ingestion-api.ts`.
+- Root `content-ingestion-api.ts` imports `adminApiRequest` from `admin-api.ts`, creating an unnecessary transport dependency on the Curriculum/admin facade instead of canonical `shared/api/client`.
+- Backend is already separated into `apps/api/src/curriculum/*` and `apps/api/src/content/*`; Curriculum also has `student-reader.ts`, so Student-facing server compatibility is explicit and must remain intact.
+- PostgreSQL migration history has distinct learning/content/media/OCR authorities including `0003_learning.sql`, `0008_content_source_import.sql`, `0009_media_pipeline.sql` and `0011_ocr_foundation.sql`. No direct evidence currently requires schema mutation.
+
+Decision: **AB-03.2.1 Curriculum frontend API ownership** is the next smallest root correction. Move only Curriculum-specific types/requests from root `admin-api.ts` to `features/curriculum/api/admin-curriculum-api.ts`, expose the required consumer contract through `features/curriculum/public/index.ts`, and update Curriculum plus legitimate Content consumers. Do not combine Content API migration, page moves, OCR/AI redesign, backend or PostgreSQL changes.
+
+The discovery itself changed documentation only, so inherited executable evidence remains authoritative: Guard `34876404251`, Combined `34880448851`, Stage13G `34880448862`, Admin AI `34880448853` — all SUCCESS.
