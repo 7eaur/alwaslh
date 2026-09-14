@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-01.1 transport and AB-01.2 auth/session foundations verified and closed; AB-01.3 next.**
+Last consolidated: **2026-09-14 — AB-01.3 minimum Admin product-state primitive implemented; source-head verification active.**
 
 ## A. Durable authority invariants
 
@@ -101,7 +101,7 @@ Scoped work continues on `rebuild/super-admin-foundation`, PR #52 Draft.
 - compare live `main` before structural phase boundaries;
 - if `main` introduces overlapping Admin/API/migrations/shared-contract changes, pause and reconcile.
 
-Latest Worker A sequence 1 reconciliation observed `main` at `3053640cc5bb0699cfa7456cf646e8997f6aa81b`, unchanged from prior AB-01 reconciliation.
+Latest Worker A sequence 2 reconciliation observed `main` at `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, advanced by Student V2 merge #58. Path-level comparison found Student frontend/workflow/docs changes and no overlapping Admin/API/migrations/scoped shared implementation changes. No implementation reconciliation was required for AB-01.3.
 
 ## G. Confirmed architecture/product decisions
 
@@ -165,22 +165,37 @@ Verified implementation checkpoint: `d955a34087552377dc8b426ec1712e57f59fd8f6`.
 
 Conclusion: AB-01.1 and AB-01.2 are final **DONE**.
 
-### AB-01.3 — NEXT
+### AB-01.3 — IMPLEMENTED / WAITING_FOR_CI
 
 Purpose: extract only the minimum Admin product-state primitive proven by real duplication.
 
-Known current evidence before next-run reinspection:
+Source implementation checkpoint:
 
-- Overview and Operations duplicate local loading/error/retry state containers;
-- shared Admin UI currently has no general state-pattern owner;
-- no generic mega-component is authorized;
-- server error truth/copy remains feature-owned.
+`cfa2016e056f6dc4f9669236414a7acbd9551011`
 
-Next run must re-read current source and select one smallest coherent shared primitive only.
+Evidence and ownership decision:
+
+- Overview and Operations had semantically identical local loading/error/retry presentation containers and identical `operations-page-state` styling.
+- Created `apps/admin-web/src/shared/ui/AdminProductState.tsx` as the Admin-only shared presentation owner.
+- Created `apps/admin-web/src/shared/ui/admin-product-state.css` as the single styling owner.
+- Overview and Operations now use the shared primitive and removed their duplicate local components.
+- Old `.operations-page-state` CSS was deleted from Operations feature styling to prevent dual ownership.
+- `LoadState`, feature copy, server error truth, session expiry behavior and retry callbacks remain feature-owned; no generic state machine or mega-component was introduced.
+- Empty/permission/conflict/unavailable/success patterns were not generalized because this batch did not establish sufficient common semantics.
+
+Required source-head verification is active:
+
+- Architecture Guard `34804704619` — running at handoff;
+- Stage13E Admin AI `34804704717` — pending at handoff;
+- Stage13E Frontend Preparation `34804704759` — pending at handoff;
+- Stage13E Combined Integration `34804704721` — pending at handoff;
+- Stage13G Admin Operations `34804704756` — pending at handoff.
+
+AB-01.3 is not DONE until required source-head gates are green.
 
 ### AB-01.4 — PENDING
 
-Backend app composition extraction from `apps/api/src/app.ts`, preserving business rules and modular-monolith behavior.
+Backend app composition extraction from `apps/api/src/app.ts`, preserving business rules and modular-monolith behavior. Do not start until AB-01.3 closure is recorded.
 
 ### AB-01.5 — PENDING
 
@@ -200,7 +215,9 @@ Live handoff state:
 
 `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
 
-Worker A and B share one roadmap and branch, execute one smallest coherent increment per run, and leave `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE` with exact HEAD/CI/next-step evidence.
+Workers A, B and C share one roadmap and branch, execute one smallest coherent increment per run at the staggered `:00/:20/:40` cadence, and leave `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE` with exact HEAD/CI/next-step evidence.
+
+After verified AB-08 completion, the proving worker disables all three scheduled tasks.
 
 ## J. Full roadmap
 
@@ -220,4 +237,4 @@ Never infer the next mutation from this log alone. Read first:
 
 `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
 
-Current durable continuation after Worker A sequence 1: **AB-01.3 minimum proven Admin product-state primitives**.
+Current durable continuation after Worker A sequence 2: inspect exact-head gates for source implementation `cfa2016e056f6dc4f9669236414a7acbd9551011`; if green, close AB-01.3 in canonical documentation as one coherent increment before starting AB-01.4.
