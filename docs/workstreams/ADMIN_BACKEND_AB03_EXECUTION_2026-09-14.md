@@ -40,7 +40,7 @@ Authoritative green evidence: Architecture Guard `34876404251`; Frontend Prepara
 
 ### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Implementation ownership moved to `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts`, with narrow consumer access through `features/curriculum/public`. `CurriculumWorkspace.tsx` and the intended Content-ingestion Curriculum consumer were migrated to that boundary. A root compatibility re-export remains intentionally transitional because strict executable typecheck proved legitimate later-slice consumers.
+Implementation ownership moved to `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts`, with narrow consumer access through `features/curriculum/public`.
 
 Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
 
@@ -48,7 +48,7 @@ Required closure evidence: Architecture Guard `34887051028`; Frontend Preparatio
 
 ### AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Content ingestion transport/types implementation moved to `apps/admin-web/src/features/content/api/content-ingestion-api.ts`, exposed through `apps/admin-web/src/features/content/public/index.ts`. Root `apps/admin-web/src/content-ingestion-api.ts` remains a transitional compatibility facade rather than a second implementation owner. API paths, payloads, response shapes and auth/session semantics were preserved.
+Content ingestion transport/types implementation moved to `apps/admin-web/src/features/content/api/content-ingestion-api.ts`, exposed through `apps/admin-web/src/features/content/public/index.ts`.
 
 Corrected executable/source checkpoint: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
 
@@ -60,41 +60,33 @@ Final ownership after this increment:
 
 - `apps/admin-web/src/features/content/api/content-operations-api.ts` owns Content operations/OCR transport and types;
 - `apps/admin-web/src/features/content/public/index.ts` exposes the narrow required consumer contract;
-- `apps/admin-web/src/OcrSourcePreview.tsx` consumes the feature boundary directly;
-- root `apps/admin-web/src/content-operations-api.ts` is compatibility-only and no longer owns implementation;
-- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains the proven reason the root compatibility facade exists.
-
-No backend/Fastify, PostgreSQL/migration, security, route, page/CSS behavior, AI or Student frontend implementation semantics were changed by this owner move.
+- `apps/admin-web/src/OcrSourcePreview.tsx` consumes the feature boundary directly.
 
 Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
 
-Exact-head green closure set:
-
-- Architecture Guard `34898665849` — SUCCESS;
-- Frontend Preparation `34898665740` — SUCCESS;
-- Admin AI Operations `34898665783` — SUCCESS;
-- Combined Integration `34898665724` — SUCCESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — SUCCESS.
+Exact-head green closure set: Architecture Guard `34898665849`; Frontend Preparation `34898665740`; Admin AI Operations `34898665783`; Combined Integration `34898665724`; Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — all SUCCESS.
 
 ### AB-03.2 closure discovery — DONE / DOC-ONLY
 
-Worker C sequence 54 inspected the live root compatibility facade and the direct Content/OCR consumer boundary without changing executable source.
+Worker C sequence 54 proved root `apps/admin-web/src/content-operations-api.ts` was a pure compatibility facade and that `ContentOperationsPage.tsx` was its remaining stale consumer.
 
-Evidence:
+### AB-03.2.4 Content operations compatibility facade retirement — IMPLEMENTED / WAITING_FOR_CI
 
-- root `apps/admin-web/src/content-operations-api.ts` contains only re-exports from `./features/content/api/content-operations-api`;
-- `apps/admin-web/src/features/content/public/index.ts` exports the required Content operations/OCR functions and types;
-- `apps/admin-web/src/OcrSourcePreview.tsx` imports `fetchOcrSourcePreview` from `./features/content/public` already;
-- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` still imports its Content operations/OCR contract from `../../content-operations-api`;
-- compare `866912f4640aa4696b896a1d897bff7ad67024f4` → sequence-54 observed start `707e52a2f28e7028c4ee3fd19ca737e092f260f6` changes only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, this AB-03 record, and the autonomous state file; there is no executable-source drift after the verified checkpoint.
+Worker A sequence 55 executed exactly the selected seam:
 
-### Exact next smallest step — AB-03.2.4 Content operations compatibility facade retirement
+1. `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` now imports its Content operations/OCR functions and types from `../../features/content/public`;
+2. root `apps/admin-web/src/content-operations-api.ts` was deleted;
+3. no API path, payload/response contract, Fastify/PostgreSQL/security authority, route, visual behavior or Student frontend implementation changed;
+4. no AI work or page/CSS restructuring was started.
 
-One bounded executable increment only:
+Executable/source checkpoint: `ca8381c45cab7ae6a8500c88325042451fbed20f`.
 
-1. switch `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` from `../../content-operations-api` to `../../features/content/public`;
-2. delete root `apps/admin-web/src/content-operations-api.ts`;
-3. require strict Admin typecheck and Architecture Guard to prove no hidden consumer remains after deletion;
-4. run the relevant Admin/API/PostgreSQL/integration/Chromium gates on the exact source head;
-5. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority, product behavior and Student frontend exclusion;
-6. do not bulk-move page/CSS ownership and do not begin AI in the same increment.
+Verification observed on that exact source head:
+
+- Architecture Guard `34906963160` — SUCCESS;
+- Frontend Preparation `34906963113` — QUEUED;
+- Admin AI Operations `34906963149` — IN PROGRESS;
+- Combined Integration `34906963163` — IN PROGRESS;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34906963142` — PENDING.
+
+Required continuation: do not start another ownership seam until these gates, or source-tree-equivalent successors after documentation-only pushes, finish green. Only then mark AB-03.2.4 DONE and perform fresh AB-03.2 closure discovery before any AI slice work.
