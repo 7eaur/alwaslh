@@ -82,16 +82,18 @@ Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
 
 Exact-head green closure evidence: Architecture Guard `34898665849`; Frontend Preparation `34898665740`; Admin AI Operations `34898665783`; Combined Integration `34898665724`; Stage13G Admin Operations / PostgreSQL / Chromium `34898665675`.
 
-#### AB-03.2.4 Content operations compatibility facade retirement — IMPLEMENTED / WAITING_FOR_CI
+#### AB-03.2.4 Content operations compatibility facade retirement — CORRECTED / WAITING_FOR_CI
 
-`ContentOperationsPage.tsx` now consumes `../../features/content/public` directly and root `apps/admin-web/src/content-operations-api.ts` has been deleted. No API, PostgreSQL, security, route, UI behavior or Student frontend implementation changed.
+Worker A retired the root production compatibility facade, but exact-head Frontend Preparation `34906963113` exposed one real remaining root dependency: `apps/admin-web/src/content-operations-api.test.ts` still imported the deleted `./content-operations-api`, causing TS2307 during Admin typecheck.
 
-Executable/source checkpoint: `ca8381c45cab7ae6a8500c88325042451fbed20f`.
+Worker B sequence 56 applied the smallest root fix inside the same ownership seam: the unchanged transport test now lives beside its owner at `apps/admin-web/src/features/content/api/content-operations-api.test.ts`; the stale root test path is deleted. No production endpoint, payload/response contract, Fastify/PostgreSQL/security authority, route, UI behavior or Student frontend implementation changed.
 
-Current exact-head CI: Architecture Guard `34906963160` — SUCCESS; Frontend Preparation `34906963113` — QUEUED; Admin AI Operations `34906963149` — IN PROGRESS; Combined Integration `34906963163` — IN PROGRESS; Stage13G Admin Operations / PostgreSQL / Chromium `34906963142` — PENDING. Do not mark AB-03.2.4 DONE until required gates are green.
+Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
+
+Exact-head verification observed so far: Architecture Guard `34908457279` — SUCCESS; Frontend Preparation `34908457311` — SUCCESS; Admin AI Operations `34908457270` — IN PROGRESS; Combined Integration `34908457265` — IN PROGRESS; Stage13G Admin Operations / PostgreSQL / Chromium `34908457306` — IN PROGRESS. Do not mark AB-03.2.4 DONE until remaining required gates are green.
 
 ## Remaining roadmap
 
-Close AB-03.2.4 exact-head verification, then perform fresh Content/OCR closure discovery before advancing to AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Close corrected AB-03.2.4 exact-head/source-tree-equivalent verification, then perform fresh Content/OCR closure discovery before advancing to AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
