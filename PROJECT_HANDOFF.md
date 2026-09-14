@@ -28,7 +28,7 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - branch: `rebuild/super-admin-foundation`;
 - PR #52 stays Draft and is never auto-merged;
 - never force-reset or force-push shared history;
-- live `main` observed in Worker C sequence 16: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
+- live `main` observed in Worker A sequence 17: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
 
 ## Execution governance
 
@@ -52,57 +52,59 @@ Backend remains one Fastify modular monolith over PostgreSQL. No microservices/D
   - Health/readiness — DONE
   - Public error/not-found — DONE
   - Fastify construction/options — DONE
-  - Database lifecycle registration — **SELECTED / IMPLEMENTATION NEXT**
+  - Database lifecycle registration — **IMPLEMENTED / WAITING_FOR_CI**
 - AB-01.5 — PENDING
 - AB-01.6 — PENDING
 
-## Fifth-seam discovery result
+## Fifth-seam implementation
 
-Live `apps/api/src/app.ts` still owns one isolated cross-cutting lifecycle concern:
+Source+test implementation HEAD:
 
-```ts
-app.addHook("onClose", async () => {
-  await database.close();
-});
-```
+`101f61a9c25e3de116d0074a3ef7e2f760eb98a7`
 
-Target owner:
+New owner:
 
 `apps/api/src/app/plugins/database-lifecycle.ts`
 
-with narrow registration such as `registerDatabaseLifecycle(app, database)`.
+`app.ts` now delegates with:
 
-Why this is the smallest justified seam:
+`registerDatabaseLifecycle(app, database)`
 
-- `Database.close()` is already an explicit infrastructure contract;
-- `server.ts` intentionally relies on `app.close()` to close PostgreSQL during SIGTERM/SIGINT and listen failure;
-- startup failure before app construction closes the database directly and remains out of scope;
-- this move does not require moving service construction, business routes, database creation or process signals.
+in the same composition position after business routes, health and public errors.
 
-## Contracts to preserve
+Focused `apps/api/tests/app.test.ts` coverage proves `app.close()` delegates to the supplied fake database close operation exactly once.
 
-- `buildApp()` still receives an already-created `Database`;
-- the same Fastify instance owns the close hook;
-- `app.close()` awaits `database.close()` without swallowing errors;
-- lifecycle registration stays after current route/health/public-error composition;
-- `server.ts` shutdown/listen-failure behavior stays unchanged;
-- legacy startup-failure direct database close stays unchanged;
-- database pool/query/transaction/migration/schema behavior stays unchanged.
+Unchanged by this seam:
 
-Implementation must add focused `apps/api/tests/app.test.ts` coverage proving app-close delegates to the supplied database close operation. Do not create a general lifecycle framework.
+- `server.ts`;
+- database creation/pool/query/transaction behavior;
+- process-signal and startup-failure paths;
+- service graph and business routes;
+- migrations/schema;
+- Student frontend.
+
+## Verification state
+
+Architecture Guard `34825750566` — **SUCCESS** on the source composition commit.
+
+On source+test HEAD before documentation commits:
+
+- Stage13G `34825773710` — IN_PROGRESS; Admin UI lint/typecheck/unit/build already green when inspected;
+- Combined `34825773686` — IN_PROGRESS;
+- Admin AI `34825773676` — IN_PROGRESS.
+
+Documentation commits may supersede or cancel these runs. The next worker must inspect current/source-tree-equivalent Actions and must not infer success from cancellation.
 
 ## Exact next engineering step
 
-Implement **only** this fifth AB-01.4 database lifecycle seam:
+Do **not** start another extraction yet.
 
-1. create `apps/api/src/app/plugins/database-lifecycle.ts`;
-2. move only the inline database `onClose` registration into the narrow owner;
-3. call it from `app.ts` in the same composition position;
-4. add one focused lifecycle parity test;
-5. leave `server.ts`, `db.ts`, service graph, route registrations, startup batch, migrations and Student frontend unchanged;
-6. run Architecture Guard, API lint/typecheck/unit/build, clean PostgreSQL, relevant integration/security/auth and real API + PostgreSQL + Chromium gates;
-7. close the seam only after green evidence;
-8. then reassess whether AB-01.4 should close rather than forcing broad service/container/route-registry extraction.
+1. fetch current branch/main HEADs and shared state;
+2. verify source-tree-equivalent Architecture Guard/API lint/typecheck/unit/build/clean PostgreSQL/relevant integration/security/auth/real API+Chromium evidence for the implemented database lifecycle seam;
+3. if any gate fails, fix only its root cause;
+4. if the seam is fully green, mark **Database lifecycle registration — DONE**;
+5. then explicitly reassess whether AB-01.4 should close rather than inventing a broad sixth service-container, route-registry or infrastructure-bundle extraction;
+6. only after that decision may AB-01.5 begin.
 
 ## Remaining roadmap
 
