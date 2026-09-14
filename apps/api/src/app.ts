@@ -15,6 +15,7 @@ import { registerAdminAiAuthoringRoutes } from "./ai/admin-authoring-http.js";
 import { AdminAiOperationsService } from "./ai/admin-operations.js";
 import { registerAdminAiOperationsRoutes } from "./ai/admin-operations-http.js";
 import { registerHealthRoutes } from "./app/http/health.js";
+import { registerPublicErrorHandlers } from "./app/http/public-errors.js";
 import { registerCorsPolicy } from "./app/plugins/cors.js";
 import { registerAuthRoutes } from "./auth/http.js";
 import { AuthService } from "./auth/service.js";
@@ -32,7 +33,6 @@ import { registerLessonAuthoringExportRoutes } from "./curriculum/lesson-authori
 import { CurriculumService } from "./curriculum/service.js";
 import { StudentReaderService } from "./curriculum/student-reader.js";
 import type { Database } from "./db.js";
-import { toPublicError } from "./errors.js";
 import { FileSystemMediaStorage } from "./media/storage.js";
 import { registerNotificationRoutes } from "./notifications/http.js";
 import { NotificationService } from "./notifications/service.js";
@@ -125,18 +125,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerQuizSpecializedExportRoutes(app, config, auth, quizSpecializedExports);
 
   registerHealthRoutes(app, database);
-
-  app.setNotFoundHandler((_request, reply) => {
-    return reply.code(404).send({ error: { code: "NOT_FOUND", message: "المسار غير موجود" } });
-  });
-
-  app.setErrorHandler((error, request, reply) => {
-    const publicError = toPublicError(error);
-    if (publicError.statusCode >= 500) {
-      request.log.error({ err: error }, "request failed");
-    }
-    return reply.code(publicError.statusCode).send(publicError.body);
-  });
+  registerPublicErrorHandlers(app);
 
   app.addHook("onClose", async () => {
     await database.close();
