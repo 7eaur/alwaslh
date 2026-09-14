@@ -1,13 +1,14 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `READY_FOR_NEXT`
 Sequence: `9`
-Last worker: `A`
-Active worker: `B`
+Last worker: `B`
+Active worker: `NONE`
 Start time: `2026-09-14T09:27:49+03:00`
-End time: `IN_PROGRESS`
+End time: `2026-09-14T09:31:30+03:00`
 Starting HEAD: `b095741e621f9241ff3eed0de86b4e64048604bf`
-Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`
+Ending HEAD before this handoff commit: `0c9612bd452921ff8f525cdaa0814dfbec74b6b7`
+Source implementation HEAD closed this run: `a302871b3486ae95810cea40dccca68363a29055`
 Latest live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`
 
 ## Active roadmap position
@@ -17,26 +18,67 @@ Latest live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`
 - AB-01.1 — DONE
 - AB-01.2 — DONE
 - AB-01.3 — DONE
-- **AB-01.4 — ACTIVE / CORS SEAM DONE / HEALTH-READINESS CLOSURE VERIFICATION IN PROGRESS**
+- **AB-01.4 — ACTIVE / CORS SEAM DONE / HEALTH-READINESS SEAM DONE / THIRD SEAM DISCOVERY NEXT**
 - AB-01.5 — PENDING
 - AB-01.6 — PENDING
 
-## Worker B sequence 9 active increment
+## Worker B sequence 9 completed increment
 
-Verify and close only the second AB-01.4 health/readiness composition seam if the source-tree-equivalent gates are fully green. Do not select or implement a third seam in this run.
+Closed exactly the second AB-01.4 composition seam: **health/readiness HTTP ownership extraction**. No source-code mutation was made in this run; this run only verified source-tree-equivalent CI and synchronized canonical documentation.
 
-### Evidence already observed
+### Source implementation already present
 
-- `a302871b3486ae95810cea40dccca68363a29055` → starting HEAD `b095741e621f9241ff3eed0de86b4e64048604bf` is documentation-only (`PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, AB-01 execution doc and this execution-state file); no source/runtime/test/migration files differ.
-- Architecture Guard `34811642661` — SUCCESS on source implementation HEAD.
-- Source run `34811642693` was cancelled after newer documentation commits superseded it.
-- Documentation-only equivalent run `34811809959` Admin AI — SUCCESS.
-- Documentation-only equivalent run `34811809962` Combined Integration — SUCCESS including API/Admin quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium.
-- Documentation-only equivalent run `34811810021` Stage13G — SUCCESS including Admin/API quality, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+- `apps/api/src/app/http/health.ts` owns `GET /health` and `GET /ready` through `registerHealthRoutes(app, database)`;
+- `apps/api/src/app.ts` retains one composition call at the same relative position;
+- `/health` remains process-only;
+- `/ready` remains based only on `database.ping()` with unchanged success/failure bodies, 503 behavior and `database readiness check failed` logging;
+- direct parity tests remained unchanged;
+- public error/not-found, DB close lifecycle, database construction/config, `server.ts`, service graph, migrations/schema and Student frontend remain untouched.
 
-## Intended completion for this run
+## Verification / CI closure
 
-1. mark health/readiness seam DONE across state/status/log/handoff/AB-01 execution documentation;
-2. record the exact successful run IDs and documentation-only equivalence proof;
-3. leave the next worker a discovery-only step for the third AB-01.4 composition seam;
-4. make no source-code mutation in this run.
+Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
+
+Evidence:
+
+- Architecture Guard `34811642661` — **SUCCESS** on source HEAD;
+- direct source Combined `34811642693` — cancelled only after later documentation commits superseded it;
+- compare `a302871b3486ae95810cea40dccca68363a29055...b095741e621f9241ff3eed0de86b4e64048604bf` proves the five intervening files are documentation only; no API/Admin source, tests, migrations or runtime code differ;
+- Admin AI `34811809959` — **SUCCESS**;
+- Combined Integration `34811809962` — **SUCCESS** including API/Admin quality gates, clean PostgreSQL, backend authority/auth regressions and real Admin Chromium;
+- Stage13G `34811810021` — **SUCCESS** including Admin/API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+
+Conclusion: health/readiness seam is **DONE**.
+
+## Documentation updated this run
+
+- `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`;
+- `PROJECT_STATUS.md`;
+- `PROJECT_ENGINEERING_LOG.md`;
+- `PROJECT_HANDOFF.md`;
+- `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`;
+- this execution-state file.
+
+No product/source/test/schema change was made. No Student frontend change was made.
+
+## Exact next smallest step — Worker C
+
+Perform **third AB-01.4 composition discovery only**:
+
+1. re-fetch live branch/main/state and inspect current exact-head CI;
+2. inspect current `apps/api/src/app.ts` after the two completed extractions;
+3. inventory remaining inline app-level responsibilities;
+4. inspect existing tests/contracts for the smallest candidate boundary;
+5. select exactly one third seam with current owner, target owner, parity evidence, dependency/order constraints, impact assessment, explicit non-goals, deletion condition and required gates;
+6. update canonical discovery/state/docs with that decision;
+7. **do not implement the third seam in the same discovery increment**.
+
+## Risks / blockers
+
+- No blocker identified.
+- Do not jump directly into public-error/not-found, onClose, service-container or route-registry refactors without discovery evidence.
+- If live `main` advances with overlapping Admin/API/migrations/shared-contract changes, reconcile before mutation.
+
+## Main reconciliation
+
+`main` remains `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; no scoped overlap was introduced during this documentation-only closure. Main reconciliation required now: `NO` unless main advances before the next mutation.
