@@ -21,74 +21,68 @@ Owner: `apps/admin-web/src/features/auth/` with API, SessionProvider and public 
 
 Source checkpoint `cfa2016e056f6dc4f9669236414a7acbd9551011`; shared Admin loading/error/retry presentation is owned by `shared/ui` while feature state machines and server truth remain feature-owned.
 
-## AB-01.4 — Backend app composition foundation — ACTIVE
+## AB-01.4 — Backend app composition foundation — DONE
 
 Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
-### CORS/preflight — DONE
+Closed bounded seams:
 
-Source `dbdc9245f2d0e283d047d7e1254748e55f890a55`; owner `apps/api/src/app/plugins/cors.ts`; required gates green.
+1. CORS/preflight — `apps/api/src/app/plugins/cors.ts`;
+2. health/readiness — `apps/api/src/app/http/health.ts`;
+3. public not-found/error handling — `apps/api/src/app/http/public-errors.ts`;
+4. Fastify instance construction/options — `apps/api/src/app/create-fastify-instance.ts`;
+5. database lifecycle registration — `apps/api/src/app/plugins/database-lifecycle.ts`.
 
-### Health/readiness — DONE
-
-Source `a302871b3486ae95810cea40dccca68363a29055`; owner `apps/api/src/app/http/health.ts`; required gates green.
-
-### Public not-found/error handling — DONE
-
-Source `001d45892bf4a17458f3beaeaaa1a7430be49b44`; owner `apps/api/src/app/http/public-errors.ts`; required source-tree-equivalent gates green.
-
-### Fastify instance construction/options — DONE
-
-Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
-
-Owner: `apps/api/src/app/create-fastify-instance.ts` with narrow `createFastifyInstance(config: AppConfig): FastifyInstance` responsibility.
-
-Closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — successful/source-tree-equivalent green.
-
-### Database lifecycle registration — IMPLEMENTED / WAITING_FOR_CI
+### Database lifecycle closure
 
 Source+test implementation HEAD:
 
 `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`
 
-Owner:
+The narrow owner `registerDatabaseLifecycle(app, database)` registers only the existing Fastify `onClose` behavior that awaits `database.close()`.
 
-`apps/api/src/app/plugins/database-lifecycle.ts`
+Preserved:
 
-with narrow:
-
-`registerDatabaseLifecycle(app: FastifyInstance, database: Database): void`
-
-Implemented behavior:
-
-- owns only Fastify `onClose` registration for the supplied database;
-- awaits `database.close()` without swallowing close errors;
-- `app.ts` delegates to it in the same composition position after business routes, health and public-error handlers;
-- focused `apps/api/tests/app.test.ts` coverage proves `app.close()` delegates to the supplied fake database close operation exactly once.
-
-Preserved exactly:
-
-- `buildApp()` receives an already-created database;
-- same Fastify instance owns shutdown lifecycle;
-- `server.ts` continues to call `app.close()` for SIGTERM/SIGINT and listen failure;
-- legacy startup failure before app construction continues direct database close;
-- database creation/pool/query/transaction/migration/schema behavior is unchanged;
+- `buildApp()` still receives an already-created `Database`;
+- `server.ts` continues to use `app.close()` for SIGTERM/SIGINT and listen failure;
+- legacy pre-app startup failure direct DB close is unchanged;
+- database creation/pool/query/transactions/migrations/schema are unchanged;
 - service graph/business routes and Student frontend are unchanged.
 
-Verification observed before documentation commits:
+Focused `apps/api/tests/app.test.ts` coverage proves `app.close()` delegates to supplied database close exactly once.
 
-- Architecture Guard `34825750566` — SUCCESS on source composition commit;
-- Stage13G `34825773710` — IN_PROGRESS on source+test head; Admin UI quality steps were already green when inspected;
-- Combined `34825773686` — IN_PROGRESS;
-- Admin AI `34825773676` — IN_PROGRESS.
+Closure evidence:
 
-Switch/deletion condition remains unmet until source/source-tree-equivalent API lint/typecheck/unit/build + clean PostgreSQL + relevant integration/security/auth + real API/Chromium evidence is green. Documentation commits may supersede/cancel the original runs; cancellation is not success.
+- Architecture Guard `34825750566` — SUCCESS on affected source composition;
+- compare `101f61a9...e6140065` contains only canonical documentation files, so later successful runs are source-tree-equivalent;
+- Admin AI `34826063345` — SUCCESS;
+- Combined `34826063326` — SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend authority/auth-security regressions and real Admin Chromium;
+- Stage13G `34826063330` — SUCCESS including Admin/API quality, clean PostgreSQL, all listed integration/auth regressions and real API + PostgreSQL + Chromium.
 
-After this fifth seam closes, reassess AB-01.4 for closure. Current evidence does not justify a sixth broad service-container, route-registry or infrastructure-bundle extraction.
+### AB-01.4 stop decision
 
-## AB-01.5 — Common backend technical ownership — PENDING
+The remaining `app.ts` responsibilities are broad module/service construction, cross-service composites, multi-consumer infrastructure construction and whole-product route registration. They are not extracted wholesale here.
 
-Normalize only proven cross-cutting technical concerns. Domain/business rules remain with module owners.
+Rejected as unjustified foundation abstractions:
+
+- giant `createServices()` container;
+- giant route registry;
+- generic infrastructure bundle;
+- DI/service locator/interface ceremony.
+
+Workflow-driven module normalization belongs in AB-03; residual backend normalization belongs in AB-04. AB-01.4 therefore ends after the fifth bounded seam.
+
+## AB-01.5 — Common backend technical ownership — NEXT
+
+Discovery must start from evidence. Inspect only genuinely cross-cutting technical concerns such as generic HTTP/auth helpers, public error plumbing, DB technical ownership, observability and media infrastructure.
+
+Rules:
+
+- fix one real duplicated/misowned technical seam at most;
+- do not move domain/business rules into shared;
+- do not reopen broad app composition;
+- do not create an abstraction because the target folder diagram suggests one;
+- if no move is justified, document that and continue to AB-01.6.
 
 ## AB-01.6 — Foundation closure gate — PENDING
 
