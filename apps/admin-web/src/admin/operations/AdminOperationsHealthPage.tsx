@@ -5,7 +5,7 @@ import { AdminProductState } from "../../shared/ui/AdminProductState";
 import {
   type OperationsAttentionSummary,
   fetchAdminOperationsAttention,
-} from "../../admin-operations-api";
+} from "../../features/operations/public";
 import { buildAttentionItems } from "./operations-model";
 import "./operations-pages.css";
 
