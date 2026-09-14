@@ -20,33 +20,51 @@ This workstream is responsible for:
 
 `apps/student-web` **frontend implementation itself** is owned by the separate Student workstream/conversation.
 
-Therefore this workstream does **not** redesign/restructure the Student shell, routes, pages, visual composition or frontend feature architecture.
-
-This exclusion does **not** exclude Student-facing backend capabilities. If this workstream changes a shared/server contract, Student tests/code may be inspected or run as consumer-regression evidence.
-
-Latest observed independent Student continuation during reconciliation: PR #57 / `stage16/student-016i`, head `ce97ef2524cd3735a0200ee0f15fa6e6e224e01e` at the observed checkpoint.
+This workstream does **not** redesign/restructure the Student shell, routes, pages, visual composition or frontend feature architecture. This exclusion does **not** exclude Student-facing backend capabilities. If this workstream changes a shared/server contract, Student tests/code may be inspected or run as consumer-regression evidence.
 
 ## Canonical active authorities
 
 Read in this order for this workstream:
 
-1. `docs/architecture/ADMIN_BACKEND_ARCHITECTURE_REVIEW_2026-09-14.md`
-2. `docs/workstreams/ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md`
-3. `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`
-4. `docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`
-5. `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`
-6. `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`
-7. `docs/architecture/ADMIN_BACKEND_BASELINE_2026-09-14.md`
-8. `docs/architecture/ADMIN_BACKEND_AB00_REVIEW_CHECKLIST_2026-09-14.md`
-9. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
-10. `docs/product/DESIGN_SYSTEM_SPEC.md`
-11. `.agents/skills/alwaslh-product-engineering/SKILL.md`
+1. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` — live continuation point and worker handoff;
+2. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md` — binding alternating execution rules;
+3. `docs/architecture/ADMIN_BACKEND_ARCHITECTURE_REVIEW_2026-09-14.md`;
+4. `docs/workstreams/ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md`;
+5. `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`;
+6. `docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`;
+7. `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`;
+8. `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`;
+9. `docs/architecture/ADMIN_BACKEND_BASELINE_2026-09-14.md`;
+10. `docs/architecture/ADMIN_BACKEND_AB00_REVIEW_CHECKLIST_2026-09-14.md`;
+11. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`;
+12. `docs/product/DESIGN_SYSTEM_SPEC.md`;
+13. `.agents/skills/alwaslh-product-engineering/SKILL.md`.
 
 Older `PLATFORM_ARCHITECTURE_*` documents are historical rationale only and are superseded for execution by the scoped AB workstream.
 
-## Cross-workstream principles adopted from Student refoundation
+## Alternating scheduled continuation
 
-The Student frontend implementation remains isolated, but these proven principles are binding here as well:
+Two scheduled workers continue the **same ordered roadmap**, not separate tracks:
+
+- Worker A runs at the top of each hour;
+- Worker B runs at half past each hour;
+- together they provide one execution opportunity every 30 minutes.
+
+Every run MUST read the live execution-state file, current branch/main HEADs, exact-head CI and canonical docs before mutation. It performs one smallest coherent increment, verifies it, then records ending HEAD, changed ownership/files, CI evidence and the exact next step for the other worker.
+
+Anti-collision rule: if the prior worker appears still active, the next worker does not mutate overlapping code. It inspects state/CI only and avoids parallel conflicting work.
+
+Every normal run ends in exactly one shared state:
+
+- `READY_FOR_NEXT`;
+- `WAITING_FOR_CI`;
+- `BLOCKED`;
+- `COMPLETE`.
+
+Full rules: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md`.
+Exact continuation: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`.
+
+## Cross-workstream principles adopted from Student refoundation
 
 - **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**;
 - one shell/route/workflow owner per responsibility;
@@ -107,37 +125,30 @@ Migration law:
 - **AB-00.4 Admin bundle/runtime + backend composition baseline — DONE**
 - **AB-00.5 Foundation readiness — PASS**
 
-### Frozen measured baseline
-
-Measured behavioral/build head: `4e4e75445cf18d0e811f60b023c52cd7696bd102`.
+Frozen measured baseline:
 
 - Admin JS: **968.68 kB / 193.92 kB gzip** — one oversized initial chunk; solve through ownership + route code splitting, never warning suppression.
 - Admin CSS: **91.38 kB / 13.68 kB gzip**.
 - Admin unit tests: **71/71 green** across 17 files.
 - API unit tests: **66/66 green**; typecheck/build green.
-- API lint: 154 files checked with one recorded legacy unused-variable warning in `content/legacy-supabase-importer.ts`.
 - PostgreSQL 16 clean migration sequence: green.
-- Stage 13E Admin AI baseline run `34798894378`: **SUCCESS**.
-- Stage 13E Combined Integration baseline run `34798894391`: **SUCCESS**.
-- Combined real Chromium Admin acceptance: **9/9 green**.
+- Combined real Chromium Admin acceptance at baseline: **9/9 green**.
 - Admin hotspot: `apps/admin-web/src/App.tsx` historically owned session + shell + navigation + routes and eagerly imported major workflows.
 - Backend hotspot: `apps/api/src/app.ts` manually composes/registers the broad service/module graph.
-
-Canonical baseline: `docs/architecture/ADMIN_BACKEND_BASELINE_2026-09-14.md`.
 
 ## AB-01 — ACTIVE
 
 Detailed execution authority: `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`.
 
-- **AB-01.1 Shared API transport boundary — IMPLEMENTED; exact-head verification on current head required before DONE**
-  - transport owner: `apps/admin-web/src/shared/api/client.ts`;
+- **AB-01.1 Shared API transport boundary — IMPLEMENTED; live exact-head state determines final DONE**
+  - owner: `apps/admin-web/src/shared/api/client.ts`;
   - root `admin-api.ts` compatibility re-export is bounded transitional debt.
-- **AB-01.2 Auth/session ownership — IMPLEMENTED; exact-head verification on current head required before DONE**
-  - auth API owner: `apps/admin-web/src/features/auth/api/admin-auth-api.ts`;
-  - session lifecycle owner: `apps/admin-web/src/features/auth/model/AdminSessionProvider.tsx`;
-  - supported external boundary: `apps/admin-web/src/features/auth/public/index.ts`;
+- **AB-01.2 Auth/session ownership — IMPLEMENTED; live exact-head state determines final DONE**
+  - auth API: `apps/admin-web/src/features/auth/api/admin-auth-api.ts`;
+  - session lifecycle: `apps/admin-web/src/features/auth/model/AdminSessionProvider.tsx`;
+  - supported feature boundary: `apps/admin-web/src/features/auth/public/index.ts`;
   - `App.tsx` no longer owns session state, restore/logout API calls or auth error interpretation.
-- **AB-01.3 Product-state primitives — NEXT**
+- **AB-01.3 Product-state primitives — NEXT after required gates are green**
 - **AB-01.4 Backend app composition foundation — PENDING**
 - **AB-01.5 Common backend technical ownership — PENDING**
 - **AB-01.6 Foundation closure gate — PENDING**
@@ -145,9 +156,9 @@ Detailed execution authority: `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_202
 ## Full roadmap
 
 - `AB-00` — baseline + guardrails — **DONE**
-- `AB-01` — minimal shared foundations: Admin product states/transport/session + backend app composition/common HTTP/auth/error/db ownership where justified — **ACTIVE**
+- `AB-01` — minimal shared foundations — **ACTIVE**
 - `AB-02` — thin Admin shell/router/providers/layouts + major lazy route boundaries
-- `AB-03` — **end-to-end Admin/backend vertical slices** by operator workflow:
+- `AB-03` — end-to-end Admin/backend vertical slices in order:
   1. Overview + Operations
   2. Curriculum + Content + OCR
   3. AI Jobs + AI Review + contextual authoring transitions
@@ -161,12 +172,12 @@ Detailed execution authority: `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_202
 - `AB-07` — legacy removal + hard dependency enforcement
 - `AB-08` — final Super Admin + full Backend verification
 
-This order intentionally avoids building a clean Admin UI on top of backend seams already known to be structurally weak. Each business slice repairs the backend boundary it actually uses, proves behavior, switches ownership and removes the legacy owner.
+No merge/readiness before AB-08 exact-head green.
 
-## Immediate next action
+## Immediate continuation authority
 
-1. require exact-head Architecture Guard + Admin/API quality + PostgreSQL + real Chromium evidence for AB-01.1/AB-01.2;
-2. if green, mark AB-01.1 and AB-01.2 DONE;
-3. execute **AB-01.3 Product-state primitives** only after that gate;
-4. then AB-01.4 backend composition foundation;
-5. keep PR #52 Draft; never auto-merge.
+Do **not** infer the next mutation from this static file alone. Always read first:
+
+`docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
+
+That file owns the exact live continuation point, latest handoff, CI state and next smallest step.
