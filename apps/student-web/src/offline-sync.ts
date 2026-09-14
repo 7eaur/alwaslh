@@ -21,6 +21,24 @@ export async function applyOfflineContentDelta(
   deviceId: string,
 ): Promise<OfflineDeltaApplyResult> {
   let cursor = readOfflineSyncCursor(profileId, deviceId);
+
+  // A scope created before this feature has no durable cursor. Do not replay its
+  // entire historical revision stream against packages that may have been saved
+  // after those events. Bootstrap to the server's current upper bound, then let
+  // the full manifest revalidation in the same reconnect cycle establish current
+  // authority for every stored package.
+  if (cursor === null) {
+    const bootstrap = await getStudentOfflineDelta("0", 1);
+    writeOfflineSyncCursor(profileId, deviceId, bootstrap.latestCursor);
+    return {
+      pages: 1,
+      entries: 0,
+      removed: 0,
+      nextCursor: bootstrap.latestCursor,
+      hasMore: false,
+    };
+  }
+
   let pages = 0;
   let entries = 0;
   let removed = 0;
