@@ -1,7 +1,7 @@
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import App from "./App";
+import { StudentPublicInfoPage } from "./features/auth/StudentEntryExperience";
 import { PageState, RouteFocus, StudentProductShell } from "./presentation-foundation";
-import { StudentPublicInfoPage } from "./student-entry";
 
 function StudentAppRoute() {
   return (
