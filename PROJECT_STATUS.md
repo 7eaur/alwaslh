@@ -21,13 +21,14 @@ Read in this order:
 3. `docs/architecture/ADMIN_BACKEND_ARCHITECTURE_REVIEW_2026-09-14.md`;
 4. `docs/workstreams/ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md`;
 5. `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`;
-6. `docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`;
-7. `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`;
-8. `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`;
-9. `docs/architecture/ADMIN_BACKEND_BASELINE_2026-09-14.md`;
-10. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`;
-11. `docs/product/DESIGN_SYSTEM_SPEC.md`;
-12. `.agents/skills/alwaslh-product-engineering/SKILL.md`.
+6. `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md` — current backend-composition discovery decision;
+7. `docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`;
+8. `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`;
+9. `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`;
+10. `docs/architecture/ADMIN_BACKEND_BASELINE_2026-09-14.md`;
+11. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`;
+12. `docs/product/DESIGN_SYSTEM_SPEC.md`;
+13. `.agents/skills/alwaslh-product-engineering/SKILL.md`.
 
 Older platform-wide architecture documents are historical rationale only and are superseded for execution by the scoped AB workstream.
 
@@ -39,7 +40,7 @@ Normal handoff states: `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, `COMPLETE`
 
 ## Branch reconciliation
 
-Latest verified `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, advanced through Student V2 merge #58. Path-level reconciliation found no overlapping Admin/API/migrations/scoped shared implementation changes affecting AB-01.3. Re-compare live `main` before every structural phase boundary and before PR readiness.
+Latest verified `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, advanced through Student V2 merge #58. Path-level reconciliation of that delta found Student frontend/workflow and root documentation changes only; no overlapping `apps/api`, `apps/admin-web`, migrations or scoped shared implementation needs import for AB-01.4.
 
 ## Permanent architecture/product rules
 
@@ -89,27 +90,17 @@ Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSession
 
 Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
-Implemented only the proven duplicated loading/error/retry presentation shell:
+Implemented only the proven duplicated loading/error/retry presentation shell; closure evidence remains Architecture Guard `34804704619`, Frontend Preparation `34804704759`, Admin AI `34805721218`, Combined `34805721217`, and Stage13G `34805721226` — all successful as documented.
 
-- `shared/ui/AdminProductState.tsx`;
-- `shared/ui/admin-product-state.css`;
-- Overview + Operations consume it;
-- local duplicate state components and legacy Operations CSS ownership removed;
-- feature state machines, copy, server truth, session behavior and recovery remain feature-owned;
-- no unsupported mega-abstraction for empty/permission/conflict/success states.
+### AB-01.4 Backend app composition foundation — DISCOVERY COMPLETE / IMPLEMENTATION NEXT
 
-Closure evidence:
+Discovery is recorded in `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
-- Architecture Guard `34804704619` — SUCCESS on source head;
-- Frontend Preparation `34804704759` — SUCCESS on source head;
-- compare from `cfa2016e...` to verification head `06127e90a859917ee4d62e33b85f6a8eae0fa769` showed documentation-only changes;
-- Admin AI `34805721218` — SUCCESS;
-- Combined Integration `34805721217` — SUCCESS including real Admin Chromium;
-- Stage13G `34805721226` — SUCCESS including Admin/API quality, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+`apps/api/src/app.ts` currently owns Fastify construction, global CORS/preflight, infrastructure adapters, broad service/composite construction, all route registration, health/readiness, public error/not-found handling and database-close lifecycle.
 
-### AB-01.4 Backend app composition foundation — NEXT
+The first extraction is deliberately narrow and proven: move only the existing CORS/preflight hook into `apps/api/src/app/plugins/cors.ts` as `registerCorsPolicy(app, config)`, invoked at the same point before business routes and preserving direct `app.addHook()` scope. Do not combine health/readiness/errors/DB lifecycle/service graph/routes in this increment.
 
-The next coherent increment is **discovery before mutation**: inspect `apps/api/src/app.ts`, direct config/plugin/composition collaborators and construction/registration order; classify app-level versus module-owned responsibilities; identify the smallest real extraction seam. Do not mechanically create folders or introduce DI/repository ceremony.
+Parity authority: `apps/api/tests/app.test.ts`; required post-implementation gates include Architecture Guard, API lint/typecheck/unit/build and current real browser/integration gates because CORS is global browser transport policy.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -135,4 +126,4 @@ No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: AB-01.4 discovery of the smallest real `apps/api/src/app.ts` composition extraction seam. Do not begin a broad refactor before that evidence is recorded.
+Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: implement only the documented AB-01.4 CORS/preflight extraction, then verify exact-head gates before selecting another backend composition seam.
