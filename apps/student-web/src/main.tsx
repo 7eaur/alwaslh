@@ -11,6 +11,8 @@ import "./student-learning-v2.css";
 import "./student-reader-v2.css";
 import "./foundation.css";
 import "./assessment-integration.css";
+import "./assessment.css";
+import "./student-practice-v2.css";
 import "./student-entry.css";
 import "./student-entry-v2.css";
 import "./student-session.css";
