@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { currentProfile, parseBody } from "../auth/http.js";
+import { parseBody } from "../app/http/request-validation.js";
+import { currentProfile } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
