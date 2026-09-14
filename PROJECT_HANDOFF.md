@@ -43,7 +43,7 @@ Priority: **Clarity → Ease of use → Flow → Visual comfort → Consistency 
 - AB-01.1 shared Admin API transport/error boundary — DONE
 - AB-01.2 Auth/session ownership + SessionProvider — DONE
 - AB-01.3 minimum proven shared product-state primitive — DONE
-- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS DONE / PUBLIC-ERROR SEAM IMPLEMENTED, WAITING FOR CI**
+- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS DONE / PUBLIC-ERROR DONE**
 - AB-01.5 justified common backend technical foundations — PENDING
 - AB-01.6 foundation gate — PENDING
 
@@ -53,48 +53,17 @@ First seam CORS/preflight: source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55
 
 Second seam health/readiness: source HEAD `a302871b3486ae95810cea40dccca68363a29055`; owner `apps/api/src/app/http/health.ts`; Architecture Guard `34811642661`, source-tree-equivalent Admin AI `34811809959`, Combined `34811809962`, Stage13G `34811810021` — SUCCESS.
 
-## Third AB-01.4 seam — IMPLEMENTED / NOT YET CLOSED
-
-Source implementation HEAD: `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
-
-Current owner after extraction:
-
-- `apps/api/src/app/http/public-errors.ts`;
-- `registerPublicErrorHandlers(app)` owns the global unknown-route and global public-error handlers.
-
-`apps/api/src/app.ts` now only composes that owner after `registerHealthRoutes(app, database)` and before database `onClose`. Direct `toPublicError` ownership/import no longer lives in `app.ts`.
-
-Behavior intentionally unchanged:
-
-- unknown route → 404 + `{ error: { code: "NOT_FOUND", message: "المسار غير موجود" } }`;
-- thrown errors still use existing `toPublicError(error)` authority;
-- only mapped 5xx errors log `request.log.error({ err: error }, "request failed")`;
-- mapped status/body unchanged.
-
-Scope intentionally untouched:
-
-- database `onClose` lifecycle;
-- Fastify construction/options;
-- service graph/business route registry;
-- migrations/schema;
-- Student frontend.
-
-Verification state:
-
-- Architecture Guard `34816433721` — SUCCESS on source HEAD;
-- Admin AI `34816433699` was cancelled after later documentation commits superseded the source head and therefore is not closure evidence;
-- Combined `34816433773` and Stage13G `34816433715` were still running/pending during Worker A handoff;
-- documentation-only commits after the source implementation preserve the same affected source tree, so source-tree-equivalent later runs may be used if they fully cover required gates.
+Third seam public error/not-found: source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`; owner `apps/api/src/app/http/public-errors.ts`; `registerPublicErrorHandlers(app)` owns both global handlers. Closure evidence: Architecture Guard `34816433721` SUCCESS; compare through `068ee06cf7fec442b95ddada2667d8aac5d1c2a2` shows documentation-only changes; source-tree-equivalent Admin AI `34816613371`, Combined `34816613431`, Stage13G `34816613493` — SUCCESS. Combined includes clean PostgreSQL, DB contract, backend authority/auth-security regressions and real Admin Chromium; Stage13G includes API/Admin quality, clean PostgreSQL, full relevant integrations/auth regression and real API + PostgreSQL + Chromium.
 
 ## Exact next engineering task
 
-Do **not** start another seam yet.
+Do **discovery only** for the next smallest bounded responsibility still owned by `apps/api/src/app.ts`.
 
-1. inspect current live branch HEAD and source/source-tree-equivalent workflow runs;
-2. require Architecture Guard + API lint/typecheck/unit/build + relevant auth/security/integration + clean PostgreSQL + Combined Chromium + Stage13G real API/PostgreSQL/Chromium;
-3. if green, mark the public-error seam DONE;
-4. only then perform discovery for the next smallest AB-01.4 responsibility;
-5. if any gate fails, fix only its root cause before advancing.
+1. inspect current live `app.ts`, its existing tests/contracts and current composition order;
+2. choose one smallest real responsibility with a clear target owner;
+3. document dependency/order constraints, non-goals, switch/deletion condition and required gates;
+4. do not implement that newly selected seam in the same discovery increment;
+5. keep database lifecycle, service graph and broad route movement untouched unless discovery evidence specifically selects one of them as the next bounded seam.
 
 ## Remaining roadmap
 
