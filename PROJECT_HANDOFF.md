@@ -43,7 +43,7 @@ Priority: **Clarity → Ease of use → Flow → Visual comfort → Consistency 
 - AB-01.1 shared Admin API transport/error boundary — DONE
 - AB-01.2 Auth/session ownership + SessionProvider — DONE
 - AB-01.3 minimum proven shared product-state primitive — DONE
-- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS DONE / PUBLIC-ERROR SEAM SELECTED**
+- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS DONE / PUBLIC-ERROR SEAM IMPLEMENTED, WAITING FOR CI**
 - AB-01.5 justified common backend technical foundations — PENDING
 - AB-01.6 foundation gate — PENDING
 
@@ -53,39 +53,48 @@ First seam CORS/preflight: source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55
 
 Second seam health/readiness: source HEAD `a302871b3486ae95810cea40dccca68363a29055`; owner `apps/api/src/app/http/health.ts`; Architecture Guard `34811642661`, source-tree-equivalent Admin AI `34811809959`, Combined `34811809962`, Stage13G `34811810021` — SUCCESS.
 
-## Third AB-01.4 seam — SELECTED, NOT IMPLEMENTED
+## Third AB-01.4 seam — IMPLEMENTED / NOT YET CLOSED
 
-Current inline ownership in `apps/api/src/app.ts`:
+Source implementation HEAD: `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
 
-- global unknown-route handler returns `{ error: { code: "NOT_FOUND", message: "المسار غير موجود" } }` with 404;
-- global error handler maps through existing `toPublicError(error)`, logs errors only when mapped status >= 500 using `request.log.error({ err: error }, "request failed")`, then sends the mapped status/body.
+Current owner after extraction:
 
-Selected target:
+- `apps/api/src/app/http/public-errors.ts`;
+- `registerPublicErrorHandlers(app)` owns the global unknown-route and global public-error handlers.
 
-- file: `apps/api/src/app/http/public-errors.ts`;
-- function: `registerPublicErrorHandlers(app)`.
+`apps/api/src/app.ts` now only composes that owner after `registerHealthRoutes(app, database)` and before database `onClose`. Direct `toPublicError` ownership/import no longer lives in `app.ts`.
 
-Implementation constraints:
+Behavior intentionally unchanged:
 
-- keep `toPublicError` where it is; import/use it, do not redesign it;
-- preserve exact 404 envelope/message/status;
-- preserve mapped statuses/bodies and exact 5xx logging policy/message;
-- call after all business routes and `registerHealthRoutes(...)`, matching current relative order;
-- do not include `onClose`, database lifecycle, Fastify construction, service graph, route registry, migrations/schema or Student frontend.
+- unknown route → 404 + `{ error: { code: "NOT_FOUND", message: "المسار غير موجود" } }`;
+- thrown errors still use existing `toPublicError(error)` authority;
+- only mapped 5xx errors log `request.log.error({ err: error }, "request failed")`;
+- mapped status/body unchanged.
 
-Parity evidence:
+Scope intentionally untouched:
 
-- `apps/api/tests/app.test.ts`: unknown route public error envelope test;
-- broader auth/security/integration suites cover global error behavior;
-- discovery starting HEAD `e592535b082c9284ecf88f19e60cb70821e8aa16` had Admin AI `34813851669`, Combined `34813851671`, Stage13G `34813851684` — SUCCESS.
+- database `onClose` lifecycle;
+- Fastify construction/options;
+- service graph/business route registry;
+- migrations/schema;
+- Student frontend.
 
-Closure condition:
+Verification state:
 
-Both inline handlers are removed from `app.ts`, one `registerPublicErrorHandlers(app)` remains at the same composition point, and Architecture Guard + API quality + auth/security/integration + clean PostgreSQL + Combined Chromium + Stage13G real API/PostgreSQL/Chromium are green.
+- Architecture Guard `34816433721` — SUCCESS on source HEAD;
+- Admin AI `34816433699` was cancelled after later documentation commits superseded the source head and therefore is not closure evidence;
+- Combined `34816433773` and Stage13G `34816433715` were still running/pending during Worker A handoff;
+- documentation-only commits after the source implementation preserve the same affected source tree, so source-tree-equivalent later runs may be used if they fully cover required gates.
 
 ## Exact next engineering task
 
-Implement **only** the selected public-error/not-found seam. Do not combine any other composition concern. After implementation, verify the required gates before marking the seam DONE.
+Do **not** start another seam yet.
+
+1. inspect current live branch HEAD and source/source-tree-equivalent workflow runs;
+2. require Architecture Guard + API lint/typecheck/unit/build + relevant auth/security/integration + clean PostgreSQL + Combined Chromium + Stage13G real API/PostgreSQL/Chromium;
+3. if green, mark the public-error seam DONE;
+4. only then perform discovery for the next smallest AB-01.4 responsibility;
+5. if any gate fails, fix only its root cause before advancing.
 
 ## Remaining roadmap
 
