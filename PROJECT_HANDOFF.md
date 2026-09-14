@@ -38,42 +38,39 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
   - AB-03.2 Curriculum + Content + OCR — ACTIVE
-  - current increment: AB-03.2.1 Curriculum frontend API ownership — PARTIAL / WAITING_FOR_CI
+  - current increment: AB-03.2.1 Curriculum frontend API ownership cleanup — IMPLEMENTED / WAITING_FOR_CI
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker A sequence 45 established the Curriculum feature owner without changing behavior:
+Worker B sequence 46 completed only the remaining Curriculum compatibility cleanup:
 
-- new owner: `features/curriculum/api/admin-curriculum-api.ts`;
-- public boundary: `features/curriculum/public/index.ts`;
-- `CurriculumWorkspace.tsx` now consumes Curriculum through the public boundary and generic API errors/session handling from `shared/api/client`;
-- root `admin-api.ts` no longer implements Curriculum; it temporarily re-exports the feature contract so the not-yet-migrated Content ingestion consumer remains compatible;
-- backend/API/PostgreSQL/security/Student frontend were untouched.
+- `ContentIngestionWorkspace.tsx` now imports `AdminCurriculumSnapshot` and `fetchAdminCurriculum` from `features/curriculum/public`;
+- it imports `ApiRequestError` and `isMissingSessionError` directly from `shared/api/client`;
+- root `admin-api.ts` no longer re-exports Curriculum symbols and is no longer a Curriculum compatibility owner;
+- root `content-ingestion-api.ts` transport was intentionally not moved in the same increment;
+- endpoints, payloads, auth/session semantics, UI behavior, backend, PostgreSQL, security and Student frontend were untouched.
 
-Source implementation checkpoint: `ee58ffe125da9e550b97965976f47240a7f35d68`.
+Final source implementation checkpoint: `af4a131b1b039883a318ebb41b7ec5e5146f126d`.
+
+Architecture Guard `34886697714` passed on the exact source HEAD. Frontend Preparation `34886697732`, Admin AI `34886697663`, Combined Integration `34886697673`, and Stage13G `34886697753` had not all settled green at the last source-head observation, so the increment remains `WAITING_FOR_CI`.
 
 ## Exact continuation
 
-Do not open another slice. First inspect the source-checkpoint gates. If green/source-tree-equivalent, continue only the remaining AB-03.2.1 compatibility cleanup:
+Do not open another slice yet.
 
-1. migrate `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` Curriculum imports (`AdminCurriculumSnapshot`, `fetchAdminCurriculum`) to `features/curriculum/public`;
-2. keep `ApiRequestError` and `isMissingSessionError` on canonical `shared/api/client` rather than root `admin-api.ts`;
-3. remove the temporary Curriculum re-exports from root `admin-api.ts` once no legitimate consumer requires them;
-4. do NOT migrate root `content-ingestion-api.ts` transport in the same increment;
-5. preserve endpoints/payload/session/UI behavior;
-6. verify Architecture Guard, Admin quality/build, relevant Curriculum/API/PostgreSQL integrations, Combined real Chromium and Stage13G real API + PostgreSQL + Chromium;
-7. use `WAITING_FOR_CI` if those gates are still running.
-
-## Verification state
-
-Fresh source-checkpoint workflows were started on `ee58ffe...`; at the last observation they were still pending/running, including Frontend Preparation `34884252963` and Admin AI `34884253074`. Do not claim AB-03.2.1 DONE before the required green evidence exists.
+1. verify the source checkpoint `af4a131...` or a documentation-only source-tree-equivalent descendant;
+2. require green Architecture Guard/Admin quality plus relevant API/PostgreSQL/integration gates, Combined real Admin Chromium, and Stage13G real API + PostgreSQL + Chromium;
+3. if those are all green, close AB-03.2.1 as DONE;
+4. only then perform fresh AB-03.2 discovery and choose one smallest Content/OCR ownership correction;
+5. do not automatically assume root `content-ingestion-api.ts` must move—inspect its consumers and ownership first;
+6. preserve backend/API/PostgreSQL authority and do not touch Student frontend structure.
 
 ## Main reconciliation need
 
-`NOT REQUIRED NOW`. Live `main` remained `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; no fresh overlapping scoped implementation change was observed.
+`NOT REQUIRED NOW`. Live `main` remained `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; no fresh overlapping scoped implementation change was observed at sequence 46 startup.
 
 ## Remaining roadmap
 
