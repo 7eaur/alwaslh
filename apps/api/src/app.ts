@@ -1,4 +1,4 @@
-import Fastify, { type FastifyInstance } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { registerAccessRoutes } from "./access/http.js";
 import { AccessCodeImportService } from "./access/import-service.js";
 import { AccessService } from "./access/service.js";
@@ -14,6 +14,7 @@ import { AdminAiAuthoringService } from "./ai/admin-authoring.js";
 import { registerAdminAiAuthoringRoutes } from "./ai/admin-authoring-http.js";
 import { AdminAiOperationsService } from "./ai/admin-operations.js";
 import { registerAdminAiOperationsRoutes } from "./ai/admin-operations-http.js";
+import { createFastifyInstance } from "./app/create-fastify-instance.js";
 import { registerHealthRoutes } from "./app/http/health.js";
 import { registerPublicErrorHandlers } from "./app/http/public-errors.js";
 import { registerCorsPolicy } from "./app/plugins/cors.js";
@@ -60,13 +61,7 @@ export interface AppDependencies {
 }
 
 export function buildApp({ config, database }: AppDependencies): FastifyInstance {
-  const app = Fastify({
-    logger: config.LOG_LEVEL === "silent" ? false : { level: config.LOG_LEVEL },
-    disableRequestLogging: false,
-    trustProxy: true,
-    bodyLimit: 1_048_576,
-    requestTimeout: 15_000,
-  });
+  const app = createFastifyInstance(config);
   const auth = new AuthService(database, config.SESSION_TTL_HOURS);
   const access = new AccessService(database);
   const accessImport = new AccessCodeImportService(database);
