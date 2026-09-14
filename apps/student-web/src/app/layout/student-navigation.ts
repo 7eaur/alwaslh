@@ -1,4 +1,4 @@
-import type { StudentIconName } from "../../student-icons";
+import type { StudentIconName } from "../../shared/icons/StudentIcon";
 
 export type StudentDestination =
   | "home"
