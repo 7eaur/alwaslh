@@ -402,7 +402,7 @@ export function StudentEntryExperience({ online, mode, notice, onMode, onAuthent
       : "استعد الوصول إلى حسابك بخطوات واضحة.";
 
   return (
-    <main className="student-entry-page">
+    <main className={`student-entry-page student-entry-page--${mode}`}>
       <div className="student-entry-shell">
         <header className="student-entry-topbar">
           <StudentBrandLockup />
