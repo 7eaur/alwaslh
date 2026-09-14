@@ -33,7 +33,7 @@ OUT only: structural/design implementation of `apps/student-web` frontend. Stude
 - never force-reset/force-push shared history;
 - never mix separate Student frontend implementation into this workstream.
 
-Latest reconciled `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62` after Student V2 merge #58. No overlapping implementation change affected AB-01.3.
+Latest reconciled `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62` after Student V2 merge #58. Its delta from the prior reconciled main is Student frontend/workflow + root docs only; no overlapping API/Admin/migration/scoped-shared implementation requires import for AB-01.4.
 
 ## 4. Alternating execution
 
@@ -75,48 +75,31 @@ If required CI is still running, use `WAITING_FOR_CI`.
 - AB-01 — ACTIVE
 - AB-01.1 shared Admin API transport/error boundary — DONE
 - AB-01.2 Auth/session ownership + SessionProvider — DONE
-- **AB-01.3 minimum proven shared product-state primitive — DONE**
-- **AB-01.4 backend app composition foundation — NEXT**
+- AB-01.3 minimum proven shared product-state primitive — DONE
+- **AB-01.4 backend app composition foundation — DISCOVERY COMPLETE / FIRST IMPLEMENTATION NEXT**
 - AB-01.5 justified common backend technical foundations — PENDING
 - AB-01.6 foundation gate — PENDING
 
-### AB-01.3 final closure
+Canonical AB-01.4 discovery:
 
-Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
+`docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`
 
-Implemented:
-- `apps/admin-web/src/shared/ui/AdminProductState.tsx` — shared Admin-only title/body/optional-retry shell;
-- `apps/admin-web/src/shared/ui/admin-product-state.css` — sole styling owner;
-- Overview and Operations adopted it;
-- duplicate local state components and legacy Operations state CSS removed;
-- page-specific state machines, copy, API/session/retry semantics remain feature-owned;
-- no unsupported generic empty/permission/conflict/success abstraction.
+The discovery mapped `apps/api/src/app.ts` as owner of Fastify construction, CORS/preflight policy, adapters, service graph, cross-service composites, route registration, health/readiness, public error/not-found handling and database close lifecycle. It recorded behavior-sensitive service dependencies and explicitly rejected a giant service container, broad route move, empty folder scaffolding and combined DB/error migration.
 
-Closure evidence:
-- Architecture Guard `34804704619` — SUCCESS on source head;
-- Frontend Preparation `34804704759` — SUCCESS on source head;
-- intervening commits to verification head `06127e90a859917ee4d62e33b85f6a8eae0fa769` were proven documentation-only;
-- Admin AI `34805721218` — SUCCESS;
-- Combined Integration `34805721217` — SUCCESS including real Admin Chromium;
-- Stage13G `34805721226` — SUCCESS including Admin/API quality, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+## 9. Exact next engineering task — AB-01.4 FIRST IMPLEMENTATION
 
-No source fix was required during Worker B verification.
+Implement **only the proven CORS/preflight extraction**:
 
-## 9. Exact next engineering task — AB-01.4 DISCOVERY ONLY
+1. create `apps/api/src/app/plugins/cors.ts`;
+2. move the existing allowed-origin/CORS/preflight `onRequest` behavior unchanged into `registerCorsPolicy(app, config)`;
+3. continue using direct `app.addHook()` semantics — do not switch to an encapsulated `app.register()` plugin in this increment;
+4. invoke `registerCorsPolicy(app, config)` in `buildApp()` at the same position: after Fastify construction, before business route registration;
+5. remove only the now-unused inline `allowedOrigins`/`AppError` ownership from `app.ts` if no longer needed there;
+6. do **not** move health/readiness, public errors, DB lifecycle, service construction or route registration in this increment;
+7. preserve `apps/api/tests/app.test.ts` CORS behavior exactly;
+8. verify Architecture Guard + API lint/typecheck/unit/build + current Combined/real-browser and Stage13G/equivalent exact-head gates before marking this extraction done.
 
-The following worker must not begin with a broad refactor. The smallest coherent increment is to **understand and record the real backend composition seam before mutation**:
-
-1. fetch live branch/main HEADs and current CI/state;
-2. inspect `apps/api/src/app.ts` completely;
-3. inspect its direct app/config/plugin/service/route construction collaborators as needed;
-4. map construction and registration order, including behavior-sensitive dependencies;
-5. separate technical app-level responsibilities from module-owned business composition;
-6. identify the smallest useful extraction seam that reduces `app.ts` responsibility without changing business rules;
-7. identify tests/gates that prove parity and any Student-facing contract impact;
-8. document the discovery and exact proposed first extraction;
-9. only if that discovery is sufficiently bounded and the one-increment rule still permits it, implementation may be the next worker/run — do not combine discovery with a broad multi-seam rewrite.
-
-Constraints: keep Fastify modular monolith; no DI framework; no generic repository/interface ceremony; no schema migration for folder structure; create only files/folders with real ownership.
+CORS is global browser transport policy, so Admin and Student HTTP semantics must remain unchanged. No Student frontend restructuring is authorized.
 
 ## 10. Remaining roadmap
 
