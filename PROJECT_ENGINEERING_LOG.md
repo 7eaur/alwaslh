@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-01.5 request-validation ownership implementation complete; exact-head integration/browser verification still running.**
+Last consolidated: **2026-09-14 — AB-01 shared foundations closed exact-head green; AB-02 shell/router discovery is next.**
 
 ## Durable invariants
 
@@ -31,7 +31,7 @@ Keep one Fastify modular monolith over PostgreSQL; Admin app composition stays t
 
 Ownership/boundary map, dependency inventory, Architecture Guard, measured baseline and readiness gate are closed.
 
-## AB-01 ledger
+## AB-01 — DONE / EXACT-HEAD VERIFIED
 
 ### AB-01.1 — DONE
 
@@ -59,54 +59,47 @@ Fifth seam source+test implementation HEAD: `101f61a9c25e3de116d0074a3ef7e2f760e
 
 Closure evidence: Architecture Guard `34825750566`, Admin AI `34826063345`, Combined `34826063326`, Stage13G `34826063330` — SUCCESS. Broad service construction/route registration remains for AB-03/AB-04 rather than a giant container/registry abstraction.
 
-### AB-01.5 — IMPLEMENTED / WAITING FOR EXACT-HEAD CI
+### AB-01.5 — DONE
 
 Canonical discovery:
 
 `docs/architecture/ADMIN_BACKEND_AB01_5_TECHNICAL_OWNERSHIP_DISCOVERY_2026-09-14.md`
 
-#### Ownership correction
-
-Generic Zod request validation is now owned by:
+Generic Zod request validation is owned by:
 
 `apps/api/src/shared/http/request-validation.ts`
 
-The first implementation placed it under `app/http`, but Architecture Guard correctly rejected module→app composition imports. The correction moved the helper to generic shared HTTP infrastructure; no guard exception was added.
+The first placement under `app/http` was rejected by Architecture Guard and corrected without adding an exception. `parseBody` no longer belongs to private `auth/http.ts`; Auth retains `currentProfile`, `sessionToken` and auth/session/cookie/role behavior. Invalid input semantics remain `safeParse` → `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)`.
 
-`parseBody` no longer belongs to private `auth/http.ts`. Auth retains `currentProfile`, `sessionToken` and all authentication/session/cookie/role behavior. Invalid input semantics remain exactly `safeParse` → `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)`.
+The initial caller audit missed eight remaining imports; exact-head TypeScript CI exposed them, and only those compiler-proven imports were migrated. No business schema, security behavior, migration, PostgreSQL authority or Student frontend implementation changed.
 
-#### CI-driven caller audit correction
+Complete source implementation checkpoint: `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`.
 
-The initial caller audit was incomplete. Exact-head Stage13E Admin AI run `34833103100` on `cba5de4bd37c9382efff91820866e7c3c2937915` failed API typecheck and proved eight remaining modules still imported `parseBody` from Auth. Worker C migrated only those compiler-proven imports:
+The five commits from that checkpoint to verification HEAD `16c7ac34078d75b990422374954f30631ebbee45` are documentation-only.
 
-- curriculum HTTP;
-- lesson-authoring export HTTP;
-- notifications HTTP;
-- offline HTTP;
-- Question Bank regeneration HTTP;
-- Quiz version export HTTP;
-- Quiz specialized export HTTP;
-- Student assessment HTTP.
-
-No business schema, auth/session behavior, migration, PostgreSQL authority or Student frontend implementation changed.
-
-Source implementation checkpoint: `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`.
-
-Current verification:
+Closure evidence:
 
 - Architecture Guard `34834714337` — SUCCESS;
-- Stage13G `34834714355` — running; Admin lint/typecheck/unit green and API lint/typecheck/unit green, proving the prior TypeScript ownership regression is fixed;
-- Admin AI `34834714335` — running;
-- Combined/real-browser `34834714325` — running.
+- Stage13E Admin AI `34834945644` — SUCCESS;
+- Stage13E Combined Integration `34834945655` — SUCCESS;
+- Stage13G `34834945649` — SUCCESS.
 
-AB-01.5 remains open until clean PostgreSQL, relevant integration/security/auth and real Chromium evidence close green on the source checkpoint.
+Stage13G explicitly proves API/Admin lint/typecheck/unit/build, clean PostgreSQL migrations, database contract, Accounts/Access, Notifications/Operations, Reports/Settings/Security/Audit, AI authoring, Access/Auth regression and real API + PostgreSQL + Chromium.
 
-### AB-01.6 — PENDING
+### AB-01.6 — PASS / DONE
 
-Foundation exact-head closure gate. Do not start it until AB-01.5 is fully green.
+Foundation closure gate passed. Single-owner technical foundations are established; Architecture Guard is green; compatibility debt is bounded to later phases; Admin/API/PostgreSQL/integration/security/auth/Chromium evidence is green; docs match the code; Student frontend implementation remained untouched.
+
+No further AB-01 foundation extraction is authorized.
+
+## AB-02 — ACTIVE
+
+Next responsibility: thin Admin shell/router/providers/layouts and substantial lazy route boundaries.
+
+Begin with evidence only: current `App.tsx`, shell/navigation/session ownership, route table, feature public/routes boundaries, route focus/history/deep-link behavior, current tests and bundle composition. Define one smallest migration seam before changing code. Preserve auth/session outcomes and defer business workflow redesign to AB-03.
 
 ## Exact continuation
 
-Inspect exact-head runs `34834714355`, `34834714335`, and `34834714325` for source checkpoint `d0352917...`. Fix only failures attributable to the request-validation ownership batch. If all required gates close green, mark AB-01.5 DONE and begin AB-01.6 Foundation Closure Gate. Do not manufacture any further shared-infrastructure extraction.
+Perform AB-02 discovery, document the current root composition and target first seam, then implement at most one coherent shell/router increment with Architecture Guard + Admin quality + relevant real Chromium parity.
 
 Remaining roadmap: AB-02 thin Admin shell/router/providers/lazy routes → AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final full verification/reconciliation.
