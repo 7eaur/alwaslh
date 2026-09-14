@@ -18,6 +18,7 @@ const OfflineAssetQuerySchema = z.object({
 });
 const OfflineDeltaQuerySchema = z.object({
   after: z.string().regex(/^\d+$/).default("0"),
+  through: z.string().regex(/^\d+$/).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
@@ -43,7 +44,13 @@ export function registerStudentOfflineRoutes(
     const profile = await currentProfile(request, config, auth);
     if (profile.role !== "student") throw new AppError("FORBIDDEN", "هذه العملية للطالب فقط", 403);
     const query = parseBody(OfflineDeltaQuerySchema, request.query);
-    const delta = await sync.delta(profile.id, sessionToken(request, config), query.after, query.limit);
+    const delta = await sync.delta(
+      profile.id,
+      sessionToken(request, config),
+      query.after,
+      query.limit,
+      query.through,
+    );
     reply.header("Cache-Control", "private, no-store");
     reply.header("Pragma", "no-cache");
     return { delta };
