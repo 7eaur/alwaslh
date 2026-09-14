@@ -16,6 +16,7 @@ import "./student-library-account.css";
 import "./student-account-v2.css";
 import "./student-future.css";
 import "./student-library-overview.css";
+import "./student-library-v2.css";
 import "./student-affordance.css";
 import "./student-motion.css";
 import { registerStudentServiceWorker } from "./pwa";
