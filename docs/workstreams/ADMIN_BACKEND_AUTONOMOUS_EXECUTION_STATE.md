@@ -1,16 +1,29 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `WAITING_FOR_CI`
-Sequence: `36`
+Status: `RUNNING`
+Sequence: `37`
 Last worker: `A`
-Active worker: `NONE`
-Start time: `2026-09-14T19:02:49+03:00`
-End time: `2026-09-14T19:10:00+03:00`
-Starting HEAD: `9363492bd60751bce6bc170bf2b742023815311d`
-Ending handoff parent HEAD: `3a8a8fe9cc0e47da80c8d400e4872704938d8f26`
+Active worker: `B`
+Start time: `2026-09-14T19:22:50+03:00`
+End time: `—`
+Starting HEAD: `8f3721da654d633e7db1c5f2f02bfcef22fd9828`
+Ending handoff parent HEAD: `—`
 Current live `main` observed: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`
-Completed increment: `AB-03.1.2 — Operations frontend API ownership implemented; closure pending required CI`
+Active increment: `AB-03.1.2 — verify/close Operations frontend API ownership or fix one root CI regression only`
 Source implementation checkpoint: `75cab6ca1067f5866a259ad079279757218e805f`
+
+## Worker B sequence 37 — RUNNING
+
+### Intended smallest step
+
+Close **AB-03.1.2 only**. Inspect exact implementation-head and newest source-tree-equivalent CI, distinguish documentation-concurrency cancellation/noise from genuine regression, require Architecture Guard + Admin quality + Combined + Stage13G real API/PostgreSQL/Chromium evidence, and fix only one root cause inside this ownership seam if a genuine failure exists. Do not start another architecture seam or Curriculum/Content/OCR in this run.
+
+### Startup observations
+
+- Observed branch HEAD: `8f3721da654d633e7db1c5f2f02bfcef22fd9828`.
+- Observed live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+- Prior state was `WAITING_FOR_CI`, sequence 36, Active worker `NONE`; no worker collision was present at takeover.
+- Latest documentation-head workflows include failures and must be inspected before deciding whether AB-03.1.2 is green or requires a root fix.
 
 ## Worker A sequence 36 — WAITING_FOR_CI
 
