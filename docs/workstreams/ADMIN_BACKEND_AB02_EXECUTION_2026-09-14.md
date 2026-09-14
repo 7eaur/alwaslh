@@ -78,61 +78,65 @@ Closure evidence: Architecture Guard `34838037118`, Frontend Preparation `348380
 
 Comparison `732555cb… → 2c2fcb6c…` includes documentation files only, so equivalent-head green CI verifies the same implementation tree. No source correction was needed to close this seam.
 
-## Seam 3 — Substantial workflow route lazy boundaries — SELECTED / IMPLEMENTATION NEXT
+## Seam 3 — Substantial workflow route lazy boundaries — IMPLEMENTED / WAITING_FOR_CI
+
+### Source checkpoint
+
+`f60d3d0d163c9f31dead139cc36406396f795a7e`
 
 ### Discovery evidence
 
-Current `apps/admin-web/src/app/router/AdminRoutes.tsx` still statically imports every major workflow destination under `src/admin/*`: Overview, Curriculum, Content/Lesson Tools, Review workspaces, Questions, Quizzes, Students, Access Codes, Operations and AI Authoring. This means entering `/app` still places all of those workflow modules in the initial route graph even though the operator uses one destination at a time.
+Before this seam, `apps/admin-web/src/app/router/AdminRoutes.tsx` statically imported every major workflow destination under `src/admin/*`: Overview, Curriculum, Content/Lesson Tools, Review workspaces, Questions, Quizzes, Students, Access Codes, Operations and AI Authoring. Entering `/app` therefore placed all workflow modules in the initial route graph.
 
-The original AB-00 measured baseline was one `968.68 kB` minified / `193.92 kB` gzip main JavaScript chunk with Vite's >500 kB warning. The latest source-tree-equivalent Stage13G Admin build (`34841142975`, job `103966179619`) has improved independently to one `446.30 kB` / `117.48 kB` gzip JavaScript chunk, but it is still a single eager chunk and contains all major Admin workflow imports. The warning disappearing does **not** close the architecture requirement for substantial route lazy boundaries.
+The AB-00 baseline was one `968.68 kB / 193.92 kB gzip` JavaScript chunk with a Vite warning. The latest verified pre-seam Stage13G Admin build (`34841142975`, job `103966179619`) had improved independently to one `446.30 kB / 117.48 kB gzip` JavaScript chunk, but remained a single eager workflow graph.
 
-React is `18.3.1`, React Router DOM `7.9.5`, and Vite `7.1.3`; no dependency change is required.
+### Implemented ownership shape
 
-### Current owner
+`AdminRoutes.tsx` still owns the route table, but substantial workflow page modules are now explicit `React.lazy(() => import(...))` route boundaries. Existing named workflow exports are preserved and adapted only at each lazy import boundary.
 
-`apps/admin-web/src/app/router/AdminRoutes.tsx` owns both the route table and eager imports of all major workflow page components.
-
-### Target owner / implementation shape
-
-Keep route-table ownership in `AdminRoutes.tsx`, but convert substantial workflow page modules to `React.lazy(() => import(...))` route boundaries. Use one route-level `Suspense` fallback backed by the existing Admin `PageState kind="loading"` presentation primitive rather than inventing another loading component.
-
-Named exports may be adapted at the lazy import boundary with the smallest explicit mapping necessary; do not change the underlying workflow module exports merely to satisfy lazy loading.
+One route-level `Suspense` wraps the route table. Its loading fallback uses the already-shared `AdminProductState` primitive with Arabic loading copy, avoiding any new state component or dependency.
 
 ### Preserved contracts
 
 - all existing `/app/*` URLs and redirects;
-- `onSessionExpired` passed to every workflow exactly as today;
+- `onSessionExpired` passed to every workflow as before;
 - `ReviewArea`, `WorkspaceWithRelatedActions` and not-found route composition;
-- outer `router.tsx`, `RouteFocus`, deep-link behavior and focus restoration;
+- outer `router.tsx`, `RouteFocus`, deep-link behavior and focus ownership;
 - session restore/login/logout behavior;
-- workflow business logic, API calls, CSS and product copy;
+- workflow business logic, API calls, CSS and product copy outside the loading fallback;
 - transitional `src/admin/*` ownership until AB-03 vertical slices.
 
-### Explicit non-goals
+### Explicit non-changes
 
-- no feature-folder migration or new feature public/routes entry points in the same batch;
-- no navigation IA changes;
-- no auth/login presentation changes;
+- no feature-folder migration or new feature public/routes entry points;
+- no navigation IA/auth redesign;
 - no error-boundary redesign;
-- no bundler threshold changes/manualChunks tuning;
-- no tiny-component splitting;
+- no bundler warning-threshold or `manualChunks` tuning;
 - no API/PostgreSQL/migration/Student frontend changes.
 
-### Verification required before DONE
+### Verification at current handoff
 
-1. Architecture Guard.
-2. Admin lint + strict typecheck + unit tests + production build.
-3. Record resulting Vite chunk topology/sizes against the current `446.30 kB / 117.48 kB gzip` single-chunk evidence and the AB-00 baseline; improvement must come from actual dynamic route chunks, not threshold suppression.
-4. Verify representative direct deep links for lazy destinations and route redirects.
-5. Verify session-expiry behavior remains intact from a lazily loaded workflow.
-6. Combined Integration including clean PostgreSQL/backend/auth regressions and real Admin Chromium.
-7. Stage13G including real API + PostgreSQL + Chromium.
-8. Keyboard/focus behavior must remain valid across lazy route transitions; no blank/unannounced loading state.
+- Architecture Guard `34849322458` — SUCCESS on source checkpoint.
+- Frontend Preparation `34849322443` — SUCCESS on source checkpoint.
+- Admin AI `34849322533` — still running when documentation handoff began.
+- Combined Integration `34849322335` — still running when documentation handoff began.
+- Stage13G `34849322551` — still running when documentation handoff began.
+
+Because the required Admin/Combined/Stage13G evidence had not all completed, Seam 3 is intentionally not marked DONE. Documentation-only commits after the source checkpoint may supersede/cancel source-head workflows; a later green run can be accepted only when its Admin source tree is demonstrably equivalent.
+
+### Remaining closure requirements
+
+1. Admin lint + strict typecheck + unit tests + production build.
+2. Record actual resulting Vite dynamic chunk topology/sizes against pre-seam `446.30 kB / 117.48 kB gzip` single-chunk evidence and AB-00 baseline.
+3. Verify representative direct deep links, redirects, lazy workflow session expiry and accessible focus/loading behavior.
+4. Combined Integration with clean PostgreSQL/backend/auth regressions and real Admin Chromium.
+5. Stage13G with real API + PostgreSQL + Chromium.
+6. If any gate fails, fix its root cause within this seam; do not weaken checks or hide debt with bundler tuning.
 
 ### Deletion / closure condition
 
-Seam 3 closes only when substantial workflow imports are no longer eager from `AdminRoutes.tsx`, the production build emits real route/workflow dynamic chunks, direct/deep-link/session behavior remains green, and required exact-head/source-tree-equivalent gates are successful. No compatibility alias should be introduced.
+Seam 3 closes only when substantial workflow imports remain non-eager, the production build demonstrates real route/workflow dynamic chunks, direct/deep-link/session/focus behavior is green, and required exact-head/source-tree-equivalent gates are successful. No compatibility alias was introduced.
 
 ## Exact next step
 
-Implement **Seam 3 only**: substantial workflow route lazy boundaries plus one accessible route-level Suspense loading state. Do not combine it with feature ownership migration, navigation/auth changes or UI redesign. After implementation, run the listed verification and document measured chunk output before selecting another AB-02 seam.
+Verification/closure only for Seam 3. Inspect source-head or source-tree-equivalent gates, record measured chunk output and close only if all required evidence is green. Do not select another AB-02 seam before that closure.
