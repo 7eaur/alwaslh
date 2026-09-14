@@ -20,7 +20,7 @@ OUT only: structural/design implementation of `apps/student-web` frontend. Stude
 - branch: `rebuild/super-admin-foundation`;
 - PR #52: Draft, unmerged, never auto-merge;
 - never force-reset/force-push shared history;
-- latest reconciled `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; no observed scoped overlap with current AB-01 backend work.
+- live `main` observed during Worker C sequence 13: `258c855ace396a3f834199708c926411a3d65f79`.
 
 ## Alternating execution
 
@@ -43,7 +43,7 @@ Priority: **Clarity → Ease of use → Flow → Visual comfort → Consistency 
 - AB-01.1 shared Admin API transport/error boundary — DONE
 - AB-01.2 Auth/session ownership + SessionProvider — DONE
 - AB-01.3 minimum proven shared product-state primitive — DONE
-- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS DONE / PUBLIC-ERROR DONE**
+- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS DONE / PUBLIC-ERROR DONE / FASTIFY-CONSTRUCTION SELECTED**
 - AB-01.5 justified common backend technical foundations — PENDING
 - AB-01.6 foundation gate — PENDING
 
@@ -53,17 +53,33 @@ First seam CORS/preflight: source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55
 
 Second seam health/readiness: source HEAD `a302871b3486ae95810cea40dccca68363a29055`; owner `apps/api/src/app/http/health.ts`; Architecture Guard `34811642661`, source-tree-equivalent Admin AI `34811809959`, Combined `34811809962`, Stage13G `34811810021` — SUCCESS.
 
-Third seam public error/not-found: source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`; owner `apps/api/src/app/http/public-errors.ts`; `registerPublicErrorHandlers(app)` owns both global handlers. Closure evidence: Architecture Guard `34816433721` SUCCESS; compare through `068ee06cf7fec442b95ddada2667d8aac5d1c2a2` shows documentation-only changes; source-tree-equivalent Admin AI `34816613371`, Combined `34816613431`, Stage13G `34816613493` — SUCCESS. Combined includes clean PostgreSQL, DB contract, backend authority/auth-security regressions and real Admin Chromium; Stage13G includes API/Admin quality, clean PostgreSQL, full relevant integrations/auth regression and real API + PostgreSQL + Chromium.
+Third seam public error/not-found: source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`; owner `apps/api/src/app/http/public-errors.ts`; `registerPublicErrorHandlers(app)` owns both global handlers. Closure evidence: Architecture Guard `34816433721` SUCCESS; compare through `068ee06cf7fec442b95ddada2667d8aac5d1c2a2` shows documentation-only changes; source-tree-equivalent Admin AI `34816613371`, Combined `34816613431`, Stage13G `34816613493` — SUCCESS. Combined includes clean PostgreSQL, DB contract, backend authority/auth-security regressions and real Admin Chromium; Stage13G includes API/Admin quality, clean PostgreSQL, relevant integrations/auth regression and real API + PostgreSQL + Chromium.
+
+## Fourth AB-01.4 seam selected
+
+Worker C sequence 13 performed discovery only from starting branch HEAD `2722de7d1d4d09f2eae7e3f9dc35624255f392fa` and selected **Fastify instance construction/options** as the next smallest bounded owner.
+
+Target:
+
+- create `apps/api/src/app/create-fastify-instance.ts`;
+- export a narrow `createFastifyInstance(config: AppConfig): FastifyInstance`;
+- preserve exactly logger behavior, `disableRequestLogging: false`, `trustProxy: true`, `bodyLimit: 1_048_576`, `requestTimeout: 15_000`;
+- `buildApp()` remains the composition entry and keeps the same service/route/plugin/database order.
+
+Evidence: live `app.ts` owns the constructor/options; `apps/api/tests/app.test.ts` uses `buildApp({ config, database })` as the bootstrap contract and verifies representative server outcomes. There is no evidence authorizing option tuning, therefore extraction and tuning must not be combined.
+
+Explicitly do not move service graph, broad business routes, DB `onClose`, config parsing/defaults, migrations/schema or Student frontend. Do not introduce DI/service container ceremony.
 
 ## Exact next engineering task
 
-Do **discovery only** for the next smallest bounded responsibility still owned by `apps/api/src/app.ts`.
+Implement **only** the selected Fastify construction seam:
 
-1. inspect current live `app.ts`, its existing tests/contracts and current composition order;
-2. choose one smallest real responsibility with a clear target owner;
-3. document dependency/order constraints, non-goals, switch/deletion condition and required gates;
-4. do not implement that newly selected seam in the same discovery increment;
-5. keep database lifecycle, service graph and broad route movement untouched unless discovery evidence specifically selects one of them as the next bounded seam.
+1. re-check live branch/state and current `app.ts`;
+2. create `apps/api/src/app/create-fastify-instance.ts` with the exact existing Fastify options;
+3. make `app.ts` call it and remove only the direct Fastify value construction/option literals;
+4. leave every service, route registration and DB lifecycle statement in its current order;
+5. run Architecture Guard, API lint/typecheck/unit/build including `app.test.ts`, clean PostgreSQL, relevant integration/auth/security gates and real API/PostgreSQL/Chromium/combined verification;
+6. if gates are still running, hand off `WAITING_FOR_CI`; if green, close the fourth seam before discovering a fifth.
 
 ## Remaining roadmap
 
