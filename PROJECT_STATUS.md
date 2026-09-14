@@ -67,17 +67,13 @@ Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
 The Operations transport/types now belong to `apps/admin-web/src/features/operations/api/admin-operations-api.ts` and are exposed through the narrow `features/operations/public` boundary. All stale root-owner imports/tests were corrected without changing endpoint, payload, response, session, backend/API, PostgreSQL, security, route/style, or Student frontend behavior.
 
-The source checkpoint through verification head `302b86585d4e1eb122c5afe30503828e10c8d025` differs only in canonical documentation/state files, so the following evidence is source-tree-equivalent for the implementation:
+Closure evidence: Architecture Guard `34870253383`, Frontend Preparation `34870253413`, Admin AI Operations `34870253417`, Combined Integration `34870253434`, Stage13G Admin Operations `34870253431` — **SUCCESS**.
 
-- Architecture Guard `34870253383` — **SUCCESS**.
-- Frontend Preparation `34870253413` — **SUCCESS**.
-- Admin AI Operations `34870253417` — **SUCCESS**.
-- Combined Integration `34870253434` — **SUCCESS**, including real Admin Chromium and canonical AI Admin Chromium smoke.
-- Stage13G Admin Operations `34870253431` — **SUCCESS**, including Admin/API quality, clean PostgreSQL/contracts, operations/security/auth regressions, and real API + PostgreSQL + Chromium.
+**AB-03.1 discovery decision — COMPLETE.**
 
-No further ownership seam was started in the closure increment.
+Fresh repository inspection found one remaining justified ownership seam before slice closure: `apps/admin-web/src/admin/operations/operations-model.ts` plus its test still own Operations presentation/model policy outside `features/operations`, while Overview and Health consume that legacy owner. The feature currently owns only API/public transport. Backend HTTP/application/PostgreSQL/security authority is already coherent and no schema/API correction is justified by this discovery.
 
-**Exact next step:** a fresh **discovery-only** pass inside `AB-03.1 Overview + Operations`. Re-inspect operator jobs, PostgreSQL/API/security/audit contracts, current backend/frontend owners, and regression/browser evidence; choose exactly one smallest high-confidence end-to-end correction if evidence justifies one. Do not start Curriculum/Content/OCR until Overview + Operations is explicitly ready to advance.
+**Exact next step: AB-03.1.3 Operations presentation-model ownership.** Move `operations-model.ts` and its test under `features/operations/model`, expose only the required helpers/types through `features/operations/public`, and switch existing Overview/Operations consumers to that public boundary without UI copy, routes, API, DB, security, CSS, or Student frontend behavior changes. Verify Architecture Guard + Admin quality/unit/build + relevant Operations integration/Chromium gates before closing. Do not move the pages/styles in the same increment.
 
 ## Remaining roadmap
 
