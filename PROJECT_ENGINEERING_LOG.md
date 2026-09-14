@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-03.1.3 Operations presentation-model ownership implemented; awaiting full CI closure.**
+Last consolidated: **2026-09-14 — AB-03.1.3 Operations presentation-model ownership closed after root-cause import repair and green exact-source CI.**
 
 ## Durable invariants
 
@@ -17,7 +17,7 @@ Last consolidated: **2026-09-14 — AB-03.1.3 Operations presentation-model owne
 
 Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the serial handoff authority. Never auto-merge or rewrite shared history.
 
-Live main latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`. No overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed at Worker B sequence 40 startup.
+Live main latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`. No overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker C sequence 41.
 
 ## AB-00 — DONE
 
@@ -43,29 +43,27 @@ Source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43` moved governance/au
 
 Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`. Operations transport/types are feature-owned behind `features/operations/public`; stale root transport ownership was removed.
 
-### AB-03.1.3 — Operations presentation-model ownership — IMPLEMENTED / WAITING_FOR_CI
+### AB-03.1.3 — Operations presentation-model ownership — DONE / EXACT-SOURCE VERIFIED
 
-Source checkpoint: `25ce968ea90e67240e5e6bffd12b0d52cb37e8b1`.
+Initial moved-model checkpoint: `25ce968ea90e67240e5e6bffd12b0d52cb37e8b1`.
 
-Root ownership correction performed by Worker B sequence 40:
+Worker C sequence 41 inspected the exact-head CI rather than assuming closure and found Frontend Preparation `34874655918` had failed Admin typecheck because two Operations pages still referenced the deleted relative owner `./operations-model`:
 
-- created `apps/admin-web/src/features/operations/model/operations-model.ts` as the feature-owned presentation/model policy owner;
-- colocated `operations-model.test.ts` under the same feature model boundary;
-- `features/operations/public/index.ts` now exposes only the presentation helpers consumed by existing pages in addition to the existing transport contract;
-- `AdminOverviewPage.tsx` and `AdminOperationsHealthPage.tsx` now consume the model through `features/operations/public`;
-- removed the legacy `apps/admin-web/src/admin/operations/operations-model.ts` and colocated legacy test;
-- no page/style move, UI copy change, route change, API/transport change, PostgreSQL/schema/migration change, security/session behavior change, backend authority change or Student frontend mutation was made.
+- `AdminNotificationsPage.tsx`;
+- `AdminOperationsAuditPage.tsx`.
 
-Verification state at handoff:
+The smallest root fix updated only those two consumers to use the existing `features/operations/public` boundary. Final source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
-- Architecture Guard `34874655955` — **SUCCESS** on source checkpoint;
-- Frontend Preparation `34874655918` — pending/running;
-- Admin AI Operations `34874655925` — pending/running;
-- Combined Integration `34874655884` — pending/running;
-- Stage13G Admin Operations `34874655953` — pending/running.
+No page/style migration, copy/route behavior change, API/transport change, PostgreSQL/schema/migration change, security/session change, backend authority change or Student frontend mutation was introduced.
 
-Because the required integration/PostgreSQL/security/Chromium evidence is incomplete, AB-03.1.3 is not yet closed.
+Verification on the final source checkpoint:
+
+- Architecture Guard `34876404251` — **SUCCESS**;
+- Frontend Preparation `34876404345` — **SUCCESS**;
+- Admin AI Operations `34876404287` — **SUCCESS**;
+- Combined Integration `34876404314` — **SUCCESS**, including real Admin Chromium;
+- Stage13G Admin Operations `34876404237` — **SUCCESS**. Admin lint/typecheck/unit/build, API lint/typecheck/unit/build, clean PostgreSQL migrations/contracts, Accounts + Access, Notifications + Operations, Reports + Settings + Security + Audit, AI authoring, Access/Auth regression and Real API + PostgreSQL + Chromium all passed.
 
 ## Exact continuation
 
-Perform **verification/closure only for AB-03.1.3**. Confirm the remaining exact-head or source-tree-equivalent CI gates are green. If they are green, mark AB-03.1.3 DONE and immediately perform the required fresh AB-03.1 slice-closure discovery before deciding whether any further Overview/Operations ownership debt is justified. Do not enter Curriculum/Content/OCR until that closure decision is complete.
+Perform a fresh **AB-03.1 slice-closure discovery only**. Re-read actual Overview + Operations jobs, owners, API/PostgreSQL/security contracts and consumer paths. Select another correction only if there is direct evidence of duplicate/wrong ownership or a product-flow defect within this slice. Otherwise close AB-03.1 and hand off the next canonical slice, Curriculum + Content + OCR. Do not combine discovery with the next slice implementation.
