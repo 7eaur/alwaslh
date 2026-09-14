@@ -56,15 +56,13 @@ Final green closure evidence: Architecture Guard `34891198234`; Admin AI Operati
 
 ### AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
 
-Worker B sequence 52 executed the bounded ownership correction selected by Worker A discovery, and Worker B sequence 53 reconciled the stale lease against repository/CI truth before closure.
-
 Final ownership after this increment:
 
 - `apps/admin-web/src/features/content/api/content-operations-api.ts` owns Content operations/OCR transport and types;
 - `apps/admin-web/src/features/content/public/index.ts` exposes the narrow required consumer contract;
 - `apps/admin-web/src/OcrSourcePreview.tsx` consumes the feature boundary directly;
 - root `apps/admin-web/src/content-operations-api.ts` is compatibility-only and no longer owns implementation;
-- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains the proven reason the root compatibility facade cannot yet be deleted blindly.
+- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains the proven reason the root compatibility facade exists.
 
 No backend/Fastify, PostgreSQL/migration, security, route, page/CSS behavior, AI or Student frontend implementation semantics were changed by this owner move.
 
@@ -78,15 +76,25 @@ Exact-head green closure set:
 - Combined Integration `34898665724` — SUCCESS;
 - Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — SUCCESS.
 
-This closes AB-03.2.3 without weakening any gate or preserving duplicate implementation ownership.
+### AB-03.2 closure discovery — DONE / DOC-ONLY
 
-### Exact next smallest step — AB-03.2 closure discovery
+Worker C sequence 54 inspected the live root compatibility facade and the direct Content/OCR consumer boundary without changing executable source.
 
-Perform discovery only before starting AI:
+Evidence:
 
-1. inspect remaining Content/OCR imports and ownership boundaries;
-2. confirm whether `ContentOperationsPage.tsx` is the final legitimate consumer of root `content-operations-api.ts`;
-3. if and only if zero other consumers are proven, select the smallest follow-up seam: switch that one page to `features/content/public` and delete the compatibility facade;
-4. do not bulk-move page/CSS ownership merely for folder neatness;
-5. do not begin AI until the Content/OCR closure check is complete;
-6. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority, product behavior and Student frontend exclusion.
+- root `apps/admin-web/src/content-operations-api.ts` contains only re-exports from `./features/content/api/content-operations-api`;
+- `apps/admin-web/src/features/content/public/index.ts` exports the required Content operations/OCR functions and types;
+- `apps/admin-web/src/OcrSourcePreview.tsx` imports `fetchOcrSourcePreview` from `./features/content/public` already;
+- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` still imports its Content operations/OCR contract from `../../content-operations-api`;
+- compare `866912f4640aa4696b896a1d897bff7ad67024f4` → sequence-54 observed start `707e52a2f28e7028c4ee3fd19ca737e092f260f6` changes only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, this AB-03 record, and the autonomous state file; there is no executable-source drift after the verified checkpoint.
+
+### Exact next smallest step — AB-03.2.4 Content operations compatibility facade retirement
+
+One bounded executable increment only:
+
+1. switch `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` from `../../content-operations-api` to `../../features/content/public`;
+2. delete root `apps/admin-web/src/content-operations-api.ts`;
+3. require strict Admin typecheck and Architecture Guard to prove no hidden consumer remains after deletion;
+4. run the relevant Admin/API/PostgreSQL/integration/Chromium gates on the exact source head;
+5. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority, product behavior and Student frontend exclusion;
+6. do not bulk-move page/CSS ownership and do not begin AI in the same increment.
