@@ -43,9 +43,11 @@ export async function applyOfflineContentDelta(
   let entries = 0;
   let removed = 0;
   let hasMore = false;
+  let through: string | undefined;
 
   while (pages < MAX_DELTA_PAGES_PER_RECONNECT) {
-    const page = await getStudentOfflineDelta(cursor, DELTA_PAGE_SIZE);
+    const page = await getStudentOfflineDelta(cursor, DELTA_PAGE_SIZE, through);
+    through ??= page.latestCursor;
 
     // Apply first, persist the cursor second. If any mutation fails, retrying the
     // page is safe because package removal is idempotent.
