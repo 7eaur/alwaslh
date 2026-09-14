@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ApiRequestError,
   isMissingSessionError,
@@ -12,6 +12,7 @@ import {
   type StudentEntryMode,
   type StudentEntryNotice,
 } from "./features/auth/StudentEntryExperience";
+import { revalidateOfflinePackagesForCurrentSession } from "./offline-revalidation";
 import { clearActiveOfflineLease, getActiveOfflineScope } from "./offline-session";
 import { clearStudentRuntimeCache } from "./shared/data/student-runtime-cache";
 import { StudentAccessSection } from "./student-access";
@@ -46,12 +47,13 @@ function offlineProfile(): SessionProfile | null {
 
 export default function App() {
   const online = useOnlineStatus();
+  const previousOnline = useRef(online);
   const [phase, setPhase] = useState<SessionPhase>("checking");
   const [profile, setProfile] = useState<SessionProfile | null>(null);
   const [mode, setMode] = useState<StudentEntryMode>(() => initialEntryMode());
   const [notice, setNotice] = useState<StudentEntryNotice | null>(null);
 
-  async function checkSession() {
+  async function checkSession(revalidateAfterReconnect = false) {
     if (!navigator.onLine) {
       const localProfile = offlineProfile();
       setProfile(localProfile);
@@ -66,10 +68,14 @@ export default function App() {
         if (profile) clearStudentRuntimeCache(profile.id);
         setProfile(null); setPhase("anonymous"); return;
       }
+      if (revalidateAfterReconnect) {
+        await revalidateOfflinePackagesForCurrentSession(restored.id);
+      }
       setProfile(restored); setPhase("authenticated");
     } catch (error) {
       if (isMissingSessionError(error)) {
         if (profile) clearStudentRuntimeCache(profile.id);
+        await clearActiveOfflineLease().catch(() => undefined);
         setProfile(null);
         setPhase("anonymous");
       } else if (error instanceof ApiRequestError && error.code === "SERVICE_UNAVAILABLE") {
@@ -87,6 +93,14 @@ export default function App() {
   }
 
   useEffect(() => { void checkSession(); }, []);
+
+  useEffect(() => {
+    const reconnected = !previousOnline.current && online;
+    previousOnline.current = online;
+    if (!reconnected) return;
+    if (profile) void checkSession(true);
+    else if (phase === "offline" || phase === "unavailable") void checkSession();
+  }, [online, phase, profile]);
 
   function handleSessionExpired() {
     if (profile) clearStudentRuntimeCache(profile.id);
