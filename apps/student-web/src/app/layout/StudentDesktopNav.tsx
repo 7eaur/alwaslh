@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
+import { StudentBrandLockup } from "../../shared/brand/StudentBrandLockup";
 import { StudentIcon } from "../../shared/icons/StudentIcon";
 import { primaryStudentDestinations, type StudentDestination } from "./student-navigation";
 
 export function StudentDesktopNav({ destination }: { destination: StudentDestination }) {
   return (
     <nav className="student-adaptive-nav" aria-label="التنقل الرئيسي للطالب">
-      <Link className="student-adaptive-nav__brand" to="/app/home">
-        <img src="/app-icon.svg" alt="" aria-hidden="true" />
-        <span>الوسيلة الذكية</span>
-        <small>مساحة الطالب</small>
+      <Link className="student-adaptive-nav__brand" to="/app/home" aria-label="الوسيلة الذكية — الرئيسية">
+        <StudentBrandLockup />
       </Link>
 
       <div className="student-adaptive-nav__links">
