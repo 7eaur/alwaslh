@@ -39,6 +39,7 @@ Main implementation delta remains Student-focused with no Admin/API/migration ov
 - AB-02 — ACTIVE
   - AB-02.1 Global Admin shell/layout ownership — DONE
   - AB-02.2 Inner Admin route-table ownership — DONE
+  - AB-02.3 Substantial workflow route lazy boundaries — SELECTED / NEXT IMPLEMENTATION
 - AB-03..AB-08 — PENDING
 
 Canonical AB-02 record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
@@ -49,38 +50,33 @@ Source checkpoint `0d07a24aa062ad569ff654524bdc13a4e368f399`; owner `apps/admin-
 
 ## AB-02.2 closure
 
-Source checkpoint:
+Source checkpoint `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`; owner `apps/admin-web/src/app/router/AdminRoutes.tsx`. Guard `34840954071`, Frontend Preparation `34840953959`, Admin AI `34841142948`, Combined `34841142987`, Stage13G `34841142975` — SUCCESS on source/source-tree-equivalent heads.
 
-`732555cb9b8499c712ad6cd19ad50cccf26a8e4a`
+## AB-02.3 selected seam
 
-Owner:
+Current `AdminRoutes.tsx` still statically imports every major workflow destination. Latest verified Stage13G Admin build (`34841142975`, job `103966179619`) emits one `446.30 kB / 117.48 kB gzip` JS chunk; this is improved from AB-00's `968.68 kB / 193.92 kB gzip` baseline but remains an eager workflow graph.
 
-`apps/admin-web/src/app/router/AdminRoutes.tsx`
+Target: preserve route-table ownership and convert substantial workflow destinations to `React.lazy()` dynamic boundaries, wrapped by one route-level `Suspense` fallback using existing `PageState kind="loading"` presentation.
 
-The inner `/app/*` route table and route-local wrappers/not-found were moved out of `App.tsx`; existing URLs, redirects, session-expiry contract, eager loading, workflow UI/business behavior and outer router/focus behavior were preserved.
-
-Verified closure evidence:
-
-- Architecture Guard `34840954071` — SUCCESS on source head;
-- Frontend Preparation `34840953959` — SUCCESS on source head;
-- Admin AI `34841142948` — SUCCESS on source-tree-equivalent documentation head;
-- Combined `34841142987` — SUCCESS with quality gates, clean PostgreSQL, backend/auth regressions and real Chromium;
-- Stage13G `34841142975` — SUCCESS with Admin/API quality, clean PostgreSQL, integration/auth and real API + PostgreSQL + Chromium.
-
-Comparison `732555cb… → 2c2fcb6c…` contained documentation files only, so the green equivalent-head runs verify the same source tree.
+Do not change URLs, redirects, `onSessionExpired`, deep links/focus, auth/session outcomes, workflow business/UI behavior or transitional `src/admin/*` ownership. Do not combine feature migration, navigation/auth changes, error-boundary redesign, bundler threshold/manualChunks tuning, API/DB changes or Student frontend work.
 
 ## Exact continuation
 
-Do **not** implement another concern immediately. First perform one bounded AB-02 discovery step:
+Implement **AB-02.3 only**:
 
-1. inspect current `App.tsx`, `app/layouts/AdminShell.tsx`, `app/router/AdminRoutes.tsx`, outer `router.tsx`, route imports and current bundle/ownership evidence;
-2. identify one smallest next seam supported by evidence;
-3. candidates include feature public/routes entries, substantial lazy route boundaries/Suspense, outer-router/presentation ownership, auth presentation ownership, navigation definition ownership or error-boundary composition;
-4. do not combine lazy-loading with feature migration or unrelated UI redesign;
-5. record current owner, target owner, preserved contracts, non-goals and required gates before implementation.
+1. replace static substantial workflow imports in `app/router/AdminRoutes.tsx` with explicit `React.lazy(() => import(...))` boundaries;
+2. keep named workflow exports intact and adapt at import boundaries only;
+3. add one accessible route-level `Suspense` loading fallback using the existing Admin product-state primitive;
+4. preserve all current route wrappers and contracts;
+5. run Architecture Guard + Admin lint/typecheck/unit/build;
+6. record new Vite chunk topology/sizes against current `446.30 kB / 117.48 kB gzip` single-chunk evidence;
+7. verify representative deep links, lazy route session expiry and focus/loading behavior;
+8. run Combined + Stage13G real API/PostgreSQL/Chromium before marking DONE.
+
+After AB-02.3 exact/source-equivalent green closure, select at most one next AB-02 seam from evidence. Do not mass-migrate workflow ownership before AB-03.
 
 ## Remaining roadmap
 
-AB-02 shell/router/providers/lazy routes → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Finish AB-02 shell/router/providers/lazy routes → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
