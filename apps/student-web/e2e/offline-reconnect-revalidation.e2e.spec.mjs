@@ -49,14 +49,6 @@ async function saveLesson(page, lessonTitle) {
   await expect.poll(() => storedPackageCount(page)).toBe(1);
 }
 
-async function reconnect(page) {
-  await page.context().setOffline(true);
-  await page.evaluate(() => window.dispatchEvent(new Event("offline")));
-  await expect(page.getByText("أنت غير متصل", { exact: true }).first()).toBeVisible();
-  await page.context().setOffline(false);
-  await page.evaluate(() => window.dispatchEvent(new Event("online")));
-}
-
 test("reconnect removes revoked and stale protected lesson packages using current server authority", async ({ page }) => {
   const fixture = createReaderFixture();
   await page.context().addCookies([{
