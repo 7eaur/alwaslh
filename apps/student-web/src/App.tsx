@@ -7,13 +7,13 @@ import {
   type SessionProfile,
 } from "./auth-api";
 import { StudentConnectionGate, StudentSessionLoading } from "./app/session/StudentSessionStates";
-import { clearActiveOfflineLease } from "./offline-session";
-import { StudentAccessSection } from "./student-access";
 import {
   StudentEntryExperience,
   type StudentEntryMode,
   type StudentEntryNotice,
-} from "./student-entry";
+} from "./features/auth/StudentEntryExperience";
+import { clearActiveOfflineLease } from "./offline-session";
+import { StudentAccessSection } from "./student-access";
 
 type SessionPhase = "checking" | "anonymous" | "authenticated" | "offline" | "unavailable";
 const WELCOME_SEEN_KEY = "alwaslh-student:welcome-seen-v1";
