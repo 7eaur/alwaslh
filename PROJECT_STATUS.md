@@ -30,9 +30,9 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 ## Branch reconciliation
 
-Live `main` latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+Live `main` latest observation: `d43fe2afe29b02093510177b921c0407e21a3de9`.
 
-AB-02 → AB-03 phase-boundary reconciliation is complete. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker C sequence 47 startup.
+Comparison from the prior Admin/backend reconciliation baseline `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0` to current live `main` contains only Student frontend/PWA workflow files under `apps/student-web` plus `.github/workflows/stage16-student-pwa.yml`. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change is present for the AB-03.2.2 closure.
 
 ## AB-00 — DONE
 
@@ -60,23 +60,28 @@ Authoritative green evidence: Architecture Guard `34876404251`; Frontend Prepara
 
 #### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Feature implementation ownership lives in `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts` with narrow consumer access through `features/curriculum/public`. `CurriculumWorkspace.tsx` and the intended Content-ingestion Curriculum consumer use that boundary; generic API error/session helpers come from `shared/api/client`.
-
-The root Curriculum compatibility re-export facade remains intentionally transitional because executable strict typecheck proved legitimate remaining consumers in later canonical slices. This is compatibility debt only, not duplicate implementation ownership; those consumers must migrate incrementally in their own slices.
+Feature implementation ownership lives in `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts` with narrow consumer access through `features/curriculum/public`. The root Curriculum compatibility re-export facade remains intentionally transitional for legitimate later-slice consumers; it is compatibility debt only, not duplicate implementation ownership.
 
 Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
 
-Source-tree equivalence to Worker B handoff HEAD `926013d1af3824cc50836660ca85615bb2ec8593` was re-verified: only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`, and the shared execution-state file differ.
+Green closure evidence: Architecture Guard `34887051028`; Frontend Preparation `34887051091`; Admin AI Operations `34887416193`; Combined Integration `34887416088`; Stage13G Admin Operations `34887416108`.
 
-Green closure evidence on the equivalent current tree:
+#### AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-- Architecture Guard `34887051028` — SUCCESS;
-- Frontend Preparation `34887051091` — SUCCESS;
-- Admin AI Operations `34887416193` — SUCCESS;
-- Combined Integration `34887416088` — SUCCESS;
-- Stage13G Admin Operations `34887416108` — SUCCESS.
+Content ingestion transport/types implementation now lives in `apps/admin-web/src/features/content/api/content-ingestion-api.ts`, exposed through `apps/admin-web/src/features/content/public/index.ts`. Root `apps/admin-web/src/content-ingestion-api.ts` is a transitional compatibility facade only; API paths, payloads, response contracts and behavior are unchanged.
 
-**Exact next smallest step:** fresh AB-03.2 discovery only. Inspect live Curriculum + Content + OCR ownership and choose one smallest root-cause correction from current code evidence. Do not bulk-migrate Access Codes/AI/Question Bank/Quiz Builder facade consumers and do not begin later roadmap slices.
+Corrected executable source checkpoint: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
+
+Source-equivalent green closure evidence:
+
+- Architecture Guard `34891198234` — SUCCESS on the exact corrected source checkpoint;
+- Admin AI Operations `34892857039` — SUCCESS;
+- Combined Integration `34892857011` — SUCCESS;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34892857278` — SUCCESS.
+
+The later CI heads differ from the source checkpoint only by documentation/state changes, so executable source equivalence is preserved.
+
+**Exact next smallest step:** fresh discovery only inside the remaining **Content + OCR** portion of AB-03.2. Inspect current frontend/backend/API/PostgreSQL/security/test ownership and choose at most one smallest root-cause seam. Do not begin the AI slice and do not bulk-migrate unrelated compatibility-facade consumers.
 
 ## Remaining roadmap
 
