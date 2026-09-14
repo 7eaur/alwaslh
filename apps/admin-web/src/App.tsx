@@ -22,11 +22,11 @@ import { QuizBuilderDetailPage } from "./admin/quizzes/QuizBuilderDetailPage";
 import { QuizBuilderListPage } from "./admin/quizzes/QuizBuilderListPage";
 import { QuizMetadataPanel } from "./admin/quizzes/QuizMetadataPanel";
 import { AdminStudentsPage } from "./admin/students/AdminStudentsPage";
-import type { AdminProfile } from "./features/auth/api/admin-auth-api";
 import {
   AdminSessionProvider,
   useAdminSession,
-} from "./features/auth/model/AdminSessionProvider";
+  type AdminProfile,
+} from "./features/auth/public";
 import "./ai-operations-review.css";
 import { LoginScreen } from "./LoginScreen";
 
