@@ -9,7 +9,7 @@ import {
 } from "../../auth-api";
 import { listOfflineLessonPackages } from "../../offline-content-store";
 import { getActiveOfflineScope } from "../../offline-session";
-import { StudentIcon } from "../../student-icons";
+import { StudentIcon } from "../../shared/icons/StudentIcon";
 import {
   getCachedStudentAttempts,
   getCachedStudentCurriculum,
@@ -17,7 +17,10 @@ import {
   peekCachedStudentAttempts,
   peekCachedStudentCurriculum,
   peekCachedStudentQuizzes,
-} from "../../student-runtime-cache";
+} from "../../shared/data/student-runtime-cache";
+import { ListRow } from "../../shared/ui/ListRow";
+import { SectionHeader } from "../../shared/ui/SectionHeader";
+import { StatStrip } from "../../shared/ui/StatStrip";
 
 function subjectLessonCount(subject: StudentCurriculumSubject): number {
   return subject.unsectionedLessons.length + subject.sections.reduce((total, section) => total + section.lessons.length, 0);
@@ -100,6 +103,12 @@ export function StudentHomeOverview({ profileId, online, onSessionExpired }: {
   const lastAttempt = snapshot.attempts?.[0] ?? null;
   const number = new Intl.NumberFormat("ar-YE");
 
+  const quickStats = [
+    { key: "subjects", label: "المواد", value: snapshot.curriculum ? number.format(subjects.length) : "—", icon: <StudentIcon name="subjects" /> },
+    { key: "lessons", label: "الدروس", value: snapshot.curriculum ? number.format(lessonTotal) : "—", icon: <StudentIcon name="lessons" /> },
+    { key: "practice", label: "التدريبات", value: snapshot.quizzes ? number.format(snapshot.quizzes.length) : "—", icon: <StudentIcon name="practice" /> },
+  ];
+
   return (
     <section className="student-home" aria-labelledby="student-home-title">
       <header className="student-home__welcome">
@@ -108,22 +117,21 @@ export function StudentHomeOverview({ profileId, online, onSessionExpired }: {
       </header>
 
       <section className="student-home-section" aria-labelledby="home-quick-title">
-        <div className="student-home-section__heading"><h2 id="home-quick-title">نظرة سريعة</h2></div>
-        <div className="student-home-stats student-v2-surface" aria-label="ملخص المحتوى المتاح">
-          <div><StudentIcon name="subjects" /><strong>{snapshot.curriculum ? number.format(subjects.length) : "—"}</strong><span>المواد</span></div>
-          <div><StudentIcon name="lessons" /><strong>{snapshot.curriculum ? number.format(lessonTotal) : "—"}</strong><span>الدروس</span></div>
-          <div><StudentIcon name="practice" /><strong>{snapshot.quizzes ? number.format(snapshot.quizzes.length) : "—"}</strong><span>التدريبات</span></div>
-        </div>
+        <SectionHeader id="home-quick-title" title="نظرة سريعة" />
+        <StatStrip items={quickStats} ariaLabel="ملخص المحتوى المتاح" />
       </section>
 
       {snapshot.downloadCount !== null ? (
         <section className="student-home-section" aria-labelledby="home-library-title">
-          <div className="student-home-section__heading"><h2 id="home-library-title">مكتبتي</h2><Link to="/app/library">فتح مكتبتي</Link></div>
-          <Link className="student-home-library-stat student-v2-surface" to="/app/library/downloads">
-            <span className="student-home-library-stat__icon"><StudentIcon name="download" /></span>
-            <span><strong>{number.format(snapshot.downloadCount)}</strong><small>تنزيلات محفوظة على هذا الجهاز</small></span>
-            <StudentIcon name="chevron" aria-hidden="true" />
-          </Link>
+          <SectionHeader id="home-library-title" title="مكتبتي" action={<Link to="/app/library">فتح مكتبتي</Link>} />
+          <ListRow
+            className="student-home-library-stat student-v2-surface"
+            to="/app/library/downloads"
+            leading={<span className="student-home-library-stat__icon"><StudentIcon name="download" /></span>}
+            title={number.format(snapshot.downloadCount)}
+            subtitle="تنزيلات محفوظة على هذا الجهاز"
+            trailing={<StudentIcon name="chevron" aria-hidden="true" />}
+          />
         </section>
       ) : null}
 
@@ -131,14 +139,22 @@ export function StudentHomeOverview({ profileId, online, onSessionExpired }: {
 
       {subjectPreview.length > 0 ? (
         <section className="student-home-section" aria-labelledby="home-subjects-title">
-          <div className="student-home-section__heading"><h2 id="home-subjects-title">موادك</h2>{subjects.length > subjectPreview.length ? <Link to="/app/learn">عرض جميع المواد</Link> : null}</div>
+          <SectionHeader
+            id="home-subjects-title"
+            title="موادك"
+            action={subjects.length > subjectPreview.length ? <Link to="/app/learn">عرض جميع المواد</Link> : undefined}
+          />
           <div className="student-home-subjects student-v2-surface">
             {subjectPreview.map(({ subject, className }) => (
-              <Link className="student-home-subject" key={subject.id} to={`/app/learn/subjects/${encodeURIComponent(subject.id)}`}>
-                <span className="student-home-subject__icon"><StudentIcon name="learn" /></span>
-                <span><strong>{subject.name}</strong><small>{className} · {number.format(subjectLessonCount(subject))} درس</small></span>
-                <StudentIcon name="chevron" />
-              </Link>
+              <ListRow
+                key={subject.id}
+                className="student-home-subject"
+                to={`/app/learn/subjects/${encodeURIComponent(subject.id)}`}
+                leading={<span className="student-home-subject__icon"><StudentIcon name="learn" /></span>}
+                title={subject.name}
+                subtitle={`${className} · ${number.format(subjectLessonCount(subject))} درس`}
+                trailing={<StudentIcon name="chevron" />}
+              />
             ))}
           </div>
         </section>
@@ -146,12 +162,15 @@ export function StudentHomeOverview({ profileId, online, onSessionExpired }: {
 
       {lastAttempt ? (
         <section className="student-home-section" aria-labelledby="home-attempt-title">
-          <div className="student-home-section__heading"><h2 id="home-attempt-title">آخر تدريب</h2></div>
-          <Link className="student-home-attempt student-v2-surface" to={`/app/practice/attempts/${encodeURIComponent(lastAttempt.sessionId)}`}>
-            <span className="student-home-attempt__icon"><StudentIcon name="result" /></span>
-            <span className="student-home-attempt__copy"><strong>{lastAttempt.quizTitle}</strong><small>{number.format(lastAttempt.correctCount)} من {number.format(lastAttempt.questionCount)} إجابة صحيحة</small></span>
-            <b>{number.format(lastAttempt.scorePercent)}٪</b>
-          </Link>
+          <SectionHeader id="home-attempt-title" title="آخر تدريب" />
+          <ListRow
+            className="student-home-attempt student-v2-surface"
+            to={`/app/practice/attempts/${encodeURIComponent(lastAttempt.sessionId)}`}
+            leading={<span className="student-home-attempt__icon"><StudentIcon name="result" /></span>}
+            title={lastAttempt.quizTitle}
+            subtitle={`${number.format(lastAttempt.correctCount)} من ${number.format(lastAttempt.questionCount)} إجابة صحيحة`}
+            trailing={<b>{number.format(lastAttempt.scorePercent)}٪</b>}
+          />
         </section>
       ) : null}
     </section>
