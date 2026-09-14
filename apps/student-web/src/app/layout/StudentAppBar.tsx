@@ -3,7 +3,7 @@ import { StudentBrandLockup } from "../../shared/brand/StudentBrandLockup";
 import { StudentIcon } from "../../shared/icons/StudentIcon";
 import { studentDestinationLabels, type StudentDestination } from "./student-navigation";
 
-export function StudentAppBar({ destination, online }: { destination: StudentDestination; online: boolean }) {
+export function StudentAppBar({ destination, online, title }: { destination: StudentDestination; online: boolean; title?: string | null }) {
   const home = destination === "home";
 
   return (
@@ -13,7 +13,7 @@ export function StudentAppBar({ destination, online }: { destination: StudentDes
           <StudentBrandLockup compact />
         </Link>
       ) : (
-        <div className="student-appbar__title" aria-current="page">{studentDestinationLabels[destination]}</div>
+        <div className="student-appbar__title" aria-current="page">{title ?? studentDestinationLabels[destination]}</div>
       )}
 
       <div className="student-appbar__actions">
