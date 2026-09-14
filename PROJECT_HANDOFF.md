@@ -45,7 +45,7 @@ Priority: **Clarity → Ease of use → Flow → Visual comfort → Consistency 
 - AB-01.1 shared Admin API transport/error boundary — DONE
 - AB-01.2 Auth/session ownership + SessionProvider — DONE
 - AB-01.3 minimum proven shared product-state primitive — DONE
-- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS IMPLEMENTED, VERIFICATION PENDING**
+- **AB-01.4 backend app composition foundation — ACTIVE / CORS DONE / HEALTH-READINESS DONE / THIRD SEAM DISCOVERY NEXT**
 - AB-01.5 justified common backend technical foundations — PENDING
 - AB-01.6 foundation gate — PENDING
 
@@ -55,38 +55,43 @@ Source implementation HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 
 `apps/api/src/app/plugins/cors.ts` owns global CORS/preflight policy through `registerCorsPolicy(app, config)`. Closure evidence: Architecture Guard `34808159011`, Admin AI `34809211720`, Combined `34809211704`, Stage13G `34809211707` — all SUCCESS including real API + PostgreSQL + Chromium.
 
-## 9. Second AB-01.4 seam implementation
+## 9. Second AB-01.4 seam — CLOSED
 
 Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 
 Implemented:
 
-- created `apps/api/src/app/http/health.ts`;
-- `registerHealthRoutes(app, database)` now owns `GET /health` and `GET /ready`;
+- `apps/api/src/app/http/health.ts` owns `GET /health` and `GET /ready` through `registerHealthRoutes(app, database)`;
 - `apps/api/src/app.ts` calls that owner at the same relative position after business route registration and before final not-found/error/onClose handling;
 - `/health` remains process-only and returns 200 `{ status: "ok", service: "alwaslh-api" }` even when PostgreSQL is unavailable;
 - `/ready` continues calling only `database.ping()`, returns 200 `{ status: "ready" }` on success, logs `database readiness check failed` on failure, and returns 503 `{ status: "not_ready" }`;
 - the three direct tests in `apps/api/tests/app.test.ts` remain unchanged;
 - no public-error/not-found, DB close lifecycle, database construction/config, `server.ts`, service graph, migration/schema or Student frontend changes were included.
 
-Verification observed so far:
+Closure evidence:
 
-- Architecture Guard `34811642661` — SUCCESS on source HEAD;
-- Combined Integration `34811642693` — pending/running at Worker A handoff;
-- Stage13G `34811642622` — pending/running at Worker A handoff;
-- Admin AI `34811642629` — running at Worker A handoff.
+- Architecture Guard `34811642661` — SUCCESS on source implementation HEAD;
+- direct source Combined `34811642693` was cancelled only because documentation commits superseded it;
+- compare `a302871b3486ae95810cea40dccca68363a29055...b095741e621f9241ff3eed0de86b4e64048604bf` proves all five intervening files are documentation only;
+- Admin AI `34811809959` — SUCCESS;
+- Combined `34811809962` — SUCCESS including quality gates, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
+- Stage13G `34811810021` — SUCCESS including Admin/API quality, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
 
-The health/readiness seam is **not DONE yet**.
+Conclusion: health/readiness seam is **DONE**.
 
 ## 10. Exact next engineering task
 
-The next worker must inspect the source-tree verification for `a302871b...` before any new mutation:
+The next worker performs **third AB-01.4 composition discovery only**:
 
-1. inspect Combined `34811642693`, Stage13G `34811642622`, Admin AI `34811642629`, and any newer source-tree-equivalent runs triggered by documentation-only commits;
-2. verify API lint/typecheck/unit/build, clean PostgreSQL/integration regressions and real API + PostgreSQL + Chromium are green;
-3. if green, mark the health/readiness seam DONE in state/status/log/handoff/AB-01 docs;
-4. if any gate fails, fix only the root cause for this seam and re-run verification;
-5. do **not** select or implement a third composition seam until this one is closed.
+1. fetch live branch/main and execution state;
+2. inspect current `apps/api/src/app.ts` after CORS + health extraction;
+3. inventory the remaining app-level responsibilities still owned inline;
+4. inspect existing tests/contracts for the smallest candidate boundary;
+5. select exactly one third seam with current owner, target owner, parity evidence, non-goals and required gates;
+6. document the selected seam in the canonical AB-01.4 discovery/workstream/state files;
+7. **do not implement the third seam in the same discovery increment**.
+
+If `main` advances with overlapping Admin/API/migrations/shared changes before mutation, reconcile first.
 
 ## 11. Remaining roadmap
 
