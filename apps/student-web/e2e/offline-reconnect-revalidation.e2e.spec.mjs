@@ -49,7 +49,7 @@ async function saveLesson(page, lessonTitle) {
   await expect.poll(() => storedPackageCount(page)).toBe(1);
 }
 
-test("reconnect removes revoked and stale protected lesson packages using current server authority", async ({ page }) => {
+test("reconnect removes revoked and stale protected lesson packages using current server authority and delta cursor", async ({ page }) => {
   const fixture = createReaderFixture();
   await page.context().addCookies([{
     name: fixture.sessionCookieName,
@@ -68,12 +68,17 @@ test("reconnect removes revoked and stale protected lesson packages using curren
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   mutateAuthority("expire-entitlement", fixture);
+  const deniedDeltaPromise = page.waitForResponse((response) =>
+    response.url().includes("/v1/student/offline/sync?") && response.status() === 200,
+  );
   await page.context().setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await deniedDeltaPromise;
   await expect.poll(() => storedPackageCount(page), { timeout: 15_000 }).toBe(0);
 
   // Restore authority and save the current publication again so we can prove
-  // that a later canonical content revision also invalidates the old package.
+  // that a later canonical content revision is delivered by the bounded delta
+  // and invalidates the old local package before the full manifest pass.
   mutateAuthority("restore-entitlement", fixture);
   await page.reload();
   await expect(page.getByRole("heading", { name: "الدروس المحفوظة" })).toBeVisible();
@@ -82,7 +87,19 @@ test("reconnect removes revoked and stale protected lesson packages using curren
   await page.context().setOffline(true);
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   mutateAuthority("bump-revision", fixture);
+  const revisionDeltaPromise = page.waitForResponse((response) =>
+    response.url().includes("/v1/student/offline/sync?") && response.status() === 200,
+  );
   await page.context().setOffline(false);
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  const revisionDeltaResponse = await revisionDeltaPromise;
+  const revisionPayload = await revisionDeltaResponse.json();
+  expect(revisionPayload.delta.entries.some((entry) => entry.lessonId === fixture.lessonId)).toBe(true);
+  expect(revisionPayload.delta.nextCursor).toMatch(/^\d+$/);
   await expect.poll(() => storedPackageCount(page), { timeout: 15_000 }).toBe(0);
+
+  const scopedCursor = await page.evaluate(({ profileId, deviceId }) =>
+    localStorage.getItem(`alwaslh-student-offline:sync-cursor:${profileId}:${deviceId}`),
+  { profileId: fixture.studentId, deviceId: fixture.deviceId });
+  expect(scopedCursor).toBe(revisionPayload.delta.nextCursor);
 });
