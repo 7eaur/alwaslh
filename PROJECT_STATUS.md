@@ -18,7 +18,7 @@ Read in this order before mutation:
 2. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md`
 3. `PROJECT_ENGINEERING_LOG.md`
 4. `PROJECT_HANDOFF.md`
-5. `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`
+5. `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`
 6. active architecture/product docs listed by those authorities.
 
 Workers A/B/C share one branch and ordered roadmap. If another worker is active, do not create overlapping mutations. Every run performs one smallest coherent increment and ends `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE`.
@@ -38,7 +38,7 @@ Workers A/B/C share one branch and ordered roadmap. If another worker is active,
 
 ## Branch reconciliation
 
-Live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`. Compared with the prior reconciled main checkpoint `3053640cc5bb0699cfa7456cf646e8997f6aa81b`, the only new commit is the Student Experience V2 merge. No `apps/api`, `apps/admin-web`, or `database/migrations` path appears in that main-only delta. No scoped reconciliation is required before AB-02 discovery unless `main` moves again.
+Live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`. Compared with the prior reconciled main checkpoint `3053640cc5bb0699cfa7456cf646e8997f6aa81b`, the only new commit is the Student Experience V2 merge. No `apps/api`, `apps/admin-web`, or `database/migrations` path appears in that main-only delta. No scoped reconciliation is required before continuing AB-02 unless `main` moves again.
 
 ## AB-00 — DONE
 
@@ -87,9 +87,28 @@ No further shared-foundation extraction is authorized. Foundation ownership is s
 
 ## AB-02 — ACTIVE
 
-Goal: thin Admin bootstrap/providers/router/layouts + one shell/navigation owner + feature public route boundaries + substantial route lazy loading, while preserving authentication/session outcomes and route behavior.
+Canonical execution record:
 
-AB-02 must begin with discovery rather than blind moves. Inspect current `apps/admin-web/src/App.tsx`, route/shell/navigation/session ownership, feature public/routes entries, route-focus/history/deep-link behavior, current tests and bundle composition. Do not redesign business workflows here; those belong to AB-03 vertical slices.
+`docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`
+
+### AB-02.1 Global Admin shell/layout ownership — DONE
+
+Source implementation checkpoint: `0d07a24aa062ad569ff654524bdc13a4e368f399`.
+
+Owner: `apps/admin-web/src/app/layouts/AdminShell.tsx`.
+
+`App.tsx` no longer owns sidebar/navigation/account/logout markup. Current-head closure evidence:
+
+- Architecture Guard `34838037118` — SUCCESS;
+- Frontend Preparation `34838037114` — SUCCESS;
+- Combined Integration `34838123077` — SUCCESS;
+- Stage13G `34838123143` — SUCCESS, including Admin/API quality, clean PostgreSQL, backend/auth/security integration and real API + PostgreSQL + Chromium.
+
+### AB-02.2 Inner Admin route-table ownership — DISCOVERED / NEXT
+
+Live `App.tsx` still owns the full inner `/app/*` route table, eager workflow imports and route-only wrappers. `apps/admin-web/src/app/` has no router owner yet, and only Auth has migrated into `features/*`.
+
+Next smallest seam: create `apps/admin-web/src/app/router/AdminRoutes.tsx` and move only the existing inner route-table composition + route-only wrappers/not-found state into that owner. Preserve current `src/admin/*` page imports, URLs and behavior. Do **not** combine this with feature migration, lazy loading, URL changes or workflow redesign.
 
 ## Remaining roadmap
 
@@ -105,4 +124,4 @@ No merge/readiness before AB-08 exact-head green. After verified AB-08 completio
 
 ## Immediate next action
 
-Perform AB-02 discovery only: inspect current Admin root composition/router/shell and current bundle/test/runtime evidence, define the smallest target seam and its parity gates, then implement no more than one coherent AB-02 increment.
+Implement **AB-02.2 only**: extract the current inner Admin route table from `App.tsx` into `app/router/AdminRoutes.tsx` with no behavior/URL/lazy-loading/feature-ownership change. Then run Architecture Guard + Admin quality + relevant route/auth/focus tests + Stage13G real Chromium/Combined verification before marking the seam DONE.
