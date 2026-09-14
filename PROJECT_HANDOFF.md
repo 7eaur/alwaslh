@@ -28,7 +28,7 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - branch: `rebuild/super-admin-foundation`;
 - PR #52 stays Draft and is never auto-merged;
 - never force-reset or force-push shared history;
-- live `main` at AB-03 startup: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+- live `main` at latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
 AB-02 → AB-03 phase-boundary reconciliation is complete. Live-main-only implementation changes are Student frontend/workflow and Student-specific CI/docs; no Admin/API/migration implementation overlap was found. Shared top-level docs diverge and remain subject to deliberate final reconciliation.
 
@@ -39,18 +39,16 @@ AB-02 → AB-03 phase-boundary reconciliation is complete. Live-main-only implem
 - AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — ACTIVE
-  - AB-03.1.1 Attention application ownership — IMPLEMENTED / WAITING_FOR_CI
+  - AB-03.1.1 Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
-## Current source correction
+## Last closed correction
 
 Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`.
 
-Discovery found that the Overview endpoint `/v1/admin/operations/attention` had correct PostgreSQL-backed data and admin authorization, but its Fastify route still owned use-case orchestration: reading governance + audit concurrently and then building the attention projection.
-
-AB-03.1.1 corrected that ownership only:
+AB-03.1.1 corrected only the attention use-case ownership:
 
 - `apps/api/src/admin-operations/attention-application.ts` now owns `loadOperationsAttention(...)`;
 - `apps/api/src/admin-operations/http.ts` owns only admin authorization, query validation and calling the application boundary for this endpoint;
@@ -59,23 +57,22 @@ AB-03.1.1 corrected that ownership only:
 - API route/query bounds/response shape, SQL, migrations/schema and security behavior are unchanged;
 - no Admin frontend or Student frontend implementation changed.
 
-Verification at handoff:
+Closure evidence:
 
-- Architecture Guard `34859593842` — SUCCESS on implementation tree `fe2f3e8811e78e03662a759127dd35fe3588b336`; the final source checkpoint adds only the dedicated test;
-- Admin AI `34859616706` — SUCCESS on exact source checkpoint;
-- Combined Integration `34859616648` — still in progress at handoff;
-- Stage13G `34859617164` — still in progress at handoff and is the relevant broad Admin/API/PostgreSQL/integration/Chromium gate.
-
-Therefore the shared state is `WAITING_FOR_CI`, not DONE.
+- Architecture Guard `34859593842` — SUCCESS on implementation tree `fe2f3e8811e78e03662a759127dd35fe3588b336`; source checkpoint adds only the dedicated test.
+- Verification head `d350ce8d1ec9d7fdedc8c466c1a4ca4657ca546e` is source-tree equivalent to the checkpoint: compare shows canonical/shared docs only and no source/test/migration/workflow drift.
+- Admin AI `34860142887` — SUCCESS.
+- Combined Integration `34860142983` — SUCCESS, including API/Admin quality, clean PostgreSQL, database contract, backend/security/auth regressions and real Admin Chromium.
+- Stage13G `34860143008` — SUCCESS, including Admin/API quality, clean PostgreSQL, operations/security/integration regressions and real API + PostgreSQL + Chromium.
 
 ## Exact continuation
 
-Do **not** start another mutation before closing AB-03.1.1.
+The next run is **discovery only inside AB-03.1 Overview + Operations**.
 
-1. Inspect `34859616648` and `34859617164`. If documentation commits caused cancellation, use the newest source-tree-equivalent runs only after proving no source/test change since `5c363658...`.
-2. If all required gates are green, mark AB-03.1.1 DONE.
-3. Then continue discovery within **Overview + Operations only** and choose one next smallest ownership correction based on live code/tests/runtime evidence.
-4. Do not combine Curriculum/Content/OCR or any later slice.
+1. Re-read live Overview and Operations frontend owners, backend HTTP/application/service owners and their tests.
+2. Identify exactly one smallest root ownership correction; do not implement more than one concern.
+3. Evidence candidates include the transitional root `apps/admin-web/src/admin-operations-api.ts`, legacy `src/admin/overview` / `src/admin/operations` feature ownership and remaining Operations HTTP/application seams. These are candidates, not predetermined targets.
+4. Do not start Curriculum/Content/OCR in the same increment.
 5. Main reconciliation is **not currently required**; repeat it if live `main` gains overlapping Admin/API/migration/shared-contract changes or at the next structural phase boundary.
 
 ## Remaining roadmap
