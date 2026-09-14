@@ -1,70 +1,86 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `READY_FOR_NEXT`
 Sequence: `50`
-Last worker: `B`
-Active worker: `C`
+Last worker: `C`
+Active worker: `NONE`
 Start time: `2026-09-14T23:38:15+03:00`
 Observed starting HEAD: `bd7915272cad5a5076b36e42c7c7cc17fede2f74`
+Ending canonical-doc HEAD: `85dabf69b7cb0dc5000f6e32281177894559a379`
 Ending executable/source HEAD: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`
 Observed live `main`: `d43fe2afe29b02093510177b921c0407e21a3de9`
-Active task: `AB-03.2.2 — verification/closure of Content ingestion frontend API ownership`
-Outcome: `RUNNING — Worker C sequence 50 is closing AB-03.2.2 from source-equivalent green CI; no new source seam will be opened in this increment.`
+Active task completed: `AB-03.2.2 — Content ingestion frontend API ownership`
+Outcome: `READY_FOR_NEXT — AB-03.2.2 CLOSED WITH SOURCE-TREE-EQUIVALENT GREEN CI`
 
-## Worker C sequence 50 — active lease
+## Worker C sequence 50 — handoff
 
 ### Startup / anti-collision
 
 - observed branch HEAD `bd7915272cad5a5076b36e42c7c7cc17fede2f74` before the lease mutation;
-- previous shared state was `WAITING_FOR_CI`, active worker `NONE`, so there is no active-worker collision;
-- live `main` is now `d43fe2afe29b02093510177b921c0407e21a3de9`; its new commit is Student-frontend work and must be reconciled as non-overlapping before this closure is finalized;
+- previous shared state was `WAITING_FOR_CI`, active worker `NONE`, so no active-worker collision existed;
+- acquired the lease as Worker C sequence 50 and performed closure only; no new source seam was opened;
 - PR #52 remains Draft / open / unmerged / no auto-merge.
 
-### Active increment
+### Main reconciliation
 
-**Closure only for AB-03.2.2.**
+- live `main` is `d43fe2afe29b02093510177b921c0407e21a3de9`;
+- comparison from prior baseline `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0` shows only `apps/student-web/*` and `.github/workflows/stage16-student-pwa.yml` changes;
+- no overlapping Admin/API/PostgreSQL/shared-contract implementation change exists for this closure;
+- main reconciliation need for this closure: `NONE`.
 
-1. verify source-equivalent green CI on current documentation head;
-2. verify the main drift is Student-only/non-overlapping for Admin/API/PostgreSQL/shared contracts;
-3. close AB-03.2.2 in canonical status/log/handoff/workstream documentation;
-4. leave the exact next step as fresh discovery inside remaining Content + OCR scope; do not open a new source seam in this increment.
+### AB-03.2.2 source truth
 
-### Verification already observed
+Corrected executable/source checkpoint remains `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
 
-Source-tree-equivalent documentation head `bd7915272cad5a5076b36e42c7c7cc17fede2f74`:
+At that checkpoint:
 
-- Admin AI Operations `34892857039` — `SUCCESS`;
-- Combined Integration `34892857011` — `SUCCESS`;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34892857278` — `SUCCESS`;
-- Architecture Guard `34891198234` remains valid from exact corrected source checkpoint `4ba7106f910098841a7026114dcfa2f2cd1f83bf` because intervening changes are documentation/state only.
-
-## Worker B sequence 49 — handoff
-
-### Startup / anti-collision
-
-- took over from sequence 48 state `WAITING_FOR_CI`, active worker `NONE`;
-- observed branch HEAD `fb5e31c7ba74b68475ffdbc83286c07683f0f7a3` before the lease mutation;
-- no competing active worker was recorded, so Worker B acquired the shared lease;
-- PR #52 remains Draft / open / unmerged / no auto-merge.
-
-### Source-equivalence proof
-
-- corrected executable/source checkpoint remains `4ba7106f910098841a7026114dcfa2f2cd1f83bf`;
-- later branch changes through Worker B handoff were documentation/state only;
-- therefore CI on the later documentation heads is source-tree-equivalent to the corrected AB-03.2.2 implementation.
-
-### Exact next smallest step left by Worker B
-
-Verification/closure only for AB-03.2.2; after closure, perform fresh discovery inside the remaining Content + OCR portion of AB-03.2 without opening the AI slice or bulk-migrating unrelated compatibility-facade consumers.
-
-## Worker A sequence 48 — implementation handoff summary
-
-- moved actual Content ingestion transport/types implementation to `apps/admin-web/src/features/content/api/content-ingestion-api.ts`;
-- `apps/admin-web/src/features/content/public/index.ts` is the narrow feature boundary;
+- Content ingestion transport/types implementation is owned by `apps/admin-web/src/features/content/api/content-ingestion-api.ts`;
+- `apps/admin-web/src/features/content/public/index.ts` is the narrow public boundary;
 - root `apps/admin-web/src/content-ingestion-api.ts` is a transitional compatibility facade only;
-- API paths, payloads and response contracts are unchanged;
-- no backend/Fastify, PostgreSQL/migration, security, OCR/AI, or Student frontend implementation changed;
-- an intermediate accidental workspace divergence was caught by strict frontend typecheck and restored byte-for-byte before corrected source checkpoint `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
+- API paths, payloads, response contracts and behavior were preserved;
+- no backend/Fastify, PostgreSQL/migration, security, OCR/AI, or Student frontend implementation changed.
+
+### Verification / CI evidence
+
+- Architecture Guard `34891198234` — `SUCCESS` on exact corrected source checkpoint `4ba7106f...`;
+- Admin AI Operations `34892857039` — `SUCCESS` on source-equivalent documentation head;
+- Combined Integration `34892857011` — `SUCCESS` on source-equivalent documentation head;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34892857278` — `SUCCESS` on source-equivalent documentation head.
+
+The later CI heads differ from `4ba7106f...` only by documentation/state changes. Therefore executable source-tree equivalence is preserved and AB-03.2.2 is closed.
+
+### Documentation changed in this run
+
+Updated to reflect the now-proven closure:
+
+- `PROJECT_STATUS.md`;
+- `PROJECT_ENGINEERING_LOG.md`;
+- `PROJECT_HANDOFF.md`;
+- `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`;
+- this shared execution-state file.
+
+No production source, test, migration, API, PostgreSQL or Student frontend implementation was changed by Worker C sequence 50.
+
+### Exact next smallest step
+
+**Fresh discovery only inside the remaining Content + OCR portion of AB-03.2.**
+
+1. inspect current Content/OCR Admin frontend ownership and operator workflow states/actions;
+2. inspect backend/API boundaries, PostgreSQL provenance/integrity, security/authorization and existing tests;
+3. choose at most one smallest root-cause ownership/workflow seam from current code evidence;
+4. do not begin the AI slice yet;
+5. do not bulk-migrate unrelated compatibility-facade consumers;
+6. only after one seam is proven, execute that single increment and run Architecture Guard plus relevant Admin/API/PostgreSQL/integration/Chromium gates.
+
+### Risks / blockers
+
+- no blocker remains for AB-03.2.2;
+- root Content ingestion compatibility facade remains intentional temporary migration debt until owning consumers migrate naturally;
+- remaining Content + OCR scope is `NOT YET VERIFIED` for the next seam and must be rediscovered from live code rather than inferred from stale prose.
+
+### Main reconciliation need
+
+`NONE FOR THIS CLOSURE` — current main drift is Student-only. Re-check before the next structural phase boundary or if overlapping scoped changes appear.
 
 ## Safety constraints
 
