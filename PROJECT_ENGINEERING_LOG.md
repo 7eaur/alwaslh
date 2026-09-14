@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — third AB-01.4 composition seam selected; implementation not yet started.**
+Last consolidated: **2026-09-14 — third AB-01.4 public-error composition seam implemented; required runtime/integration gates pending.**
 
 ## Durable authority invariants
 
@@ -59,43 +59,37 @@ Source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`; Architecture Guard `3480
 
 Source HEAD `a302871b3486ae95810cea40dccca68363a29055`; target owner `apps/api/src/app/http/health.ts`. Closure evidence: Architecture Guard `34811642661`; source-tree-equivalent Admin AI `34811809959`, Combined `34811809962`, Stage13G `34811810021` — SUCCESS.
 
-#### Third seam — PUBLIC ERROR / NOT-FOUND — SELECTED
+#### Third seam — public error / not-found — IMPLEMENTED / WAITING_FOR_CI
 
-Discovery performed from live `apps/api/src/app.ts` after the first two extractions.
+Source implementation HEAD: `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
 
-Current inline responsibility:
+Implemented owner:
 
-- `setNotFoundHandler` builds the public 404 envelope;
-- `setErrorHandler` maps through existing `toPublicError`, logs 5xx as `request failed`, and sends canonical public status/body.
+- `apps/api/src/app/http/public-errors.ts`;
+- `registerPublicErrorHandlers(app)` owns both `setNotFoundHandler` and `setErrorHandler`.
 
-Decision:
+Composition result:
 
-- target owner: `apps/api/src/app/http/public-errors.ts`;
-- target function: `registerPublicErrorHandlers(app)`;
-- keep `toPublicError` in its current authority; do not move or duplicate error semantics;
-- preserve exact 404 body, status codes, mapped error bodies and 5xx logging threshold/message;
-- retain registration after business routes + health and before app return;
-- do not combine DB close lifecycle, Fastify construction, service graph or route-registry work.
+- `apps/api/src/app.ts` imports/calls `registerPublicErrorHandlers(app)` after `registerHealthRoutes(app, database)`;
+- both inline handlers were removed from `app.ts`;
+- direct `toPublicError` import was removed from `app.ts`;
+- database `onClose`, Fastify construction, service graph, business route registration, migrations and Student frontend were untouched.
 
-Parity evidence:
+Preserved behavior:
 
-- direct `apps/api/tests/app.test.ts` contract: unknown route returns 404 public error envelope with code `NOT_FOUND`;
-- broader API/auth/security/integration suites exercise global error behavior;
-- discovery starting HEAD `e592535b082c9284ecf88f19e60cb70821e8aa16` had Admin AI `34813851669`, Combined `34813851671`, Stage13G `34813851684` — all SUCCESS.
+- unknown route still returns HTTP 404 with `{ error: { code: "NOT_FOUND", message: "المسار غير موجود" } }`;
+- global thrown errors still map through existing `toPublicError(error)` authority;
+- only mapped 5xx errors log `request.log.error({ err: error }, "request failed")`;
+- mapped status/body behavior remains unchanged.
 
-Impact:
+Verification evidence at Worker A handoff:
 
-- no schema/database/business-rule change;
-- no intended auth or Student contract semantic change, but shared server error-envelope regressions remain required;
-- no Student frontend restructuring.
+- Architecture Guard `34816433721` — SUCCESS;
+- source-head Admin AI `34816433699` was cancelled after later documentation commits superseded the head before completion, so it is not closure evidence;
+- source-head Combined `34816433773` and Stage13G `34816433715` were still active/pending when documentation began;
+- later documentation-only heads contain the same implementation tree for affected source files; exact/source-tree-equivalent gates must be checked by the next worker before marking the seam DONE.
 
-Deletion/switch condition:
-
-Both inline handlers leave `apps/api/src/app.ts`; one `registerPublicErrorHandlers(app)` call remains at the same composition point; no duplicate ownership; required gates green.
-
-Implementation gates:
-
-Architecture Guard; API lint/typecheck/unit/build; unchanged app not-found test; auth/security/integration regressions; clean PostgreSQL combined gate; Combined Chromium; Stage13G real API + PostgreSQL + Chromium.
+Deletion/switch condition is structurally satisfied (single owner, no duplicate handler ownership), but completion remains gated on runtime/integration evidence.
 
 ### AB-01.5 — PENDING
 
@@ -115,4 +109,4 @@ AB-01 active → AB-02 thin Admin shell/router/providers/layouts/lazy routes →
 
 ## Exact continuation
 
-Implement **only** the selected third AB-01.4 public-error/not-found composition seam. Do not bundle database-close lifecycle or any broader app/service/route refactor.
+Verify the implemented third AB-01.4 public-error/not-found seam using required exact/source-tree-equivalent Architecture Guard, API quality, auth/security/integration, clean PostgreSQL, Combined Chromium and Stage13G real API/PostgreSQL/Chromium gates. If green, mark this seam DONE before selecting/implementing another composition concern. If a gate fails, fix its root cause only.
