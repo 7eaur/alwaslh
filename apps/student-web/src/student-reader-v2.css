@@ -119,7 +119,11 @@
 .reader-page {
   display: grid;
   gap: .55rem;
-  padding-bottom: .85rem;
+  padding: 0 0 .85rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .reader-page + .reader-page {
@@ -130,6 +134,12 @@
 .reader-media {
   width: 100%;
   margin: 0;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .reader-media img {
@@ -140,9 +150,9 @@
   margin-inline: auto;
   object-fit: contain;
   border: 0;
-  border-radius: .3rem;
+  border-radius: .18rem;
   background: #fff;
-  box-shadow: 0 1px 5px rgb(18 60 67 / .07);
+  box-shadow: 0 1px 4px rgb(18 60 67 / .055);
 }
 
 .reader-media figcaption {
@@ -240,8 +250,8 @@
   .reader-media img {
     width: 100%;
     max-height: none;
-    border-radius: .18rem;
-    box-shadow: 0 1px 4px rgb(18 60 67 / .06);
+    border-radius: .1rem;
+    box-shadow: none;
   }
 
   .reader-media figcaption {
