@@ -90,13 +90,20 @@
 .student-home__welcome {
   min-height: 8.2rem;
   display: grid;
-  align-content: center;
-  justify-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(11rem, 19rem);
+  align-items: center;
+  gap: 1.25rem;
   padding: .65rem .2rem 1rem;
+}
+
+.student-home__welcome-copy {
+  grid-column: 2;
+  min-width: 0;
   text-align: right;
 }
 
 .student-home__welcome h1 {
+  margin: 0;
   font-size: clamp(1.8rem, 7vw, 2.55rem);
   font-weight: 750;
   letter-spacing: -.02em;
@@ -113,11 +120,37 @@
   background: var(--student-accent);
 }
 
-.student-home__welcome p {
-  margin-top: .5rem;
-  max-width: 32rem;
+.student-home__welcome-copy > p {
+  max-width: 31rem;
+  margin: .5rem 0 0;
+  color: var(--student-text-secondary);
   font-size: .92rem;
+  line-height: 1.7;
 }
+
+.student-home__quote {
+  grid-column: 1;
+  grid-row: 1;
+  width: fit-content;
+  max-width: 12rem;
+  margin: 0;
+  color: var(--student-accent-strong);
+  font-size: .82rem;
+  font-weight: 600;
+  line-height: 1.8;
+  text-align: center;
+  opacity: .78;
+}
+
+.student-home__quote::before,
+.student-home__quote::after {
+  color: var(--student-accent);
+  font-size: 1.25rem;
+  line-height: 0;
+}
+
+.student-home__quote::before { content: "“"; }
+.student-home__quote::after { content: "”"; }
 
 .student-home-section {
   gap: .6rem;
@@ -126,6 +159,13 @@
 .student-home-section__heading h2,
 .student-v2-section-title {
   font-size: 1.08rem;
+}
+
+.student-home-section__heading a {
+  min-height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  padding-inline: .15rem;
 }
 
 .student-home-stats {
@@ -183,8 +223,41 @@
   }
 
   .student-home__welcome {
-    min-height: 7.4rem;
+    min-height: 8.4rem;
+    grid-template-columns: minmax(7rem, .8fr) minmax(0, 1.2fr);
+    gap: .7rem;
     padding-top: .35rem;
+  }
+
+  .student-home__welcome h1 {
+    font-size: clamp(1.72rem, 8vw, 2.15rem);
+  }
+
+  .student-home__welcome-copy > p {
+    font-size: .84rem;
+    line-height: 1.65;
+  }
+
+  .student-home__quote {
+    max-width: 8.5rem;
+    font-size: .73rem;
+    line-height: 1.7;
+  }
+}
+
+@media (max-width: 24rem) {
+  .student-home__welcome {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .student-home__welcome-copy,
+  .student-home__quote {
+    grid-column: 1;
+  }
+
+  .student-home__quote {
+    display: none;
   }
 }
 
