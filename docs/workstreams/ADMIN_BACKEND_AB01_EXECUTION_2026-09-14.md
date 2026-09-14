@@ -51,15 +51,7 @@ Implemented ownership:
 - existing allowed-origin headers, credentials, `Vary: Origin`, OPTIONS methods/headers and rejected-preflight `AppError("FORBIDDEN", ..., 403)` semantics are preserved;
 - health/readiness, public error mapping, database close lifecycle, service graph and all business route registrations were deliberately untouched.
 
-Verification:
-
-- Architecture Guard `34808159011` — SUCCESS on source HEAD;
-- source HEAD → verification HEAD `3d281eddcdaf4a8d75d810dc0e5ded5a35392cad` differs only in autonomous execution-state documentation;
-- Stage13E Admin AI `34809211720` — SUCCESS;
-- Stage13E Combined Integration `34809211704` — SUCCESS;
-- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
-
-Conclusion: first AB-01.4 seam is **DONE**.
+Verification: Architecture Guard `34808159011`, Admin AI `34809211720`, Combined `34809211704`, Stage13G `34809211707` — SUCCESS.
 
 ### Second seam — health/readiness HTTP ownership — DONE
 
@@ -68,31 +60,45 @@ Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 Implemented exactly the selected bounded app-level responsibility:
 
 - created `apps/api/src/app/http/health.ts`;
-- `registerHealthRoutes(app, database)` now owns `GET /health` and `GET /ready`;
-- `apps/api/src/app.ts` imports and invokes the health owner at the same relative position after business route registration and before not-found/error/onClose handling;
-- `/health` still returns `{ status: "ok", service: "alwaslh-api" }` without calling PostgreSQL;
-- `/ready` still uses only `database.ping()`, returns `{ status: "ready" }` on success, logs `database readiness check failed` on ping failure, and returns 503 `{ status: "not_ready" }`;
-- the existing three direct health/readiness tests remain unchanged as parity authority;
-- public error/not-found handlers, database-close lifecycle, database construction/config, `server.ts`, service graph, migrations/schema and Student frontend were untouched.
+- `registerHealthRoutes(app, database)` owns `GET /health` and `GET /ready`;
+- route paths/methods/statuses/bodies and readiness failure logging remain unchanged;
+- readiness still calls only `database.ping()`;
+- public error/not-found, DB close lifecycle, database construction/config, `server.ts`, service/composite graph, migrations/schema and Student frontend were untouched.
+
+Closure evidence: Architecture Guard `34811642661`; source-tree-equivalent Admin AI `34811809959`, Combined `34811809962`, Stage13G `34811810021` — SUCCESS.
+
+### Third seam — public error/not-found HTTP ownership — DONE
+
+Source implementation HEAD: `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
+
+Implemented exactly the selected app-level HTTP presentation boundary:
+
+- created `apps/api/src/app/http/public-errors.ts`;
+- `registerPublicErrorHandlers(app)` owns `setNotFoundHandler` and `setErrorHandler`;
+- `apps/api/src/app.ts` composes that owner after health registration and no longer owns the inline handler bodies or imports `toPublicError` directly;
+- existing `toPublicError(error)` remains the canonical public-error mapping authority;
+- unknown routes still return 404 + `{ error: { code: "NOT_FOUND", message: "المسار غير موجود" } }`;
+- mapped statuses/bodies remain unchanged;
+- `request.log.error({ err: error }, "request failed")` remains 5xx-only;
+- database `onClose`, Fastify construction/options, service graph, business route registry, migrations/schema and Student frontend were untouched.
 
 Closure evidence:
 
-- Architecture Guard `34811642661` — SUCCESS on source implementation HEAD;
-- direct source Combined run `34811642693` was cancelled only because later documentation commits superseded it;
-- compare `a302871b3486ae95810cea40dccca68363a29055...b095741e621f9241ff3eed0de86b4e64048604bf` proves the five intervening commits changed documentation only: `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, this AB-01 execution doc and the autonomous execution-state file;
-- Stage13E Admin AI `34811809959` — SUCCESS on the documentation-only equivalent source tree;
-- Stage13E Combined Integration `34811809962` — SUCCESS including API/Admin quality gates, clean PostgreSQL, backend authority/auth regressions and real Admin Chromium;
-- Stage13G `34811810021` — SUCCESS including Admin/API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+- Architecture Guard `34816433721` — SUCCESS on source implementation HEAD;
+- compare `001d45892bf4a17458f3beaeaaa1a7430be49b44...068ee06cf7fec442b95ddada2667d8aac5d1c2a2` changed only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`;
+- source-tree-equivalent Admin AI `34816613371` — SUCCESS;
+- Combined `34816613431` — SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend authority/auth-security regressions and real Admin Chromium;
+- Stage13G `34816613493` — SUCCESS including Admin/API quality, clean PostgreSQL, relevant integrations/auth regression and real API + PostgreSQL + Chromium.
 
-Conclusion: second AB-01.4 seam is **DONE**. No behavior, schema or Student frontend change was introduced.
+Conclusion: third AB-01.4 seam is **DONE**.
 
 ### Next AB-01.4 action
 
-Perform **discovery only** for the third bounded app-composition seam in `apps/api/src/app.ts`. Select one smallest responsibility backed by existing contracts/tests and explicit non-goals. Do not implement that third seam in the same discovery increment.
+Perform **discovery only** for the next bounded app-composition seam still owned by `apps/api/src/app.ts`. Select one smallest responsibility backed by existing contracts/tests and explicit non-goals. Document target owner, dependency/order constraints, switch/deletion condition and closure gates. Do not implement the newly selected seam in the same discovery increment.
 
 ## AB-01.5 — Common backend technical ownership — PENDING
 
-Normalize only proven cross-cutting technical concerns such as public error mapping, auth/session helpers, PostgreSQL connection/transaction helpers, observability hooks or media technical helpers when genuinely shared. Domain/business rules stay with module owners.
+Normalize only proven cross-cutting technical concerns such as auth/session helpers, PostgreSQL connection/transaction helpers, observability hooks or media technical helpers when genuinely shared. Domain/business rules stay with module owners. Public HTTP error registration now has its bounded app-level owner; do not redesign `toPublicError` without separate evidence.
 
 ## AB-01.6 — Foundation closure gate — PENDING
 
