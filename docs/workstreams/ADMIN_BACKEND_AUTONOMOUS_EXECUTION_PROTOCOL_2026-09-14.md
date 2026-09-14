@@ -1,37 +1,63 @@
 # Admin + Backend Autonomous Execution Protocol — الوسيلة الذكية
 
-Date: 2026-09-14
-Status: ACTIVE / BINDING
-Branch: `rebuild/super-admin-foundation`
+Date: 2026-09-14  
+Status: **ACTIVE / BINDING**  
+Branch: `rebuild/super-admin-foundation`  
 Draft PR: #52 — remain Draft; never auto-merge.
 
 ## 1. Purpose
 
-This protocol governs the two scheduled alternating execution workers that continue the Admin + Backend rebuild every 30 minutes in a safe serial handoff pattern.
+This protocol governs **three scheduled alternating workers** that continue the Admin + Backend rebuild in one serial roadmap with a 20-minute handoff cadence.
 
-The two workers do NOT own separate code areas. They share one ordered roadmap and one branch. Each worker must understand the exact state left by the previous worker, execute the smallest correct next step, verify it, then leave a precise handoff for the other worker.
+The workers do **not** own separate code areas. They share one branch, one roadmap, one execution-state file and one source of truth. Every worker must understand the exact state left by the previous worker, execute only the smallest correct next increment, verify it, then leave a precise handoff.
 
-Goal: continuous progress without parallel conflicting mutations, duplicated work, architecture drift, or undocumented state.
+Goal: continuous high-confidence progress without parallel conflicting mutations, duplicated work, architecture drift, stale assumptions or undocumented state.
 
-## 2. Scope
+## 2. Scheduler topology
 
-Owned by this workstream:
+Strict recurring order:
+
+- **Worker A** — every hour at `:00`;
+- **Worker B** — every hour at `:20`;
+- **Worker C** — every hour at `:40`.
+
+Thus the project receives one scheduled execution opportunity every 20 minutes:
+
+`A → B → C → A → B → C → ...`
+
+All workers continue the **same ordered roadmap**. No worker may invent an unrelated task merely because another worker touched the active task.
+
+### Automatic shutdown rule
+
+The schedule is temporary and exists only until the roadmap is finished.
+
+When `AB-08` is fully complete with required exact-head green evidence and `ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` is set to `COMPLETE`, the worker that proves completion MUST immediately disable all three scheduled tasks:
+
+- `Alwaslh Worker A`
+- `Alwaslh Worker B`
+- `Alwaslh Worker C`
+
+No scheduled run should continue after verified project completion.
+
+## 3. Scope
+
+Owned here:
 
 - complete Super Admin frontend architecture/product/UX/UI;
 - full Fastify backend/API;
 - PostgreSQL schema/migrations/integrity;
-- security, auth/session/device, access/entitlements, curriculum/publication, content/media/OCR, AI/review, Question Bank, Quiz Builder, assessment/scoring, offline authorization/integrity, notifications and operations;
-- shared packages only when a real shared contract/design responsibility exists;
-- CI, contract/integration/security/browser verification;
+- auth/session/device, security, access/entitlements, curriculum/publication, content/media/OCR, AI/review, Question Bank, Quiz Builder, assessment/scoring, offline authorization/integrity, notifications and operations;
+- shared packages only when a genuine shared contract/design responsibility exists;
+- CI, contracts, integration/security/browser verification;
 - architecture documentation and handoff state.
 
 Only structural exclusion:
 
 - `apps/student-web` frontend redesign/restructure belongs to the separate Student workstream.
 
-Student-facing backend contracts remain owned here. Student code/tests may be inspected only as compatibility evidence when server/shared contracts change.
+Student-facing backend contracts remain owned here. Student frontend code/tests may be inspected only as compatibility evidence when shared/server contracts change.
 
-## 3. Source of truth order
+## 4. Source of truth order
 
 1. repository code on the current branch;
 2. PostgreSQL migrations/schema;
@@ -39,11 +65,11 @@ Student-facing backend contracts remain owned here. Student code/tests may be in
 4. verified runtime/browser evidence;
 5. current canonical documentation.
 
-Never substitute old chat context for current repository evidence.
+Old chat context never overrides current repository evidence.
 
-## 4. Mandatory startup for EVERY scheduled run
+## 5. Mandatory startup for EVERY run
 
-Before any mutation, the worker MUST:
+Before any mutation, each worker MUST:
 
 1. fetch live HEAD of `rebuild/super-admin-foundation`;
 2. fetch live `main` HEAD;
@@ -51,67 +77,51 @@ Before any mutation, the worker MUST:
 4. read `PROJECT_ENGINEERING_LOG.md`;
 5. read `PROJECT_HANDOFF.md`;
 6. read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`;
-7. read the active roadmap docs listed in `PROJECT_STATUS.md`;
-8. inspect exact-head Actions/CI for the current branch;
+7. read active roadmap/architecture docs listed in `PROJECT_STATUS.md`;
+8. inspect exact-head Actions/CI for current branch;
 9. inspect current code/tests for the active batch;
-10. confirm no unresolved conflicting work is already active.
+10. confirm no unresolved active worker lease/conflicting mutation exists.
 
 Anything not inspected is `NOT YET VERIFIED`.
 
-## 5. Alternating worker law
+## 6. Mutual exclusion / anti-collision law
 
-Two workers operate in strict sequence:
+`ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` is the shared lease and handoff authority.
 
-- Worker A — top of the hour;
-- Worker B — half past the hour.
+If state is `RUNNING` and the recorded start/lease is recent enough that another worker may still be executing, the next worker MUST NOT mutate overlapping code. It may inspect CI/state only and leave the branch unchanged.
 
-Each worker runs hourly, staggered by 30 minutes, producing one execution opportunity every half hour.
+If a previous run looks stale/abandoned, reconcile actual HEAD + CI before taking ownership.
 
-Both workers MUST continue the SAME ordered roadmap. Neither worker may start an unrelated task merely because the other worker touched the current task.
-
-The next worker always treats the repository + execution state file as authoritative handoff.
-
-## 6. Mutual-exclusion / anti-collision protocol
-
-Before mutation, inspect `ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`.
-
-If state is `RUNNING` and the recorded lease/start is recent enough that the prior worker may still be executing, DO NOT mutate overlapping code. Instead:
-
-- inspect CI/state only;
-- record that execution was skipped due to active lease if safe to do so;
-- leave the branch unchanged.
-
-If the prior run is clearly stale/abandoned, reconcile actual HEAD and CI before taking ownership.
-
-At the start of a real execution batch, update the state to:
+At start of a real batch, record:
 
 - `RUNNING`;
-- worker identity A or B;
+- worker identity `A | B | C`;
+- sequence number;
+- start timestamp;
 - observed starting HEAD;
 - active roadmap item/subtask;
-- intended smallest next step;
-- start timestamp.
+- intended smallest next step.
 
-At the end of the run, update state to exactly one of:
+At the end, state must be exactly one of:
 
-- `READY_FOR_NEXT` — completed a safe increment; next worker may continue;
-- `WAITING_FOR_CI` — implementation is done but required exact-head gates are still running;
-- `BLOCKED` — real blocker needs resolution before continuing;
-- `COMPLETE` — roadmap fully finished and final verification complete.
+- `READY_FOR_NEXT` — safe increment complete;
+- `WAITING_FOR_CI` — implementation/documentation done but required exact-head gates still running;
+- `BLOCKED` — real blocker needs resolution;
+- `COMPLETE` — AB-08 and final verification fully complete.
 
-Never leave state as `RUNNING` after finishing normally.
+Never leave state as `RUNNING` after a normal finish.
 
-## 7. Execution size rule
+## 7. Execution-size rule
 
-Each scheduled run should perform ONE smallest coherent high-confidence increment, not open multiple fronts.
+Each scheduled run performs **ONE smallest coherent high-confidence increment**.
 
-A valid increment usually does one of:
+Examples:
 
 - finish/verify the currently active subtask;
-- implement one small architecture boundary;
+- implement one architecture boundary;
 - migrate one owner seam;
 - add one necessary test/guard;
-- complete one UI state primitive proven by duplication;
+- extract one product-state primitive proven by duplication;
 - close one backend composition seam;
 - complete one vertical-slice step.
 
@@ -119,18 +129,18 @@ Do not start a second major concern merely because time remains.
 
 ## 8. Required reasoning before mutation
 
-For every batch answer internally and, where durable, document:
+For every batch establish:
 
-1. What operator job/backend use case is being improved?
-2. What is the current owner?
-3. What is the target owner?
-4. What API/DB/security contract must remain true?
-5. What old owner/compatibility path will eventually be deleted?
-6. What tests prove parity?
-7. Could this change break the separate Student frontend consumer?
-8. Is the change a root fix or merely a patch?
-9. Is any abstraction/framework being introduced without evidence?
-10. What exact-head gates are required before advancing?
+1. operator job/backend use case;
+2. current owner;
+3. target owner;
+4. authoritative API/DB/security contract;
+5. legacy/compatibility owner and deletion condition;
+6. tests proving parity;
+7. possible Student-consumer impact;
+8. whether this is a root fix rather than a patch;
+9. whether any abstraction/framework is being introduced without evidence;
+10. exact-head gates required before advancing.
 
 ## 9. Permanent architecture rules
 
@@ -154,10 +164,10 @@ For every batch answer internally and, where durable, document:
 
 - one Fastify modular monolith;
 - PostgreSQL/API remain canonical business authority;
-- conceptual direction where useful: `HTTP → Application → Domain`, infrastructure as technical adapter;
-- do not create empty layers/interfaces for ceremony;
-- no microservices, DI framework, service locator, generic repositories everywhere, or interface ceremony without demonstrated value;
-- app composition must not import private module internals in new architecture;
+- useful dependency direction: `HTTP → Application → Domain`, with Infrastructure as technical adapter;
+- do not manufacture empty layers/interfaces;
+- no microservices, DI framework, service locator, universal repositories or interface ceremony without demonstrated value;
+- new app composition must not import private module internals;
 - cross-module work uses narrow public application contracts when genuinely needed;
 - schema changes require domain/integrity need, never folder cleanup;
 - auth/authorization/entitlement/publication/revision/provenance/audit/assessment/offline authority remains server-owned.
@@ -176,13 +186,13 @@ Binding rules:
 - Loading / Empty / Error / Permission / Conflict / Unavailable / Long-running / Success / Recovery are first-class product states;
 - clickable looks clickable; static looks static;
 - primary / secondary / destructive actions are visually distinct;
-- technical IDs/provider/runtime/storage/raw JSON use progressive disclosure unless needed for the decision;
+- technical IDs/provider/runtime/storage/raw JSON use progressive disclosure unless required for the decision;
 - Arabic-first / RTL-native;
 - keyboard/focus/deep-link/back-navigation are first-class;
 - responsive/no-overflow required;
 - reduced-motion respected;
-- use existing approved brand/design system; no second visual identity;
-- cards/tabs/dialogs are not default containers: use only when semantically correct;
+- reuse approved brand/design system; no second visual identity;
+- cards/tabs/dialogs are not default containers;
 - UI completion never implies backend completion without authoritative server evidence.
 
 ## 11. Testing / verification rules
@@ -191,77 +201,77 @@ Never weaken tests, validation, auth or security to make migration pass.
 
 Tests assert durable outcomes/contracts, not obsolete wording or DOM shape.
 
-Required according to affected scope:
+According to affected scope, require:
 
-- architecture guard;
+- Architecture Guard;
 - Admin lint/typecheck/unit/build;
 - API lint/typecheck/unit/build;
 - clean PostgreSQL migrations;
 - relevant backend integration/security/auth regressions;
 - real API + PostgreSQL + Chromium Admin flow;
-- Student consumer regression only when changed backend/shared contracts affect it;
-- RTL/keyboard/focus/responsive/visual QA where UI changes.
+- Student consumer regression when a changed server/shared contract affects it;
+- RTL/keyboard/focus/responsive/visual QA for UI changes.
 
-A worker may document `WAITING_FOR_CI`; it must not falsely mark the subtask `DONE` before required exact-head gates are green.
+A worker may record `WAITING_FOR_CI`; it must never falsely mark a subtask `DONE` before its required exact-head gates are green.
 
-## 12. No-conflict Git rules
+## 12. Git / branch rules
 
 - work only on `rebuild/super-admin-foundation`;
-- do not touch the separate Student frontend implementation;
+- do not touch Student frontend implementation;
 - never force-push/reset shared history;
 - never auto-merge PR #52;
-- before structural phase boundaries, compare live `main` for Admin/API/migrations/shared-contract changes;
-- if live `main` gains scoped changes, pause and reconcile deliberately;
+- before structural phase boundaries compare live `main` for Admin/API/migrations/shared-contract changes;
+- if live `main` gains overlapping scoped changes, pause and reconcile deliberately;
 - commits must be small, coherent and accurately named;
 - no broad rename/move without ownership evidence;
 - no permanent dual ownership.
 
-## 13. Documentation rule after EVERY scheduled run
+## 13. Documentation after EVERY run
 
-Before finishing, update the SAME shared truth:
+Mandatory shared handoff:
 
-1. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` — mandatory every run;
+1. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` — update every run;
 2. `PROJECT_STATUS.md` when stage/subtask/CI truth changes;
-3. `PROJECT_ENGINEERING_LOG.md` when durable engineering evidence/decision/change occurs;
-4. `PROJECT_HANDOFF.md` when exact continuation point changes materially;
-5. relevant canonical architecture/workstream doc when the plan/decision itself changes;
-6. PR #52 comment for significant completed/blocked milestones, not noisy trivial updates.
+3. `PROJECT_ENGINEERING_LOG.md` for durable engineering evidence/decision/change;
+4. `PROJECT_HANDOFF.md` when exact continuation changes materially;
+5. relevant canonical workstream/architecture doc when plan/decision changes;
+6. PR #52 comment only for significant milestones/blockers.
 
-Every handoff must record:
+Every handoff records:
 
-- worker A/B;
-- starting HEAD;
-- ending HEAD;
+- worker `A/B/C`;
+- sequence;
+- start/end timestamps;
+- starting/ending HEAD;
+- active task/subtask;
+- completed work;
 - exact files/owners changed;
-- what was verified;
-- CI run IDs/status if applicable;
-- active task state;
+- verification and CI run IDs/status;
+- current state;
 - exact next smallest step;
-- blocker/risk if any;
+- risks/blockers;
 - whether `main` reconciliation is required.
 
-## 14. Current ordered roadmap
+## 14. Ordered roadmap
 
 ### AB-00 — Architecture baseline & guardrails — DONE
 
 - AB-00.1 ownership/boundary map — DONE
 - AB-00.2 dependency/migration inventory — DONE
-- AB-00.3 architecture guard — DONE
+- AB-00.3 Architecture Guard — DONE
 - AB-00.4 measured baseline — DONE
 - AB-00.5 readiness gate — DONE
 
 ### AB-01 — Shared foundations — ACTIVE
 
-Ordered subtasks:
-
 1. AB-01.1 shared Admin API transport/error boundary;
-2. AB-01.2 Auth/session feature ownership and session lifecycle extraction from App root;
+2. AB-01.2 Auth/session feature ownership + session lifecycle extraction;
 3. AB-01.3 minimum proven shared Admin product-state primitives;
 4. AB-01.4 backend app composition extraction without business-rule change;
 5. AB-01.5 justified common backend technical foundations only;
 6. AB-01.6 foundation exact-head verification gate.
 
-AB-01.1 and AB-01.2 are implemented; exact-head verification may still be running at the time this protocol was created. Always re-read live state rather than assuming completion.
+Always re-read live state; do not infer completion from this static protocol.
 
 ### AB-02 — Thin Admin shell + routing
 
@@ -297,7 +307,7 @@ Each slice follows:
 - standardize useful module boundaries;
 - verify transactions/auth/errors;
 - preserve Student-facing server contracts;
-- eliminate backend debt not naturally closed by AB-03.
+- eliminate backend debt not naturally closed in AB-03.
 
 ### AB-05 — Admin design/interaction convergence audit
 
@@ -337,19 +347,19 @@ Each slice follows:
 - documentation consistency;
 - final reconciliation with live `main`.
 
-PR #52 remains Draft until AB-08 exact-head green.
+PR #52 remains Draft until AB-08 exact-head green. Once AB-08 is verified and state becomes `COMPLETE`, disable all three scheduled workers immediately.
 
 ## 15. Stop conditions
 
-A scheduled worker must stop and record `BLOCKED` instead of improvising if:
+A worker records `BLOCKED` and stops instead of improvising if:
 
 - required source of truth cannot be inspected;
 - branch/HEAD changed unexpectedly and cannot be reconciled confidently;
 - live `main` introduces overlapping Admin/API/migration/shared changes;
 - required CI exposes a real regression not yet understood;
-- a schema/security/business-rule change would be needed without sufficient evidence;
+- schema/security/business-rule changes would be needed without enough evidence;
 - another worker appears actively mutating the same branch;
-- progress would require touching Student frontend implementation;
-- the only available path is a patch that violates the root architecture rules.
+- progress would require Student frontend implementation changes;
+- only available path is a patch violating root architecture rules.
 
-High confidence and continuity are more important than maximizing mutations per run.
+High confidence, serial continuity and exact evidence are more important than maximizing mutations per run.
