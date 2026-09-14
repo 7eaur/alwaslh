@@ -86,19 +86,20 @@ Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSession
 
 Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
-### AB-01.4 Backend app composition foundation — ACTIVE / THIRD SEAM SELECTED
+### AB-01.4 Backend app composition foundation — ACTIVE
 
 Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
 - CORS/preflight seam — DONE; source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 - health/readiness seam — DONE; source HEAD `a302871b3486ae95810cea40dccca68363a29055`.
-- **third seam selected:** public not-found + global public-error HTTP handling.
-- target owner: `apps/api/src/app/http/public-errors.ts` with `registerPublicErrorHandlers(app)`.
-- preserve current `toPublicError` authority, 404 envelope, statuses/bodies and 5xx logging; do not bundle DB close lifecycle or business/service composition.
-- direct parity evidence includes `apps/api/tests/app.test.ts` unknown-route public-envelope test plus broader API/auth/integration regressions.
-- starting exact-head `e592535b082c9284ecf88f19e60cb70821e8aa16` had Admin AI `34813851669`, Combined `34813851671`, Stage13G `34813851684` — all SUCCESS.
+- public not-found + global public-error HTTP seam — **IMPLEMENTED / WAITING_FOR_CI**; source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
+- owner: `apps/api/src/app/http/public-errors.ts` via `registerPublicErrorHandlers(app)`; `app.ts` no longer owns the two inline handlers or imports `toPublicError` directly.
+- behavior preserved: exact 404 envelope/message/status, existing `toPublicError` authority, mapped statuses/bodies, and 5xx-only `request failed` logging.
+- Architecture Guard run `34816433721` — SUCCESS.
+- source-head Admin AI `34816433699`, Combined `34816433773`, Stage13G `34816433715` were still running/pending at the Worker A handoff; do not mark this seam DONE until required runtime/integration gates are green.
+- database `onClose`, Fastify construction, service graph, route registry, migrations/schema and Student frontend remain untouched.
 
-**Next:** implement only this selected third seam, then run Architecture Guard + API quality + integration/auth/security + clean PostgreSQL + real Chromium gates before calling it DONE.
+**Next:** inspect source-head runs above. If all required gates are green, mark the public-error seam DONE and then perform discovery only for the next smallest AB-01.4 responsibility; if any gate fails, fix its root cause without starting another seam.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -124,4 +125,4 @@ No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: **implement only the selected third AB-01.4 public-error/not-found composition seam**; do not combine it with DB-close lifecycle, service-container, route-registry or schema work.
+Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: **verify the implemented third AB-01.4 public-error/not-found seam on its source-head required gates; do not start a fourth seam while those gates remain unresolved.**
