@@ -38,7 +38,7 @@ Normal handoff states: `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, `COMPLETE`
 
 ## Branch reconciliation
 
-Latest verified `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, advanced through Student V2 merge #58. Path-level reconciliation found Student frontend/workflow and root documentation changes only; no overlapping `apps/api`, `apps/admin-web`, migrations or scoped shared implementation needs import for current AB-01 work.
+Latest live `main` observed by Worker C during fourth-seam discovery: `258c855ace396a3f834199708c926411a3d65f79`. No structural phase boundary is being crossed in this discovery increment; current AB-01 work remains isolated from Student frontend implementation.
 
 ## Permanent architecture/product rules
 
@@ -92,14 +92,15 @@ Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVE
 
 - CORS/preflight seam — DONE; source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 - health/readiness seam — DONE; source HEAD `a302871b3486ae95810cea40dccca68363a29055`.
-- public not-found + global public-error HTTP seam — **DONE**; source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
-- owner: `apps/api/src/app/http/public-errors.ts` via `registerPublicErrorHandlers(app)`; `app.ts` no longer owns the two inline handlers or imports `toPublicError` directly.
-- behavior preserved: exact 404 envelope/message/status, existing `toPublicError` authority, mapped statuses/bodies, and 5xx-only `request failed` logging.
-- closure evidence: Architecture Guard `34816433721` SUCCESS; source-tree-equivalent Admin AI `34816613371` SUCCESS; Combined `34816613431` SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend authority, auth/security regressions and real Chromium; Stage13G `34816613493` SUCCESS including Admin quality, API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
-- compare `001d4589... → 068ee06c...` contains documentation files only, so the later successful gates exercised the same affected source implementation.
-- database `onClose`, Fastify construction, service graph, route registry, migrations/schema and Student frontend remain untouched.
+- public not-found + global public-error HTTP seam — DONE; source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
+- fourth seam **Fastify instance construction/options — SELECTED / IMPLEMENTATION NEXT**.
+- target owner: `apps/api/src/app/create-fastify-instance.ts` via narrow `createFastifyInstance(config: AppConfig): FastifyInstance`.
+- preserve exactly: logger silent/non-silent semantics, `disableRequestLogging: false`, `trustProxy: true`, `bodyLimit: 1_048_576`, `requestTimeout: 15_000`, one instance per `buildApp()` and all downstream composition ordering.
+- evidence: `apps/api/tests/app.test.ts` treats `buildApp({ config, database })` as bootstrap contract; no evidence authorizes option tuning, so extraction and tuning remain separate concerns.
+- non-goals: no DI/service container, service graph move, broad route move, database `onClose` move, config/default change, schema/migration change or Student frontend change.
+- switch condition: the new helper becomes the single owner of `Fastify(...)`; `app.ts` no longer imports Fastify as a value or embeds those option literals; source-head/exact-head gates pass.
 
-**Next:** perform discovery only for the next smallest bounded AB-01.4 responsibility in `apps/api/src/app.ts`; document current owner, target owner, contracts/tests, ordering constraints, non-goals and closure gates. Do not implement that next seam in the same discovery increment.
+**Next:** implement only the selected Fastify instance construction/options seam, verify it, close it, and only then discover a fifth seam.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -125,4 +126,4 @@ No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next engineering increment after this closure is **discovery only for the next smallest AB-01.4 app-composition seam; do not implement it until the discovery is documented and handed off.**
+Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next engineering increment is **implementation only of the selected fourth AB-01.4 Fastify instance construction/options seam**. Do not combine a fifth seam until this one is verified and documented closed.
