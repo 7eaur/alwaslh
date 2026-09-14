@@ -10,8 +10,8 @@ import { FeatureLoading } from "./shared/ui/FeatureLoading";
 const StudentAccountExperience = lazy(() =>
   import("./features/account/StudentAccountExperience").then((module) => ({ default: module.StudentAccountExperience })),
 );
-const StudentAssessmentSection = lazy(() =>
-  import("./student-assessment").then((module) => ({ default: module.StudentAssessmentSection })),
+const StudentPracticeExperience = lazy(() =>
+  import("./features/practice/StudentPracticeExperience").then((module) => ({ default: module.StudentPracticeExperience })),
 );
 const StudentLearningExperience = lazy(() =>
   import("./features/learn/StudentLearningExperience").then((module) => ({ default: module.StudentLearningExperience })),
@@ -70,7 +70,8 @@ export function StudentAccessSection({ profile, online, onSessionExpired, onLogg
         ) : null}
 
         {destination === "practice" ? (
-          <StudentAssessmentSection
+          <StudentPracticeExperience
+            profileId={profile.id}
             online={online}
             refreshKey={curriculumRefreshKey}
             onSessionExpired={onSessionExpired}
