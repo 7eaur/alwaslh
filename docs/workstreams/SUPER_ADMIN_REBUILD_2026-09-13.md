@@ -1,25 +1,27 @@
 # Super Admin Rebuild — 2026-09-13
 
-Status: **ACTIVE — AR-01 through AR-09 DONE / VERIFIED. AR-10 A11y / RTL / performance / visual QA ACTIVE.**
+Status: **HISTORICAL / SUPERSEDED FOR FUTURE EXECUTION**
 
 Branch: `rebuild/super-admin-foundation`  
 Draft PR: `#52 — refactor(admin): rebuild Super Admin foundation`  
-Latest live `main` checked this continuation: `3053640cc5bb0699cfa7456cf646e8997f6aa81b` — parallel Student/content workstream, untouched.  
-Verified AR-09 production exact-head: `c755b209bfa67980afee0ed150bd43b3574b0a3b`.
+Verified AR-09 production exact-head: `c755b209bfa67980afee0ed150bd43b3574b0a3b`.  
+Verified final Admin accessibility/runtime baseline before architecture pivot: `302127c3223d00715f1d960f37c7d25044b6b20e`, Stage13G `34793896054` — SUCCESS.
 
-> Source of truth order: repository code + PostgreSQL migrations + executable tests/CI + verified runtime + canonical project documentation.
+> This document preserves the verified AR-01..AR-10 history. It is no longer the active execution roadmap after the 2026-09-14 platform architecture decision.
 
-## Product and architecture rules
+## Superseding workstream
 
-- KEEP modular-monolith backend and server authority.
-- KEEP publication, assessment, access, human-review, revision, provenance and audit boundaries.
-- KEEP the route-owned Admin architecture proven through AR-09.
-- KEEP technical IDs/provider/runtime/storage/database details advanced-only.
-- DO NOT break or overwrite the parallel Student/audit/content workstreams.
-- Test fixtures must satisfy production contracts; backend validation is never weakened for E2E.
-- AR-10 changes are evidence-driven accessibility/RTL/performance/visual-quality work, not a redesign.
+Active architecture roadmap:
 
-## Roadmap
+`docs/workstreams/PLATFORM_ARCHITECTURE_REBUILD_2026-09-14.md`
+
+The former rule that AR-10 must make only the smallest accessibility/RTL/performance/visual fix and must not redesign/rebuild already-working surfaces is **superseded**.
+
+The new requirement is to evaluate the platform from first principles and rebuild structural ownership, data flow, design-system boundaries and application composition in a controlled, parity-proven migration.
+
+Do not resume the old AR-10 polish loop.
+
+## Verified roadmap history
 
 - AR-01 — DONE / VERIFIED.
 - AR-02 — DONE / VERIFIED.
@@ -29,73 +31,54 @@ Verified AR-09 production exact-head: `c755b209bfa67980afee0ed150bd43b3574b0a3b`
 - AR-06 — DONE / VERIFIED.
 - AR-07 — DONE / VERIFIED.
 - AR-08 — DONE / VERIFIED.
-- AR-09 — Cleanup + architecture enforcement — DONE / VERIFIED.
-- AR-10 — A11y/RTL/performance/visual QA — **ACTIVE**.
+- AR-09 — Cleanup + architecture ownership enforcement — DONE / VERIFIED.
+- AR-10 accessibility/runtime baseline — valid work preserved; final baseline `302127c3223d00715f1d960f37c7d25044b6b20e` passed Stage13G `34793896054` including Admin UI, backend/integration and Real API + PostgreSQL + Chromium.
 
-No final verification starts before AR-10 is verified and documented.
+## Important preserved decisions
 
-## AR-09 closure
+The architecture rebuild must not silently discard the product truths established by this workstream:
 
-AR-09 route/feature ownership cleanup is complete. Final production exact-head `c755b209bfa67980afee0ed150bd43b3574b0a3b` passed Frontend `34789114130`, Admin AI `34789114112`, Combined `34789114110`, Stage13G `34789114192`, including backend `103809925133`, Admin UI `103809925136`, and Real API + PostgreSQL + Chromium `103810061281`. Root `apps/admin-web/src/*Workspace.tsx` legacy ownership inventory is clean.
+- primary Admin work is route-owned and deep-linkable;
+- Overview is attention-first;
+- Operations owns Health/Audit/Diagnostics;
+- technical IDs/provider/runtime/storage/hash/raw JSON stay advanced-only unless a scenario genuinely requires them;
+- Student and Access Codes remain separate task owners;
+- server authority remains canonical for publication/review/revision/access/security/assessment;
+- test contracts are not weakened to ease migration;
+- a legacy owner is removed only after its replacement has executable parity.
 
-## AR-10 Batch 1 — accessibility baseline — ACTIVE
+These are product/authority decisions, not permission to preserve the old file structure.
 
-### Pre-mutation verification
+## AR-09 closure evidence
 
-Inherited docs head `fdc6a4ed2a3de8f7481b7522d1f14907a0018219` was closed before AR-10 mutation:
-- Admin AI `34789354837` — SUCCESS;
-- Combined `34789354801` — SUCCESS;
-- Stage13G `34789354857` — SUCCESS.
+Final AR-09 production exact-head `c755b209bfa67980afee0ed150bd43b3574b0a3b` passed:
 
-### Inspection / classification
+- Frontend `34789114130` — SUCCESS;
+- Admin AI `34789114112` — SUCCESS;
+- Combined `34789114110` — SUCCESS;
+- Stage13G `34789114192` — SUCCESS;
+  - backend `103809925133`;
+  - Admin UI `103809925136`;
+  - Real API + PostgreSQL + Chromium `103810061281`.
 
-- **KEEP:** `AdminProductShell` RTL ownership (`dir="rtl"`), skip link, route-content landmark/focus target, `RouteFocus`, semantic navigation labels, current responsive shell breakpoints, logical inline CSS, existing Stage13G real Chromium/PostgreSQL coverage.
-- **IMPROVE:** shared keyboard focus coverage and reduced-motion support.
-- **REFACTOR/REBUILD/REMOVE:** none in this batch.
-- **KEEP untouched:** backend, migrations, API contracts, Student workstream and existing tests.
+## Final AR-10 accessibility/runtime evidence before pivot
 
-### Production change
+Accessibility work established shared focus visibility and reduced-motion behavior, added real-browser accessibility checks, and exposed a real focus-management defect after authentication because the session transition happened without a pathname change.
 
-Commit `1d3fd708bb913f4363721b17e4d78c90d02b8ddc` changes only `apps/admin-web/src/styles.css`:
-- expands `:focus-visible` coverage to anchors, buttons, inputs, textarea, select, summary and programmatic `[tabindex]` targets;
-- strengthens focus-ring visibility;
-- adds a `prefers-reduced-motion: reduce` fallback for nonessential motion/smooth scrolling.
+The product defect was fixed at:
 
-This is an accessibility baseline fix only; it does not alter product behavior, server authority or route ownership.
+`302127c3223d00715f1d960f37c7d25044b6b20e` — `fix(admin): restore route focus after authentication`
 
-### Exact-head verification
+Stage13G `34793896054` completed fully green:
 
-For production code-head `1d3fd708bb913f4363721b17e4d78c90d02b8ddc`:
-- Frontend `34791103952` — ACTIVE at last check;
-- Admin AI `34791103945` — ACTIVE/queued at last check;
-- Combined `34791103997` — ACTIVE at last check;
-- Stage13G `34791104004` — ACTIVE/queued at last check.
+- Admin UI `103823172953` — SUCCESS;
+- Admin operations backend `103823173114` — SUCCESS;
+- Real API + PostgreSQL + Chromium `103823326277` — SUCCESS.
 
-Batch 1 remains **ACTIVE / NOT VERIFIED** until the exact-head matrix is green.
+This baseline is the executable safety point used by the new architecture workstream.
 
-## Explicit handoff
+## Handoff
 
-1. Re-fetch live `main`, Admin branch HEAD, all three continuity files, Draft PR #52 and exact-head CI.
-2. Close the Batch 1 production matrix above before any further production mutation. Documentation descendants may trigger newer CI; do not confuse them with the production code-head evidence.
-3. If Batch 1 is green, mark it VERIFIED and continue AR-10 only.
-4. Next AR-10 work must be derived from actual runtime evidence: keyboard navigation/focus, RTL directionality, responsive widths/no horizontal overflow, real Chromium flows, and performance/visual sanity.
-5. Make only the smallest evidence-driven fix/test; do not redesign already-correct surfaces.
-6. Preserve Student isolation, backend/PostgreSQL authority and test strength.
-7. Keep PR #52 Draft; no merge or auto-merge.
-8. AR-10 closes only after accessibility + RTL + performance + visual/responsive QA are exact-head green. Then run final verification only and stop changes when review/merge readiness is proven.
+Continue only from `PLATFORM_ARCHITECTURE_REBUILD_2026-09-14.md`, beginning at PA-00. Preserve the verified behavior above as migration evidence, but do not use the historical Admin file layout as the target architecture.
 
-## Quality gate for AR-10 / final verification
-
-- lint;
-- strict typecheck;
-- unit/integration tests;
-- production build;
-- backend/auth/security regressions where applicable;
-- real Chromium flows;
-- keyboard/focus evidence;
-- RTL directionality evidence;
-- responsive/no-overflow evidence;
-- performance/visual sanity;
-- final exact-head matrix before closure.
-
-Acceptance: **Functional + Clear + Elegant + Consistent + Fast + Maintainable + Professional**.
+PR #52 remains Draft. No merge or auto-merge.
