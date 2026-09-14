@@ -34,19 +34,22 @@ Older `PLATFORM_ARCHITECTURE_*` documents are historical rationale only and are 
 
 ## Scheduled continuation law
 
-Worker A and Worker B continue the same ordered roadmap, staggered by 30 minutes. Every run reads the live state, current branch/main HEADs, exact-head CI and canonical docs before mutation; performs one smallest coherent increment; verifies it; then records ending HEAD, evidence and the exact next step. If another worker is still active, do not create overlapping mutations.
+Workers A, B and C continue the same ordered roadmap on the same branch, staggered by 20 minutes (`:00`, `:20`, `:40`). Every run reads the live execution state, current branch/main HEADs, exact-head CI and canonical docs before mutation; performs one smallest coherent increment; verifies it; then records ending HEAD, evidence and the exact next step. If another worker is still active, do not create overlapping mutations.
 
 Normal handoff states are `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE`.
+
+After verified AB-08 completion and state `COMPLETE`, the proving worker disables all three scheduled tasks.
 
 ## Branch reconciliation
 
 Continue isolated Admin/backend work without importing Student frontend implementation. Re-compare live `main` before every structural phase boundary and before PR readiness.
 
-Latest reconciliation in Worker A sequence 1:
+Latest Worker A sequence 2 reconciliation:
 
-- live `main`: `3053640cc5bb0699cfa7456cf646e8997f6aa81b`;
-- unchanged from prior AB-01 reconciliation;
-- no new overlapping Admin/API/migrations/shared-contract change observed.
+- live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`;
+- main advanced through Student V2 merge #58;
+- path-level compare from prior main checkpoint showed Student frontend/workflow/docs changes only, with no overlapping Admin/API/migrations/scoped shared implementation changes;
+- no implementation merge/rebase is required for the current AB-01.3 increment.
 
 ## Permanent architecture/product rules
 
@@ -121,13 +124,32 @@ Evidence:
 - Architecture Guard `34799891149` — SUCCESS on last source-code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a`;
 - `e0b90cd..d955a340` is documentation-only, so source architecture did not change after the successful guard.
 
-### AB-01.3 Product-state primitives — NEXT
+### AB-01.3 Product-state primitives — IMPLEMENTED / WAITING_FOR_CI
 
-Inspect real repeated states first. Extract only the minimum proven Admin-only primitive. Current evidence shows duplication in Overview/Operations loading/error/retry states; do not create a generic mega-component or generic copy that hides server truth.
+Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
+
+Implemented the smallest proven Admin-only reusable state surface:
+
+- `apps/admin-web/src/shared/ui/AdminProductState.tsx` owns the title/body/optional-retry presentation shell only;
+- `apps/admin-web/src/shared/ui/admin-product-state.css` owns its styling;
+- Overview and Operations now consume the shared primitive for loading/error/retry states;
+- feature-specific load state machines, error copy, server truth and retry callbacks remain feature-owned;
+- duplicate local state components and legacy `.operations-page-state` CSS ownership were removed;
+- no generic empty/permission/conflict/success abstraction was invented without evidence.
+
+Required source-head workflows currently running/pending:
+
+- Architecture Guard `34804704619`;
+- Stage13E Admin AI `34804704717`;
+- Stage13E Frontend Preparation `34804704759`;
+- Stage13E Combined Integration `34804704721`;
+- Stage13G Admin Operations `34804704756`.
+
+Do not mark AB-01.3 DONE until required exact-head gates are green.
 
 ### AB-01.4 Backend app composition foundation — PENDING
 
-Thin `apps/api/src/app.ts` by extracting real app-level composition/config/plugin responsibilities without changing business rules or introducing DI/repository ceremony.
+Thin `apps/api/src/app.ts` by extracting real app-level composition/config/plugin responsibilities without changing business rules or introducing DI/repository ceremony. Start only after AB-01.3 closure evidence is recorded.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -164,4 +186,4 @@ Always read first:
 
 `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
 
-The next engineering mutation after Worker A sequence 1 is AB-01.3, subject to the live handoff/state and exact branch evidence at the next run.
+Current continuation: inspect the exact source-head gates for `cfa2016e056f6dc4f9669236414a7acbd9551011`; if green, close AB-01.3 in documentation as one coherent increment. Do not begin AB-01.4 until that closure is proven.
