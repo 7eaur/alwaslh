@@ -43,12 +43,7 @@ export function registerStudentOfflineRoutes(
     const profile = await currentProfile(request, config, auth);
     if (profile.role !== "student") throw new AppError("FORBIDDEN", "هذه العملية للطالب فقط", 403);
     const query = parseBody(OfflineDeltaQuerySchema, request.query);
-    const delta = await sync.delta(
-      profile.id,
-      sessionToken(request, config),
-      query.after,
-      query.limit,
-    );
+    const delta = await sync.delta(profile.id, sessionToken(request, config), query.after, query.limit);
     reply.header("Cache-Control", "private, no-store");
     reply.header("Pragma", "no-cache");
     return { delta };
