@@ -5,18 +5,7 @@ Purpose: allow any new/manual/scheduled execution to resume the scoped Super Adm
 
 ## 1. Mandatory startup order
 
-Before any mutation:
-
-1. confirm repo `7eaur/alwaslh`;
-2. live-check `main` and `rebuild/super-admin-foundation` HEADs;
-3. read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` FIRST for the exact continuation point;
-4. read `PROJECT_STATUS.md`;
-5. read `PROJECT_ENGINEERING_LOG.md`;
-6. read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md`;
-7. read the active phase execution doc referenced by status/state;
-8. inspect current code/tests/migrations for the active batch;
-9. inspect exact-head Actions before claiming health;
-10. before structural phase boundaries, compare live `main` for scoped Admin/API/migrations/shared changes.
+Before any mutation: confirm repo `7eaur/alwaslh`; live-check `main` and `rebuild/super-admin-foundation`; read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first; read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, this handoff, the autonomous protocol and active phase docs; inspect current code/tests/migrations and exact-head Actions; compare live `main` at structural boundaries.
 
 Code/migrations/executable CI/runtime evidence outrank prose. Anything not inspected is `NOT YET VERIFIED`.
 
@@ -24,85 +13,71 @@ Code/migrations/executable CI/runtime evidence outrank prose. Anything not inspe
 
 IN: complete Super Admin frontend/product/UX/UI/architecture, full Fastify API/backend, PostgreSQL/migrations/integrity, server capabilities consumed by Admin/Student, relevant shared contracts/design primitives, CI/security/integration/browser verification and architecture documentation.
 
-OUT only: structural/design implementation of `apps/student-web` frontend. Student-facing backend remains in scope; Student frontend tests/code may be used as consumer regression evidence when shared/server contracts change.
+OUT only: structural/design implementation of `apps/student-web` frontend. Student-facing backend remains in scope; Student frontend tests/code may be used only as consumer-regression evidence when shared/server contracts change.
 
 ## 3. Active branch / PR
 
 - branch: `rebuild/super-admin-foundation`;
 - PR #52: Draft, unmerged, never auto-merge;
 - never force-reset/force-push shared history;
-- never mix separate Student frontend implementation into this workstream.
-
-Latest reconciled `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62` after Student V2 merge #58. Its delta from the prior reconciled main is Student frontend/workflow + root docs only; no overlapping API/Admin/migration/scoped-shared implementation requires import for AB-01.4.
+- latest reconciled `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; no observed scoped overlap with current AB-01 backend work.
 
 ## 4. Alternating execution
 
-Workers A, B and C share one roadmap and branch in serial order `A → B → C`, staggered at `:00`, `:20`, `:40`. Each run performs one smallest coherent increment, writes the shared state, and hands the exact next step to the following worker.
-
-Shared truth: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`.
-
-If the prior worker appears still active, do not mutate overlapping work. Every run ends in `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE` with starting/ending HEAD, task, changes, CI evidence and exact next step. After verified AB-08 completion, the proving worker disables all three scheduled tasks.
+Workers A/B/C share one branch/roadmap in serial order `A → B → C`, staggered at `:00/:20/:40`. Shared truth is `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`. If another worker is active, do not mutate overlapping work. Every run ends in `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE` with exact HEAD/evidence/next step. After verified AB-08 completion, disable all three scheduled tasks.
 
 ## 5. Architecture law
 
-`operator job/use case → DB/API/security contracts → current owner → target owner → product states/flow → backend seam correction where needed → replacement → verify outcome → switch → delete legacy owner → exact-head gates → document`
+`operator job/use case → DB/API/security contracts → current owner → target owner → product states/flow → backend seam correction → replacement → verify outcome → switch → delete legacy owner → exact-head gates → document`
 
 No patch-only closure. No big-bang rewrite.
 
-### Admin
+Admin app composes only; features own workflows/contracts; shared never imports app/features; substantial routes lazy-load; one shell owns chrome/navigation. Backend remains one Fastify modular monolith over PostgreSQL with selective useful boundaries and no DI/service-locator/interface ceremony without evidence.
 
-App composes only; app imports feature public/routes boundaries; feature internals private; shared never imports app/features; substantial routes lazy-load; one shell owns chrome/navigation; preserve verified `/app`; browser state is not canonical authority; no state/query/styling rewrite without evidence.
+## 6. Product/testing rules
 
-### Backend
+Priority: **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**. No fake data. Product states/RTL/keyboard/focus/responsive/reduced-motion are mandatory. Never weaken tests/validation/auth/security. According to affected scope require Architecture Guard, Admin/API quality, clean PostgreSQL, relevant integrations/security/auth, real API + PostgreSQL + Chromium, and Student consumer regressions only when a changed server/shared contract affects them.
 
-One Fastify modular monolith over PostgreSQL; PostgreSQL/API canonical authority; useful direction `HTTP → Application → Domain` with Infrastructure adapters; no mandatory empty layers/interfaces; no microservices/DI/service locator/generic repository ceremony without evidence; cross-module dependencies use narrow public contracts; schema changes only for real domain/integrity needs.
-
-## 6. Product/design rules
-
-Priority: **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**.
-
-Loading/Empty/Error/Permission/Conflict/Unavailable/Long-running/Success/Recovery are first-class. No fake data. Arabic-first RTL, keyboard/focus, responsive/no-overflow and reduced-motion are mandatory. Reuse approved brand/design system.
-
-## 7. Testing rules
-
-Never weaken tests, validation, auth or security. As affected require Architecture Guard; Admin lint/typecheck/unit/build; API lint/typecheck/unit/build; clean PostgreSQL migrations; backend/auth/security/integration regressions; real API + PostgreSQL + Chromium; Student consumer regression only for changed shared/server contracts; RTL/keyboard/focus/responsive/visual QA for UI changes.
-
-If required CI is still running, use `WAITING_FOR_CI`.
-
-## 8. Current phase
+## 7. Current phase
 
 - AB-00 — DONE
 - AB-01 — ACTIVE
 - AB-01.1 shared Admin API transport/error boundary — DONE
 - AB-01.2 Auth/session ownership + SessionProvider — DONE
 - AB-01.3 minimum proven shared product-state primitive — DONE
-- **AB-01.4 backend app composition foundation — DISCOVERY COMPLETE / FIRST IMPLEMENTATION NEXT**
+- **AB-01.4 backend app composition foundation — ACTIVE / FIRST CORS SEAM DONE**
 - AB-01.5 justified common backend technical foundations — PENDING
 - AB-01.6 foundation gate — PENDING
 
-Canonical AB-01.4 discovery:
+## 8. AB-01.4 first seam closure
 
-`docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`
+Source implementation HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 
-The discovery mapped `apps/api/src/app.ts` as owner of Fastify construction, CORS/preflight policy, adapters, service graph, cross-service composites, route registration, health/readiness, public error/not-found handling and database close lifecycle. It recorded behavior-sensitive service dependencies and explicitly rejected a giant service container, broad route move, empty folder scaffolding and combined DB/error migration.
+`apps/api/src/app/plugins/cors.ts` now owns the existing global CORS/preflight policy through `registerCorsPolicy(app, config)`. Direct `app.addHook("onRequest")` scope and ordering remain unchanged. `app.ts` composes the helper before route registration. No health/readiness, error, database lifecycle, service graph, route-registration, migration or Student frontend behavior was moved.
 
-## 9. Exact next engineering task — AB-01.4 FIRST IMPLEMENTATION
+Verification over the same source tree:
 
-Implement **only the proven CORS/preflight extraction**:
+- Architecture Guard `34808159011` — SUCCESS;
+- source-to-verification compare through `3d281eddcdaf4a8d75d810dc0e5ded5a35392cad` — documentation-only;
+- Admin AI `34809211720` — SUCCESS;
+- Combined `34809211704` — SUCCESS including clean PostgreSQL, backend/auth regressions and real Admin Chromium;
+- Stage13G `34809211707` — SUCCESS including Admin/API quality, clean PostgreSQL, listed integrations/auth and real API + PostgreSQL + Chromium.
 
-1. create `apps/api/src/app/plugins/cors.ts`;
-2. move the existing allowed-origin/CORS/preflight `onRequest` behavior unchanged into `registerCorsPolicy(app, config)`;
-3. continue using direct `app.addHook()` semantics — do not switch to an encapsulated `app.register()` plugin in this increment;
-4. invoke `registerCorsPolicy(app, config)` in `buildApp()` at the same position: after Fastify construction, before business route registration;
-5. remove only the now-unused inline `allowedOrigins`/`AppError` ownership from `app.ts` if no longer needed there;
-6. do **not** move health/readiness, public errors, DB lifecycle, service construction or route registration in this increment;
-7. preserve `apps/api/tests/app.test.ts` CORS behavior exactly;
-8. verify Architecture Guard + API lint/typecheck/unit/build + current Combined/real-browser and Stage13G/equivalent exact-head gates before marking this extraction done.
+Therefore the first CORS/preflight extraction is **DONE**.
 
-CORS is global browser transport policy, so Admin and Student HTTP semantics must remain unchanged. No Student frontend restructuring is authorized.
+## 9. Exact next engineering task
+
+Perform **second AB-01.4 composition discovery only**:
+
+1. read live state/HEAD/main and inspect remaining `apps/api/src/app.ts` responsibilities after CORS removal;
+2. inspect only collaborators required to understand the candidate seam;
+3. choose the next single smallest app-level technical/composition owner with real value;
+4. record current owner, target owner, ordering/dependencies, parity tests, Student/server impact, and required gates;
+5. reject broad service-container/all-routes/combined-error-DB moves unless new evidence proves otherwise;
+6. do **not** implement the selected seam in the same discovery increment.
 
 ## 10. Remaining roadmap
 
-AB-02 thin Admin shell/router/providers/lazy routes; AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes; AB-04 remaining backend debt; AB-05 UX/UI convergence; AB-06 performance/delivery; AB-07 legacy deletion + hard dependency enforcement; AB-08 final full verification + live-main reconciliation.
+AB-02 thin Admin shell/router/providers/lazy routes; AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes; AB-04 remaining backend debt; AB-05 UX/UI convergence; AB-06 performance/delivery; AB-07 legacy deletion + hard enforcement; AB-08 final full verification + live-main reconciliation.
 
 Always defer exact mutation to the live execution-state file because scheduled runs continuously advance the branch.
