@@ -1,7 +1,7 @@
 # AB-02 — Thin Admin Shell + Routing Execution Record
 
 Date: **2026-09-14**  
-Status: **ACTIVE / BINDING**  
+Status: **DONE / SOURCE-TREE-EQUIVALENT VERIFIED**  
 Branch: `rebuild/super-admin-foundation`  
 PR: #52 — Draft only; never auto-merge.
 
@@ -60,10 +60,6 @@ Measured build: initial JS **196.84 kB / 64.11 kB gzip** from verified pre-seam 
 
 ## Seam 4 — Auth login presentation ownership — DONE
 
-### Evidence / reason
-
-AB-01 explicitly left root `apps/admin-web/src/LoginScreen.tsx` as transitional presentation debt for AB-02. The seam moved this feature presentation into auth ownership without changing behavior.
-
 ### Source implementation checkpoint
 
 `d4c3c7896043ea6b1cc4cac1dd404d7912131916`
@@ -72,7 +68,7 @@ AB-01 explicitly left root `apps/admin-web/src/LoginScreen.tsx` as transitional 
 
 - `apps/admin-web/src/features/auth/ui/LoginScreen.tsx` owns login presentation;
 - `features/auth/public/index.ts` exposes `LoginScreen` as the narrow composition contract;
-- `App.tsx` consumes `LoginScreen` through the auth public boundary;
+- `App.tsx` consumes `LoginScreen` through that public boundary;
 - transitional root `apps/admin-web/src/LoginScreen.tsx` is deleted.
 
 Behavior is unchanged: same form fields/validation attributes, pending/error handling, `loginAdmin` call, authenticated profile callback, session acceptance and post-auth focus behavior. No API/backend/PostgreSQL/migration/Student frontend changes were made.
@@ -88,10 +84,37 @@ Compare from source implementation checkpoint to verification head shows only ca
 - Combined Integration `34853935696` — SUCCESS.
 - Stage13G `34853935720` — SUCCESS, including Admin lint/typecheck/unit/build, API lint/typecheck/unit/build, clean PostgreSQL migrations, DB contract verification, operations/security/audit/AI integrations, auth regression, and Real API + PostgreSQL + Chromium.
 
-## Exact next step
+## Final closure inspection — DONE
 
-1. Perform one final AB-02 closure inspection against live `App.tsx`, shell, router and provider ownership.
-2. Existing legacy `src/admin/*` workflow pages are intentionally transitional until AB-03; do not use them as justification for mechanical AB-02 moves.
-3. If no material shell/router/provider debt remains, close AB-02 rather than inventing abstraction.
-4. Reconcile live `main` before starting AB-03 because it is a structural phase boundary.
-5. Do not combine AB-02 closure with an AB-03 workflow migration.
+Worker C inspected live:
+
+- `apps/admin-web/src/App.tsx`;
+- `apps/admin-web/src/app/layouts/AdminShell.tsx`;
+- `apps/admin-web/src/app/router/AdminRoutes.tsx`;
+- outer `apps/admin-web/src/router.tsx` and bootstrap;
+- `features/auth/public/index.ts` and `AdminSessionProvider`.
+
+Result:
+
+- `App.tsx` is composition-only for provider/session/authenticated shell;
+- `AdminShell` is the single global chrome/navigation owner;
+- `AdminRoutes` is the single inner route-table owner and owns route-level lazy/Suspense boundaries;
+- outer router owns `/app/*`, route focus and outer not-found behavior;
+- auth/session internals are feature-owned behind a narrow public boundary;
+- remaining `src/admin/*` workflow pages are intentional AB-03 migration targets, not missing AB-02 abstractions.
+
+No material shell/router/provider debt remains, and no additional abstraction is justified.
+
+Compare from verification head `080b8e131da72b0795f647809239a815d4604210` through the final closure handoff chain contains only the five canonical/shared documentation files. No Admin/API/migration/test/workflow source changed, so the existing green Guard/Combined/Stage13G evidence is source-tree-equivalent for final AB-02 closure.
+
+## Main reconciliation at phase boundary — DONE
+
+Live `main` observed: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+
+Main-only implementation changes are confined to Student frontend/workflow and Student-specific CI/product documentation. No `apps/admin-web`, `apps/api`, or `database/migrations` implementation overlap was found. Shared top-level docs diverge and remain subject to deliberate final reconciliation.
+
+## Next phase
+
+AB-03 begins with **Overview + Operations** only.
+
+Before mutation, inspect current operator jobs, DB/API/security/audit contracts, frontend owners, integration tests and browser evidence. Choose one smallest coherent end-to-end ownership correction and do not combine later AB-03 slices.
