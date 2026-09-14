@@ -17,6 +17,7 @@ export interface StudentOfflineDeltaPage {
   version: 1;
   after: string;
   nextCursor: string;
+  latestCursor: string;
   hasMore: boolean;
   entries: StudentOfflineDeltaEntry[];
 }
