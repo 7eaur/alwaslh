@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-03.1.2 Operations frontend API ownership closed with source-tree-equivalent green evidence.**
+Last consolidated: **2026-09-14 — AB-03.1 discovery identified the remaining Operations presentation-model ownership seam.**
 
 ## Durable invariants
 
@@ -41,34 +41,32 @@ Source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43` moved governance/au
 
 ### AB-03.1.2 — Operations frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Worker A moved Operations transport/types under `features/operations` and removed the transitional root adapter. Worker B then found and fixed the real stale-import/typecheck regression left by that move. Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
+Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
 Final ownership:
 
 - `features/operations/api/admin-operations-api.ts` owns the Operations transport/types;
 - `features/operations/public` is the narrow consumer boundary;
-- `admin/operations/operations-model.ts` and its test consume contracts through that public boundary;
-- the transport test is colocated with the feature API owner;
-- no endpoint/query/body/response/session semantics, routes/styles, backend/API authority, PostgreSQL schema/migrations, security authority or Student frontend behavior changed.
+- stale root imports/tests were removed/corrected;
+- endpoint/query/body/response/session semantics, routes/styles, backend/API authority, PostgreSQL schema/migrations, security authority and Student frontend behavior were preserved.
 
-Source-equivalence proof: comparing corrected source checkpoint `abe4f2c...` through verification head `302b86585d4e1eb122c5afe30503828e10c8d025` showed only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`, and the shared execution-state document changed; there was no executable source/test/migration/workflow drift.
+Closure evidence: Architecture Guard `34870253383`, Frontend Preparation `34870253413`, Admin AI Operations `34870253417`, Combined Integration `34870253434`, Stage13G Admin Operations `34870253431` — SUCCESS.
 
-Closure evidence on that equivalent tree:
+### Worker A sequence 39 — AB-03.1 discovery-only decision
 
-- Architecture Guard `34870253383` — **SUCCESS**.
-- Frontend Preparation `34870253413` — **SUCCESS**.
-- Admin AI Operations `34870253417` — **SUCCESS**.
-- Combined Integration `34870253434` — **SUCCESS**, including real Admin Chromium and canonical AI Admin Chromium smoke.
-- Stage13G Admin Operations `34870253431` — **SUCCESS**: Admin UI quality, API quality, clean PostgreSQL/migration/database contracts, Operations/Access/Security/Auth integrations, and real API + PostgreSQL + Chromium all green.
+No executable production/test/migration/workflow mutation was made. Fresh inspection confirmed:
 
-No production/source mutation was made by Worker C sequence 38; it was verification/closure only.
+- backend HTTP still owns admin authorization and Zod query validation only;
+- attention orchestration is application-owned;
+- `AdminOperationsService` remains PostgreSQL-backed canonical operational/audit authority;
+- the frontend feature now owns transport/types behind `features/operations/public`;
+- however `apps/admin-web/src/admin/operations/operations-model.ts` and its colocated test still own the Operations presentation-model mapping outside the feature, and current Overview/Health presentation imports that legacy owner;
+- `AdminRoutes.tsx` still lazily imports legacy presentation owners under `admin/overview` and `admin/operations`, which is acceptable transitional debt for now but confirms AB-03.1 is not yet ready to close.
+
+Root decision: do not invent an API/schema/security rewrite. The next smallest coherent correction is **AB-03.1.3 Operations presentation-model ownership** only: move the presentation model + test under `features/operations/model`, publish only needed helpers/types through `features/operations/public`, and switch existing consumers. Preserve copy, routes, API/DB/security contracts, styles and Student frontend. Page/style migration is explicitly excluded from that increment.
+
+Required closure gates for AB-03.1.3: Architecture Guard; Admin lint/typecheck/unit/build; relevant Operations/API/PostgreSQL/integration/security gates; real Admin Chromium regression because Overview/Health consumers change imports even though behavior must remain identical.
 
 ## Exact continuation
 
-Perform a fresh **discovery-only** pass inside `AB-03.1 Overview + Operations`:
-
-1. re-read operator jobs, PostgreSQL/API/security/audit contracts, current backend/frontend owners and current regression/browser evidence;
-2. determine whether Overview + Operations has one remaining smallest high-confidence end-to-end ownership/product defect;
-3. if evidence justifies one, document exactly one next correction before mutating;
-4. if no remaining justified correction exists, prepare the AB-03.1 slice closure/advance gate instead of inventing work;
-5. do not begin Curriculum/Content/OCR in the same increment.
+Execute **AB-03.1.3 Operations presentation-model ownership** and nothing broader. After green evidence, re-run AB-03.1 closure discovery before deciding whether presentation pages/styles themselves need migration or the slice can advance. Do not begin Curriculum/Content/OCR in the same increment.
