@@ -45,41 +45,48 @@ Direct live-code inspection established:
 - Curriculum presentation under `apps/admin-web/src/admin/curriculum/*` consumed its full contract from root `admin-api.ts`.
 - root `admin-api.ts` implemented Curriculum records/snapshot plus `/v1/admin/curriculum*` requests while also re-exporting generic transport/auth symbols.
 - `ContentIngestionWorkspace.tsx` also consumed Curriculum through that root facade.
-- root `content-ingestion-api.ts` separately owns Content ingestion transport and still imports `adminApiRequest` through `admin-api.ts`; that is a later concern and must not be combined with Curriculum ownership migration.
+- root `content-ingestion-api.ts` separately owns Content ingestion transport and still imports `adminApiRequest` through `admin-api.ts`; that remains a separate concern and must not be automatically combined with Curriculum ownership migration.
 - backend Curriculum and Content modules are already bounded, and PostgreSQL already has explicit learning/content/media/OCR migration history.
 - no backend/schema mutation was justified before correcting frontend ownership.
 
-### AB-03.2.1 Curriculum frontend API ownership — IN PROGRESS / WAITING_FOR_CI
+### AB-03.2.1 Curriculum frontend API ownership — IMPLEMENTED / WAITING_FOR_CI
 
-Worker A sequence 45 performed one smallest coherent owner move:
+Worker A sequence 45 established the owner:
 
 1. created `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts` and moved Curriculum-specific types plus request implementations there;
 2. created `apps/admin-web/src/features/curriculum/public/index.ts` as the narrow consumer boundary;
 3. migrated `CurriculumWorkspace.tsx` to consume Curriculum from that public boundary and generic API error/session helpers directly from `shared/api/client`;
-4. reduced root `admin-api.ts` from implementation owner to a temporary compatibility re-export only, because `ContentIngestionWorkspace.tsx` still imports Curriculum through the root facade;
-5. preserved endpoint URLs, request payloads, response shapes, auth/session semantics and UI behavior;
-6. changed no backend/API/PostgreSQL/security/OCR/AI/Student frontend implementation.
+4. temporarily kept root Curriculum compatibility re-exports because Content ingestion still depended on them.
 
-Source implementation checkpoint: `ee58ffe125da9e550b97965976f47240a7f35d68`.
+Worker B sequence 46 completed the bounded compatibility cleanup:
 
-This is not declared DONE because the legitimate Content consumer has not yet switched and the source-checkpoint CI is still running.
+1. migrated only `ContentIngestionWorkspace.tsx` Curriculum symbols to `features/curriculum/public`;
+2. migrated its generic API error/session helpers to `shared/api/client`;
+3. removed the temporary Curriculum re-export block from root `admin-api.ts` after the last legitimate consumer moved;
+4. deliberately did not migrate root `content-ingestion-api.ts`, move pages, restructure CSS, redesign OCR/AI, or change backend/schema;
+5. preserved endpoint URLs, request payloads, response shapes, auth/session semantics and UI behavior.
+
+Final source implementation checkpoint for AB-03.2.1 cleanup: `af4a131b1b039883a318ebb41b7ec5e5146f126d`.
+
+### Verification state
+
+Exact-source evidence observed for `af4a131...`:
+
+- Architecture Guard `34886697714` — SUCCESS;
+- Frontend Preparation `34886697732` — pending at last observation;
+- Admin AI Operations `34886697663` — pending at last observation;
+- Combined Integration `34886697673` — in progress at last observation;
+- Stage13G Admin Operations `34886697753` — in progress at last observation.
+
+AB-03.2.1 is therefore not declared DONE yet. Documentation-only descendants are source-tree-equivalent and may provide the remaining required green evidence if the exact-source runs are superseded/cancelled.
 
 ### Exact next smallest step
 
-After source-checkpoint gates settle:
+Verification/closure only:
 
-1. migrate only `ContentIngestionWorkspace.tsx` Curriculum imports to `features/curriculum/public`;
-2. import generic API error/session helpers from `shared/api/client`;
-3. remove the temporary Curriculum re-exports from root `admin-api.ts` once unused;
-4. do not migrate root `content-ingestion-api.ts` transport, move pages, restructure CSS, redesign OCR/AI, or change backend/schema in the same increment.
+1. confirm no executable drift from `af4a131...`;
+2. require green Architecture Guard/Admin quality/build plus relevant API/PostgreSQL/integration evidence, Combined real Admin Chromium, and Stage13G real API + PostgreSQL + Chromium;
+3. if green, mark AB-03.2.1 DONE;
+4. then perform fresh AB-03.2 discovery and select one smallest Content/OCR ownership seam based on code evidence rather than assuming a transport move.
 
-### Required verification for AB-03.2.1
-
-- Architecture Guard;
-- Admin lint/typecheck/unit/build;
-- relevant Curriculum/API/PostgreSQL integration gates;
-- Combined Integration with real Admin Chromium;
-- Stage13G real API + PostgreSQL + Chromium;
-- exact-head or source-tree-equivalent evidence before declaring DONE.
-
-Fresh source-checkpoint runs on `ee58ffe...` were pending/running at handoff, including Frontend Preparation `34884252963` and Admin AI Operations `34884253074`.
+Do not begin AI, Question Bank, Quiz Builder, Students or Access Codes before the canonical order reaches them.
