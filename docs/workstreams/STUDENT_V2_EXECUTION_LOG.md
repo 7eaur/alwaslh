@@ -84,6 +84,33 @@ Current direction:
 - bottom navigation refined with safe-area ownership;
 - relevant cache invalidation started for access changes.
 
+## 2026-09-14 — first code-architecture extraction batch
+
+The implementation moved from the flat `student-access.tsx` ownership model toward the approved V2 boundaries.
+
+Created:
+
+- `app/layout/student-navigation.ts`
+- `app/layout/StudentAppBar.tsx`
+- `app/layout/StudentBottomNav.tsx`
+- `app/layout/StudentDesktopNav.tsx`
+- `app/layout/StudentAppShell.tsx`
+- `app/routing/student-route-meta.ts`
+- `shared/ui/FeatureLoading.tsx`
+- `features/home/StudentHomeOverview.tsx`
+
+`student-access.tsx` was reduced to route/feature orchestration and no longer owns the App Bar, Bottom Navigation, adaptive navigation, route metadata, Home data loading or Home presentation.
+
+This is the first concrete application of:
+
+> shared layout once + thin page/orchestrator + feature-owned UI/data composition.
+
+No Learn/Reader implementation was rewritten in this batch because PR #57 still owns overlapping Stage16 offline Reader changes.
+
+Latest implementation head after extraction: `8e88bc02a1130c1dfa603460edafa3d73b057c82`.
+
+CI for that exact head was triggered and is pending/queued; this batch is **NOT YET VERIFIED** until the relevant workflows finish green.
+
 ## Workstream overlap
 
 PR #57 (`stage16/student-016i`) is still the authoritative active workstream for true cold-start offline Reader behavior and changes overlapping files including `App.tsx`, `student-learning.tsx`, `student-reader.tsx`.
@@ -94,7 +121,7 @@ Rule: do not rewrite overlapping Learn/Reader files in V2 until #57 is reconcile
 
 1. V2-00 architecture freeze — DONE.
 2. V2-01 foundation / shell / Home — IN PROGRESS.
-3. shared layout/primitives extraction.
+3. shared layout/primitives extraction — STARTED.
 4. Welcome/Auth redesign.
 5. PR #57 reconciliation.
 6. Learn/Subject scalable hierarchy.
