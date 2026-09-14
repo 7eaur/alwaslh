@@ -30,7 +30,7 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 ## Branch reconciliation
 
-Live `main` at AB-03 startup: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+Live `main` at AB-03 startup and latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
 AB-02 → AB-03 phase-boundary reconciliation is complete. The live-main-only implementation delta is Student frontend/workflow plus Student-specific CI/docs; no `apps/admin-web`, `apps/api`, or `database/migrations` implementation overlap was found. Shared project docs diverge and remain branch-local workstream authority until final reconciliation.
 
@@ -82,7 +82,9 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ### AB-03.1 Overview + Operations — ACTIVE
 
-First correction, **AB-03.1.1 Attention application ownership**, is implemented at source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43`.
+**AB-03.1.1 Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.**
+
+Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`.
 
 - governance + audit orchestration moved from the Fastify HTTP route into `admin-operations/attention-application.ts`;
 - HTTP retains authorization/query validation and calls the application owner;
@@ -90,10 +92,12 @@ First correction, **AB-03.1.1 Attention application ownership**, is implemented 
 - a dedicated application-owner test was added;
 - no Admin or Student frontend source and no migration/schema changed.
 
-Verification so far: Architecture Guard `34859593842` — SUCCESS on the implementation tree; exact-source Admin AI `34859616706` — SUCCESS; Combined `34859616648` and Stage13G `34859617164` were still running at handoff. Therefore AB-03.1.1 is **WAITING_FOR_CI**, not DONE.
+Closure evidence on source-tree-equivalent head `d350ce8d1ec9d7fdedc8c466c1a4ca4657ca546e`: Architecture Guard `34859593842` — SUCCESS on the implementation tree; Admin AI `34860142887` — SUCCESS; Combined Integration `34860142983` — SUCCESS; Stage13G `34860143008` — SUCCESS. The source checkpoint → verification-head diff contains canonical/shared documentation only, with no source/test/migration/workflow drift.
+
+Next: one **discovery-only** pass inside Overview + Operations to identify the next smallest ownership correction. Do not enter Curriculum/Content/OCR in the same increment.
 
 ## Remaining roadmap
 
-Finish AB-03.1 verification and continue Overview + Operations only, then AB-03 slices in canonical order: Curriculum + Content + OCR → AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Continue Overview + Operations only, then AB-03 slices in canonical order: Curriculum + Content + OCR → AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
