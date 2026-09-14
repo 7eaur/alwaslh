@@ -43,7 +43,7 @@ Migration law:
 
 ## Branch reconciliation
 
-Current live `main` observed during Worker C sequence 16: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the Student Experience V2 merge checkpoint. No overlapping Admin/API/migration change was introduced for the current AB-01 seam, and no structural phase boundary is being crossed.
+Current live `main` observed during Worker A sequence 17: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the Student Experience V2 merge checkpoint. No overlapping Admin/API/migration change was introduced for the current AB-01 seam, and no structural phase boundary is being crossed.
 
 ## AB-00 — DONE
 
@@ -74,30 +74,27 @@ Closed seams:
 - public not-found/error handling — DONE, source `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
 - Fastify instance construction/options — DONE, source `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
 
-Fourth-seam closure evidence remains: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — SUCCESS/source-tree-equivalent green.
+Fourth-seam closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — SUCCESS/source-tree-equivalent green.
 
-#### Fifth seam — database lifecycle registration — SELECTED / NOT IMPLEMENTED
+#### Fifth seam — database lifecycle registration — IMPLEMENTED / WAITING_FOR_CI
 
-Discovery on live `apps/api/src/app.ts`, `apps/api/tests/app.test.ts`, `apps/api/src/db.ts` and `apps/api/src/server.ts` selected the smallest remaining bounded responsibility: the inline Fastify `onClose` hook that awaits `database.close()`.
+Source+test implementation HEAD: `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`.
 
-Target owner:
+Changes:
 
-`apps/api/src/app/plugins/database-lifecycle.ts`
+- new sole registration owner `apps/api/src/app/plugins/database-lifecycle.ts`;
+- `apps/api/src/app.ts` now delegates database-close hook registration via `registerDatabaseLifecycle(app, database)` in the same composition position after business routes, health and public-error composition;
+- focused `apps/api/tests/app.test.ts` parity coverage proves `app.close()` delegates to the supplied `database.close()` exactly once;
+- `server.ts`, database creation/pool/query/transaction behavior, service graph, business routes, migrations/schema and Student frontend were not changed.
 
-with narrow registration such as `registerDatabaseLifecycle(app, database)`.
+Verification so far:
 
-Contracts to preserve:
+- Architecture Guard `34825750566` — **SUCCESS** on the source composition commit;
+- Stage13G `34825773710` — **IN_PROGRESS** on the source+test head; Admin UI lint/typecheck/unit/build already green inside that run when last inspected;
+- Combined `34825773686` — **IN_PROGRESS**;
+- Admin AI `34825773676` — **IN_PROGRESS**.
 
-- `buildApp()` continues receiving an already-created `Database`;
-- normal `app.close()` awaits `database.close()` without swallowing errors;
-- registration remains on the same Fastify instance and in the same composition position after business routes/health/public errors;
-- `server.ts` keeps using `app.close()` for SIGTERM/SIGINT and listen failure;
-- legacy startup failure before app construction keeps directly closing the database;
-- database pool/query/transaction/migration/schema semantics remain untouched.
-
-Implementation must add one focused lifecycle parity assertion to `apps/api/tests/app.test.ts`; no generic lifecycle framework is authorized.
-
-After this seam closes, current evidence does not justify a giant service container, whole-route registry or broad multi-consumer infrastructure move. AB-01.4 should then be reassessed for closure before inventing a sixth extraction.
+Do not mark this seam DONE until the required source/source-tree-equivalent API quality, clean PostgreSQL, integration/security/auth and real API+Chromium evidence is green. After closure, reassess whether AB-01.4 itself should close; do not invent a broad sixth extraction without evidence.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -121,4 +118,4 @@ No merge/readiness before AB-08 exact-head green. After verified AB-08 completio
 
 ## Immediate next action
 
-Implement **only** the selected fifth AB-01.4 database lifecycle seam: create the narrow lifecycle registration owner, replace only the inline database `onClose` hook in `app.ts`, add focused app-close→database-close parity coverage, leave server/database/service/routes unchanged, then run Architecture Guard + API quality + clean PostgreSQL + relevant integration/real API + Chromium gates before closing the seam.
+Inspect the fifth-seam source/source-tree-equivalent CI above. If green, close **only** the database lifecycle seam and then reassess AB-01.4 for closure before authorizing any sixth composition extraction. If a gate fails, fix the root cause only; do not start unrelated work.
