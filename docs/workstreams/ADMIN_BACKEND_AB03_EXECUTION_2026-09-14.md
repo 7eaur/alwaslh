@@ -68,25 +68,32 @@ Exact-head green closure set: Architecture Guard `34898665849`; Frontend Prepara
 
 ### AB-03.2 closure discovery — DONE / DOC-ONLY
 
-Worker C sequence 54 proved root `apps/admin-web/src/content-operations-api.ts` was a pure compatibility facade and that `ContentOperationsPage.tsx` was its remaining stale consumer.
+Worker C sequence 54 proved root `apps/admin-web/src/content-operations-api.ts` was a pure compatibility facade and that `ContentOperationsPage.tsx` was its remaining stale production consumer.
 
-### AB-03.2.4 Content operations compatibility facade retirement — IMPLEMENTED / WAITING_FOR_CI
+### AB-03.2.4 Content operations compatibility facade retirement — CORRECTED / WAITING_FOR_CI
 
-Worker A sequence 55 executed exactly the selected seam:
+Worker A sequence 55 executed the selected production seam:
 
-1. `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` now imports its Content operations/OCR functions and types from `../../features/content/public`;
+1. `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` imports its Content operations/OCR functions and types from `../../features/content/public`;
 2. root `apps/admin-web/src/content-operations-api.ts` was deleted;
-3. no API path, payload/response contract, Fastify/PostgreSQL/security authority, route, visual behavior or Student frontend implementation changed;
-4. no AI work or page/CSS restructuring was started.
+3. no API path, payload/response contract, Fastify/PostgreSQL/security authority, route, visual behavior or Student frontend implementation changed.
 
-Executable/source checkpoint: `ca8381c45cab7ae6a8500c88325042451fbed20f`.
+Exact-head Frontend Preparation `34906963113` then exposed one remaining ownership defect: root `apps/admin-web/src/content-operations-api.test.ts` still imported the deleted `./content-operations-api`, so Admin typecheck failed with TS2307.
 
-Verification observed on that exact source head:
+Worker B sequence 56 applied the smallest root correction inside the same seam:
 
-- Architecture Guard `34906963160` — SUCCESS;
-- Frontend Preparation `34906963113` — QUEUED;
-- Admin AI Operations `34906963149` — IN PROGRESS;
-- Combined Integration `34906963163` — IN PROGRESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34906963142` — PENDING.
+1. moved the unchanged transport test to `apps/admin-web/src/features/content/api/content-operations-api.test.ts`, beside the implementation it verifies;
+2. deleted the stale root test path;
+3. did not restore the compatibility facade or alter production behavior/contracts.
 
-Required continuation: do not start another ownership seam until these gates, or source-tree-equivalent successors after documentation-only pushes, finish green. Only then mark AB-03.2.4 DONE and perform fresh AB-03.2 closure discovery before any AI slice work.
+Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
+
+Exact-head verification observed before documentation handoff:
+
+- Architecture Guard `34908457279` — SUCCESS;
+- Frontend Preparation `34908457311` — SUCCESS;
+- Admin AI Operations `34908457270` — IN PROGRESS;
+- Combined Integration `34908457265` — IN PROGRESS;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34908457306` — IN PROGRESS.
+
+Required continuation: do not start another ownership seam until the remaining gates, or source-tree-equivalent successors after documentation-only pushes, finish green. Only then mark AB-03.2.4 DONE and perform fresh AB-03.2 closure discovery before any AI slice work.
