@@ -227,6 +227,7 @@
 .quiz-mode-option {
   min-height: 5rem;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
   gap: .8rem;
   padding: .8rem .9rem;
   border: 1px solid var(--student-border, #e5e7eb);
@@ -250,6 +251,16 @@
   font-size: .95rem;
 }
 
+.quiz-mode-option > span:nth-child(2) {
+  min-width: 0;
+  text-align: start;
+}
+
+.quiz-mode-option strong,
+.quiz-mode-option small {
+  display: block;
+}
+
 .quiz-mode-option strong {
   margin-bottom: .08rem;
   color: var(--student-heading, #123c43);
@@ -266,6 +277,7 @@
   color: var(--student-accent-strong, #007f78);
   font-size: .74rem;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .practice-state {
@@ -353,10 +365,14 @@
 
   .quiz-mode-option {
     grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
   }
 
   .quiz-mode-option__action {
     grid-column: 2;
+    margin-top: .2rem;
+    white-space: normal;
+    text-align: start;
   }
 }
 
