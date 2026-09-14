@@ -92,14 +92,14 @@ Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVE
 
 - CORS/preflight seam — DONE; source HEAD `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 - health/readiness seam — DONE; source HEAD `a302871b3486ae95810cea40dccca68363a29055`.
-- public not-found + global public-error HTTP seam — **IMPLEMENTED / WAITING_FOR_CI**; source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
+- public not-found + global public-error HTTP seam — **DONE**; source HEAD `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
 - owner: `apps/api/src/app/http/public-errors.ts` via `registerPublicErrorHandlers(app)`; `app.ts` no longer owns the two inline handlers or imports `toPublicError` directly.
 - behavior preserved: exact 404 envelope/message/status, existing `toPublicError` authority, mapped statuses/bodies, and 5xx-only `request failed` logging.
-- Architecture Guard run `34816433721` — SUCCESS.
-- source-head Admin AI `34816433699`, Combined `34816433773`, Stage13G `34816433715` were still running/pending at the Worker A handoff; do not mark this seam DONE until required runtime/integration gates are green.
+- closure evidence: Architecture Guard `34816433721` SUCCESS; source-tree-equivalent Admin AI `34816613371` SUCCESS; Combined `34816613431` SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend authority, auth/security regressions and real Chromium; Stage13G `34816613493` SUCCESS including Admin quality, API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+- compare `001d4589... → 068ee06c...` contains documentation files only, so the later successful gates exercised the same affected source implementation.
 - database `onClose`, Fastify construction, service graph, route registry, migrations/schema and Student frontend remain untouched.
 
-**Next:** inspect source-head runs above. If all required gates are green, mark the public-error seam DONE and then perform discovery only for the next smallest AB-01.4 responsibility; if any gate fails, fix its root cause without starting another seam.
+**Next:** perform discovery only for the next smallest bounded AB-01.4 responsibility in `apps/api/src/app.ts`; document current owner, target owner, contracts/tests, ordering constraints, non-goals and closure gates. Do not implement that next seam in the same discovery increment.
 
 ### AB-01.5 Common backend technical ownership — PENDING
 
@@ -125,4 +125,4 @@ No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next step: **verify the implemented third AB-01.4 public-error/not-found seam on its source-head required gates; do not start a fourth seam while those gates remain unresolved.**
+Always read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current next engineering increment after this closure is **discovery only for the next smallest AB-01.4 app-composition seam; do not implement it until the discovery is documented and handed off.**
