@@ -28,9 +28,9 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - branch: `rebuild/super-admin-foundation`;
 - PR #52 stays Draft and is never auto-merged;
 - never force-reset or force-push shared history;
-- live `main` at latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+- live `main` latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-AB-02 → AB-03 phase-boundary reconciliation is complete. Live-main-only implementation changes are Student frontend/workflow and Student-specific CI/docs; no Admin/API/migration implementation overlap was found. Shared top-level docs diverge and remain subject to deliberate final reconciliation.
+AB-02 → AB-03 phase-boundary reconciliation found no Admin/API/PostgreSQL implementation overlap from live main. Shared top-level docs remain subject to deliberate final reconciliation.
 
 ## Current phase
 
@@ -40,40 +40,44 @@ AB-02 → AB-03 phase-boundary reconciliation is complete. Live-main-only implem
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — ACTIVE
   - AB-03.1.1 Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+  - AB-03.1.2 Operations frontend API ownership — DISCOVERED / NEXT
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Last closed correction
 
-Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`.
+AB-03.1.1 source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`.
 
-AB-03.1.1 corrected only the attention use-case ownership:
+- `apps/api/src/admin-operations/attention-application.ts` owns `loadOperationsAttention(...)`;
+- HTTP owns admin authorization, query validation and application invocation only for that endpoint;
+- API path/query bounds/response shape, SQL, migrations/schema and security behavior remained unchanged;
+- dedicated application-owner test added;
+- closure evidence: Guard `34859593842`, Admin AI `34860142887`, Combined `34860142983`, Stage13G `34860143008` — SUCCESS.
 
-- `apps/api/src/admin-operations/attention-application.ts` now owns `loadOperationsAttention(...)`;
-- `apps/api/src/admin-operations/http.ts` owns only admin authorization, query validation and calling the application boundary for this endpoint;
-- `apps/api/src/admin-operations/attention.ts` remains the pure projection owner;
-- `apps/api/tests/admin-operations-attention-application.test.ts` proves the application orchestration contract;
-- API route/query bounds/response shape, SQL, migrations/schema and security behavior are unchanged;
-- no Admin frontend or Student frontend implementation changed.
+## Discovery just completed
 
-Closure evidence:
+Worker C sequence 35 inspected live Overview/Operations frontend ownership and selected exactly one smallest next correction.
 
-- Architecture Guard `34859593842` — SUCCESS on implementation tree `fe2f3e8811e78e03662a759127dd35fe3588b336`; source checkpoint adds only the dedicated test.
-- Verification head `d350ce8d1ec9d7fdedc8c466c1a4ca4657ca546e` is source-tree equivalent to the checkpoint: compare shows canonical/shared docs only and no source/test/migration/workflow drift.
-- Admin AI `34860142887` — SUCCESS.
-- Combined Integration `34860142983` — SUCCESS, including API/Admin quality, clean PostgreSQL, database contract, backend/security/auth regressions and real Admin Chromium.
-- Stage13G `34860143008` — SUCCESS, including Admin/API quality, clean PostgreSQL, operations/security/integration regressions and real API + PostgreSQL + Chromium.
+`apps/admin-web/src/admin-operations-api.ts` is still a root transitional owner for Operations-specific transport and response contracts. It serves the Overview and Operations pages, while the repository's permanent architecture requires feature-owned API adapters exposed through narrow public boundaries. Moving all legacy pages/models/styles simultaneously would be broader than necessary.
 
 ## Exact continuation
 
-The next run is **discovery only inside AB-03.1 Overview + Operations**.
+Implement **AB-03.1.2 Operations frontend API ownership only**:
 
-1. Re-read live Overview and Operations frontend owners, backend HTTP/application/service owners and their tests.
-2. Identify exactly one smallest root ownership correction; do not implement more than one concern.
-3. Evidence candidates include the transitional root `apps/admin-web/src/admin-operations-api.ts`, legacy `src/admin/overview` / `src/admin/operations` feature ownership and remaining Operations HTTP/application seams. These are candidates, not predetermined targets.
-4. Do not start Curriculum/Content/OCR in the same increment.
-5. Main reconciliation is **not currently required**; repeat it if live `main` gains overlapping Admin/API/migration/shared-contract changes or at the next structural phase boundary.
+1. create the Operations feature API owner under `apps/admin-web/src/features/operations/api/`;
+2. move the current `admin-operations-api.ts` transport/types there without changing behavior or exported names;
+3. expose only required functions/types through `apps/admin-web/src/features/operations/public/index.ts`;
+4. update current Overview/Operations consumers to import from the feature public boundary;
+5. delete root `apps/admin-web/src/admin-operations-api.ts` once unused;
+6. do not move pages, `operations-model`, CSS, route ownership, or UX in this increment;
+7. do not alter API endpoints/query construction/payloads/session handling/backend/PostgreSQL/Student frontend.
+
+Then verify Architecture Guard, Admin lint/typecheck/unit/build, focused Overview/Operations tests, Combined Integration and Stage13G real API + PostgreSQL + Chromium. If green, close AB-03.1.2 and return to a fresh discovery-only pass inside Overview + Operations. Do not begin Curriculum/Content/OCR in the same increment.
+
+## Main reconciliation need
+
+`NOT REQUIRED NOW`. Repeat if live `main` gains overlapping Admin/API/PostgreSQL/shared-contract changes or at the next structural phase boundary.
 
 ## Remaining roadmap
 
