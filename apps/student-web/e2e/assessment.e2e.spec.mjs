@@ -25,8 +25,8 @@ async function openQuizDetail(page, fixture) {
 }
 
 async function startVersionA(page, fixture, mode) {
-  await page.getByRole("combobox", { name: "مجموعة الأسئلة" }).selectOption({ label: fixture.versionALabel });
-  await expect(page.getByText(`المجموعة المختارة: ${fixture.versionALabel}`, { exact: true })).toBeVisible();
+  await page.getByRole("combobox", { name: "النموذج" }).selectOption({ label: fixture.versionALabel });
+  await expect(page.getByText(`النموذج المختار: ${fixture.versionALabel}`, { exact: true })).toBeVisible();
   const responsePromise = page.waitForResponse((response) => response.url().includes(`/v1/student/quizzes/${fixture.quizId}/sessions`) && response.request().method() === "POST" && response.status() === 200);
   await page.getByRole("button", { name: mode === "practice" ? "ابدأ التدريب" : "ابدأ الاختبار" }).click();
   const payload = await (await responsePromise).json();
@@ -48,7 +48,7 @@ test("Student Practice/Test uses routed focused attempts, published snapshots, s
 
   await page.goto("/");
   await expect(page).toHaveURL(/\/app\/home$/);
-  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مرحبًا بك" })).toBeVisible();
   await page.getByRole("link", { name: "التدريب", exact: true }).first().click();
   await expect(page).toHaveURL(/\/app\/practice$/);
   await expect(page.getByRole("heading", { name: "التدريب والاختبارات" })).toBeVisible();
