@@ -1,0 +1,107 @@
+/* Student Experience V2 account surface */
+.student-account-v2 {
+  display: grid;
+  gap: 1.25rem;
+  width: min(100%, 46rem);
+}
+
+.student-account-v2__section {
+  display: grid;
+  gap: .8rem;
+  padding: 1rem;
+  border: 1px solid var(--student-border, #e5e7eb);
+  border-radius: var(--student-radius-large, 1rem);
+  background: var(--student-surface, #fff);
+}
+
+.student-account-v2__section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.student-account-v2__section-heading h2 {
+  margin: 0;
+  color: var(--student-heading, #123c43);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.student-account-v2__section-heading p {
+  margin: .2rem 0 0;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .82rem;
+  line-height: 1.65;
+}
+
+.student-account-v2__links {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--student-border, #e5e7eb);
+  border-radius: .85rem;
+}
+
+.student-account-v2__links > a {
+  min-height: 4rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem .9rem;
+  color: inherit;
+  text-decoration: none;
+  background: #fff;
+}
+
+.student-account-v2__links > a + a {
+  border-top: 1px solid var(--student-border, #e5e7eb);
+}
+
+.student-account-v2__links strong,
+.student-account-v2__links small {
+  display: block;
+}
+
+.student-account-v2__links strong {
+  color: var(--student-heading, #123c43);
+  font-size: .92rem;
+  font-weight: 700;
+}
+
+.student-account-v2__links small {
+  margin-top: .15rem;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .77rem;
+  line-height: 1.55;
+}
+
+.student-account-v2__logout {
+  padding-block: .35rem max(.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+.student-account-v2__logout .student-danger-action {
+  min-height: 2.75rem;
+  color: var(--danger-700, #b42318);
+  font-weight: 600;
+}
+
+@media (max-width: 40rem) {
+  .student-account-v2 {
+    gap: .9rem;
+  }
+
+  .student-account-v2__section {
+    padding: .9rem;
+    border-radius: .9rem;
+  }
+
+  .student-account-code-row {
+    grid-template-columns: 1fr;
+  }
+
+  .student-account-code-row .primary-button {
+    width: 100%;
+  }
+}

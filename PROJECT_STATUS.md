@@ -2,151 +2,165 @@
 
 > Concise execution truth. Code, PostgreSQL migrations, executable CI and verified runtime evidence outrank prose. Anything not inspected/executed = `NOT YET VERIFIED`.
 
-Last synchronized: **2026-09-14 — reviewed Grade 9 English Unit 2 Lessons published and runtime-verified**.
+Last synchronized: **2026-09-14 — Student Experience V2 reached green exact-head Student gates after architecture migration, Stage16 reconciliation, Practice split, visual QA fixes and legacy cleanup.**
 
 ## Current state
 
-**CURRENT USER PRIORITY: Content Rebuild — review and publish verified Grade 9 English content**
+**CURRENT USER PRIORITY: close Student Experience V2 safely, then return to the roadmap without rebuilding the approved Student foundation.**
 
-The hourly roadmap automation is disabled. Student PR #57 remains a separate workstream and was not merged as part of this content run.
+Active branch: `ux/student-experience-v2`
 
-### Grade 9 English — FULL TECHNICAL IMPORT COMPLETE / PARTIALLY PUBLISHED BY REVIEW
+Active PR: `#58 — refactor(student): establish Student Experience V2 foundation` — **DRAFT / NOT MERGED**.
 
-The full RAW-backed Grade 9 English Pupil's Book 3 corpus is present in modern PostgreSQL and previously passed inspect → rollback gate → controlled apply → committed-state verification.
+Last fully verified implementation head before this documentation synchronization:
 
-Verified imported scope:
+`1dd6222bc21cab615ca9b93416666bfa16d1bf04`
 
-- RAW-backed pages: `69/69`
-- RAW images verified by SHA-256: `69/69`
-- content source identities: `69/69`
-- ready Media Assets: `69/69`
-- Lesson Assets: `69/69`
-- recovered Units/Sections: `8/8`
-- Question Revisions preserved: `104/104`
-- manifest-only page 70: evidence-only because it has no RAW identity
+Authoritative V2 docs:
 
-Recovered Units:
+- `docs/product/STUDENT_EXPERIENCE_V2.md`
+- `docs/product/STUDENT_EXPERIENCE_V2_EXECUTION_PLAN.md`
+- `docs/product/STUDENT_FRONTEND_CODE_ARCHITECTURE_V2.md`
+- `docs/product/STUDENT_V2_IMPLEMENTATION_RULES.md`
+- `docs/product/STUDENT_DATA_RESIDENCY_AND_CACHE_V2.md`
+- `docs/workstreams/STUDENT_V2_EXECUTION_LOG.md`
 
-1. `Unit 1 - Revision`
-2. `Unit 2 - Describing: Making plans`
-3. `Unit 3 - Other countries`
-4. `Unit 4 - Visiting Japan`
-5. `Unit 5 - Safety`
-6. `Unit 6 - Helping others`
-7. `Unit 7 - Communications`
-8. `Unit 8 - Winning medals`
+## V2 execution checkpoint
 
-Bulk-import runtime evidence remains:
+- `V2-00 Architecture Freeze = DONE`
+- Foundation/theme/tokens = implemented
+- App Shell / App Bar / Bottom Nav / Desktop Nav = implemented
+- Home V2 = implemented using authoritative available data only
+- Welcome / Activation / Login / Recovery / Help / Support = modularized
+- Account / Library / Notifications / Progress = feature-owned V2 surfaces
+- Learn landing + scalable Subject hierarchy = implemented
+- Reader V2 visual/focused behavior = implemented while preserving Stage16 integrity semantics
+- Practice/Models = split into feature-owned Catalog / Quiz Detail / Attempt orchestration; old assessment monolith removed
+- Stage16 cold-start Offline Reader behavior from PR #57 = reconciled into V2
+- Downloads now reuse the shared profile-scoped curriculum read-through cache
+- Reader and Downloads expose feature boundaries under `features/*` while security-critical legacy internals remain unchanged
+- obsolete Library overview stylesheet removed; future-surface stylesheet pruned to live selectors
+- phone Practice visual QA was reviewed from exact-head artifacts and the attempt/result action layout overlap was fixed
 
-- content source commit: `9e58ab3e882b883bddd016099949881801eedc28`
-- Railway deployment: `de7f9883-b2f0-483d-a7c1-ffbfb15ac30c` — `SUCCESS`
-- markers: `BULK_G9_EN_INSPECT_PASS`, `BULK_G9_EN_TRANSACTION_GATE_PASS`, `BULK_G9_EN_APPLY_PASS`, `BULK_G9_EN_VERIFY_PASS`, `BULK_G9_EN_RUNNER_PASS`
+## Exact-head Student verification
 
-Do not rerun the bulk import.
+On implementation head `1dd6222bc21cab615ca9b93416666bfa16d1bf04`, the following completed successfully:
 
-## Reviewed Unit 2 publication — DONE / COMMITTED_STATE_VERIFIED_AND_PUBLISHED
+- `UX B01 Shared Frontend Foundation`
+- `UX B02 Student Shell and Navigation`
+- `UX B03 Student Learning and Reader`
+- `UX B04 Student Practice and Assessment`
+- `UX B05 Student Downloads and Account`
+- `Stage14 Student Product`
+- `Stage15 Student Assessment`
+- `Stage16 Student PWA`
 
-The user explicitly authorized publication only for the Lessons/questions that completed review.
+Stage14 Student lint/typecheck/unit/build passed, followed by the real Chromium auth/access/curriculum suite at `390px`.
 
-Published Lesson 1:
+The latest B04 visual artifact was manually inspected. Phone attempt/result layouts no longer show the previous overlap between previous/next controls, remaining-question status and finish action.
 
-- `curated-english9-pb3-u2-describing-people-and-animals`
-- `Describing people and animals`
-- pages `5..8`
-- published Lesson Assets: `4`
-- published reviewed Question Revisions: `12`
+A prior Stage12 AI-control failure was unrelated to Student UI and passed on a later exact-head run without Student business-rule changes.
 
-Published Lesson 2:
+`STUDENT V2 CORE IMPLEMENTATION = VERIFIED ON 1dd6222...`
 
-- `curated-english9-pb3-u2-time-and-meeting`
-- `Telling time and arranging a meeting`
-- pages `9..10`
-- published Lesson Assets: `2`
-- published reviewed Question Revisions: `7`
+Any documentation-only commit after that head must still receive normal CI before PR #58 is merged.
 
-Question review result:
+## Fixed Student V2 decisions
 
-- reviewed: `19`
-- approved unchanged: `18`
-- corrected before publication: `1`
+- phone navigation is exactly: Home / Learn / Practice / Library;
+- Home alone shows official الوسيلة الذكية mark + name;
+- other top-level pages show page title in App Bar;
+- nested Learn subject title uses shared App Bar context;
+- no assumed learner name and no fixed permanent grade on Home/account card;
+- Home is an overview, not duplicate navigation;
+- Library is direct access, not a dashboard article;
+- Learn scales through compact lists/search/accordion rather than nested card walls;
+- Reader and active assessment use focused UI patterns;
+- quiz versions are presented as learner-facing Models without inventing a second backend authority;
+- Summary / Lesson Questions / Notes / Saved / Needs Review remain honest until authoritative contracts/data exist;
+- no fabricated progress/streak/completion/ranking values.
 
-Corrected page-10 question now asks:
+## Frontend architecture now enforced
 
-`When is Fuad helping Dad on Saturday?`
+Direction: `app → features → shared`.
 
-with answer `at six o'clock` and a matching reviewed explanation.
+Ownership:
 
-Publication runner evidence:
+- `app/layout` — shell/appbar/bottom-nav/desktop navigation;
+- `app/routing` / `app/session` — app-level routing/session composition;
+- `shared/ui` — reusable primitives;
+- `shared/icons` / `shared/brand` — one visual boundary;
+- `shared/data` — runtime read-through cache + invalidation;
+- `shared/storage` — scoped persistence adapters;
+- `features/*` — feature pages/components/state/query boundaries.
 
-- publisher commit: `ea5a19b7086eb8779701be2b1f47fc073b38aa12`
-- reviewed correction/final execution head: `7d17e19bef37835d500de492053e728f0cdb9f1b`
-- Railway deployment: `5024b218-32e0-49fe-b9f8-20ee82c5bcd0` — `SUCCESS`
-- markers: `G9_U2_PUBLISH_APPLY_PASS`, `G9_U2_PUBLISH_FULL_PASS`
-- final status: `COMMITTED_STATE_VERIFIED_AND_PUBLISHED`
+Rules remain mandatory:
 
-Verified Grade 9 English publication totals after this gate:
+- no giant page files mixing routing + API + cache + storage + large JSX;
+- no duplicated app chrome, icon implementations, common rows/buttons/empty states;
+- shared UI stays domain-agnostic;
+- no feature-to-feature private internals;
+- incremental migration only when executable gates remain green.
+
+## Data/cache truth
+
+Runtime read-through cache:
+
+- curriculum: 2 min memory TTL;
+- quiz catalog: 1 min;
+- recent attempts: 30 sec;
+- profile-scoped;
+- duplicate concurrent reads deduplicated;
+- access changes invalidate affected curriculum/practice read models;
+- assessment completion invalidates attempt summaries;
+- Downloads reuses the same curriculum cache instead of creating a second catalog request path.
+
+Stage16 offline package storage remains the single lesson-download authority.
+
+Notes / Saved / Needs Review remain targeted for account-scoped local-first persistence only when Stage17 ownership and synchronization contracts become authoritative. Do not persist passwords, reusable auth tokens, synthetic entitlements, or arbitrary `/v1` responses as hidden business authority.
+
+## Stage16 reconciliation
+
+Preserved behavior from the separate PR #57 workstream:
+
+- bounded startup from verified durable profile/device scope;
+- verified stored lesson package path;
+- direct opening from Downloads;
+- signature/integrity/tamper/profile-device/time-bound checks;
+- cold-start Reader acceptance;
+- no synthetic server session or fake offline authorization authority.
+
+Do not weaken these semantics while moving remaining Reader internals.
+
+## Remaining V2 closure work
+
+The large product redesign/migration is no longer the blocker. Remaining work is closure-only:
+
+1. let CI complete on the documentation synchronization head;
+2. inspect any final exact-head failure rather than assuming green from the previous head;
+3. keep security-critical Reader/Offline internals stable unless there is evidence-driven reason to move them;
+4. finish final documentation/PR readiness synchronization;
+5. when all required checks are green, take PR #58 out of Draft and merge through the repository's normal protected flow if permissions/tools permit;
+6. after merge, resume the product roadmap from the next unclosed Student item instead of redesigning V2 again.
+
+## Grade 9 English content truth retained
+
+The RAW-backed Grade 9 English Pupil's Book 3 import and reviewed Unit 2 publication remain closed technical checkpoints.
+
+Retained verified publication totals:
 
 - published Lessons: `2`
-- published Lesson Assets: `6`
+- Lesson Assets: `6`
 - published Question Revisions: `19`
-- target Reader-eligible assets: `6`
-- target published/known Question Revisions eligible for Quiz Builder: `19`
 
-Those exact totals prove the rest of the imported Grade 9 English corpus remains Draft/unpublished.
+Do not rerun the completed Grade 9 bulk import or republish those closed review checkpoints.
 
-Student delivery semantics:
+## Stable system boundaries
 
-- the two reviewed Lessons satisfy Student Reader publication predicates, subject to normal auth/entitlement rules;
-- their 19 reviewed Question Revisions are published in Question Bank and linked to the two modern Lessons (`12 + 7`);
-- no standalone student Quiz/version is claimed to have been created or published by this gate. Quiz construction/publication is separate if required.
-
-Isolation:
-
-- RAW mutations: `0`
-- media-binary mutations: `0`
-- unrelated publication: `0`
-- page 70 fabrication: `0`
-- prohibited `69 -> 62` heuristic: not used
-
-Canonical report:
-
-`7eaur/alwaslh-go@content/legacy-staging-rebuild/content-staging/GRADE9_UNIT2_REVIEWED_PUBLICATION_REPORT.md`
-
-## Source authority clarification
-
-The exact original Grade 9 reference exists in `7eaur/alwaslh-go@master` under `تاسع انجليزي/الانجليزي_تاسع` and may be used for structural/page/title cross-checking. `master` also contains unrelated corpora such as Third Secondary/Pupil's Book 6, so the exact Grade 9 path must be resolved before use.
-
-Immutable RAW, the reconstruction manifest and live PostgreSQL remain the write/import authority. The legacy `69 -> 62` heuristic is prohibited.
-
-## Content Rebuild checkpoints retained
-
-- `BATCH-001 = DONE / COMMITTED_STATE_VERIFIED`
-- `STRUCTURE-001 = DONE / SECTION_BOUNDARY_VERIFIED`
-- `STRUCTURE-002 = DONE / SECTION_BOUNDARY_VERIFIED`
-- `CURATION-001 = DONE / COMMITTED_STATE_VERIFIED / PUBLISHED`
-- `CURATION-002 = DONE / COMMITTED_STATE_VERIFIED / PUBLISHED`
-- `CONTENT-GAPS-001 = DONE / GAP_INVENTORY_VERIFIED`
-- `MEDIA-001 = DONE / MEDIA_PROFILE_VERIFIED_PARTIAL_ACCEPTANCE`
-- `IMPORT-001 = DONE / COMMITTED_STATE_VERIFIED`
-- `VERIFY-001 = DONE / DELIVERY_ISOLATION_AND_PROVENANCE_VERIFIED`
-- `ROADMAP-RETURN = DONE / STUDENT-016I_HANDOFF_VERIFIED`
-- `FULL-GRADE9-ENGLISH-BULK-IMPORT = DONE / FULL_ASSET_COVERAGE_VERIFIED`
-- `REVIEWED-UNIT2-PUBLICATION = DONE / COMMITTED_STATE_VERIFIED_AND_PUBLISHED`
-
-## Student workstream retained
-
-PR #57 — `feat(student): close cold-start offline Reader gap` remains a separate `STUDENT-016I` workstream on `stage16/student-016i`.
-
-Last checked head in the prior Student run:
-
-`ce97ef2524cd3735a0200ee0f15fa6e6e224e01e`
-
-Do not infer current PR/CI state without re-fetching live exact-head evidence when Student work resumes.
-
-Remaining Student roadmap stays repository-controlled; re-read live roadmap before continuing.
-
-## Required startup / next Content action
-
-Read live heads first, then `PROJECT_HANDOFF.md`, this file, `PROJECT_ENGINEERING_LOG.md`, relevant product docs, and the live Content Rebuild status/handoff in `alwaslh-go`.
-
-For Content: do not republish these two Lessons or rerun the bulk import. Continue from the first unresolved evidence-backed pedagogical boundary; future Lessons/questions remain unpublished until they complete review and an explicit rollback-gated publication pass.
+- API + PostgreSQL own canonical business state.
+- Auth/Authz/Entitlements remain server-owned.
+- browser storage is not hidden backend authority.
+- `media ready != published`.
+- AI/legacy output never auto-publishes learner content/questions.
+- Question Bank publication + immutable Quiz version remain assessment delivery authority.
+- `/v1` never becomes Service Worker business-cache authority.

@@ -1,0 +1,102 @@
+/* Student Experience V2 library and shared empty states */
+.student-library-v2 {
+  width: min(100%, 46rem);
+}
+
+.student-library-v2__list {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--student-border, #e5e7eb);
+  border-radius: var(--student-radius-large, 1rem);
+  background: var(--student-surface, #fff);
+}
+
+.student-library-v2__row {
+  min-height: 4.5rem;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .8rem;
+  padding: .8rem 1rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.student-library-v2__row + .student-library-v2__row {
+  border-top: 1px solid var(--student-border, #e5e7eb);
+}
+
+.student-library-v2__icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: .75rem;
+  background: var(--student-surface-selected, #e6f7f6);
+  color: var(--student-accent-strong, #007f78);
+}
+
+.student-library-v2__icon svg,
+.student-library-v2__row > svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.student-library-v2__copy strong,
+.student-library-v2__copy small {
+  display: block;
+}
+
+.student-library-v2__copy strong {
+  color: var(--student-heading, #123c43);
+  font-size: .95rem;
+  font-weight: 700;
+}
+
+.student-library-v2__copy small {
+  margin-top: .15rem;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+
+.student-library-v2__row > svg {
+  color: var(--student-text-muted, #6b7280);
+}
+
+.student-v2-empty-state {
+  width: min(100%, 34rem);
+  margin-inline: auto;
+  padding: clamp(1.5rem, 5vw, 2.25rem) 1rem;
+  text-align: center;
+}
+
+.student-v2-empty-state__icon {
+  width: 3rem;
+  height: 3rem;
+  display: grid;
+  place-items: center;
+  margin: 0 auto .8rem;
+  border-radius: 50%;
+  background: var(--student-surface-selected, #e6f7f6);
+  color: var(--student-accent-strong, #007f78);
+}
+
+.student-v2-empty-state h2 {
+  margin: 0;
+  color: var(--student-heading, #123c43);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.student-v2-empty-state p {
+  max-width: 30rem;
+  margin: .45rem auto 0;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .86rem;
+  line-height: 1.75;
+}
+
+.student-v2-empty-state__action {
+  margin-top: 1rem;
+}

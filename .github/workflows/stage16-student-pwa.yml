@@ -75,7 +75,7 @@ jobs:
           tests/integration/student-offline-download.integration.test.ts
 
   offline-client:
-    name: Student offline · lifecycle/materialization · real Chromium
+    name: Student offline · lifecycle/materialization/cold-start Reader · real Chromium
     runs-on: ubuntu-latest
     timeout-minutes: 25
     services:
@@ -124,12 +124,13 @@ jobs:
           ('654322', 365), ('654323', 365);"
       - name: Install Chromium
         run: npx --prefix apps/student-web playwright install --with-deps chromium
-      - name: Verify IndexedDB lease lifecycle and protected materialization
+      - name: Verify IndexedDB lifecycle, protected materialization and cold-start Reader
         working-directory: apps/student-web
         run: >-
           npx playwright test
           e2e/offline-lease.e2e.spec.mjs
           e2e/offline-download.e2e.spec.mjs
+          e2e/offline-reader-cold-start.e2e.spec.mjs
 
   pwa-shell:
     name: Student PWA · app shell · real Chromium

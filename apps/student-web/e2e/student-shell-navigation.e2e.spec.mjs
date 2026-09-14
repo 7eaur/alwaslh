@@ -18,12 +18,12 @@ async function openAuthenticatedStudent(page) {
   await page.context().addCookies([{ name: fixture.sessionCookieName, value: fixture.sessionToken, url: "http://127.0.0.1:5174", httpOnly: true, sameSite: "Lax" }]);
   await page.goto("/");
   await expect(page).toHaveURL(/\/app\/home$/);
-  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مرحبًا بك" })).toBeVisible();
   return fixture;
 }
 
 test("Student shell provides stable mobile destinations, focus, history and actionable offline state", async ({ page }) => {
-  await openAuthenticatedStudent(page);
+  const fixture = await openAuthenticatedStudent(page);
 
   await expect(page.locator(".aw-product-shell")).toHaveAttribute("dir", "rtl");
   const phoneNav = page.getByRole("navigation", { name: "التنقل الرئيسي للطالب على الهاتف" });
@@ -39,17 +39,17 @@ test("Student shell provides stable mobile destinations, focus, history and acti
   await phoneNav.getByRole("link", { name: "التعلّم" }).click();
   await expect(page).toHaveURL(/\/app\/learn$/);
   await expect(page.locator("#route-content")).toBeFocused();
-  await expect(page.getByRole("heading", { name: "موادك ودروسك" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
   await expect(phoneNav.getByRole("link", { name: "التعلّم" })).toHaveAttribute("aria-current", "page");
 
   await page.goBack();
   await expect(page).toHaveURL(/\/app\/home$/);
   await expect(page.locator("#route-content")).toBeFocused();
-  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مرحبًا بك" })).toBeVisible();
 
   await phoneNav.getByRole("link", { name: "مكتبتي" }).click();
   await expect(page).toHaveURL(/\/app\/library$/);
-  await expect(page.getByRole("heading", { name: "محتواك الشخصي، مرتب في مكان واحد" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "مكتبتي" })).toBeVisible();
   await expect(phoneNav.getByRole("link", { name: "مكتبتي" })).toHaveAttribute("aria-current", "page");
 
   await page.context().setOffline(true);
@@ -92,5 +92,5 @@ test("Student shell adapts navigation for tablet and desktop without overflow", 
 
   await adaptiveNav.getByRole("link", { name: "تقدمي" }).click();
   await expect(page).toHaveURL(/\/app\/progress$/);
-  await expect(page.getByRole("heading", { name: "شاهد تقدمك بدون أرقام مربكة" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "سيظهر تقدمك هنا" })).toBeVisible();
 });

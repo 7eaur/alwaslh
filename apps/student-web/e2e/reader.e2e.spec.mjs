@@ -35,18 +35,17 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
 
   await page.goto("/");
   await expect(page).toHaveURL(/\/app\/home$/);
-  await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "مرحبًا بك" })).toBeVisible();
   await page.getByRole("link", { name: "التعلّم", exact: true }).first().click();
   await expect(page).toHaveURL(/\/app\/learn$/);
-  await expect(page.getByRole("heading", { name: "موادك ودروسك" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/Stage16|PWA|authority/);
 
-  await expect(page.getByRole("heading", { name: fixture.className })).toBeVisible();
   const subjectLink = page.getByRole("link", { name: new RegExp(fixture.subjectName) });
   await expect(subjectLink).toBeVisible();
   await subjectLink.click();
   await expect(page).toHaveURL(/\/app\/learn\/subjects\/[^/]+$/);
-  await expect(page.getByRole("heading", { name: fixture.subjectName })).toBeVisible();
+  await expect(page.getByRole("article", { name: fixture.subjectName })).toBeVisible();
 
   const lessonLink = page.getByRole("link", { name: new RegExp(fixture.lessonTitle) });
   await lessonLink.focus();
@@ -143,5 +142,5 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
 
   await page.goBack();
   await expect(page).toHaveURL(new RegExp(`${subjectUrl}$`));
-  await expect(page.getByRole("heading", { name: fixture.subjectName })).toBeVisible();
+  await expect(page.getByRole("article", { name: fixture.subjectName })).toBeVisible();
 });

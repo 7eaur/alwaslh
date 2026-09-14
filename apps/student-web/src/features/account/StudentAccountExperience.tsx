@@ -1,0 +1,189 @@
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  createAccessRedemptionIdempotencyKey,
+  isMissingSessionError,
+  isSevenDigitClassCode,
+  listStudentEntitlements,
+  normalizeAccessCode,
+  redeemStudentAccess,
+  type EntitlementView,
+} from "../../auth-api";
+import { FormAlert } from "../../shared/ui/FormAlert";
+import { studentErrorMessage } from "../../student-error-copy";
+
+type AccountAccessState =
+  | { status: "loading" }
+  | { status: "ready"; entitlements: EntitlementView[] }
+  | { status: "offline" }
+  | { status: "error"; message: string };
+
+function expiryLabel(expiresAt: string | null): string {
+  if (!expiresAt) return "مستمر حاليًا";
+  return `حتى ${new Intl.DateTimeFormat("ar-YE", { dateStyle: "medium" }).format(new Date(expiresAt))}`;
+}
+
+export function StudentAccountExperience({
+  online,
+  onSessionExpired,
+  onAccessChanged,
+  onLoggedOut,
+}: {
+  online: boolean;
+  onSessionExpired: () => void;
+  onAccessChanged: () => void;
+  onLoggedOut: () => void;
+}) {
+  const navigate = useNavigate();
+  const [state, setState] = useState<AccountAccessState>({ status: online ? "loading" : "offline" });
+  const [classCode, setClassCode] = useState("");
+  const [redemptionKey, setRedemptionKey] = useState(createAccessRedemptionIdempotencyKey);
+  const [redeemBusy, setRedeemBusy] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
+
+  const normalizedClassCode = normalizeAccessCode(classCode).slice(0, 7);
+  const entitlements = state.status === "ready" ? state.entitlements : [];
+  const hasFullAccess = entitlements.some((entitlement) => entitlement.scope === "all_content");
+
+  async function loadAccess() {
+    if (!online) {
+      setState({ status: "offline" });
+      return;
+    }
+    setState({ status: "loading" });
+    try {
+      setState({ status: "ready", entitlements: await listStudentEntitlements() });
+    } catch (error) {
+      if (isMissingSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setState({ status: "error", message: studentErrorMessage(error, "access") });
+    }
+  }
+
+  useEffect(() => {
+    void loadAccess();
+  }, [online]);
+
+  async function handleRedeem(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!isSevenDigitClassCode(normalizedClassCode) || redeemBusy || !online || hasFullAccess) return;
+    setRedeemBusy(true);
+    setRedeemError(null);
+    try {
+      await redeemStudentAccess(normalizedClassCode, redemptionKey);
+      setClassCode("");
+      setRedemptionKey(createAccessRedemptionIdempotencyKey());
+      await loadAccess();
+      onAccessChanged();
+      navigate("/app/learn", { state: { accessActivated: true } });
+    } catch (error) {
+      if (isMissingSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setRedeemError(studentErrorMessage(error, "access"));
+    } finally {
+      setRedeemBusy(false);
+    }
+  }
+
+  async function handleLogout() {
+    if (logoutBusy) return;
+    setLogoutBusy(true);
+    try {
+      onLoggedOut();
+    } finally {
+      setLogoutBusy(false);
+    }
+  }
+
+  return (
+    <main className="student-account-v2" aria-label="حسابي">
+      <section className="student-account-v2__section" aria-labelledby="account-access-title">
+        <div className="student-account-v2__section-heading">
+          <div>
+            <h2 id="account-access-title">الوصول والمحتوى</h2>
+            <p>الصفوف والمحتوى المفعّل لحسابك.</p>
+          </div>
+          <button className="text-button student-compact-action" type="button" onClick={() => void loadAccess()} disabled={!online || state.status === "loading"}>تحديث</button>
+        </div>
+
+        {state.status === "loading" ? (
+          <div className="student-b05-skeleton" role="status" aria-live="polite" aria-busy="true"><span className="sr-only">جاري تحميل الوصول</span><span /><span /></div>
+        ) : state.status === "offline" ? (
+          <div className="student-b05-state is-warning" role="status"><strong>أنت غير متصل الآن</strong><p>يمكنك متابعة المحتوى الذي سبق تنزيله.</p></div>
+        ) : state.status === "error" ? (
+          <div className="student-b05-state is-error" role="alert"><strong>تعذر تحميل الوصول</strong><p>{state.message}</p><button className="secondary-button" type="button" onClick={() => void loadAccess()} disabled={!online}>إعادة المحاولة</button></div>
+        ) : entitlements.length === 0 ? (
+          <div className="student-b05-state is-empty"><strong>لا توجد صفوف مفعّلة</strong><p>أضف رمز صف عندما تحصل عليه ليظهر محتواه في التعلّم.</p></div>
+        ) : (
+          <ul className="student-access-list" aria-label="الوصول الحالي">
+            {entitlements.map((entitlement) => (
+              <li key={entitlement.id}>
+                <span className="student-access-list__mark" aria-hidden="true">✓</span>
+                <span><strong>{entitlement.scope === "all_content" ? "كل المحتوى المتاح" : "صف مفعّل"}</strong><small>{expiryLabel(entitlement.expiresAt)}</small></span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="student-account-v2__section" aria-labelledby="account-add-class-title">
+        <div className="student-account-v2__section-heading">
+          <div><h2 id="account-add-class-title">إضافة رمز صف</h2><p>اكتب الرمز المكوّن من 7 أرقام كما استلمته.</p></div>
+        </div>
+
+        {hasFullAccess ? (
+          <FormAlert tone="info">لديك وصول كامل، ولا تحتاج إلى رمز صف آخر الآن.</FormAlert>
+        ) : (
+          <form className="student-account-code-form" onSubmit={handleRedeem} noValidate>
+            {redeemError ? <FormAlert tone="danger">{redeemError}</FormAlert> : null}
+            <div className="field-group">
+              <label htmlFor="class-access-code">رمز الصف</label>
+              <div className="student-account-code-row">
+                <input
+                  id="class-access-code"
+                  className="text-input class-code-input"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="[0-9٠-٩۰-۹]*"
+                  maxLength={14}
+                  value={normalizedClassCode}
+                  onChange={(event) => {
+                    setClassCode(event.target.value);
+                    setRedemptionKey(createAccessRedemptionIdempotencyKey());
+                    setRedeemError(null);
+                  }}
+                  aria-describedby="class-access-code-hint"
+                  placeholder="0000000"
+                  dir="ltr"
+                />
+                <button className="primary-button" type="submit" disabled={!isSevenDigitClassCode(normalizedClassCode) || redeemBusy || !online}>{redeemBusy ? "جاري التفعيل" : "تفعيل الصف"}</button>
+              </div>
+              <p className="field-hint" id="class-access-code-hint">يمكنك استخدام الأرقام العربية أو الإنجليزية.</p>
+            </div>
+            {!online ? <FormAlert tone="warning">اتصل بالإنترنت لتفعيل رمز الصف.</FormAlert> : null}
+          </form>
+        )}
+      </section>
+
+      <section className="student-account-v2__section" aria-labelledby="account-help-title">
+        <div className="student-account-v2__section-heading"><div><h2 id="account-help-title">المساعدة</h2></div></div>
+        <div className="student-account-v2__links">
+          <Link to="/help"><span><strong>التعليمات</strong><small>طريقة استخدام الحساب والتعلّم والتدريب.</small></span><span aria-hidden="true">←</span></Link>
+          <Link to="/support"><span><strong>الدعم</strong><small>مساعدة عند تعذر الدخول أو الوصول.</small></span><span aria-hidden="true">←</span></Link>
+          <Link to="/app/progress"><span><strong>تقدمي</strong><small>يظهر هنا عندما تتوفر بيانات تقدم موثوقة.</small></span><span aria-hidden="true">←</span></Link>
+        </div>
+      </section>
+
+      <div className="student-account-v2__logout">
+        <button className="text-button student-danger-action" type="button" onClick={() => void handleLogout()} disabled={logoutBusy}>{logoutBusy ? "جاري تسجيل الخروج" : "تسجيل الخروج"}</button>
+      </div>
+    </main>
+  );
+}

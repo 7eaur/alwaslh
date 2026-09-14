@@ -1,0 +1,194 @@
+/* Student Experience V2 entry/auth visual contract.
+   This layer intentionally overrides legacy entry presentation while feature extraction proceeds. */
+.student-entry-page {
+  background: var(--student-canvas, #f7faf9);
+  color: var(--student-text, #1f2937);
+}
+
+.student-entry-shell {
+  width: min(100%, 40rem);
+  min-height: calc(100dvh - 2rem);
+  gap: 1.25rem;
+}
+
+.student-entry-topbar {
+  min-height: 3.5rem;
+}
+
+.student-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: .65rem;
+}
+
+.student-brand__asset {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: .75rem;
+}
+
+.student-brand__copy strong {
+  color: var(--student-heading, #123c43);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.student-brand__copy small {
+  color: var(--student-text-muted, #6b7280);
+  font-size: .75rem;
+}
+
+.student-entry-main {
+  align-self: center;
+}
+
+.student-entry-main.is-auth {
+  width: min(100%, 29rem);
+}
+
+.student-welcome-panel {
+  width: min(100%, 31rem);
+  margin-inline: auto;
+  text-align: center;
+}
+
+.student-welcome-panel .eyebrow {
+  display: none;
+}
+
+.student-welcome-panel > h1 {
+  max-width: none;
+  margin: 0;
+  color: var(--student-heading, #123c43);
+  font-size: clamp(1.8rem, 7vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: -.015em;
+}
+
+.student-welcome-panel > p {
+  max-width: 29rem;
+  margin: .75rem auto 0;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .98rem;
+  line-height: 1.85;
+}
+
+.student-welcome-points {
+  display: none;
+}
+
+.student-entry-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .65rem;
+  width: min(100%, 22rem);
+  margin: 1.7rem auto 0;
+}
+
+.student-entry-actions .primary-button,
+.student-entry-actions .secondary-button {
+  width: 100%;
+  min-height: 3.25rem;
+}
+
+.student-entry-help-link {
+  margin-top: .85rem;
+  color: var(--student-text-secondary, #64748b);
+}
+
+.student-auth-surface {
+  padding: clamp(1rem, 4vw, 1.4rem);
+  border: 1px solid var(--student-border, #e5e7eb);
+  border-radius: var(--student-radius-large, 1rem);
+  background: var(--student-surface, #fff);
+  box-shadow: 0 10px 30px rgb(18 60 67 / .05);
+}
+
+.student-auth-switch {
+  gap: .25rem;
+  margin-bottom: 1.15rem;
+  padding: .25rem;
+  background: var(--student-surface-subtle, #f3f6f5);
+}
+
+.student-auth-switch button {
+  min-height: 2.65rem;
+  border-radius: .7rem;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.student-auth-switch button.is-active {
+  color: var(--student-accent-strong, #007f78);
+  background: var(--student-surface, #fff);
+  box-shadow: 0 2px 10px rgb(18 60 67 / .06);
+}
+
+.student-auth-heading {
+  margin-bottom: 1.15rem;
+}
+
+.student-auth-heading .eyebrow {
+  display: none;
+}
+
+.student-auth-heading h1 {
+  margin: 0;
+  color: var(--student-heading, #123c43);
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.student-auth-heading > p:last-child {
+  margin-top: .35rem;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .9rem;
+  line-height: 1.75;
+}
+
+.student-entry-form {
+  gap: .9rem;
+}
+
+.student-entry-page .text-input {
+  min-height: 3.15rem;
+  border-color: var(--student-border, #e5e7eb);
+  border-radius: .75rem;
+  background: #fff;
+}
+
+.student-entry-page .text-input:focus {
+  border-color: var(--student-accent-strong, #007f78);
+  box-shadow: 0 0 0 3px rgb(0 127 120 / .1);
+}
+
+.student-entry-footer {
+  gap: .35rem .8rem;
+  color: var(--student-text-muted, #6b7280);
+}
+
+.student-entry-footer .text-button {
+  font-size: .82rem;
+}
+
+@media (max-width: 40rem) {
+  .student-entry-page {
+    padding: max(.85rem, env(safe-area-inset-top, 0px)) .85rem max(.85rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .student-entry-shell {
+    min-height: calc(100dvh - 1.7rem);
+  }
+
+  .student-entry-topbar {
+    align-items: center;
+  }
+
+  .student-brand__copy small {
+    display: none;
+  }
+}

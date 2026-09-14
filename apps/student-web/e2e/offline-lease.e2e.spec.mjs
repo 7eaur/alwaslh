@@ -104,24 +104,24 @@ async function expectAuthenticatedApp(page) {
   await expect(page).toHaveURL(/\/app\/(?:home|account)$/);
   await expect(page.getByRole("link", { name: "حسابي", exact: true })).toBeVisible();
   if (/\/app\/home$/.test(page.url())) {
-    await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "مرحبًا بك" })).toBeVisible();
   } else {
-    await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "الوصول والمحتوى" })).toBeVisible();
   }
 }
 
 async function activateStudent(page, code, password) {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
-  await page.getByLabel("رمز الوصول الكامل").fill(code);
+  await expect(page.getByRole("heading", { name: "تفعيل الحساب" })).toBeVisible();
+  await page.getByLabel("رمز التفعيل").fill(code);
 
   const verifyPromise = page.waitForResponse(
     (response) => response.url().includes("/v1/student/activation/verify") && response.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "متابعة التفعيل" }).click();
+  await page.getByRole("button", { name: "متابعة", exact: true }).click();
   expect((await verifyPromise).status()).toBe(200);
 
-  await page.getByLabel("كلمة المرور الخاصة بك").fill(password);
+  await page.getByLabel("كلمة المرور", { exact: true }).fill(password);
   await page.getByLabel("تأكيد كلمة المرور").fill(password);
   const completePromise = page.waitForResponse(
     (response) => response.url().includes("/v1/student/activation/complete") && response.request().method() === "POST",
@@ -129,7 +129,7 @@ async function activateStudent(page, code, password) {
   const leasePromise = page.waitForResponse(
     (response) => response.url().includes("/v1/student/offline/lease") && response.request().method() === "GET",
   );
-  await page.getByRole("button", { name: "إنشاء الحساب والمتابعة" }).click();
+  await page.getByRole("button", { name: "إنشاء الحساب", exact: true }).click();
   const [completeResponse, leaseResponse] = await Promise.all([completePromise, leasePromise]);
   expect(completeResponse.status()).toBe(201);
   expect(leaseResponse.status()).toBe(200);
@@ -143,7 +143,7 @@ async function activateStudent(page, code, password) {
 
 async function switchToLogin(page) {
   await page.locator(".student-auth-switch").getByRole("button", { name: "تسجيل الدخول", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تسجيل الدخول" })).toBeVisible();
 }
 
 async function loginStudent(page, code, password, expectedPurpose) {
@@ -177,7 +177,7 @@ async function loginStudent(page, code, password, expectedPurpose) {
 async function openAccount(page) {
   if (!/\/app\/account$/.test(page.url())) await page.getByRole("link", { name: "حسابي", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/account$/);
-  await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الوصول والمحتوى" })).toBeVisible();
 }
 
 async function expectSessionExpiryFromAccess(page) {
@@ -185,12 +185,12 @@ async function expectSessionExpiryFromAccess(page) {
     (response) => response.url().includes("/v1/student/access/entitlements") && response.status() === 401,
   );
   if (/\/app\/account$/.test(page.url())) {
-    await page.locator(".access-section").getByRole("button", { name: "تحديث", exact: true }).click();
+    await page.getByRole("button", { name: "تحديث", exact: true }).click();
   } else {
     await page.getByRole("link", { name: "حسابي", exact: true }).click();
   }
   await expiredRequest;
-  await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تسجيل الدخول" })).toBeVisible();
   await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة.", { exact: true })).toBeVisible();
 }
 
@@ -233,7 +233,7 @@ test("offline lease persists and cleanup stays scoped across logout and device r
   await page.evaluate(() => window.dispatchEvent(new Event("offline")));
   await expect(page.getByText("أنت غير متصل الآن", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "تسجيل الخروج" }).click();
-  await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تسجيل الدخول" })).toBeVisible();
   await expect.poll(async () => (await readOfflineLeases(page)).some((record) => record.scopeKey === currentRecord.scopeKey)).toBe(false);
   let afterOfflineLogout = await readOfflineLeases(page);
   expect(afterOfflineLogout.some((record) => record.scopeKey === staleSameProfile.scopeKey)).toBe(true);

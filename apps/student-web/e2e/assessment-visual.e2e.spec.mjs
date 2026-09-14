@@ -44,7 +44,7 @@ async function openQuiz(page, fixture) {
 }
 
 async function startPractice(page, fixture) {
-  await page.getByRole("combobox", { name: "مجموعة الأسئلة" }).selectOption({ label: fixture.versionALabel });
+  await page.getByRole("combobox", { name: "النموذج" }).selectOption({ label: fixture.versionALabel });
   const responsePromise = page.waitForResponse(
     (response) =>
       response.url().includes(`/v1/student/quizzes/${fixture.quizId}/sessions`) &&

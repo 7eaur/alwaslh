@@ -39,7 +39,7 @@ async function storedPublicKey(page, accountIdentifier) {
 
 async function switchToLogin(page) {
   await page.locator(".student-auth-switch").getByRole("button", { name: "تسجيل الدخول" }).click();
-  await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تسجيل الدخول" })).toBeVisible();
 }
 
 async function fillLogin(page, password) {
@@ -56,48 +56,48 @@ async function expectAuthenticatedApp(page) {
   await expect(page).toHaveURL(/\/app\/(?:home|account)$/);
   await expect(page.getByRole("link", { name: "حسابي", exact: true })).toBeVisible();
   if (/\/app\/home$/.test(page.url())) {
-    await expect(page.getByRole("heading", { name: "ماذا تريد أن تفعل الآن؟" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "مرحبًا بك" })).toBeVisible();
   } else {
-    await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "الوصول والمحتوى" })).toBeVisible();
   }
 }
 
 async function openAccount(page) {
   if (!/\/app\/account$/.test(page.url())) await page.getByRole("link", { name: "حسابي", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/account$/);
-  await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الوصول والمحتوى" })).toBeVisible();
 }
 
 test("student activation, recovery, device access and canonical curriculum work at 390px", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تفعيل الحساب" })).toBeVisible();
 
-  await page.getByLabel("رمز الوصول الكامل").fill("123");
-  await expect(page.getByRole("button", { name: "متابعة التفعيل" })).toBeDisabled();
+  await page.getByLabel("رمز التفعيل").fill("123");
+  await expect(page.getByRole("button", { name: "متابعة", exact: true })).toBeDisabled();
 
-  await page.getByLabel("رمز الوصول الكامل").fill("999999");
+  await page.getByLabel("رمز التفعيل").fill("999999");
   const invalidVerifyPromise = page.waitForResponse((response) => response.url().includes("/v1/student/activation/verify") && response.request().method() === "POST");
-  await page.getByRole("button", { name: "متابعة التفعيل" }).click();
+  await page.getByRole("button", { name: "متابعة", exact: true }).click();
   expect((await invalidVerifyPromise).status()).toBe(404);
   await expect(page.getByRole("alert")).toContainText("رمز التفعيل غير صحيح أو لم يعد صالحًا");
   await expect(page.locator("body")).not.toContainText("كود التفعيل غير موجود");
 
-  await page.getByLabel("رمز الوصول الكامل").fill(accountCodeArabic);
-  await expect(page.getByLabel("رمز الوصول الكامل")).toHaveValue(accountCode);
+  await page.getByLabel("رمز التفعيل").fill(accountCodeArabic);
+  await expect(page.getByLabel("رمز التفعيل")).toHaveValue(accountCode);
   const verifyPromise = page.waitForResponse((response) => response.url().includes("/v1/student/activation/verify") && response.request().method() === "POST");
-  await page.getByRole("button", { name: "متابعة التفعيل" }).click();
+  await page.getByRole("button", { name: "متابعة", exact: true }).click();
   const verify = await verifyPromise;
   expect(verify.status()).toBe(200);
   expect((await verify.json()).accountIdentifier).toBe(accountCode);
-  await expect(page.locator(".form-alert.is-success")).toContainText("الرمز صالح");
+  await expect(page.locator(".form-alert.is-success")).toContainText("تم التحقق من الرمز");
 
-  await page.getByLabel("كلمة المرور الخاصة بك").fill(initialPassword);
+  await page.getByLabel("كلمة المرور", { exact: true }).fill(initialPassword);
   await page.getByLabel("تأكيد كلمة المرور").fill(`${initialPassword}x`);
   await expect(page.getByText("كلمتا المرور غير متطابقتين.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "إنشاء الحساب والمتابعة" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "إنشاء الحساب", exact: true })).toBeDisabled();
   await page.getByLabel("تأكيد كلمة المرور").fill(initialPassword);
   const completePromise = page.waitForResponse((response) => response.url().includes("/v1/student/activation/complete") && response.request().method() === "POST");
-  await page.getByRole("button", { name: "إنشاء الحساب والمتابعة" }).click();
+  await page.getByRole("button", { name: "إنشاء الحساب", exact: true }).click();
   const activationResponse = await completePromise;
   expect(activationResponse.status()).toBe(201);
   const activation = await activationResponse.json();
@@ -132,7 +132,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   expect(recovery.temporaryPassword).toEqual(expect.any(String));
   expect(recovery.expiresInHours).toBeGreaterThan(0);
   await page.reload();
-  await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تفعيل الحساب" })).toBeVisible();
   await switchToLogin(page);
   await fillLogin(page, recovery.temporaryPassword);
   const recoveryStartPromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/start") && response.request().method() === "POST");
@@ -143,9 +143,9 @@ test("student activation, recovery, device access and canonical curriculum work 
   expect(recoveryChallenge.purpose).toBe("password_change");
   expect(recoveryChallenge.mustChangePassword).toBe(true);
   expect(recoveryChallenge.requiresDeviceRegistration).toBe(false);
-  await expect(page.getByText(/كلمة المرور التي أدخلتها مؤقتة/)).toBeVisible();
+  await expect(page.getByText("اختر كلمة مرور جديدة لحسابك.", { exact: true })).toBeVisible();
 
-  await page.getByLabel("كلمة المرور الخاصة بك").fill(privatePassword);
+  await page.getByLabel("كلمة المرور", { exact: true }).fill(privatePassword);
   await page.getByLabel("تأكيد كلمة المرور").fill(privatePassword);
   const recoveryCompletePromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/complete") && response.request().method() === "POST");
   await page.getByRole("button", { name: "حفظ كلمة المرور والدخول" }).click();
@@ -156,7 +156,7 @@ test("student activation, recovery, device access and canonical curriculum work 
   const reset = runAuthFixture("device-rebind", studentProfileId);
   expect(reset.status).toBe("device_rebind_allowed");
   await page.reload();
-  await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تفعيل الحساب" })).toBeVisible();
   await switchToLogin(page);
   await fillLogin(page, privatePassword);
   const rebindStartPromise = page.waitForResponse((response) => response.url().includes("/v1/student/login/start") && response.request().method() === "POST");
@@ -182,7 +182,7 @@ test("student activation, recovery, device access and canonical curriculum work 
 
   await page.reload();
   await openAccount(page);
-  await expect(page.getByText("لا توجد صفوف مفعّلة لحسابك الآن", { exact: true })).toBeVisible();
+  await expect(page.getByText("لا توجد صفوف مفعّلة", { exact: true })).toBeVisible();
   await page.getByLabel("رمز الصف").fill("123");
   await expect(page.getByRole("button", { name: "تفعيل الصف" })).toBeDisabled();
   await page.getByLabel("رمز الصف").fill(toArabicIndic(classAccess.code));
@@ -198,15 +198,15 @@ test("student activation, recovery, device access and canonical curriculum work 
   await expect(page.getByRole("heading", { name: classAccess.className })).toBeVisible();
   const subjectLink = page.getByRole("link", { name: new RegExp(classAccess.subjectName) });
   await subjectLink.click();
-  await expect(page.getByRole("heading", { name: classAccess.subjectName })).toBeVisible();
+  await expect(page.getByRole("article", { name: classAccess.subjectName })).toBeVisible();
   await expect(page.getByText("درس غير منشور يجب ألا يظهر", { exact: true })).toHaveCount(0);
-  await expect(page.locator(".lesson-link .lesson-copy strong")).toHaveText(classAccess.lessonTitles);
+  await expect(page.locator(".subject-v2-lesson__copy strong")).toHaveText(classAccess.lessonTitles);
 
   await page.getByRole("link", { name: "التعلّم", exact: true }).first().click();
   await page.evaluate(async () => { await fetch("/v1/auth/logout", { method: "POST", credentials: "include" }); });
   const expiredRequest = page.waitForResponse((response) => response.url().includes("/v1/student/access/entitlements") && response.status() === 401);
   await page.getByRole("link", { name: "حسابي", exact: true }).click();
   await expiredRequest;
-  await expect(page.getByRole("heading", { name: "لدي حساب بالفعل" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تسجيل الدخول" })).toBeVisible();
   await expect(page.getByText("انتهت جلستك. سجّل الدخول مرة أخرى للمتابعة.", { exact: true })).toBeVisible();
 });
