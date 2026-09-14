@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { OperationsAttentionSummary } from "../../admin-operations-api";
+import type { OperationsAttentionSummary } from "../../features/operations/public";
 import {
   attentionTotal,
   buildAttentionItems,
