@@ -43,40 +43,44 @@ The latest proven `main` drift remains confined to Student frontend/PWA work; no
   - AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
-  - AB-03.2.4 Content operations compatibility facade retirement — IMPLEMENTED / WAITING_FOR_CI
+  - AB-03.2.4 Content operations compatibility facade retirement — CORRECTED / WAITING_FOR_CI
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker A sequence 55 executed only AB-03.2.4:
+Worker A sequence 55 retired the root Content operations compatibility facade, but exact-head Frontend Preparation `34906963113` exposed a real stale dependency: `apps/admin-web/src/content-operations-api.test.ts` still imported the deleted root module, causing TS2307 during Admin typecheck.
 
-- repointed `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` from the root compatibility facade to `../../features/content/public`;
-- deleted root `apps/admin-web/src/content-operations-api.ts`;
-- preserved endpoint/payload semantics, backend/PostgreSQL/security authority, routes, UI behavior and Student frontend exclusion.
+Worker B sequence 56 corrected only that ownership defect:
 
-Executable/source checkpoint: `ca8381c45cab7ae6a8500c88325042451fbed20f`.
+- moved the unchanged test to `apps/admin-web/src/features/content/api/content-operations-api.test.ts` beside its implementation owner;
+- deleted the stale root test path;
+- did not restore any root compatibility implementation;
+- did not change API paths, payload/response semantics, backend/PostgreSQL/security authority, routes, UI behavior or Student frontend implementation.
 
-Exact-head verification at handoff:
+Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
 
-- Architecture Guard `34906963160` — SUCCESS;
-- Frontend Preparation `34906963113` — QUEUED;
-- Admin AI Operations `34906963149` — IN PROGRESS;
-- Combined Integration `34906963163` — IN PROGRESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34906963142` — PENDING.
+Exact-head verification observed before documentation handoff:
 
-Because required exact-head CI is incomplete, this increment is not DONE yet.
+- Architecture Guard `34908457279` — SUCCESS;
+- Frontend Preparation `34908457311` — SUCCESS;
+- Admin AI Operations `34908457270` — IN PROGRESS;
+- Combined Integration `34908457265` — IN PROGRESS;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34908457306` — IN PROGRESS.
+
+Because required integration/PostgreSQL/Chromium evidence is incomplete, AB-03.2.4 is not DONE yet. Documentation-only pushes may supersede/cancel those runs; use source-tree-equivalent successors if required.
 
 ## Exact continuation
 
-Do not start a new seam first. Verify/close **AB-03.2.4** only:
+Do not start a new seam first. Verify/close **corrected AB-03.2.4** only:
 
-1. inspect the five exact-source runs above or source-tree-equivalent successors if documentation pushes superseded them;
-2. require Frontend Preparation/typecheck, Combined Integration and Stage13G/PostgreSQL/Chromium to finish green, with Architecture Guard remaining green;
-3. if green, mark AB-03.2.4 DONE and perform fresh AB-03.2 closure discovery before selecting any AI work;
-4. if any gate fails, fix only the root cause within this same facade-retirement scope;
-5. keep PR #52 Draft and unmerged.
+1. inspect the three remaining exact-source runs above and/or source-tree-equivalent successors after documentation-only pushes;
+2. preserve the already-green Architecture Guard and Frontend Preparation evidence;
+3. require Admin AI, Combined Integration and Stage13G/PostgreSQL/Chromium to finish green;
+4. if a gate fails, fix only the root cause within this same facade-retirement/test-ownership scope;
+5. if all required gates are green, mark AB-03.2.4 DONE and perform fresh AB-03.2 closure discovery before selecting any AI work;
+6. keep PR #52 Draft and unmerged.
 
 ## Main reconciliation need
 
@@ -84,6 +88,6 @@ Do not start a new seam first. Verify/close **AB-03.2.4** only:
 
 ## Remaining roadmap
 
-Close AB-03.2.4 verification → fresh Content/OCR closure discovery → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Close corrected AB-03.2.4 verification → fresh Content/OCR closure discovery → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
