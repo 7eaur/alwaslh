@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — first AB-01.4 backend composition seam verified and closed.**
+Last consolidated: **2026-09-14 — second AB-01.4 composition seam selected; implementation not yet started.**
 
 ## A. Durable authority invariants
 
@@ -57,30 +57,47 @@ Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSession
 
 Source implementation checkpoint `cfa2016e056f6dc4f9669236414a7acbd9551011`; minimum duplicated loading/error/retry presentation extracted to `shared/ui/AdminProductState` with successful architecture/integration/Chromium closure evidence already recorded.
 
-### AB-01.4 — ACTIVE / FIRST COMPOSITION SEAM DONE
+### AB-01.4 — ACTIVE
 
 Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
-First seam source HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
+#### First composition seam — CORS/preflight — DONE
 
-Implemented:
+Source HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 
-- `apps/api/src/app/plugins/cors.ts` is the app-level owner of global CORS/preflight policy;
-- `registerCorsPolicy(app, config)` preserves direct `app.addHook("onRequest")` behavior, origin filtering, credentials, `Vary`, methods/headers and rejected-preflight `FORBIDDEN` semantics;
-- `apps/api/src/app.ts` retains only composition call at the same pre-route lifecycle position;
+- `apps/api/src/app/plugins/cors.ts` owns the existing global CORS/preflight policy;
+- `registerCorsPolicy(app, config)` preserves direct `onRequest` behavior, origin filtering, credentials, `Vary`, methods/headers and rejected-preflight semantics;
 - no health/readiness, public-error, DB-close, service-graph, route-registration, schema or Student frontend changes were included.
 
 Closure evidence:
 
-- Architecture Guard `34808159011` — SUCCESS on source HEAD;
-- source → verification `3d281eddcdaf4a8d75d810dc0e5ded5a35392cad` compare contains only shared execution-state documentation;
+- Architecture Guard `34808159011` — SUCCESS;
 - Admin AI `34809211720` — SUCCESS;
-- Combined `34809211704` — SUCCESS including quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
-- Stage13G `34809211707` — SUCCESS including Admin/API quality, clean PostgreSQL, all listed integration/auth regressions and real API + PostgreSQL + Chromium.
+- Combined `34809211704` — SUCCESS;
+- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
 
-Conclusion: the first AB-01.4 CORS/preflight extraction is **DONE** with no behavior regression found.
+#### Second composition seam — health/readiness — DISCOVERY DONE / IMPLEMENTATION NEXT
 
-Next action is not implementation: perform the **second composition discovery** over remaining `apps/api/src/app.ts` responsibilities, identify one smallest justified seam, record ownership/dependency/parity/removal conditions, then hand implementation to a later coherent increment.
+Discovery inspected the remaining live `apps/api/src/app.ts`, `apps/api/tests/app.test.ts`, `apps/api/src/db.ts` and `apps/api/src/server.ts`.
+
+Decision:
+
+- current owner: inline `GET /health` and `GET /ready` handlers in `app.ts`;
+- target owner: `apps/api/src/app/http/health.ts`;
+- target composition API: `registerHealthRoutes(app, database)`;
+- rationale: one coherent app-level operational HTTP responsibility, no business-module dependency, no schema/security/auth/Student contract change, and three direct parity tests already exist.
+
+Parity requirements:
+
+- `/health` remains 200 `{ status: "ok", service: "alwaslh-api" }` even when DB ping would fail;
+- `/ready` remains 200 `{ status: "ready" }` when `database.ping()` resolves;
+- `/ready` preserves readiness error logging and returns 503 `{ status: "not_ready" }` when ping throws.
+
+Explicit non-goals: no not-found/public-error extraction, no DB-close lifecycle move, no database construction/config move, no `server.ts` signal/startup changes, no service graph/all-routes move, no migrations/schema, no Student frontend changes.
+
+Implementation closure requires Architecture Guard, API lint/typecheck/unit/build, clean PostgreSQL/integration evidence, Combined/equivalent backend authority regressions and Stage13G/equivalent real API + PostgreSQL + Chromium evidence.
+
+No source code was changed during this discovery. The next worker implements this seam only and must not select a third seam before verification.
 
 ### AB-01.5 — PENDING
 
@@ -100,4 +117,4 @@ AB-01 active → AB-02 thin Admin shell/router/providers/layouts/lazy routes →
 
 ## J. Exact continuation
 
-Read the live execution-state file first. Current durable continuation: **second AB-01.4 composition discovery only; do not implement the next seam in the same discovery run.**
+Read the live execution-state file first. Current durable continuation: **implement only the selected AB-01.4 health/readiness extraction, verify it fully, then decide whether another composition seam remains justified.**
