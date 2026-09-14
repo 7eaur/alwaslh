@@ -30,7 +30,7 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - never force-reset or force-push shared history;
 - live `main` latest observation: `d43fe2afe29b02093510177b921c0407e21a3de9`.
 
-The latest `main` drift from baseline `62a148e...` is confined to `apps/student-web` and `.github/workflows/stage16-student-pwa.yml`; no overlapping Admin/API/PostgreSQL/shared-contract implementation change was found for the current closure.
+The latest `main` drift from baseline `62a148e...` is confined to Student frontend/PWA work; no overlapping Admin/API/PostgreSQL/shared-contract implementation change was found for the current discovery.
 
 ## Current phase
 
@@ -42,38 +42,35 @@ The latest `main` drift from baseline `62a148e...` is confined to `apps/student-
   - AB-03.2 Curriculum + Content + OCR — ACTIVE
   - AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+  - AB-03.2.3 Content operations + OCR frontend API ownership — NEXT / DISCOVERY COMPLETE
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker C sequence 50 performed verification/closure only; no new production seam was opened.
+Worker A sequence 51 performed discovery only; no executable source was changed. The corrected executable checkpoint remains `4ba7106f910098841a7026114dcfa2f2cd1f83bf` with source-tree-equivalent green evidence: Architecture Guard `34891198234`, Admin AI `34892857039`, Combined `34892857011`, Stage13G/PostgreSQL/Chromium `34892857278`.
 
-Corrected executable source checkpoint for AB-03.2.2 remains `4ba7106f910098841a7026114dcfa2f2cd1f83bf`. Content ingestion implementation ownership is under `apps/admin-web/src/features/content/api/content-ingestion-api.ts`, exposed through `features/content/public`. Root `apps/admin-web/src/content-ingestion-api.ts` remains only as a transitional compatibility facade.
+Discovery confirmed the next bounded ownership seam: root `apps/admin-web/src/content-operations-api.ts` still owns Content operations/OCR transport and types, while `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` and `apps/admin-web/src/OcrSourcePreview.tsx` consume that root owner. With Content-ingestion transport already owned under `features/content`, this is the next proven split-ownership seam.
 
-Required source-equivalent closure evidence is green:
-
-- Architecture Guard `34891198234` — SUCCESS on exact corrected source checkpoint;
-- Admin AI Operations `34892857039` — SUCCESS;
-- Combined Integration `34892857011` — SUCCESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34892857278` — SUCCESS.
-
-This closes the bounded AB-03.2.2 migration. API paths/payloads/contracts, backend/Fastify, PostgreSQL, security, OCR/AI and Student frontend implementation were not changed by this ownership move.
+No evidence in this discovery justified changing backend/Fastify, PostgreSQL/schema, security contracts, routes, page/CSS behavior, Student frontend or starting AI.
 
 ## Exact continuation
 
-Perform **fresh AB-03.2 discovery only** inside the remaining **Content + OCR** portion before any new source mutation:
+Execute **AB-03.2.3 — Content operations + OCR frontend API ownership** only:
 
-1. inspect current Content/OCR frontend ownership, backend/API boundaries, PostgreSQL provenance/integrity, security/authorization and existing tests;
-2. identify at most one smallest root-cause ownership or workflow seam from live code evidence;
-3. do not bulk-migrate unrelated compatibility-facade consumers;
-4. do not begin the AI slice until Curriculum + Content + OCR is actually complete;
-5. once one seam is selected, execute only that increment and verify Architecture Guard plus relevant Admin/API/PostgreSQL/integration/Chromium gates.
+1. move the implementation/types from root `content-operations-api.ts` into `apps/admin-web/src/features/content/api`;
+2. expose only the minimum required contract via `apps/admin-web/src/features/content/public`;
+3. update the proven Content/OCR consumers to the feature public boundary;
+4. keep a root compatibility re-export only if an actual remaining consumer proves it necessary;
+5. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority, routes and UI behavior;
+6. run Architecture Guard plus relevant Admin/API/PostgreSQL/integration/Chromium gates; if exact/source-equivalent required CI is still running, hand off `WAITING_FOR_CI` rather than claiming DONE.
+
+Do not begin the AI slice.
 
 ## Main reconciliation need
 
-`NONE FOR THIS CLOSURE`. Current live `main` drift is Student-only and outside the structural frontend scope owned here. Re-check before the next structural phase boundary or whenever overlapping Admin/API/PostgreSQL/shared-contract changes appear.
+`NONE FOR THIS DISCOVERY`. Current live `main` drift is Student-only and outside the structural frontend scope owned here. Re-check before the next structural phase boundary or whenever overlapping Admin/API/PostgreSQL/shared-contract changes appear.
 
 ## Remaining roadmap
 
