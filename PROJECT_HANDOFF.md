@@ -1,163 +1,210 @@
 # PROJECT HANDOFF — الوسيلة الذكية
 
-> نقطة البداية للمحادثة الهندسية التالية. لا تعتمد على ذاكرة المحادثات السابقة بدل المستودع. الكود + PostgreSQL migrations + tests/CI + verified runtime + الوثائق الحالية هي Source of Truth.
+> نقطة البداية للمحادثة الهندسية التالية. Source of Truth = live repository + PostgreSQL migrations + executable tests/CI + verified runtime + current documentation.
 
-Last synchronized: **2026-09-14 — Grade 9 English full technical import verified; reviewed Unit 2 pages 5..10 published**.
+Last synchronized: **2026-09-14 — Student Experience V2 approved and active on PR #58**.
 
-## 1. Mandatory startup
+## 1. Current priority
 
-قبل أي تعديل:
+The user explicitly switched the active Student priority to:
 
-1. live-check `7eaur/alwaslh@main`.
-2. live-check `7eaur/alwaslh-go@content/legacy-staging-rebuild`.
-3. read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md` and this handoff.
-4. for Content Rebuild read live `CONTENT_REBUILD_EXECUTION_STATUS.md` and `CONTENT_REBUILD_HANDOFF.md`.
-5. inspect executable/runtime evidence before editing; anything not inspected = `NOT YET VERIFIED`.
+**Student Experience V2 — establish a clean, scalable, mobile-first Student UI/UX and code foundation before layering unfinished backend-dependent capabilities.**
 
-## 2. Current Content truth — Grade 9 English
+Work branch:
 
-`FULL-GRADE9-ENGLISH-BULK-IMPORT = DONE / FULL_ASSET_COVERAGE_VERIFIED`
+`ux/student-experience-v2`
 
-The complete RAW-backed Grade 9 English Pupil's Book 3 source corpus is present in modern PostgreSQL.
+Draft PR:
 
-Verified imported scope:
+`#58 — refactor(student): establish Student Experience V2 foundation`
 
-- `69/69` RAW-backed pages
-- `69/69` RAW images / SHA-256
-- `69/69` content-source identities
-- `69/69` ready Media Assets
-- `69/69` Lesson Assets
-- `8/8` Units/Sections
-- `104/104` Question Revisions preserved
-- page 70 remains evidence-only because no RAW identity exists
+Do not merge PR #58 until executable + visual gates pass.
 
-Bulk runtime evidence:
+## 2. Mandatory startup for Student V2
 
-- source commit `9e58ab3e882b883bddd016099949881801eedc28`
-- Railway deployment `de7f9883-b2f0-483d-a7c1-ffbfb15ac30c`
-- `BULK_G9_EN_INSPECT_PASS`
-- `BULK_G9_EN_TRANSACTION_GATE_PASS`
-- `BULK_G9_EN_APPLY_PASS`
-- `BULK_G9_EN_VERIFY_PASS`
-- `BULK_G9_EN_RUNNER_PASS`
+Before editing:
 
-Do not rerun the full import.
+1. live-check `main`;
+2. live-check PR #58 exact head and CI;
+3. live-check PR #57 exact head/state because it overlaps Student Learn/Reader files;
+4. read:
+   - `PROJECT_STATUS.md`
+   - `PROJECT_HANDOFF.md`
+   - `docs/product/STUDENT_EXPERIENCE_V2.md`
+   - `docs/product/STUDENT_EXPERIENCE_V2_EXECUTION_PLAN.md`
+   - `docs/product/STUDENT_FRONTEND_CODE_ARCHITECTURE_V2.md`
+   - `docs/product/STUDENT_V2_IMPLEMENTATION_RULES.md`
+   - `docs/product/STUDENT_DATA_RESIDENCY_AND_CACHE_V2.md`
+   - `docs/workstreams/STUDENT_V2_EXECUTION_LOG.md`
+5. inspect executable evidence before claiming completion; anything unverified stays `NOT YET VERIFIED`.
 
-## 3. Reviewed content now published
+## 3. Fixed V2 product decisions
 
-`REVIEWED-UNIT2-PUBLICATION = DONE / COMMITTED_STATE_VERIFIED_AND_PUBLISHED`
+- phone primary navigation: `الرئيسية / التعلم / التدريب / مكتبتي` only;
+- Home alone shows official الوسيلة الذكية logo + name in App Bar;
+- other top-level pages show page title in App Bar;
+- nested pages use back + current entity title;
+- no assumed student name;
+- no fixed student grade on Home/account summary;
+- Home is an overview, not a duplicate navigation menu;
+- Library statistics live on Home when backed by real data;
+- Library body becomes direct access to Downloads / Notes / Saved / Needs Review;
+- Learn scales to many classes/subjects/units/lessons using progressive disclosure;
+- Reader and active Assessment use focused shell variants;
+- Summary / Lesson Questions / Models / Notes / Saved / Review are placed in the architecture but never fabricated before their contracts/data exist.
 
-The user explicitly authorized publication of only the Lessons/questions that had completed review.
+## 4. Fixed V2 visual decisions
 
-### Published Lesson A
+- neutral-first composition;
+- teal = brand/action/selected state, not every title/border;
+- primary text = charcoal; secondary text = neutral gray;
+- Cairo-first typography contract; approved weights 400/500/600/700;
+- unified outline icon registry;
+- restrained radius/shadows;
+- no gradient/glow/glass/3D functional chrome;
+- short functional motion only;
+- `prefers-reduced-motion` mandatory;
+- touch targets >=44px;
+- safe areas owned by App Shell, not patched per page.
 
-- slug `curated-english9-pb3-u2-describing-people-and-animals`
-- title `Describing people and animals`
-- source book pages `5..8`
-- published Lesson Assets `4`
-- published reviewed Question Revisions `12`
+## 5. Fixed V2 code architecture
 
-### Published Lesson B
+Mandatory direction:
 
-- slug `curated-english9-pb3-u2-time-and-meeting`
-- title `Telling time and arranging a meeting`
-- source book pages `9..10`
-- published Lesson Assets `2`
-- published reviewed Question Revisions `7`
+`app → features → shared`
 
-Question review:
+Target ownership:
 
-- total reviewed `19`
-- approved unchanged `18`
-- corrected before publication `1`
+- `app/layout` — App Shell/App Bar/Bottom Nav/Desktop Nav/safe areas;
+- `shared/ui` — domain-agnostic reusable UI primitives;
+- `shared/icons` — one icon registry;
+- `shared/data` — runtime cache/read-through/invalidation;
+- `shared/storage` — scoped storage adapters;
+- `features/*` — feature-owned pages/components/query adapters/state.
 
-Corrected page-10 item now asks `When is Fuad helping Dad on Saturday?`, with answer `at six o'clock` and matching reviewed explanation.
+Rules:
 
-Publication runtime evidence:
+- no giant flat files mixing routing + API + storage + cache + large JSX;
+- no duplicated App Bar/Bottom Nav/icons/common button/empty state/search/list row;
+- pages compose; they do not own every layer;
+- shared UI remains domain-agnostic;
+- no feature-to-feature internal imports;
+- no circular dependencies;
+- no stage-number CSS in final product UI;
+- migration is incremental, not Big Bang.
 
-- publisher commit `ea5a19b7086eb8779701be2b1f47fc073b38aa12`
-- final reviewed execution head `7d17e19bef37835d500de492053e728f0cdb9f1b`
-- Railway deployment `5024b218-32e0-49fe-b9f8-20ee82c5bcd0` — `SUCCESS`
-- `G9_U2_PUBLISH_APPLY_PASS`
-- `G9_U2_PUBLISH_FULL_PASS`
-- final status `COMMITTED_STATE_VERIFIED_AND_PUBLISHED`
+## 6. Data/cache architecture
 
-Post-verify Grade 9 English publication totals:
+Current approved runtime cache:
 
-- Lessons `2`
-- Lesson Assets `6`
-- Question Revisions `19`
+- curriculum: 2 min memory TTL;
+- quiz catalog: 1 min;
+- recent attempts: 30 sec;
+- profile-scoped;
+- concurrent identical reads deduplicated;
+- access changes invalidate curriculum/practice;
+- quiz completion invalidates attempt/Home summary;
+- logout/session expiry clears active profile cache in final integration.
 
-Those exact totals prove the rest of the imported Grade 9 English corpus remains Draft/unpublished.
+Stage16 verified offline lesson packages remain the only lesson-download storage path.
 
-Student delivery meaning:
+Target local-first datasets when Stage17 ownership rules are ready:
 
-- both Lessons satisfy Student Reader publication predicates, subject to normal auth/entitlement rules;
-- all 19 reviewed questions are published/known Question Bank revisions and linked to the two modern Lessons (`12 + 7`), so they are available to Quiz Builder;
-- no standalone student Quiz/version was created or published by this gate. Build/publish a Quiz separately only when product scope requires it.
+- Notes;
+- Saved/bookmarked items;
+- Needs Review;
+- safe reader/UI preferences.
 
-Canonical report:
+Do not persist plaintext passwords, reusable auth secrets, fake progress/entitlement authority, or arbitrary `/v1` responses as business cache.
 
-`7eaur/alwaslh-go@content/legacy-staging-rebuild/content-staging/GRADE9_UNIT2_REVIEWED_PUBLICATION_REPORT.md`
+## 7. Current V2 implementation state
 
-After post-verification the Railway content service was returned to an idle start command so later documentation commits cannot replay publication logic.
+`V2-00 Architecture Freeze = DONE`
 
-## 4. Source authority
+`V2-01 Foundation / Shell / Home = IN PROGRESS`
 
-Grade 9 authority includes:
+Already started on PR #58:
 
-- legacy subject `1794eea5-4772-4c94-bd2b-b08e5815e733`
-- branch `content/legacy-supabase-reconstruction`
-- immutable RAW extraction
-- `content-staging/curated/grade-9/english/pupil-book-3/reconstruction-candidates.json`
-- exact original Grade 9 reference on `alwaslh-go@master`: `تاسع انجليزي/الانجليزي_تاسع`
+- V2 visual/theme foundation;
+- unified Student icon registry;
+- profile-scoped runtime cache;
+- App Bar contract;
+- safe-area aware four-item Bottom Nav;
+- Home rebuilt with real curriculum/quiz/attempt/download data;
+- duplicated Home destination-card wall removed;
+- relevant read-model invalidation started.
 
-`master` also contains unrelated corpora, including Third Secondary/Pupil's Book 6. Resolve the exact Grade 9 path before using it as reference evidence.
+Next implementation order:
 
-Immutable RAW + reconstruction manifest + PostgreSQL are write/import authority. Do not use the prohibited `69 -> 62` heuristic.
+1. shared layout/navigation extraction;
+2. shared reused UI primitives extraction;
+3. Welcome/Auth V2;
+4. reconcile PR #57;
+5. Learn/Subject scalable hierarchy;
+6. Reader;
+7. Practice/Models/Results;
+8. Library/Account/Notifications/Progress/Help;
+9. Notes/Saved/Review local repositories when allowed;
+10. persistent read-model snapshots only after revision/delta contracts;
+11. full visual/performance/accessibility QA.
 
-## 5. Content checkpoints retained
+## 8. PR #57 overlap boundary
 
-- `BATCH-001 = DONE / COMMITTED_STATE_VERIFIED`
-- `STRUCTURE-001 = DONE / SECTION_BOUNDARY_VERIFIED`
-- `STRUCTURE-002 = DONE / SECTION_BOUNDARY_VERIFIED`
-- `CURATION-001 = DONE / COMMITTED_STATE_VERIFIED / PUBLISHED`
-- `CURATION-002 = DONE / COMMITTED_STATE_VERIFIED / PUBLISHED`
-- `CONTENT-GAPS-001 = DONE / GAP_INVENTORY_VERIFIED`
-- `MEDIA-001 = DONE / MEDIA_PROFILE_VERIFIED_PARTIAL_ACCEPTANCE`
-- `IMPORT-001 = DONE / COMMITTED_STATE_VERIFIED`
-- `VERIFY-001 = DONE / DELIVERY_ISOLATION_AND_PROVENANCE_VERIFIED`
-- `ROADMAP-RETURN = DONE / STUDENT-016I_HANDOFF_VERIFIED`
-- `FULL-GRADE9-ENGLISH-BULK-IMPORT = DONE / FULL_ASSET_COVERAGE_VERIFIED`
-- `REVIEWED-UNIT2-PUBLICATION = DONE / COMMITTED_STATE_VERIFIED_AND_PUBLISHED`
+PR #57:
 
-Do not repeat closed checkpoints unless fresh evidence invalidates them.
+`feat(student): close cold-start offline Reader gap`
 
-## 6. Student workstream remains separate
+branch:
 
-PR #57 — `feat(student): close cold-start offline Reader gap` remains a separate `STUDENT-016I` workstream on `stage16/student-016i`.
+`stage16/student-016i`
 
-Last previously checked head:
+last checked head:
 
 `ce97ef2524cd3735a0200ee0f15fa6e6e224e01e`
 
-It was not merged by this Content publication run. Re-fetch live PR/exact-head CI when Student work resumes.
+It overlaps Student files including `App.tsx`, `student-learning.tsx`, `student-reader.tsx`.
 
-## 7. Exact Content resume rule
+Do not broadly rewrite Learn/Reader on V2 until #57 is explicitly reconciled. Preserve its signed-manifest / lease / integrity / offline authorization behavior.
 
-Do not rerun the Grade 9 bulk import or republish CURATION-001/002.
+## 9. Quality gate
 
-The remaining Grade 9 English corpus is imported but unpublished. Continue from the first unresolved evidence-backed pedagogical boundary and only publish future Lessons/questions after explicit review + rollback gate + committed-state post-verification.
+No V2 batch is `DONE` from appearance alone.
 
-Never mutate RAW, delete anomalies, fabricate page 70, use `69 -> 62` as curriculum truth, or auto-publish unreviewed legacy/AI content.
+Required as relevant:
 
-## 8. Stable security/product boundaries
+- lint;
+- typecheck;
+- tests;
+- build;
+- route smoke;
+- mobile browser verification;
+- iPhone safe area;
+- Android Chrome;
+- RTL;
+- focus/keyboard;
+- reduced motion;
+- contrast/readability;
+- duplicate-network-read check;
+- visual QA against V2 architecture.
 
-- API + PostgreSQL own canonical state.
+## 10. Content work retained but not current priority
+
+Grade 9 English technical import remains completed and partially published by review.
+
+Verified retained publication totals:
+
+- published Lessons: `2`;
+- Lesson Assets: `6`;
+- published Question Revisions: `19`.
+
+Do not rerun the completed Grade 9 bulk import or republish closed reviewed Unit 2 checkpoints.
+
+## 11. Stable system boundaries
+
+- API + PostgreSQL own canonical business state.
 - Auth/Authz/Entitlements remain server-owned.
-- browser is not canonical durable business authority.
+- browser storage is not hidden backend authority.
 - `media ready != published`.
-- AI output never auto-publishes learner content/questions.
-- protected Reader/media remains server-authorized.
-- Question Bank publication + immutable Quiz version remain delivery authority.
-- `/v1` never becomes Service Worker cache authority.
+- AI/legacy output never auto-publishes learner content/questions.
+- Question Bank publication + immutable Quiz version remain assessment delivery authority.
+- `/v1` never becomes Service Worker business-cache authority.
