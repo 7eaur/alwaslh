@@ -1,13 +1,15 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `WAITING_FOR_CI`
 Sequence: `21`
-Last worker: `A`
-Active worker: `C`
+Last worker: `C`
+Active worker: `NONE`
 Start time: `2026-09-14T13:40:00+03:00`
+End time: `2026-09-14T13:47:00+03:00`
 Starting HEAD: `cba5de4bd37c9382efff91820866e7c3c2937915`
+Source implementation HEAD: `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`
 Current live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`
-Active task: `AB-01.5 — complete generic request-validation caller migration exposed by exact-head typecheck`
+Active task: `AB-01.5 — generic request-validation ownership closure`
 
 ## Active roadmap position
 
@@ -17,33 +19,48 @@ Active task: `AB-01.5 — complete generic request-validation caller migration e
 - AB-01.2 — DONE
 - AB-01.3 — DONE
 - AB-01.4 — DONE
-- AB-01.5 — **IMPLEMENTED / CI ROOT-CAUSE FIX ACTIVE**
+- AB-01.5 — **IMPLEMENTED / WAITING_FOR_EXACT_HEAD_CI**
 - AB-01.6 — PENDING; do not start until AB-01.5 gates close green
 
-## Worker C sequence 21 ownership
+## Worker C sequence 21 completed
 
-The previous shared state still described Worker A sequence 20 at source HEAD `b37374fc...`, but live branch had advanced to `cba5de4b...` through a newer caller-migration batch without a completed handoff update. Worker C reconciled live HEAD and exact-head CI before mutation.
+- Reconciled stale handoff state against live branch and exact-head CI before mutation.
+- Confirmed `cba5de4b...` Architecture Guard run `34833103240` was SUCCESS but Stage13E Admin AI run `34833103100` failed API typecheck.
+- The failure proved eight remaining modules still imported `parseBody` from private `auth/http.ts` after generic validation ownership moved to `apps/api/src/shared/http/request-validation.ts`.
+- Migrated only those eight compiler-proven imports:
+  - `apps/api/src/curriculum/http.ts`
+  - `apps/api/src/curriculum/lesson-authoring-export-http.ts`
+  - `apps/api/src/notifications/http.ts`
+  - `apps/api/src/offline/http.ts`
+  - `apps/api/src/question-bank/regeneration-http.ts`
+  - `apps/api/src/quiz-builder/export-http.ts`
+  - `apps/api/src/quiz-builder/specialized-export-http.ts`
+  - `apps/api/src/student-assessment/http.ts`
+- Preserved `currentProfile`, `sessionToken`, auth/session/role/cookie behavior and every Zod schema/business path under their existing owners.
+- No migration, PostgreSQL authority, Student frontend implementation or validation semantics changed.
+- Implementation commit: `d0352917f9df83dd15f9fbd7994ad79c1b9447dd` (`refactor(api): finish request validation caller migration`).
 
-Exact-head Stage13E Admin AI run `34833103100` failed at API typecheck because eight remaining modules still imported `parseBody` from private `auth/http.ts` after its export was removed:
+## Exact-head verification — `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`
 
-- `src/curriculum/http.ts`
-- `src/curriculum/lesson-authoring-export-http.ts`
-- `src/notifications/http.ts`
-- `src/offline/http.ts`
-- `src/question-bank/regeneration-http.ts`
-- `src/quiz-builder/export-http.ts`
-- `src/quiz-builder/specialized-export-http.ts`
-- `src/student-assessment/http.ts`
+- Architecture Guard `34834714337` — **SUCCESS**.
+- Stage13G Admin Operations `34834714355` — running at handoff; Admin lint/typecheck/unit are green and API lint/typecheck/unit are green, proving the prior compiler failure is resolved; builds/integration/DB/Chromium remain in progress.
+- Stage13E Admin AI `34834714335` — running at handoff; API quality step in progress.
+- Stage13E Combined Integration / real-browser `34834714325` — running at handoff.
 
-Architecture Guard run `34833103240` on `cba5de4b...` is SUCCESS, confirming the ownership direction itself is valid. This run will change only those remaining imports to the already-established generic owner `apps/api/src/shared/http/request-validation.ts`, preserving `currentProfile` and all auth/session/role/cookie behavior under Auth.
+AB-01.5 is intentionally not marked DONE until the remaining exact-head PostgreSQL/integration/security/Chromium evidence closes green.
 
-## Exact next step in this run
+## Exact next smallest step
 
-1. Migrate only the eight compiler-proven remaining `parseBody` imports.
-2. Do not alter validation semantics, auth behavior, schemas, migrations or Student frontend.
-3. Inspect exact-head Architecture Guard + API/Admin quality + PostgreSQL/integration/security + real Chromium gates.
-4. If any failure is caused by this ownership batch, fix only that root cause.
-5. End with precise HEAD/CI evidence and `READY_FOR_NEXT` or `WAITING_FOR_CI`.
+1. Inspect runs `34834714355`, `34834714335`, and `34834714325` on exact source HEAD `d0352917...`.
+2. If any fail, fix only a root cause attributable to this request-validation ownership batch; do not weaken tests/guards/security.
+3. If all required exact-head gates close green, mark **AB-01.5 DONE** in state/status/log/handoff/canonical AB-01 docs.
+4. Then begin only **AB-01.6 Foundation closure gate**; do not invent another foundation extraction.
+
+## Collision / reconciliation
+
+- The stale unrecorded caller-migration activity was reconciled before Worker C took ownership.
+- No overlapping worker mutation was observed after Worker C acquired the shared state.
+- Main remains `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; main reconciliation required for the next step: `NO`, unless it moves into scoped Admin/API/migrations/shared-contract paths.
 
 ## Safety constraints
 
