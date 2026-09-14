@@ -45,7 +45,7 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
   await expect(subjectLink).toBeVisible();
   await subjectLink.click();
   await expect(page).toHaveURL(/\/app\/learn\/subjects\/[^/]+$/);
-  await expect(page.getByRole("heading", { name: fixture.subjectName })).toBeVisible();
+  await expect(page.getByRole("article", { name: fixture.subjectName })).toBeVisible();
 
   const lessonLink = page.getByRole("link", { name: new RegExp(fixture.lessonTitle) });
   await lessonLink.focus();
@@ -142,5 +142,5 @@ test("authorized Learn hierarchy opens a focused protected Reader with direct-ro
 
   await page.goBack();
   await expect(page).toHaveURL(new RegExp(`${subjectUrl}$`));
-  await expect(page.getByRole("heading", { name: fixture.subjectName })).toBeVisible();
+  await expect(page.getByRole("article", { name: fixture.subjectName })).toBeVisible();
 });
