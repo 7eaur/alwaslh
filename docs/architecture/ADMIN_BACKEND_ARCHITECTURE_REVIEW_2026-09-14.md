@@ -2,94 +2,105 @@
 
 Status: **REVIEWED / BINDING CHECKPOINT**
 
-Scope: Super Admin frontend + full backend/API/PostgreSQL + genuinely shared packages required by those surfaces. Student frontend remains owned by its separate branch/workstream.
+## 1. Ownership boundary — clarified
 
-## 1. Why this review exists
+This workstream is responsible for the project’s **full backend/server architecture and the entire Super Admin product**.
 
-Before structural implementation, the current plan, dependency audit, target IA, design-system authority, project-specific engineering rules, branch state and exact-head CI were re-reviewed against repository evidence.
+Owned here:
+
+- Super Admin frontend, UX/UI, IA, routing, accessibility, performance and design consistency;
+- complete Fastify API and PostgreSQL-backed backend;
+- all server-side business/security capabilities whether consumed by Admin, Student, or both;
+- auth/session/device, access/entitlements, curriculum/publication, content/media/OCR, AI/human review, Question Bank, Quiz Builder, assessment/scoring, offline authorization/integrity, notifications and operations on the server side;
+- database integrity/migrations, API contracts, backend performance, security, tests/CI and cross-module architecture;
+- genuinely shared packages required by those contracts.
+
+The **only product area structurally excluded** from this workstream is the Student frontend implementation itself (`apps/student-web` UI/shell/routes/components/visual structure), because it is owned by the separate Student conversation/branch.
+
+Student frontend tests/code remain valid consumer evidence whenever this workstream changes a shared backend contract. Student-facing backend behavior is not excluded.
+
+Observed separate Student continuation at this review: PR #57 / `stage16/student-016i`, latest observed head `ce97ef2524cd3735a0200ee0f15fa6e6e224e01e`.
+
+## 2. Why this review exists
+
+Before structural implementation, the current plan, dependency audit, target IA, design-system authority, project-specific engineering rules, branch state, Student refoundation principles and exact-head CI were re-reviewed against repository evidence.
 
 The purpose is to catch a wrong architectural decision **before** it becomes a large migration.
 
-## 2. Evidence reviewed
+Anything outside inspected evidence remains `NOT YET VERIFIED` until its owning batch.
 
-- live `main`: `3053640cc5bb0699cfa7456cf646e8997f6aa81b`;
-- Admin architecture branch before this review: `f7c56628bc89e1a534c24bd2ba4771b61313664b`;
-- Draft PR #52;
-- `PROJECT_STATUS.md`;
-- `PROJECT_ENGINEERING_LOG.md`;
-- `PROJECT_HANDOFF.md`;
-- `DOCUMENTATION_INDEX.md`;
-- `ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md`;
-- `ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`;
-- `ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`;
-- `ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`;
-- `TARGET_INFORMATION_ARCHITECTURE.md`;
-- `DESIGN_SYSTEM_SPEC.md`;
-- Alwaslh project skill and focused Admin/frontend/backend/project guardrails;
-- current Admin `App.tsx`, router/navigation and representative feature pages;
-- current API `app.ts` and representative Question Bank/AI boundaries;
-- architecture-guard code/workflow;
-- exact-head workflows for `f7c56628...`.
+## 3. Cross-product rules adopted from Student refoundation
 
-Anything outside that evidence remains `NOT YET VERIFIED` until its owning batch.
+The Student workstream is implementation-isolated, but its strongest verified product/engineering principles are useful across the platform and are now adopted here.
 
-## 3. Branch divergence decision
+Binding order:
 
-Repository comparison shows:
+**Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
 
-- architecture branch is **284 commits ahead** of `main`;
-- architecture branch is **170 commits behind** `main`;
-- merge-base is `8d0676443aa7e186c41a79cc011f7f828d1290ef`.
+Adopted rules:
 
-The 170 `main`-only commits inspected from merge-base to live `main` affect **Student frontend/workflows and project/product documentation**, not:
+- one shell/route/workflow owner per responsibility;
+- preserve verified contracts and business authority, not old presentation debt;
+- no fake metrics, counts, progress, health, outcomes or actions;
+- loading/empty/error/permission/conflict/unavailable/success/recovery are first-class product states;
+- interactive affordance must be obvious; static content must not mimic actions;
+- lazy loading at substantial route/workflow boundaries, not artificial tiny chunks;
+- browser tests prove outcomes/contracts rather than obsolete text/DOM shape;
+- old UI is not retained solely because historical tests referenced it;
+- historical override chains/compatibility bridges have explicit deletion conditions;
+- motion is functional and reduced-motion-safe;
+- UI architecture completion and backend capability completion are separate claims;
+- backend/security authority remains server-owned even when a UI surface exists before integration.
 
-- `apps/admin-web`;
-- `apps/api`;
-- `database/migrations`;
-- the shared packages used by the current Admin/backend implementation.
+These principles are adapted to Admin/backend needs. Student UI code/structure is not copied into this workstream.
 
-### Decision
+## 4. Branch divergence decision
 
-**CONTINUE this scoped Admin/backend branch without importing Student implementation into it.**
+Repository comparison established that the Admin/backend branch and `main` have diverged substantially, but the inspected `main`-only implementation work at the checkpoint was Student frontend/workflow and documentation work rather than Admin/API/migrations/scoped-shared implementation changes.
 
-Do **not** merge/rebase `main` merely to make commit counts look aligned while Student work is active separately.
+Decision:
+
+**CONTINUE this scoped Admin/backend branch without importing Student frontend implementation into it.**
+
+Do not merge/rebase merely to make commit counts look aligned while the Student frontend workstream is active separately.
 
 However:
 
 1. live `main` must be re-compared before every structural phase boundary;
-2. if `main` gains changes under Admin/API/migrations/shared contract paths, structural work pauses until those changes are reconciled;
-3. before PR #52 becomes review/merge-ready, the branch must reconcile current `main` and resolve documentation conflicts explicitly;
-4. no branch divergence claim may be treated as harmless without a path-level comparison.
+2. if `main` gains changes under Admin/API/migrations/shared-contract paths, structural work pauses until reconciled;
+3. before PR #52 becomes review/merge-ready, reconcile current `main` and resolve documentation conflicts explicitly;
+4. no divergence is treated as harmless without path-level comparison.
 
-This is controlled isolation, not permission to ignore `main`.
-
-## 4. Decision review matrix
+## 5. Decision review matrix
 
 | Decision | Verdict | Review adjustment |
 |---|---|---|
 | Backend stays one Fastify modular monolith | **KEEP** | Correct. No evidence supports microservices. |
 | PostgreSQL/API remain canonical business authority | **KEEP** | Security/business authority stays server-owned. |
+| Full backend ownership includes Student-facing contracts | **KEEP / CLARIFIED** | Student frontend is separate; server capabilities are owned here. |
 | Admin becomes `app / features / shared` | **KEEP** | Correct ownership model. `app` composes only. |
 | Feature owns pages/components/API adapter/model/tests | **KEEP** | Correct; do not move giant legacy files unchanged. |
-| Cross-feature collaboration through public contract/app orchestration | **KEEP** | Architecture Guard must enforce it. |
+| Preserve old `reviews` / `ai-authoring` as permanent top-level features | **REFINE / REJECT AS TARGET** | OCR review belongs to Content; AI jobs/review belong to AI; contextual authoring belongs to Lesson/Question/Quiz workflows. |
+| Cross-feature collaboration through public contract/app orchestration | **KEEP** | Architecture Guard enforces it. |
 | Route-level code splitting | **KEEP / REFINE** | Lazy-load major workflow route modules; do not split tiny components simply to increase chunk count. |
 | One shell owns global navigation | **KEEP** | Session/shell/router ownership is centralized without turning app state into business authority. |
 | Session invalidation moves out of every feature page | **KEEP** | Central lifecycle boundary; feature errors remain meaningful domain/transport errors. |
-| `packages/ui` + Admin `shared/ui` | **REFINE** | `packages/ui` owns genuinely cross-product primitives/semantics; Admin `shared/ui` owns Admin-only reusable patterns/composition helpers. Do not duplicate the same primitive in both. |
-| Shared domain/validation packages expand | **REFINE** | Only for genuinely shared stable contracts. Feature/module-private types remain local. |
+| `packages/ui` + Admin `shared/ui` | **REFINE** | `packages/ui` owns cross-product primitives/semantics; Admin `shared/ui` owns Admin-only reusable patterns. |
+| Shared domain/validation packages expand | **REFINE** | Only genuinely shared stable contracts. Feature/module-private types remain local. |
 | Target backend module folders `domain/application/infrastructure/http/tests` | **KEEP / REFINE** | Dependency model only. Never create empty layers/interfaces for ceremony. |
 | Introduce generic repositories/services/interfaces everywhere | **REJECT** | Abstraction requires ownership/test/reuse/framework-decoupling value. |
-| Add a new global frontend state/query library now | **NOT AUTHORIZED** | Existing evidence does not justify it yet. Evaluate only if repeated server-state orchestration remains after feature ownership is corrected. |
-| Replace CSS stack/Tailwind/CSS-in-JS wholesale | **REJECT** | Keep approved tokens and CSS foundation; repair ownership and reusable patterns instead of creating a second styling architecture. |
+| Add a new global frontend state/query library now | **NOT AUTHORIZED** | Correct ownership first; add only on evidence. |
+| Replace CSS stack/Tailwind/CSS-in-JS wholesale | **REJECT** | Preserve approved tokens/CSS architecture; repair ownership. |
 | Target IA user-job hierarchy | **KEEP** | Binding screen/task boundaries remain valid. |
-| Literal `/admin` prefix from Target IA | **REFINE** | The Admin is already a separate app and `/app` is verified runtime/deep-link behavior. Preserve `/app` as canonical base unless deployment/runtime evidence proves a need to change it; migrate child route semantics to the target IA and provide bounded redirects for superseded routes. |
+| Literal `/admin` prefix from Target IA | **REFINE** | Preserve verified `/app` base unless runtime evidence justifies change; fix child route semantics. |
 | Overview attention-first | **KEEP** | Real actionable values only; no decorative KPI/navigation duplication. |
 | Progressive disclosure for IDs/raw provider/runtime data | **KEEP** | Normal operator flows stay decision-focused. |
-| Design rules applied only in final polish | **REJECT** | UX/a11y/RTL/responsive/state rules apply during every vertical slice. AB-05 is convergence audit only. |
+| Design rules applied only in final polish | **REJECT** | UX/a11y/RTL/responsive/state rules apply during every vertical slice. |
+| Build all Admin UI slices before correcting backend seams | **REJECT** | Rebuild each slice end-to-end through required backend/API/Admin layers; finish remaining backend normalization afterward. |
 | Big-bang rewrite | **REJECT** | Controlled replacement slice-by-slice with old-owner deletion after parity. |
-| Patch current pages indefinitely | **REJECT** | Current code is behavior evidence, not target architecture. |
+| Patch current pages indefinitely | **REJECT** | Current code is behavioral evidence, not target architecture. |
 
-## 5. Admin UI ownership refinement
+## 6. Admin UI ownership refinement
 
 Target relationship:
 
@@ -105,17 +116,32 @@ apps/admin-web/src/features # business workflow composition
 apps/admin-web/src/app      # composition/router/providers/layout only
 ```
 
-Dependency direction is conceptual; `app` composes feature public route modules and shared layers, but features never import app internals.
+Target top-level feature concepts follow operator jobs:
 
-Do not create a duplicate Button/Input/Status primitive locally if `packages/ui` already owns the semantic primitive. Conversely, do not push Admin-only dense tables/review workflow composition into `packages/ui` merely to call it shared.
+```text
+auth
+overview
+curriculum
+content        # library, ingestion, OCR review
+ai             # jobs + human review
+questions
+quizzes
+students
+access-codes
+operations
+```
 
-## 6. Route decision
+Contextual AI authoring is owned by the domain workflow that invokes it rather than a permanent catch-all top-level workspace.
 
-The **IA semantics** in `TARGET_INFORMATION_ARCHITECTURE.md` are binding; the literal root prefix is not worth breaking verified runtime for by itself.
+Do not create duplicate Button/Input/Status primitives locally if `packages/ui` owns them. Conversely, do not push Admin-only dense table/review workflow composition into `packages/ui` merely to call it shared.
+
+## 7. Route decision
+
+IA semantics in `TARGET_INFORMATION_ARCHITECTURE.md` are binding; the literal root prefix is not worth breaking verified runtime by itself.
 
 Current verified Admin shell uses `/app/*`.
 
-Target child semantics should evolve toward clear job routes beneath that base, for example:
+Target child semantics evolve under it:
 
 ```text
 /app
@@ -134,7 +160,7 @@ Target child semantics should evolve toward clear job routes beneath that base, 
 
 Old routes may redirect during a bounded migration window, with an explicit deletion condition.
 
-## 7. Backend boundary refinement
+## 8. Backend boundary refinement
 
 Target backend layering is intentionally selective.
 
@@ -144,59 +170,47 @@ Rules:
 - Application owns use-case orchestration and transaction boundaries where needed.
 - Domain owns durable business rules only when a real domain concept exists.
 - Infrastructure owns DB/provider/filesystem adapters.
-- A small module may remain compact if these responsibilities are obvious without artificial folders/classes.
-- Cross-module calls use narrow public application contracts/ports only where a genuine dependency exists.
+- A small module may remain compact if responsibilities are obvious without artificial folders/classes.
+- Cross-module calls use narrow public application contracts where a genuine dependency exists.
 - Do not create an interface solely because Clean Architecture diagrams usually contain one.
+- server-side Student security/business authority is preserved even though Student frontend structure is handled elsewhere.
 
-## 8. Architecture Guard review
+## 9. Architecture Guard review
 
-Initial guard is a good direction and exact-head run `34797219591` passed.
+The guard direction is correct. It must:
 
-Review found two missing protections and one operational limitation:
+1. detect static and dynamic imports relevant to architectural boundaries;
+2. prevent app composition from bypassing feature/module public entry points;
+3. operate as a ratchet during migration;
+4. advance its frozen legacy baseline only after accepted exact-head-green cleanup batches;
+5. become hard target-architecture enforcement after legacy owners are removed.
 
-1. dynamic `import()` must be inspected because route lazy loading will use it;
-2. `app` must not bypass feature/module public entry points and import private internals directly;
-3. the frozen-baseline ratchet must be **advanced after accepted exact-head-green cleanup batches**; otherwise an old baseline exception could remain implicitly permitted forever.
+## 10. Execution-order correction
 
-The guard is being strengthened before AB-00.3 is considered final.
+A major review adjustment is now binding:
 
-AB-07 will later replace transitional ratchet behavior with hard target-architecture enforcement after legacy owners are removed.
+Do **not** finish the whole Admin frontend and postpone backend structure until afterward.
 
-## 9. Exact-head verification reviewed
+Correct order:
 
-For `f7c56628bc89e1a534c24bd2ba4771b61313664b`:
+1. AB-00 — baseline/guard/readiness;
+2. AB-01 — minimal shared Admin + backend app/transport/auth/error foundations;
+3. AB-02 — thin Admin shell/router/lazy route architecture;
+4. AB-03 — end-to-end vertical slices; each slice may correct its backend contracts/module seams and Admin ownership together;
+5. AB-04 — remaining backend modular-monolith normalization not naturally closed by slices;
+6. AB-05..08 — convergence, performance, legacy deletion, final verification.
 
-- Architecture Guard `34797219591` — **SUCCESS**;
-- Admin AI Operations `34797219497` — **SUCCESS**;
-- Combined Integration `34797219488` — **SUCCESS**;
-- Stage13G Admin Operations `34797219505` — **SUCCESS**.
-
-Therefore the pre-review architecture checkpoint is behaviorally green.
-
-## 10. Documentation defects found
-
-The following were stale/inconsistent and must be corrected before implementation proceeds:
-
-- PR #52 still described platform-wide Student + Admin `PA-*` execution;
-- `DOCUMENTATION_INDEX.md` still pointed to platform-wide PA documents as active authority;
-- `PROJECT_ENGINEERING_LOG.md` still listed Student architecture migration and PA phases;
-- `PROJECT_STATUS.md` still described AB-00.2 active / AB-00.3 pending after both had progressed;
-- `PROJECT_HANDOFF.md` remained a broad unified-main/Stage16 handoff rather than a usable handoff for this scoped Admin/backend branch.
-
-Canonical execution authority is now the **AB** workstream, not PA.
-
-The older `PLATFORM_ARCHITECTURE_*` documents remain historical rationale only where their general decisions are still compatible with this review.
+This prevents building a clean UI over backend seams we already know are structurally wrong.
 
 ## 11. Correct next gate
 
-Do **not** start AB-01 yet.
+Do **not** start broad feature rebuilding yet.
 
 Finish AB-00 in this order:
 
-1. finalize strengthened AB-00.3 guard and verify exact-head;
+1. keep strengthened architecture guard exact-head green;
 2. AB-00.4 record reproducible Admin bundle/runtime and backend-composition baseline;
-3. reconcile active documentation/PR/handoff to the same AB execution point;
-4. AB-00.5 readiness review confirms no unresolved scope/authority/baseline contradiction;
-5. then begin AB-01.
+3. AB-00.5 readiness confirms scope, ownership, branch evidence and architecture decisions are coherent;
+4. then begin the minimal AB-01 foundation.
 
-This preserves the user's requirement: **build correctly from the root, not patch quickly.**
+This preserves the Product Owner requirement: **rebuild correctly from the root, not patch quickly.**
