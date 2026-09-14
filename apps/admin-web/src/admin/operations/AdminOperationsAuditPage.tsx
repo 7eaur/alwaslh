@@ -3,15 +3,13 @@ import { ApiRequestError, isMissingSessionError } from "../../admin-api";
 import {
   type OperationsAuditEntry,
   type OperationsAuditSource,
-  fetchAdminOperationsAudit,
-} from "../../features/operations/public";
-import {
   auditSubject,
   eventLabel,
+  fetchAdminOperationsAudit,
   formatAdminDate,
   resourceLabel,
   sourceLabel,
-} from "./operations-model";
+} from "../../features/operations/public";
 import "./operations-pages.css";
 
 const PAGE_SIZE = 25;
