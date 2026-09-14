@@ -28,7 +28,7 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - branch: `rebuild/super-admin-foundation`;
 - PR #52 stays Draft and is never auto-merged;
 - never force-reset or force-push shared history;
-- live `main` observed in Worker A sequence 14: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
+- live `main` observed in Worker B sequence 15: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
 
 ## Execution governance
 
@@ -51,21 +51,20 @@ Backend remains one Fastify modular monolith over PostgreSQL. No microservices/D
   - CORS — DONE
   - Health/readiness — DONE
   - Public error/not-found — DONE
-  - **Fastify construction/options — IMPLEMENTED / WAITING FOR REQUIRED CI**
+  - Fastify construction/options — **DONE**
+  - Fifth seam — **DISCOVERY NEXT / NOT SELECTED**
 - AB-01.5 — PENDING
 - AB-01.6 — PENDING
 
-## Current source implementation
+## Closed fourth seam
 
-Source HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
+Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
 
-Created owner:
+Owner:
 
 `apps/api/src/app/create-fastify-instance.ts`
 
-`createFastifyInstance(config)` now owns the Fastify constructor and exact existing options.
-
-`apps/api/src/app.ts` now calls that owner and no longer imports Fastify as a value or contains those option literals.
+`createFastifyInstance(config)` owns Fastify construction/options; `apps/api/src/app.ts` delegates to it and no longer owns those option literals.
 
 Preserved exactly:
 
@@ -79,20 +78,27 @@ Preserved exactly:
 
 No service graph, business route, DB lifecycle, config default, migration/schema or Student frontend change occurred.
 
-## Verification state
+## Closure verification
 
-- Architecture Guard `34820842164` — **SUCCESS**.
-- Combined Integration `34820842196` — **IN PROGRESS** at last handoff.
-- Stage13G `34820842163` — **IN PROGRESS** at last handoff.
-- Admin AI `34820842245` — **QUEUED** at last handoff.
+- Architecture Guard `34820842164` — SUCCESS on source implementation HEAD.
+- Compare from source implementation HEAD to verification HEAD `248ce58053bca9d97498d41fdda57aec1ace4033` changed only five canonical documentation files.
+- Admin AI `34821032274` — SUCCESS.
+- Combined Integration `34821032272` — SUCCESS including clean PostgreSQL, backend/auth regressions and real Admin Chromium.
+- Stage13G `34821032271` — SUCCESS including Admin/API quality, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
+
+The original source-head runs were cancelled by later documentation commits, not by a demonstrated code failure. The source-tree-equivalent later runs provide the required runtime/integration closure evidence.
 
 ## Exact next engineering step
 
-1. Read live state and verify no newer worker has taken ownership.
-2. Inspect runs `34820842196`, `34820842163`, `34820842245`.
-3. If all required affected gates are green, mark the Fastify construction/options seam DONE in state/status/log/handoff.
-4. Only after closure, perform discovery for the next smallest AB-01.4 seam; do not implement a fifth seam in the same closure batch.
-5. If any gate fails, inspect the failing job/log and repair only the root cause of this extraction before advancing.
+Perform **only discovery for the fifth AB-01.4 composition seam**:
+
+1. re-read live `apps/api/src/app.ts` and current branch HEAD;
+2. inspect current tests/contracts around the remaining composition responsibilities;
+3. choose the smallest evidence-backed remaining boundary from infrastructure/service construction, cross-service composition, route registration, or database `onClose` lifecycle;
+4. document current owner, target owner, exact preserved contracts/order, explicit non-goals, switch/deletion condition and required gates;
+5. do **not** implement the fifth seam in the same discovery run.
+
+If evidence says no further small AB-01.4 seam is justified, document that and assess whether AB-01.4 should close rather than forcing extraction.
 
 ## Remaining roadmap
 
