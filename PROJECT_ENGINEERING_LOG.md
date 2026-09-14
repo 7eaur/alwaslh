@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-03.2 Curriculum feature ownership established; remaining Content consumer compatibility seam isolated.**
+Last consolidated: **2026-09-14 — AB-03.2.1 Curriculum frontend ownership cleanup implemented; exact verification still settling.**
 
 ## Durable invariants
 
@@ -17,7 +17,7 @@ Last consolidated: **2026-09-14 — AB-03.2 Curriculum feature ownership establi
 
 Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the serial handoff authority. Never auto-merge or rewrite shared history.
 
-Live main latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`. No overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker A sequence 45.
+Live main latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`. No overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker B sequence 46 startup.
 
 ## AB-00 — DONE
 
@@ -41,19 +41,32 @@ Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
 ### AB-03.2 Curriculum + Content + OCR — ACTIVE
 
-Worker C sequence 44 established that root `admin-api.ts` incorrectly owned the full Curriculum frontend contract while Curriculum and Content consumers depended on it.
+Worker C sequence 44 identified root `admin-api.ts` as the incorrect owner of the full Curriculum frontend contract while Curriculum and Content consumers depended on it.
 
-Worker A sequence 45 executed the first smallest owner correction:
+Worker A sequence 45 created the real feature owner:
 
-- created `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts` as the implementation owner for Curriculum types and `/v1/admin/curriculum*` request functions;
-- created `apps/admin-web/src/features/curriculum/public/index.ts` as the narrow feature boundary;
-- migrated `CurriculumWorkspace.tsx` to the feature public contract and canonical `shared/api/client` error/session helpers;
-- reduced root `admin-api.ts` from implementation owner to a temporary compatibility re-export for the still-unmigrated Content ingestion consumer;
-- preserved all URLs, payload shapes, auth/session semantics, UI behavior and server/database authority;
-- made no backend, PostgreSQL, security, OCR, AI or Student frontend changes.
+- `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts` owns Curriculum transport/types;
+- `apps/admin-web/src/features/curriculum/public/index.ts` exposes the narrow consumer contract;
+- `CurriculumWorkspace.tsx` consumes that feature boundary;
+- temporary Curriculum root re-exports remained only for the last Content ingestion consumer.
 
-Source checkpoint: `ee58ffe125da9e550b97965976f47240a7f35d68`.
+Worker B sequence 46 completed the smallest remaining compatibility cleanup:
 
-This is intentionally not declared fully DONE yet. The remaining exact AB-03.2.1 seam is to migrate `ContentIngestionWorkspace.tsx` Curriculum imports to `features/curriculum/public` and then delete the temporary Curriculum re-exports from root `admin-api.ts`. Root `content-ingestion-api.ts` migration remains a separate later concern and must not be combined with that cleanup.
+- migrated `ContentIngestionWorkspace.tsx` Curriculum imports to `features/curriculum/public`;
+- migrated its generic API error/session imports to `shared/api/client`;
+- removed the temporary Curriculum re-export block from root `admin-api.ts`;
+- deliberately left root `content-ingestion-api.ts` transport untouched for a separate later ownership decision;
+- preserved all endpoints, payload shapes, auth/session semantics, UI behavior and backend/database authority;
+- made no backend, PostgreSQL, security, OCR, AI or Student frontend implementation change.
 
-Fresh CI for the source checkpoint started as runs including Frontend Preparation `34884252963` and Admin AI `34884253074`; required gates had not completed at handoff, so shared state is `WAITING_FOR_CI`.
+Final source checkpoint for this cleanup: `af4a131b1b039883a318ebb41b7ec5e5146f126d`.
+
+Verification observed on the exact source HEAD:
+
+- Architecture Guard `34886697714` — SUCCESS;
+- Frontend Preparation `34886697732` — pending at handoff observation;
+- Admin AI Operations `34886697663` — pending at handoff observation;
+- Combined Integration `34886697673` — in progress at handoff observation;
+- Stage13G Admin Operations `34886697753` — in progress at handoff observation.
+
+Therefore AB-03.2.1 is `WAITING_FOR_CI`, not DONE. The next worker must close these source-tree-equivalent gates before opening another Content/OCR ownership increment.
