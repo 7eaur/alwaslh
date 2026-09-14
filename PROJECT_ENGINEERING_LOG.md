@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-03.1.2 Operations frontend API ownership implemented; awaiting full affected-scope CI.**
+Last consolidated: **2026-09-14 — AB-03.1.2 root CI regression fixed; final Combined + Stage13G evidence still pending.**
 
 ## Durable invariants
 
@@ -39,37 +39,36 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 Source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43` moved governance/audit orchestration from HTTP into `admin-operations/attention-application.ts`, retained HTTP authorization/query validation, added a dedicated application-owner test and preserved API/PostgreSQL/security behavior. Closure: Guard `34859593842`, Admin AI `34860142887`, Combined `34860142983`, Stage13G `34860143008` — SUCCESS.
 
-### AB-03.1.2 — Operations frontend API ownership — IMPLEMENTED / WAITING_FOR_CI
+### AB-03.1.2 — Operations frontend API ownership — ROOT FIX APPLIED / WAITING_FOR_CI
 
-Worker A sequence 36 implemented only the previously selected transport ownership seam.
+Worker A sequence 36 moved Operations transport/types under `features/operations` and deleted the root adapter. Worker B sequence 37 inspected the failing verification rather than treating it as concurrency noise and found a genuine ownership-migration regression: the deleted root module was still referenced by `admin-operations-api.test.ts`, `operations-model.ts`, and `operations-model.test.ts`. Stage13G Admin UI quality failed strict typecheck on those stale imports, while its backend/PostgreSQL/integration job was already green.
 
-Source checkpoint: `75cab6ca1067f5866a259ad079279757218e805f`.
+Current source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
-Changes:
+Root correction:
 
-- moved the Operations-specific transport/types from root `apps/admin-web/src/admin-operations-api.ts` to `apps/admin-web/src/features/operations/api/admin-operations-api.ts`;
-- added `apps/admin-web/src/features/operations/public/index.ts` as the feature public contract;
-- switched `AdminOverviewPage`, `AdminOperationsHealthPage`, `AdminOperationsAuditPage`, `AdminOperationsDiagnosticsPage`, and `AdminNotificationsPage` to import the adapter through the public feature boundary;
-- deleted the root transitional adapter after consumers switched;
-- preserved all exported type/function names and endpoint/query/body/session behavior;
-- changed no Overview/Operations page ownership, model, style, route structure, backend/API implementation, PostgreSQL schema/migration, security authority or Student frontend implementation.
+- `admin/operations/operations-model.ts` now imports Operations contracts through `features/operations/public`;
+- `admin/operations/operations-model.test.ts` uses the same public contract;
+- `admin-operations-api.test.ts` was moved from root to `features/operations/api/admin-operations-api.test.ts`, colocating the transport test with its actual owner;
+- the stale root test file was removed;
+- no endpoint/query/body/response/session semantics, page/model behavior, routes/styles, API backend, PostgreSQL schema/migrations, security authority or Student frontend implementation changed.
 
-Verification on the implementation HEAD:
+Exact source-head verification at handoff:
 
-- Architecture Guard `34866606170` — **SUCCESS**.
-- Frontend Preparation `34866606173` — pending/not fully closed at handoff.
-- Admin AI Operations `34866606148` — in progress/not fully closed at handoff.
-- Combined Integration `34866606220` — pending/not fully closed at handoff.
-- Stage13G Admin Operations `34866606179` — pending/not fully closed at handoff.
+- Architecture Guard `34868596586` — **SUCCESS**.
+- Frontend Preparation `34868596646` — **SUCCESS**.
+- Admin AI Operations `34868596701` — **SUCCESS**.
+- Combined Integration `34868596865` — **IN PROGRESS** at last observation.
+- Stage13G Admin Operations `34868596682` — **IN PROGRESS** at last observation.
 
-Because required affected-scope CI is not fully green yet, this subtask remains `WAITING_FOR_CI`; no second architecture seam was started.
+The subtask remains `WAITING_FOR_CI`; no second architecture seam was started.
 
 ## Exact continuation
 
 Verification/closure of **AB-03.1.2 only**:
 
-1. inspect the remaining exact implementation-head runs, or source-tree-equivalent runs if documentation-only commits supersede them;
-2. require Admin quality plus Combined and Stage13G real API + PostgreSQL + Chromium to be green;
-3. if a real failure appears, fix its root cause within AB-03.1.2 only;
-4. if all required evidence is green, close AB-03.1.2 and then perform a fresh discovery-only pass inside Overview + Operations;
+1. inspect Combined `34868596865` and Stage13G `34868596682`, or newer source-tree-equivalent runs if documentation commits supersede them;
+2. require Combined to be green and Stage13G to include green Admin/API quality, clean PostgreSQL/contracts, regressions, and real API + PostgreSQL + Chromium;
+3. fix only a genuine root regression inside AB-03.1.2 if one appears;
+4. when all required evidence is green, mark AB-03.1.2 DONE and only then perform a fresh discovery-only pass inside Overview + Operations;
 5. do not begin Curriculum/Content/OCR in the same increment.
