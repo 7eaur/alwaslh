@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-02 thin shell/router phase closed after final ownership inspection and live-main phase-boundary reconciliation.**
+Last consolidated: **2026-09-14 — AB-03 started with first Overview + Operations backend ownership correction; verification pending.**
 
 ## Durable invariants
 
@@ -17,7 +17,7 @@ Last consolidated: **2026-09-14 — AB-02 thin shell/router phase closed after f
 
 Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the serial handoff authority. Never auto-merge or rewrite shared history.
 
-Live main: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
+Live main at AB-03 startup: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
 AB-02 → AB-03 phase-boundary reconciliation compared live main against the work branch. The live-main-only implementation delta is confined to Student frontend/workflow and Student-specific CI/product documentation; no `apps/admin-web`, `apps/api`, or `database/migrations` implementation overlap was found. Shared top-level docs diverge and must continue to be reconciled deliberately.
 
@@ -81,8 +81,35 @@ Findings:
 
 No material AB-02 shell/router/provider debt remains. Comparing verification head `080b8e...` to the current documentation-only handoff chain shows only the five canonical/shared documentation files changed; no Admin/API/migration/test/workflow source changed. Therefore the existing green source-tree-equivalent Guard/Combined/Stage13G evidence remains valid for AB-02 closure.
 
+## AB-03 — ACTIVE
+
+Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
+
+### AB-03.1.1 — Operations attention application ownership — IMPLEMENTED / WAITING_FOR_CI
+
+Discovery established that `AdminOverviewPage` consumes `/v1/admin/operations/attention`, while PostgreSQL-backed governance/audit authority lives in `apps/api/src/admin-operations/service.ts`. The route in `admin-operations/http.ts` was still orchestrating two application reads and building the Overview projection itself.
+
+Root correction at source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43`:
+
+- created `admin-operations/attention-application.ts` with `loadOperationsAttention(...)` as the use-case owner;
+- moved concurrent governance + audit orchestration there;
+- left HTTP with admin authorization, Zod query validation and application invocation only;
+- retained `attention.ts` as the pure projection;
+- added `admin-operations-attention-application.test.ts` proving orchestration inputs and projection result;
+- preserved API path, SQL/PostgreSQL authority, response contract and security behavior;
+- changed no migrations/schema, Admin frontend or Student frontend.
+
+Verification evidence at handoff:
+
+- Architecture Guard `34859593842` — SUCCESS on implementation tree `fe2f3e8811e78e03662a759127dd35fe3588b336`; the final source checkpoint adds only the dedicated test;
+- exact-source Admin AI `34859616706` — SUCCESS;
+- exact-source Combined `34859616648` — IN PROGRESS at handoff;
+- exact-source Stage13G `34859617164` — IN PROGRESS at handoff, carrying Admin/API/PostgreSQL/integration and Real API + PostgreSQL + Chromium evidence.
+
+This increment must not be marked DONE until the remaining required verification is green.
+
 ## Exact continuation
 
-Begin AB-03 with the first canonical vertical slice: **Overview + Operations**. The next worker must inspect current DB/API/security contracts and current Overview/Operations frontend owners before mutation, then choose one smallest end-to-end ownership correction. Do not combine multiple AB-03 slices.
+Verify/close **AB-03.1.1 only** first. If Combined and Stage13G are green on source checkpoint `5c363658...` or a documentation-only source-tree-equivalent head, record closure. Then continue AB-03.1 discovery and choose the next smallest Overview + Operations ownership seam. Do not start Curriculum/Content/OCR in the same increment.
 
 Remaining roadmap: AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final full verification/reconciliation.
