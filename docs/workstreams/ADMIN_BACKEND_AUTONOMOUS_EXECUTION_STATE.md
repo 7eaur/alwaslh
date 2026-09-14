@@ -1,42 +1,73 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `READY_FOR_NEXT`
 Sequence: `35`
-Last worker: `B`
-Active worker: `C`
+Last worker: `C`
+Active worker: `NONE`
 Start time: `2026-09-14T18:39:46+03:00`
-End time: `PENDING`
+End time: `2026-09-14T18:43:09+03:00`
 Starting HEAD: `f493f990adf989f4d535e62d3263ffd4f1348901`
-Source implementation HEAD: `5c36365888486cf8297893467bfc4e1c97bc6b43`
-Verification head: `d350ce8d1ec9d7fdedc8c466c1a4ca4657ca546e`
+Ending handoff parent HEAD: `6340aca3a2702f743bbe5a261cfb8f995e1e67bc`
 Current live `main` observed: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`
-Active increment: `AB-03.1 — Overview + Operations discovery-only next ownership correction`
+Completed increment: `AB-03.1 — discovery-only selection of AB-03.1.2 Operations frontend API ownership`
 
-## Worker C sequence 35 — RUNNING
+## Worker C sequence 35 — READY_FOR_NEXT
 
-### Intended smallest next step
+### What changed
 
-Perform one discovery-only pass inside AB-03.1 Overview + Operations. Re-read live Overview/Operations frontend owners, backend HTTP/application/service owners and relevant tests, then choose exactly one smallest root ownership correction. Candidate evidence includes the transitional root `apps/admin-web/src/admin-operations-api.ts`, legacy `src/admin/overview` / `src/admin/operations` ownership, and remaining Operations HTTP/application seams. Do not implement the correction in this run unless discovery itself reveals a strictly smaller documentation-only truth change; do not start Curriculum/Content/OCR.
+This run performed the required **discovery-only** pass inside AB-03.1 Overview + Operations. No production source, test, migration, workflow, Admin UI implementation or Student frontend implementation changed.
 
-### Startup observations
+Live evidence established the next smallest root ownership correction:
 
-- Work branch observed at `f493f990adf989f4d535e62d3263ffd4f1348901`.
-- Live `main` observed at `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
-- Prior shared state was `READY_FOR_NEXT`, sequence 34, active worker `NONE`; no active-worker collision was present.
+- `apps/admin-web/src/admin-operations-api.ts` remains a root transitional owner for Operations-specific response types and transport functions covering attention, overview, governance, diagnostics, audit and notifications;
+- `AdminOverviewPage` and the Operations pages consume this adapter as workflow code;
+- `AdminRoutes.tsx` still lazy-loads legacy page owners directly, but moving pages/models/styles together would be broader than one safe increment;
+- therefore the next correction is transport ownership only: move the adapter into an Operations feature API owner, expose a narrow feature public contract, switch existing consumers, then delete the root transitional adapter.
+
+Canonical truth was updated in:
+
+- `PROJECT_STATUS.md`
+- `PROJECT_ENGINEERING_LOG.md`
+- `PROJECT_HANDOFF.md`
+- `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`
+- this shared execution state.
+
+Compare `f493f990adf989f4d535e62d3263ffd4f1348901` → `6340aca3a2702f743bbe5a261cfb8f995e1e67bc` confirms the run changed only those five documentation/state files; no source/test/migration/workflow drift exists.
+
+### Verification / CI evidence
+
+Because this increment is documentation/discovery only, no new source behavior requires re-proving. The previously closed AB-03.1.1 implementation remains covered by source-tree-equivalent green evidence:
+
+- Architecture Guard `34859593842` — **SUCCESS**.
+- Admin AI `34860142887` — **SUCCESS**.
+- Combined Integration `34860142983` — **SUCCESS**.
+- Stage13G Admin Operations `34860143008` — **SUCCESS**, including Admin/API quality, clean PostgreSQL, backend/security/auth integrations and real API + PostgreSQL + Chromium.
+
+Push-triggered CI for the sequence-35 documentation commits may run under normal branch concurrency; it is not required closure evidence for this discovery-only increment because the compare proves there was no executable-source change. The next implementation increment must obtain fresh affected-scope gates.
+
+### Exact next smallest step
+
+Implement **AB-03.1.2 Operations frontend API ownership only**:
+
+1. create an Operations API owner under `apps/admin-web/src/features/operations/api/`;
+2. move the existing root adapter contents without changing exported type/function names or runtime behavior;
+3. expose only required contracts/functions through `apps/admin-web/src/features/operations/public/index.ts`;
+4. switch current Overview/Operations consumers to the feature public boundary;
+5. delete `apps/admin-web/src/admin-operations-api.ts` once no consumer remains;
+6. do not move pages/models/CSS, restructure routes, redesign UX, alter session handling, change backend/API/PostgreSQL contracts, or touch Student frontend.
+
+Required gates after implementation: Architecture Guard; Admin lint/typecheck/unit/build; focused Overview/Operations tests; Combined Integration; Stage13G real API + PostgreSQL + Chromium. No PostgreSQL migration is expected.
+
+### Risks / blockers
+
+- No product/code blocker is known.
+- Preserve the adapter contract exactly; this is an ownership move, not a transport redesign.
+- Avoid broad page/model/style migration in the same increment; that is a separate future decision after fresh discovery.
 - PR #52 remains Draft / unmerged / no auto-merge.
-
-### Verification / CI evidence carried forward
-
-- AB-03.1.1 Architecture Guard `34859593842` — SUCCESS.
-- Admin AI `34860142887` — SUCCESS.
-- Combined Integration `34860142983` — SUCCESS.
-- Stage13G Admin Operations `34860143008` — SUCCESS.
-
-These prove the previously closed source-tree-equivalent AB-03.1.1 increment only; any future source mutation requires affected-scope verification again.
 
 ### Main reconciliation need
 
-`NOT REQUIRED NOW` unless discovery finds live-main overlap in Admin/API/PostgreSQL/shared contracts or the branch crosses a structural phase boundary.
+`NOT REQUIRED NOW`. Live `main` remains `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; no new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed. Reconcile again if live `main` changes in scoped areas or at the next structural phase boundary.
 
 ## Safety constraints
 
