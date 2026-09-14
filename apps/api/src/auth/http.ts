@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { parseBody } from "../shared/http/request-validation.js";
 import { type AppConfig, allowedOrigins } from "../config.js";
 import { AppError } from "../errors.js";
+import { parseBody } from "../shared/http/request-validation.js";
 import type { AuthService, SessionProfile } from "./service.js";
 
 const LoginSchema = z.object({
