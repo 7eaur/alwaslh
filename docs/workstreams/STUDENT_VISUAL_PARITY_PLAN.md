@@ -10,7 +10,7 @@ Bring the complete Student product into one coherent visual family that stays cl
 
 ## Batch order
 
-### V01 — Foundation and shared shell
+### V01 — Foundation and shared shell — STARTED
 - Visual tokens and surfaces.
 - Botanical motif asset/background utility.
 - App Bar icon wells and spacing.
@@ -18,14 +18,29 @@ Bring the complete Student product into one coherent visual family that stays cl
 - Shared card/list density.
 - Mobile safe area and 390px baseline.
 
+Implemented so far:
+- reusable `student-botanical.svg` decorative motif;
+- `student-visual-parity.css` loaded as the final Student visual layer;
+- calm canvas/background framing;
+- refined App Bar icon wells/brand sizing;
+- refined bottom-nav selected state/elevation;
+- shared surface elevation/border tuning.
+
 Gate: B01 + B02 + screenshot inspection.
 
-### V02 — Home
+### V02 — Home — STARTED
 - Botanical hero/welcome composition.
 - Quick stats grouped card.
 - Library grouped summary using only real device/download data; future items stay unavailable/empty, not fabricated.
 - Compact subject preview.
 - Last attempt when authoritative data exists.
+
+Implemented so far:
+- reference-style two-part welcome hero with restrained motivational copy;
+- botanical framing reused from V01;
+- quick-stat card density/elevation aligned with the reference;
+- Library/Subjects/Last Attempt surfaces restyled without changing data authority;
+- download count remains device/profile-scoped real data only.
 
 Gate: B02/B05 + Home visual QA.
 
@@ -45,20 +60,30 @@ Gate: Stage14 + auth screenshots.
 
 Gate: B03.
 
-### V05 — Subject / Units / Lessons
+### V05 — Subject / Units / Lessons — STARTED
 - Reference-like entity heading.
 - Compact unit accordions.
 - Lesson number wells and row actions.
 - Empty sections never become dominant default state.
 - Summary/question actions only when their contracts exist.
 
+Implemented so far:
+- tightened subject hierarchy and unit density;
+- first populated unit opens instead of an empty first unit;
+- reduced oversized card treatment.
+
 Gate: B03.
 
-### V06 — Reader
+### V06 — Reader — STARTED
 - Focused reading canvas.
 - Source page/media presentation without heavy card framing.
 - Search, TTS, offline, reconnect/integrity preserved.
 - Suppress decorative artwork inside focused reading area.
+
+Implemented so far:
+- cleaner focused Reader canvas;
+- lighter source-media framing;
+- preserved canonical backend lesson media and Stage16 boundaries.
 
 Gate: B03 + Stage16 cold-start/offline/reconnect.
 
@@ -106,6 +131,4 @@ Do not advance a visually broken surface merely because its functional E2E test 
 
 ## Current progress
 
-- Existing Learn/Subject/Reader density correction already started in PR #60.
-- V01 documentation/source-of-truth established.
-- Next implementation: shared botanical/visual foundation + Home parity.
+Active work is now V01 + V02, while previously started V05/V06 corrections remain in the same branch. After exact-head verification of the shared visual layer and Home, continue in strict order with V03 then V04/V05/V06, V07, V08, V09 and V10.
