@@ -97,9 +97,7 @@ export class StudentOfflineSyncService {
 
     const hasMore = rows.length > limit;
     const pageRows = rows.slice(0, limit);
-    const nextCursor = hasMore
-      ? (pageRows.at(-1)?.revision ?? after)
-      : upperBound;
+    const nextCursor = hasMore ? (pageRows.at(-1)?.revision ?? after) : upperBound;
 
     return {
       version: 1,
