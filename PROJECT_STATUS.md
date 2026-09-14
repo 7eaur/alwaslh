@@ -35,16 +35,17 @@ Read in this order for this workstream:
 3. `docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`
 4. `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`
 5. `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`
-6. `docs/architecture/ADMIN_BACKEND_AB00_REVIEW_CHECKLIST_2026-09-14.md`
-7. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
-8. `docs/product/DESIGN_SYSTEM_SPEC.md`
-9. `.agents/skills/alwaslh-product-engineering/SKILL.md`
+6. `docs/architecture/ADMIN_BACKEND_BASELINE_2026-09-14.md`
+7. `docs/architecture/ADMIN_BACKEND_AB00_REVIEW_CHECKLIST_2026-09-14.md`
+8. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
+9. `docs/product/DESIGN_SYSTEM_SPEC.md`
+10. `.agents/skills/alwaslh-product-engineering/SKILL.md`
 
 Older `PLATFORM_ARCHITECTURE_*` documents are historical rationale only and are superseded for execution by the scoped AB workstream.
 
 ## Cross-workstream principles adopted from Student refoundation
 
-The Student frontend implementation remains isolated, but these proven principles are now binding here as well:
+The Student frontend implementation remains isolated, but these proven principles are binding here as well:
 
 - **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**;
 - one shell/route/workflow owner per responsibility;
@@ -99,27 +100,55 @@ Migration law:
 
 - **AB-00.1 Ownership & boundary map — DONE**
 - **AB-00.2 Current-file + dependency inventory — DONE**
-- **AB-00.3 Architecture Guard — IMPLEMENTED / strengthened; exact-head coherence still part of readiness**
-- **AB-00.4 Admin bundle/runtime + backend composition baseline — NEXT**
-- **AB-00.5 Foundation readiness — PENDING**
+- **AB-00.3 Architecture Guard — IMPLEMENTED / strengthened and verified green; final readiness coherence check remains**
+- **AB-00.4 Admin bundle/runtime + backend composition baseline — DONE**
+- **AB-00.5 Foundation readiness — NEXT / ACTIVE**
+
+### AB-00.4 measured baseline
+
+Measured behavioral/build head: `4e4e75445cf18d0e811f60b023c52cd7696bd102`.
+
+- Admin JS: **968.68 kB / 193.92 kB gzip** — one oversized initial chunk; this is debt to solve through ownership + route code splitting, never warning suppression.
+- Admin CSS: **91.38 kB / 13.68 kB gzip**.
+- Admin unit tests: **71/71 green** across 17 files.
+- API unit tests: **66/66 green**; typecheck/build green.
+- API lint: 154 files checked with one recorded legacy unused-variable warning in `content/legacy-supabase-importer.ts`.
+- PostgreSQL 16 clean migration sequence: green.
+- Stage 13E Admin AI exact-head run `34798894378`: **SUCCESS**.
+- Stage 13E Combined Integration exact-head run `34798894391`: **SUCCESS**.
+- Combined real Chromium Admin acceptance: **9/9 green**.
+- Admin hotspot: `apps/admin-web/src/App.tsx` owns session + shell + navigation + routes and eagerly imports major workflows.
+- Backend hotspot: `apps/api/src/app.ts` manually composes/registers the broad service/module graph.
+
+Canonical baseline: `docs/architecture/ADMIN_BACKEND_BASELINE_2026-09-14.md`.
 
 ## Corrected roadmap
 
-- `AB-00` — baseline + guardrails — ACTIVE
-- `AB-01` — minimal shared Admin + backend app/transport/auth/error foundations
-- `AB-02` — thin Admin shell/router/providers/layouts + lazy route boundaries
-- `AB-03` — end-to-end Admin/backend vertical slices by operator workflow
-- `AB-04` — remaining backend modular-monolith normalization
+- `AB-00` — baseline + guardrails — **ACTIVE / readiness gate**
+- `AB-01` — minimal shared foundations: Admin product states/transport/session + backend app composition/common HTTP/auth/error/db ownership where justified
+- `AB-02` — thin Admin shell/router/providers/layouts + major lazy route boundaries
+- `AB-03` — **end-to-end Admin/backend vertical slices** by operator workflow:
+  1. Overview + Operations
+  2. Curriculum + Content + OCR
+  3. AI Jobs + AI Review + contextual authoring transitions
+  4. Question Bank
+  5. Quiz Builder
+  6. Students
+  7. Access Codes
+- `AB-04` — remaining backend modular-monolith normalization, including server-only/Student-facing boundaries not naturally closed in AB-03
 - `AB-05` — final Admin design/interaction convergence audit
-- `AB-06` — frontend/backend performance and delivery validation
+- `AB-06` — frontend/backend performance and delivery validation + evidence-based budgets
 - `AB-07` — legacy removal + hard dependency enforcement
-- `AB-08` — final Admin + full Backend verification
+- `AB-08` — final Super Admin + full Backend verification
 
-This order intentionally avoids building a clean Admin UI on top of backend seams already known to be structurally weak.
+This order intentionally avoids building a clean Admin UI on top of backend seams already known to be structurally weak. Each business slice repairs the backend boundary it actually uses, proves behavior, switches ownership and removes the legacy owner.
 
 ## Immediate next action
 
-1. execute **AB-00.4** baseline measurement;
-2. execute **AB-00.5** readiness review;
-3. only then start AB-01 minimal foundation;
-4. preserve PR #52 as Draft; never auto-merge.
+Execute **AB-00.5 Foundation Readiness Review** now:
+
+1. re-compare live `main` immediately before AB-01;
+2. verify scope/docs/PR/head/guard/baseline are coherent;
+3. identify the smallest high-leverage AB-01 foundation batch;
+4. only after AB-00.5 passes, implement AB-01;
+5. keep PR #52 Draft; never auto-merge.
