@@ -40,7 +40,7 @@ AB-02 → AB-03 phase-boundary reconciliation found no Admin/API/PostgreSQL impl
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — ACTIVE
   - AB-03.1.1 Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.1.2 Operations frontend API ownership — DISCOVERED / NEXT
+  - AB-03.1.2 Operations frontend API ownership — IMPLEMENTED / WAITING_FOR_CI
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
@@ -55,29 +55,40 @@ AB-03.1.1 source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`.
 - dedicated application-owner test added;
 - closure evidence: Guard `34859593842`, Admin AI `34860142887`, Combined `34860142983`, Stage13G `34860143008` — SUCCESS.
 
-## Discovery just completed
+## Current implementation awaiting closure
 
-Worker C sequence 35 inspected live Overview/Operations frontend ownership and selected exactly one smallest next correction.
+AB-03.1.2 source checkpoint: `75cab6ca1067f5866a259ad079279757218e805f`.
 
-`apps/admin-web/src/admin-operations-api.ts` is still a root transitional owner for Operations-specific transport and response contracts. It serves the Overview and Operations pages, while the repository's permanent architecture requires feature-owned API adapters exposed through narrow public boundaries. Moving all legacy pages/models/styles simultaneously would be broader than necessary.
+Worker A sequence 36 moved only Operations frontend transport ownership:
+
+- `apps/admin-web/src/features/operations/api/admin-operations-api.ts` now owns the existing Operations request functions and response/type contracts;
+- `apps/admin-web/src/features/operations/public/index.ts` exposes the narrow feature contract;
+- Overview, Operations Health, Audit, Diagnostics and Notifications now consume that public boundary;
+- root `apps/admin-web/src/admin-operations-api.ts` was deleted;
+- exported names, endpoints, query/body construction and session-expiry behavior were preserved;
+- pages/models/styles/routes, backend/API, PostgreSQL/schema/migrations and Student frontend implementation were not changed.
+
+Verification observed on source checkpoint:
+
+- Architecture Guard `34866606170` — **SUCCESS**;
+- Frontend Preparation `34866606173` — pending/not fully closed;
+- Admin AI Operations `34866606148` — in progress/not fully closed;
+- Combined Integration `34866606220` — pending/not fully closed;
+- Stage13G Admin Operations `34866606179` — pending/not fully closed.
 
 ## Exact continuation
 
-Implement **AB-03.1.2 Operations frontend API ownership only**:
+Do **verification/closure only** for AB-03.1.2:
 
-1. create the Operations feature API owner under `apps/admin-web/src/features/operations/api/`;
-2. move the current `admin-operations-api.ts` transport/types there without changing behavior or exported names;
-3. expose only required functions/types through `apps/admin-web/src/features/operations/public/index.ts`;
-4. update current Overview/Operations consumers to import from the feature public boundary;
-5. delete root `apps/admin-web/src/admin-operations-api.ts` once unused;
-6. do not move pages, `operations-model`, CSS, route ownership, or UX in this increment;
-7. do not alter API endpoints/query construction/payloads/session handling/backend/PostgreSQL/Student frontend.
-
-Then verify Architecture Guard, Admin lint/typecheck/unit/build, focused Overview/Operations tests, Combined Integration and Stage13G real API + PostgreSQL + Chromium. If green, close AB-03.1.2 and return to a fresh discovery-only pass inside Overview + Operations. Do not begin Curriculum/Content/OCR in the same increment.
+1. inspect the source-head runs above; if documentation-only commits caused concurrency cancellation, use the newest source-tree-equivalent runs after confirming no executable source/test/migration/workflow drift from `75cab6ca...`;
+2. require Architecture Guard, Admin quality, Combined Integration and Stage13G real API + PostgreSQL + Chromium evidence to be green;
+3. if any real failure appears, fix only its root cause inside this ownership seam;
+4. if all required gates are green, mark AB-03.1.2 DONE and perform a fresh discovery-only pass inside Overview + Operations;
+5. do not start another ownership seam or Curriculum/Content/OCR before closure.
 
 ## Main reconciliation need
 
-`NOT REQUIRED NOW`. Repeat if live `main` gains overlapping Admin/API/PostgreSQL/shared-contract changes or at the next structural phase boundary.
+`NOT REQUIRED NOW`. Live `main` remains `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`; repeat reconciliation if live `main` gains overlapping Admin/API/PostgreSQL/shared-contract changes or at the next structural phase boundary.
 
 ## Remaining roadmap
 
