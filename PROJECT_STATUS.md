@@ -61,26 +61,23 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`. Closure evidence: Architecture Guard `34859593842` — SUCCESS; Admin AI `34860142887` — SUCCESS; Combined `34860142983` — SUCCESS; Stage13G `34860143008` — SUCCESS.
 
-**AB-03.1.2 Operations frontend API ownership — ROOT FIX APPLIED / WAITING_FOR_CI.**
+**AB-03.1.2 Operations frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.**
 
-Current source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
+Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
-Worker A moved Operations transport/types to `apps/admin-web/src/features/operations/api/admin-operations-api.ts` and exposed them through `features/operations/public`, but the next exact verification exposed three stale imports left behind by that move. Worker B sequence 37 fixed only that ownership regression:
+The Operations transport/types now belong to `apps/admin-web/src/features/operations/api/admin-operations-api.ts` and are exposed through the narrow `features/operations/public` boundary. All stale root-owner imports/tests were corrected without changing endpoint, payload, response, session, backend/API, PostgreSQL, security, route/style, or Student frontend behavior.
 
-- `admin/operations/operations-model.ts` now consumes Operations types through the feature public boundary;
-- `admin/operations/operations-model.test.ts` uses the same public boundary;
-- the Operations API transport test is colocated at `features/operations/api/admin-operations-api.test.ts` and the stale root test owner was removed;
-- no endpoint, payload, response, session, backend/API, PostgreSQL, security, route, style, or Student frontend behavior changed.
+The source checkpoint through verification head `302b86585d4e1eb122c5afe30503828e10c8d025` differs only in canonical documentation/state files, so the following evidence is source-tree-equivalent for the implementation:
 
-Exact source-head verification currently:
+- Architecture Guard `34870253383` — **SUCCESS**.
+- Frontend Preparation `34870253413` — **SUCCESS**.
+- Admin AI Operations `34870253417` — **SUCCESS**.
+- Combined Integration `34870253434` — **SUCCESS**, including real Admin Chromium and canonical AI Admin Chromium smoke.
+- Stage13G Admin Operations `34870253431` — **SUCCESS**, including Admin/API quality, clean PostgreSQL/contracts, operations/security/auth regressions, and real API + PostgreSQL + Chromium.
 
-- Architecture Guard `34868596586` — **SUCCESS**.
-- Frontend Preparation `34868596646` — **SUCCESS**.
-- Admin AI Operations `34868596701` — **SUCCESS**.
-- Combined Integration `34868596865` — **IN PROGRESS** at last observation.
-- Stage13G Admin Operations `34868596682` — **IN PROGRESS** at last observation.
+No further ownership seam was started in the closure increment.
 
-AB-03.1.2 therefore remains open. Exact continuation is verification/closure only: require Combined and Stage13G real API + PostgreSQL + Chromium to finish green on this source tree or a proven documentation-only equivalent. Do not start another ownership seam or Curriculum/Content/OCR before closure.
+**Exact next step:** a fresh **discovery-only** pass inside `AB-03.1 Overview + Operations`. Re-inspect operator jobs, PostgreSQL/API/security/audit contracts, current backend/frontend owners, and regression/browser evidence; choose exactly one smallest high-confidence end-to-end correction if evidence justifies one. Do not start Curriculum/Content/OCR until Overview + Operations is explicitly ready to advance.
 
 ## Remaining roadmap
 
