@@ -51,8 +51,6 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 - AB-02.3 Substantial workflow route lazy boundaries — DONE.
 - AB-02.4 Auth login presentation ownership — DONE.
 
-Final AB-02 closure confirmed `App.tsx` composition-only ownership, single `AdminShell`, single inner `AdminRoutes`, auth public boundaries and route-level lazy/Suspense behavior. Existing green Architecture Guard, Combined and Stage13G evidence remains source-tree-equivalent.
-
 ## AB-03 — ACTIVE
 
 Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
@@ -63,19 +61,26 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`. Closure evidence: Architecture Guard `34859593842` — SUCCESS; Admin AI `34860142887` — SUCCESS; Combined `34860142983` — SUCCESS; Stage13G `34860143008` — SUCCESS.
 
-**AB-03.1.2 Operations frontend API ownership — IMPLEMENTED / WAITING_FOR_CI.**
+**AB-03.1.2 Operations frontend API ownership — ROOT FIX APPLIED / WAITING_FOR_CI.**
 
-Source checkpoint: `75cab6ca1067f5866a259ad079279757218e805f`.
+Current source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
-- Operations transport/types now live under `apps/admin-web/src/features/operations/api/admin-operations-api.ts`.
-- `apps/admin-web/src/features/operations/public/index.ts` is the narrow public boundary.
-- Existing Overview, health, audit, diagnostics and notifications consumers now import through that public boundary.
-- Transitional root `apps/admin-web/src/admin-operations-api.ts` was deleted.
-- No pages/models/styles/routes, backend/API contracts, PostgreSQL schema/migrations, session semantics or Student frontend implementation changed.
+Worker A moved Operations transport/types to `apps/admin-web/src/features/operations/api/admin-operations-api.ts` and exposed them through `features/operations/public`, but the next exact verification exposed three stale imports left behind by that move. Worker B sequence 37 fixed only that ownership regression:
 
-Exact source-head verification currently: Architecture Guard `34866606170` — **SUCCESS**; Frontend Preparation `34866606173`, Admin AI `34866606148`, Combined Integration `34866606220`, and Stage13G Admin Operations `34866606179` are not yet all complete. Therefore AB-03.1.2 is not closed yet.
+- `admin/operations/operations-model.ts` now consumes Operations types through the feature public boundary;
+- `admin/operations/operations-model.test.ts` uses the same public boundary;
+- the Operations API transport test is colocated at `features/operations/api/admin-operations-api.test.ts` and the stale root test owner was removed;
+- no endpoint, payload, response, session, backend/API, PostgreSQL, security, route, style, or Student frontend behavior changed.
 
-Exact continuation: verify the remaining affected-scope gates on the implementation tree (or a later documentation-only source-tree-equivalent head). Only after all are green, close AB-03.1.2 and perform a fresh discovery-only pass inside Overview + Operations. Do not begin Curriculum/Content/OCR before that closure.
+Exact source-head verification currently:
+
+- Architecture Guard `34868596586` — **SUCCESS**.
+- Frontend Preparation `34868596646` — **SUCCESS**.
+- Admin AI Operations `34868596701` — **SUCCESS**.
+- Combined Integration `34868596865` — **IN PROGRESS** at last observation.
+- Stage13G Admin Operations `34868596682` — **IN PROGRESS** at last observation.
+
+AB-03.1.2 therefore remains open. Exact continuation is verification/closure only: require Combined and Stage13G real API + PostgreSQL + Chromium to finish green on this source tree or a proven documentation-only equivalent. Do not start another ownership seam or Curriculum/Content/OCR before closure.
 
 ## Remaining roadmap
 
