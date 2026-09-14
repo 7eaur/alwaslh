@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   validateManifest: vi.fn(),
   refreshLease: vi.fn(),
   clearLease: vi.fn(),
+  applyDelta: vi.fn(),
 }));
 
 vi.mock("./offline-authorization", () => ({
@@ -32,6 +33,10 @@ vi.mock("./offline-content-store", () => ({
 vi.mock("./offline-session", () => ({
   refreshOfflineLeaseForCurrentSession: mocks.refreshLease,
   clearActiveOfflineLease: mocks.clearLease,
+}));
+
+vi.mock("./offline-sync", () => ({
+  applyOfflineContentDelta: mocks.applyDelta,
 }));
 
 import { revalidateOfflinePackagesForCurrentSession } from "./offline-revalidation";
@@ -117,6 +122,13 @@ beforeEach(() => {
   mocks.removePackage.mockResolvedValue(undefined);
   mocks.savePackage.mockResolvedValue(undefined);
   mocks.validateManifest.mockReturnValue(undefined);
+  mocks.applyDelta.mockResolvedValue({
+    pages: 1,
+    entries: 0,
+    removed: 0,
+    nextCursor: "0",
+    hasMore: false,
+  });
 });
 
 describe("revalidateOfflinePackagesForCurrentSession", () => {
@@ -130,8 +142,37 @@ describe("revalidateOfflinePackagesForCurrentSession", () => {
     const result = await revalidateOfflinePackagesForCurrentSession("profile-1");
 
     expect(result).toEqual({ status: "verified", checked: 1, refreshed: 1, removed: 0, deferred: 0 });
+    expect(mocks.applyDelta).toHaveBeenCalledWith("profile-1", "device-1");
     expect(mocks.savePackage).toHaveBeenCalledOnce();
     expect(mocks.removePackage).not.toHaveBeenCalled();
+  });
+
+  it("includes delta removals before revalidating remaining packages", async () => {
+    mocks.applyDelta.mockResolvedValue({
+      pages: 1,
+      entries: 1,
+      removed: 1,
+      nextCursor: "8",
+      hasMore: false,
+    });
+    mocks.listPackages.mockResolvedValue([]);
+
+    const result = await revalidateOfflinePackagesForCurrentSession("profile-1");
+
+    expect(result).toEqual({ status: "verified", checked: 0, refreshed: 0, removed: 1, deferred: 0 });
+  });
+
+  it("keeps the full manifest pass authoritative when delta transport is temporarily unavailable", async () => {
+    const record = storedPackage();
+    const current = envelope();
+    mocks.applyDelta.mockRejectedValue(new ApiRequestError("SERVICE_UNAVAILABLE", "retry", 0));
+    mocks.listPackages.mockResolvedValue([record]);
+    mocks.getManifest.mockResolvedValue(current);
+    mocks.verifyAuthorization.mockResolvedValue(current.manifest);
+
+    const result = await revalidateOfflinePackagesForCurrentSession("profile-1");
+
+    expect(result).toEqual({ status: "deferred", checked: 1, refreshed: 1, removed: 0, deferred: 1 });
   });
 
   it("removes a stale package when the authoritative lesson revision changed", async () => {
