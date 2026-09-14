@@ -30,7 +30,7 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - never force-reset or force-push shared history;
 - live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
 
-Latest live-main reconciliation: compared prior checkpoint `3053640cc5bb0699cfa7456cf646e8997f6aa81b` to current main. The only main-only commit is Student Experience V2; no `apps/api`, `apps/admin-web`, or `database/migrations` path appears in the delta. No scoped reconciliation is required before closing the current AB-01.5 correction.
+Latest live-main reconciliation shows the only move since the prior checkpoint is Student Experience V2; no `apps/api`, `apps/admin-web`, or `database/migrations` path appears in that main-only delta.
 
 ## Execution governance
 
@@ -39,50 +39,53 @@ Workers A/B/C share one branch and roadmap in serial order. Shared state is `doc
 ## Current phase
 
 - AB-00 — DONE
-- AB-01 — ACTIVE
-- AB-01.1 — DONE
-- AB-01.2 — DONE
-- AB-01.3 — DONE
-- AB-01.4 — DONE
-- AB-01.5 — **IMPLEMENTED / WAITING FOR EXACT-HEAD CI**
-- AB-01.6 — PENDING
+- AB-01 — **DONE / EXACT-HEAD VERIFIED**
+- AB-02 — **ACTIVE**
+- AB-03..AB-08 — PENDING
 
-## AB-01.5 implemented correction
+## AB-01 closure evidence
 
-Generic `parseBody(...)` request validation is now owned by:
+AB-01.5 request-validation owner is `apps/api/src/shared/http/request-validation.ts`; complete source implementation checkpoint is `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`.
 
-`apps/api/src/shared/http/request-validation.ts`
+The five commits from that checkpoint to verification HEAD `16c7ac34078d75b990422374954f30631ebbee45` changed documentation only.
 
-Architecture Guard rejected the earlier `app/http` placement, so the final owner is generic shared HTTP infrastructure. Auth retains `currentProfile`, `sessionToken` and all session/cookie/role/authentication responsibilities. Validation behavior is unchanged.
-
-Exact-head CI on intermediate HEAD `cba5de4bd37c9382efff91820866e7c3c2937915` exposed eight remaining callers importing `parseBody` from private Auth HTTP. Worker C migrated only those imports and committed the complete caller migration at:
-
-`d0352917f9df83dd15f9fbd7994ad79c1b9447dd`
-
-No business logic, schema behavior, migrations or Student frontend implementation changed.
-
-## Verification state
-
-For source checkpoint `d0352917...`:
+Verified closure:
 
 - Architecture Guard `34834714337` — SUCCESS;
-- Stage13G `34834714355` — running; Admin lint/typecheck/unit and API lint/typecheck/unit already green;
-- Stage13E Admin AI `34834714335` — running;
-- Stage13E Combined Integration / real-browser `34834714325` — running.
+- Stage13E Admin AI `34834945644` — SUCCESS;
+- Stage13E Combined Integration `34834945655` — SUCCESS;
+- Stage13G `34834945649` — SUCCESS.
 
-Do not mark AB-01.5 DONE while PostgreSQL/integration/security/Chromium evidence is still pending.
+Stage13G proves Admin/API quality, clean PostgreSQL migrations, database contract, relevant integration/security/auth regressions and real API + PostgreSQL + Chromium. Therefore AB-01.5 is DONE and AB-01.6 Foundation Closure Gate is PASS/DONE.
 
-## Exact continuation
+No further foundation extraction is authorized.
 
-1. Inspect runs `34834714355`, `34834714335`, `34834714325` for source HEAD `d0352917...`.
-2. If a run fails, fix only a root cause attributable to request-validation ownership; do not weaken tests/security/Architecture Guard.
-3. If all required gates close green, mark **AB-01.5 DONE** across state/status/log/handoff/canonical AB-01 docs.
-4. Then start only **AB-01.6 Foundation Closure Gate**.
-5. Do not invent another shared-infrastructure extraction.
+## Exact continuation — AB-02 discovery
 
-## Stop rule
+The next worker must begin AB-02 by inspecting current evidence before mutation:
 
-After AB-01.5 is exact-head green, move directly to AB-01.6. Do not normalize root `config`, `db`, `errors`, media or observability merely to match a folder model.
+1. `apps/admin-web/src/App.tsx` — current bootstrap/session/shell/navigation/route responsibilities;
+2. current route table and route wrappers;
+3. current shell/global chrome/navigation owner(s);
+4. feature public/routes entry points and any private imports used by app composition;
+5. auth/session provider placement from AB-01.2;
+6. route focus/history/deep-link behavior and tests;
+7. Admin build/bundle composition and current eager imports;
+8. existing app/feature/shared folder ownership and Architecture Guard rules.
+
+Then document one smallest first AB-02 seam. Do not redesign workflow pages in this phase. Preserve auth/session and browser navigation outcomes. Major workflow UI/backend changes belong to AB-03.
+
+Likely target direction remains thin bootstrap/providers/router/layout, one shell/navigation owner, feature public route boundaries and substantial route lazy-loading; however actual implementation must follow inspected live code rather than this prose.
+
+## Verification expectations for first AB-02 mutation
+
+At minimum according to affected scope:
+
+- Architecture Guard;
+- Admin lint/typecheck/unit/build;
+- relevant auth/session/navigation tests;
+- real API + PostgreSQL + Chromium Admin parity when shell/router behavior changes;
+- bundle evidence when route/lazy boundaries change.
 
 ## Remaining roadmap
 
