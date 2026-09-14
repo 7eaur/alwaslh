@@ -1,14 +1,15 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `READY_FOR_NEXT`
 Sequence: `19`
-Last worker: `B`
-Active worker: `C`
+Last worker: `C`
+Active worker: `NONE`
 Start time: `2026-09-14T12:42:41+03:00`
-End time: `—`
+End time: `2026-09-14T12:49:00+03:00`
 Starting HEAD: `5627dabffb06bfc6ad99779e7e45f4ebcb0776ff`
+Ending work/docs checkpoint before this handoff-state commit: `1f5a33e2cd931e3584165750dfa9db0a2ec001aa`
 Current live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`
-Active task: `AB-01.5 discovery — inspect proven cross-cutting backend technical ownership and select at most one bounded correction or document no-op`
+Active task completed: `AB-01.5 discovery — one bounded generic request-validation ownership correction selected`
 
 ## Active roadmap position
 
@@ -18,20 +19,87 @@ Active task: `AB-01.5 discovery — inspect proven cross-cutting backend technic
 - AB-01.2 — DONE
 - AB-01.3 — DONE
 - AB-01.4 — DONE
-- AB-01.5 — **ACTIVE / DISCOVERY ONLY**
+- AB-01.5 — **DISCOVERY COMPLETE / IMPLEMENTATION NEXT**
 - AB-01.6 — PENDING
 
-## Previous handoff truth
+## Worker C sequence 19 completed
 
-Worker B sequence 18 closed AB-01.4 after five bounded seams (CORS, health/readiness, public errors, Fastify construction, database lifecycle). Source+test implementation checkpoint `101f61a9c25e3de116d0074a3ef7e2f760eb98a7` was backed by Architecture Guard `34825750566`, Admin AI `34826063345`, Combined `34826063326`, and Stage13G `34826063330` — all SUCCESS. Live handoff HEAD `5627dabffb06bfc6ad99779e7e45f4ebcb0776ff` also has successful Combined/Stage13G exact-head push runs.
+### Live-main reconciliation
 
-## Worker C sequence 19 intent
+Compared prior reconciled main `3053640cc5bb0699cfa7456cf646e8997f6aa81b` to live main `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
 
-1. Inspect generic/cross-cutting backend technical concerns only: HTTP/auth helpers, shared error plumbing, DB technical ownership, observability and media infrastructure.
-2. Find concrete duplication/private cross-module misuse from current branch code.
-3. Select at most one smallest evidence-backed ownership correction with explicit contract/tests/non-goals, or document that no AB-01.5 extraction is justified.
-4. Do not reopen broad `app.ts` composition and do not change domain/business workflows during discovery.
-5. End this run with precise evidence and the exact next smallest step.
+- one main-only commit: Student Experience V2 merge;
+- no `apps/api`, `apps/admin-web`, or `database/migrations` paths in that delta;
+- no scoped reconciliation required before the selected AB-01.5 correction.
+
+### Evidence inspected
+
+- `apps/api/src/auth/http.ts`: generic `parseBody(...)` uses Zod `safeParse` and maps failure to `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)`; the helper itself performs no authentication/session behavior.
+- `apps/api/src/question-bank/http.ts`: imports `parseBody` from private Auth HTTP and uses it for query/params/body validation.
+- `apps/api/src/quiz-builder/http.ts`: imports `parseBody` likewise.
+- `currentProfile(...)` was explicitly separated from the correction because it invokes AuthService/session authentication and remains materially Auth-owned.
+
+### Selected single correction
+
+Target owner:
+
+`apps/api/src/app/http/request-validation.ts`
+
+Move only the generic request-validation adapter out of Auth HTTP ownership. Preserve exact parsing/error semantics. Before implementation, search the live branch for every current caller and migrate only real callers.
+
+Explicit non-goals:
+
+- no `currentProfile` move;
+- no auth/session/cookie/role redesign;
+- no AppError/config/db/media/observability normalization;
+- no schema registry;
+- no Question Bank/AI contract correction;
+- no broad module HTTP rewrite.
+
+Canonical discovery:
+
+`docs/architecture/ADMIN_BACKEND_AB01_5_TECHNICAL_OWNERSHIP_DISCOVERY_2026-09-14.md`
+
+### Documentation updated
+
+- `PROJECT_STATUS.md`
+- `PROJECT_ENGINEERING_LOG.md`
+- `PROJECT_HANDOFF.md`
+- `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`
+- new canonical AB-01.5 discovery document
+
+## Verification / CI
+
+This sequence made **documentation-only** changes; no production source, test, migration, API contract or runtime behavior changed.
+
+Verification performed:
+
+- live branch/main HEADs inspected;
+- main delta inspected and confirmed Student-only for scoped implementation paths;
+- current Auth / Question Bank / Quiz Builder HTTP source inspected directly;
+- compare `5627dabffb06bfc6ad99779e7e45f4ebcb0776ff...1f5a33e2cd931e3584165750dfa9db0a2ec001aa` contains only the six canonical documentation/handoff files;
+- preceding executable source checkpoint remains backed by Architecture Guard `34825750566`, Admin AI `34826063345`, Combined `34826063326`, Stage13G `34826063330` — SUCCESS;
+- no executable gate is claimed for this docs-only discovery as if new source had been verified.
+
+## Exact next smallest step
+
+Implement **only** the selected AB-01.5 request-validation ownership correction:
+
+1. re-read live state/HEAD and ensure no active worker;
+2. search the current branch for every `parseBody` import/caller;
+3. create `apps/api/src/app/http/request-validation.ts` with the existing safeParse → BAD_REQUEST semantics;
+4. switch Auth HTTP and every real external caller to the new owner;
+5. remove `parseBody` ownership/export from `auth/http.ts`;
+6. do not touch `currentProfile` or authorization/session behavior;
+7. run Architecture Guard + API lint/typecheck/unit/build + relevant auth/security and Question Bank/Quiz Builder integration gates + clean PostgreSQL/DB contract + canonical Combined/Stage13G real API/PostgreSQL/Chromium gates;
+8. if required exact-head CI is still running, hand off `WAITING_FOR_CI`;
+9. if green, close AB-01.5 and move to AB-01.6; do not invent another AB-01.5 seam.
+
+## Risks / blockers
+
+- No blocker.
+- Main reconciliation required: `NO` for this correction based on the inspected main-only delta.
+- The known Question Bank → AI question-schema dependency remains separate debt for later workflow/module normalization and must not be mixed into this batch.
 
 ## Safety constraints
 
@@ -41,20 +109,3 @@ Worker B sequence 18 closed AB-01.4 after five bounded seams (CORS, health/readi
 - Never weaken tests/security/validation.
 - Never force reset/force push shared history.
 - Never advance on stale chat assumptions; repository truth wins.
-
-## Handoff template
-
-- Worker:
-- Sequence:
-- Start time:
-- End time:
-- Starting HEAD:
-- Ending HEAD:
-- Active task/subtask:
-- Completed:
-- Files/owners changed:
-- Verification/CI:
-- Current state: `READY_FOR_NEXT | WAITING_FOR_CI | BLOCKED | COMPLETE`
-- Exact next smallest step:
-- Risks/blockers:
-- Main reconciliation required: `YES | NO`
