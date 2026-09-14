@@ -1,7 +1,7 @@
 # AB-01.4 — Backend App Composition Discovery
 
 Date: **2026-09-14**  
-Status: **FOUR SEAMS CLOSED — FIFTH SEAM DISCOVERY NEXT**  
+Status: **FOUR SEAMS CLOSED — FIFTH SEAM SELECTED / NOT IMPLEMENTED**  
 Branch: `rebuild/super-admin-foundation`  
 Initial discovery starting HEAD: `60151da0cdcf56d61f5d68ea5cdd3d329523f2a9`
 
@@ -130,17 +130,90 @@ Also preserved:
 
 Conclusion: the fourth seam is **DONE**.
 
+## Fifth seam discovery — database lifecycle registration — SELECTED / NOT IMPLEMENTED
+
+Worker C sequence 16 re-read live `apps/api/src/app.ts`, `apps/api/tests/app.test.ts`, `apps/api/src/db.ts` and `apps/api/src/server.ts` after the first four seams. The smallest remaining owner boundary is the single Fastify `onClose` hook that binds application shutdown to `Database.close()`.
+
+### Current owner
+
+`apps/api/src/app.ts` currently contains:
+
+```ts
+app.addHook("onClose", async () => {
+  await database.close();
+});
+```
+
+This is a cross-cutting application lifecycle responsibility rather than business-module composition.
+
+### Target owner
+
+`apps/api/src/app/plugins/database-lifecycle.ts`
+
+with a narrow function such as:
+
+`registerDatabaseLifecycle(app: FastifyInstance, database: Database): void`
+
+The target owner should register only the existing close hook. It must not create/configure the database or own process signals.
+
+### Evidence that this seam is bounded
+
+- `Database` exposes `close(): Promise<void>` as an explicit infrastructure contract.
+- `server.ts` creates the database before `buildApp()` and relies on `await app.close()` during SIGTERM/SIGINT and listen failure; therefore the application lifecycle hook is the bridge that closes PostgreSQL during normal Fastify shutdown.
+- `server.ts` directly calls `database.close()` only on legacy-startup failure before an app instance exists; that behavior is outside this seam and must remain unchanged.
+- `apps/api/tests/app.test.ts` already closes every built Fastify instance, so the lifecycle path is exercised, but the fake database currently has no assertion that `close()` was invoked. The implementation batch should add one focused lifecycle assertion rather than broaden test structure.
+
+### Contracts/order to preserve exactly
+
+1. `buildApp({ config, database })` still receives an already-created `Database` dependency.
+2. The database lifecycle hook remains registered on the same Fastify instance returned by `buildApp()`.
+3. A normal `await app.close()` awaits `database.close()`; no fire-and-forget or swallowed error is introduced.
+4. Registration remains after business-route, health and public-error composition, preserving current lifecycle-registration order.
+5. `server.ts` shutdown behavior remains `await app.close()` for SIGTERM/SIGINT and listen failure.
+6. Legacy startup failure before `buildApp()` continues to call `database.close().catch(() => undefined)` directly in `server.ts`.
+7. Database pool construction/options, query/transaction semantics, migrations/schema and HTTP/business contracts remain unchanged.
+
+### Required parity test for implementation
+
+Add a focused `apps/api/tests/app.test.ts` assertion using a fake database whose `close()` records invocation, proving that closing a built app delegates to the supplied database lifecycle exactly for that app-close path. Do not introduce a general lifecycle framework.
+
+### Explicit non-goals
+
+- no `createDatabase()` move;
+- no database configuration/pool tuning;
+- no process-signal abstraction;
+- no startup-batch change;
+- no service graph/container/DI extraction;
+- no business-route registry extraction;
+- no infrastructure-adapter bundle;
+- no transaction/query changes;
+- no migrations/schema change;
+- no Student frontend change.
+
+### Switch/deletion condition
+
+The fifth seam can be marked DONE only when:
+
+1. `database-lifecycle.ts` is the single owner of Fastify database-close hook registration;
+2. `apps/api/src/app.ts` no longer embeds `app.addHook("onClose", ...)` for the database and calls the narrow registration owner instead;
+3. focused app lifecycle unit coverage proves `app.close()` delegates to the supplied `Database.close()`;
+4. `server.ts` behavior remains unchanged;
+5. Architecture Guard, API lint/typecheck/unit/build, clean PostgreSQL and relevant integration/real API + Chromium gates are green on the affected source tree.
+
+### AB-01.4 closure direction after this seam
+
+After database lifecycle extraction, the remaining classes are broad service construction, cross-service composites, whole-product route registration and multi-consumer infrastructure construction. Current evidence does **not** justify moving those wholesale into a giant container/registry during AB-01.4. Unless implementation exposes a new small bounded responsibility, the next discovery should assess **closing AB-01.4 after the fifth seam** and leave workflow-driven module normalization for AB-03/AB-04.
+
 ## Remaining app-composition responsibility classes
 
-After four closed seams, the live inventory still includes:
+After selecting the fifth seam, the still-unmoved broad classes are:
 
-- infrastructure adapter construction;
+- infrastructure adapter construction with multiple business consumers;
 - broad module/service construction;
 - cross-service composite construction;
-- whole-product route registration;
-- database `onClose` lifecycle.
+- whole-product route registration.
 
-This remains an inventory, **not** permission to extract any item mechanically. A fifth seam must be freshly justified from live code/tests. It is acceptable to conclude that no further small AB-01.4 seam is justified and close AB-01.4 rather than create a giant service container or route registry.
+These remain inventory, not permission for mechanical extraction.
 
 ## Rejected broad moves remain rejected
 
@@ -153,14 +226,14 @@ This remains an inventory, **not** permission to extract any item mechanically. 
 
 ## Exact next step
 
-Perform **discovery only** for a fifth seam:
+Implement **only** the selected fifth seam:
 
-1. re-read live `apps/api/src/app.ts` after the four closed extractions;
-2. inspect tests/contracts around the remaining responsibilities;
-3. select the smallest evidence-backed boundary, if one exists;
-4. document current owner, target owner, exact behavior/order contracts, non-goals, switch/deletion condition and required gates;
-5. do not implement the fifth seam in the discovery run;
-6. if no further small seam is justified, document why AB-01.4 should close instead of forcing extraction.
+1. create the narrow database lifecycle registration owner;
+2. switch `app.ts` from inline `onClose` registration to that owner;
+3. add focused lifecycle parity coverage in `apps/api/tests/app.test.ts`;
+4. do not move database creation, service construction, routes, signals or startup behavior;
+5. run Architecture Guard + API quality + clean PostgreSQL + relevant integration/real API + Chromium gates;
+6. close the seam only after green evidence, then reassess whether AB-01.4 should end rather than forcing a sixth broad extraction.
 
 ## Permanent AB-01.4 law
 
