@@ -32,7 +32,7 @@ function learningRoute(pathname: string): LearningRoute {
   return { kind: "invalid" };
 }
 
-function CurriculumUnavailable({ online, onRetry, error }: { online: boolean; onRetry: () => void; error?: string }) {
+function CurriculumUnavailable({ online, onRetry, error }: { online: boolean; onRetry: () => void; error: string | undefined }) {
   if (!online) {
     return (
       <section className="learn-v2-empty">
