@@ -3,10 +3,10 @@ import { AdminBrandBlock, AdminShell } from "./app/layouts/AdminShell";
 import { AdminRoutes } from "./app/router/AdminRoutes";
 import {
   AdminSessionProvider,
+  LoginScreen,
   useAdminSession,
 } from "./features/auth/public";
 import "./ai-operations-review.css";
-import { LoginScreen } from "./LoginScreen";
 
 export function App() {
   return (
