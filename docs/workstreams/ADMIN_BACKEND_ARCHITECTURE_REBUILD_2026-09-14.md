@@ -9,49 +9,80 @@ Canonical decision review:
 
 `docs/architecture/ADMIN_BACKEND_ARCHITECTURE_REVIEW_2026-09-14.md`
 
-## 1. Scope
+## 1. Scope and responsibility boundary
 
-This workstream owns the structural rebuild of the **Super Admin frontend and full backend**.
+This workstream owns the **Super Admin frontend plus the full server-side product architecture**.
 
-### IN SCOPE
+### IN SCOPE — owned here
 
-- `apps/admin-web`
-- `apps/api`
-- `database/migrations`
-- `packages/brand`, `packages/ui`, `packages/domain`, `packages/validation` only when genuinely required by Admin/API contracts or shared design semantics
-- Admin product architecture, UX/UI, IA, routing, data flow, accessibility, RTL, responsive behavior, performance and visual consistency
-- backend modular-monolith boundaries, service/application ownership, HTTP contracts, PostgreSQL integrity and cross-module orchestration
-- CI, integration tests and real Chromium coverage for Admin/backend scenarios
+- `apps/admin-web` — complete Super Admin product rebuild;
+- `apps/api` — **full backend**, including APIs/services used by both Admin and Student;
+- `database/migrations` — PostgreSQL schema/integrity authority;
+- authentication, session, device verification, access/entitlements, curriculum/publication, content/media/OCR, AI/review, Question Bank, Quiz Builder, assessment/scoring, offline authorization/integrity, notifications and operations on the server side;
+- `packages/brand`, `packages/ui`, `packages/domain`, `packages/validation` only when genuinely required by Admin/API/shared contracts;
+- backend modular-monolith boundaries, service/application ownership, HTTP contracts, PostgreSQL integrity, security, performance and cross-module orchestration;
+- Admin product architecture, UX/UI, IA, routing, data flow, accessibility, RTL, responsive behavior, performance and visual consistency;
+- CI, contract/integration/security tests and real browser verification required to prove Admin/backend behavior.
 
-### OUT OF SCOPE
+### OUT OF SCOPE — owned by the separate Student frontend workstream
 
-- structural refactor/redesign of `apps/student-web`
-- Student routes/components/design-system migration/bundle work
-- Student roadmap implementation
+- redesign/refactor of `apps/student-web` UI itself;
+- Student page composition, shell/navigation, route architecture, visual layout and frontend feature decomposition;
+- Student frontend bundle/design migration performed by the other branch/conversation.
 
-Student frontend is owned by a separate workstream. Student code/tests may be read/run only as consumer-regression evidence when a shared API/security contract is affected.
+**Important:** “Student frontend is out of scope” does **not** mean Student backend capability is out of scope. Server-side contracts consumed by Student remain part of the full backend owned here. When backend changes affect Student consumers, Student code/tests may be read or executed as regression evidence, but this workstream does not redesign or restructure their frontend implementation.
 
-## 2. Branch isolation rule
+Current independent Student branch observed during reconciliation: `stage16/student-016i` / PR #57. It remains separate and must not be overwritten.
+
+## 2. Cross-workstream principles adopted from Student refoundation
+
+The Student workstream is not an implementation source for Admin, but several principles are strong product/engineering rules and are adopted here as binding cross-product guidance.
+
+### Decision priority
+
+**Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
+
+Acceptance target:
+
+**Functional + Clear + Easy + Predictable + Comfortable + Consistent + Fast + Maintainable + Professional**
+
+### Adopted rules
+
+1. **One owner per responsibility.** One shell owner, one route/workflow owner, one durable authority.
+2. **Preserve contracts, not presentation debt.** Existing UI structure is evidence, not a target architecture.
+3. **Do not fabricate data or authority.** No fake metrics, counts, progress, health, statuses or actions.
+4. **Product states are first-class.** Loading, empty, error, denied, conflict, unavailable, long-running, success and recovery states are explicitly designed and tested.
+5. **Clickable must look clickable; static must look static.** Primary, secondary and destructive actions must be obvious without relying on hover.
+6. **Destination/workflow-level lazy loading.** Split substantial routes/workflows, not tiny components for artificial chunk counts.
+7. **Outcome-based tests.** Browser tests prove user/operator outcomes and contracts, not obsolete wording/DOM shape.
+8. **Do not preserve legacy UI merely because an old test targeted it.** Replace tests with durable behavior assertions when ownership changes.
+9. **One coherent shell.** Global chrome/navigation cannot be duplicated inside feature surfaces.
+10. **Remove historical override chains after parity.** Compatibility is bounded; accepted legacy is deleted after replacement proves behavior.
+11. **Motion is functional only.** Reduced motion always wins.
+12. **UI completion and backend completion are separate truths.** A designed surface never implies a server capability/stage is complete; backend claims require authoritative contracts and executable evidence.
+
+These rules are adapted to Admin/backend semantics; Student frontend code is not copied.
+
+## 3. Branch isolation rule
 
 Latest reviewed repository comparison:
 
 - live `main`: `3053640cc5bb0699cfa7456cf646e8997f6aa81b`;
 - architecture checkpoint before review: `f7c56628bc89e1a534c24bd2ba4771b61313664b`;
-- branch: 284 commits ahead / 170 behind `main`;
-- inspected `main`-only changes are Student frontend + documentation, not Admin/API/migrations/shared implementation paths.
+- inspected `main`-only implementation changes were Student frontend/workflow changes, not Admin/API/migrations/scoped shared implementation paths.
 
 Decision:
 
-- continue the scoped branch without importing parallel Student implementation;
+- continue the scoped branch without importing parallel Student frontend implementation;
 - re-compare live `main` before every structural phase boundary;
 - if `main` changes Admin/API/migrations/shared-contract paths, pause and reconcile before continuing;
 - reconcile current `main` before PR #52 review/merge readiness.
 
 Branch divergence is never assumed harmless without path-level evidence.
 
-## 3. Root-fix objective
+## 4. Root-fix objective
 
-The objective is not to cosmetically improve the current Admin. Rebuild ownership so that:
+The objective is not to cosmetically improve the current Admin or merely rename backend folders. Rebuild ownership so that:
 
 - every Admin route/workflow has one clear feature owner;
 - each route represents one coherent operator job;
@@ -65,28 +96,20 @@ The objective is not to cosmetically improve the current Admin. Rebuild ownershi
 - backend remains one Fastify modular monolith with explicit useful boundaries;
 - PostgreSQL/application/domain logic remain canonical authority;
 - legitimate cross-module workflows use narrow explicit public contracts rather than private implementation imports;
+- backend changes are driven by real domain/security/maintainability needs, not architecture theater;
 - old owners are deleted after parity instead of retained indefinitely.
-
-## 4. Binding decision order
-
-**Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**
 
 Architecture constraints:
 
 - **Correct ownership before convenience**.
 - **Verified contracts before visual preservation**.
-
-Acceptance target:
-
-**Functional + Clear + Easy + Predictable + Comfortable + Consistent + Fast + Maintainable + Professional**
-
-Legacy presentation is evidence, not a preservation contract.
+- **Root cause before local workaround**.
 
 ## 5. Migration law
 
 Every structural migration follows:
 
-`understand operator job → map API/database contracts → classify current owner → define target owner → design states/flow → build replacement → verify operator outcome → switch composition → delete legacy owner → exact-head gates → document`
+`understand job/use case → map API/database contracts → classify current owner → define target owner → design states/flow → build replacement → verify outcome → switch composition → delete legacy owner → exact-head gates → document`
 
 Classifications:
 
@@ -96,18 +119,18 @@ Classifications:
 - `REBUILD`
 - `REMOVE`
 
-No patch-only completion and no big-bang rewrite.
+No patch-only completion and no blind big-bang rewrite.
 
 Before implementation, each batch records:
 
-1. operator job;
+1. user/operator job or backend use case;
 2. current owner;
 3. target owner;
-4. authoritative API/database contracts;
-5. primary/secondary/destructive actions;
-6. loading/empty/error/permission/conflict states;
-7. responsive/RTL/keyboard behavior;
-8. route/bundle loading boundary;
+4. authoritative API/database/security contracts;
+5. primary/secondary/destructive actions where UI exists;
+6. loading/empty/error/permission/conflict/recovery states;
+7. responsive/RTL/keyboard behavior where UI exists;
+8. route/bundle loading boundary where applicable;
 9. old owner/removal condition;
 10. verification evidence.
 
@@ -127,8 +150,7 @@ apps/admin-web/src/
     overview/
     curriculum/
     content/
-    reviews/
-    ai-authoring/
+    ai/
     questions/
     quizzes/
     students/
@@ -145,12 +167,14 @@ apps/admin-web/src/
   styles/
 ```
 
+This map follows user-job IA rather than preserving old workspace names. AI review/jobs belong to the AI workflow; OCR review belongs to Content; contextual AI authoring belongs with the owning Lesson/Question/Quiz workflow rather than surviving as a catch-all top-level feature.
+
 Rules:
 
 1. `app` composes only.
 2. Feature owns workflow routes/pages/components/API adapters/models/tests.
 3. Feature internals are private.
-4. Cross-feature work uses feature `public` contracts or app orchestration.
+4. Cross-feature work uses narrow public contracts or app orchestration.
 5. `shared` cannot import feature/app internals.
 6. No new feature dumping in root `src/`.
 7. Major workflow route modules lazy-load by default; do not split tiny components merely to create chunks.
@@ -174,7 +198,7 @@ packages/brand
 ```
 
 - `packages/ui`: genuinely cross-product primitives/semantic behavior only.
-- Admin `shared/ui`: reusable **Admin-only** patterns.
+- Admin `shared/ui`: reusable Admin-only patterns.
 - Features: business composition and vocabulary.
 
 Do not duplicate one primitive in `packages/ui` and Admin shared. Do not push Admin-specific dense workflow components into `packages/ui` merely to call them shared.
@@ -189,11 +213,11 @@ Do not replace the approved CSS/token stack with Tailwind, CSS-in-JS or another 
 
 ## 7. Route/IA decision
 
-`TARGET_INFORMATION_ARCHITECTURE.md` is binding for **user-job/screen boundaries**, not for a literal URL prefix when verified runtime has a better compatibility reason.
+`TARGET_INFORMATION_ARCHITECTURE.md` is binding for **user-job/screen boundaries**, not for a literal URL prefix when verified runtime has a compatibility reason.
 
 Current Admin runtime owns `/app/*`; preserve `/app` as canonical base unless deployment/runtime evidence justifies changing it.
 
-Target semantics evolve beneath it, e.g.:
+Target semantics evolve beneath it:
 
 ```text
 /app
@@ -242,9 +266,9 @@ apps/api/src/
     observability/
 ```
 
-This is a **dependency model**, not permission for mechanical mass moves or empty-layer ceremony.
+This is a dependency model, not permission for mechanical mass moves or empty-layer ceremony.
 
-Direction where the concepts exist:
+Direction where concepts exist:
 
 `HTTP → Application → Domain`
 
@@ -258,12 +282,17 @@ Rules:
 - Infrastructure owns PostgreSQL/provider/filesystem adapters.
 - Small modules may stay compact when ownership/dependency direction is already obvious.
 - Cross-module dependencies use narrow public application contracts only when a genuine dependency exists.
-- No DI framework/service locator/interface ceremony is introduced without evidence.
+- No DI framework/service locator/interface ceremony without evidence.
 - Database schema changes require domain/integrity need, never folder refactoring.
+- Student-facing backend security/business contracts remain protected even though Student frontend is developed elsewhere.
 
 Canonical data flow:
 
-`PostgreSQL → application/domain authority → HTTP contract → feature API adapter → presentation model → Admin UI`
+`PostgreSQL → application/domain authority → HTTP contract → consumer adapter → presentation/use-case model`
+
+For Admin UI specifically:
+
+`PostgreSQL → application/domain authority → HTTP contract → Admin feature API adapter → presentation model → Admin UI`
 
 ## 9. Product/design rules
 
@@ -289,9 +318,9 @@ Design authority remains:
 
 No second visual identity/design system is authorized.
 
-## 10. Browser acceptance philosophy
+## 10. Browser and integration acceptance philosophy
 
-Browser tests validate operator outcomes/durable contracts, not obsolete copy/selectors/DOM shape.
+Tests validate outcomes and durable contracts, not obsolete copy/selectors/DOM shape.
 
 Where applicable verify:
 
@@ -302,13 +331,16 @@ Where applicable verify:
 - focus/context restored;
 - RTL/keyboard works;
 - representative narrow/desktop layouts do not overflow;
-- real PostgreSQL/API/Chromium workflow remains valid.
+- real PostgreSQL/API/Chromium workflow remains valid;
+- Student consumer regressions when a shared/server contract changes.
 
 Never weaken server validation/security to make a fixture pass.
 
 ## 11. Scenario gates
 
-- admin sign-in/session restoration/logout;
+Admin scenarios:
+
+- sign-in/session restoration/logout;
 - Overview → actionable task;
 - Curriculum → Content → ingestion/review/publication;
 - AI output → human review → application;
@@ -316,61 +348,81 @@ Never weaken server validation/security to make a fixture pass.
 - Quiz Builder lifecycle/version/export;
 - Students account/device/recovery;
 - Access Codes generation/filter/revoke/report/import/export;
-- Operations health/audit/notifications/diagnostics;
-- real PostgreSQL + API + Chromium;
-- keyboard/focus/RTL/responsive/no-overflow representative flows.
+- Operations health/audit/notifications/diagnostics.
 
-## 12. Roadmap
+Backend/shared-authority scenarios additionally preserve applicable:
+
+- authentication/session/device verification;
+- access/entitlement/publication authority;
+- human-review boundaries;
+- assessment scoring/finalization authority;
+- offline signed authorization/integrity/session/device rules;
+- protected media/content access;
+- Student consumer compatibility whenever those contracts are changed.
+
+## 12. Roadmap — corrected execution order
 
 ### AB-00 — Architecture baseline & guardrails — ACTIVE
 
 - **AB-00.1 ownership/boundary map — DONE**
 - **AB-00.2 current-file + dependency migration inventory — DONE**
-- **AB-00.3 automated architecture guard — IMPLEMENTED / strengthening exact-head verification active**
+- **AB-00.3 automated architecture guard — IMPLEMENTED / strengthened guard verified; final exact-head coherence required**
 - AB-00.4 Admin bundle/runtime + backend-composition baseline — NEXT
 - AB-00.5 readiness gate — PENDING
 
 AB-00 closes only when docs, branch evidence, guard, baselines and exact-head verification agree.
 
-### AB-01 — Admin system foundation + API presentation boundary
+### AB-01 — Shared foundations
 
-- design-system primitives/patterns that are genuinely reusable;
-- stable Admin transport/error/session conventions;
-- status/action/form/state patterns;
-- no feature-specific logic in shared;
-- no generic mega-components.
+Build only the foundations needed by real slices:
 
-### AB-02 — Thin Admin application shell
+- Admin design/product-state primitives and reusable patterns;
+- stable Admin API transport/error/session boundary;
+- backend app composition/HTTP foundation extraction that can be done without changing business rules;
+- common auth/error/db infrastructure ownership where evidence supports it;
+- no feature business logic in shared;
+- no generic mega-components or abstraction ceremony.
+
+### AB-02 — Thin Admin shell + routing
 
 - bootstrap/session provider;
-- global shell/navigation owner;
+- one global shell/navigation owner;
 - router/layout/error boundaries;
 - major-route lazy loading/Suspense;
 - route focus/history;
 - remove feature knowledge from `App.tsx`;
 - preserve auth/session outcomes through real Chromium.
 
-### AB-03 — Admin vertical-slice rebuild
+### AB-03 — End-to-end vertical slices
+
+Rebuild each slice **through all owning layers needed by that workflow**, rather than finishing the entire Admin first and postponing backend boundary fixes.
+
+Order:
 
 1. Overview + Operations
-2. Curriculum + Content
-3. Reviews + AI Authoring
+2. Curriculum + Content + OCR
+3. AI Jobs + AI Review + contextual authoring transitions
 4. Question Bank
 5. Quiz Builder
 6. Students
 7. Access Codes
 
-For every slice:
+For each slice:
 
-`job map → contracts → IA/states/actions → new owner → browser/integration parity → switch → legacy delete`
+`job map → DB/API/security contracts → backend boundary correction if needed → IA/states/actions → new frontend owner → integration/browser parity → switch → legacy delete`
 
-### AB-04 — Backend modular-monolith standardization
+A slice may leave unrelated backend modules untouched. Do not mass-refactor the server merely for folder uniformity.
 
-- extract app composition/HTTP infrastructure;
-- standardize only useful module boundaries;
-- explicit legitimate cross-module contracts;
-- preserve business/security/PostgreSQL authority;
-- remove private cross-module implementation imports.
+### AB-04 — Remaining backend modular-monolith normalization
+
+After vertical slices have corrected the backend seams they actually use:
+
+- close remaining cross-module private imports;
+- finish app composition extraction;
+- standardize useful module boundaries;
+- verify transaction/auth/error conventions;
+- preserve full Student-facing backend contracts;
+- remove architectural debt not naturally eliminated by AB-03.
 
 ### AB-05 — Admin design/interaction convergence audit
 
@@ -387,7 +439,8 @@ Rules apply during every earlier slice. AB-05 only audits remaining system-wide 
 - validate code splitting from AB-02/03;
 - remove dead/duplicate code/CSS/dependencies;
 - inspect fetch waterfalls/state duplication;
-- establish evidence-based bundle budgets;
+- inspect backend request/query/payload bottlenecks where evidence exists;
+- establish evidence-based budgets;
 - never hide performance debt by raising warnings.
 
 ### AB-07 — Legacy removal + hard dependency enforcement
@@ -403,6 +456,7 @@ Rules apply during every earlier slice. AB-05 only audits remaining system-wide 
 - API contracts;
 - clean PostgreSQL migrations;
 - backend integration/security/auth regressions;
+- Student consumer regression gates for changed shared contracts;
 - production Admin build;
 - real Chromium operator workflows;
 - keyboard/focus/RTL/a11y/responsive/no-overflow;
