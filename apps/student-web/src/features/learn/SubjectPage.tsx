@@ -54,6 +54,7 @@ export function SubjectPage({ catalog, subjectId }: { catalog: StudentCurriculum
     .map((section) => ({ ...section, lessons: section.lessons.filter((lesson) => lessonMatches(lesson, normalizedQuery)) }))
     .filter((section) => section.lessons.length > 0 || !normalizedQuery);
   const resultCount = filteredUnsectioned.length + filteredSections.reduce((count, section) => count + section.lessons.length, 0);
+  const firstPopulatedSectionIndex = filteredSections.findIndex((section) => section.lessons.length > 0);
 
   let lessonIndex = 0;
 
@@ -93,7 +94,11 @@ export function SubjectPage({ catalog, subjectId }: { catalog: StudentCurriculum
             const startIndex = lessonIndex;
             lessonIndex += section.lessons.length;
             return (
-              <details className="subject-v2-unit" key={section.id} open={normalizedQuery ? true : sectionIndex === 0}>
+              <details
+                className="subject-v2-unit"
+                key={section.id}
+                open={normalizedQuery ? section.lessons.length > 0 : sectionIndex === firstPopulatedSectionIndex}
+              >
                 <summary>
                   <span><strong>{section.title}</strong>{section.description ? <small>{section.description}</small> : null}</span>
                   <span className="subject-v2-unit__meta">{new Intl.NumberFormat("ar-YE").format(section.lessons.length)} درس</span>
