@@ -10,6 +10,7 @@ import "./student-learning.css";
 import "./foundation.css";
 import "./assessment-integration.css";
 import "./student-entry.css";
+import "./student-entry-v2.css";
 import "./student-session.css";
 import "./student-library-account.css";
 import "./student-future.css";
