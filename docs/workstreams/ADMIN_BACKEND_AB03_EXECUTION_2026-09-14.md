@@ -21,7 +21,7 @@ Each slice follows `job → DB/API/security → backend boundary correction → 
 
 ## AB-03.1 — Overview + Operations
 
-### Current owners after AB-03.1.3 source implementation
+### Current owners after AB-03.1.3 closure
 
 - `apps/admin-web/src/admin/overview/AdminOverviewPage.tsx` remains the Overview presentation owner.
 - `apps/admin-web/src/admin/operations/*` still owns Operations pages/styles.
@@ -42,30 +42,39 @@ Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`.
 
 Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
-### AB-03.1.3 — Operations presentation-model ownership — IMPLEMENTED / WAITING_FOR_CI
+### AB-03.1.3 — Operations presentation-model ownership — DONE / EXACT-SOURCE VERIFIED
 
-Source checkpoint: `25ce968ea90e67240e5e6bffd12b0d52cb37e8b1`.
+Initial moved-model checkpoint: `25ce968ea90e67240e5e6bffd12b0d52cb37e8b1`.
 
-Worker B sequence 40 completed exactly the model ownership correction identified by the previous discovery run:
+Worker B sequence 40 moved the Operations presentation/model policy and test into `features/operations/model`, exported required helpers through `features/operations/public`, switched Overview and Operations Health to the public boundary and deleted the legacy model/test owner.
 
-1. moved `operations-model.ts` under `features/operations/model/`;
-2. colocated its unit test under the same feature model boundary;
-3. exported only the presentation helpers needed by existing consumers through `features/operations/public`;
-4. switched Overview and Operations Health consumers from the legacy `admin/operations/operations-model` path to the feature public boundary;
-5. deleted the legacy model/test owners;
-6. preserved UI copy, routes, CSS, API/transport contracts, session behavior, PostgreSQL/schema/migrations, backend/security authority and Student frontend behavior;
-7. did not move Overview/Operations pages or styles.
+Worker C sequence 41 performed the required closure verification and found Frontend Preparation typecheck still failed because two additional consumers referenced the deleted `./operations-model` path:
 
-Verification status on the exact source checkpoint:
+- `AdminNotificationsPage.tsx`;
+- `AdminOperationsAuditPage.tsx`.
 
-- Architecture Guard `34874655955` — **SUCCESS**;
-- Frontend Preparation `34874655918` — pending/running at handoff;
-- Admin AI Operations `34874655925` — pending/running at handoff;
-- Combined Integration `34874655884` — pending/running at handoff;
-- Stage13G Admin Operations `34874655953` — pending/running at handoff.
+The smallest coherent root fix switched only those consumers to `features/operations/public`. Final source checkpoint:
 
-AB-03.1.3 is therefore not yet DONE. Any docs-only commits after the source checkpoint require source-tree-equivalence confirmation before their CI can be used as replacement evidence.
+`7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
+
+Preserved deliberately:
+
+- UI copy and workflows;
+- URLs/routes and session behavior;
+- CSS/layout ownership;
+- API/transport contracts;
+- PostgreSQL/schema/migrations;
+- backend/security authority;
+- Student frontend behavior.
+
+Exact-source verification on the final checkpoint:
+
+- Architecture Guard `34876404251` — **SUCCESS**;
+- Frontend Preparation `34876404345` — **SUCCESS**;
+- Admin AI Operations `34876404287` — **SUCCESS**;
+- Combined Integration `34876404314` — **SUCCESS**, including real Admin Chromium;
+- Stage13G Admin Operations `34876404237` — **SUCCESS**, including Admin/API quality, clean PostgreSQL contracts, Operations/security/auth integrations and Real API + PostgreSQL + Chromium.
 
 ### Exact next step
 
-Verification/closure only for AB-03.1.3. Require green Architecture Guard, Admin quality/unit/build, relevant API/PostgreSQL/security/integration gates and real Admin Chromium. After closure, perform a fresh AB-03.1 slice-closure decision. Do not begin Curriculum + Content + OCR in the same increment.
+Fresh **AB-03.1 slice-closure discovery only**. Re-inspect Overview + Operations operator jobs, existing page/feature owners, API/PostgreSQL/security authority and consumer paths. Choose one further correction only if direct repository/runtime evidence justifies it. If none remains, close AB-03.1 and hand off Curriculum + Content + OCR as the next canonical slice. Do not implement that next slice in the same discovery increment.
