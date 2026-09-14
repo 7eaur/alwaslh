@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { StudentCurriculumCatalog, StudentCurriculumSubject } from "../../auth-api";
 import { useStudentAppBarTitle } from "../../app/layout/StudentAppBarContext";
@@ -49,17 +49,10 @@ export function SubjectPage({ catalog, subjectId }: { catalog: StudentCurriculum
   const total = lessonCount(subject);
   const searchable = total > 8;
   const normalizedQuery = query.trim().toLocaleLowerCase("ar");
-
-  const filteredUnsectioned = useMemo(
-    () => subject.unsectionedLessons.filter((lesson) => lessonMatches(lesson, normalizedQuery)),
-    [subject.unsectionedLessons, normalizedQuery],
-  );
-  const filteredSections = useMemo(
-    () => subject.sections
-      .map((section) => ({ ...section, lessons: section.lessons.filter((lesson) => lessonMatches(lesson, normalizedQuery)) }))
-      .filter((section) => section.lessons.length > 0 || !normalizedQuery),
-    [subject.sections, normalizedQuery],
-  );
+  const filteredUnsectioned = subject.unsectionedLessons.filter((lesson) => lessonMatches(lesson, normalizedQuery));
+  const filteredSections = subject.sections
+    .map((section) => ({ ...section, lessons: section.lessons.filter((lesson) => lessonMatches(lesson, normalizedQuery)) }))
+    .filter((section) => section.lessons.length > 0 || !normalizedQuery);
   const resultCount = filteredUnsectioned.length + filteredSections.reduce((count, section) => count + section.lessons.length, 0);
 
   let lessonIndex = 0;
@@ -74,13 +67,7 @@ export function SubjectPage({ catalog, subjectId }: { catalog: StudentCurriculum
       {searchable ? (
         <div className="learn-v2-search subject-v2__search">
           <StudentIcon name="search" />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="ابحث عن درس"
-            aria-label="ابحث عن درس"
-          />
+          <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ابحث عن درس" aria-label="ابحث عن درس" />
         </div>
       ) : null}
 
