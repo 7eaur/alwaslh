@@ -11,7 +11,7 @@ Before mutation:
 2. fetch live branch HEAD and live `main` HEAD;
 3. read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first;
 4. read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, this file and the autonomous protocol;
-5. inspect active phase docs, current code/tests/migrations and exact-head Actions;
+5. inspect active phase docs, code/tests and exact-head Actions;
 6. confirm no active worker collision;
 7. compare live `main` at structural phase boundaries or when overlapping scoped changes appear.
 
@@ -30,86 +30,57 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - never force-reset or force-push shared history;
 - live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-Relative to prior reconciled main `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, implementation changes are Student-focused and do not overlap `apps/admin-web`, `apps/api`, or `database/migrations`. Shared project docs did move and require deliberate reconciliation later.
-
-## Execution governance
-
-Workers A/B/C share one branch and roadmap in serial order. Shared state is `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`. If another worker is active, do not mutate overlapping work. Each run performs one smallest coherent increment and leaves exact HEAD, CI evidence, next step and one of `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, `COMPLETE`.
+Main implementation delta remains Student-focused with no Admin/API/migration overlap; shared project docs require deliberate reconciliation before a structural phase boundary.
 
 ## Current phase
 
 - AB-00 — DONE
 - AB-01 — DONE / EXACT-HEAD VERIFIED
 - AB-02 — ACTIVE
+  - AB-02.1 Global Admin shell/layout ownership — DONE
+  - AB-02.2 Inner Admin route-table ownership — DONE
 - AB-03..AB-08 — PENDING
 
-Canonical AB-02 execution record:
+Canonical AB-02 record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 
-`docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`
+## AB-02.1 closure
 
-## AB-02.1 closure — Global Admin shell/layout ownership — DONE
+Source checkpoint `0d07a24aa062ad569ff654524bdc13a4e368f399`; owner `apps/admin-web/src/app/layouts/AdminShell.tsx`. Guard `34838037118`, Frontend Preparation `34838037114`, Combined `34838123077`, Stage13G `34838123143` — SUCCESS.
 
-Source implementation checkpoint: `0d07a24aa062ad569ff654524bdc13a4e368f399`.
+## AB-02.2 closure
 
-Owner: `apps/admin-web/src/app/layouts/AdminShell.tsx`.
-
-Verified closure evidence:
-
-- Architecture Guard `34838037118` — SUCCESS;
-- Frontend Preparation `34838037114` — SUCCESS;
-- Combined Integration `34838123077` — SUCCESS;
-- Stage13G `34838123143` — SUCCESS.
-
-## AB-02.2 — Inner Admin route-table ownership — IMPLEMENTED / WAITING_FOR_CI
-
-Source implementation checkpoint:
+Source checkpoint:
 
 `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`
 
-New owner:
+Owner:
 
 `apps/admin-web/src/app/router/AdminRoutes.tsx`
 
-The source seam moved only:
+The inner `/app/*` route table and route-local wrappers/not-found were moved out of `App.tsx`; existing URLs, redirects, session-expiry contract, eager loading, workflow UI/business behavior and outer router/focus behavior were preserved.
 
-- the complete inner `/app/*` route table;
-- `ReviewArea`;
-- `WorkspaceWithRelatedActions`;
-- `AdminRouteNotFound`.
+Verified closure evidence:
 
-`App.tsx` now keeps session/provider/auth-state composition plus `AdminShell + AdminRoutes`.
+- Architecture Guard `34840954071` — SUCCESS on source head;
+- Frontend Preparation `34840953959` — SUCCESS on source head;
+- Admin AI `34841142948` — SUCCESS on source-tree-equivalent documentation head;
+- Combined `34841142987` — SUCCESS with quality gates, clean PostgreSQL, backend/auth regressions and real Chromium;
+- Stage13G `34841142975` — SUCCESS with Admin/API quality, clean PostgreSQL, integration/auth and real API + PostgreSQL + Chromium.
 
-Deliberately unchanged:
-
-- transitional `src/admin/*` workflow imports/ownership;
-- eager loading / no new Suspense;
-- URLs and redirects;
-- `onSessionExpired` contract;
-- outer `apps/admin-web/src/router.tsx`, `RouteFocus`, product-shell behavior;
-- workflow UI/CSS/business behavior;
-- API/PostgreSQL/migrations/Student frontend implementation.
-
-### Current verification
-
-Exact-head Actions for `732555cb…` started but were not complete at handoff:
-
-- Architecture Guard `34840954071` — queued at inspection;
-- Stage13G `34840953847` — queued/in-progress;
-- Stage13E Admin Web quality `34840953959` — queued;
-- Stage13E Admin AI `34840953862` — queued.
-
-Additional exact-head checks may be present; inspect the commit check-runs rather than relying only on this list.
+Comparison `732555cb… → 2c2fcb6c…` contained documentation files only, so the green equivalent-head runs verify the same source tree.
 
 ## Exact continuation
 
-1. Re-fetch live branch/main and shared state.
-2. Inspect all required checks for source checkpoint `732555cb9b8499c712ad6cd19ad50cccf26a8e4a` or a source-tree-equivalent documentation head.
-3. If Architecture Guard + Admin quality + relevant route/auth/focus + Combined/Stage13G real API/PostgreSQL/Chromium are green, close **AB-02.2 only** and update canonical docs/state.
-4. If any gate fails, diagnose and fix the root cause without weakening tests/guardrails.
-5. Do not begin lazy-loading, feature route-entry migration, navigation ownership or another AB-02 seam until AB-02.2 is closed.
+Do **not** implement another concern immediately. First perform one bounded AB-02 discovery step:
+
+1. inspect current `App.tsx`, `app/layouts/AdminShell.tsx`, `app/router/AdminRoutes.tsx`, outer `router.tsx`, route imports and current bundle/ownership evidence;
+2. identify one smallest next seam supported by evidence;
+3. candidates include feature public/routes entries, substantial lazy route boundaries/Suspense, outer-router/presentation ownership, auth presentation ownership, navigation definition ownership or error-boundary composition;
+4. do not combine lazy-loading with feature migration or unrelated UI redesign;
+5. record current owner, target owner, preserved contracts, non-goals and required gates before implementation.
 
 ## Remaining roadmap
 
-AB-02 shell/router/providers/lazy routes → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI Jobs + AI Review → Question Bank → Quiz Builder → Students → Access Codes → AB-04 remaining backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final full verification and live-main reconciliation.
+AB-02 shell/router/providers/lazy routes → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
