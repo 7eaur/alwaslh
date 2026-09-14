@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-01.3 product-state primitive verified green and closed; AB-01.4 discovery is next.**
+Last consolidated: **2026-09-14 — AB-01.4 backend composition discovery complete; first CORS extraction identified.**
 
 ## A. Durable authority invariants
 
@@ -50,7 +50,7 @@ Work branch: `rebuild/super-admin-foundation`; PR #52 remains Draft.
 - compare live `main` before structural phase boundaries;
 - if `main` introduces overlapping Admin/API/migrations/shared-contract changes, pause and reconcile.
 
-Latest reconciled `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62` after Student V2 merge #58; no overlapping implementation conflict for AB-01.3.
+Latest reconciled `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62` after Student V2 merge #58. Compare against prior reconciled `3053640c...` showed Student frontend/workflow and root documentation only; no scoped implementation conflict for AB-01.4 discovery.
 
 ## F. Permanent decisions
 
@@ -74,37 +74,32 @@ Closure checkpoint `d955a34087552377dc8b426ec1712e57f59fd8f6`: Admin AI `3480088
 
 Source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
-Evidence for extraction:
-- Overview and Operations had duplicate loading/error/retry presentation containers and styling.
-- Added `apps/admin-web/src/shared/ui/AdminProductState.tsx` as Admin-only presentation owner.
-- Added `apps/admin-web/src/shared/ui/admin-product-state.css` as sole styling owner.
-- Overview and Operations consume it; local duplicate components and Operations-owned legacy state CSS were removed.
-- Feature `LoadState`, copy, API/server truth, session handling and retry semantics remain feature-owned.
-- Empty/permission/conflict/unavailable/success were intentionally not generalized without evidence.
+Overview and Operations now share `AdminProductState` + one shared CSS owner for the proven loading/error/retry presentation duplication. Feature state machines, copy, server truth, session handling and retry semantics remain feature-owned. Closure evidence: Architecture Guard `34804704619`, Frontend Preparation `34804704759`, Admin AI `34805721218`, Combined `34805721217`, Stage13G `34805721226` — successful as documented.
 
-Verification/closure:
-- Architecture Guard `34804704619` — SUCCESS on source head;
-- Frontend Preparation `34804704759` — SUCCESS on source head;
-- original Admin AI/Combined/Stage13G source-head runs were cancelled by later documentation pushes, not failures;
-- compare `cfa2016e...06127e90` proved all later commits were documentation-only;
-- superseding Admin AI `34805721218` — SUCCESS;
-- superseding Combined `34805721217` — SUCCESS, including quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
-- superseding Stage13G `34805721226` — SUCCESS, including Admin/API quality, clean PostgreSQL, all listed integration/auth regressions and real API + PostgreSQL + Chromium.
+### AB-01.4 — DISCOVERY COMPLETE / FIRST IMPLEMENTATION NEXT
 
-Conclusion: AB-01.3 closed **DONE** with no verification-time source fix required.
+Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_4_COMPOSITION_DISCOVERY_2026-09-14.md`.
 
-### AB-01.4 — NEXT: Backend app composition discovery
+Worker C inspected `apps/api/src/app.ts`, `config.ts`, `db.ts`, `errors.ts`, `server.ts`, `tests/app.test.ts`, package scripts and representative composite dependencies.
 
-Do not begin with a folder move. First inspect `apps/api/src/app.ts` plus direct config/plugin/composition collaborators and establish:
+Discovery found eight root responsibility classes in `buildApp()`:
 
-1. actual app-level responsibilities;
-2. module-owned responsibilities that must remain module-owned;
-3. construction/registration order and behavior-sensitive dependencies;
-4. smallest useful extraction seam;
-5. tests/gates protecting that seam;
-6. Student-consumer impact, if any.
+1. Fastify construction options;
+2. global CORS/preflight request policy;
+3. infrastructure adapter construction;
+4. broad module/service construction;
+5. cross-service composite construction;
+6. whole-product route registration;
+7. health/readiness HTTP surface;
+8. public error/not-found and database-close lifecycle.
 
-Only then implement one smallest coherent extraction. Keep modular monolith; no DI/repository/interface ceremony and no schema change for structure alone.
+Behavior-sensitive dependency edges include media storage → content/reader consumers; quiz builder → quiz exports; offline + reader + signer → offline downloads; Question Bank + Quiz Builder → AI authoring; quiz builder + database + media storage → specialized exports. `server.ts` separately owns env/config load, database creation, legacy startup batch, signals and listen.
+
+First seam decision: **extract only CORS/preflight policy** to `apps/api/src/app/plugins/cors.ts` as `registerCorsPolicy(app, config)`. Preserve direct `app.addHook("onRequest")` semantics and invocation before business route registration. Do not introduce `app.register()` encapsulation in the first move because scope behavior could change.
+
+Direct parity contract: `apps/api/tests/app.test.ts` allowed/denied CORS tests. Post-implementation gates: Architecture Guard, API lint/typecheck/unit/build, current Combined integration/real browser and Stage13G/equivalent. No migration required. CORS is global browser transport policy, so semantics for both Admin and Student origins must remain unchanged; no Student frontend restructuring is needed.
+
+Explicitly rejected as first moves: giant service container, all-route extraction, empty architecture scaffolding, or bundling DB/error ownership into the same increment.
 
 ### AB-01.5 — PENDING
 
@@ -123,7 +118,7 @@ Workers A/B/C share one roadmap and branch, execute one smallest coherent increm
 ## I. Remaining roadmap
 
 - AB-00 — DONE
-- AB-01 — ACTIVE; AB-01.4 next
+- AB-01 — ACTIVE; first AB-01.4 CORS extraction next
 - AB-02 — thin Admin shell/router/providers/layouts + major lazy routes
 - AB-03 — vertical slices: Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes
 - AB-04 — remaining backend modular-monolith normalization
@@ -134,4 +129,4 @@ Workers A/B/C share one roadmap and branch, execute one smallest coherent increm
 
 ## J. Exact continuation
 
-Never infer the next mutation from this log alone. Read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current durable continuation: **AB-01.4 discovery** — inspect backend composition and identify the smallest real extraction seam before mutation.
+Never infer the next mutation from this log alone. Read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first. Current durable continuation: implement only the documented AB-01.4 CORS/preflight extraction, then verify exact-head gates before selecting a second composition seam.
