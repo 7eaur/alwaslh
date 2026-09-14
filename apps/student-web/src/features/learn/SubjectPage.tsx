@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { StudentCurriculumCatalog, StudentCurriculumSubject } from "../../auth-api";
+import { useStudentAppBarTitle } from "../../app/layout/StudentAppBarContext";
 import { StudentIcon } from "../../shared/icons/StudentIcon";
 import { findStudentSubject, lessonCount, studentLessonHref } from "../../student-learning-model";
 
@@ -26,7 +27,13 @@ function lessonMatches(lesson: Lesson, query: string): boolean {
 
 export function SubjectPage({ catalog, subjectId }: { catalog: StudentCurriculumCatalog; subjectId: string }) {
   const [query, setQuery] = useState("");
+  const { setTitle } = useStudentAppBarTitle();
   const context = findStudentSubject(catalog, subjectId);
+
+  useEffect(() => {
+    setTitle(context?.subject.name ?? null);
+    return () => setTitle(null);
+  }, [context?.subject.name, setTitle]);
 
   if (!context) {
     return (
@@ -58,13 +65,10 @@ export function SubjectPage({ catalog, subjectId }: { catalog: StudentCurriculum
   let lessonIndex = 0;
 
   return (
-    <article className="subject-v2" aria-labelledby={`subject-v2-${subject.id}`}>
+    <article className="subject-v2" aria-label={subject.name}>
       <header className="subject-v2__summary">
         <Link className="subject-v2__back" to="/app/learn"><span aria-hidden="true">→</span> التعلّم</Link>
-        <div>
-          <h1 id={`subject-v2-${subject.id}`}>{subject.name}</h1>
-          <p>{classRecord.name} · {new Intl.NumberFormat("ar-YE").format(total)} درس{subject.sections.length > 0 ? ` · ${new Intl.NumberFormat("ar-YE").format(subject.sections.length)} وحدات` : ""}</p>
-        </div>
+        <p>{classRecord.name} · {new Intl.NumberFormat("ar-YE").format(total)} درس{subject.sections.length > 0 ? ` · ${new Intl.NumberFormat("ar-YE").format(subject.sections.length)} وحدات` : ""}</p>
       </header>
 
       {searchable ? (
