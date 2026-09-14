@@ -39,47 +39,49 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
   - AB-03.1 Overview + Operations — ACTIVE
   - AB-03.1.1 Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.1.2 Operations frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.1.3 Operations presentation-model ownership — IMPLEMENTED / WAITING_FOR_CI
+  - AB-03.1.3 Operations presentation-model ownership — DONE / EXACT-SOURCE VERIFIED
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest implementation result
 
-Worker B sequence 40 executed only AB-03.1.3.
+Worker C sequence 41 performed the required AB-03.1.3 verification/closure and found that the initial moved-model checkpoint still had two stale consumers of the deleted legacy `./operations-model` owner:
 
-Source checkpoint: `25ce968ea90e67240e5e6bffd12b0d52cb37e8b1`.
+- `apps/admin-web/src/admin/operations/AdminNotificationsPage.tsx`;
+- `apps/admin-web/src/admin/operations/AdminOperationsAuditPage.tsx`.
 
-The Operations presentation/model policy and its test were moved from legacy `admin/operations` ownership into `features/operations/model`. Required helpers are re-exported through the feature public boundary; Overview and Operations Health now consume that public boundary. The legacy model/test owners were deleted.
+The exact smallest root fix switched only those two consumers to the existing `features/operations/public` contract. Final source checkpoint:
 
-No page/style move, UI copy change, route change, API/transport contract change, PostgreSQL/schema/migration change, auth/security/session behavior change, backend authority change or Student frontend mutation was made.
+`7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
+
+No page/style migration, UI copy change, route change, API/transport contract change, PostgreSQL/schema/migration change, auth/security/session behavior change, backend authority change or Student frontend mutation was made.
 
 ## Verification state
 
-Exact-head workflows on the source checkpoint were started automatically:
+Exact-source verification on `7eda86f...` is green:
 
-- Architecture Guard `34874655955` — **SUCCESS**;
-- Frontend Preparation `34874655918` — pending/running at handoff;
-- Admin AI Operations `34874655925` — pending/running at handoff;
-- Combined Integration `34874655884` — pending/running at handoff;
-- Stage13G Admin Operations `34874655953` — pending/running at handoff.
+- Architecture Guard `34876404251` — **SUCCESS**;
+- Frontend Preparation `34876404345` — **SUCCESS**;
+- Admin AI Operations `34876404287` — **SUCCESS**;
+- Combined Integration `34876404314` — **SUCCESS**, including real Admin Chromium;
+- Stage13G Admin Operations `34876404237` — **SUCCESS**, including Admin/API quality, clean PostgreSQL, relevant operations/security/auth integrations and Real API + PostgreSQL + Chromium.
 
-Do not mark AB-03.1.3 DONE until the remaining required Admin/API/PostgreSQL/security/integration/Chromium evidence is green. Documentation commits after the source checkpoint are source-tree-equivalent only if compare confirms no executable drift.
+The previous Frontend Preparation failure was therefore a real source defect, not an infrastructure transient; it is now closed by the final source checkpoint above.
 
 ## Exact continuation
 
-Perform **AB-03.1.3 verification/closure only**:
+Perform a fresh **AB-03.1 Overview + Operations slice-closure discovery only**:
 
 1. fetch current branch/main heads and shared execution state;
-2. confirm no source/test/migration/workflow drift after source checkpoint `25ce968e...` or identify the latest source-equivalent verification head;
-3. inspect the five workflow runs above and any replacement runs caused by docs-only commits;
-4. require Architecture Guard + Admin lint/typecheck/unit/build + relevant API/PostgreSQL/security/integration + real Admin Chromium green evidence;
-5. only then mark AB-03.1.3 DONE;
-6. next increment after closure is a fresh AB-03.1 slice-closure discovery; do not start Curriculum/Content/OCR before that decision.
+2. inspect actual Overview + Operations operator jobs, page/feature owners, API/PostgreSQL/security authority and consumer paths;
+3. identify another correction only if direct evidence shows duplicate/wrong ownership or a concrete product-flow defect inside this slice;
+4. if no further justified correction remains, close AB-03.1 and hand off the next canonical slice, Curriculum + Content + OCR;
+5. do not implement Curriculum/Content/OCR in the same discovery increment.
 
 ## Main reconciliation need
 
-`NOT REQUIRED NOW`. Live `main` remained `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0` at startup and no overlapping scoped implementation change was observed.
+`NOT REQUIRED NOW`. Live `main` remained `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0` through Worker C sequence 41 and no overlapping scoped implementation change was observed.
 
 ## Remaining roadmap
 
