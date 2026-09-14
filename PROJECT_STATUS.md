@@ -63,11 +63,19 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 Source checkpoint: `5c36365888486cf8297893467bfc4e1c97bc6b43`. Closure evidence: Architecture Guard `34859593842` — SUCCESS; Admin AI `34860142887` — SUCCESS; Combined `34860142983` — SUCCESS; Stage13G `34860143008` — SUCCESS.
 
-**AB-03.1.2 Operations frontend API ownership — DISCOVERED / NEXT.**
+**AB-03.1.2 Operations frontend API ownership — IMPLEMENTED / WAITING_FOR_CI.**
 
-Live discovery found `apps/admin-web/src/admin-operations-api.ts` still owns feature-specific Operations transport/types at root while Overview and Operations pages consume it. The next smallest correction is to move this adapter into `features/operations/api`, expose a narrow `features/operations/public` contract, update only the existing Overview/Operations consumers, and delete the root transitional adapter. Do not move pages/models/styles or change backend/API/PostgreSQL behavior in the same increment.
+Source checkpoint: `75cab6ca1067f5866a259ad079279757218e805f`.
 
-Required verification after implementation: Architecture Guard; Admin lint/typecheck/unit/build; focused Overview/Operations tests; Combined Integration; Stage13G real API + PostgreSQL + Chromium.
+- Operations transport/types now live under `apps/admin-web/src/features/operations/api/admin-operations-api.ts`.
+- `apps/admin-web/src/features/operations/public/index.ts` is the narrow public boundary.
+- Existing Overview, health, audit, diagnostics and notifications consumers now import through that public boundary.
+- Transitional root `apps/admin-web/src/admin-operations-api.ts` was deleted.
+- No pages/models/styles/routes, backend/API contracts, PostgreSQL schema/migrations, session semantics or Student frontend implementation changed.
+
+Exact source-head verification currently: Architecture Guard `34866606170` — **SUCCESS**; Frontend Preparation `34866606173`, Admin AI `34866606148`, Combined Integration `34866606220`, and Stage13G Admin Operations `34866606179` are not yet all complete. Therefore AB-03.1.2 is not closed yet.
+
+Exact continuation: verify the remaining affected-scope gates on the implementation tree (or a later documentation-only source-tree-equivalent head). Only after all are green, close AB-03.1.2 and perform a fresh discovery-only pass inside Overview + Operations. Do not begin Curriculum/Content/OCR before that closure.
 
 ## Remaining roadmap
 
