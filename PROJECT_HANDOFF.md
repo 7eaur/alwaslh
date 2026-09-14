@@ -38,34 +38,35 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
   - AB-03.2 Curriculum + Content + OCR — ACTIVE
-  - current increment: AB-03.2.1 Curriculum frontend API ownership cleanup — IMPLEMENTED / WAITING_FOR_CI
+  - current increment: AB-03.2.1 remaining Content-ingestion Curriculum consumer migration — IMPLEMENTED / WAITING_FOR_CI
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker B sequence 46 completed only the remaining Curriculum compatibility cleanup:
+Worker B sequence 46 completed only the intended consumer migration:
 
 - `ContentIngestionWorkspace.tsx` now imports `AdminCurriculumSnapshot` and `fetchAdminCurriculum` from `features/curriculum/public`;
 - it imports `ApiRequestError` and `isMissingSessionError` directly from `shared/api/client`;
-- root `admin-api.ts` no longer re-exports Curriculum symbols and is no longer a Curriculum compatibility owner;
-- root `content-ingestion-api.ts` transport was intentionally not moved in the same increment;
+- root `content-ingestion-api.ts` transport was not moved;
 - endpoints, payloads, auth/session semantics, UI behavior, backend, PostgreSQL, security and Student frontend were untouched.
 
-Final source implementation checkpoint: `af4a131b1b039883a318ebb41b7ec5e5146f126d`.
+An attempted removal of the root Curriculum compatibility facade at `af4a131b1b039883a318ebb41b7ec5e5146f126d` was rejected by executable evidence: Stage13G `34886697753` failed Admin strict typecheck because Curriculum subcomponents, Access Codes, AI authoring, Question Bank, Quiz Builder and `admin-api.test.ts` still legitimately import Curriculum symbols from the root facade. The backend/PostgreSQL Stage13G job passed on that same source. Rather than widening this increment across later roadmap slices or weakening tests, the root compatibility re-exports were restored while the Curriculum implementation remains owned by `features/curriculum`.
 
-Architecture Guard `34886697714` passed on the exact source HEAD. Frontend Preparation `34886697732`, Admin AI `34886697663`, Combined Integration `34886697673`, and Stage13G `34886697753` had not all settled green at the last source-head observation, so the increment remains `WAITING_FOR_CI`.
+Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
+
+Architecture Guard `34887051028` is green on that corrected exact source. Frontend Preparation `34887051091`, Admin AI `34887051031`, Combined Integration `34887051068`, and Stage13G `34887051059` had not all settled green at the latest observation, so the increment remains `WAITING_FOR_CI`.
 
 ## Exact continuation
 
-Do not open another slice yet.
+Do not open another source seam yet.
 
-1. verify the source checkpoint `af4a131...` or a documentation-only source-tree-equivalent descendant;
-2. require green Architecture Guard/Admin quality plus relevant API/PostgreSQL/integration gates, Combined real Admin Chromium, and Stage13G real API + PostgreSQL + Chromium;
-3. if those are all green, close AB-03.2.1 as DONE;
-4. only then perform fresh AB-03.2 discovery and choose one smallest Content/OCR ownership correction;
-5. do not automatically assume root `content-ingestion-api.ts` must move—inspect its consumers and ownership first;
+1. verify the corrected source checkpoint `4cd3daf...` or a documentation-only source-tree-equivalent descendant;
+2. require green Admin quality/build, relevant API/PostgreSQL/integration evidence, Combined real Admin Chromium, and Stage13G real API + PostgreSQL + Chromium;
+3. if those are all green, close this bounded consumer migration;
+4. only then perform fresh AB-03.2 discovery and choose one smallest Content/OCR/Curriculum ownership correction based on live code evidence;
+5. do not bulk-migrate Access Codes/AI/Question Bank/Quiz Builder consumers simply to remove the compatibility facade, because those belong to later canonical slices;
 6. preserve backend/API/PostgreSQL authority and do not touch Student frontend structure.
 
 ## Main reconciliation need
