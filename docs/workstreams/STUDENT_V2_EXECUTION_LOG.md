@@ -100,6 +100,8 @@ Created and wired:
 
 `student-access.tsx` is now primarily a route/feature orchestrator instead of owning shell, navigation, Home data and Home UI.
 
+The canonical icon and runtime-cache implementations now live directly under `shared/*`; their temporary root compatibility wrappers have been removed after consumers were pointed at the canonical boundaries.
+
 ## Entry/Auth V2
 
 `features/auth/StudentEntryExperience.tsx` is wired from `App.tsx` and `router.tsx` and owns Welcome, Activation, Login, forced password change, Recovery, Help and Support while preserving the existing secure auth/device-proof contracts.
@@ -149,20 +151,20 @@ Behavior now scales progressively:
 
 Current improvements include smaller hierarchy, calmer reading width, better image/text sizing, safe-area handling, focused offline state, search and listening affordance polish, and no global bottom navigation while reading.
 
-Reader implementation ownership remains partly legacy-flat and must not be aggressively moved until exact-head Stage16/Reader gates remain green.
+Focused offline Reader chrome now exposes the explicit `أنت غير متصل` state plus `فتح التنزيلات`, while the Reader body keeps its own verified stored-content/fail-closed behavior.
+
+Reader implementation ownership remains partly legacy-flat; further movement is allowed only while Stage16/Reader executable gates remain green.
 
 ## Practice V2 structural migration
 
-The large assessment implementation is being split into feature-owned units instead of adding more code to `student-assessment.tsx`.
-
-Created:
+Practice ownership has been split into feature-owned units:
 
 - `features/practice/practice-model.ts` — routes, hrefs, formatting and catalog state;
 - `features/practice/PracticeCatalog.tsx` — catalog, adaptive filters and quiz/model detail;
 - `features/practice/AssessmentAttempt.tsx` — focused attempt, answer feedback, result/review flow;
 - `features/practice/StudentPracticeExperience.tsx` — route/data orchestration.
 
-`student-access.tsx` now routes the live Practice destination to `StudentPracticeExperience` and passes `profileId` so quiz/attempt read models share the same profile-scoped cache used elsewhere.
+`student-access.tsx` routes the live Practice destination to `StudentPracticeExperience` and passes `profileId` so quiz/attempt read models share the same profile-scoped cache used elsewhere.
 
 Practice data behavior:
 
@@ -173,7 +175,7 @@ Practice data behavior:
 - successful attempt completion invalidates attempt summaries so Home/Practice cannot keep stale scores;
 - real quiz `versions` are presented as learner-facing `نماذج` without inventing an unsupported backend entity.
 
-The old `student-assessment.tsx` still exists temporarily as legacy structural debt until exact-head compile/tests show the modular path is stable and any direct imports can be safely removed or reduced to a compatibility boundary.
+After exact-head B04/Stage15 evidence showed the modular path was live, the replaced root `student-assessment.tsx` monolith was removed.
 
 ## PR #57 / Stage16 reconciliation — IMPLEMENTED ON V2 BRANCH
 
@@ -191,36 +193,47 @@ Preserved and integrated:
 - the persistent-profile real-Chromium cold-start Reader test was added;
 - Stage16 CI runs that cold-start test with the existing lease/materialization browser tests.
 
-## CI repair log
+## CI repair and verification log
 
 Exact-head CI is treated as source of truth, not as a final afterthought.
 
-Recent blockers and repairs:
+Repaired blockers:
 
-1. `exactOptionalPropertyTypes` error in Learn error-state props — repaired.
-2. Account `_profile` unused lint error — removed the unused profile prop entirely.
-3. session-end cache clear imported through shared boundary but not re-exported — `clearStudentRuntimeCache` is now exported through `shared/data/student-runtime-cache.ts`.
+1. `exactOptionalPropertyTypes` error in Learn error-state props;
+2. Account unused profile lint dependency;
+3. missing cache-clear export through shared boundary;
+4. focused Reader offline assertion mismatch — App Shell now exposes the user-visible offline state and Downloads recovery action.
 
-Fresh exact-head workflows are required after each repair. No superseded failed run is treated as current evidence.
+On head `22afdff250cc833468438fae24b0c6b5329f1c7d`, verified green Student gates included:
+
+- `UX B02 Student Shell and Navigation`;
+- `UX B03 Student Learning and Reader`;
+- `UX B04 Student Practice and Assessment`;
+- `UX B05 Student Downloads and Account`;
+- `Stage16 Student PWA`.
+
+`Stage15 Student Assessment` had already been green on the preceding exact V2 head and was re-running on `22afdff...` when cleanup continued.
+
+Cleanup commits after that verified head removed only compatibility/dead structural files; therefore fresh exact-head workflows are required before merge readiness is claimed.
 
 ## Current order
 
 1. V2-00 architecture freeze — DONE.
-2. Foundation / shell / Home — IMPLEMENTED / VERIFICATION ACTIVE.
-3. Shared layout/primitives extraction — IMPLEMENTED / VERIFICATION ACTIVE.
-4. Welcome/Auth — IMPLEMENTED / VERIFICATION ACTIVE.
-5. Stage16 reconciliation — IMPLEMENTED / VERIFICATION ACTIVE.
-6. Learn/Subject scalable hierarchy — IMPLEMENTED / VERIFICATION ACTIVE.
-7. Reader visual/interaction V2 — IMPLEMENTED PARTIALLY / VERIFICATION ACTIVE.
-8. Practice/Models — STRUCTURAL MIGRATION ACTIVE.
-9. final secondary-surface polish and legacy-file cleanup.
+2. Foundation / shell / Home — IMPLEMENTED / VERIFIED ON PRIOR EXACT HEAD; FINAL HEAD RECHECK ACTIVE.
+3. Shared layout/primitives extraction — IMPLEMENTED / VERIFIED ON PRIOR EXACT HEAD; FINAL HEAD RECHECK ACTIVE.
+4. Welcome/Auth — IMPLEMENTED / FINAL HEAD RECHECK ACTIVE.
+5. Stage16 reconciliation — IMPLEMENTED / VERIFIED ON `22afdff...`; FINAL HEAD RECHECK ACTIVE AFTER CLEANUP.
+6. Learn/Subject scalable hierarchy — IMPLEMENTED / B03 VERIFIED ON `22afdff...`; FINAL HEAD RECHECK ACTIVE AFTER CLEANUP.
+7. Reader visual/interaction V2 — IMPLEMENTED PARTIALLY / B03 VERIFIED; VISUAL/A11Y POLISH REMAINS.
+8. Practice/Models — MODULAR MIGRATION IMPLEMENTED / LEGACY MONOLITH REMOVED / FINAL HEAD RECHECK ACTIVE.
+9. final secondary-surface polish and remaining legacy-file cleanup.
 10. local personal data after Stage17 contracts.
 11. durable read-model caching when contracts allow.
 12. full visual/performance/a11y QA.
 
 ## Verification state
 
-The branch remains **NOT YET VERIFIED** until the latest exact-head lint/typecheck/build/tests and relevant Chromium/mobile/RTL/safe-area visual checks are green.
+The branch remains **NOT YET FINAL-VERIFIED** until the latest cleanup head passes lint/typecheck/build and the relevant Chromium/mobile/RTL/safe-area visual gates.
 
 ## Done criteria
 
