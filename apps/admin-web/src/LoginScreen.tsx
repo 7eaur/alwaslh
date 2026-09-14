@@ -1,10 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { ApiRequestError } from "./shared/api/client";
-import {
-  loginAdmin,
-  type AdminProfile,
-} from "./features/auth/api/admin-auth-api";
+import { loginAdmin, type AdminProfile } from "./features/auth/public";
 
 function formValue(form: FormData, name: string): string {
   const value = form.get(name);
