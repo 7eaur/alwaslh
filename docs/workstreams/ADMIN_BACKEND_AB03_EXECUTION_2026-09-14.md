@@ -35,7 +35,7 @@ Current backend authority:
 - `apps/api/src/admin-operations/service.ts` reads authoritative PostgreSQL operational state for governance/attention inputs and the multi-source audit stream.
 - `apps/api/src/admin-operations/http.ts` owns admin authorization and HTTP query validation.
 - `apps/api/src/admin-operations/attention.ts` owns the pure actionable projection used by Overview.
-- No schema or migration change is justified for the first correction.
+- No schema or migration change is justified for the first corrections.
 
 ### AB-03.1.1 — Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
@@ -60,10 +60,29 @@ Closure evidence:
 
 AB-03.1.1 is therefore closed without further source mutation.
 
+### AB-03.1.2 — Operations frontend API ownership — DISCOVERED / NEXT
+
+Worker C sequence 35 inspected the live Overview/Operations frontend owners after AB-03.1.1 closure.
+
+Evidence:
+
+- `apps/admin-web/src/admin-operations-api.ts` remains a root-level feature-specific adapter containing all Operations transport functions and response/type contracts (`attention`, `overview`, `governance`, `diagnostics`, `audit`, notifications).
+- `AdminOverviewPage`, `AdminOperationsHealthPage`, `AdminOperationsAuditPage` and the remaining Operations pages consume this adapter as feature workflow code; it is not an app-composition or genuinely cross-product root responsibility.
+- `AdminRoutes.tsx` still routes directly to legacy `src/admin/overview` and `src/admin/operations` owners; migrating all those pages at once would be broader than the smallest safe increment.
+- the only existing feature under `src/features` is auth, so the next move should establish the Operations feature transport boundary without simultaneously moving presentation/model/style ownership.
+
+Decision for the next implementation increment:
+
+- create a narrow Operations feature API owner under `apps/admin-web/src/features/operations/api/` (exact filename may follow repository naming conventions discovered during implementation);
+- move the complete contents of root `admin-operations-api.ts` there with behavior and exported type/function names unchanged;
+- expose only the needed contract through `apps/admin-web/src/features/operations/public/index.ts`;
+- update Overview/Operations consumers to import through that public boundary;
+- delete the root transitional `apps/admin-web/src/admin-operations-api.ts` after all consumers switch;
+- do **not** move Overview/Operations pages, models or CSS in the same increment;
+- do **not** change URLs, request payloads/query construction, response types, session-expiry behavior, backend/API/PostgreSQL contracts, or Student frontend.
+
+Verification required after implementation: Architecture Guard; Admin lint/typecheck/unit/build; focused Overview/Operations tests; Combined Integration and Stage13G real API + PostgreSQL + Chromium because the adapter is runtime transport for operator workflows. No schema migration is expected.
+
 ## Exact continuation
 
-1. Continue **AB-03.1 Overview + Operations discovery only** from live code and tests.
-2. Choose exactly one smallest next ownership correction based on demonstrated duplication/private ownership/HTTP-or-frontend orchestration debt.
-3. Strong candidates to inspect, not pre-decided targets: root transitional `apps/admin-web/src/admin-operations-api.ts`, legacy Overview/Operations feature ownership, and remaining backend Operations HTTP/application seams.
-4. Do not start Curriculum/Content/OCR in the same increment.
-5. Do not introduce schema/framework changes without domain evidence.
+Implement **AB-03.1.2 Operations frontend API ownership only** as defined above. Do not combine it with page/model/style migration, route restructuring, UX redesign, backend changes, or Curriculum/Content/OCR. After exact affected-scope verification, close AB-03.1.2 and perform a fresh discovery pass for the next smallest Overview + Operations ownership correction.
