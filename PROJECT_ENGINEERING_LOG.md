@@ -1,150 +1,192 @@
 # PROJECT ENGINEERING LOG — الوسيلة الذكية
 
-> Consolidated engineering truth. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose. Historical detail remains preserved in Git history and specialized workstream documents.
+> Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — platform architecture pivot initiated; PA-00 ACTIVE.**
+Last consolidated: **2026-09-14 — architecture decisions re-reviewed before structural implementation; AB-00 active.**
 
-## Platform authority invariants
+## A. Durable authority invariants
 
-- `apps/student-web` — Student product.
 - `apps/admin-web` — Super Admin product.
 - `apps/api` — authoritative Fastify API.
 - `database/migrations` — PostgreSQL schema/integrity authority.
+- `apps/student-web` — separate Student frontend workstream; not an implementation target here.
 - Browser state is never canonical business authority.
-- Auth/authorization/entitlement/publication/revision/provenance/audit/assessment authority remains server-owned.
-- Tests represent production contracts; backend validation is never weakened to satisfy fixtures.
-- Parallel Student/content work on live `main` must not be overwritten by architecture work from the Admin branch.
+- Auth/authorization/entitlement/publication/revision/provenance/audit/assessment/offline authority remains server-owned.
+- Tests represent production contracts; validation/security is never weakened to satisfy fixtures.
 
-## Verified Super Admin history retained
+## B. Verified Super Admin history retained
 
-- AR-01 — DONE / VERIFIED.
-- AR-02 — DONE / VERIFIED.
-- AR-03 — DONE / VERIFIED.
-- AR-04 — DONE / VERIFIED.
-- AR-05 — DONE / VERIFIED. `cda2c3a683c6101db12f0c7cfad772226c234e0d`; Frontend `34729512441`, Admin AI `34729512433`, Combined `34729512404` — SUCCESS.
-- AR-06 — DONE / VERIFIED. `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
-- AR-07 — DONE / VERIFIED. `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
-- AR-08 — DONE / VERIFIED. `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
-- AR-09 — DONE / VERIFIED. `c755b209bfa67980afee0ed150bd43b3574b0a3b`; Frontend `34789114130`, Admin AI `34789114112`, Combined `34789114110`, Stage13G `34789114192` — SUCCESS.
+- AR-01..AR-04 — DONE / VERIFIED historical foundation.
+- AR-05 — `cda2c3a683c6101db12f0c7cfad772226c234e0d`; Frontend `34729512441`, Admin AI `34729512433`, Combined `34729512404` — SUCCESS.
+- AR-06 — `02cf24d5c3fda57f7270580d8c5ff137f7b8a2e1`; Frontend `34740148367`, Admin AI `34740148382`, Combined `34740148361` — SUCCESS.
+- AR-07 — `c5bf37d4d72e341817970c7f95ff25bd771f8e17`; Frontend `34750417663`, Admin AI `34750417642`, Combined `34750417627` — SUCCESS.
+- AR-08 — `20ed69e46d6693925be42464f0c9f85691cec203`; Frontend `34754057319`, Admin AI `34754057304`, Combined `34754057322`, Stage13G `34754057370` — SUCCESS.
+- AR-09 — `c755b209bfa67980afee0ed150bd43b3574b0a3b`; Frontend `34789114130`, Admin AI `34789114112`, Combined `34789114110`, Stage13G `34789114192` — SUCCESS.
+- AR-10 accessibility/runtime correction remains valid. Auth route-focus fix at `302127c3223d00715f1d960f37c7d25044b6b20e`; Stage13G `34793896054` fully green (Admin UI `103823172953`, backend `103823173114`, Real API + PostgreSQL + Chromium `103823326277`).
 
-AR-10 accessibility work remains valid history. It established focus/reduced-motion/browser checks and exposed a real session-transition focus defect. The defect was fixed at `302127c3223d00715f1d960f37c7d25044b6b20e`.
+Former AR-10 “smallest polish only” constraint is superseded by the scoped architecture rebuild.
 
-Stage13G run `34793896054` for that baseline completed fully green:
-- Admin UI job `103823172953` — SUCCESS;
-- backend job `103823173114` — SUCCESS;
-- Real API + PostgreSQL + Chromium job `103823326277` — SUCCESS.
+## C. Root architecture findings
 
-The former AR-10 rule requiring only the smallest polish and no redesign/rebuild is **superseded** by the architecture decision below.
+### `AB-ARCH-001` — P1 — Admin composition root too broad
 
-# 2026-09-14 — Platform architecture audit / PA-00 initiation
+`App.tsx` owns session/auth state, login/error states, shell/navigation/account behavior, full route table, route wrappers and eagerly imports most major Admin workspaces.
 
-## A. State inspected
+**Decision:** REBUILD composition boundary into app providers/router/layout + feature public route modules.
 
-- Live `main`: `3053640cc5bb0699cfa7456cf646e8997f6aa81b`.
-- Architecture branch baseline before documentation pivot: `302127c3223d00715f1d960f37c7d25044b6b20e`.
-- Draft PR #52: open, Draft, unmerged; no auto-merge authorized.
-- Apps confirmed: `admin-web`, `student-web`, `api`.
-- Shared packages confirmed: `brand`, `domain`, `ui`, `validation`.
-- Representative composition roots, package coverage and runtime/build evidence were inspected.
+### `AB-ARCH-002` — P1 — Admin initial bundle architecture
 
-## B. Evidence-backed findings
+Verified production baseline before rebuild: main JS about `968.58 kB` minified / `193.92 kB` gzip, with Vite >500 kB warning.
 
-### `ARCH-001` — P1 — Frontend composition ownership
+**Cause:** eager static imports of major route workspaces.
 
-**Finding:** both frontend applications have oversized composition roots.
+**Decision:** major-route lazy boundaries; do not hide the warning by increasing thresholds.
 
-- Admin `App.tsx` coordinates auth/session, login/error states, shell/navigation/account behavior, route table and feature composition, while eagerly importing most major Admin workspaces.
-- Student `App.tsx` is approximately 30 KB and mixes activation/login/recovery/device/session orchestration with common presentation and product-state concerns.
+### `AB-ARCH-003` — P1 — Feature ownership incomplete
 
-**Decision:** REBUILD composition boundaries. `app` must compose providers/router/layouts; feature logic belongs to feature owners.
+Feature pages exist under `src/admin/<feature>`, but feature API adapters, CSS, tests/editors and session lifecycle remain rooted/shared inconsistently.
 
-### `ARCH-002` — P1 — Admin initial bundle
+**Decision:** feature-local ownership + narrow truly shared primitives/adapters; no mechanical folder move.
 
-**Finding:** verified Admin production build emitted one main JS chunk around `968.58 kB` minified / `193.92 kB` gzip and Vite warned that the chunk exceeds 500 kB.
+### `AB-ARCH-004` — P1 — Cross-feature coupling
 
-**Root cause:** major route workspaces are statically imported from the Admin composition root; there is no route-level lazy-loading architecture.
+Confirmed `Overview → Operations` private model/CSS import and legitimate curriculum reference-data needs from other features.
 
-**Decision:** REBUILD route composition with feature-owned lazy boundaries. Do not hide the problem by raising Vite's warning limit.
+**Decision:** explicit public contracts/app orchestration. Do not promote whole feature internals to shared.
 
-### `ARCH-003` — P1 — Inconsistent feature/source ownership
+### `AB-ARCH-005` — P1 — Large internal feature compositions
 
-**Finding:** Admin feature ownership has improved under `src/admin/<feature>`, but API adapters, tests, editors and CSS still coexist in the source root. Student source ownership is flatter still.
+Content Ingestion, Students, Access Codes, Reviews and AI Authoring contain combined orchestration/presentation concerns.
 
-**Decision:** MOVE/REBUILD into feature-local boundaries. Root-level feature dumping becomes prohibited after migration.
+**Decision:** REBUILD INTERNAL COMPOSITION where needed; moving giant files unchanged does not satisfy architecture.
 
-### `ARCH-004` — P2 — Shared contract coverage
+### `AB-ARCH-101` — P1 — Backend root composition hotspot
 
-**Finding:** `packages/domain/src` currently covers only a small subset of domains and `packages/validation/src` is narrower. The package concept is sound, but it does not yet represent the platform's contract boundaries.
+`apps/api/src/app.ts` manually constructs/registers almost the entire service graph and mixes technical Fastify setup with business-module composition.
 
-**Decision:** STANDARDIZE gradually. Promote code to shared packages only when genuinely shared by multiple owners; never use shared packages as a dumping ground.
+**Decision:** extract app/plugin/composition boundaries while preserving behavior.
 
-### `ARCH-005` — P2 — Backend modular-monolith consistency
+### `AB-ARCH-102` — P1 — Backend private cross-module coupling
 
-**Finding:** backend grouping by business area is structurally sound and should be preserved. However, `apps/api/src/app.ts` manually constructs/registers every service and module, while internal naming/layer conventions vary by module.
+Examples:
 
-**Decision:** KEEP modular monolith/business rules; STANDARDIZE app composition and module internals/dependency direction. No microservice conversion.
+- AI Authoring depends on concrete Question Bank / Quiz Builder services;
+- AI performs direct SQL against data governed by other domains;
+- Question Bank HTTP imports question schema from AI internals;
+- module HTTP imports generic request/auth helpers from `auth/http`.
 
-### `ARCH-006` — P1 — Design-system ownership
+**Decision:** narrow public application/read contracts and shared HTTP infrastructure where genuinely generic. Preserve legitimate orchestration; do not force artificial zero coupling.
 
-**Finding:** brand/UI foundations exist, but feature/app CSS and interaction patterns are distributed. Accessibility/RTL improvements have been added, but consistency is not yet enforced as a complete design architecture.
+## D. AB-00 execution
 
-**Decision:** establish `tokens → primitives → components → patterns → feature compositions`, with Arabic-first RTL, keyboard, reduced-motion and responsive behavior defined centrally where generic.
+### AB-00.1 — DONE
 
-### `ARCH-007` — P1 — Architecture gates
+Ownership/boundary map established.
 
-**Finding:** executable functional gates are strong (unit/integration/PostgreSQL/Chromium), but dependency-boundary and performance architecture are not yet first-class gates.
+### AB-00.2 — DONE
 
-**Decision:** add deterministic architecture/dependency checks and evidence-based bundle/runtime budgets during PA-00/PA-07.
+Created/closed:
 
-## C. Target architecture decision
+- `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`;
+- `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`.
 
-Canonical plan created:
+Legacy exceptions are frozen for ratchet enforcement.
 
-`docs/workstreams/PLATFORM_ARCHITECTURE_REBUILD_2026-09-14.md`
+### AB-00.3 — IMPLEMENTED / under reviewed exact-head verification
 
-Migration rule:
+Created:
 
-`define target boundary → build new owner → prove contract/parity → switch composition/route → remove old owner → exact-head gates`
+- `scripts/verify-architecture-boundaries.py`;
+- `.github/workflows/admin-backend-architecture-guard.yml`.
 
-This is deliberately different from both patching and a big-bang rewrite. Existing code is not the target architecture, but it remains executable behavioral evidence until its replacement is verified.
+Initial guard run `34797219591` — SUCCESS on `f7c56628...`.
 
-## D. Active phase ledger
+Smart review found and fixed guard gaps:
 
-- PA-00 — Architecture baseline + guardrails — **ACTIVE**.
-- PA-01 — Shared design + contract foundation — PENDING.
-- PA-02 — Thin frontend app shells/router/providers/layouts + lazy route boundaries — PENDING.
-- PA-03 — Admin vertical-slice migration — PENDING.
-- PA-04 — Student vertical-slice migration against refreshed live `main` — PENDING.
-- PA-05 — Backend modular-monolith boundary standardization — PENDING.
-- PA-06 — Design/interaction convergence — PENDING.
-- PA-07 — Performance/delivery architecture — PENDING.
-- PA-08 — Legacy removal + dependency enforcement — PENDING.
-- PA-09 — Full platform verification — PENDING.
+- detect dynamic `import()` used by lazy routes;
+- prevent Admin `app` from importing private feature internals (only feature `public`/`routes` entry points);
+- prevent new backend `app` composition from bypassing module public entry points;
+- document ratchet-baseline advancement after accepted exact-head-green cleanup batches.
 
-## E. Explicit next execution point
+The guard remains transitional until AB-07 removes legacy exceptions and hardens target rules.
 
-Continue PA-00 only:
+## E. 2026-09-14 decision review
 
-1. produce current ownership/classification maps for Admin, Student, API and packages;
-2. create ADRs for frontend feature boundaries, backend module boundaries, canonical data flow and design-system layers;
-3. define import/dependency rules that can be enforced automatically;
-4. capture current build/bundle/runtime baseline per app;
-5. decide branch strategy after reconciling current architecture branch with refreshed live `main` without discarding parallel work;
-6. after PA-00 gate, start PA-01 then PA-02 before migrating business slices.
+Canonical review:
+
+`docs/architecture/ADMIN_BACKEND_ARCHITECTURE_REVIEW_2026-09-14.md`
+
+### Branch evidence
+
+Compared live `main` `3053640cc5bb0699cfa7456cf646e8997f6aa81b` with architecture branch from merge-base `8d0676443aa7e186c41a79cc011f7f828d1290ef`:
+
+- architecture branch 284 commits ahead / 170 behind at review checkpoint;
+- inspected 170 main-only commits change Student frontend/workflow and documentation;
+- no main-only changes under Admin/API/migrations/current shared implementation paths.
+
+**Decision:** continue scoped isolation; re-compare main before every structural phase boundary and reconcile before PR readiness.
+
+### Decisions confirmed
+
+- KEEP modular monolith.
+- KEEP PostgreSQL/API authority.
+- KEEP feature-owned Admin + thin app composition target.
+- KEEP user-job IA and attention-first Overview.
+- KEEP route-level code splitting for major workflow routes.
+- KEEP existing Design System/brand authority; no second design system.
+- KEEP RTL/a11y/responsive/product states as architecture acceptance.
+- KEEP controlled replacement with legacy deletion after parity.
+
+### Decisions refined
+
+- `packages/ui` = cross-product primitives only; Admin `shared/ui` = Admin-only reusable patterns.
+- target backend layers are selective dependency boundaries, not mandatory folders/interfaces.
+- Target IA route semantics are binding, but current verified `/app` Admin base is preserved unless runtime/deployment evidence justifies changing it.
+- performance budgets will be set from measured improved baselines, not arbitrary thresholds.
+
+### Overengineering explicitly rejected
+
+- microservices;
+- DI framework/service locator without need;
+- repository/interface ceremony everywhere;
+- new global state/query library without post-cleanup evidence;
+- wholesale Tailwind/CSS-in-JS/styling-stack replacement;
+- lazy-splitting tiny components merely to manufacture chunks;
+- big-bang rewrite.
+
+## F. Pre-review exact-head CI
+
+On `f7c56628bc89e1a534c24bd2ba4771b61313664b`:
+
+- Architecture Guard `34797219591` — SUCCESS;
+- Admin AI Operations `34797219497` — SUCCESS;
+- Combined Integration `34797219488` — SUCCESS;
+- Stage13G Admin Operations `34797219505` — SUCCESS.
+
+This is behavioral safety evidence for the pre-review checkpoint. Fresh exact-head verification is required after the strengthened guard/document reconciliation before AB-00.3 closes.
+
+## G. Documentation governance correction
+
+The original PA platform-wide architecture documents were created before Product Owner clarified that Student frontend belongs to another branch/workstream. They are now historical/superseded for execution.
+
+Active execution uses **AB-00..AB-08** only.
+
+The stale PA references in status/index/handoff/PR are being removed so a replacement engineer cannot accidentally resume the wrong scope.
+
+## H. Current phase ledger
+
+- AB-00.1 — DONE
+- AB-00.2 — DONE
+- AB-00.3 — IMPLEMENTED / exact-head verification active
+- AB-00.4 — NEXT
+- AB-00.5 — PENDING
+- AB-01..AB-08 — PENDING
+
+## I. Exact next execution point
+
+1. verify strengthened Architecture Guard/current exact head;
+2. record AB-00.4 Admin bundle/runtime + backend composition baselines;
+3. perform AB-00.5 readiness review;
+4. then begin AB-01.
 
 Keep PR #52 Draft. Never auto-merge.
-
-## Findings register
-
-| ID | Severity | Area | Problem | Status |
-|---|---:|---|---|---|
-| `ADMIN-001..011` | P1/P2 | Super Admin | prior IA/parity/ownership defects | FIXED / verified history |
-| `ADMIN-012` | P2 | Accessibility | focus/reduced-motion/runtime focus gaps | FIXED / verified at `302127c3`, Stage13G `34793896054` |
-| `ARCH-001` | P1 | Frontend | oversized composition roots | OPEN / PA-00→PA-02 |
-| `ARCH-002` | P1 | Performance | Admin eager route bundle ~968.58 kB minified | OPEN / PA-02→PA-07 |
-| `ARCH-003` | P1 | Ownership | inconsistent source/feature ownership | OPEN / PA-00→PA-04 |
-| `ARCH-004` | P2 | Contracts | incomplete shared domain/validation boundary | OPEN / PA-01 |
-| `ARCH-005` | P2 | Backend | composition/module conventions not fully standardized | OPEN / PA-05 |
-| `ARCH-006` | P1 | Design system | distributed patterns/CSS ownership | OPEN / PA-01→PA-06 |
-| `ARCH-007` | P1 | Quality | architecture/performance gates not first-class | OPEN / PA-00→PA-09 |
-| `FPA-013` | P2 | Student Reader | existing separate Student audit finding | remains owned by Student track until PA-04 reconciliation |

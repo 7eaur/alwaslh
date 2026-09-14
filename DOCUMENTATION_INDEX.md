@@ -1,157 +1,134 @@
 # DOCUMENTATION INDEX — الوسيلة الذكية
 
-> Official project memory map. A replacement engineer must be able to recover the current product/architecture state from repository evidence without prior chat memory.
+> Recovery map for the current **Super Admin + Backend Architecture Rebuild**. Code/migrations/executable CI/runtime evidence outrank prose.
 
-Last synchronized: **2026-09-14 — Platform Architecture Rebuild / PA-00 ACTIVE.**
+Last synchronized: **2026-09-14 — scoped AB architecture review completed; AB-00 active.**
 
 ## 1. Source-of-truth precedence
 
 When sources conflict:
 
-1. current repository code + PostgreSQL migrations/schema + executable CI/test evidence;
-2. verified live runtime evidence where the question is runtime-specific;
-3. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`;
-4. active platform architecture and UX/product authorities listed below;
-5. `PROJECT_STATUS.md`;
-6. `PROJECT_ENGINEERING_LOG.md`;
-7. `PROJECT_HANDOFF.md` and resume/continuity docs;
-8. specialized operations/content documents;
-9. historical workstreams, roadmap and parity documents.
+1. current repository code + PostgreSQL migrations/schema + executable tests/CI;
+2. verified runtime evidence for runtime-specific claims;
+3. current explicit Product Owner direction;
+4. scoped active Admin/backend authorities below;
+5. approved product/IA/design-system authorities;
+6. `PROJECT_STATUS.md`;
+7. `PROJECT_ENGINEERING_LOG.md`;
+8. `PROJECT_HANDOFF.md`;
+9. historical workstreams/roadmaps.
 
 Anything not inspected/executed = `NOT YET VERIFIED`.
 
-## 2. Mandatory startup order while Platform Architecture Rebuild is active
+## 2. Mandatory startup order for this branch/workstream
 
-1. `README.md`
-2. `DOCUMENTATION_INDEX.md`
-3. `PROJECT_STATUS.md`
-4. `PROJECT_ENGINEERING_LOG.md`
-5. `docs/workstreams/PLATFORM_ARCHITECTURE_REBUILD_2026-09-14.md`
-6. `docs/workstreams/PLATFORM_ARCHITECTURE_DECISIONS_2026-09-14.md`
-7. `docs/product/CURRENT_PRODUCT_OVERRIDES.md`
-8. `docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md`
-9. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`
-10. `docs/product/DESIGN_SYSTEM_SPEC.md`
-11. `docs/product/CONTENT_LANGUAGE_RULES.md`
-12. `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md`
-13. `.agents/skills/alwaslh-product-engineering/SKILL.md`
-14. `PROJECT_HANDOFF.md`
-15. `PROJECT_RESUME_SNAPSHOT.md`
-16. `PROJECT_INTEGRATION_CONTINUITY.md`
-17. `PROJECT_EXECUTION_QUEUE.md`
-18. `docs/workstreams/STAGE16_STUDENT_HANDOFF.md`
-19. `docs/workstreams/STUDENT_PRODUCT_TRACK_STATUS.md`
-20. `docs/operations/RAILWAY_LIVE_STATE.md`
-21. `docs/content/LIVE_CONTENT_IMPORT_STATUS.md`
-22. `MASTER_REBUILD_ROADMAP.md`
-23. `docs/product/LEGACY_FEATURE_COVERAGE_GATE.md`
-24. `PRODUCT_FEATURE_PARITY_MATRIX.md`
-25. live `main`, architecture branch/PR and Actions before mutation.
+1. live-check `main` and `rebuild/super-admin-foundation` HEADs;
+2. `PROJECT_STATUS.md`;
+3. `PROJECT_ENGINEERING_LOG.md`;
+4. `docs/architecture/ADMIN_BACKEND_ARCHITECTURE_REVIEW_2026-09-14.md`;
+5. `docs/workstreams/ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md`;
+6. `docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md`;
+7. `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md`;
+8. `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md`;
+9. `docs/architecture/ADMIN_BACKEND_AB00_REVIEW_CHECKLIST_2026-09-14.md`;
+10. `docs/product/TARGET_INFORMATION_ARCHITECTURE.md`;
+11. `docs/product/DESIGN_SYSTEM_SPEC.md`;
+12. `docs/product/CONTENT_LANGUAGE_RULES.md`;
+13. `.agents/skills/alwaslh-product-engineering/SKILL.md` and only the focused references needed by the batch;
+14. `PROJECT_HANDOFF.md`;
+15. inspect actual current code/migrations/tests/workflows for the batch;
+16. check exact-head GitHub Actions before mutation/closure.
 
-Then inspect the actual code/migrations/tests for the active batch. Live executable evidence always wins.
+For backend changes that affect Student-consumed contracts, also read/run only the necessary Student consumer contract evidence. Do not migrate Student frontend here.
 
-## 3. Current operating model
+## 3. Active scope
 
-The active work is no longer the historical “AR-10 smallest polish only” loop.
+Execution target:
 
-The platform is under a **first-principles architecture rebuild** because current Student/Admin composition and ownership remain harder to extend than the product should require, even though substantial UX/parity work is already verified.
+- `apps/admin-web`;
+- `apps/api`;
+- `database/migrations`;
+- genuinely relevant shared packages.
 
-The architecture rebuild does **not** authorize blind rewriting of verified business/security behavior.
-
-Migration rule:
-
-`target boundary → replacement owner → contract/parity proof → composition switch → remove legacy owner → exact-head gates`
+Student frontend is a separate workstream (`stage16/student-016i` / PR #57 at latest reconciliation).
 
 ## 4. Active architecture authorities
 
 | File | Authority |
 |---|---|
-| `docs/workstreams/PLATFORM_ARCHITECTURE_REBUILD_2026-09-14.md` | active platform-wide architecture diagnosis, target structure, scenarios, phases and gates |
-| `docs/workstreams/PLATFORM_ARCHITECTURE_DECISIONS_2026-09-14.md` | binding ADRs: dependency direction, ownership, modular monolith, state/contracts, lazy routing, design architecture |
-| `PROJECT_STATUS.md` | concise active phase and exact next execution point |
-| `PROJECT_ENGINEERING_LOG.md` | evidence-backed findings, decisions, verified baselines and phase history |
+| `docs/architecture/ADMIN_BACKEND_ARCHITECTURE_REVIEW_2026-09-14.md` | latest smart review of decisions, branch isolation, refinements and rejected overengineering |
+| `docs/workstreams/ADMIN_BACKEND_ARCHITECTURE_REBUILD_2026-09-14.md` | binding scoped roadmap, target structure, gates and migration law |
+| `docs/product/ADMIN_PRODUCT_DESIGN_ARCHITECTURE_RULES_2026-09-14.md` | binding Admin UX/IA/design/useability rules |
+| `docs/architecture/ADMIN_BACKEND_MIGRATION_INVENTORY_2026-09-14.md` | current→target ownership/classification/removal map |
+| `docs/architecture/ADMIN_BACKEND_DEPENDENCY_AUDIT_2026-09-14.md` | evidence-backed dependency/coupling findings |
+| `docs/architecture/ADMIN_BACKEND_AB00_REVIEW_CHECKLIST_2026-09-14.md` | readiness checklist before AB-01 |
+| `PROJECT_STATUS.md` | concise active state/next action |
+| `PROJECT_ENGINEERING_LOG.md` | verified history + current decisions/evidence |
 
-## 5. UX/product authorities preserved and integrated
-
-The architecture workstream **does not replace or duplicate** the existing UX/UI refoundation. It implements its product/design truths within a maintainable code architecture.
+## 5. Product/design authorities reused, not duplicated
 
 | File | Purpose |
 |---|---|
-| `docs/product/UX_UI_MASTER_AUDIT_2026-09-12.md` | source-backed Student/Admin UX inventory and KEEP/IMPROVE/REFACTOR/REBUILD/REMOVE findings |
-| `docs/product/TARGET_INFORMATION_ARCHITECTURE.md` | binding Student route/screen tree and Admin user-job hierarchy |
-| `docs/product/DESIGN_SYSTEM_SPEC.md` | canonical identity/tokens/components/state/RTL/a11y/responsive rules |
-| `docs/product/CONTENT_LANGUAGE_RULES.md` | product-language and technical-copy boundaries |
-| `docs/workstreams/UX_UI_REFOUNDATION_IMPLEMENTATION_ROADMAP.md` | historical/incremental UX execution evidence; must be reconciled with the active architecture phases |
+| `docs/product/TARGET_INFORMATION_ARCHITECTURE.md` | user-job/screen hierarchy; child route semantics |
+| `docs/product/DESIGN_SYSTEM_SPEC.md` | brand/tokens/components/state/RTL/a11y/responsive authority |
+| `docs/product/CONTENT_LANGUAGE_RULES.md` | human-facing language/technical-detail boundary |
+| `packages/brand/*` | canonical identity/tokens/assets |
 
-External Product Design/Mobbin/Figma may support research but cannot override repository product authority.
+Important review refinement: Target IA's literal `/admin` prefix is **not** a mandate to break the verified separate Admin runtime. `/app` remains the current canonical base unless deployment/runtime evidence proves otherwise; user-job child-route semantics remain binding.
 
-## 6. Platform boundaries
+## 6. Shared UI ownership
 
-- `apps/student-web` — Student PWA/product.
-- `apps/admin-web` — Super Admin product.
-- `apps/api` — Fastify API and server business authority.
-- `database/migrations` — PostgreSQL schema/integrity authority.
-- `packages/brand` — canonical identity/tokens.
-- `packages/ui` — genuinely shared UI/presentation primitives.
-- `packages/domain` — genuinely shared pure domain contracts only.
-- `packages/validation` — shared boundary validation only.
+- `packages/brand` — identity/tokens.
+- `packages/ui` — genuinely cross-product primitives/semantic behavior.
+- `apps/admin-web/src/shared` — Admin-only reusable patterns/adapters.
+- `features/*` — business workflow composition/vocabulary.
+- `app/*` — composition/router/providers/layout only.
 
-The target is a modular monolith on the backend and feature-owned frontends with thin app composition roots.
+Do not duplicate the same primitive across shared layers.
 
-## 7. Preserved security/business contracts
+## 7. Backend authority
 
-Architecture migration must not weaken:
+Backend remains one Fastify modular monolith over PostgreSQL.
 
-- authentication/session/device rules;
-- access/entitlement rules;
-- publication + human-review authority;
-- revision/provenance/audit requirements;
-- server-owned assessment scoring/finalization;
-- protected Reader/media authorization;
-- offline signed authorization, integrity, device/session and lifecycle rules;
-- `/v1` exclusion from Service Worker Cache API authority.
+Conceptual dependency model:
 
-Database/schema changes require a real domain/integrity need, not folder refactoring.
+`HTTP → Application → Domain`, with Infrastructure adapters.
 
-## 8. Current verified baseline
+This does not require every small module to have empty folders/interfaces. No microservices, DI framework or repository/interface ceremony without evidence.
 
-Live `main` most recently checked for this architecture pivot:
+## 8. Historical / superseded execution documents
 
-`3053640cc5bb0699cfa7456cf646e8997f6aa81b`
+The following preserve rationale/history but are **not active execution authorities**:
 
-Parallel Student/content work exists there and must not be overwritten by the architecture branch.
+- `docs/workstreams/PLATFORM_ARCHITECTURE_REBUILD_2026-09-14.md`;
+- `docs/workstreams/PLATFORM_ARCHITECTURE_DECISIONS_2026-09-14.md`;
+- `docs/workstreams/PLATFORM_ARCHITECTURE_EXECUTION_RULES_2026-09-14.md`;
+- `docs/architecture/PLATFORM_OWNERSHIP_BOUNDARIES_2026-09-14.md`;
+- `docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` (AR history).
 
-Super Admin baseline before the documentation pivot:
+The original platform-wide concept was narrowed by Product Owner direction because Student frontend is being rebuilt independently. Use Git history for the former detailed PA rationale if needed.
 
-`302127c3223d00715f1d960f37c7d25044b6b20e`
+## 9. Current verified baseline
 
-Stage13G `34793896054` is fully green:
+Pre-review exact-head `f7c56628bc89e1a534c24bd2ba4771b61313664b`:
 
-- Admin UI `103823172953` — SUCCESS;
-- backend/integration `103823173114` — SUCCESS;
-- Real API + PostgreSQL + Chromium `103823326277` — SUCCESS.
+- Architecture Guard `34797219591` SUCCESS;
+- Admin AI Operations `34797219497` SUCCESS;
+- Combined Integration `34797219488` SUCCESS;
+- Stage13G Admin Operations `34797219505` SUCCESS.
 
-This is behavioral safety evidence, not approval of the current folder/composition architecture.
+Latest review strengthened the guard and reconciled architecture decisions; fresh exact-head verification is required before AB-00.3 closes.
 
-## 9. Active phase
+## 10. Active execution point
 
-`PA-00 — Architecture baseline and guardrails`.
+`AB-00.4 — Admin bundle/runtime + backend composition baseline` is next **after strengthened AB-00.3 exact-head verification**.
 
-PA-00 must establish/reconcile:
+Do not begin AB-01 until AB-00.5 readiness confirms:
 
-- ownership/classification map;
-- architecture decisions;
-- enforceable dependency rules;
-- Student/Admin build/bundle baselines;
-- branch strategy against refreshed live `main`;
-- documentation agreement on one next execution point.
+- one scope;
+- one documentation authority;
+- green architecture guard;
+- reproducible baselines;
+- no unresolved `main` changes in scoped implementation paths.
 
-After PA-00: `PA-01 shared design/contract foundation → PA-02 app shells → PA-03 Admin slices → PA-04 Student slices → PA-05 backend boundaries → PA-06 design convergence → PA-07 performance → PA-08 legacy enforcement → PA-09 full verification`.
-
-## 10. Historical continuity
-
-`docs/workstreams/SUPER_ADMIN_REBUILD_2026-09-13.md` preserves AR-01..AR-10 history but is **SUPERSEDED for future execution**.
-
-Normal roadmap work after the architectural/refoundation program must still reconcile the previously documented Stage16 boundary and `STUDENT-016I` return point. The architecture workstream may reorganize existing capabilities; it must not silently implement or claim future roadmap capabilities without their own contracts/gates.
-
-PR #52 remains Draft. No merge or auto-merge is authorized.
+PR #52 remains Draft. No merge/auto-merge.
