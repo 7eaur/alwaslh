@@ -30,7 +30,7 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - never force-reset or force-push shared history;
 - live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-Main implementation delta remains Student-focused with no Admin/API/migration overlap; shared project docs require deliberate reconciliation before a structural phase boundary.
+Main implementation delta remains Student-focused with no Admin/API/migration overlap; shared project docs require deliberate reconciliation before the AB-03 structural phase boundary.
 
 ## Current phase
 
@@ -40,47 +40,53 @@ Main implementation delta remains Student-focused with no Admin/API/migration ov
   - AB-02.1 Global Admin shell/layout ownership — DONE
   - AB-02.2 Inner Admin route-table ownership — DONE
   - AB-02.3 Substantial workflow route lazy boundaries — DONE
+  - AB-02.4 Auth login presentation ownership — IMPLEMENTED / WAITING_FOR_CI
 - AB-03..AB-08 — PENDING
 
 Canonical AB-02 record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 
 ## AB-02.1 closure
 
-Source checkpoint `0d07a24aa062ad569ff654524bdc13a4e368f399`; owner `apps/admin-web/src/app/layouts/AdminShell.tsx`. Guard `34838037118`, Frontend Preparation `34838037114`, Combined `34838123077`, Stage13G `34838123143` — SUCCESS.
+Source checkpoint `0d07a24aa062ad569ff654524bdc13a4e368f399`; Guard `34838037118`, Frontend Preparation `34838037114`, Combined `34838123077`, Stage13G `34838123143` — SUCCESS.
 
 ## AB-02.2 closure
 
-Source checkpoint `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`; owner `apps/admin-web/src/app/router/AdminRoutes.tsx`. Guard `34840954071`, Frontend Preparation `34840953959`, Admin AI `34841142948`, Combined `34841142987`, Stage13G `34841142975` — SUCCESS on source/source-tree-equivalent heads.
+Source checkpoint `732555cb9b8499c712ad6cd19ad50cccf26a8e4a`; Guard `34840954071`, Frontend Preparation `34840953959`, Admin AI `34841142948`, Combined `34841142987`, Stage13G `34841142975` — SUCCESS.
 
 ## AB-02.3 closure
 
-Source checkpoint: `f60d3d0d163c9f31dead139cc36406396f795a7e`.
+Source checkpoint `f60d3d0d163c9f31dead139cc36406396f795a7e`; Guard `34849322458`, Frontend Preparation `34849322443`, Admin AI `34849322533`, source-tree-equivalent Combined `34849829516`, Stage13G `34849829576` — SUCCESS. Initial JS verified at **196.84 kB / 64.11 kB gzip** with independent workflow chunks and no threshold/manualChunks tuning.
 
-`apps/admin-web/src/app/router/AdminRoutes.tsx` lazy-loads substantial workflow destinations through explicit `React.lazy()` boundaries. Existing named exports remain unchanged and are adapted only at import boundaries. One route-level `Suspense` fallback uses the existing shared `AdminProductState` loading presentation.
+## AB-02.4 current seam
 
-Preserved contracts: all `/app/*` URLs/redirects, `onSessionExpired`, route wrappers, not-found composition, outer `router.tsx`/`RouteFocus`, session outcomes and workflow behavior. No feature migration, navigation/auth redesign, bundler threshold/manualChunks tuning, API/DB/migration or Student frontend change was included.
+AB-01 explicitly documented root `apps/admin-web/src/LoginScreen.tsx` as transitional presentation debt assigned to AB-02. Remaining AB-02 discovery therefore selected this single seam instead of inventing a new abstraction.
 
-Closure evidence:
+Source implementation checkpoint: `d4c3c7896043ea6b1cc4cac1dd404d7912131916`.
 
-- Guard `34849322458` — SUCCESS;
-- Frontend Preparation `34849322443` — SUCCESS;
-- Admin AI `34849322533` — SUCCESS;
-- source-tree-equivalent Combined `34849829516` — SUCCESS;
-- source-tree-equivalent Stage13G `34849829576` — SUCCESS, including clean PostgreSQL/contracts/integrations/auth and Real API + PostgreSQL + Chromium.
+Changed ownership:
 
-Measured production build: initial JS **196.84 kB / 64.11 kB gzip**, down from verified pre-seam **446.30 kB / 117.48 kB gzip**. Substantial workflows now emit independent chunks; largest observed workflow chunk is AI Operations at **41.23 kB / 10.82 kB gzip**. No threshold/manualChunks tuning was used.
+- `apps/admin-web/src/features/auth/ui/LoginScreen.tsx` now owns the login presentation;
+- `apps/admin-web/src/features/auth/public/index.ts` exposes `LoginScreen` as the feature composition contract;
+- `App.tsx` consumes it through that public boundary;
+- root `apps/admin-web/src/LoginScreen.tsx` was deleted.
 
-Comparison from source checkpoint through the closure documentation contains documentation files only, so the later green CI verifies the same Admin implementation tree.
+Login/session behavior is unchanged: form fields and validation, loading/error state, `loginAdmin`, authenticated profile handoff, session acceptance and post-auth focus remain the same. No API/DB/migration/Student frontend implementation changed.
+
+Verification observed on the source checkpoint:
+
+- Architecture Guard `34853562192` — SUCCESS;
+- Stage13G `34853562095` — in progress;
+- Combined `34853562292` — pending.
+
+Therefore AB-02.4 is **not DONE** yet.
 
 ## Exact continuation
 
-Perform **remaining AB-02 discovery only**:
-
-1. re-read live `apps/admin-web/src/App.tsx`, `src/app/router/*`, providers/layout ownership and architecture guard evidence;
-2. identify at most one remaining shell/router/provider concern that is materially justified by current code;
-3. if no meaningful concern remains, close AB-02 instead of inventing abstractions;
-4. before entering AB-03, reconcile live `main` because this is a structural phase boundary;
-5. do not combine the discovery with an AB-03 workflow migration.
+1. Inspect the latest source/source-tree-equivalent gates for AB-02.4.
+2. If Admin quality, integration, PostgreSQL/security and Real API + PostgreSQL + Chromium evidence are green, close AB-02.4.
+3. Then perform one final AB-02 closure inspection only; if no material shell/router/provider debt remains, close AB-02.
+4. Reconcile live `main` before starting AB-03 because that is a structural phase boundary.
+5. Do not combine AB-02 closure with an AB-03 workflow migration.
 
 ## Remaining roadmap
 
