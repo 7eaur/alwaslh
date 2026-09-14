@@ -9,19 +9,8 @@ LANGUAGE plpgsql
 AS $$
 DECLARE
   revision_id bigint;
-  target_class_id uuid;
-  target_lesson_id uuid;
-  target_content_revision bigint;
-  target_published_at timestamptz;
-  target_status record_status;
 BEGIN
   IF TG_OP = 'DELETE' THEN
-    target_class_id := OLD.class_id;
-    target_lesson_id := OLD.id;
-    target_content_revision := OLD.content_revision;
-    target_published_at := OLD.published_at;
-    target_status := OLD.status;
-
     INSERT INTO content_revisions (
       entity_type, entity_id, change_type, class_id, metadata
     ) VALUES (
@@ -47,39 +36,31 @@ BEGIN
     RETURN OLD;
   END IF;
 
-  target_class_id := NEW.class_id;
-  target_lesson_id := NEW.id;
-  target_content_revision := NEW.content_revision;
-  target_published_at := NEW.published_at;
-  target_status := NEW.status;
-
-  -- Draft-only records are not Student sync authority. Record transitions away
-  -- from a previously published lesson so clients can invalidate local bytes.
+  -- Draft-only records are not Student sync authority. A transition away from
+  -- a previously published lesson is still recorded so clients can invalidate.
   IF TG_OP = 'INSERT' AND (NEW.published_at IS NULL OR NEW.status <> 'active') THEN
     RETURN NEW;
   END IF;
   IF TG_OP = 'UPDATE'
      AND OLD.published_at IS NULL
-     AND NEW.published_at IS NULL
-     AND OLD.status <> 'active'
-     AND NEW.status <> 'active' THEN
+     AND NEW.published_at IS NULL THEN
     RETURN NEW;
   END IF;
 
   INSERT INTO content_revisions (
     entity_type, entity_id, change_type, class_id, metadata
   ) VALUES (
-    'lesson', target_lesson_id, 'upsert', target_class_id,
+    'lesson', NEW.id, 'upsert', NEW.class_id,
     jsonb_build_object(
-      'lessonId', target_lesson_id,
-      'contentRevision', target_content_revision,
-      'publishedAt', target_published_at,
-      'status', target_status
+      'lessonId', NEW.id,
+      'contentRevision', NEW.content_revision,
+      'publishedAt', NEW.published_at,
+      'status', NEW.status
     )
   );
 
   DELETE FROM content_tombstones
-   WHERE entity_type = 'lesson' AND entity_id = target_lesson_id;
+   WHERE entity_type = 'lesson' AND entity_id = NEW.id;
 
   RETURN NEW;
 END;
@@ -96,7 +77,11 @@ DECLARE
   next_lesson_revision bigint;
   was_or_is_published boolean;
 BEGIN
-  asset_record := CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+  IF TG_OP = 'DELETE' THEN
+    asset_record := OLD;
+  ELSE
+    asset_record := NEW;
+  END IF;
 
   SELECT * INTO lesson_record
     FROM lessons
@@ -105,7 +90,8 @@ BEGIN
   -- A parent lesson delete is already represented by a lesson tombstone. If the
   -- parent no longer exists, there is no separate learner package to reconcile.
   IF NOT FOUND THEN
-    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
   END IF;
 
   was_or_is_published :=
@@ -113,7 +99,8 @@ BEGIN
     OR (TG_OP <> 'DELETE' AND NEW.publication_status = 'published');
 
   IF NOT was_or_is_published OR lesson_record.published_at IS NULL OR lesson_record.status <> 'active' THEN
-    RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
   END IF;
 
   -- Published lesson assets are part of the signed offline package. Any
