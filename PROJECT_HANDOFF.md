@@ -43,42 +43,40 @@ The latest proven `main` drift remains confined to Student frontend/PWA work; no
   - AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
+  - AB-03.2 closure discovery — DONE / DOC-ONLY
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker B sequence 53 reconciled the stale sequence-52 lease against actual repository truth and closed AB-03.2.3 without opening another executable seam.
+Worker C sequence 54 completed the requested Content/OCR closure discovery without changing executable source.
 
-The Content operations/OCR transport and type implementation is owned by `apps/admin-web/src/features/content/api/content-operations-api.ts`, exposed through `features/content/public`. `OcrSourcePreview.tsx` consumes the feature boundary directly. Root `apps/admin-web/src/content-operations-api.ts` is now compatibility-only because `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains a proven consumer; there is no permanent dual implementation ownership.
+Direct inspection established:
 
-Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
+- root `apps/admin-web/src/content-operations-api.ts` is a pure compatibility re-export of the feature implementation;
+- `apps/admin-web/src/features/content/public/index.ts` already exposes the required Content operations/OCR contract;
+- `apps/admin-web/src/OcrSourcePreview.tsx` already consumes that feature boundary directly;
+- `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` remains the confirmed stale consumer importing `../../content-operations-api`.
 
-Exact-head closure evidence:
+The compare from executable checkpoint `866912f4640aa4696b896a1d897bff7ad67024f4` to the observed sequence-54 start head `707e52a2f28e7028c4ee3fd19ca737e092f260f6` contains only canonical documentation/state files, so AB-03.2.3 exact-head green evidence remains source-tree-equivalent for this discovery.
 
-- Architecture Guard `34898665849` — SUCCESS;
-- Frontend Preparation `34898665740` — SUCCESS;
-- Admin AI Operations `34898665783` — SUCCESS;
-- Combined Integration `34898665724` — SUCCESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — SUCCESS.
-
-No source/backend/PostgreSQL/security/route/UI semantics were changed during sequence 53; this run only closed and documented the already-verified increment.
+Authoritative executable checkpoint remains `866912f4640aa4696b896a1d897bff7ad67024f4`, covered by Architecture Guard `34898665849`, Frontend Preparation `34898665740`, Admin AI Operations `34898665783`, Combined Integration `34898665724`, and Stage13G Admin Operations / PostgreSQL / Chromium `34898665675`, all SUCCESS.
 
 ## Exact continuation
 
-Perform **AB-03.2 Content/OCR closure discovery only**:
+Execute **AB-03.2.4 — retire the Content operations compatibility facade** only:
 
-1. inspect remaining imports and owners around Content/OCR;
-2. verify whether `ContentOperationsPage.tsx` is the final legitimate consumer of root `content-operations-api.ts`;
-3. if zero other consumers are proven, the next smallest executable seam may repoint only `ContentOperationsPage.tsx` to `features/content/public` and delete the compatibility facade;
-4. do not bulk-move pages/CSS or unrelated facades for neatness;
-5. do not begin AI until AB-03.2 closure is proven;
-6. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority and Student frontend exclusion.
+1. repoint `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` from `../../content-operations-api` to `../../features/content/public`;
+2. delete root `apps/admin-web/src/content-operations-api.ts`;
+3. run strict Admin typecheck plus Architecture Guard first; successful resolution is required evidence that no hidden importer remains;
+4. then run all relevant Admin/API/PostgreSQL/integration/Chromium gates on the exact source head;
+5. preserve API paths, payload/response semantics, backend/PostgreSQL/security authority and UI behavior;
+6. do not bulk-move page/CSS ownership and do not begin AI in the same increment.
 
 ## Main reconciliation need
 
-`NONE FOR THIS CLOSURE`. Current live `main` observation is `d43fe2afe29b02093510177b921c0407e21a3de9`; no overlapping scoped drift is currently proven. Re-check before the next structural phase boundary or whenever Admin/API/PostgreSQL/shared-contract overlap appears.
+`NONE FOR THIS DISCOVERY`. Current live `main` observation is `d43fe2afe29b02093510177b921c0407e21a3de9`; no overlapping scoped drift is currently proven. Re-check before the next structural phase boundary or whenever Admin/API/PostgreSQL/shared-contract overlap appears.
 
 ## Remaining roadmap
 
