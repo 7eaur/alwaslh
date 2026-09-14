@@ -1,7 +1,7 @@
 # AB-01.4 — Backend App Composition Discovery
 
 Date: **2026-09-14**  
-Status: **THIRD SEAM SELECTED — IMPLEMENTATION NEXT**  
+Status: **THREE SEAMS CLOSED — NEXT DISCOVERY REQUIRED**  
 Branch: `rebuild/super-admin-foundation`  
 Initial discovery starting HEAD: `60151da0cdcf56d61f5d68ea5cdd3d329523f2a9`
 
@@ -32,18 +32,13 @@ Source implementation HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 
 Implemented `registerCorsPolicy(app, config)` with the existing `allowedOrigins(config)` contract and direct `onRequest` hook. Existing allowed-origin headers, credentials, `Vary`, OPTIONS methods/headers and rejected-preflight `AppError("FORBIDDEN", "مصدر الطلب غير مسموح", 403)` semantics were preserved. Health/readiness, public errors, DB close lifecycle, services/composites, routes, migrations and Student frontend were untouched.
 
-Closure evidence:
-
-- Architecture Guard `34808159011` — SUCCESS;
-- Admin AI `34809211720` — SUCCESS;
-- Combined Integration `34809211704` — SUCCESS;
-- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
+Closure evidence: Architecture Guard `34808159011`, Admin AI `34809211720`, Combined `34809211704`, Stage13G `34809211707` — SUCCESS.
 
 ## Second seam — health/readiness HTTP surface — DONE
 
 Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 
-Target owner implemented: `apps/api/src/app/http/health.ts` with `registerHealthRoutes(app, database)`.
+Target owner: `apps/api/src/app/http/health.ts` with `registerHealthRoutes(app, database)`.
 
 Preserved contracts:
 
@@ -63,111 +58,68 @@ GET /ready when database.ping() throws
 → { status: "not_ready" }
 ```
 
-Implementation constraints satisfied:
+Closure evidence: Architecture Guard `34811642661`; source-tree-equivalent Admin AI `34811809959`, Combined `34811809962`, Stage13G `34811810021` — SUCCESS.
 
-- same Fastify instance and existing `Database` dependency are reused;
-- readiness still calls only `database.ping()`;
-- route paths/methods/statuses/bodies and failure log semantics are unchanged;
-- registration remains at the same relative app composition position;
-- no coupling to AuthService/business services/CORS internals/server process signals was introduced;
-- public error/not-found, DB close lifecycle, database construction/config, `server.ts`, service/composite graph, migrations/schema and Student frontend remain untouched;
-- the three direct parity tests in `apps/api/tests/app.test.ts` were not weakened or rewritten.
+## Third seam — public error + not-found HTTP handling — DONE
 
-### Second seam verification — DONE
+Source implementation HEAD: `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
 
-- Architecture Guard `34811642661` — SUCCESS on source implementation HEAD;
-- direct source Combined `34811642693` was cancelled when newer documentation-only commits superseded it;
-- compare `a302871b3486ae95810cea40dccca68363a29055...b095741e621f9241ff3eed0de86b4e64048604bf` contains only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`, and `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`, proving the later runs exercised the same API/Admin source tree;
-- Admin AI `34811809959` — SUCCESS;
-- Combined Integration `34811809962` — SUCCESS including API/Admin quality, clean PostgreSQL, backend authority/auth regressions, deterministic fixtures and real Admin Chromium;
-- Stage13G `34811810021` — SUCCESS including Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, database/integration/auth regressions and real API + PostgreSQL + Chromium.
-
-Conclusion: second health/readiness extraction is behavior-preserving and **DONE**.
-
-## Third seam — public error + not-found HTTP handling — SELECTED / IMPLEMENTATION NEXT
-
-### Current owner
-
-`apps/api/src/app.ts` still owns two adjacent global HTTP concerns inline after all business/health route registration:
-
-- `app.setNotFoundHandler(...)` producing the public 404 envelope;
-- `app.setErrorHandler(...)` converting thrown errors through `toPublicError(error)`, logging server-side failures at 5xx, and sending the canonical public error body/status.
-
-These are app-level HTTP presentation concerns. They do not own business rules, database transactions, module services or route-specific authorization.
-
-### Target owner
-
-Create:
+### Implemented owner
 
 `apps/api/src/app/http/public-errors.ts`
 
-with one narrow registration function:
+with:
 
 `registerPublicErrorHandlers(app)`
 
-The target owner should import/use the existing `toPublicError` implementation rather than moving or duplicating error-domain semantics.
+The helper owns only:
 
-### Existing parity evidence
+- `app.setNotFoundHandler(...)` producing the canonical public 404 envelope;
+- `app.setErrorHandler(...)` converting thrown errors through existing `toPublicError(error)`, preserving 5xx-only server logging and mapped public status/body.
 
-Direct contract in `apps/api/tests/app.test.ts`:
+`apps/api/src/app.ts` now composes this helper after health registration and no longer owns those inline handlers or imports `toPublicError` directly.
 
-- `unknown routes use the public error envelope` asserts `GET /missing` returns 404 and `error.code === "NOT_FOUND"`.
+### Preserved contracts
 
-Broader API/integration/auth/security suites already exercise errors flowing through the global Fastify error handler; those remain regression evidence for the error envelope and security behavior.
+- unknown route → HTTP 404;
+- exact body `{ error: { code: "NOT_FOUND", message: "المسار غير موجود" } }`;
+- existing `toPublicError(error)` remains the single mapping authority;
+- mapped status/body semantics unchanged;
+- only mapped status >= 500 logs `request.log.error({ err: error }, "request failed")`;
+- ordering remains after business routes/health registration;
+- database `onClose` remains outside the helper.
 
-Exact-head evidence before this documentation-only discovery was green on `e592535b082c9284ecf88f19e60cb70821e8aa16`:
+### Scope intentionally untouched
 
-- Admin AI `34813851669` — SUCCESS;
-- Combined Integration `34813851671` — SUCCESS;
-- Stage13G `34813851684` — SUCCESS.
+- database lifecycle;
+- Fastify construction/options;
+- service/composite graph;
+- business route registry;
+- migrations/schema;
+- Student frontend.
 
-### Dependency / ordering constraints
+### Closure evidence
 
-- register after all business routes and `registerHealthRoutes(...)`, matching current relative placement;
-- register before returning the app;
-- do not combine database lifecycle into this helper;
-- preserve `toPublicError` as the single existing public-error mapping authority;
-- preserve 5xx logging exactly: `request.log.error({ err: error }, "request failed")` only when mapped status is >= 500;
-- preserve exact 404 body `{ error: { code: "NOT_FOUND", message: "المسار غير موجود" } }`;
-- preserve status codes and body shapes for all existing thrown errors.
+- Architecture Guard `34816433721` — SUCCESS on source implementation HEAD;
+- compare `001d45892bf4a17458f3beaeaaa1a7430be49b44...068ee06cf7fec442b95ddada2667d8aac5d1c2a2` contains documentation files only, proving later verification exercised the same affected source tree;
+- Admin AI `34816613371` — SUCCESS;
+- Combined `34816613431` — SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend authority/auth-security regressions, deterministic fixtures and real Admin Chromium;
+- Stage13G `34816613493` — SUCCESS including Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, Accounts+Access, Notifications+Operations, Reports+Settings+Security+Audit, AI authoring, Access/Auth regressions, and real API + PostgreSQL + Chromium.
 
-### Impact assessment
+Conclusion: switch/deletion condition is satisfied and the third seam is **DONE**.
 
-- database/schema: none;
-- business rules: none;
-- auth/authorization semantics: none expected; regression suites must confirm;
-- Student-facing backend contracts: HTTP error envelopes are shared server contracts, so full API/auth/integration regression evidence is required even though no Student frontend restructuring is permitted;
-- Admin frontend: no intended change; real Chromium remains closure evidence.
+## Remaining app-composition responsibility classes
 
-### Explicit non-goals
+After the first three closures, discovery must re-inspect the live `apps/api/src/app.ts` before selecting another seam. Remaining classes from the original inventory may include:
 
-Do not in this seam:
+- Fastify instance construction/options;
+- infrastructure adapter construction;
+- broad module/service construction;
+- cross-service composite construction;
+- whole-product route registration;
+- database `onClose` lifecycle.
 
-- move or redesign `errors.ts` / `toPublicError`;
-- change error codes, Arabic messages, HTTP statuses or logging policy;
-- extract `onClose`/database lifecycle;
-- create generic HTTP plugin frameworks;
-- change Fastify construction/options;
-- create a service container or route registry;
-- move any business route/module/service;
-- touch migrations/schema or Student frontend.
-
-### Switch / deletion condition
-
-The seam is complete only when both inline handlers are removed from `apps/api/src/app.ts`, `registerPublicErrorHandlers(app)` is called once at the same relative composition point, no duplicate handler ownership remains, and required gates are green.
-
-### Required implementation closure gates
-
-At minimum:
-
-1. Architecture Guard;
-2. API lint + strict typecheck + unit tests + build;
-3. unchanged direct `apps/api/tests/app.test.ts` not-found contract;
-4. relevant auth/security/integration regressions;
-5. clean PostgreSQL migration verification from the established combined gates;
-6. Combined real Admin Chromium;
-7. Stage13G real API + PostgreSQL + Chromium;
-8. documentation/state synchronization.
+This list is an inventory, **not** permission to extract any item mechanically. The next seam must be selected from live code evidence, existing tests/contracts and a bounded ownership improvement.
 
 ## Rejected broad moves remain rejected
 
@@ -178,11 +130,16 @@ At minimum:
 - bundle DB/error ownership with unrelated composition work;
 - schema changes for folder restructuring.
 
-No evidence from the first three discoveries changes those decisions.
+No evidence from the first three closures changes those decisions.
 
 ## Exact next step
 
-Implement **only** the selected public-error/not-found seam. Do not combine it with database-close lifecycle or any service/route composition move.
+Perform **discovery only**:
+
+1. re-read live `apps/api/src/app.ts` and relevant direct tests/contracts;
+2. identify the smallest remaining responsibility with a real owner boundary;
+3. document current owner, target owner, dependency/ordering constraints, behavior contracts, Student/shared impact, explicit non-goals, switch/deletion condition and required verification gates;
+4. do **not** implement the newly selected seam in the same discovery increment.
 
 ## Permanent AB-01.4 law
 
