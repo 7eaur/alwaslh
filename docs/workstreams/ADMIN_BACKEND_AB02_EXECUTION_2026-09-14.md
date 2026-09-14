@@ -78,15 +78,61 @@ Closure evidence: Architecture Guard `34838037118`, Frontend Preparation `348380
 
 Comparison `732555cb… → 2c2fcb6c…` includes documentation files only, so equivalent-head green CI verifies the same implementation tree. No source correction was needed to close this seam.
 
-## Next AB-02 step — DISCOVERY ONLY
+## Seam 3 — Substantial workflow route lazy boundaries — SELECTED / IMPLEMENTATION NEXT
 
-Before authorizing another implementation seam, inspect current composition and select one smallest bounded concern. Candidates:
+### Discovery evidence
 
-- feature public/routes entry points;
-- substantial route lazy boundaries/Suspense;
-- outer router/presentation ownership cleanup;
-- login/auth presentation ownership;
-- navigation definition ownership;
-- error-boundary composition.
+Current `apps/admin-web/src/app/router/AdminRoutes.tsx` still statically imports every major workflow destination under `src/admin/*`: Overview, Curriculum, Content/Lesson Tools, Review workspaces, Questions, Quizzes, Students, Access Codes, Operations and AI Authoring. This means entering `/app` still places all of those workflow modules in the initial route graph even though the operator uses one destination at a time.
 
-For the selected candidate record current owner, target owner, preserved contracts, non-goals, tests/gates and deletion condition. Do not combine multiple candidates in one batch and do not mass-migrate `src/admin/*` feature ownership during AB-02.
+The original AB-00 measured baseline was one `968.68 kB` minified / `193.92 kB` gzip main JavaScript chunk with Vite's >500 kB warning. The latest source-tree-equivalent Stage13G Admin build (`34841142975`, job `103966179619`) has improved independently to one `446.30 kB` / `117.48 kB` gzip JavaScript chunk, but it is still a single eager chunk and contains all major Admin workflow imports. The warning disappearing does **not** close the architecture requirement for substantial route lazy boundaries.
+
+React is `18.3.1`, React Router DOM `7.9.5`, and Vite `7.1.3`; no dependency change is required.
+
+### Current owner
+
+`apps/admin-web/src/app/router/AdminRoutes.tsx` owns both the route table and eager imports of all major workflow page components.
+
+### Target owner / implementation shape
+
+Keep route-table ownership in `AdminRoutes.tsx`, but convert substantial workflow page modules to `React.lazy(() => import(...))` route boundaries. Use one route-level `Suspense` fallback backed by the existing Admin `PageState kind="loading"` presentation primitive rather than inventing another loading component.
+
+Named exports may be adapted at the lazy import boundary with the smallest explicit mapping necessary; do not change the underlying workflow module exports merely to satisfy lazy loading.
+
+### Preserved contracts
+
+- all existing `/app/*` URLs and redirects;
+- `onSessionExpired` passed to every workflow exactly as today;
+- `ReviewArea`, `WorkspaceWithRelatedActions` and not-found route composition;
+- outer `router.tsx`, `RouteFocus`, deep-link behavior and focus restoration;
+- session restore/login/logout behavior;
+- workflow business logic, API calls, CSS and product copy;
+- transitional `src/admin/*` ownership until AB-03 vertical slices.
+
+### Explicit non-goals
+
+- no feature-folder migration or new feature public/routes entry points in the same batch;
+- no navigation IA changes;
+- no auth/login presentation changes;
+- no error-boundary redesign;
+- no bundler threshold changes/manualChunks tuning;
+- no tiny-component splitting;
+- no API/PostgreSQL/migration/Student frontend changes.
+
+### Verification required before DONE
+
+1. Architecture Guard.
+2. Admin lint + strict typecheck + unit tests + production build.
+3. Record resulting Vite chunk topology/sizes against the current `446.30 kB / 117.48 kB gzip` single-chunk evidence and the AB-00 baseline; improvement must come from actual dynamic route chunks, not threshold suppression.
+4. Verify representative direct deep links for lazy destinations and route redirects.
+5. Verify session-expiry behavior remains intact from a lazily loaded workflow.
+6. Combined Integration including clean PostgreSQL/backend/auth regressions and real Admin Chromium.
+7. Stage13G including real API + PostgreSQL + Chromium.
+8. Keyboard/focus behavior must remain valid across lazy route transitions; no blank/unannounced loading state.
+
+### Deletion / closure condition
+
+Seam 3 closes only when substantial workflow imports are no longer eager from `AdminRoutes.tsx`, the production build emits real route/workflow dynamic chunks, direct/deep-link/session behavior remains green, and required exact-head/source-tree-equivalent gates are successful. No compatibility alias should be introduced.
+
+## Exact next step
+
+Implement **Seam 3 only**: substantial workflow route lazy boundaries plus one accessible route-level Suspense loading state. Do not combine it with feature ownership migration, navigation/auth changes or UI redesign. After implementation, run the listed verification and document measured chunk output before selecting another AB-02 seam.
