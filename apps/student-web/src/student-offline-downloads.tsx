@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   isMissingSessionError,
-  listStudentCurriculum,
   type StudentCurriculumCatalog,
 } from "./auth-api";
+import { getCachedStudentCurriculum } from "./shared/data/student-runtime-cache";
 import { studentErrorMessage } from "./student-error-copy";
 import { OfflineAuthorizationError } from "./offline-authorization";
 import {
@@ -103,8 +103,12 @@ export function StudentOfflineDownloadsSection({ online, refreshKey, onSessionEx
     }
     setState({ status: "loading" });
     try {
-      const [lease, catalog] = await Promise.all([refreshOfflineLeaseForCurrentSession(), listStudentCurriculum()]);
-      setState({ status: "ready", lessons: lessonOptions(catalog), packages: await listOfflineLessonPackages(lease.profileId, lease.deviceId), catalogAvailable: true });
+      const lease = await refreshOfflineLeaseForCurrentSession();
+      const [catalog, packages] = await Promise.all([
+        getCachedStudentCurriculum(lease.profileId),
+        listOfflineLessonPackages(lease.profileId, lease.deviceId),
+      ]);
+      setState({ status: "ready", lessons: lessonOptions(catalog), packages, catalogAvailable: true });
     } catch (error) {
       if (isMissingSessionError(error)) { onSessionExpired(); return; }
       setState({ status: "error", message: studentErrorMessage(error, "downloads") });
