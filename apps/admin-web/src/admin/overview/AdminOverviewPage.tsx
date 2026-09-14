@@ -4,17 +4,15 @@ import { ApiRequestError, isMissingSessionError } from "../../admin-api";
 import { AdminProductState } from "../../shared/ui/AdminProductState";
 import {
   type OperationsAttentionSummary,
-  fetchAdminOperationsAttention,
-} from "../../features/operations/public";
-import {
   attentionTotal,
   auditSubject,
   buildAttentionItems,
   eventLabel,
+  fetchAdminOperationsAttention,
   formatAdminDate,
   resourceLabel,
   sourceLabel,
-} from "../operations/operations-model";
+} from "../../features/operations/public";
 import "../operations/operations-pages.css";
 
 type LoadState = "loading" | "ready" | "error";
