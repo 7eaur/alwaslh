@@ -1,11 +1,11 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import type { AdminAiAuthoringService } from "../ai/admin-authoring.js";
-import { parseBody } from "../shared/http/request-validation.js";
 import { currentProfile } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
+import { parseBody } from "../shared/http/request-validation.js";
 import type { QuizQuestionCandidateService } from "./candidates.js";
 import type { QuizBuilderService } from "./service.js";
 
