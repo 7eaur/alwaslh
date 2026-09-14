@@ -38,42 +38,45 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — ACTIVE
   - AB-03.1.1 Attention application ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.1.2 Operations frontend API ownership — ROOT FIX APPLIED / WAITING_FOR_CI
+  - AB-03.1.2 Operations frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 - AB-04..AB-08 — PENDING
 
 Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
-## Current implementation awaiting closure
+## Latest closed increment
 
-Current AB-03.1.2 source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
+AB-03.1.2 corrected Operations frontend API ownership. Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
-Worker A sequence 36 moved Operations frontend transport/types under `features/operations` and exposed the narrow `features/operations/public` boundary. Worker B sequence 37 then inspected the failed Stage13G Admin UI job and confirmed a real strict-typecheck regression rather than CI concurrency noise: three consumers/tests still referenced the deleted root `admin-operations-api` module.
+Final state:
 
-Worker B corrected exactly that root ownership defect:
+- Operations transport/types live at `apps/admin-web/src/features/operations/api/admin-operations-api.ts`;
+- consumers use the narrow `features/operations/public` boundary;
+- stale root imports/tests were removed/corrected;
+- transport test is colocated with its actual owner;
+- endpoint/query/body/response contracts, credentials/session behavior, pages/routes/styles, backend/API/PostgreSQL/security authority and Student frontend behavior were preserved.
 
-- `admin/operations/operations-model.ts` now consumes Operations contracts through `features/operations/public`;
-- `admin/operations/operations-model.test.ts` uses the same public feature boundary;
-- the API transport test now lives with its owner at `features/operations/api/admin-operations-api.test.ts`;
-- the stale root `admin-operations-api.test.ts` was removed;
-- endpoints, query/body/response contracts, credentials/session-expiry behavior, pages/routes/styles, backend/API/PostgreSQL/security and Student frontend behavior were not changed.
+The source checkpoint through verification head `302b86585d4e1eb122c5afe30503828e10c8d025` changed only canonical docs/state, proving no executable source/test/migration/workflow drift.
 
-Exact source-head evidence at handoff:
+Closure evidence:
 
-- Architecture Guard `34868596586` — **SUCCESS**;
-- Frontend Preparation `34868596646` — **SUCCESS**;
-- Admin AI Operations `34868596701` — **SUCCESS**;
-- Combined Integration `34868596865` — **IN PROGRESS** at last observation;
-- Stage13G Admin Operations `34868596682` — **IN PROGRESS** at last observation.
+- Architecture Guard `34870253383` — **SUCCESS**;
+- Frontend Preparation `34870253413` — **SUCCESS**;
+- Admin AI Operations `34870253417` — **SUCCESS**;
+- Combined Integration `34870253434` — **SUCCESS**;
+- Stage13G Admin Operations `34870253431` — **SUCCESS**, including Admin/API quality, clean PostgreSQL/contracts, security/auth/integration regressions and real API + PostgreSQL + Chromium.
+
+Worker C sequence 38 performed verification/closure only; it made no executable production/test/migration/workflow mutation and opened no new seam.
 
 ## Exact continuation
 
-Do **verification/closure only** for AB-03.1.2:
+Perform **one discovery-only pass inside AB-03.1 Overview + Operations**:
 
-1. inspect Combined `34868596865` and Stage13G `34868596682`; if documentation-only commits supersede/cancel them, use the newest source-tree-equivalent runs only after proving no executable source/test/migration/workflow drift from `abe4f2c...`;
-2. require Combined Integration green plus Stage13G Admin/API quality, clean PostgreSQL/contracts, relevant regression suites and real API + PostgreSQL + Chromium green;
-3. fix only a genuine root regression inside this same seam if one appears;
-4. when all required evidence is green, mark AB-03.1.2 DONE and only then perform a fresh discovery-only pass inside Overview + Operations;
-5. do not start another ownership seam or Curriculum/Content/OCR before closure.
+1. inspect operator jobs and the current PostgreSQL/API/security/audit contracts;
+2. inspect current backend/frontend owners plus integration/Chromium evidence;
+3. decide whether exactly one smallest high-confidence end-to-end correction remains;
+4. if one is justified, document its owner/boundary and verification contract before mutation;
+5. if none is justified, prepare AB-03.1 closure/advance rather than inventing a seam;
+6. do not begin Curriculum/Content/OCR in the same increment.
 
 ## Main reconciliation need
 
