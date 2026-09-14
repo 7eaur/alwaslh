@@ -83,6 +83,22 @@ BEGIN
     asset_record := NEW;
   END IF;
 
+  IF TG_OP = 'UPDATE'
+     AND OLD.kind IS NOT DISTINCT FROM NEW.kind
+     AND OLD.position IS NOT DISTINCT FROM NEW.position
+     AND OLD.storage_key IS NOT DISTINCT FROM NEW.storage_key
+     AND OLD.mime_type IS NOT DISTINCT FROM NEW.mime_type
+     AND OLD.byte_size IS NOT DISTINCT FROM NEW.byte_size
+     AND OLD.width IS NOT DISTINCT FROM NEW.width
+     AND OLD.height IS NOT DISTINCT FROM NEW.height
+     AND OLD.checksum_sha256 IS NOT DISTINCT FROM NEW.checksum_sha256
+     AND OLD.source_page_number IS NOT DISTINCT FROM NEW.source_page_number
+     AND OLD.media_asset_id IS NOT DISTINCT FROM NEW.media_asset_id
+     AND OLD.publication_status IS NOT DISTINCT FROM NEW.publication_status
+     AND OLD.asset_published_at IS NOT DISTINCT FROM NEW.asset_published_at THEN
+    RETURN NEW;
+  END IF;
+
   SELECT * INTO lesson_record
     FROM lessons
    WHERE id = asset_record.lesson_id;
@@ -153,6 +169,66 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION bump_lesson_revision_for_reader_ocr()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  variant_id uuid;
+  old_visible boolean := false;
+  new_visible boolean := false;
+  old_text text;
+  new_text text;
+  target record;
+BEGIN
+  IF TG_OP <> 'INSERT' THEN
+    old_text := coalesce(nullif(OLD.normalized_text, ''), nullif(OLD.raw_text, ''));
+    old_visible := OLD.status = 'completed'
+      AND OLD.review_status IN ('not_required', 'approved')
+      AND old_text IS NOT NULL;
+  END IF;
+  IF TG_OP <> 'DELETE' THEN
+    new_text := coalesce(nullif(NEW.normalized_text, ''), nullif(NEW.raw_text, ''));
+    new_visible := NEW.status = 'completed'
+      AND NEW.review_status IN ('not_required', 'approved')
+      AND new_text IS NOT NULL;
+  END IF;
+
+  IF NOT old_visible AND NOT new_visible THEN
+    IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+    RETURN NEW;
+  END IF;
+
+  IF TG_OP = 'UPDATE'
+     AND old_visible = new_visible
+     AND OLD.input_media_variant_id = NEW.input_media_variant_id
+     AND old_text IS NOT DISTINCT FROM new_text THEN
+    RETURN NEW;
+  END IF;
+
+  variant_id := CASE WHEN TG_OP = 'DELETE' THEN OLD.input_media_variant_id ELSE NEW.input_media_variant_id END;
+
+  FOR target IN
+    SELECT DISTINCT l.id AS lesson_id
+      FROM media_variants mv
+      JOIN media_assets ma ON ma.id = mv.media_asset_id
+      JOIN lesson_assets la ON la.media_asset_id = ma.id
+      JOIN lessons l ON l.id = la.lesson_id
+     WHERE mv.id = variant_id
+       AND la.publication_status = 'published'
+       AND l.status = 'active'
+       AND l.published_at IS NOT NULL
+  LOOP
+    UPDATE lessons
+       SET content_revision = content_revision + 1
+     WHERE id = target.lesson_id;
+  END LOOP;
+
+  IF TG_OP = 'DELETE' THEN RETURN OLD; END IF;
+  RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS lessons_content_revision_log ON lessons;
 CREATE TRIGGER lessons_content_revision_log
 AFTER INSERT OR UPDATE OR DELETE ON lessons
@@ -162,6 +238,11 @@ DROP TRIGGER IF EXISTS lesson_assets_content_revision_log ON lesson_assets;
 CREATE TRIGGER lesson_assets_content_revision_log
 AFTER INSERT OR UPDATE OR DELETE ON lesson_assets
 FOR EACH ROW EXECUTE FUNCTION record_lesson_asset_content_revision();
+
+DROP TRIGGER IF EXISTS reader_ocr_content_revision ON ocr_extractions;
+CREATE TRIGGER reader_ocr_content_revision
+AFTER INSERT OR UPDATE OR DELETE ON ocr_extractions
+FOR EACH ROW EXECUTE FUNCTION bump_lesson_revision_for_reader_ocr();
 
 CREATE INDEX IF NOT EXISTS idx_content_revisions_offline_delta
   ON content_revisions(revision, class_id, entity_type)
