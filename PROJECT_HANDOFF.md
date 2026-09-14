@@ -28,7 +28,7 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - branch: `rebuild/super-admin-foundation`;
 - PR #52 stays Draft and is never auto-merged;
 - never force-reset or force-push shared history;
-- live `main` observed in Worker A sequence 17: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
+- live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
 
 ## Execution governance
 
@@ -47,64 +47,49 @@ Backend remains one Fastify modular monolith over PostgreSQL. No microservices/D
 - AB-01.1 — DONE
 - AB-01.2 — DONE
 - AB-01.3 — DONE
-- AB-01.4 — ACTIVE
+- AB-01.4 — **DONE**
   - CORS — DONE
   - Health/readiness — DONE
   - Public error/not-found — DONE
   - Fastify construction/options — DONE
-  - Database lifecycle registration — **IMPLEMENTED / WAITING_FOR_CI**
-- AB-01.5 — PENDING
+  - Database lifecycle registration — DONE
+- AB-01.5 — **NEXT**
 - AB-01.6 — PENDING
 
-## Fifth-seam implementation
+## AB-01.4 final closure
 
-Source+test implementation HEAD:
+Fifth seam source+test implementation HEAD:
 
 `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`
 
-New owner:
+Owner:
 
 `apps/api/src/app/plugins/database-lifecycle.ts`
 
-`app.ts` now delegates with:
+The seam is now verified closed. `app.close()` delegates to the supplied database close operation exactly once, while `server.ts`, database construction, process signals, service graph, business routes, migrations/schema and Student frontend remain unchanged.
 
-`registerDatabaseLifecycle(app, database)`
+Source-tree-equivalent closure evidence:
 
-in the same composition position after business routes, health and public errors.
+- Architecture Guard `34825750566` — SUCCESS;
+- compare from source+test head to `e61400652267a4c836c40abf35a58a434b0fff08` changes only canonical docs;
+- Admin AI `34826063345` — SUCCESS;
+- Combined `34826063326` — SUCCESS including quality, clean PostgreSQL, DB/backend/auth regressions and real Chromium;
+- Stage13G `34826063330` — SUCCESS including Admin/API quality, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
 
-Focused `apps/api/tests/app.test.ts` coverage proves `app.close()` delegates to the supplied fake database close operation exactly once.
+## Why AB-01.4 stops here
 
-Unchanged by this seam:
-
-- `server.ts`;
-- database creation/pool/query/transaction behavior;
-- process-signal and startup-failure paths;
-- service graph and business routes;
-- migrations/schema;
-- Student frontend.
-
-## Verification state
-
-Architecture Guard `34825750566` — **SUCCESS** on the source composition commit.
-
-On source+test HEAD before documentation commits:
-
-- Stage13G `34825773710` — IN_PROGRESS; Admin UI lint/typecheck/unit/build already green when inspected;
-- Combined `34825773686` — IN_PROGRESS;
-- Admin AI `34825773676` — IN_PROGRESS.
-
-Documentation commits may supersede or cancel these runs. The next worker must inspect current/source-tree-equivalent Actions and must not infer success from cancellation.
+Current `apps/api/src/app.ts` still composes many services, cross-service composites and route registrations. That remaining work is broad business/module composition, not another small cross-cutting app-foundation seam. Do **not** create a giant service container, route registry or infrastructure bundle merely to shrink the file. Workflow-driven backend boundary corrections belong in AB-03 and residual normalization in AB-04.
 
 ## Exact next engineering step
 
-Do **not** start another extraction yet.
+Begin **AB-01.5 discovery only**.
 
-1. fetch current branch/main HEADs and shared state;
-2. verify source-tree-equivalent Architecture Guard/API lint/typecheck/unit/build/clean PostgreSQL/relevant integration/security/auth/real API+Chromium evidence for the implemented database lifecycle seam;
-3. if any gate fails, fix only its root cause;
-4. if the seam is fully green, mark **Database lifecycle registration — DONE**;
-5. then explicitly reassess whether AB-01.4 should close rather than inventing a broad sixth service-container, route-registry or infrastructure-bundle extraction;
-6. only after that decision may AB-01.5 begin.
+1. inspect generic/cross-cutting backend technical concerns currently scattered or misowned: common HTTP/auth helpers, errors, DB technical ownership, observability, media infrastructure;
+2. identify evidence of real duplication/cross-module misuse;
+3. select at most one small, bounded ownership correction with explicit contracts/tests, or record that no AB-01.5 extraction is justified;
+4. do not change business rules or module workflows during discovery;
+5. after any justified implementation, run Architecture Guard + relevant API/Admin/PostgreSQL/integration/Chromium gates;
+6. then proceed to AB-01.6 foundation closure gate.
 
 ## Remaining roadmap
 
