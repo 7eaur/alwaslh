@@ -7,11 +7,12 @@ import { createDatabase } from "../../src/db.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error("DATABASE_URL is required for Student offline sync integration tests");
+const requiredDatabaseUrl = databaseUrl;
 
 const origin = "http://127.0.0.1:5174";
 
 async function fixture() {
-  const db = createDatabase(databaseUrl);
+  const db = createDatabase(requiredDatabaseUrl);
   const studentRows = await db.query<{ id: string }>(
     "insert into profiles (role, display_name) values ('student', 'Stage16 sync student') returning id",
   );
@@ -78,7 +79,7 @@ test("offline delta is entitlement-scoped, cursor-bounded and backed by tombston
   const f = await fixture();
   const config = loadConfig({
     NODE_ENV: "test",
-    DATABASE_URL: databaseUrl,
+    DATABASE_URL: requiredDatabaseUrl,
     LOG_LEVEL: "silent",
     ALLOWED_ORIGINS: origin,
     SESSION_TTL_HOURS: "168",
