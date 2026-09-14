@@ -19,7 +19,7 @@ const config: AppConfig = {
   MEDIA_STORAGE_ROOT: "./.test-media-storage",
 };
 
-function fakeDatabase(options: { ready?: boolean } = {}): Database {
+function fakeDatabase(options: { ready?: boolean; onClose?: () => void | Promise<void> } = {}): Database {
   const executor: QueryExecutor = {
     async query() {
       return [];
@@ -33,9 +33,27 @@ function fakeDatabase(options: { ready?: boolean } = {}): Database {
     async transaction(work) {
       return work(executor);
     },
-    async close() {},
+    async close() {
+      await options.onClose?.();
+    },
   };
 }
+
+test("closing the app delegates to the supplied database close operation", async () => {
+  let closeCalls = 0;
+  const app = buildApp({
+    config,
+    database: fakeDatabase({
+      onClose() {
+        closeCalls += 1;
+      },
+    }),
+  });
+
+  assert.equal(closeCalls, 0);
+  await app.close();
+  assert.equal(closeCalls, 1);
+});
 
 test("GET /health is process health only", async () => {
   const app = buildApp({ config, database: fakeDatabase({ ready: false }) });
