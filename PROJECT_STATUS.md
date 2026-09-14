@@ -8,23 +8,13 @@
 
 ## Binding responsibility
 
-This workstream is responsible for:
+This workstream owns the complete Super Admin product plus the full backend/server product, PostgreSQL/migrations/integrity, security and shared/server contracts consumed by Admin or Student, and the CI/integration/browser evidence needed to prove them.
 
-- **the complete Super Admin product** — frontend architecture, IA, UX/UI, routing, accessibility, RTL, responsive behavior, performance and maintainability;
-- **the full backend/server product** — Fastify API, PostgreSQL/migrations, security, business rules, module boundaries, data flow, performance and integration;
-- server-side capabilities consumed by Admin, Student or both, including auth/session/device, access/entitlements, curriculum/publication, content/media/OCR, AI/human review, Question Bank, Quiz Builder, assessment/scoring, offline authorization/integrity, notifications and operations;
-- shared packages only where a real shared contract/design responsibility exists;
-- CI, integration/security/contract tests and runtime/browser evidence needed to prove the above.
-
-### The only structural exclusion
-
-`apps/student-web` **frontend implementation itself** is owned by the separate Student workstream/conversation.
-
-This workstream does **not** redesign/restructure the Student shell, routes, pages, visual composition or frontend feature architecture. This exclusion does **not** exclude Student-facing backend capabilities. If this workstream changes a shared/server contract, Student tests/code may be inspected or run as consumer-regression evidence.
+The only structural exclusion is `apps/student-web` frontend implementation itself. Student-facing backend capability remains in scope; Student frontend code/tests may be inspected only as consumer-regression evidence when shared/server contracts change.
 
 ## Canonical active authorities
 
-Read in this order for this workstream:
+Read in this order:
 
 1. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` — live continuation point and worker handoff;
 2. `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md` — binding alternating execution rules;
@@ -42,50 +32,21 @@ Read in this order for this workstream:
 
 Older `PLATFORM_ARCHITECTURE_*` documents are historical rationale only and are superseded for execution by the scoped AB workstream.
 
-## Alternating scheduled continuation
+## Scheduled continuation law
 
-Two scheduled workers continue the **same ordered roadmap**, not separate tracks:
+Worker A and Worker B continue the same ordered roadmap, staggered by 30 minutes. Every run reads the live state, current branch/main HEADs, exact-head CI and canonical docs before mutation; performs one smallest coherent increment; verifies it; then records ending HEAD, evidence and the exact next step. If another worker is still active, do not create overlapping mutations.
 
-- Worker A runs at the top of each hour;
-- Worker B runs at half past each hour;
-- together they provide one execution opportunity every 30 minutes.
+Normal handoff states are `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE`.
 
-Every run MUST read the live execution-state file, current branch/main HEADs, exact-head CI and canonical docs before mutation. It performs one smallest coherent increment, verifies it, then records ending HEAD, changed ownership/files, CI evidence and the exact next step for the other worker.
+## Branch reconciliation
 
-Anti-collision rule: if the prior worker appears still active, the next worker does not mutate overlapping code. It inspects state/CI only and avoids parallel conflicting work.
+Continue isolated Admin/backend work without importing Student frontend implementation. Re-compare live `main` before every structural phase boundary and before PR readiness.
 
-Every normal run ends in exactly one shared state:
+Latest reconciliation in Worker A sequence 1:
 
-- `READY_FOR_NEXT`;
-- `WAITING_FOR_CI`;
-- `BLOCKED`;
-- `COMPLETE`.
-
-Full rules: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_PROTOCOL_2026-09-14.md`.
-Exact continuation: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`.
-
-## Cross-workstream principles adopted from Student refoundation
-
-- **Clarity → Ease of use → Flow → Visual comfort → Consistency → Polish**;
-- one shell/route/workflow owner per responsibility;
-- preserve contracts, not presentation debt;
-- no fabricated metrics/counts/progress/health/outcomes/actions;
-- loading/empty/error/permission/conflict/unavailable/success/recovery are first-class states;
-- clickable must look clickable; static must look static;
-- lazy-load substantial destination/workflow routes rather than tiny components;
-- tests assert outcomes/contracts, not obsolete wording/DOM shape;
-- old UI is not preserved merely because historical tests targeted it;
-- compatibility/legacy bridges have explicit deletion conditions;
-- motion is functional and honors reduced motion;
-- UI completion never implies backend/stage completion without authoritative server evidence.
-
-## Branch reconciliation rule
-
-Continue isolated Admin/backend work without importing Student frontend implementation, but re-compare live `main` before every structural phase boundary.
-
-If `main` gains Admin/API/migrations/shared-contract changes, pause and reconcile before continuing. Reconcile current `main` again before PR #52 becomes review/merge-ready.
-
-Latest AB-01 entry reconciliation confirmed live `main` remained `3053640cc5bb0699cfa7456cf646e8997f6aa81b`; no newer Admin/API/migrations work needed importing before foundation execution.
+- live `main`: `3053640cc5bb0699cfa7456cf646e8997f6aa81b`;
+- unchanged from prior AB-01 reconciliation;
+- no new overlapping Admin/API/migrations/shared-contract change observed.
 
 ## Permanent architecture/product rules
 
@@ -93,25 +54,21 @@ Latest AB-01 entry reconciliation confirmed live `main` remained `3053640cc5bb06
 - Backend remains one Fastify modular monolith; no microservices.
 - Student-facing backend security/business authority remains server-owned and protected.
 - Admin `app` composes only; features own workflows/routes/API adapters/models/tests.
+- App imports feature code through supported public/routes boundaries only.
 - Feature internals are private; cross-feature work uses narrow public contracts or app orchestration.
-- Target Admin feature concepts follow operator jobs: auth, overview, curriculum, content/OCR, AI jobs/review, questions, quizzes, students, access-codes, operations.
-- Contextual AI authoring belongs with Lesson/Question/Quiz workflows rather than a permanent catch-all top-level workspace.
-- `packages/ui` owns cross-product primitives/semantics; Admin `shared/ui` owns Admin-only reusable patterns.
-- `shared` never becomes a dumping ground.
+- `packages/ui` owns cross-product primitives only; Admin `shared/ui` owns Admin-only reusable patterns.
+- `shared` never becomes a dumping ground and cannot import feature/app internals.
 - No new feature files in Admin root `src/`.
-- Major workflow routes lazy-load by default; no artificial tiny-chunk splitting.
+- Substantial workflow routes lazy-load by default; no artificial tiny-chunk splitting.
 - One Admin shell owns global chrome/navigation.
-- Keep verified `/app` as Admin base unless runtime evidence justifies changing it; improve child-route semantics instead.
-- No new global state/query framework without evidence.
-- No Tailwind/CSS-in-JS/styling-stack rewrite without evidence.
-- Backend module layers are a dependency model, not mandatory empty folders/interfaces.
-- No DI/service-locator/interface ceremony without demonstrated value.
-- Database schema changes require domain/integrity need, never folder restructuring.
-- Overview is attention-first and uses authoritative values only.
-- Technical IDs/provider/runtime/storage/raw JSON are progressive/advanced details unless needed for the operator decision.
-- RTL/a11y/responsive/reduced-motion are architecture requirements.
+- Keep verified `/app` base unless runtime evidence justifies changing it.
+- No global state/query framework, DI/service locator, microservices or styling-stack rewrite without evidence.
+- Database changes require domain/integrity need, never folder restructuring.
+- No fabricated metrics/counts/progress/health/outcomes/actions.
+- Loading/Empty/Error/Permission/Conflict/Unavailable/Long-running/Success/Recovery are first-class states.
+- Arabic-first RTL, keyboard/focus, responsive/no-overflow and reduced-motion are architecture requirements.
 - Tests/security/validation are never weakened to make migration pass.
-- No permanent dual ownership: replacement closes with legacy deletion or a bounded explicit removal condition.
+- No permanent dual ownership: every compatibility bridge has a deletion condition.
 
 Migration law:
 
@@ -119,46 +76,73 @@ Migration law:
 
 ## AB-00 — CLOSED
 
-- **AB-00.1 Ownership & boundary map — DONE**
-- **AB-00.2 Current-file + dependency inventory — DONE**
-- **AB-00.3 Architecture Guard — DONE / active ratchet**
-- **AB-00.4 Admin bundle/runtime + backend composition baseline — DONE**
-- **AB-00.5 Foundation readiness — PASS**
+- AB-00.1 Ownership & boundary map — DONE
+- AB-00.2 Current-file + dependency inventory — DONE
+- AB-00.3 Architecture Guard — DONE / active ratchet
+- AB-00.4 Admin bundle/runtime + backend composition baseline — DONE
+- AB-00.5 Foundation readiness — PASS
 
 Frozen measured baseline:
 
-- Admin JS: **968.68 kB / 193.92 kB gzip** — one oversized initial chunk; solve through ownership + route code splitting, never warning suppression.
-- Admin CSS: **91.38 kB / 13.68 kB gzip**.
-- Admin unit tests: **71/71 green** across 17 files.
-- API unit tests: **66/66 green**; typecheck/build green.
-- PostgreSQL 16 clean migration sequence: green.
+- Admin JS: **968.68 kB / 193.92 kB gzip**;
+- Admin CSS: **91.38 kB / 13.68 kB gzip**;
+- Admin unit tests: **71/71 green** across 17 files;
+- API unit tests: **66/66 green**; typecheck/build green;
+- PostgreSQL 16 clean migration sequence: green;
 - Combined real Chromium Admin acceptance at baseline: **9/9 green**.
-- Admin hotspot: `apps/admin-web/src/App.tsx` historically owned session + shell + navigation + routes and eagerly imported major workflows.
-- Backend hotspot: `apps/api/src/app.ts` manually composes/registers the broad service/module graph.
 
 ## AB-01 — ACTIVE
 
 Detailed execution authority: `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_2026-09-14.md`.
 
-- **AB-01.1 Shared API transport boundary — IMPLEMENTED; live exact-head state determines final DONE**
-  - owner: `apps/admin-web/src/shared/api/client.ts`;
-  - root `admin-api.ts` compatibility re-export is bounded transitional debt.
-- **AB-01.2 Auth/session ownership — IMPLEMENTED; live exact-head state determines final DONE**
-  - auth API: `apps/admin-web/src/features/auth/api/admin-auth-api.ts`;
-  - session lifecycle: `apps/admin-web/src/features/auth/model/AdminSessionProvider.tsx`;
-  - supported feature boundary: `apps/admin-web/src/features/auth/public/index.ts`;
-  - `App.tsx` no longer owns session state, restore/logout API calls or auth error interpretation.
-- **AB-01.3 Product-state primitives — NEXT after required gates are green**
-- **AB-01.4 Backend app composition foundation — PENDING**
-- **AB-01.5 Common backend technical ownership — PENDING**
-- **AB-01.6 Foundation closure gate — PENDING**
+### AB-01.1 Shared API transport boundary — DONE
+
+Owner: `apps/admin-web/src/shared/api/client.ts`.
+
+Owns fetch/credentials, JSON/blob transport, network/service error normalization, `ApiRequestError` and missing-session classification only. Root `admin-api.ts` compatibility re-export remains bounded transitional debt until feature adapters migrate.
+
+### AB-01.2 Auth/session ownership — DONE
+
+Owners:
+
+- `apps/admin-web/src/features/auth/api/admin-auth-api.ts`;
+- `apps/admin-web/src/features/auth/model/AdminSessionProvider.tsx`;
+- public boundary `apps/admin-web/src/features/auth/public/index.ts`.
+
+`App.tsx` no longer owns session state, restore/logout API calls or auth error interpretation.
+
+Final verification checkpoint for AB-01.1/AB-01.2: `d955a34087552377dc8b426ec1712e57f59fd8f6`.
+
+Evidence:
+
+- Stage13E Admin AI `34800888706` — SUCCESS;
+- Stage13E Combined Integration `34800888690` — SUCCESS;
+- Stage13G `34800888723` — SUCCESS including Admin quality, API quality, clean PostgreSQL migrations, integration/auth regressions and real API + PostgreSQL + Chromium;
+- Architecture Guard `34799891149` — SUCCESS on last source-code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a`;
+- `e0b90cd..d955a340` is documentation-only, so source architecture did not change after the successful guard.
+
+### AB-01.3 Product-state primitives — NEXT
+
+Inspect real repeated states first. Extract only the minimum proven Admin-only primitive. Current evidence shows duplication in Overview/Operations loading/error/retry states; do not create a generic mega-component or generic copy that hides server truth.
+
+### AB-01.4 Backend app composition foundation — PENDING
+
+Thin `apps/api/src/app.ts` by extracting real app-level composition/config/plugin responsibilities without changing business rules or introducing DI/repository ceremony.
+
+### AB-01.5 Common backend technical ownership — PENDING
+
+Normalize only proven cross-cutting technical concerns where ownership is genuinely shared.
+
+### AB-01.6 Foundation closure gate — PENDING
+
+Requires architecture guard, Admin/API quality, clean PostgreSQL, real Chromium and docs/code consistency after all AB-01 foundations are implemented.
 
 ## Full roadmap
 
-- `AB-00` — baseline + guardrails — **DONE**
-- `AB-01` — minimal shared foundations — **ACTIVE**
-- `AB-02` — thin Admin shell/router/providers/layouts + major lazy route boundaries
-- `AB-03` — end-to-end Admin/backend vertical slices in order:
+- AB-00 — baseline + guardrails — DONE
+- AB-01 — minimal shared foundations — ACTIVE
+- AB-02 — thin Admin shell/router/providers/layouts + major lazy route boundaries
+- AB-03 — end-to-end Admin/backend vertical slices in order:
   1. Overview + Operations
   2. Curriculum + Content + OCR
   3. AI Jobs + AI Review + contextual authoring transitions
@@ -166,18 +150,18 @@ Detailed execution authority: `docs/workstreams/ADMIN_BACKEND_AB01_EXECUTION_202
   5. Quiz Builder
   6. Students
   7. Access Codes
-- `AB-04` — remaining backend modular-monolith normalization, including server-only/Student-facing boundaries not naturally closed in AB-03
-- `AB-05` — final Admin design/interaction convergence audit
-- `AB-06` — frontend/backend performance and delivery validation + evidence-based budgets
-- `AB-07` — legacy removal + hard dependency enforcement
-- `AB-08` — final Super Admin + full Backend verification
+- AB-04 — remaining backend modular-monolith normalization
+- AB-05 — final Admin design/interaction convergence audit
+- AB-06 — frontend/backend performance and delivery validation + evidence-based budgets
+- AB-07 — legacy removal + hard dependency enforcement
+- AB-08 — final Super Admin + full Backend verification and live-main reconciliation
 
 No merge/readiness before AB-08 exact-head green.
 
 ## Immediate continuation authority
 
-Do **not** infer the next mutation from this static file alone. Always read first:
+Always read first:
 
 `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`
 
-That file owns the exact live continuation point, latest handoff, CI state and next smallest step.
+The next engineering mutation after Worker A sequence 1 is AB-01.3, subject to the live handoff/state and exact branch evidence at the next run.
