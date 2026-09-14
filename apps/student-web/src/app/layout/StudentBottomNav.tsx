@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { StudentIcon } from "../../student-icons";
+import { StudentIcon } from "../../shared/icons/StudentIcon";
 import { primaryStudentDestinations, type StudentDestination } from "./student-navigation";
 
 export function StudentBottomNav({ destination }: { destination: StudentDestination }) {
