@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { StudentIcon } from "../../student-icons";
+import { StudentIcon } from "../../shared/icons/StudentIcon";
 import { studentDestinationLabels, type StudentDestination } from "./student-navigation";
 
 export function StudentAppBar({ destination, online }: { destination: StudentDestination; online: boolean }) {
