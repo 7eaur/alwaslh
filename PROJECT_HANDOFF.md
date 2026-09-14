@@ -30,49 +30,55 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - never force-reset or force-push shared history;
 - live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-Main implementation delta remains Student-focused with no Admin/API/migration overlap; shared project docs require deliberate reconciliation before the AB-03 structural phase boundary.
+AB-02 → AB-03 phase-boundary reconciliation is complete. Live-main-only implementation changes are Student frontend/workflow and Student-specific CI/docs; no Admin/API/migration implementation overlap was found. Shared top-level docs diverge and remain subject to deliberate final reconciliation.
 
 ## Current phase
 
 - AB-00 — DONE
 - AB-01 — DONE / EXACT-HEAD VERIFIED
-- AB-02 — ACTIVE
+- AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-02.1 Global Admin shell/layout ownership — DONE
   - AB-02.2 Inner Admin route-table ownership — DONE
   - AB-02.3 Substantial workflow route lazy boundaries — DONE
   - AB-02.4 Auth login presentation ownership — DONE
-- AB-03..AB-08 — PENDING
+  - Final shell/router/provider closure inspection — DONE
+- AB-03 — NEXT / no source mutation started yet
+- AB-04..AB-08 — PENDING
 
 Canonical AB-02 record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 
-## AB-02.4 closure
+## AB-02 closure
 
-Source implementation checkpoint: `d4c3c7896043ea6b1cc4cac1dd404d7912131916`.
+The final live inspection confirms the target shell/router/provider architecture is sufficient:
 
-Ownership is now feature-correct:
+- `App.tsx` composes `AdminSessionProvider`, session boundary, `LoginScreen`, `AdminShell`, and `AdminRoutes` only;
+- `AdminShell` owns global chrome/navigation/account controls;
+- `AdminRoutes` owns the inner route table, route-local wrappers/redirects/not-found and route-level lazy/Suspense boundaries;
+- outer `router.tsx` owns `/app/*`, route focus and outer not-found behavior;
+- auth session internals are feature-owned and exposed through `features/auth/public`;
+- remaining legacy workflow pages under `src/admin/*` are intentionally migrated slice-by-slice in AB-03 and are not an AB-02 blocker.
 
-- `apps/admin-web/src/features/auth/ui/LoginScreen.tsx` owns login presentation;
-- `apps/admin-web/src/features/auth/public/index.ts` exposes the narrow composition contract;
-- `App.tsx` consumes login presentation through that public boundary;
-- transitional root `apps/admin-web/src/LoginScreen.tsx` is removed.
+No additional shell/router/provider abstraction is justified.
 
-The verification head `080b8e131da72b0795f647809239a815d4604210` differs from the implementation checkpoint only by canonical/shared documentation. Required closure evidence is green:
+Latest source-tree-equivalent verification remains green:
 
-- Architecture Guard `34853562192` — SUCCESS;
+- Architecture Guard `34853562192` — SUCCESS on source checkpoint `d4c3c7896043ea6b1cc4cac1dd404d7912131916`;
 - Admin AI `34853935899` — SUCCESS;
-- Combined Integration `34853935696` — SUCCESS;
-- Stage13G `34853935720` — SUCCESS, including Admin/API quality, clean PostgreSQL migrations/contracts, auth/security/integration regressions and Real API + PostgreSQL + Chromium.
+- Combined Integration `34853935696` — SUCCESS on verification head `080b8e131da72b0795f647809239a815d4604210`;
+- Stage13G `34853935720` — SUCCESS on the same verification head, including Admin/API quality, clean PostgreSQL migrations/contracts, auth/security/integration regressions and Real API + PostgreSQL + Chromium.
+
+Compare from `080b8e...` through the AB-02 closure handoff chain shows documentation-only changes; no Admin/API/migration/test/workflow source changes.
 
 ## Exact continuation
 
-1. Perform one **final AB-02 closure inspection only** against live `App.tsx`, shell, router, providers and current architecture rules.
-2. Do not manufacture a new abstraction. Existing legacy `src/admin/*` workflow pages are explicitly transitional to AB-03 vertical-slice ownership.
-3. If no additional material AB-02 shell/router/provider debt is proven, close AB-02.
-4. Before starting AB-03, reconcile live `main` deliberately because this is a structural phase boundary.
-5. Do not combine AB-02 closure with the first AB-03 workflow migration.
+Start **AB-03.1 — Overview + Operations** only.
+
+The next worker must first inspect the current Overview/Operations frontend owners, related API routes/services, PostgreSQL authority, auth/security/audit contracts, existing integration tests and browser flows. Establish operator job → DB/API/security contract → current owner → target feature owner → parity/deletion condition before mutation.
+
+Choose only one smallest coherent end-to-end correction inside this slice. Do not combine Curriculum/Content/OCR or any later AB-03 slice in the same increment. Do not redesign Student frontend.
 
 ## Remaining roadmap
 
-Close AB-02 → reconcile live `main` → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+AB-03 vertical slices in order: Overview + Operations → Curriculum + Content + OCR → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
