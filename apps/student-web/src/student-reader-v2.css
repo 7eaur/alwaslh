@@ -1,0 +1,238 @@
+/* Student Experience V2 — focused Reader */
+.student-shell.is-focused-reader {
+  width: min(100% - 1rem, 68rem);
+  padding-block: .6rem max(1.4rem, env(safe-area-inset-bottom));
+}
+
+.student-focused-offline {
+  width: fit-content;
+  margin: 0 auto .75rem;
+  padding: .28rem .62rem;
+  border-radius: 999px;
+  background: var(--student-surface-selected, #e6f7f6);
+  color: var(--student-accent-strong, #007f78);
+  font-size: .74rem;
+  font-weight: 700;
+}
+
+.reader-shell {
+  width: min(100%, 58rem);
+  margin-inline: auto;
+}
+
+.reader-shell__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: .25rem 0 .9rem;
+  border-bottom: 1px solid var(--student-border, #e5e7eb);
+}
+
+.reader-shell__context {
+  min-width: 0;
+  max-width: 44rem;
+}
+
+.reader-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  min-height: 2.75rem;
+  margin-bottom: .2rem;
+  color: var(--student-accent-strong, #007f78);
+  font-size: .8rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.reader-shell__context > p:not(.reader-shell__summary) {
+  margin: 0 0 .22rem;
+  color: var(--student-text-muted, #6b7280);
+  font-size: .76rem;
+  font-weight: 600;
+}
+
+.reader-shell__context h1 {
+  margin: 0;
+  color: var(--student-heading, #123c43);
+  font-size: clamp(1.3rem, 4.4vw, 1.85rem);
+  font-weight: 720;
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.reader-shell__summary {
+  max-width: 42rem;
+  margin: .35rem 0 0;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .88rem;
+  line-height: 1.8;
+}
+
+.reader-speech-button {
+  min-height: 2.75rem;
+  padding-inline: .9rem;
+  white-space: nowrap;
+}
+
+.reader-shell__body {
+  display: grid;
+  gap: 1rem;
+}
+
+.reader-search {
+  width: min(100%, 30rem);
+  display: grid;
+  gap: .4rem;
+  padding-bottom: .2rem;
+}
+
+.reader-search label {
+  color: var(--student-heading, #123c43);
+  font-size: .78rem;
+  font-weight: 650;
+}
+
+.reader-search .text-input {
+  min-height: 2.9rem;
+  border-radius: .8rem;
+}
+
+.reader-search__status {
+  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  color: var(--student-text-secondary, #64748b);
+  font-size: .76rem;
+}
+
+.reader-pages {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.reader-page {
+  display: grid;
+  gap: .75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--student-border, #e5e7eb);
+}
+
+.reader-page:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.reader-media {
+  margin: 0;
+}
+
+.reader-media img {
+  display: block;
+  width: min(100%, 48rem);
+  height: auto;
+  max-height: 78dvh;
+  margin-inline: auto;
+  object-fit: contain;
+  border: 1px solid var(--student-border, #e5e7eb);
+  border-radius: .9rem;
+  background: var(--student-surface, #fff);
+}
+
+.reader-media figcaption {
+  width: min(100%, 48rem);
+  margin: .35rem auto 0;
+  color: var(--student-text-muted, #6b7280);
+  font-size: .7rem;
+}
+
+.reader-text {
+  width: min(100%, 42rem);
+  margin-inline: auto;
+  color: var(--student-text, #1f2937);
+  font-size: clamp(.98rem, 2vw, 1.06rem);
+  line-height: 2;
+}
+
+.reader-text p {
+  margin: 0;
+}
+
+.reader-text.is-muted {
+  color: var(--student-text-muted, #6b7280);
+  font-size: .82rem;
+}
+
+.reader-state,
+.reader-media-error,
+.reader-media-unsupported {
+  border-radius: .9rem;
+  box-shadow: none;
+}
+
+.reader-state {
+  width: min(100%, 36rem);
+  padding: 1rem;
+  border: 1px solid var(--student-border, #e5e7eb);
+  background: var(--student-surface, #fff);
+}
+
+.reader-state--offline {
+  border-color: color-mix(in srgb, var(--student-accent-strong, #007f78) 24%, var(--student-border, #e5e7eb));
+}
+
+.reader-media-error,
+.reader-media-unsupported {
+  width: min(100%, 48rem);
+  margin-inline: auto;
+  padding: 1rem;
+  border: 1px solid var(--student-border, #e5e7eb);
+  background: var(--student-surface-subtle, #f6f8f7);
+}
+
+.reader-back-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--student-accent-strong, #007f78) 24%, transparent);
+  outline-offset: 2px;
+  border-radius: .45rem;
+}
+
+@media (max-width: 47.99rem) {
+  .student-shell.is-focused-reader {
+    width: min(100% - .75rem, 68rem);
+    padding-top: .3rem;
+  }
+
+  .reader-shell__header {
+    grid-template-columns: 1fr;
+    gap: .65rem;
+  }
+
+  .reader-speech-button {
+    width: fit-content;
+  }
+
+  .reader-media img {
+    max-height: none;
+    border-radius: .75rem;
+  }
+
+  .reader-text {
+    margin-inline: 0;
+  }
+
+  .reader-search {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reader-shell *,
+  .reader-shell *::before,
+  .reader-shell *::after {
+    scroll-behavior: auto !important;
+  }
+}
