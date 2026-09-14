@@ -29,11 +29,39 @@ beforeEach(() => {
 });
 
 describe("applyOfflineContentDelta", () => {
+  it("bootstraps a missing cursor without replaying historical changes", async () => {
+    mocks.readCursor.mockReturnValue(null);
+    mocks.getDelta.mockResolvedValue({
+      version: 1,
+      after: "0",
+      nextCursor: "1",
+      latestCursor: "23",
+      hasMore: true,
+      entries: [{
+        revision: "1",
+        entityType: "lesson",
+        entityId: "lesson-old",
+        changeType: "delete",
+        classId: "class-1",
+        lessonId: "lesson-old",
+        contentRevision: 1,
+      }],
+    });
+
+    const result = await applyOfflineContentDelta("profile-1", "device-1");
+
+    expect(mocks.getDelta).toHaveBeenCalledWith("0", 1);
+    expect(mocks.removePackage).not.toHaveBeenCalled();
+    expect(mocks.writeCursor).toHaveBeenCalledWith("profile-1", "device-1", "23");
+    expect(result).toEqual({ pages: 1, entries: 0, removed: 0, nextCursor: "23", hasMore: false });
+  });
+
   it("applies a page before advancing the scoped cursor", async () => {
     mocks.getDelta.mockResolvedValue({
       version: 1,
       after: "0",
       nextCursor: "7",
+      latestCursor: "7",
       hasMore: false,
       entries: [{
         revision: "7",
@@ -61,6 +89,7 @@ describe("applyOfflineContentDelta", () => {
         version: 1,
         after: "10",
         nextCursor: "11",
+        latestCursor: "14",
         hasMore: true,
         entries: [{
           revision: "11", entityType: "lesson", entityId: "lesson-1", changeType: "upsert",
@@ -71,6 +100,7 @@ describe("applyOfflineContentDelta", () => {
         version: 1,
         after: "11",
         nextCursor: "14",
+        latestCursor: "14",
         hasMore: false,
         entries: [{
           revision: "14", entityType: "lesson_asset", entityId: "asset-1", changeType: "delete",
@@ -92,6 +122,7 @@ describe("applyOfflineContentDelta", () => {
       version: 1,
       after: "0",
       nextCursor: "8",
+      latestCursor: "8",
       hasMore: false,
       entries: [{
         revision: "8", entityType: "lesson", entityId: "lesson-1", changeType: "delete",
@@ -109,6 +140,7 @@ describe("applyOfflineContentDelta", () => {
       version: 1,
       after,
       nextCursor: String(Number(after) + 1),
+      latestCursor: "99",
       hasMore: true,
       entries: [],
     }));
