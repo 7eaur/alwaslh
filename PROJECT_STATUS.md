@@ -88,7 +88,11 @@ Exact-head green closure evidence:
 - Combined Integration `34898665724` — SUCCESS;
 - Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — SUCCESS.
 
-**Exact next smallest step:** perform AB-03.2 Content/OCR closure discovery only. Confirm whether `ContentOperationsPage.tsx` is the final legitimate consumer of the root compatibility facade and whether switching that single consumer to `features/content/public` allows safe facade deletion. Do not bulk-move pages/CSS, do not start AI, and do not delete compatibility exports without proven zero consumers.
+#### AB-03.2 closure discovery — DONE / DOC-ONLY
+
+Worker C sequence 54 directly inspected the compatibility facade, `ContentOperationsPage.tsx`, `OcrSourcePreview.tsx`, and `features/content/public`. The root `content-operations-api.ts` is a pure re-export facade; `OcrSourcePreview.tsx` already consumes `features/content/public`, while `ContentOperationsPage.tsx` remains the confirmed stale root-facade consumer. The executable tree from `866912f...` through the observed start head `707e52a...` differs only in canonical docs/state, so the exact-head green evidence above remains source-tree-equivalent for this discovery.
+
+**Exact next smallest step:** `AB-03.2.4 — retire the Content operations compatibility facade`. Repoint only `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` from `../../content-operations-api` to `../../features/content/public`, delete root `apps/admin-web/src/content-operations-api.ts`, then require strict Admin typecheck/Architecture Guard to prove no hidden consumer remains before closure. Do not bulk-move pages/CSS or begin AI in the same increment.
 
 ## Remaining roadmap
 
