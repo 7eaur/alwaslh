@@ -58,11 +58,11 @@ Closure evidence:
 
 Measured build: initial JS **196.84 kB / 64.11 kB gzip** from verified pre-seam **446.30 kB / 117.48 kB gzip**, with independent workflow chunks and no threshold/manualChunks tuning.
 
-## Seam 4 — Auth login presentation ownership — IMPLEMENTED / WAITING_FOR_CI
+## Seam 4 — Auth login presentation ownership — DONE
 
 ### Evidence / reason
 
-AB-01 explicitly left root `apps/admin-web/src/LoginScreen.tsx` as **transitional presentation debt for AB-02**. Remaining AB-02 discovery confirmed `App.tsx` still imported that root feature presentation directly while auth/session ownership otherwise already lived under `features/auth`.
+AB-01 explicitly left root `apps/admin-web/src/LoginScreen.tsx` as transitional presentation debt for AB-02. The seam moved this feature presentation into auth ownership without changing behavior.
 
 ### Source implementation checkpoint
 
@@ -70,24 +70,28 @@ AB-01 explicitly left root `apps/admin-web/src/LoginScreen.tsx` as **transitiona
 
 ### Ownership correction
 
-- created `apps/admin-web/src/features/auth/ui/LoginScreen.tsx` as the auth-owned presentation;
-- `features/auth/public/index.ts` now exposes `LoginScreen` as the narrow composition contract;
-- `App.tsx` consumes `LoginScreen` from `features/auth/public` alongside the existing session provider/hook;
-- deleted transitional root `apps/admin-web/src/LoginScreen.tsx`.
+- `apps/admin-web/src/features/auth/ui/LoginScreen.tsx` owns login presentation;
+- `features/auth/public/index.ts` exposes `LoginScreen` as the narrow composition contract;
+- `App.tsx` consumes `LoginScreen` through the auth public boundary;
+- transitional root `apps/admin-web/src/LoginScreen.tsx` is deleted.
 
-Behavior is intentionally unchanged: same form fields/validation attributes, pending/error handling, `loginAdmin` call, authenticated profile callback, session acceptance and post-auth focus behavior. No API/backend/PostgreSQL/migration/Student frontend changes were made.
+Behavior is unchanged: same form fields/validation attributes, pending/error handling, `loginAdmin` call, authenticated profile callback, session acceptance and post-auth focus behavior. No API/backend/PostgreSQL/migration/Student frontend changes were made.
 
-### Verification in progress
+### Closure evidence
 
-- Architecture Guard / Dependency ratchet on source HEAD: run `34853562192` — **SUCCESS**.
-- Stage13G run `34853562095` — **IN PROGRESS** at handoff observation; includes Admin UI quality, backend/PostgreSQL/integration and Real API + PostgreSQL + Chromium coverage.
-- Combined Integration run `34853562292` — **PENDING** at handoff observation.
+Source-tree-equivalent verification head: `080b8e131da72b0795f647809239a815d4604210`.
 
-Do not mark this seam DONE until required source-head/source-tree-equivalent gates are green.
+Compare from source implementation checkpoint to verification head shows only canonical/shared documentation files changed; no Admin/API/migration/test/workflow source changed.
+
+- Architecture Guard `34853562192` — SUCCESS.
+- Admin AI `34853935899` — SUCCESS.
+- Combined Integration `34853935696` — SUCCESS.
+- Stage13G `34853935720` — SUCCESS, including Admin lint/typecheck/unit/build, API lint/typecheck/unit/build, clean PostgreSQL migrations, DB contract verification, operations/security/audit/AI integrations, auth regression, and Real API + PostgreSQL + Chromium.
 
 ## Exact next step
 
-1. Verify/close Seam 4 only after relevant exact-head/source-tree-equivalent Admin, integration, PostgreSQL and Chromium gates are green.
-2. Then perform one final AB-02 closure inspection. If no additional material shell/router/provider debt is proven, close AB-02 rather than inventing abstraction.
-3. Reconcile live `main` before starting AB-03 because it is a structural phase boundary.
-4. Do not combine AB-02 closure with an AB-03 workflow migration.
+1. Perform one final AB-02 closure inspection against live `App.tsx`, shell, router and provider ownership.
+2. Existing legacy `src/admin/*` workflow pages are intentionally transitional until AB-03; do not use them as justification for mechanical AB-02 moves.
+3. If no material shell/router/provider debt remains, close AB-02 rather than inventing abstraction.
+4. Reconcile live `main` before starting AB-03 because it is a structural phase boundary.
+5. Do not combine AB-02 closure with an AB-03 workflow migration.
