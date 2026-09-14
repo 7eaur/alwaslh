@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — third AB-01.4 public-error composition seam verified and closed; next increment is discovery only.**
+Last consolidated: **2026-09-14 — fourth AB-01.4 Fastify construction seam selected by discovery; implementation is next.**
 
 ## Durable authority invariants
 
@@ -21,7 +21,7 @@ Admin initial JS **968.68 kB / 193.92 kB gzip**; Admin CSS **91.38 kB / 13.68 kB
 
 ## Branch governance
 
-Work branch: `rebuild/super-admin-foundation`; PR #52 remains Draft. Never auto-merge or force shared history. Latest reconciled `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; observed delta remains Student frontend/workflow + root documentation only for current AB-01 scope.
+Work branch: `rebuild/super-admin-foundation`; PR #52 remains Draft. Never auto-merge or force shared history. Latest live `main` observed during Worker C sequence 13: `258c855ace396a3f834199708c926411a3d65f79`. No structural phase boundary was crossed during this docs-only discovery increment.
 
 ## Permanent decisions
 
@@ -85,12 +85,44 @@ Preserved behavior:
 Closure evidence:
 
 - Architecture Guard `34816433721` — SUCCESS on source implementation HEAD;
-- compare `001d45892bf4a17458f3beaeaaa1a7430be49b44...068ee06cf7fec442b95ddada2667d8aac5d1c2a2` contains only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`, proving no affected source file changed after implementation;
+- compare `001d45892bf4a17458f3beaeaaa1a7430be49b44...068ee06cf7fec442b95ddada2667d8aac5d1c2a2` contains only documentation files, proving no affected source file changed after implementation;
 - source-tree-equivalent Admin AI `34816613371` — SUCCESS;
 - Combined `34816613431` — SUCCESS including API/Admin quality, clean PostgreSQL, DB contract, backend authority, auth/security regressions and real Admin Chromium;
-- Stage13G `34816613493` — SUCCESS including Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, Accounts/Access + Notifications/Operations + Reports/Settings/Security/Audit + AI authoring integration, Access/Auth regression, and real API + PostgreSQL + Chromium.
+- Stage13G `34816613493` — SUCCESS including Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, relevant integrations/auth regression, and real API + PostgreSQL + Chromium.
 
 Conclusion: deletion/switch condition and runtime/integration gates are satisfied. Third seam is **DONE**.
+
+#### Fourth seam — Fastify instance construction/options — SELECTED / IMPLEMENTATION NEXT
+
+Worker C sequence 13 performed discovery only. Starting branch HEAD before reservation: `2722de7d1d4d09f2eae7e3f9dc35624255f392fa`; reservation commit: `0b522a7de907c5bcbcc1af78a6db33db8fc6cbae`.
+
+Evidence:
+
+- live `apps/api/src/app.ts` still directly owns `Fastify(...)` construction before service/route composition;
+- `apps/api/tests/app.test.ts` consumes `buildApp({ config, database })` as the bootstrap contract and verifies representative liveness/readiness/CORS/public-error outcomes;
+- no dedicated contract/evidence authorizes changing Fastify option values, so extraction must preserve them literally rather than combine tuning with ownership cleanup.
+
+Selected target:
+
+- create `apps/api/src/app/create-fastify-instance.ts`;
+- narrow owner `createFastifyInstance(config: AppConfig): FastifyInstance`;
+- preserve logger silent/non-silent semantics, `disableRequestLogging: false`, `trustProxy: true`, `bodyLimit: 1_048_576`, `requestTimeout: 15_000`, one instance per `buildApp()` call and the current downstream registration order.
+
+Explicit non-goals:
+
+- no service graph/container/DI;
+- no broad route move;
+- no database `onClose` move;
+- no config/default tuning;
+- no migration/schema or Student frontend change;
+- no fifth seam in the same implementation batch.
+
+Switch/deletion condition:
+
+- the helper becomes the single value owner of `Fastify(...)` construction/options;
+- `app.ts` stops importing `Fastify` as a value and stops embedding those option literals;
+- `buildApp()` and downstream HTTP/security/database behavior remain unchanged;
+- Architecture Guard + API quality + clean PostgreSQL + relevant integration/security/auth + real Chromium/combined gates are green.
 
 ### AB-01.5 — PENDING
 
@@ -110,4 +142,4 @@ AB-01 active → AB-02 thin Admin shell/router/providers/layouts/lazy routes →
 
 ## Exact continuation
 
-Perform **discovery only** for the next smallest bounded AB-01.4 responsibility remaining in `apps/api/src/app.ts`. Document current owner, target owner, authoritative contracts/tests, ordering/dependency constraints, explicit non-goals and required closure gates. Do not implement the newly selected seam in that same discovery increment.
+Implement **only** the fourth AB-01.4 Fastify instance construction/options seam exactly as documented. Preserve existing options and `buildApp()` behavior; run the required gates; close the seam before performing discovery for any fifth seam.
