@@ -43,7 +43,7 @@ Migration law:
 
 ## Branch reconciliation
 
-Current live `main` observed during Worker A sequence 17: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the Student Experience V2 merge checkpoint. No overlapping Admin/API/migration change was introduced for the current AB-01 seam, and no structural phase boundary is being crossed.
+Current live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, the Student Experience V2 merge checkpoint. It does not overlap the just-closed AB-01.4 API composition seams. Reconcile again at the next structural phase boundary.
 
 ## AB-00 — DONE
 
@@ -65,44 +65,35 @@ Owners: `features/auth/api/admin-auth-api.ts`, `features/auth/model/AdminSession
 
 Source checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
-### AB-01.4 Backend app composition — ACTIVE
+### AB-01.4 Backend app composition foundation — DONE
 
-Closed seams:
+Closed bounded seams:
 
-- CORS/preflight — DONE, source `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
-- health/readiness — DONE, source `a302871b3486ae95810cea40dccca68363a29055`.
-- public not-found/error handling — DONE, source `001d45892bf4a17458f3beaeaaa1a7430be49b44`.
-- Fastify instance construction/options — DONE, source `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
+- CORS/preflight — source `dbdc9245f2d0e283d047d7e1254748e55f890a55`;
+- health/readiness — source `a302871b3486ae95810cea40dccca68363a29055`;
+- public not-found/error handling — source `001d45892bf4a17458f3beaeaaa1a7430be49b44`;
+- Fastify instance construction/options — source `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`;
+- database lifecycle registration — source+test `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`.
 
-Fourth-seam closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — SUCCESS/source-tree-equivalent green.
+Database lifecycle owner: `apps/api/src/app/plugins/database-lifecycle.ts`. `apps/api/src/app.ts` no longer embeds the database `onClose` hook; focused app test coverage proves `app.close()` delegates to the supplied `database.close()` exactly once.
 
-#### Fifth seam — database lifecycle registration — IMPLEMENTED / WAITING_FOR_CI
+Closure evidence for the fifth seam/source-equivalent tree:
 
-Source+test implementation HEAD: `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`.
+- Architecture Guard `34825750566` — SUCCESS on source composition commit;
+- compare `101f61a9c25e3de116d0074a3ef7e2f760eb98a7...e61400652267a4c836c40abf35a58a434b0fff08` changes only canonical documentation files;
+- Admin AI `34826063345` — SUCCESS;
+- Combined Integration `34826063326` — SUCCESS including API/Admin quality, clean PostgreSQL, database contract, backend authority/auth-security regressions and real Admin Chromium;
+- Stage13G `34826063330` — SUCCESS including Admin UI quality, API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
 
-Changes:
+AB-01.4 closes here. Remaining broad service construction, cross-service composites, multi-consumer infrastructure construction and whole-product route registration stay in `app.ts` for now. Moving them wholesale would create a giant container/registry without evidence; workflow-driven normalization belongs in AB-03 and residual backend cleanup in AB-04.
 
-- new sole registration owner `apps/api/src/app/plugins/database-lifecycle.ts`;
-- `apps/api/src/app.ts` now delegates database-close hook registration via `registerDatabaseLifecycle(app, database)` in the same composition position after business routes, health and public-error composition;
-- focused `apps/api/tests/app.test.ts` parity coverage proves `app.close()` delegates to the supplied `database.close()` exactly once;
-- `server.ts`, database creation/pool/query/transaction behavior, service graph, business routes, migrations/schema and Student frontend were not changed.
+### AB-01.5 Common backend technical ownership — NEXT
 
-Verification so far:
-
-- Architecture Guard `34825750566` — **SUCCESS** on the source composition commit;
-- Stage13G `34825773710` — **IN_PROGRESS** on the source+test head; Admin UI lint/typecheck/unit/build already green inside that run when last inspected;
-- Combined `34825773686` — **IN_PROGRESS**;
-- Admin AI `34825773676` — **IN_PROGRESS**.
-
-Do not mark this seam DONE until the required source/source-tree-equivalent API quality, clean PostgreSQL, integration/security/auth and real API+Chromium evidence is green. After closure, reassess whether AB-01.4 itself should close; do not invent a broad sixth extraction without evidence.
-
-### AB-01.5 Common backend technical ownership — PENDING
-
-Only justified cross-cutting technical foundations.
+Normalize only proven cross-cutting technical concerns. Domain/business rules remain with module owners. Discovery must identify an actual duplicated/misowned technical concern before any extraction.
 
 ### AB-01.6 Foundation closure gate — PENDING
 
-Requires Architecture Guard, Admin/API quality, clean PostgreSQL, relevant integration/security/auth and real Chromium evidence with docs/code consistency.
+Requires one-owner foundations, no new dependency violations, bounded compatibility debt, Architecture Guard, Admin/API quality, clean PostgreSQL, relevant integration/security/auth and real API + PostgreSQL + Chromium evidence, with docs matching code.
 
 ## Remaining roadmap
 
@@ -118,4 +109,4 @@ No merge/readiness before AB-08 exact-head green. After verified AB-08 completio
 
 ## Immediate next action
 
-Inspect the fifth-seam source/source-tree-equivalent CI above. If green, close **only** the database lifecycle seam and then reassess AB-01.4 for closure before authorizing any sixth composition extraction. If a gate fails, fix the root cause only; do not start unrelated work.
+Begin **AB-01.5 discovery only**: inspect currently duplicated/misowned cross-cutting backend technical concerns (HTTP/auth/error/db/observability/media infrastructure) and select at most one small evidence-backed ownership correction. Do not invent shared abstractions, containers or framework layers. If no AB-01.5 move is justified, document that and proceed to AB-01.6 rather than manufacturing work.
