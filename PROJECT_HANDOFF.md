@@ -28,9 +28,9 @@ Excluded only: structural/design implementation of `apps/student-web` frontend. 
 - branch: `rebuild/super-admin-foundation`;
 - PR #52 stays Draft and is never auto-merged;
 - never force-reset or force-push shared history;
-- live `main`: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`.
+- live `main`: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-Latest live-main reconciliation shows the only move since the prior checkpoint is Student Experience V2; no `apps/api`, `apps/admin-web`, or `database/migrations` path appears in that main-only delta.
+Relative to prior reconciled main `258c5bc2c09a049afb57c0593b5b6ca9db532c62`, implementation changes are Student-focused and do not overlap `apps/admin-web`, `apps/api`, or `database/migrations`. Shared project docs did move and require deliberate reconciliation later.
 
 ## Execution governance
 
@@ -49,69 +49,67 @@ Canonical AB-02 execution record:
 
 ## AB-02.1 closure — Global Admin shell/layout ownership — DONE
 
-Source implementation checkpoint:
+Source implementation checkpoint: `0d07a24aa062ad569ff654524bdc13a4e368f399`.
 
-`0d07a24aa062ad569ff654524bdc13a4e368f399`
-
-Owner:
-
-`apps/admin-web/src/app/layouts/AdminShell.tsx`
-
-`App.tsx` no longer owns global sidebar/navigation/account/logout markup. It composes authenticated state as `AdminShell + AdminRoutes`.
+Owner: `apps/admin-web/src/app/layouts/AdminShell.tsx`.
 
 Verified closure evidence:
 
 - Architecture Guard `34838037118` — SUCCESS;
 - Frontend Preparation `34838037114` — SUCCESS;
 - Combined Integration `34838123077` — SUCCESS;
-- Stage13G `34838123143` — SUCCESS, including Admin/API quality, clean PostgreSQL, backend/auth/security integrations and real API + PostgreSQL + Chromium.
+- Stage13G `34838123143` — SUCCESS.
 
-Earlier long source-head runs were cancelled by later documentation pushes; current-head required equivalent coverage completed green.
+## AB-02.2 — Inner Admin route-table ownership — IMPLEMENTED / WAITING_FOR_CI
 
-## Exact continuation — AB-02.2 Inner Admin route-table ownership
+Source implementation checkpoint:
 
-Live `apps/admin-web/src/App.tsx` still owns:
+`732555cb9b8499c712ad6cd19ad50cccf26a8e4a`
 
-- every large workflow import;
-- the full inner `/app/*` route table;
-- redirects and inner not-found composition;
-- route-only wrappers `ReviewArea` and `WorkspaceWithRelatedActions`.
-
-Live `apps/admin-web/src/app/` has no router owner yet. `features/` currently contains only Auth; other workflow surfaces remain transitional under `src/admin/*`. Outer `router.tsx` already owns product-level `/`, `/app/*`, outer not-found and `RouteFocus` and must not be duplicated in this seam.
-
-### Next smallest source mutation
-
-Create:
+New owner:
 
 `apps/admin-web/src/app/router/AdminRoutes.tsx`
 
-Move **only** the existing inner route-table composition and its route-only wrappers/not-found state from `App.tsx` into that module.
+The source seam moved only:
 
-Afterward `App.tsx` should keep session/provider/auth-state composition and `AdminShell + AdminRoutes` only.
+- the complete inner `/app/*` route table;
+- `ReviewArea`;
+- `WorkspaceWithRelatedActions`;
+- `AdminRouteNotFound`.
 
-### Do not combine in this seam
+`App.tsx` now keeps session/provider/auth-state composition plus `AdminShell + AdminRoutes`.
 
-- no feature folder migrations;
-- no new feature public/routes entries for all workflows;
-- no lazy imports/Suspense yet;
-- no URL/IA changes;
-- no workflow redesign;
-- no session-expiry contract change;
-- no outer `router.tsx` change;
-- no broad CSS/navigation-definition move.
+Deliberately unchanged:
 
-### Verification expectations
+- transitional `src/admin/*` workflow imports/ownership;
+- eager loading / no new Suspense;
+- URLs and redirects;
+- `onSessionExpired` contract;
+- outer `apps/admin-web/src/router.tsx`, `RouteFocus`, product-shell behavior;
+- workflow UI/CSS/business behavior;
+- API/PostgreSQL/migrations/Student frontend implementation.
 
-- Architecture Guard;
-- Admin lint/typecheck/unit/build;
-- relevant auth/session/navigation/deep-link/focus tests;
-- Stage13G real API + PostgreSQL + Chromium;
-- Combined Integration when triggered/required.
+### Current verification
 
-Mark AB-02.2 DONE only when exact-head-equivalent green evidence exists.
+Exact-head Actions for `732555cb…` started but were not complete at handoff:
+
+- Architecture Guard `34840954071` — queued at inspection;
+- Stage13G `34840953847` — queued/in-progress;
+- Stage13E Admin Web quality `34840953959` — queued;
+- Stage13E Admin AI `34840953862` — queued.
+
+Additional exact-head checks may be present; inspect the commit check-runs rather than relying only on this list.
+
+## Exact continuation
+
+1. Re-fetch live branch/main and shared state.
+2. Inspect all required checks for source checkpoint `732555cb9b8499c712ad6cd19ad50cccf26a8e4a` or a source-tree-equivalent documentation head.
+3. If Architecture Guard + Admin quality + relevant route/auth/focus + Combined/Stage13G real API/PostgreSQL/Chromium are green, close **AB-02.2 only** and update canonical docs/state.
+4. If any gate fails, diagnose and fix the root cause without weakening tests/guardrails.
+5. Do not begin lazy-loading, feature route-entry migration, navigation ownership or another AB-02 seam until AB-02.2 is closed.
 
 ## Remaining roadmap
 
-AB-02 shell/router/providers/lazy routes → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 remaining backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final full verification and live-main reconciliation.
+AB-02 shell/router/providers/lazy routes → AB-03 vertical slices Overview+Operations → Curriculum+Content+OCR → AI Jobs + AI Review → Question Bank → Quiz Builder → Students → Access Codes → AB-04 remaining backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final full verification and live-main reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
