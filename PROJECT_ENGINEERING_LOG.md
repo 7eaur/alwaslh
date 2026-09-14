@@ -2,7 +2,7 @@
 
 > Consolidated engineering truth for the current Admin + Backend workstream. Repository code, PostgreSQL migrations/schema, executable CI and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — second AB-01.4 composition seam selected; implementation not yet started.**
+Last consolidated: **2026-09-14 — second AB-01.4 composition seam implemented; verification still active.**
 
 ## A. Durable authority invariants
 
@@ -67,37 +67,30 @@ Source HEAD: `dbdc9245f2d0e283d047d7e1254748e55f890a55`.
 
 - `apps/api/src/app/plugins/cors.ts` owns the existing global CORS/preflight policy;
 - `registerCorsPolicy(app, config)` preserves direct `onRequest` behavior, origin filtering, credentials, `Vary`, methods/headers and rejected-preflight semantics;
-- no health/readiness, public-error, DB-close, service-graph, route-registration, schema or Student frontend changes were included.
+- Architecture Guard `34808159011`, Admin AI `34809211720`, Combined `34809211704`, Stage13G `34809211707` — SUCCESS.
 
-Closure evidence:
+#### Second composition seam — health/readiness — IMPLEMENTED / WAITING_FOR_CI
 
-- Architecture Guard `34808159011` — SUCCESS;
-- Admin AI `34809211720` — SUCCESS;
-- Combined `34809211704` — SUCCESS;
-- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
+Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 
-#### Second composition seam — health/readiness — DISCOVERY DONE / IMPLEMENTATION NEXT
+Implemented:
 
-Discovery inspected the remaining live `apps/api/src/app.ts`, `apps/api/tests/app.test.ts`, `apps/api/src/db.ts` and `apps/api/src/server.ts`.
+- created `apps/api/src/app/http/health.ts`;
+- `registerHealthRoutes(app, database)` is now the sole owner of `/health` and `/ready` handlers;
+- `apps/api/src/app.ts` retains one composition call at the same relative position;
+- liveness remains process-only and independent from PostgreSQL;
+- readiness still calls only `database.ping()` and preserves the same success body, failure log message, 503 status and `not_ready` body;
+- direct tests in `apps/api/tests/app.test.ts` remain unchanged as parity authority;
+- public errors/not-found, DB close lifecycle, database setup, server startup/signals, service graph, migrations/schema and Student frontend were intentionally untouched.
 
-Decision:
+Verification observed at handoff:
 
-- current owner: inline `GET /health` and `GET /ready` handlers in `app.ts`;
-- target owner: `apps/api/src/app/http/health.ts`;
-- target composition API: `registerHealthRoutes(app, database)`;
-- rationale: one coherent app-level operational HTTP responsibility, no business-module dependency, no schema/security/auth/Student contract change, and three direct parity tests already exist.
+- Architecture Guard `34811642661` — SUCCESS;
+- Combined Integration `34811642693` — pending/running;
+- Stage13G `34811642622` — pending/running;
+- Admin AI `34811642629` — running.
 
-Parity requirements:
-
-- `/health` remains 200 `{ status: "ok", service: "alwaslh-api" }` even when DB ping would fail;
-- `/ready` remains 200 `{ status: "ready" }` when `database.ping()` resolves;
-- `/ready` preserves readiness error logging and returns 503 `{ status: "not_ready" }` when ping throws.
-
-Explicit non-goals: no not-found/public-error extraction, no DB-close lifecycle move, no database construction/config move, no `server.ts` signal/startup changes, no service graph/all-routes move, no migrations/schema, no Student frontend changes.
-
-Implementation closure requires Architecture Guard, API lint/typecheck/unit/build, clean PostgreSQL/integration evidence, Combined/equivalent backend authority regressions and Stage13G/equivalent real API + PostgreSQL + Chromium evidence.
-
-No source code was changed during this discovery. The next worker implements this seam only and must not select a third seam before verification.
+The second seam is not DONE until the pending API/PostgreSQL/integration/real Chromium evidence is green on the source tree. No third seam is authorized before closure.
 
 ### AB-01.5 — PENDING
 
@@ -117,4 +110,4 @@ AB-01 active → AB-02 thin Admin shell/router/providers/layouts/lazy routes →
 
 ## J. Exact continuation
 
-Read the live execution-state file first. Current durable continuation: **implement only the selected AB-01.4 health/readiness extraction, verify it fully, then decide whether another composition seam remains justified.**
+Read the live execution-state file first. Current durable continuation: **inspect the source-tree gates for the health/readiness extraction; close the seam only if green, otherwise fix the root cause. Do not select a third composition seam before closure.**
