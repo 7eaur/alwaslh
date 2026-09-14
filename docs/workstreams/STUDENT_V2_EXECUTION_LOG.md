@@ -41,15 +41,8 @@ The user approved a full Student Experience V2 foundation before future backend 
 
 ## Approved code decisions
 
-Canonical code architecture is documented in:
-
-`docs/product/STUDENT_FRONTEND_CODE_ARCHITECTURE_V2.md`
-
-Mandatory implementation rules are documented in:
-
-`docs/product/STUDENT_V2_IMPLEMENTATION_RULES.md`
-
-Key rule:
+Canonical code architecture is documented in `docs/product/STUDENT_FRONTEND_CODE_ARCHITECTURE_V2.md`.
+Mandatory implementation rules are documented in `docs/product/STUDENT_V2_IMPLEMENTATION_RULES.md`.
 
 > Shared once, feature-owned locally, page files stay thin.
 
@@ -57,11 +50,7 @@ No page/feature may continue growing into a routing + API + cache + storage + la
 
 ## Approved data/cache decisions
 
-Canonical policy:
-
-`docs/product/STUDENT_DATA_RESIDENCY_AND_CACHE_V2.md`
-
-Current direction:
+Canonical policy: `docs/product/STUDENT_DATA_RESIDENCY_AND_CACHE_V2.md`.
 
 - profile-scoped in-memory read-through cache;
 - request deduplication;
@@ -73,22 +62,19 @@ Current direction:
 - Notes/Saved/Needs Review target account-scoped IndexedDB once Stage17 ownership rules are explicit;
 - no durable curriculum/quiz snapshot database until revision/tombstone/delta semantics are authoritative.
 
-## Code already started on this branch
+## Foundation implemented
 
-- Student V2 theme/foundation layer introduced;
-- shared Student icon registry introduced;
-- shared runtime cache introduced;
-- Home rebuilt away from the duplicate destination-card wall;
-- Home reads real curriculum/quiz/attempt/download data only;
-- App Bar contract started;
-- bottom navigation refined with safe-area ownership;
-- relevant cache invalidation started for access changes.
+- Student V2 theme/foundation layer;
+- shared Student icon boundary;
+- shared runtime cache;
+- Home rebuilt away from duplicate destination cards;
+- Home uses only real curriculum/quiz/attempt/download data;
+- App Bar contract + safe-area bottom navigation;
+- access-change cache invalidation.
 
-## 2026-09-14 — first code-architecture extraction batch
+## Code architecture extraction
 
-The implementation moved from the flat `student-access.tsx` ownership model toward the approved V2 boundaries.
-
-Created:
+Created and wired:
 
 - `app/layout/student-navigation.ts`
 - `app/layout/StudentAppBar.tsx`
@@ -96,82 +82,81 @@ Created:
 - `app/layout/StudentDesktopNav.tsx`
 - `app/layout/StudentAppShell.tsx`
 - `app/routing/student-route-meta.ts`
+- `app/session/StudentSessionStates.tsx`
+- `shared/brand/StudentBrandLockup.tsx`
+- `shared/icons/StudentIcon.tsx`
+- `shared/data/student-runtime-cache.ts`
 - `shared/ui/FeatureLoading.tsx`
+- `shared/ui/Surface.tsx`
+- `shared/ui/SectionHeader.tsx`
+- `shared/ui/StatStrip.tsx`
+- `shared/ui/ListRow.tsx`
+- `shared/ui/FormAlert.tsx`
+- `shared/ui/LoadingSpinner.tsx`
+- `shared/ui/EmptyState.tsx`
 - `features/home/StudentHomeOverview.tsx`
 
-`student-access.tsx` was reduced to route/feature orchestration and no longer owns the App Bar, Bottom Navigation, adaptive navigation, route metadata, Home data loading or Home presentation.
+`student-access.tsx` is now primarily a route/feature orchestrator instead of owning shell, navigation, Home data and Home UI.
 
-No Learn/Reader implementation was rewritten in this batch because PR #57 still owns overlapping Stage16 offline Reader changes.
+## Entry/Auth V2
 
-## 2026-09-14 — shared primitives + entry/auth extraction batch
+`features/auth/StudentEntryExperience.tsx` is wired from `App.tsx` and `router.tsx` and owns Welcome, Activation, Login, forced password change, Recovery, Help and Support while preserving the existing secure auth/device-proof contracts.
 
-The second extraction batch continued the same architecture instead of adding more code to legacy flat files.
+`student-entry-v2.css` provides the current V2 entry/auth visual layer: simpler welcome, smaller hierarchy, calmer surfaces and mobile-safe spacing.
 
-Shared boundaries added:
+The old root `student-entry.tsx` remains temporarily until reference/test cleanup is safe.
 
-- `shared/icons/StudentIcon.tsx` — shared icon import boundary;
-- `shared/data/student-runtime-cache.ts` — shared cache import boundary;
-- `shared/brand/StudentBrandLockup.tsx` — one brand lockup using the official app icon asset;
-- `shared/ui/Surface.tsx`;
-- `shared/ui/SectionHeader.tsx`;
-- `shared/ui/StatStrip.tsx`;
-- `shared/ui/ListRow.tsx`;
-- `shared/ui/FormAlert.tsx`;
-- `shared/ui/LoadingSpinner.tsx`.
+## Account / Library / secondary surfaces V2
 
-Home now composes `StatStrip`, `SectionHeader` and `ListRow` instead of manually reproducing those structures.
+New feature-owned surfaces are wired:
 
-Shell App Bar / Bottom Nav / Desktop Nav now consume the shared icon boundary, and the App Bar/Desktop Nav consume the shared brand lockup.
+- `features/account/StudentAccountExperience.tsx`
+- `features/library/StudentLibraryExperience.tsx`
+- `features/notifications/StudentNotificationsExperience.tsx`
+- `features/progress/StudentProgressExperience.tsx`
 
-Session loading/unavailable/offline views were extracted from `App.tsx` to:
+Account no longer promotes logout at the top, does not assume a learner display name, and groups access/class-code/help with logout at the bottom.
 
-`app/session/StudentSessionStates.tsx`
+Library is direct access to Downloads / Notes / Saved / Needs Review and no longer repeats an article-style overview/dashboard. Future personal collections stay honest empty states until their contracts exist.
 
-A new modular entry/auth feature was created at:
+Notifications and Progress are intentionally honest future surfaces; no fabricated counts/progress are shown.
 
-`features/auth/StudentEntryExperience.tsx`
+## PR #57 / Stage16 reconciliation — IMPLEMENTED ON V2 BRANCH
 
-It owns:
+PR #57 (`stage16/student-016i`) was inspected file-by-file before reconciliation. Its security/runtime behavior was ported into the V2 architecture rather than overwriting V2 files.
 
-- Welcome;
-- Activation;
-- Login;
-- forced password-change flow;
-- Recovery;
-- Help;
-- Support;
-- public Help/Support pages.
+Preserved and integrated:
 
-`App.tsx` and `router.tsx` now route through this V2 auth feature instead of the legacy `student-entry.tsx` implementation. The legacy file remains temporarily for safe incremental removal after reference/test audit.
+- offline startup may recover only a bounded local presentation profile from the durable verified `profileId + deviceId` scope;
+- no synthetic server session/token is created;
+- an offline lesson deep link can enter the stored Reader path without requiring online curriculum;
+- `StudentOfflineLessonReaderPage` uses `loadUsableOfflineLessonPackage(...)` and renders only after existing lease/scope/signature/time/blob checks pass;
+- verified stored image bytes use temporary object URLs;
+- invalid/tampered/expired packages fail closed;
+- Downloads now expose `فتح الدرس` directly;
+- the persistent-profile real-Chromium cold-start Reader test was added;
+- Stage16 CI now runs that cold-start test with the existing lease/materialization browser tests.
 
-A new visual override layer `student-entry-v2.css` reduces editorial spacing, removes the welcome feature-list wall, shrinks auth hierarchy, uses calmer surfaces, and improves mobile safe-area spacing without changing backend/auth contracts.
-
-This batch also preserves the existing auth/device-proof/security flow; it only changes ownership/composition and UX copy/presentation.
-
-## Workstream overlap
-
-PR #57 (`stage16/student-016i`) is still the authoritative active workstream for true cold-start offline Reader behavior and changes overlapping files including `App.tsx`, `student-learning.tsx`, `student-reader.tsx`.
-
-Rule: do not rewrite overlapping Learn/Reader files in V2 until #57 is reconciled. Preserve its authorization/integrity/offline behavior.
+Important: this reconciliation preserves V2 modular `App.tsx`/auth/session ownership and does not copy PR #57's older top-level documentation over the newer V2 docs.
 
 ## Current order
 
 1. V2-00 architecture freeze — DONE.
-2. V2-01 foundation / shell / Home — IN PROGRESS.
-3. shared layout/primitives extraction — ACTIVE.
-4. Welcome/Auth redesign — ACTIVE / V2 FEATURE WIRED.
-5. PR #57 reconciliation.
-6. Learn/Subject scalable hierarchy.
-7. Reader.
+2. V2-01 foundation / shell / Home — IMPLEMENTED / VERIFICATION PENDING.
+3. shared layout/primitives extraction — IMPLEMENTED / VERIFICATION PENDING.
+4. Welcome/Auth redesign — IMPLEMENTED / VERIFICATION PENDING.
+5. PR #57 reconciliation — IMPLEMENTED / VERIFICATION PENDING.
+6. Learn/Subject scalable hierarchy — NEXT after exact-head compile/CI feedback.
+7. Reader visual/interaction V2.
 8. Practice/Models.
-9. Library/Account/secondary surfaces.
-10. local personal data.
+9. final secondary-surface polish and legacy-file cleanup.
+10. local personal data after Stage17 contracts.
 11. durable read-model caching when contracts allow.
 12. full visual/performance/a11y QA.
 
 ## Verification state
 
-The workstream remains **NOT YET VERIFIED** until the latest exact-head CI finishes and relevant browser/mobile/RTL/safe-area visual checks are complete.
+The branch remains **NOT YET VERIFIED** until the latest exact-head lint/typecheck/build/tests and relevant Chromium/mobile/RTL/safe-area visual checks are green.
 
 ## Done criteria
 
