@@ -5,7 +5,7 @@ import { AdminProductState } from "../../shared/ui/AdminProductState";
 import {
   type OperationsAttentionSummary,
   fetchAdminOperationsAttention,
-} from "../../admin-operations-api";
+} from "../../features/operations/public";
 import {
   attentionTotal,
   auditSubject,
