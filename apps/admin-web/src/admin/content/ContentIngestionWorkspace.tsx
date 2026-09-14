@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import {
-  ApiRequestError,
   type AdminCurriculumSnapshot,
   fetchAdminCurriculum,
-  isMissingSessionError,
-} from "../../admin-api";
+} from "../../features/curriculum/public";
+import { ApiRequestError, isMissingSessionError } from "../../shared/api/client";
 import {
   archiveContentIngestionTask,
   createContentIngestionTask,
