@@ -2,7 +2,7 @@ import type {
   OperationsAttentionSummary,
   OperationsAuditEntry,
   OperationsAuditSource,
-} from "../../admin-operations-api";
+} from "../../features/operations/public";
 
 export type AttentionCategory = "review" | "failure" | "support";
 
