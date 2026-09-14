@@ -49,8 +49,10 @@ async function publicError(response: Response, fallback: string): Promise<ApiReq
 export async function getStudentOfflineDelta(
   after: string,
   limit = 50,
+  through?: string,
 ): Promise<StudentOfflineDeltaPage> {
   const query = new URLSearchParams({ after, limit: String(limit) });
+  if (through !== undefined) query.set("through", through);
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl}/v1/student/offline/sync?${query.toString()}`, {
