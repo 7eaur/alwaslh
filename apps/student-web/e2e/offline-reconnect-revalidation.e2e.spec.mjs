@@ -71,8 +71,10 @@ test("reconnect revalidates current authority and purges a revoked lesson packag
   const authorityChange = revokeFixtureEntitlements(fixture.sessionToken);
   expect(authorityChange.revokedCount).toBeGreaterThan(0);
 
+  // Student Reader intentionally hides access denial as NOT_FOUND rather than
+  // exposing entitlement details, so reconnect must treat this 404 as revocation.
   const deniedManifest = page.waitForResponse((response) =>
-    response.url().includes(`/v1/student/offline/lessons/${lessonId}/manifest`) && response.status() === 403,
+    response.url().includes(`/v1/student/offline/lessons/${lessonId}/manifest`) && response.status() === 404,
   );
   await context.setOffline(false);
   await expect.poll(() => page.evaluate(() => navigator.onLine)).toBe(true);
