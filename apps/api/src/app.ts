@@ -33,6 +33,7 @@ import { StudentOfflineDownloadService } from "./offline/download.js";
 import { registerStudentOfflineRoutes } from "./offline/http.js";
 import { StudentOfflineService } from "./offline/service.js";
 import { createOfflineAuthorizationSigner } from "./offline/signing.js";
+import { StudentOfflineSyncService } from "./offline/sync.js";
 import { registerQuestionBankRoutes } from "./question-bank/http.js";
 import { QuestionBankRegenerationService } from "./question-bank/regeneration.js";
 import { registerQuestionBankRegenerationRoutes } from "./question-bank/regeneration-http.js";
@@ -81,6 +82,7 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   const studentReader = new StudentReaderService(database, mediaStorage);
   const studentAssessment = new StudentAssessmentService(database);
   const studentOffline = new StudentOfflineService(database);
+  const studentOfflineSync = new StudentOfflineSyncService(database, studentOffline);
   const offlineAuthorizationSigner = createOfflineAuthorizationSigner(config);
   const studentOfflineDownloads = new StudentOfflineDownloadService(
     studentOffline,
@@ -118,7 +120,14 @@ export function buildApp({ config, database }: AppDependencies): FastifyInstance
   registerCurriculumRoutes(app, config, auth, curriculum, studentReader);
   registerLessonAuthoringExportRoutes(app, config, auth, lessonAuthoringExports);
   registerStudentAssessmentRoutes(app, config, auth, studentAssessment);
-  registerStudentOfflineRoutes(app, config, auth, studentOffline, studentOfflineDownloads);
+  registerStudentOfflineRoutes(
+    app,
+    config,
+    auth,
+    studentOffline,
+    studentOfflineDownloads,
+    studentOfflineSync,
+  );
   registerAdminContentOperationsRoutes(app, config, auth, contentOperations);
   registerAdminContentIngestionRoutes(app, config, auth, contentIngestion);
   registerAdminAiOperationsRoutes(app, config, auth, aiOperations);
