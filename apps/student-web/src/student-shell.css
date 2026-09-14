@@ -306,9 +306,8 @@
     env(safe-area-inset-bottom, 0px)
     max(.45rem, env(safe-area-inset-right, 0px));
   border-top: 1px solid var(--student-border);
-  background: color-mix(in srgb, var(--student-surface) 97%, transparent);
+  background: var(--student-surface);
   box-shadow: 0 -8px 28px rgb(18 60 67 / .06);
-  backdrop-filter: blur(10px);
 }
 
 .student-bottom-nav__item {
