@@ -61,7 +61,7 @@ Verification:
 
 Conclusion: first AB-01.4 seam is **DONE**.
 
-### Second seam — HEALTH/READINESS IMPLEMENTED / WAITING_FOR_CI
+### Second seam — health/readiness HTTP ownership — DONE
 
 Source implementation HEAD: `a302871b3486ae95810cea40dccca68363a29055`.
 
@@ -75,14 +75,20 @@ Implemented exactly the selected bounded app-level responsibility:
 - the existing three direct health/readiness tests remain unchanged as parity authority;
 - public error/not-found handlers, database-close lifecycle, database construction/config, `server.ts`, service graph, migrations/schema and Student frontend were untouched.
 
-Verification status on the source HEAD:
+Closure evidence:
 
-- Architecture Guard `34811642661` — **SUCCESS**;
-- Stage13E Combined Integration `34811642693` — running/pending at this handoff;
-- Stage13G `34811642622` — running/pending at this handoff;
-- Stage13E Admin AI `34811642629` — running at this handoff.
+- Architecture Guard `34811642661` — SUCCESS on source implementation HEAD;
+- direct source Combined run `34811642693` was cancelled only because later documentation commits superseded it;
+- compare `a302871b3486ae95810cea40dccca68363a29055...b095741e621f9241ff3eed0de86b4e64048604bf` proves the five intervening commits changed documentation only: `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, this AB-01 execution doc and the autonomous execution-state file;
+- Stage13E Admin AI `34811809959` — SUCCESS on the documentation-only equivalent source tree;
+- Stage13E Combined Integration `34811809962` — SUCCESS including API/Admin quality gates, clean PostgreSQL, backend authority/auth regressions and real Admin Chromium;
+- Stage13G `34811810021` — SUCCESS including Admin/API lint/typecheck/unit/build, clean PostgreSQL, integration/auth regressions and real API + PostgreSQL + Chromium.
 
-Therefore the second seam is **not DONE yet**. Required closure still needs the pending API/integration/PostgreSQL/real Chromium evidence to become green on the source tree. No third composition seam may be selected before that closure.
+Conclusion: second AB-01.4 seam is **DONE**. No behavior, schema or Student frontend change was introduced.
+
+### Next AB-01.4 action
+
+Perform **discovery only** for the third bounded app-composition seam in `apps/api/src/app.ts`. Select one smallest responsibility backed by existing contracts/tests and explicit non-goals. Do not implement that third seam in the same discovery increment.
 
 ## AB-01.5 — Common backend technical ownership — PENDING
 
