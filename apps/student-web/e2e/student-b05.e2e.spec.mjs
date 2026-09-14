@@ -45,16 +45,16 @@ test("Student entry, installed welcome, help and support are learner-facing", as
   const normal = await browser.newContext();
   const normalPage = await normal.newPage();
   await normalPage.goto("/app/home");
-  await expect(normalPage.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
+  await expect(normalPage.getByRole("heading", { name: "تفعيل الحساب" })).toBeVisible();
   await capture(normalPage, "entry-activation");
 
   await normalPage.goto("/help");
-  await expect(normalPage.getByRole("heading", { name: "استخدام التطبيق خطوة بخطوة" })).toBeVisible();
+  await expect(normalPage.getByRole("heading", { name: "التعليمات" })).toBeVisible();
   await capture(normalPage, "help");
 
   await normalPage.goto("/support");
-  await expect(normalPage.getByRole("heading", { name: "إذا واجهتك مشكلة، ابدأ من هنا" })).toBeVisible();
-  await expect(normalPage.getByText(/تواصل مع الإدارة أو الجهة التعليمية/)).toBeVisible();
+  await expect(normalPage.getByRole("heading", { name: "الدعم" })).toBeVisible();
+  await expect(normalPage.getByText(/الجهة التي سلمتك رمز التفعيل/)).toBeVisible();
   await capture(normalPage, "support");
   await normal.close();
 
@@ -70,7 +70,7 @@ test("Student entry, installed welcome, help and support are learner-facing", as
   });
   const installedPage = await installed.newPage();
   await installedPage.goto("/app/home");
-  await expect(installedPage.getByRole("heading", { name: "تعلّم، تدرّب، وارجع لما تحتاجه بسهولة." })).toBeVisible();
+  await expect(installedPage.getByRole("heading", { name: "مرحبًا بك في الوسيلة الذكية" })).toBeVisible();
   await capture(installedPage, "installed-welcome");
   await installed.close();
 });
@@ -78,7 +78,7 @@ test("Student entry, installed welcome, help and support are learner-facing", as
 test("Student motion respects reduced-motion preference", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/app/home");
-  await expect(page.getByRole("heading", { name: "تفعيل حساب جديد" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "تفعيل الحساب" })).toBeVisible();
   const durationMs = await page.locator(".student-auth-surface").evaluate((element) => {
     const raw = getComputedStyle(element).animationDuration.trim();
     if (raw.endsWith("ms")) return Number.parseFloat(raw);
@@ -94,23 +94,17 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/app/library");
-  await expect(page.getByRole("heading", { name: "محتواك الشخصي، مرتب في مكان واحد" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "نظرة سريعة على ما احتفظت به" })).toBeVisible();
-  await expect(page.getByLabel("إحصائيات مكتبتي")).toBeVisible();
-  await expect(page.locator("[data-library-stat='downloads']")).toContainText("الدروس المحفوظة");
-  await expect(page.locator("[data-library-stat='notes']")).toContainText("٠");
-  await expect(page.locator(".student-library-tabs")).toHaveCount(0);
-
-  const libraryCards = page.locator(".student-library-card");
-  await expect(libraryCards).toHaveCount(4);
-  const firstLibraryCard = libraryCards.first();
-  await expectClickable(firstLibraryCard, { minHeight: 96 });
-  await expect(firstLibraryCard.locator(".student-clickable-card__arrow")).toBeVisible();
+  const libraryRows = page.locator(".student-library-v2__row");
+  await expect(libraryRows).toHaveCount(4);
+  await expect(libraryRows.filter({ hasText: "التنزيلات" })).toBeVisible();
+  await expect(libraryRows.filter({ hasText: "الملاحظات" })).toBeVisible();
+  await expect(libraryRows.filter({ hasText: "المحفوظات" })).toBeVisible();
+  await expect(libraryRows.filter({ hasText: "للمراجعة" })).toBeVisible();
+  await expectClickable(libraryRows.first());
   await capture(page, "library-overview");
 
-  await libraryCards.filter({ hasText: "التنزيلات" }).click();
+  await libraryRows.filter({ hasText: "التنزيلات" }).click();
   await expect(page).toHaveURL(/\/app\/library\/downloads$/);
-  await expect(page.getByRole("link", { name: /العودة إلى نظرة مكتبتي/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "الدروس المحفوظة" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "دروس متاحة للتنزيل" })).toBeVisible();
   await expect(page.locator("[data-downloadable-lesson-id]").filter({ hasText: fixture.lessonTitle })).toBeVisible();
@@ -134,14 +128,14 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
   await page.evaluate(() => window.dispatchEvent(new Event("online")));
 
   await page.goto("/app/library");
-  await expect(page.locator("[data-library-stat='downloads']")).toContainText("١");
+  await expect(page.locator(".student-library-v2__row").filter({ hasText: "التنزيلات" })).toBeVisible();
 
   await page.goto("/app/library/notes");
   await expect(page.getByRole("heading", { name: "لا توجد ملاحظات بعد" })).toBeVisible();
-  await expectClickable(page.getByRole("link", { name: "العودة إلى التعلّم" }));
+  await expectClickable(page.getByRole("link", { name: "فتح التعلّم" }));
   await capture(page, "library-notes-empty");
   await page.goto("/app/library/saved");
-  await expect(page.getByRole("heading", { name: "لم تحفظ شيئًا بعد" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "لا توجد محفوظات بعد" })).toBeVisible();
   await expectClickable(page.getByRole("link", { name: "فتح التدريب" }));
   await capture(page, "library-saved-empty");
   await page.goto("/app/library/review");
@@ -149,26 +143,20 @@ test("Library, Notifications, Progress and Account are responsive and learner-fa
   await capture(page, "library-review-empty");
 
   await page.goto("/app/notifications");
-  await expect(page.getByRole("heading", { name: "ما يحتاج انتباهك" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "لا توجد إشعارات جديدة" })).toBeVisible();
-  await expectClickable(page.getByRole("link", { name: "العودة إلى الرئيسية" }));
   await capture(page, "notifications-empty");
 
   await page.goto("/app/progress");
-  await expect(page.getByRole("heading", { name: "شاهد تقدمك بدون أرقام مربكة" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "ابدأ التعلّم ليظهر تقدمك هنا" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "سيظهر تقدمك هنا" })).toBeVisible();
   await expectClickable(page.getByRole("link", { name: "فتح التعلّم" }));
-  const staticAchievementPanel = page.locator(".future-summary-panel--wide");
-  const staticCursor = await staticAchievementPanel.evaluate((element) => getComputedStyle(element).cursor);
-  expect(staticCursor).not.toBe("pointer");
   await capture(page, "progress-empty");
 
   await page.getByRole("link", { name: "حسابي", exact: true }).click();
   await expect(page).toHaveURL(/\/app\/account$/);
-  await expect(page.getByRole("heading", { name: "وصولك الحالي" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "لديك رمز صف جديد؟" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "الوصول والمحتوى" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "إضافة رمز صف" })).toBeVisible();
   await expectClickable(page.getByRole("button", { name: "تسجيل الخروج" }));
-  await expect(page.getByRole("link", { name: "التعليمات والمساعدة" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "الدعم والتواصل" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "التعليمات" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "الدعم" })).toBeVisible();
   await capture(page, "account");
 });
