@@ -37,28 +37,32 @@ Source+test checkpoint for the fifth seam: `101f61a9c25e3de116d0074a3ef7e2f760eb
 
 Closure evidence includes Architecture Guard `34825750566`, Admin AI `34826063345`, Combined `34826063326`, and Stage13G `34826063330` — SUCCESS. Broad service construction/route composition intentionally remains for workflow-driven AB-03/AB-04 work; no giant service container or route registry is authorized.
 
-## AB-01.5 — Common backend technical ownership — DISCOVERY COMPLETE / IMPLEMENTATION NEXT
+## AB-01.5 — Common backend technical ownership — IMPLEMENTED / WAITING FOR EXACT-HEAD CI
 
 Canonical discovery: `docs/architecture/ADMIN_BACKEND_AB01_5_TECHNICAL_OWNERSHIP_DISCOVERY_2026-09-14.md`.
 
-One bounded correction is selected: the generic Zod→public-BAD_REQUEST request-validation adapter currently exported as `parseBody` from private Auth HTTP ownership.
+The one authorized correction is implemented: generic Zod request validation formerly exported as `parseBody` from private Auth HTTP is now owned by:
 
-Current evidence:
+`apps/api/src/shared/http/request-validation.ts`
 
-- `apps/api/src/auth/http.ts` owns `parseBody`, but the helper itself performs no authentication/session behavior;
-- `apps/api/src/question-bank/http.ts` imports it from `../auth/http.js` for params/query/body parsing;
-- `apps/api/src/quiz-builder/http.ts` does the same;
-- `currentProfile` is intentionally **not** included because it invokes AuthService/session authentication and is therefore materially Auth-owned.
+The first attempted placement under `app/http` was rejected by Architecture Guard because backend modules may not depend on app composition internals. The final shared HTTP owner is therefore intentional architecture, not a guard exception.
 
-Target owner:
+The contract remains unchanged: `safeParse` input, return parsed data on success, and throw `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)` on failure. `currentProfile`, `sessionToken`, authentication/session/cookie/role behavior remain Auth-owned.
 
-`apps/api/src/app/http/request-validation.ts`
+Exact-head CI on intermediate checkpoint `cba5de4bd37c9382efff91820866e7c3c2937915` exposed an incomplete caller audit: eight additional modules still imported `parseBody` from Auth and failed TypeScript compilation. Those compiler-proven imports were migrated without altering schemas or behavior. Complete source implementation checkpoint:
 
-Implementation must preserve the exact contract: `safeParse` input, return parsed data on success, and throw `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)` on failure. Before editing, search for every current caller and migrate only real callers.
+`d0352917f9df83dd15f9fbd7994ad79c1b9447dd`
 
-Explicit non-goals: no auth/session/cookie/role redesign; no schema registry; no AppError move; no root config/db/media/observability folder normalization; no Question Bank/AI contract correction; no broad module HTTP rewrite.
+Current source-head evidence:
 
-After this single correction is exact-head verified, **stop AB-01.5** and proceed to AB-01.6 rather than manufacturing more shared infrastructure.
+- Architecture Guard `34834714337` — SUCCESS;
+- Stage13G `34834714355` — running; Admin lint/typecheck/unit and API lint/typecheck/unit already green;
+- Admin AI `34834714335` — running;
+- Combined Integration / real-browser `34834714325` — running.
+
+Explicit non-goals remain unchanged: no auth/session/cookie/role redesign; no schema registry; no AppError move; no root config/db/media/observability folder normalization; no Question Bank/AI contract correction; no broad module HTTP rewrite.
+
+Once the remaining exact-head PostgreSQL/integration/security/Chromium gates are green, mark AB-01.5 DONE and **stop foundation extraction**. Proceed directly to AB-01.6.
 
 ## AB-01.6 — Foundation closure gate — PENDING
 
