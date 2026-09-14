@@ -71,20 +71,20 @@ Generic request validation is now owned by:
 
 `apps/api/src/shared/http/request-validation.ts`
 
-The live caller audit found six consumers: Auth, AI application, Content operations, Lesson content, Question Bank and Quiz Builder. All six now depend on the shared HTTP adapter; `parseBody` was removed from private `auth/http.ts` ownership while `currentProfile` and all auth/session/cookie/role behavior remain Auth-owned.
+`parseBody` has been removed from private `auth/http.ts` ownership while `currentProfile`, `sessionToken` and all auth/session/cookie/role behavior remain Auth-owned. The initial `app/http` placement was rejected by Architecture Guard and corrected to generic `shared/http` infrastructure without weakening the guard.
 
-The initial implementation attempted `apps/api/src/app/http/request-validation.ts`, but Architecture Guard correctly rejected module→app composition imports. The ownership was corrected to `shared/http`; no guard exception or weakening was introduced. Exact invalid-input semantics remain `safeParse` → `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)`.
+The first implementation audit missed additional callers. Exact-head CI on `cba5de4bd37c9382efff91820866e7c3c2937915` exposed eight remaining private Auth imports through TypeScript errors. Worker C migrated only those compiler-proven imports in Curriculum, Lesson Authoring Export, Notifications, Offline, Question Bank regeneration, Quiz exports and Student Assessment. Validation semantics remain unchanged: `safeParse` → `AppError("BAD_REQUEST", "البيانات المرسلة غير صالحة", 400)`.
 
-Current source checkpoint: `b37374fc9f3f1fef19563047aa63d4057319e7a2`.
+Current source implementation checkpoint: `d0352917f9df83dd15f9fbd7994ad79c1b9447dd`.
 
-Verification at handoff:
+Exact-head verification at current handoff:
 
-- Architecture Guard `34832573644` — running;
-- Stage13G `34832573595` — pending;
-- Admin AI `34832573633` — pending;
-- Combined Integration / real-browser `34832573663` — pending.
+- Architecture Guard `34834714337` — **SUCCESS**;
+- Stage13G `34834714355` — running; Admin lint/typecheck/unit green and API lint/typecheck/unit green, confirming the prior compiler failure is resolved;
+- Admin AI `34834714335` — running;
+- Combined Integration / real-browser `34834714325` — running.
 
-Do not mark AB-01.5 DONE or start AB-01.6 until these source-head gates close green. The unrelated historical `legacy-supabase-importer.ts` `SOURCE_BUCKET` warning remains untouched.
+Do not mark AB-01.5 DONE or start AB-01.6 until PostgreSQL/integration/security/Chromium portions of these source-head gates close green. The unrelated historical `legacy-supabase-importer.ts` `SOURCE_BUCKET` warning remains untouched.
 
 ### AB-01.6 Foundation closure gate — PENDING
 
@@ -104,4 +104,4 @@ No merge/readiness before AB-08 exact-head green. After verified AB-08 completio
 
 ## Immediate next action
 
-Inspect the exact-head runs for source checkpoint `b37374fc...`. If any fail, fix only the root cause related to this request-validation ownership batch. If Guard + API/Admin quality + PostgreSQL/integration/security + required real Chromium evidence are green, mark AB-01.5 DONE and then move only to **AB-01.6 Foundation closure gate**. Do not open another foundation extraction.
+Inspect exact-head runs `34834714355`, `34834714335`, and `34834714325` for source checkpoint `d0352917...`. If any fail, fix only a root cause attributable to this request-validation ownership batch. If all required gates are green, mark AB-01.5 DONE and move only to **AB-01.6 Foundation closure gate**. Do not open another foundation extraction.
