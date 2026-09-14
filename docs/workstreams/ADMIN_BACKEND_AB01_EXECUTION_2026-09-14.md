@@ -67,26 +67,50 @@ Compatibility:
 - root `admin-api.ts` re-exports auth symbols through the feature public boundary temporarily;
 - root `LoginScreen.tsx` is still transitional presentation debt and will move under Auth before AB-02 closes.
 
-### AB-01.3 — Product-state primitives — NEXT
+### AB-01.3 — Product-state primitives — IMPLEMENTED / WAITING_FOR_CI
 
-Create/standardize the smallest reusable Admin-only state patterns needed by real workflows:
-- loading;
+Source implementation checkpoint:
+
+`cfa2016e056f6dc4f9669236414a7acbd9551011`
+
+The smallest proven reusable Admin-only state pattern was loading/error/retry presentation shared by Overview and Operations.
+
+Implemented ownership:
+
+- `apps/admin-web/src/shared/ui/AdminProductState.tsx` — title/body/optional-retry presentation shell only;
+- `apps/admin-web/src/shared/ui/admin-product-state.css` — sole styling owner;
+- `AdminOverviewPage` and `AdminOperationsHealthPage` consume the shared primitive;
+- duplicate local state components were removed;
+- legacy `.operations-page-state` CSS ownership was removed from Operations.
+
+Deliberately left feature-owned:
+
+- `LoadState` state machines;
+- feature/server-specific error copy;
+- API calls and server truth;
+- session-expiry behavior;
+- retry callbacks and recovery semantics.
+
+Not generalized in this batch:
+
 - empty;
-- error/retry;
 - permission/denied;
 - conflict/unavailable;
-- success/confirmation where persistent UI is justified.
+- success/confirmation.
 
-Rules:
-- first inspect real duplicated patterns and their semantics;
-- start with the smallest proven common surface, currently evidenced by Overview/Operations loading/error/retry states;
-- no mega-component;
-- no generic copy that hides server truth;
-- accessible live regions/focus semantics;
-- Arabic-first/RTL;
-- promote to `packages/ui` only if independently required cross-product.
+Those require independent duplication/semantic evidence before a shared owner is justified. No mega-component or generic copy was introduced.
 
-### AB-01.4 — Backend app composition foundation
+Verification required before DONE:
+
+- Architecture Guard `34804704619` — running at handoff;
+- Stage13E Admin AI `34804704717` — pending at handoff;
+- Stage13E Frontend Preparation `34804704759` — pending at handoff;
+- Stage13E Combined Integration `34804704721` — pending at handoff;
+- Stage13G Admin Operations `34804704756` — pending at handoff.
+
+If these required source-head gates are green, close AB-01.3 as DONE in a verification/documentation increment. If any fails, root-fix that regression only.
+
+### AB-01.4 — Backend app composition foundation — PENDING
 
 Refactor `apps/api/src/app.ts` without changing business rules:
 - extract configuration/composition responsibilities that are genuinely app-level;
@@ -106,7 +130,7 @@ apps/api/src/app/
   plugins/
 ```
 
-Only create folders/files that hold real responsibility.
+Only create folders/files that hold real responsibility. Do not start source mutation until AB-01.3 is formally closed; first inspect current `app.ts` and identify the smallest real extraction seam.
 
 ### AB-01.5 — Common backend technical ownership
 
