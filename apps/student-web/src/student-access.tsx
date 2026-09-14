@@ -20,10 +20,10 @@ const StudentLibraryExperience = lazy(() =>
   import("./features/library/StudentLibraryExperience").then((module) => ({ default: module.StudentLibraryExperience })),
 );
 const StudentNotificationsExperience = lazy(() =>
-  import("./student-future-surfaces").then((module) => ({ default: module.StudentNotificationsExperience })),
+  import("./features/notifications/StudentNotificationsExperience").then((module) => ({ default: module.StudentNotificationsExperience })),
 );
 const StudentProgressExperience = lazy(() =>
-  import("./student-future-surfaces").then((module) => ({ default: module.StudentProgressExperience })),
+  import("./features/progress/StudentProgressExperience").then((module) => ({ default: module.StudentProgressExperience })),
 );
 
 export function StudentAccessSection({ profile, online, onSessionExpired, onLoggedOut }: {
