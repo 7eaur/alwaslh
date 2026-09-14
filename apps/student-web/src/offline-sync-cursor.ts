@@ -17,19 +17,19 @@ function validCursor(value: string | null): value is string {
   return value !== null && /^\d+$/.test(value);
 }
 
-export function readOfflineSyncCursor(profileId: string, deviceId: string): string {
+export function readOfflineSyncCursor(profileId: string, deviceId: string): string | null {
   const storage = storageOrNull();
-  if (!storage) return "0";
+  if (!storage) return null;
   const key = cursorKey(profileId, deviceId);
   try {
     const value = storage.getItem(key);
     if (!validCursor(value)) {
       if (value !== null) storage.removeItem(key);
-      return "0";
+      return null;
     }
     return value;
   } catch {
-    return "0";
+    return null;
   }
 }
 
