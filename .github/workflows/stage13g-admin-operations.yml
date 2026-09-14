@@ -203,3 +203,4 @@ jobs:
           e2e/admin-governance.e2e.spec.mjs
           e2e/admin-ai-authoring.e2e.spec.mjs
           e2e/admin-parity-closure.e2e.spec.mjs
+          e2e/admin-accessibility.e2e.spec.mjs
