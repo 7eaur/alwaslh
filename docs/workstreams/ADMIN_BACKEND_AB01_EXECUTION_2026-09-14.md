@@ -12,9 +12,23 @@ Root-fix law remains:
 
 `use case → authority/contract → owner → replacement → verification → switch → legacy removal condition`
 
+## Verified checkpoint for AB-01.1 / AB-01.2
+
+Final implementation verification checkpoint: `d955a34087552377dc8b426ec1712e57f59fd8f6`.
+
+Evidence:
+
+- Stage13E Admin AI run `34800888706` — SUCCESS;
+- Stage13E Combined Integration run `34800888690` — SUCCESS;
+- Stage13G run `34800888723` — SUCCESS, including Admin lint/typecheck/unit/build, API lint/typecheck/unit/build, clean PostgreSQL migrations, integration/auth regressions, and real API + PostgreSQL + Chromium;
+- Architecture Guard run `34799891149` — SUCCESS on last code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a`;
+- compare `e0b90cd..d955a340` contains documentation-only changes, so no Admin/API/source mutation occurred after the successful architecture guard.
+
+Therefore AB-01.1 and AB-01.2 are closed as **DONE**. Documentation-only commits after this checkpoint do not introduce a second implementation owner and do not reopen these subtasks unless later source changes regress their contracts.
+
 ## AB-01 sequence
 
-### AB-01.1 — Shared API transport boundary — IMPLEMENTED / exact-head verification required
+### AB-01.1 — Shared API transport boundary — DONE
 
 Target owner:
 
@@ -35,7 +49,7 @@ Compatibility:
 - root `admin-api.ts` may re-export transport symbols temporarily;
 - removal condition: all feature adapters consume shared transport directly and root compatibility is unused.
 
-### AB-01.2 — Auth/session ownership — IMPLEMENTED / exact-head verification required
+### AB-01.2 — Auth/session ownership — DONE
 
 Target owner:
 
@@ -46,13 +60,14 @@ Structure:
 - `model/AdminSessionProvider.tsx` — restore/signed-out/signed-in/error lifecycle and logout/expiry orchestration;
 - `public/index.ts` — only supported external contract.
 
-`App.tsx` must not own session state, restore logic, logout API calls or auth error interpretation.
+Verified result:
+- `App.tsx` no longer owns session state, restore logic, logout API calls or auth error interpretation.
 
 Compatibility:
 - root `admin-api.ts` re-exports auth symbols through the feature public boundary temporarily;
 - root `LoginScreen.tsx` is still transitional presentation debt and will move under Auth before AB-02 closes.
 
-### AB-01.3 — Product-state primitives
+### AB-01.3 — Product-state primitives — NEXT
 
 Create/standardize the smallest reusable Admin-only state patterns needed by real workflows:
 - loading;
@@ -63,6 +78,8 @@ Create/standardize the smallest reusable Admin-only state patterns needed by rea
 - success/confirmation where persistent UI is justified.
 
 Rules:
+- first inspect real duplicated patterns and their semantics;
+- start with the smallest proven common surface, currently evidenced by Overview/Operations loading/error/retry states;
 - no mega-component;
 - no generic copy that hides server truth;
 - accessible live regions/focus semantics;
