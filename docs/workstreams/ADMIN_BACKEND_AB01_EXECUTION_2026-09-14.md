@@ -43,55 +43,46 @@ Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
 
 Owner: `apps/api/src/app/create-fastify-instance.ts` with narrow `createFastifyInstance(config: AppConfig): FastifyInstance` responsibility.
 
-Preserved logger mode, request logging, trust proxy, body limit, request timeout, one instance per build and all downstream composition ordering. Service graph, business routes, DB lifecycle, config defaults, migrations/schema and Student frontend remained untouched.
+Closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — successful/source-tree-equivalent green.
 
-Closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — successful/source-tree-equivalent green. Seam closed.
+### Database lifecycle registration — IMPLEMENTED / WAITING_FOR_CI
 
-### Database lifecycle registration — SELECTED / IMPLEMENTATION NEXT
+Source+test implementation HEAD:
 
-Worker C sequence 16 selected the smallest remaining bounded app-composition responsibility: the inline Fastify `onClose` hook that awaits the supplied `Database.close()`.
+`101f61a9c25e3de116d0074a3ef7e2f760eb98a7`
 
-Target owner:
+Owner:
 
 `apps/api/src/app/plugins/database-lifecycle.ts`
 
-with one narrow registration function such as:
+with narrow:
 
 `registerDatabaseLifecycle(app: FastifyInstance, database: Database): void`
 
-Preserve exactly:
+Implemented behavior:
+
+- owns only Fastify `onClose` registration for the supplied database;
+- awaits `database.close()` without swallowing close errors;
+- `app.ts` delegates to it in the same composition position after business routes, health and public-error handlers;
+- focused `apps/api/tests/app.test.ts` coverage proves `app.close()` delegates to the supplied fake database close operation exactly once.
+
+Preserved exactly:
 
 - `buildApp()` receives an already-created database;
-- the same Fastify instance owns the hook;
-- `await app.close()` awaits database close and does not swallow a close error;
-- registration stays after business routes, health and public error handlers;
+- same Fastify instance owns shutdown lifecycle;
 - `server.ts` continues to call `app.close()` for SIGTERM/SIGINT and listen failure;
-- legacy startup failure before app creation continues direct database close;
-- database creation/pool/query/transaction/migration/schema behavior remains unchanged.
+- legacy startup failure before app construction continues direct database close;
+- database creation/pool/query/transaction/migration/schema behavior is unchanged;
+- service graph/business routes and Student frontend are unchanged.
 
-Required implementation parity coverage:
+Verification observed before documentation commits:
 
-- add one focused `apps/api/tests/app.test.ts` assertion proving app close delegates to the supplied fake database close operation;
-- do not introduce a general lifecycle manager/framework.
+- Architecture Guard `34825750566` — SUCCESS on source composition commit;
+- Stage13G `34825773710` — IN_PROGRESS on source+test head; Admin UI quality steps were already green when inspected;
+- Combined `34825773686` — IN_PROGRESS;
+- Admin AI `34825773676` — IN_PROGRESS.
 
-Explicit non-goals:
-
-- database creation/configuration move;
-- process-signal abstraction;
-- startup-batch changes;
-- service graph/container/DI extraction;
-- whole-route registry extraction;
-- multi-consumer infrastructure bundle;
-- query/transaction/schema changes;
-- Student frontend changes.
-
-Switch/deletion condition:
-
-1. `database-lifecycle.ts` becomes the single owner of the Fastify database-close hook registration;
-2. `app.ts` no longer embeds that hook and delegates in the same composition position;
-3. focused lifecycle unit coverage is green;
-4. `server.ts` behavior remains unchanged;
-5. Architecture Guard + API lint/typecheck/unit/build + clean PostgreSQL + relevant integration/real API + Chromium gates are green.
+Switch/deletion condition remains unmet until source/source-tree-equivalent API lint/typecheck/unit/build + clean PostgreSQL + relevant integration/security/auth + real API/Chromium evidence is green. Documentation commits may supersede/cancel the original runs; cancellation is not success.
 
 After this fifth seam closes, reassess AB-01.4 for closure. Current evidence does not justify a sixth broad service-container, route-registry or infrastructure-bundle extraction.
 
