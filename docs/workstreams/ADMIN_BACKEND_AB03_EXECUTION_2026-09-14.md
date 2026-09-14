@@ -10,7 +10,7 @@ Status: **ACTIVE — AB-03.2 Curriculum + Content + OCR**
 AB-03 migrates complete Admin vertical slices in canonical order:
 
 1. Overview + Operations — DONE / EXACT-SOURCE VERIFIED
-2. Curriculum + Content + OCR — ACTIVE / DISCOVERY NEXT
+2. Curriculum + Content + OCR — ACTIVE / DISCOVERY COMPLETE; NEXT CORRECTION SELECTED
 3. AI Jobs + AI Review + contextual authoring — PENDING
 4. Question Bank — PENDING
 5. Quiz Builder — PENDING
@@ -56,17 +56,45 @@ Exact-source verification remains authoritative:
 - Combined Integration `34876404314` — SUCCESS, including real Admin Chromium;
 - Stage13G Admin Operations `34876404237` — SUCCESS, including Admin/API quality, clean PostgreSQL contracts, Operations/security/auth integrations and Real API + PostgreSQL + Chromium.
 
-## AB-03.2 — Curriculum + Content + OCR — ACTIVE / DISCOVERY NEXT
+## AB-03.2 — Curriculum + Content + OCR — ACTIVE / DISCOVERY COMPLETE
 
-Do not mutate this slice before discovery. The next worker must map:
+### Discovery — Worker C sequence 44
 
-1. operator jobs/routes for curriculum structure, content ingestion/publication and OCR review/recovery;
-2. current Admin frontend page/feature/API/model ownership and any duplicate/legacy owners;
-3. backend HTTP/application/domain/infrastructure boundaries and cross-module dependencies;
-4. PostgreSQL schema/migrations for curriculum hierarchy, revisions/publication, content/media/provenance, ingestion tasks and OCR extraction/review integrity;
-5. authorization/security boundaries and audit requirements;
-6. Student-facing backend/shared consumers where server-contract changes could affect compatibility;
-7. existing unit/integration/security/Chromium coverage;
-8. exactly one smallest evidence-backed correction to implement after discovery.
+Direct live-code inspection established the following ownership map without changing production source/tests/migrations:
 
-Do not combine broad restructuring or the AI slice with this discovery increment.
+- Admin Curriculum presentation is still under `apps/admin-web/src/admin/curriculum/*`; `CurriculumWorkspace.tsx` directly imports the Curriculum snapshot/types/mutations from root transitional `apps/admin-web/src/admin-api.ts`.
+- `admin-api.ts` is not merely a generic shared transport: it currently owns the complete Curriculum frontend contract (`CurriculumRecordStatus`, class/subject/offering/section/lesson records, `AdminCurriculumSnapshot`, fetch/create/update functions) while also re-exporting generic transport/auth symbols. This is mixed ownership at the root.
+- Content ingestion presentation is under `apps/admin-web/src/admin/content/*`. `ContentIngestionWorkspace.tsx` consumes Curriculum through the same root `admin-api.ts` and ingestion/publication through root transitional `apps/admin-web/src/content-ingestion-api.ts`.
+- `content-ingestion-api.ts` owns ingestion task/item/media/publication types and `/v1/admin/content-ingestions*` requests, but imports `adminApiRequest` from `admin-api.ts` rather than from the canonical shared client. This makes the root Curriculum/admin facade an unnecessary dependency for Content transport.
+- Backend authority is already separated into bounded server modules: Curriculum has `apps/api/src/curriculum/http.ts`, `service.ts`, `student-reader.ts` and lesson-authoring export files; Content has dedicated ingestion HTTP/service plus admin content operations. No backend merge or cross-module rewrite is justified by this discovery.
+- PostgreSQL already has explicit evolution for learning/content/media/OCR, including `0003_learning.sql`, `0008_content_source_import.sql`, `0009_media_pipeline.sql`, and `0011_ocr_foundation.sql`. Discovery found no evidence justifying a schema mutation before fixing the clearer frontend ownership seam.
+- Student frontend remains untouched. Curriculum has an explicit server-side `student-reader.ts`, so future backend changes must preserve that consumer contract.
+
+### Selected next smallest correction — AB-03.2.1 Curriculum frontend API ownership
+
+Implement only this ownership correction:
+
+1. move the Curriculum-specific types and request functions currently owned by root `apps/admin-web/src/admin-api.ts` into a feature-owned Curriculum API module, targeted as `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts`;
+2. expose only the required Curriculum contract through `apps/admin-web/src/features/curriculum/public/index.ts`;
+3. update Curriculum consumers and the Content ingestion workspace to import the Curriculum contract from that public feature boundary;
+4. leave generic transport in `shared/api/client`; do not make Content import Curriculum internals;
+5. keep URLs, request payloads, response shapes, auth/session handling, UI behavior and PostgreSQL/API authority unchanged;
+6. do not combine `content-ingestion-api.ts` migration, page moves, OCR redesign, AI work, CSS restructuring or backend/schema changes into this increment.
+
+Why this is first: it is a bounded, directly evidenced single-owner correction analogous to the already-verified Operations transport migration. It removes mixed root ownership without changing business behavior and creates a stable Curriculum contract that Content may consume legitimately.
+
+### Required verification for AB-03.2.1
+
+- Architecture Guard;
+- Admin lint/typecheck/unit/build and Curriculum API tests/consumer tests;
+- relevant API/Curriculum/PostgreSQL integration gates even though server code should be unchanged;
+- Combined Integration with real Admin Chromium;
+- Stage13G Admin Operations/real API + PostgreSQL + Chromium;
+- exact-head or source-tree-equivalent evidence before declaring the increment DONE.
+
+Inherited executable evidence remains green because Worker C sequence 44 changed documentation only:
+
+- Architecture Guard `34876404251` — SUCCESS on executable checkpoint `7eda86f...`;
+- Combined Integration `34880448851` — SUCCESS on documentation-equivalent head `694473bf...`;
+- Stage13G Admin Operations `34880448862` — SUCCESS on documentation-equivalent head `694473bf...`;
+- Admin AI Operations `34880448853` — SUCCESS on documentation-equivalent head `694473bf...`.
