@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — fifth AB-01.4 database lifecycle seam selected; implementation is next.**
+Last consolidated: **2026-09-14 — fifth AB-01.4 database lifecycle seam implemented; required gates still active.**
 
 ## Durable invariants
 
@@ -21,7 +21,7 @@ Admin initial JS **968.68 kB / 193.92 kB gzip**; CSS **91.38 kB / 13.68 kB gzip*
 
 Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the live serial handoff. Never auto-merge or rewrite shared history.
 
-Current live `main` observed in Worker C sequence 16: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; this is the Student Experience V2 merge checkpoint and does not overlap the current AB-01 API seam.
+Current live `main` observed in Worker A sequence 17: `258c5bc2c09a049afb57c0593b5b6ca9db532c62`; this is the Student Experience V2 merge checkpoint and does not overlap the current AB-01 API seam.
 
 ## Architecture decisions
 
@@ -49,7 +49,7 @@ Minimum proven Admin product-state primitive closed at source checkpoint `cfa201
 
 #### CORS/preflight — DONE
 
-Source `dbdc9245f2d0e283d047d7e1254748e55f890a55`; verified by Architecture Guard, Admin AI, Combined and Stage13G.
+Source `dbdc9245f2d0e283d047d7e1254748e55f890a55`; owner `apps/api/src/app/plugins/cors.ts`; required gates green.
 
 #### Health/readiness — DONE
 
@@ -61,42 +61,40 @@ Source `001d45892bf4a17458f3beaeaaa1a7430be49b44`; owner `apps/api/src/app/http/
 
 #### Fastify construction/options — DONE
 
-Source implementation HEAD: `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`.
+Source `d8fdcbaf16a3ac07ac39412dfa916b7b7fa8979d`; owner `apps/api/src/app/create-fastify-instance.ts`. Closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — SUCCESS/source-tree-equivalent green.
 
-Owner: `apps/api/src/app/create-fastify-instance.ts` with narrow `createFastifyInstance(config: AppConfig): FastifyInstance` responsibility.
+#### Database lifecycle registration — IMPLEMENTED / WAITING_FOR_CI
 
-Preserved exactly: logger mode, request logging, trust proxy, body limit, request timeout, one instance per `buildApp()`, downstream service/route/plugin/error/health/database-close ordering. Service graph, business routes, DB lifecycle, config defaults, migrations/schema and Student frontend were untouched.
+Worker A sequence 17 implemented source+test head `101f61a9c25e3de116d0074a3ef7e2f760eb98a7`.
 
-Closure evidence: Architecture Guard `34820842164`, Admin AI `34821032274`, Combined `34821032272`, Stage13G `34821032271` — successful/source-tree-equivalent green. Fourth seam closed.
+Owner: `apps/api/src/app/plugins/database-lifecycle.ts` with narrow `registerDatabaseLifecycle(app, database)` responsibility.
 
-#### Fifth seam — database lifecycle registration — SELECTED / NOT IMPLEMENTED
+Implementation facts:
 
-Worker C sequence 16 inspected live `apps/api/src/app.ts`, `apps/api/tests/app.test.ts`, `apps/api/src/db.ts` and `apps/api/src/server.ts`.
+- `app.ts` no longer embeds the database `onClose` hook;
+- registration remains after business routes, health and public error handlers;
+- `registerDatabaseLifecycle` owns only the hook that awaits `database.close()`;
+- focused `apps/api/tests/app.test.ts` coverage asserts `app.close()` delegates to the supplied database close operation exactly once;
+- `server.ts`, database creation/configuration, process signals, service graph, routes, migrations/schema and Student frontend were untouched.
 
-Current owner is the inline `app.addHook("onClose", ...)` in `app.ts` that awaits `database.close()`.
+Contract preserved:
 
-Target owner: `apps/api/src/app/plugins/database-lifecycle.ts` with one narrow `registerDatabaseLifecycle(app, database)` responsibility.
+- `buildApp()` receives an already-created `Database`;
+- the same Fastify instance owns lifecycle shutdown;
+- database-close errors are not swallowed by the hook;
+- server shutdown/listen-failure semantics remain unchanged;
+- pre-app startup failure direct database close remains unchanged.
 
-Evidence:
+Verification observed before documentation commits:
 
-- `Database.close(): Promise<void>` is an explicit infrastructure contract.
-- `server.ts` relies on `app.close()` during SIGTERM/SIGINT and listen failure, so the hook is a real application lifecycle boundary.
-- legacy startup failure closes the database directly before `buildApp()` exists; that path must remain unchanged.
-- `app.test.ts` closes every built app but does not explicitly assert database-close delegation, so implementation should add one focused parity assertion.
+- Architecture Guard `34825750566` — SUCCESS on the source composition commit;
+- Stage13G `34825773710` — IN_PROGRESS on source+test head; Admin UI lint/typecheck/unit/build already green when inspected;
+- Combined `34825773686` — IN_PROGRESS;
+- Admin AI `34825773676` — IN_PROGRESS.
 
-Preserve exactly:
+Because documentation commits can supersede/cancel those runs, the next worker must verify source-tree-equivalent green evidence before closure. Do not falsely mark DONE.
 
-- already-created `Database` injected into `buildApp()`;
-- `app.close()` awaits database close without swallowing error;
-- registration remains on the same app after route/health/error composition;
-- server signal/startup-failure behavior unchanged;
-- pool config, queries, transactions, migrations/schema unchanged.
-
-Non-goals: database creation, signal abstraction, startup batch, service graph/container, route registry, infrastructure-adapter bundle, transaction/query changes, Student frontend.
-
-Switch condition: narrow owner is sole database-close hook registrar; `app.ts` no longer embeds it; focused lifecycle unit coverage is added; `server.ts` unchanged; Architecture Guard/API quality/clean PostgreSQL/relevant integration/real API+Chromium green.
-
-After this seam, current evidence does not justify broad service/container/route-registry extraction. Reassess AB-01.4 closure instead of forcing a sixth seam.
+After this seam closes, current evidence does not justify a broad service/container/route-registry extraction. Reassess AB-01.4 closure first.
 
 ### AB-01.5 — PENDING
 
@@ -108,6 +106,6 @@ Foundation exact-head closure gate.
 
 ## Exact continuation
 
-Implement only the selected fifth AB-01.4 database lifecycle seam and focused parity test, then run required gates. Do not move database creation, server signals, service construction, routes or startup behavior. After green closure, assess whether AB-01.4 should end and advance to AB-01.5.
+Verify the implemented database lifecycle seam on current/source-tree-equivalent CI. If green, close only this seam and explicitly decide whether AB-01.4 can close. If any gate fails, fix the root cause only. Do not move database creation, server signals, service construction, routes or startup behavior.
 
 Remaining roadmap: AB-02 thin Admin shell/router/providers/lazy routes → AB-03 vertical slices → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final full verification/reconciliation.
