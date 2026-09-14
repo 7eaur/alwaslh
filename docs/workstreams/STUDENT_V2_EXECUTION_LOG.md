@@ -16,14 +16,14 @@ The user approved a full Student Experience V2 foundation before future backend 
 - keep the four primary phone destinations: Home / Learn / Practice / Library;
 - Home shows the official الوسيلة الذكية mark + name;
 - other top-level pages show page title in the App Bar;
-- nested pages use back + entity title;
+- nested pages use shared App Bar context instead of duplicate giant page headings when possible;
 - generic greeting only; do not assume learner name;
 - no fixed learner grade on Home/account card;
 - move useful Library summary statistics to Home when backed by real data;
 - Library itself becomes direct access, not a dashboard article;
 - Learn must scale to many subjects, units and lessons;
 - Reader is focused and content-first;
-- Practice architecture reserves direct access to models/versions;
+- Practice architecture exposes real quiz versions as models without inventing a separate backend authority;
 - future Summary / Lesson Questions / Notes / Saved / Review are placed in the architecture but are not fabricated before backend/ownership contracts exist.
 
 ## Approved visual decisions
@@ -58,6 +58,7 @@ Canonical policy: `docs/product/STUDENT_DATA_RESIDENCY_AND_CACHE_V2.md`.
 - quiz catalog TTL 1 minute;
 - recent attempts TTL 30 seconds;
 - counts derived from loaded read models;
+- cache is cleared for the active profile on logout/session expiry;
 - Stage16 offline package store remains the single lesson-download storage path;
 - Notes/Saved/Needs Review target account-scoped IndexedDB once Stage17 ownership rules are explicit;
 - no durable curriculum/quiz snapshot database until revision/tombstone/delta semantics are authoritative.
@@ -70,7 +71,8 @@ Canonical policy: `docs/product/STUDENT_DATA_RESIDENCY_AND_CACHE_V2.md`.
 - Home rebuilt away from duplicate destination cards;
 - Home uses only real curriculum/quiz/attempt/download data;
 - App Bar contract + safe-area bottom navigation;
-- access-change cache invalidation.
+- access-change cache invalidation;
+- session-end cache clearing.
 
 ## Code architecture extraction
 
@@ -115,11 +117,63 @@ New feature-owned surfaces are wired:
 - `features/notifications/StudentNotificationsExperience.tsx`
 - `features/progress/StudentProgressExperience.tsx`
 
-Account no longer promotes logout at the top, does not assume a learner display name, and groups access/class-code/help with logout at the bottom.
+Account no longer promotes logout at the top, does not assume a learner display name, and groups access/class-code/help with logout at the bottom. The feature no longer receives an unused profile object.
 
 Library is direct access to Downloads / Notes / Saved / Needs Review and no longer repeats an article-style overview/dashboard. Future personal collections stay honest empty states until their contracts exist.
 
 Notifications and Progress are intentionally honest future surfaces; no fabricated counts/progress are shown.
+
+## Learn / Subject V2
+
+Implemented modular learning ownership:
+
+- `features/learn/StudentLearningExperience.tsx`
+- `features/learn/useStudentCurriculum.ts`
+- `features/learn/LearnLanding.tsx`
+- `features/learn/SubjectPage.tsx`
+
+Behavior now scales progressively:
+
+- curriculum reads use the shared profile-scoped cache instead of refetching on every route change;
+- subject search appears only when useful;
+- subject lists stay compact rather than becoming a card wall;
+- sectioned subjects use accordion disclosure;
+- unsectioned lessons remain direct rows;
+- lesson summary badge appears only when a real summary exists;
+- nested subject title can populate the shared App Bar;
+- offline lesson deep links preserve Stage16 stored Reader behavior.
+
+## Reader V2
+
+`student-reader-v2.css` is wired as the current focused visual layer while the Reader behavior remains compatible with Stage16 integrity/offline semantics.
+
+Current improvements include smaller hierarchy, calmer reading width, better image/text sizing, safe-area handling, focused offline state, search and listening affordance polish, and no global bottom navigation while reading.
+
+Reader implementation ownership remains partly legacy-flat and must not be aggressively moved until exact-head Stage16/Reader gates remain green.
+
+## Practice V2 structural migration
+
+The large assessment implementation is being split into feature-owned units instead of adding more code to `student-assessment.tsx`.
+
+Created:
+
+- `features/practice/practice-model.ts` — routes, hrefs, formatting and catalog state;
+- `features/practice/PracticeCatalog.tsx` — catalog, adaptive filters and quiz/model detail;
+- `features/practice/AssessmentAttempt.tsx` — focused attempt, answer feedback, result/review flow;
+- `features/practice/StudentPracticeExperience.tsx` — route/data orchestration.
+
+`student-access.tsx` now routes the live Practice destination to `StudentPracticeExperience` and passes `profileId` so quiz/attempt read models share the same profile-scoped cache used elsewhere.
+
+Practice data behavior:
+
+- quiz catalog reads use the shared 60-second cache;
+- recent attempts use the shared 30-second cache;
+- cached values can render immediately during navigation;
+- force refresh remains available for explicit refresh;
+- successful attempt completion invalidates attempt summaries so Home/Practice cannot keep stale scores;
+- real quiz `versions` are presented as learner-facing `نماذج` without inventing an unsupported backend entity.
+
+The old `student-assessment.tsx` still exists temporarily as legacy structural debt until exact-head compile/tests show the modular path is stable and any direct imports can be safely removed or reduced to a compatibility boundary.
 
 ## PR #57 / Stage16 reconciliation — IMPLEMENTED ON V2 BRANCH
 
@@ -133,22 +187,32 @@ Preserved and integrated:
 - `StudentOfflineLessonReaderPage` uses `loadUsableOfflineLessonPackage(...)` and renders only after existing lease/scope/signature/time/blob checks pass;
 - verified stored image bytes use temporary object URLs;
 - invalid/tampered/expired packages fail closed;
-- Downloads now expose `فتح الدرس` directly;
+- Downloads expose `فتح الدرس` directly;
 - the persistent-profile real-Chromium cold-start Reader test was added;
-- Stage16 CI now runs that cold-start test with the existing lease/materialization browser tests.
+- Stage16 CI runs that cold-start test with the existing lease/materialization browser tests.
 
-Important: this reconciliation preserves V2 modular `App.tsx`/auth/session ownership and does not copy PR #57's older top-level documentation over the newer V2 docs.
+## CI repair log
+
+Exact-head CI is treated as source of truth, not as a final afterthought.
+
+Recent blockers and repairs:
+
+1. `exactOptionalPropertyTypes` error in Learn error-state props — repaired.
+2. Account `_profile` unused lint error — removed the unused profile prop entirely.
+3. session-end cache clear imported through shared boundary but not re-exported — `clearStudentRuntimeCache` is now exported through `shared/data/student-runtime-cache.ts`.
+
+Fresh exact-head workflows are required after each repair. No superseded failed run is treated as current evidence.
 
 ## Current order
 
 1. V2-00 architecture freeze — DONE.
-2. V2-01 foundation / shell / Home — IMPLEMENTED / VERIFICATION PENDING.
-3. shared layout/primitives extraction — IMPLEMENTED / VERIFICATION PENDING.
-4. Welcome/Auth redesign — IMPLEMENTED / VERIFICATION PENDING.
-5. PR #57 reconciliation — IMPLEMENTED / VERIFICATION PENDING.
-6. Learn/Subject scalable hierarchy — NEXT after exact-head compile/CI feedback.
-7. Reader visual/interaction V2.
-8. Practice/Models.
+2. Foundation / shell / Home — IMPLEMENTED / VERIFICATION ACTIVE.
+3. Shared layout/primitives extraction — IMPLEMENTED / VERIFICATION ACTIVE.
+4. Welcome/Auth — IMPLEMENTED / VERIFICATION ACTIVE.
+5. Stage16 reconciliation — IMPLEMENTED / VERIFICATION ACTIVE.
+6. Learn/Subject scalable hierarchy — IMPLEMENTED / VERIFICATION ACTIVE.
+7. Reader visual/interaction V2 — IMPLEMENTED PARTIALLY / VERIFICATION ACTIVE.
+8. Practice/Models — STRUCTURAL MIGRATION ACTIVE.
 9. final secondary-surface polish and legacy-file cleanup.
 10. local personal data after Stage17 contracts.
 11. durable read-model caching when contracts allow.
