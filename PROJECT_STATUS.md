@@ -32,7 +32,7 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 Live `main` latest observation: `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0`.
 
-AB-02 → AB-03 phase-boundary reconciliation is complete. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker A sequence 42.
+AB-02 → AB-03 phase-boundary reconciliation is complete. No new overlapping Admin/API/PostgreSQL/shared-contract implementation change was observed through Worker C sequence 44.
 
 ## AB-00 — DONE
 
@@ -68,9 +68,15 @@ Exact-source verification on `7eda86f...` remains authoritative because compare 
 - Combined Integration `34876404314` — SUCCESS, including real Admin Chromium;
 - Stage13G Admin Operations `34876404237` — SUCCESS, including Admin/API quality, clean PostgreSQL, relevant operations/security/auth integrations and Real API + PostgreSQL + Chromium.
 
-### AB-03.2 Curriculum + Content + OCR — ACTIVE / DISCOVERY NEXT
+### AB-03.2 Curriculum + Content + OCR — ACTIVE / DISCOVERY COMPLETE
 
-Exact next step: perform discovery only for Curriculum + Content + OCR. Map operator jobs, current frontend owners, backend/API/PostgreSQL/security authority, publication/provenance/OCR contracts, consumer paths and tests. Select only the smallest evidence-backed correction after that discovery; do not combine broad restructuring with discovery.
+Worker C sequence 44 completed discovery without executable mutation. The clearest current ownership defect is in the Admin frontend: root `apps/admin-web/src/admin-api.ts` still owns the full Curriculum types and `/v1/admin/curriculum*` request surface, while `admin/curriculum/CurriculumWorkspace.tsx` and Content ingestion consume that root facade. `apps/admin-web/src/content-ingestion-api.ts` also depends on `admin-api.ts` for the generic request function even though canonical transport already lives under `shared/api/client`.
+
+Backend authority is already visibly split into Curriculum and Content modules, while PostgreSQL has dedicated learning/content/media/OCR migrations. No schema/backend mutation is justified before correcting the narrower frontend owner.
+
+**Exact next increment: AB-03.2.1 Curriculum frontend API ownership.** Move only Curriculum-specific transport/types from root `admin-api.ts` into `features/curriculum/api/admin-curriculum-api.ts`, expose the required contract via `features/curriculum/public/index.ts`, and update Curriculum + legitimate Content consumers. Preserve endpoints/payloads/session/UI behavior. Do not combine Content API migration, page moves, OCR redesign, AI work or backend/schema changes.
+
+Worker C sequence 44 changed documentation only. Inherited executable verification remains green: Guard `34876404251`; Combined `34880448851`; Stage13G `34880448862`; Admin AI `34880448853`.
 
 ## Remaining roadmap
 
