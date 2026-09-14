@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-14 — AB-03.1.2 root CI regression fixed; final Combined + Stage13G evidence still pending.**
+Last consolidated: **2026-09-14 — AB-03.1.2 Operations frontend API ownership closed with source-tree-equivalent green evidence.**
 
 ## Durable invariants
 
@@ -39,36 +39,36 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 Source checkpoint `5c36365888486cf8297893467bfc4e1c97bc6b43` moved governance/audit orchestration from HTTP into `admin-operations/attention-application.ts`, retained HTTP authorization/query validation, added a dedicated application-owner test and preserved API/PostgreSQL/security behavior. Closure: Guard `34859593842`, Admin AI `34860142887`, Combined `34860142983`, Stage13G `34860143008` — SUCCESS.
 
-### AB-03.1.2 — Operations frontend API ownership — ROOT FIX APPLIED / WAITING_FOR_CI
+### AB-03.1.2 — Operations frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Worker A sequence 36 moved Operations transport/types under `features/operations` and deleted the root adapter. Worker B sequence 37 inspected the failing verification rather than treating it as concurrency noise and found a genuine ownership-migration regression: the deleted root module was still referenced by `admin-operations-api.test.ts`, `operations-model.ts`, and `operations-model.test.ts`. Stage13G Admin UI quality failed strict typecheck on those stale imports, while its backend/PostgreSQL/integration job was already green.
+Worker A moved Operations transport/types under `features/operations` and removed the transitional root adapter. Worker B then found and fixed the real stale-import/typecheck regression left by that move. Corrected source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
 
-Current source checkpoint: `abe4f2c935cf09a84e7be29d94f5bd59f8c2cfc0`.
+Final ownership:
 
-Root correction:
+- `features/operations/api/admin-operations-api.ts` owns the Operations transport/types;
+- `features/operations/public` is the narrow consumer boundary;
+- `admin/operations/operations-model.ts` and its test consume contracts through that public boundary;
+- the transport test is colocated with the feature API owner;
+- no endpoint/query/body/response/session semantics, routes/styles, backend/API authority, PostgreSQL schema/migrations, security authority or Student frontend behavior changed.
 
-- `admin/operations/operations-model.ts` now imports Operations contracts through `features/operations/public`;
-- `admin/operations/operations-model.test.ts` uses the same public contract;
-- `admin-operations-api.test.ts` was moved from root to `features/operations/api/admin-operations-api.test.ts`, colocating the transport test with its actual owner;
-- the stale root test file was removed;
-- no endpoint/query/body/response/session semantics, page/model behavior, routes/styles, API backend, PostgreSQL schema/migrations, security authority or Student frontend implementation changed.
+Source-equivalence proof: comparing corrected source checkpoint `abe4f2c...` through verification head `302b86585d4e1eb122c5afe30503828e10c8d025` showed only `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`, and the shared execution-state document changed; there was no executable source/test/migration/workflow drift.
 
-Exact source-head verification at handoff:
+Closure evidence on that equivalent tree:
 
-- Architecture Guard `34868596586` — **SUCCESS**.
-- Frontend Preparation `34868596646` — **SUCCESS**.
-- Admin AI Operations `34868596701` — **SUCCESS**.
-- Combined Integration `34868596865` — **IN PROGRESS** at last observation.
-- Stage13G Admin Operations `34868596682` — **IN PROGRESS** at last observation.
+- Architecture Guard `34870253383` — **SUCCESS**.
+- Frontend Preparation `34870253413` — **SUCCESS**.
+- Admin AI Operations `34870253417` — **SUCCESS**.
+- Combined Integration `34870253434` — **SUCCESS**, including real Admin Chromium and canonical AI Admin Chromium smoke.
+- Stage13G Admin Operations `34870253431` — **SUCCESS**: Admin UI quality, API quality, clean PostgreSQL/migration/database contracts, Operations/Access/Security/Auth integrations, and real API + PostgreSQL + Chromium all green.
 
-The subtask remains `WAITING_FOR_CI`; no second architecture seam was started.
+No production/source mutation was made by Worker C sequence 38; it was verification/closure only.
 
 ## Exact continuation
 
-Verification/closure of **AB-03.1.2 only**:
+Perform a fresh **discovery-only** pass inside `AB-03.1 Overview + Operations`:
 
-1. inspect Combined `34868596865` and Stage13G `34868596682`, or newer source-tree-equivalent runs if documentation commits supersede them;
-2. require Combined to be green and Stage13G to include green Admin/API quality, clean PostgreSQL/contracts, regressions, and real API + PostgreSQL + Chromium;
-3. fix only a genuine root regression inside AB-03.1.2 if one appears;
-4. when all required evidence is green, mark AB-03.1.2 DONE and only then perform a fresh discovery-only pass inside Overview + Operations;
+1. re-read operator jobs, PostgreSQL/API/security/audit contracts, current backend/frontend owners and current regression/browser evidence;
+2. determine whether Overview + Operations has one remaining smallest high-confidence end-to-end ownership/product defect;
+3. if evidence justifies one, document exactly one next correction before mutating;
+4. if no remaining justified correction exists, prepare the AB-03.1 slice closure/advance gate instead of inventing work;
 5. do not begin Curriculum/Content/OCR in the same increment.
