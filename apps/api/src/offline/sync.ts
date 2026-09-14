@@ -43,6 +43,14 @@ function safeContentRevision(value: string | number | null): number | null {
   return Number.isSafeInteger(parsed) && parsed >= 1 ? parsed : null;
 }
 
+function boundedUpperCursor(after: string, currentMax: string, requested?: string): string {
+  const afterRevision = BigInt(after);
+  const currentMaxRevision = BigInt(currentMax);
+  const requestedRevision = requested === undefined ? currentMaxRevision : BigInt(requested);
+  if (requestedRevision < afterRevision) return after;
+  return (requestedRevision > currentMaxRevision ? currentMaxRevision : requestedRevision).toString();
+}
+
 export class StudentOfflineSyncService {
   constructor(
     private readonly db: Database,
@@ -54,6 +62,7 @@ export class StudentOfflineSyncService {
     sessionToken: string | undefined,
     after: string,
     limit: number,
+    through?: string,
   ): Promise<StudentOfflineDeltaPage> {
     const lease = await this.offline.lease(profileId, sessionToken);
     const allContent = lease.grants.some((grant) => grant.scope === "all_content");
@@ -64,7 +73,8 @@ export class StudentOfflineSyncService {
     const maxRows = await this.db.query<MaxRevisionRow>(
       "select coalesce(max(revision), 0)::text as revision from content_revisions",
     );
-    const upperBound = maxRows[0]?.revision ?? after;
+    const currentMax = maxRows[0]?.revision ?? after;
+    const upperBound = boundedUpperCursor(after, currentMax, through);
 
     if (!allContent && classIds.length === 0) {
       return {
