@@ -44,11 +44,11 @@ Student-facing backend remains in scope. Student frontend tests/code may be insp
 - never force-reset/force-push shared history;
 - never mix separate Student frontend implementation into this workstream.
 
-Latest live-main observation during Worker A sequence 1: `3053640cc5bb0699cfa7456cf646e8997f6aa81b`, unchanged from prior AB-01 reconciliation.
+Latest live-main observation during Worker A sequence 2: `258c5bc2c09a049afb57c0593b5b6ca9db532c62` after Student V2 merge #58. Path-level comparison showed no overlapping Admin/API/migrations/scoped shared implementation changes for the current increment.
 
 ## 4. Alternating execution
 
-Worker A and Worker B share one roadmap and one branch. Each run performs one smallest coherent increment, writes the shared state, and hands the exact next step to the other worker.
+Workers A, B and C share one roadmap and one branch in serial order `A → B → C`, staggered at `:00`, `:20`, `:40`. Each run performs one smallest coherent increment, writes the shared state, and hands the exact next step to the following worker.
 
 Shared coordination truth:
 
@@ -61,6 +61,8 @@ Binding protocol:
 If the prior worker appears still active, do not mutate overlapping work. Inspect/verify only.
 
 Every run ends in `READY_FOR_NEXT`, `WAITING_FOR_CI`, `BLOCKED`, or `COMPLETE` and records starting/ending HEAD, task, changed ownership/files, CI evidence and exact next step.
+
+After verified AB-08 completion, the proving worker disables all three scheduled tasks.
 
 ## 5. Architecture law
 
@@ -119,36 +121,50 @@ If required CI is still running, use `WAITING_FOR_CI`.
 
 - AB-00 — DONE
 - AB-01 — ACTIVE
-- **AB-01.1 shared Admin API transport/error boundary — DONE**
-- **AB-01.2 Auth/session ownership + SessionProvider — DONE**
-- AB-01.3 minimum proven shared product-state primitives — NEXT
+- AB-01.1 shared Admin API transport/error boundary — DONE
+- AB-01.2 Auth/session ownership + SessionProvider — DONE
+- **AB-01.3 minimum proven shared product-state primitive — IMPLEMENTED / WAITING_FOR_CI**
 - AB-01.4 backend app composition foundation — PENDING
 - AB-01.5 justified common backend technical foundations — PENDING
 - AB-01.6 foundation gate — PENDING
 
 AB-01.1/AB-01.2 final implementation checkpoint: `d955a34087552377dc8b426ec1712e57f59fd8f6`.
 
-Verification:
+AB-01.3 source implementation checkpoint: `cfa2016e056f6dc4f9669236414a7acbd9551011`.
 
-- Stage13E Admin AI `34800888706` — SUCCESS;
-- Stage13E Combined `34800888690` — SUCCESS;
-- Stage13G `34800888723` — SUCCESS, including Admin/API quality, clean PostgreSQL, integration/auth regressions and real Chromium;
-- Architecture Guard `34799891149` — SUCCESS on last code head `e0b90cd21c404cc1ab6a65200a08385c1a319e5a`;
-- all commits from that code head through `d955a340` were documentation-only.
+### AB-01.3 implemented ownership
+
+- `apps/admin-web/src/shared/ui/AdminProductState.tsx` — shared Admin-only title/body/optional-retry presentation shell;
+- `apps/admin-web/src/shared/ui/admin-product-state.css` — sole styling owner;
+- Overview and Operations adopted the shared primitive for loading/error/retry;
+- duplicate local state components and Operations-owned `.operations-page-state` CSS were removed;
+- page-specific `LoadState`, copy, API/session behavior and retry callbacks remain local to their features.
+
+This is intentionally not a mega-component and does not generalize empty/permission/conflict/success states without evidence.
+
+### Active source-head verification
+
+For `cfa2016e056f6dc4f9669236414a7acbd9551011`:
+
+- Architecture Guard `34804704619` — running at Worker A handoff;
+- Stage13E Admin AI `34804704717` — pending;
+- Stage13E Frontend Preparation `34804704759` — pending;
+- Stage13E Combined `34804704721` — pending;
+- Stage13G `34804704756` — pending.
+
+Do not mark AB-01.3 DONE until required gates are green.
 
 ## 9. Exact next engineering task
 
-AB-01.3 — minimum proven Admin product-state primitive.
+The next worker must perform **verification/closure only** as the smallest coherent increment:
 
-Next worker must:
+1. fetch live branch/main HEAD and read live state;
+2. inspect the source-head runs listed above and any superseding exact-head runs;
+3. if required AB-01.3 gates are green, update state/status/log/handoff/AB-01 execution doc to mark AB-01.3 DONE;
+4. if a gate fails, diagnose and root-fix only that regression;
+5. do not mix AB-01.3 closure with a broad AB-01.4 mutation.
 
-1. first inspect the live shared state and exact-head workflows from Worker A documentation commits;
-2. if no real regression exists, re-read current Overview + Operations state implementations and any other repeated state patterns;
-3. identify one smallest reusable Admin-only primitive with proven duplication, beginning with loading/error/retry if evidence still supports it;
-4. keep server/feature-specific copy and recovery semantics with the feature;
-5. do not create a generic mega-component;
-6. implement one coherent primitive adoption only;
-7. run Architecture Guard and relevant Admin/API/PostgreSQL/Chromium gates before advancing.
+After AB-01.3 is formally closed, the following engineering increment is AB-01.4 discovery: inspect `apps/api/src/app.ts`, map composition responsibilities/order/contracts, and identify the smallest real app-level extraction before mutation.
 
 ## 10. Remaining roadmap
 
