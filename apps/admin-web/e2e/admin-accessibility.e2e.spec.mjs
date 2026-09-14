@@ -32,14 +32,20 @@ test("admin shell preserves RTL, keyboard focus visibility, and responsive width
   const productShell = page.locator(".aw-product-shell--admin");
   await expect(productShell).toHaveAttribute("dir", "rtl");
 
+  // RouteFocus intentionally places programmatic focus on the page-content landmark.
+  // Move backwards/forwards with the keyboard so :focus-visible is exercised through
+  // the same input modality a keyboard user actually uses.
+  const routeContent = page.locator("#route-content");
+  await expect(routeContent).toBeFocused();
+
   const skipLink = page.getByRole("link", { name: "انتقل إلى المحتوى" });
-  await skipLink.focus();
+  await page.keyboard.press("Shift+Tab");
   await expect(skipLink).toBeFocused();
   const skipOutline = await skipLink.evaluate((element) => getComputedStyle(element).outlineStyle);
   expect(skipOutline).not.toBe("none");
 
   const firstNavigationLink = page.getByRole("navigation", { name: "أقسام الإدارة" }).getByRole("link").first();
-  await firstNavigationLink.focus();
+  await page.keyboard.press("Tab");
   await expect(firstNavigationLink).toBeFocused();
   const navOutline = await firstNavigationLink.evaluate((element) => getComputedStyle(element).outlineStyle);
   expect(navOutline).not.toBe("none");
