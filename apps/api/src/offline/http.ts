@@ -6,6 +6,7 @@ import type { AppConfig } from "../config.js";
 import { AppError } from "../errors.js";
 import type { StudentOfflineDownloadService } from "./download.js";
 import type { StudentOfflineService } from "./service.js";
+import type { StudentOfflineSyncService } from "./sync.js";
 
 const OfflineLessonParamsSchema = z.object({ lessonId: z.string().uuid() });
 const OfflineLessonAssetParamsSchema = z.object({
@@ -15,6 +16,10 @@ const OfflineLessonAssetParamsSchema = z.object({
 const OfflineAssetQuerySchema = z.object({
   revision: z.coerce.number().int().min(1).max(Number.MAX_SAFE_INTEGER),
 });
+const OfflineDeltaQuerySchema = z.object({
+  after: z.string().regex(/^\d+$/).default("0"),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});
 
 export function registerStudentOfflineRoutes(
   app: FastifyInstance,
@@ -22,6 +27,7 @@ export function registerStudentOfflineRoutes(
   auth: AuthService,
   offline: StudentOfflineService,
   downloads: StudentOfflineDownloadService,
+  sync: StudentOfflineSyncService,
 ): void {
   app.get("/v1/student/offline/lease", async (request, reply) => {
     const profile = await currentProfile(request, config, auth);
@@ -31,6 +37,21 @@ export function registerStudentOfflineRoutes(
     reply.header("Cache-Control", "private, no-store");
     reply.header("Pragma", "no-cache");
     return { lease };
+  });
+
+  app.get("/v1/student/offline/sync", async (request, reply) => {
+    const profile = await currentProfile(request, config, auth);
+    if (profile.role !== "student") throw new AppError("FORBIDDEN", "هذه العملية للطالب فقط", 403);
+    const query = parseBody(OfflineDeltaQuerySchema, request.query);
+    const delta = await sync.delta(
+      profile.id,
+      sessionToken(request, config),
+      query.after,
+      query.limit,
+    );
+    reply.header("Cache-Control", "private, no-store");
+    reply.header("Pragma", "no-cache");
+    return { delta };
   });
 
   app.get("/v1/student/offline/lessons/:lessonId/manifest", async (request, reply) => {
