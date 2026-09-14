@@ -97,8 +97,10 @@ export default function App() {
   useEffect(() => {
     const reconnected = !previousOnline.current && online;
     previousOnline.current = online;
-    if (reconnected && phase === "offline") void checkSession(true);
-  }, [online, phase]);
+    if (!reconnected) return;
+    if (profile) void checkSession(true);
+    else if (phase === "offline" || phase === "unavailable") void checkSession();
+  }, [online, phase, profile]);
 
   function handleSessionExpired() {
     if (profile) clearStudentRuntimeCache(profile.id);
