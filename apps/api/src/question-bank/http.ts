@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { aiQuestionSchema } from "../ai/contracts.js";
-import { parseBody } from "../app/http/request-validation.js";
+import { parseBody } from "../shared/http/request-validation.js";
 import { currentProfile } from "../auth/http.js";
 import type { AuthService } from "../auth/service.js";
 import type { AppConfig } from "../config.js";
