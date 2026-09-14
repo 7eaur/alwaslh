@@ -151,6 +151,10 @@ try {
     JSON.stringify({
       sessionCookieName: config.SESSION_COOKIE_NAME,
       sessionToken,
+      studentId,
+      deviceId,
+      classId: classRecord.id,
+      lessonId: lesson.id,
       className: classRecord.name,
       subjectName: subject.name,
       lessonTitle: lesson.title,

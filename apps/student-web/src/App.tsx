@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ApiRequestError,
   isMissingSessionError,
@@ -12,6 +12,7 @@ import {
   type StudentEntryMode,
   type StudentEntryNotice,
 } from "./features/auth/StudentEntryExperience";
+import { revalidateOfflinePackagesForCurrentSession } from "./offline-revalidation";
 import { clearActiveOfflineLease, getActiveOfflineScope } from "./offline-session";
 import { clearStudentRuntimeCache } from "./shared/data/student-runtime-cache";
 import { StudentAccessSection } from "./student-access";
@@ -46,6 +47,7 @@ function offlineProfile(): SessionProfile | null {
 
 export default function App() {
   const online = useOnlineStatus();
+  const previousOnline = useRef(online);
   const [phase, setPhase] = useState<SessionPhase>("checking");
   const [profile, setProfile] = useState<SessionProfile | null>(null);
   const [mode, setMode] = useState<StudentEntryMode>(() => initialEntryMode());
@@ -96,6 +98,25 @@ export default function App() {
     setMode("login");
     setPhase("anonymous");
   }
+
+  useEffect(() => {
+    const cameOnline = !previousOnline.current && online;
+    previousOnline.current = online;
+    if (!cameOnline || !profile || (phase !== "authenticated" && phase !== "offline")) return;
+
+    let cancelled = false;
+    void (async () => {
+      const result = await revalidateOfflinePackagesForCurrentSession(profile.id);
+      if (cancelled) return;
+      if (result.status === "session_invalid") {
+        handleSessionExpired();
+        return;
+      }
+      if (phase === "offline") await checkSession();
+    })();
+
+    return () => { cancelled = true; };
+  }, [online, phase, profile?.id]);
 
   async function handleLogout() {
     if (profile) clearStudentRuntimeCache(profile.id);
