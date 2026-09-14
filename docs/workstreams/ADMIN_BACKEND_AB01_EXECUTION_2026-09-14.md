@@ -49,32 +49,35 @@ Implemented ownership:
 - `registerCorsPolicy(app, config)` derives origins through the existing `allowedOrigins(config)` contract and registers the same direct `onRequest` hook;
 - `apps/api/src/app.ts` invokes it at the same pre-route lifecycle point;
 - existing allowed-origin headers, credentials, `Vary: Origin`, OPTIONS methods/headers and rejected-preflight `AppError("FORBIDDEN", ..., 403)` semantics are preserved;
-- health/readiness, public error mapping, database close lifecycle, service graph, all route registrations, migrations and Student frontend were deliberately untouched.
+- health/readiness, public error mapping, database close lifecycle, service graph and all business route registrations were deliberately untouched.
 
 Verification:
 
 - Architecture Guard `34808159011` — SUCCESS on source HEAD;
 - source HEAD → verification HEAD `3d281eddcdaf4a8d75d810dc0e5ded5a35392cad` differs only in autonomous execution-state documentation;
 - Stage13E Admin AI `34809211720` — SUCCESS;
-- Stage13E Combined Integration `34809211704` — SUCCESS including API/Admin quality, clean PostgreSQL, backend/auth regressions and real Admin Chromium;
-- Stage13G `34809211707` — SUCCESS including Admin/API quality, clean PostgreSQL, all listed integrations/auth regressions and real API + PostgreSQL + Chromium.
+- Stage13E Combined Integration `34809211704` — SUCCESS;
+- Stage13G `34809211707` — SUCCESS including real API + PostgreSQL + Chromium.
 
 Conclusion: first AB-01.4 seam is **DONE**.
 
-### Second seam — DISCOVERY NEXT
+### Second seam — HEALTH/READINESS DISCOVERY DONE / IMPLEMENTATION NEXT
 
-The next increment is discovery only. Re-inspect remaining `apps/api/src/app.ts` responsibilities after the CORS extraction and choose exactly one next technical/composition seam. Record:
+Discovery selected the next smallest bounded app-level responsibility:
 
-1. current owner and target owner;
-2. ordering/dependency constraints;
-3. business/server/Student impact;
-4. direct parity tests/contracts;
-5. required exact-head gates;
-6. explicit non-goals/removal condition.
+- current owner: inline `GET /health` and `GET /ready` handlers in `apps/api/src/app.ts`;
+- target owner: `apps/api/src/app/http/health.ts`;
+- target composition call: `registerHealthRoutes(app, database)`;
+- direct parity authority: the three existing health/readiness tests in `apps/api/tests/app.test.ts`;
+- `/health` must remain process-only and healthy even when PostgreSQL is unavailable;
+- `/ready` must continue using only `database.ping()`, return the same 200/503 bodies, and preserve the database readiness failure log semantics;
+- no business/auth/security/Student/schema contract changes are authorized.
 
-Do not implement the next seam in the same discovery increment. Continue to reject a giant `createServices()` container, all-route extraction, empty folder scaffolding, DI/service-locator ceremony, or combined DB/error restructuring without new evidence.
+Implementation must preserve the current route registration position and must **not** include public-error handlers, not-found handling, database-close lifecycle, service construction, all-route extraction, `server.ts`, migrations or Student frontend changes.
 
-Constraints remain: one Fastify modular monolith; preserve construction/registration order where behavior depends on it; no database migration for folder structure; create only owners with real responsibility.
+Required closure gates: Architecture Guard, API lint/typecheck/unit/build, clean PostgreSQL/integration regressions, Combined/equivalent backend authority evidence, and Stage13G/equivalent real API + PostgreSQL + Chromium evidence.
+
+The next increment is implementation of **this seam only**. No third composition seam may be selected until health/readiness extraction is verified.
 
 ## AB-01.5 — Common backend technical ownership — PENDING
 
