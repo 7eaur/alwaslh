@@ -46,33 +46,22 @@ Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
 Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 
-Sub-increments:
-
-- AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
-- AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
-- AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED.
-- AB-03.2.4 Content operations compatibility facade retirement — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
-- AB-03.2.5 Content ingestion compatibility facade retirement — DONE / EXACT-HEAD VERIFIED at `7f4a07ebd138106e1c7701bc9820bf978c233643`.
-- AB-03.2.6 same-slice direct-owner consumption — DONE / SOURCE-TREE-EQUIVALENT VERIFIED at executable checkpoint `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`.
-- AB-03.2.7 final lesson Content/Curriculum transport ownership — DONE / EXACT-HEAD VERIFIED at `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
-
 ### AB-03.3 AI Jobs / Review / Authoring — ACTIVE
 
-Worker A sequence 75 established the first real AI feature owner without mixing Question Bank or Quiz Builder ownership into this slice.
+- **AB-03.3.1 AI operations feature-owner foundation — DONE / EXACT-HEAD VERIFIED.** AI jobs/review application capability, transport, adapter, view-model and tests live under `features/ai/operations`.
+- **AB-03.3.2 AI review presentation ownership transfer — DONE / EXACT-HEAD VERIFIED.** Review page/workspace moved into the AI feature without behavior drift.
+- **AB-03.3.3 compatibility-facade retirement + direct-owner consumption — DONE / EXACT-HEAD VERIFIED.** Root AI operations facades were removed. `AiStructuredOutputEditor.tsx`, review UI and their CSS were relocated under `features/ai/operations` as 100% renames; two one-line internal bridges preserve generic API-error and approved-output application dependencies without reintroducing root ownership. Executable/source checkpoint: `d1e11bc7b99b50dff480e8f830812492a390983c`.
+- **AB-03.3.4 approved-output application ownership — NEXT.** Extract only the AI-owned approved lesson/quiz output application contracts/functions from mixed root `admin-ai-authoring-api.ts` into `features/ai`; keep Question Bank/Quiz Builder generation/export ownership in their later slices. Remove compatibility only after consumer proof.
 
-- **AB-03.3.1 AI operations feature-owner foundation — DONE / EXACT-HEAD VERIFIED.** Real jobs/review application capability, transport, adapter and view-model implementations now live under `features/ai/operations`; their four tests are colocated with the owner. Root AI operations files are compatibility facades only. Core/test checkpoint: `c82ef8e298103d010a8421ab2df3eecaad038ea5`.
-- **AB-03.3.2 AI review presentation ownership transfer — DONE / EXACT-HEAD VERIFIED.** `AiOperationsPage.tsx` and `AiReviewWorkspace.tsx` now live under `features/ai`; the review workspace is a byte-identical rename, and the old `admin/reviews/AiOperationsPage.tsx` is a one-line compatibility facade through `features/ai/public`. Executable/source checkpoint: `c4f44953a6d16473e24f8a4188eb36943452812c`.
-- **AB-03.3.3 compatibility-facade retirement + direct-owner consumption — NEXT.** Inspect/repoint every remaining consumer of the root AI operations facades and the old review-page facade, then delete only proven-unused compatibility files. Keep AI authoring application hooks separate where moving them would mix Question Bank/Quiz Builder ownership.
+Exact-head evidence on `d1e11bc7...`:
 
-Exact-head evidence on `c4f44953...`:
+- Architecture Guard `34990715628` — SUCCESS.
+- Frontend Preparation `34990715697` — SUCCESS: lint + strict typecheck + unit tests + build.
+- Admin AI `34990715543` — SUCCESS: clean migrations + PostgreSQL contracts + authorization/observability/review-race/control + Stage12/auth regressions.
+- Combined Integration `34990715804` — SUCCESS including deterministic fixture and real Admin Chromium.
+- Stage13G `34990715570` — SUCCESS across Admin UI, backend, PostgreSQL/security/integrations and Real API + PostgreSQL + Chromium.
 
-- Architecture Guard `34989303067` — SUCCESS.
-- Frontend Preparation `34989303106` — SUCCESS: lint + strict typecheck + unit tests + build.
-- Admin AI `34989303059` — SUCCESS: clean migrations + PostgreSQL contracts + authorization/observability/review-race/control + Stage12/auth regressions.
-- Combined Integration `34989303098` — SUCCESS including deterministic fixture and real Admin Chromium.
-- Stage13G `34989303031` — SUCCESS across Admin UI, backend, PostgreSQL/security/integrations and Real API + PostgreSQL + Chromium.
-
-No endpoint, payload, backend, database, authorization, route behavior, product copy or styling behavior changed in AB-03.3.2; the large presentation files were moved using their existing blobs to avoid UI drift.
+No endpoint, payload, backend, PostgreSQL, authorization, route behavior, product copy, JSX behavior or styling behavior changed in AB-03.3.3.
 
 ## Remaining roadmap
 

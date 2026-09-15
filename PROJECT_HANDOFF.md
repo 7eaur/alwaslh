@@ -32,38 +32,39 @@ Owned: complete Super Admin, full Fastify backend/API, PostgreSQL/migrations/int
 
 ## Latest verified result
 
-Worker A sequence 75 established the initial AI feature owner and transferred the review presentation without changing behavior.
+Worker B sequence 76 closed **AB-03.3.3 compatibility-facade retirement + direct-owner consumption**.
 
-Latest executable/source checkpoint: `c4f44953a6d16473e24f8a4188eb36943452812c`.
+Latest executable/source checkpoint: `d1e11bc7b99b50dff480e8f830812492a390983c`.
 
-Current ownership:
+Current AI operations/review ownership:
 
-- AI jobs/review application capability, transport, adapter and view-model implementations + tests → `apps/admin-web/src/features/ai/operations`;
-- public AI boundary → `apps/admin-web/src/features/ai/public`;
-- `AiOperationsPage.tsx` + `AiReviewWorkspace.tsx` → `apps/admin-web/src/features/ai`;
-- old `admin/reviews/AiOperationsPage.tsx` is now a one-line compatibility facade; old `AiReviewWorkspace.tsx` path was removed.
+- application capability, jobs/review transport, adapter, view-model + tests → `apps/admin-web/src/features/ai/operations`;
+- `AiStructuredOutputEditor.tsx` + its CSS → `features/ai/operations`;
+- AI review page/workspace → `features/ai/operations/ui/reviews`;
+- public AI boundary → `features/ai/public`;
+- root AI operations facades were deleted;
+- two one-line internal bridges retain generic API-error/session helpers and approved-output application hooks until their owners are separated deliberately.
 
-The review presentation move reused the exact existing blobs. No UI copy/JSX/workflow logic, endpoint, payload, backend, database or security behavior changed.
+The presentation/editor moves reused existing blobs and were recognized as 100% renames. No UI copy/JSX/workflow logic, endpoint, payload, backend, database or security behavior changed.
 
-Exact-head green evidence on `c4f44953...`:
+Exact-head green evidence on `d1e11bc7...`:
 
-- Architecture Guard `34989303067`;
-- Frontend Preparation `34989303106`;
-- Admin AI `34989303059`;
-- Combined Integration `34989303098` including real Admin Chromium;
-- Stage13G `34989303031` including Admin UI, backend, PostgreSQL/security integrations, and Real API + PostgreSQL + Chromium.
+- Architecture Guard `34990715628`;
+- Frontend Preparation `34990715697`;
+- Admin AI `34990715543`;
+- Combined Integration `34990715804` including real Admin Chromium;
+- Stage13G `34990715570` including Admin UI, backend, PostgreSQL/security integrations, and Real API + PostgreSQL + Chromium.
 
 ## Exact continuation
 
-Next worker is **B**. Execute one smallest coherent increment: **AB-03.3.3 — compatibility-facade retirement + direct-owner consumption**.
+Next worker is **C**. Execute one smallest coherent increment: **AB-03.3.4 — approved-output application ownership**.
 
-1. Re-read live state/HEAD and inspect all current consumers before mutation.
-2. Repoint legitimate consumers of root `ai-application-api.ts`, `ai-operations-api.ts`, `ai-operations-adapter.ts`, `ai-operations-view-model.ts` and the old `admin/reviews/AiOperationsPage.tsx` facade to the real `features/ai` owners/public boundary.
-3. `AiStructuredOutputEditor.tsx` is a known root consumer of AI operations/view-model contracts; handle it deliberately rather than deleting facades underneath it.
-4. Delete compatibility files only after a zero-consumer proof.
-5. Do not fold Question Bank or Quiz Builder transports into this cleanup. Keep mixed AI-authoring application hooks separate unless a root-cause ownership fix is possible without crossing those later canonical slices.
-6. Preserve all current behavior, routes, payloads, product copy and styles.
-7. Re-run Architecture Guard, Admin quality, Admin AI, Combined and Stage13G/PostgreSQL/security/Chromium gates.
+1. Re-read live state/HEAD and inspect all consumers before mutation.
+2. Locate `applyApprovedLessonOutput`, `applyApprovedQuizOutput` and their result/input contracts in mixed root `admin-ai-authoring-api.ts`.
+3. Move only the AI-owned approved-output application capability into `features/ai` and repoint AI review consumers/internal bridge to that owner.
+4. Do **not** move lesson generation, quiz generation, question regeneration/archive, specialized quiz export/print, Question Bank or Quiz Builder concerns merely because they share the legacy file.
+5. Remove the temporary `features/ai/operations/admin-ai-authoring-api.ts` bridge only when its consumer is feature-local and direct.
+6. Preserve routes/endpoints/payloads/copy/styles and run Architecture Guard, Admin quality, Admin AI, Combined and Stage13G/PostgreSQL/security/Chromium gates.
 
 ## Remaining roadmap
 

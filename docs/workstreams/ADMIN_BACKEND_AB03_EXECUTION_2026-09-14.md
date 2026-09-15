@@ -17,69 +17,44 @@ Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
 ## AB-03.2 — Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
 
-### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-Implementation ownership lives in `features/curriculum/api/admin-curriculum-api.ts`, exposed through `features/curriculum/public`.
-
-### AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-Implementation ownership lives in `features/content/api/content-ingestion-api.ts`, exposed through `features/content/public`.
-
-### AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
-Implementation ownership lives in `features/content/api/content-operations-api.ts`, exposed through `features/content/public`.
-
-### AB-03.2.4 Content operations compatibility facade retirement — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-Corrected executable checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
-
-### AB-03.2.5 Content ingestion compatibility facade retirement — DONE / EXACT-HEAD VERIFIED
-Exact checkpoint: `7f4a07ebd138106e1c7701bc9820bf978c233643`.
-
-### AB-03.2.6 Same-slice direct-owner consumption — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-Executable checkpoint: `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`.
-
-### AB-03.2.7 Final lesson Content/Curriculum transport ownership — DONE / EXACT-HEAD VERIFIED
 Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
-
-The final closure moved lesson-content publication into `features/content` and lesson summary/export into `features/curriculum`; endpoint/payload/business/UI/security behavior remained unchanged. Exact-head Architecture Guard, Frontend, Admin AI, Combined and Stage13G/PostgreSQL/Chromium all passed.
 
 ## AB-03.3 — AI Jobs / Review / Authoring — ACTIVE
 
 ### AB-03.3.1 AI operations feature-owner foundation — DONE / EXACT-HEAD VERIFIED
 
-Worker A sequence 75 created the real AI owner rather than retaining root implementation ownership:
-
-- `features/ai/operations/ai-application-api.ts` owns the AI application capability transport;
-- `features/ai/operations/ai-operations-api.ts` owns jobs/review transport and contracts;
-- `features/ai/operations/ai-operations-adapter.ts` owns API-to-view mapping;
-- `features/ai/operations/ai-operations-view-model.ts` owns the review presentation model;
-- the four associated tests are colocated with the owner;
-- `features/ai/public/index.ts` exposes the controlled public boundary;
-- prior root AI operations modules are compatibility facades only.
-
-Core/test checkpoint: `c82ef8e298103d010a8421ab2df3eecaad038ea5`. Exact-head Architecture Guard, Frontend, Admin AI, Combined real Chromium and Stage13G Real API + PostgreSQL + Chromium all passed.
+Real AI jobs/review application capability, transport, adapter, view-model and associated tests live under `features/ai/operations`.
 
 ### AB-03.3.2 AI review presentation ownership transfer — DONE / EXACT-HEAD VERIFIED
 
-Executable/source checkpoint: `c4f44953a6d16473e24f8a4188eb36943452812c`.
+Executable/source checkpoint: `c4f44953a6d16473e24f8a4188eb36943452812c`. Review presentation was moved into `features/ai` without changing JSX, endpoints, payloads, product copy or security behavior.
 
-Worker A moved the review presentation into the same feature owner conservatively:
+### AB-03.3.3 Compatibility-facade retirement + direct-owner consumption — DONE / EXACT-HEAD VERIFIED
 
-- `admin/reviews/AiOperationsPage.tsx` implementation → `features/ai/AiOperationsPage.tsx`;
-- `admin/reviews/AiReviewWorkspace.tsx` → `features/ai/AiReviewWorkspace.tsx` as a byte-identical rename;
-- `features/ai/public` now exports `AiOperationsPage`;
-- old `admin/reviews/AiOperationsPage.tsx` is a one-line compatibility facade so routing behavior is unchanged during the handoff.
+Executable/source checkpoint: `d1e11bc7b99b50dff480e8f830812492a390983c`.
 
-The large presentation files were moved using their existing blobs. No JSX, product copy, routing behavior, endpoint, payload, backend, PostgreSQL, authorization or styling behavior changed.
+Worker B sequence 76 closed the root AI operations facade debt:
 
-Exact-head evidence on `c4f44953...`:
+- deleted root `ai-application-api.ts`, `ai-operations-api.ts`, `ai-operations-adapter.ts`, `ai-operations-view-model.ts` facades;
+- moved `AiStructuredOutputEditor.tsx` into `features/ai/operations` as a 100% rename;
+- moved editor/review CSS into the AI owner as 100% renames;
+- moved `AiOperationsPage.tsx` and `AiReviewWorkspace.tsx` under `features/ai/operations/ui/reviews` as 100% renames, preserving their existing relative imports to feature-owned operations code;
+- updated `features/ai/public` to the new review-page path;
+- added two one-line internal bridges only for generic Admin API helpers and approved-output application hooks.
 
-- Architecture Guard `34989303067` — SUCCESS;
-- Frontend Preparation `34989303106` — SUCCESS;
-- Admin AI `34989303059` — SUCCESS;
-- Combined Integration `34989303098` — SUCCESS including real Admin Chromium;
-- Stage13G `34989303031` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+No endpoint, payload, backend, PostgreSQL, authorization, route behavior, copy, JSX behavior or style semantics changed.
 
-### AB-03.3.3 Compatibility-facade retirement + direct-owner consumption — NEXT
+Exact-head evidence on `d1e11bc7...`:
 
-Next worker B must perform a fresh consumer scan on live HEAD, repoint legitimate consumers of the root AI operations facades and old review-page facade to the real `features/ai` owner/public boundary, and delete only proven-unused facades. `AiStructuredOutputEditor.tsx` is a known root consumer and must be handled deliberately. Keep Question Bank and Quiz Builder transports for their later canonical slices, and do not mix broad AI-authoring application-hook ownership into this cleanup unless the root-cause boundary can be corrected without crossing those domains.
+- Architecture Guard `34990715628` — SUCCESS;
+- Frontend Preparation `34990715697` — SUCCESS;
+- Admin AI `34990715543` — SUCCESS including clean migrations, PostgreSQL contracts, authorization/observability/review-race/control and Stage12/auth regressions;
+- Combined Integration `34990715804` — SUCCESS including deterministic fixture and real Admin Chromium;
+- Stage13G `34990715570` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+
+### AB-03.3.4 Approved-output application ownership — NEXT
+
+Next worker C must perform a fresh consumer scan around `applyApprovedLessonOutput`, `applyApprovedQuizOutput` and their contracts in mixed root `admin-ai-authoring-api.ts`. Extract only this AI review/application capability into `features/ai` and repoint the feature-local review consumer. Do not absorb lesson/quiz generation, Question Bank, question regeneration/archive, specialized export/print or Quiz Builder concerns into the AI feature simply because they share the legacy root file. Delete the temporary `features/ai/operations/admin-ai-authoring-api.ts` bridge once direct ownership is proven, then run the full required exact-head gates.
 
 ## Main reconciliation
 
