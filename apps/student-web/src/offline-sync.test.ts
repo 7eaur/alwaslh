@@ -87,7 +87,7 @@ describe("applyOfflineContentDelta", () => {
     expect(result).toEqual({ pages: 1, entries: 1, removed: 1, nextCursor: "7", hasMore: false });
   });
 
-  it("continues bounded pagination from the returned cursor", async () => {
+  it("continues bounded pagination from one stable snapshot", async () => {
     mocks.readCursor.mockReturnValue("10");
     mocks.getDelta
       .mockResolvedValueOnce({
@@ -115,8 +115,8 @@ describe("applyOfflineContentDelta", () => {
 
     const result = await applyOfflineContentDelta("profile-1", "device-1");
 
-    expect(mocks.getDelta).toHaveBeenNthCalledWith(1, "10", 50);
-    expect(mocks.getDelta).toHaveBeenNthCalledWith(2, "11", 50);
+    expect(mocks.getDelta).toHaveBeenNthCalledWith(1, "10", 50, undefined);
+    expect(mocks.getDelta).toHaveBeenNthCalledWith(2, "11", 50, "14");
     expect(mocks.writeCursor).toHaveBeenNthCalledWith(1, "profile-1", "device-1", "11");
     expect(mocks.writeCursor).toHaveBeenNthCalledWith(2, "profile-1", "device-1", "14");
     expect(result).toEqual({ pages: 2, entries: 2, removed: 2, nextCursor: "14", hasMore: false });
