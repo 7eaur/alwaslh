@@ -75,7 +75,9 @@ try {
   const lessonId = lessonRows[0]?.id;
   assert.ok(lessonId, "Stage13F question-bank lesson must exist before generation-closure seeding");
 
-  const mediaRows = await db.query<{ id: string }>("select id from media_assets where id = $1", [mediaAssetId]);
+  const mediaRows = await db.query<{ id: string }>("select id from media_assets where id = $1", [
+    mediaAssetId,
+  ]);
   assert.equal(mediaRows.length, 1, "Stage13F source media must exist before generation-closure seeding");
 
   await db.query(
