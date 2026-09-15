@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-15 — Worker A sequence 87 closed Quiz Builder compatibility debt and exact-head verification.**
+Last consolidated: **2026-09-16 — owner-directed pause before Students source mutation; AI generation operational closure opened.**
 
 ## Durable invariants
 
@@ -19,7 +19,7 @@ Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use
 
 Live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. Reconciliation is `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification.
 
-## AB-03 — ACTIVE
+## AB-03 — ACTIVE / ORDERED ROADMAP PAUSED BEFORE AB-03.6.1 SOURCE MUTATION
 
 ### AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
 Source: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
@@ -64,13 +64,30 @@ Exact-head CI on `f60a4b279fad9a011f9188005dd3ad075c7e3f00`:
 - Combined Integration `35022098947` — SUCCESS including clean PostgreSQL/backend/security regressions and real Admin Chromium.
 - Stage13G `35022099002` — SUCCESS including Admin backend/UI and Real API + PostgreSQL + Chromium.
 
-## Exact next vertical slice — AB-03.6 Students
+## Sequence 88 — AB-03.6.1 Students opening — DEFERRED BEFORE SOURCE MUTATION
 
-Fresh pre-scan:
-- presentation: `apps/admin-web/src/admin/students/AdminStudentsPage.tsx`;
-- mixed frontend owner: `apps/admin-web/src/admin-student-access-api.ts`, which combines Student and Access Code contracts/actions;
-- mixed unit test similarly combines two Access Code tests and two Student tests;
-- backend `apps/api/src/admin-access/http.ts` already protects Student list/detail with admin authorization and bounded Zod pagination/UUID validation;
-- recovery/device-rebind/entitlement mutation authority already lives in existing auth/access backend services and Stage13G access/auth regressions are green.
+Sequence 88 opened `AB-03.6.1 — Students feature-owner foundation` and recorded a frontend-only extraction plan. No Student implementation source commit followed the sequence-open documentation commit `6bb1c0390e3b4e6bf39647421ac9da4b175d828d`. The owner explicitly paused this slice on 2026-09-16 so AI question generation can be operationally completed first.
 
-Smallest coherent next increment: **AB-03.6.1 Students feature-owner foundation**. Split only Student-owned frontend contracts/actions and Student-specific test blocks into `features/students`; expose a narrow public boundary; preserve Access Code implementation/tests in the existing mixed root until its own slice; leave backend/database unchanged absent new evidence.
+This is a priority pause, not a roadmap deletion. Exact resume point after generation closure: **AB-03.6.1 Students feature-owner foundation**.
+
+## Sequence 89 — AI generation operational closure — ACTIVE
+
+Purpose: verify and, where evidence requires, complete the existing lesson/content-to-question generation path instead of continuing structural roadmap work while generation remains operationally uncertain.
+
+Acceptance boundary:
+- inspect Admin lesson/content context and linked-question observability;
+- trace generation request from Admin through API/job/worker/provider;
+- prove whether runtime binds a real AI provider and identify required config without exposing secrets;
+- inspect prompt registry, grounding rules, output schemas/parsers and validation;
+- search repository/history/available legacy evidence for the old/original prompt and question-generation rules, then compare parity rather than assuming it;
+- trace result/review/adoption into canonical Question Bank/PostgreSQL persistence and lesson/content linkage;
+- verify authorization, provenance/audit, idempotency/transaction behavior as applicable;
+- run focused unit/integration/security/PostgreSQL/browser evidence and exact-head CI.
+
+At sequence open, the architecture for AI authoring had prior green evidence, but **real provider runtime execution/config** and **exact old/original prompt/rule parity** are `NOT YET VERIFIED`. Therefore prior AB-03.3 architecture closure must not be confused with end-to-end production/development readiness of generation.
+
+Before any overlapping backend/database change, compare the live-main authoritative offline/content delta and reconcile deliberately. No backend/schema mutation is justified solely by this documentation pivot.
+
+## Exact roadmap resume after generation closure
+
+`AB-03.6.1 Students feature-owner foundation` → remaining Students → Access Codes → AB-04 → AB-05 → AB-06 → AB-07 → AB-08.
