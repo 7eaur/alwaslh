@@ -26,40 +26,43 @@ Owned: complete Super Admin, full Fastify backend/API, PostgreSQL/migrations/int
 - AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
-  - AB-03.2 Curriculum + Content + OCR — ACTIVE
-  - AB-03.2.1 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.2.2 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.2.3 — DONE / EXACT-HEAD VERIFIED
-  - AB-03.2.4 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.2.5 — DONE / EXACT-HEAD VERIFIED
-  - AB-03.2.6 same-slice direct-owner consumption — IMPLEMENTED / WAITING_FOR_CI
+  - AB-03.2 Curriculum + Content + OCR — **DONE / EXACT-HEAD VERIFIED**
+  - AB-03.3 AI Jobs / Review / Authoring — **ACTIVE**
 - AB-04..AB-08 — PENDING
 
-## Latest result
+## Latest verified result
 
-AB-03.2.5 was fixed safely and closed at exact source checkpoint `7f4a07ebd138106e1c7701bc9820bf978c233643`: `ContentIngestionWorkspace.tsx` now consumes `features/content/public`, the obsolete root `content-ingestion-api.ts` facade was deleted, and exact-head Architecture Guard, Frontend Preparation, Admin AI, Combined Integration, Stage13G/PostgreSQL/security and real Chromium all passed.
+AB-03.2 final executable/source checkpoint is `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 
-Worker A then used the same Curriculum/Content/OCR ownership context for one adjacent cleanup batch. Current executable/source checkpoint is `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`; compared with the last green checkpoint, only six files changed and all changes are import-boundary ownership corrections. No UI behavior, endpoint, payload, PostgreSQL, security or Student frontend implementation changed.
+Final closure moved the two remaining real root implementations into their feature owners:
 
-Current exact-head CI for `2dd1ca2...`:
+- lesson-content publication transport/test → `features/content/api`, exposed by `features/content/public`;
+- lesson summary/export transport → `features/curriculum/api`, exposed by `features/curriculum/public`.
 
-- Architecture Guard `34963907236` — SUCCESS;
-- Frontend Preparation `34963907292` — SUCCESS;
-- Admin AI `34963907259` — PENDING at handoff;
-- Combined Integration `34963907267` — IN PROGRESS at handoff;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34963907247` — IN PROGRESS at handoff.
+The transport moves were behavior-preserving renames with only shared-client import-path changes. Production consumers now use the public feature boundaries.
+
+Exact-head green evidence:
+
+- Architecture Guard `34964996524`;
+- Frontend Preparation `34964996555`;
+- Admin AI `34964996466`;
+- Combined Integration `34964996488` including real Admin Chromium;
+- Stage13G `34964996480` including Admin UI, backend, PostgreSQL/security integrations, and Real API + PostgreSQL + Chromium.
 
 ## Exact continuation
 
-1. Fetch live branch/main and respect shared lease.
-2. Check the exact-head runs above or their exact-source successors if GitHub superseded them.
-3. If any gate fails, fix root cause only; do not weaken tests/security/validation.
-4. If all gates become green, perform fresh AB-03.2 closure inspection before entering AI.
-5. `ContentOperationsPage.tsx` still uses generic API/session helpers through `admin-api.ts`, while Content/OCR transport already comes from `features/content/public`. Treat this as a possible compatibility cleanup, not as evidence of split Content implementation ownership. Change it only via a mechanically safe patch; do not rebuild the large file merely to remove one import.
-6. Close AB-03.2 only when exact-head evidence and closure inspection support it; then begin the next canonical slice, AI Jobs/Review/authoring, in a separate coherent batch.
+Begin **AB-03.3.1 — AI operations frontend ownership** as a separate coherent increment:
+
+1. preserve current AI behavior/contracts and inspect all consumers/tests before mutation;
+2. establish `features/ai` ownership for AI jobs/review API plus its adapter/view-model/test family rather than leaving split root implementation ownership;
+3. expose only the narrow public surface needed by `AiOperationsPage` / review UI;
+4. repoint legitimate consumers, then remove root files only when proven unused;
+5. do not fold Question Bank or Quiz Builder transports into this increment—they have later canonical slices;
+6. keep AI authoring-specific application hooks separate if they cannot be moved coherently without mixing later domain ownership;
+7. run Architecture Guard, Admin quality, Admin AI, Combined and Stage13G/PostgreSQL/security/Chromium gates before declaring the increment closed.
 
 ## Remaining roadmap
 
-Finish AB-03.2 verification/closure → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+AB-03.3 AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.

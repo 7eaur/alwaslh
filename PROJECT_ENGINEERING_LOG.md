@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-15 — Worker A sequence 73 solved the AB-03.2.5 blocker safely, closed that seam on exact-head green evidence, then implemented an adjacent same-slice direct-owner cleanup now waiting on final exact-head CI.**
+Last consolidated: **2026-09-15 — Worker A sequence 74 closed AB-03.2 Curriculum + Content + OCR at exact source checkpoint `3a45d18...`, then selected AI operations ownership as the next canonical slice.**
 
 ## Durable invariants
 
@@ -15,9 +15,9 @@ Last consolidated: **2026-09-15 — Worker A sequence 73 solved the AB-03.2.5 bl
 
 ## Governance
 
-Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as the serial handoff authority. Never auto-merge or rewrite shared history.
+Branch `rebuild/super-admin-foundation`; PR #52 remains Draft. Workers A/B/C use `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` as serial handoff authority. Never auto-merge or rewrite shared history.
 
-Live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. This main contains authoritative offline-content API/PostgreSQL changes; reconciliation is `REQUIRED / DEFERRED` before any overlapping backend/database mutation and before AB-08 final verification.
+Live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. It contains authoritative offline-content API/PostgreSQL changes; reconciliation is `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification.
 
 ## AB-00 — DONE
 ## AB-01 — DONE / EXACT-HEAD VERIFIED
@@ -29,33 +29,36 @@ Live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. This main contains auth
 
 Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
-### AB-03.2 Curriculum + Content + OCR — ACTIVE
+### AB-03.2 Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
 
-- AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
-- AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
-- AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED.
-- AB-03.2.4 Content operations compatibility facade retirement — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
-- AB-03.2.5 Content ingestion compatibility facade retirement — **DONE / EXACT-HEAD VERIFIED** at `7f4a07ebd138106e1c7701bc9820bf978c233643`.
+Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 
-### Worker A sequence 73
+Sequence 73 closed the remaining Content-ingestion compatibility facade at exact checkpoint `7f4a07e...`, then completed a same-slice direct-owner import cleanup at executable checkpoint `2dd1ca2...`; successor Admin AI `34964251627`, Combined `34964251663`, and Stage13G `34964251606` were all green.
 
-The prior AB-03.2.5 blocker was tooling-related: the remaining `ContentIngestionWorkspace.tsx` change was one import line, but previous whole-file mutation had caused large unrelated drift. Worker A solved this safely by reconstructing the live file exactly, changing only the Content ingestion import to `features/content/public`, mechanically comparing the diff, correcting even whitespace-only noise, and deleting the root facade only after confirming the existing transport test already consumed the feature public boundary.
+Sequence 74 performed the final closure scan and found two actual root-owned transports still inside AB-03.2: lesson-content publication and lesson-authoring/export. They were moved without behavior change:
 
-AB-03.2.5 exact-head verification at `7f4a07e...` is green across Architecture Guard, Frontend Preparation, Admin AI, Combined Integration, Stage13G PostgreSQL/security/API gates and real Chromium.
+- root `lesson-content-api.ts` + test → `features/content/api/lesson-content-api.ts` + colocated test; `features/content/public` now owns the public contract.
+- root `lesson-authoring-parity-api.ts` → `features/curriculum/api/lesson-authoring-parity-api.ts`; `features/curriculum/public` now owns summary/export contracts.
+- `LessonPublicationPanel` and `LessonAuthoringParityPanel` were repointed to the proper public boundaries.
+- GitHub classified the implementation/test moves as renames; implementation deltas were limited to the `shared/api/client` import path. No endpoint, payload, business rule, UI flow, database, authorization or security behavior changed.
 
-The run then continued within the same coherent Curriculum/Content/OCR ownership context. Current source checkpoint `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78` removes current-slice root-facade consumption where safe:
+Exact-head CI on `3a45d18...` is fully green:
 
-- Curriculum create/structure/UI types now use `features/curriculum/public` directly.
-- Lesson authoring uses `shared/api/client` and `features/curriculum/public` directly.
-- OCR source preview and lesson publication use `shared/api/client` directly.
-- Compare from the last green checkpoint shows six files and import-boundary-only edits; no business/UI/API/PostgreSQL/security behavior change.
+- Architecture Guard `34964996524` — SUCCESS.
+- Frontend Preparation `34964996555` — SUCCESS.
+- Admin AI `34964996466` — SUCCESS.
+- Combined Integration `34964996488` — SUCCESS including clean PostgreSQL and real Chromium.
+- Stage13G `34964996480` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations, and Real API + PostgreSQL + Chromium.
 
-Exact-head CI on `2dd1ca2...` at handoff:
+`ContentOperationsPage.tsx` still uses generic `ApiRequestError` / session helpers through root `admin-api.ts`; actual Content/OCR transport is feature-correct. This was intentionally not used as a reason to reconstruct a large file for one compatibility import.
 
-- Architecture Guard `34963907236` — SUCCESS.
-- Frontend Preparation `34963907292` — SUCCESS.
-- Admin AI `34963907259` — PENDING.
-- Combined `34963907267` — IN PROGRESS.
-- Stage13G/PostgreSQL/Chromium `34963907247` — IN PROGRESS.
+### AB-03.3 AI Jobs / Review / Authoring — ACTIVE
 
-Do not close AB-03.2 while these required exact-head gates remain unfinished. After they are green, perform a fresh slice-closure check; `ContentOperationsPage.tsx` still reaches generic `ApiRequestError` / session helpers through root `admin-api.ts`, but its actual Content/OCR transport ownership is already feature-correct. Remove that remaining generic compatibility dependency only if it can be patched mechanically without unsafe whole-file reconstruction.
+Fresh read-only discovery:
+
+- no `features/ai` owner exists yet;
+- root AI jobs/review implementation is split across `ai-operations-api.ts`, `ai-operations-adapter.ts`, `ai-operations-view-model.ts` and their tests;
+- `AiOperationsPage.tsx` consumes those root modules plus a small AI application capability transport and approved-output application hooks;
+- `AdminAiAuthoringWorkspace.tsx` additionally crosses Curriculum, AI authoring, Question Bank and Quiz Builder roots, so it must not be migrated as one indiscriminate batch.
+
+Selected next increment: **AB-03.3.1 AI operations frontend ownership**. Establish a coherent `features/ai` owner for AI jobs/review API + mapping/view-model concerns and tests, expose a narrow public boundary, repoint AI operations/review consumers, and keep Question Bank/Quiz Builder ownership for their later canonical slices.
