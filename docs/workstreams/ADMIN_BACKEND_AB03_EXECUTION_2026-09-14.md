@@ -33,14 +33,50 @@ Implementation/types live in `apps/admin-web/src/features/content/api/content-op
 
 Worker A retired the root production facade; Worker B moved the stale root transport test beside its feature owner instead of restoring compatibility code. Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
 
-Closure evidence: Architecture Guard `34908457279`; Frontend Preparation `34908457311`; Admin AI Operations `34908457270`; successor Combined Integration `34909883950`; successor Stage13G Admin Operations / PostgreSQL / Chromium `34909884028` — all SUCCESS. The successor integration gates ran on documentation-only source-tree-equivalent head `a7dc026583e395a14fb06b5c9022cd091d35c07c`.
+Closure evidence: Architecture Guard `34908457279`; Frontend Preparation `34908457311`; Admin AI Operations `34908457270`; successor Combined Integration `34909883950`; successor Stage13G Admin Operations / PostgreSQL / Chromium `34909884028` — all SUCCESS.
 
-### Worker A sequence 58 — fresh AB-03.2 closure discovery
+### AB-03.2.5 Content ingestion compatibility facade retirement — DONE / EXACT-HEAD VERIFIED
 
-No executable mutation was made. Inspection found the next concrete compatibility debt:
+Worker A sequence 73 resolved the previous tooling blocker without repeating the unsafe whole-file drift:
 
-- `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` still imports Content-ingestion transport/types from root `../../content-ingestion-api`;
-- root `apps/admin-web/src/content-ingestion-api.ts` contains no implementation and only re-exports `features/content/public`;
-- therefore implementation ownership is already feature-correct, but the compatibility facade still has a legitimate production consumer and cannot yet be deleted safely.
+- fetched/reconstructed the live `ContentIngestionWorkspace.tsx` exactly and changed only its Content-ingestion import from root compatibility facade to `features/content/public`;
+- mechanically compared the change and corrected whitespace-only noise before proceeding;
+- confirmed the transport test already consumed `features/content/public`;
+- deleted root `apps/admin-web/src/content-ingestion-api.ts` only after proving it no longer owned implementation and no legitimate test depended on it.
 
-Selected next smallest increment: **AB-03.2.5 — Content ingestion compatibility facade retirement**. Repoint all remaining legitimate root-facade consumers/tests to `features/content/public`, then delete the facade only after proving it unused. No endpoint/payload/PostgreSQL/security/UI behavior change is intended. Do not start AI implementation in the same increment.
+Exact source checkpoint: `7f4a07ebd138106e1c7701bc9820bf978c233643`.
+
+Required exact-head verification completed green on that checkpoint: Architecture Guard, Frontend Preparation, Admin AI, Combined Integration, Stage13G Admin/API/PostgreSQL/security and real Chromium.
+
+### AB-03.2.6 Same-slice direct-owner consumption — IMPLEMENTED / WAITING_FOR_CI
+
+To use the same coherent Curriculum/Content/OCR context productively, Worker A continued only adjacent ownership cleanup:
+
+- `CurriculumCreateActions.tsx`, `CurriculumStructure.tsx`, and `curriculum-ui.tsx` now take Curriculum contracts directly from `features/curriculum/public`;
+- `LessonAuthoringParityPanel.tsx` now takes generic API/session helpers from `shared/api/client` and Curriculum contracts from `features/curriculum/public`;
+- `OcrSourcePreview.tsx` and `LessonPublicationPanel.tsx` now take generic API/session helpers directly from `shared/api/client`.
+
+Current executable/source checkpoint: `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`.
+
+Compare from exact-green `7f4a07e...` to `2dd1ca2...` shows six files and import-boundary-only changes. No UI behavior, API path/payload, PostgreSQL/schema, authorization/security, or Student frontend implementation changed.
+
+Exact-head verification status at Worker A sequence-73 handoff:
+
+- Architecture Guard `34963907236` — SUCCESS;
+- Frontend Preparation `34963907292` — SUCCESS;
+- Admin AI `34963907259` — PENDING when last checked;
+- Combined Integration `34963907267` — IN PROGRESS when last checked;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34963907247` — IN PROGRESS when last checked.
+
+Do not mark AB-03.2.6 or the full AB-03.2 slice DONE until the required final gates are green. After green evidence, do a fresh closure scan. `ContentOperationsPage.tsx` still reaches generic transport/session helpers through root `admin-api.ts`, while its actual Content/OCR API transport already comes from `features/content/public`; this is compatibility debt, not dual Content implementation ownership. Only remove it if a mechanically safe patch is available—do not rebuild that large file solely for one import.
+
+## Main reconciliation
+
+Live `main` observation for this handoff: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. It contains authoritative offline-content API/PostgreSQL changes. Reconciliation is `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification; this Admin import-boundary batch does not overlap it.
+
+## Exact next batch
+
+1. Verify the final exact-source gates for `2dd1ca2...` or exact-source-equivalent successor runs if GitHub concurrency superseded them with documentation-only commits.
+2. Fix root cause if any required gate fails; never weaken validation/tests/security.
+3. If all green, conduct fresh AB-03.2 closure inspection.
+4. Close AB-03.2 only with evidence. Then enter AI Jobs/Review/authoring as the next separate canonical vertical slice.
