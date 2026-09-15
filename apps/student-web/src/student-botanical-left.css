@@ -1,0 +1,76 @@
+/* Approved botanical placement.
+   The motif is decorative background only: physical LEFT, no text, no layout authority. */
+
+.student-shell:not(.is-focused-reader)::before,
+.student-entry-page::before {
+  left: -2.25rem;
+  right: auto;
+  inset-inline-start: auto;
+  inset-inline-end: auto;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* One left-side tree is enough. Remove the mirrored secondary decoration so
+   no botanical artwork appears on the content/right side in RTL. */
+.student-shell:not(.is-focused-reader)::after,
+.student-entry-page::after {
+  display: none;
+}
+
+.student-welcome-panel::before,
+.student-auth-surface::before,
+.subject-v2__hero::before,
+.practice-page-heading::before,
+.quiz-detail__hero::after,
+.student-v2-empty-state::before,
+.student-account-v2__section:first-child::before {
+  left: -2.4rem;
+  right: auto;
+  inset-inline-start: auto;
+  inset-inline-end: auto;
+  pointer-events: none;
+}
+
+.student-welcome-panel::after {
+  display: none;
+}
+
+.student-library-v2::before {
+  background-position: left center;
+}
+
+/* Keep all actual content above the decorative layer. */
+.student-shell > *,
+.student-entry-page > *,
+.subject-v2__hero > *,
+.practice-page-heading > *,
+.quiz-detail__hero > *,
+.student-account-v2__section:first-child > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 40rem) {
+  .student-shell:not(.is-focused-reader)::before {
+    left: -3.2rem;
+    right: auto;
+    inset-inline-start: auto;
+    inset-inline-end: auto;
+  }
+
+  .student-welcome-panel::before {
+    left: -4.2rem;
+    right: auto;
+    inset-inline-start: auto;
+    inset-inline-end: auto;
+  }
+
+  .subject-v2__hero::before,
+  .practice-page-heading::before {
+    left: -3rem;
+    right: auto;
+    inset-inline-start: auto;
+    inset-inline-end: auto;
+  }
+}
