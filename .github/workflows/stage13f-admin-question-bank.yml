@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - integration/stage13f-question-bank
+      - rebuild/super-admin-foundation
 
 permissions:
   contents: read
