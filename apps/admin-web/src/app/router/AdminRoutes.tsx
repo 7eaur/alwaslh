@@ -73,22 +73,22 @@ const QuestionBankListPage = lazy(() =>
   })),
 );
 const QuizBuilderCreatePage = lazy(() =>
-  import("../../admin/quizzes/QuizBuilderCreatePage").then((module) => ({
+  import("../../features/quizzes/public/QuizBuilderCreatePage").then((module) => ({
     default: module.QuizBuilderCreatePage,
   })),
 );
 const QuizBuilderDetailPage = lazy(() =>
-  import("../../admin/quizzes/QuizBuilderDetailPage").then((module) => ({
+  import("../../features/quizzes/public/QuizBuilderDetailPage").then((module) => ({
     default: module.QuizBuilderDetailPage,
   })),
 );
 const QuizBuilderListPage = lazy(() =>
-  import("../../admin/quizzes/QuizBuilderListPage").then((module) => ({
+  import("../../features/quizzes/public/QuizBuilderListPage").then((module) => ({
     default: module.QuizBuilderListPage,
   })),
 );
 const QuizMetadataPanel = lazy(() =>
-  import("../../admin/quizzes/QuizMetadataPanel").then((module) => ({
+  import("../../features/quizzes/public/QuizMetadataPanel").then((module) => ({
     default: module.QuizMetadataPanel,
   })),
 );

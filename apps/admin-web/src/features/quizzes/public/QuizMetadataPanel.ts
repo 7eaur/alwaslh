@@ -1,0 +1,1 @@
+export { QuizMetadataPanel } from "../QuizMetadataPanel";
