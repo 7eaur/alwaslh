@@ -74,3 +74,12 @@ jobs:
       - name: Verify Student shell across phone tablet and desktop
         working-directory: apps/student-web
         run: npx playwright test e2e/student-shell-navigation.e2e.spec.mjs
+
+      - name: Upload Home reference visual QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ux-b02-home-reference
+          path: apps/student-web/test-results/**/student-home-reference-*.png
+          if-no-files-found: warn
+          retention-days: 14
