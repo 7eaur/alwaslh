@@ -5,32 +5,19 @@ Purpose: resume the scoped Super Admin + Backend rebuild without relying on chat
 
 ## Mandatory startup
 
-Before mutation:
-
-1. confirm repo `7eaur/alwaslh` and branch `rebuild/super-admin-foundation`;
-2. fetch live branch HEAD and live `main` HEAD;
-3. read `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md` first;
-4. read `PROJECT_STATUS.md`, `PROJECT_ENGINEERING_LOG.md`, this file and the autonomous protocol;
-5. inspect active phase docs, code/tests and exact-head Actions;
-6. confirm no active worker collision;
-7. compare live `main` at structural phase boundaries or when overlapping scoped changes appear.
-
-Code/migrations/executable CI/runtime evidence outrank prose.
+Confirm repo/branch and live branch + `main` HEAD; read shared execution state, status, engineering log, this handoff, autonomous protocol and active AB-03 record; inspect code/tests/CI; confirm no active-worker collision. Code/migrations/executable CI/runtime evidence outrank prose.
 
 ## Scope
 
-Owned here: complete Super Admin, full Fastify backend/API, PostgreSQL/migrations/integrity, server capabilities consumed by Admin/Student, relevant shared contracts, architecture documentation and required CI/security/integration/browser verification.
-
-Excluded only: structural/design implementation of `apps/student-web` frontend. Student-facing backend remains in scope.
+Owned: complete Super Admin, full Fastify backend/API, PostgreSQL/migrations/integrity, server capabilities consumed by Admin/Student, relevant shared contracts, architecture documentation and required CI/security/integration/browser verification. Excluded only: structural/design implementation of `apps/student-web` frontend.
 
 ## Branch / PR
 
 - branch: `rebuild/super-admin-foundation`;
 - PR #52 stays Draft and is never auto-merged;
 - never force-reset or force-push shared history;
-- live `main` latest observation: `d43fe2afe29b02093510177b921c0407e21a3de9`.
-
-The latest proven `main` drift remains confined to Student frontend/PWA work; no overlapping Admin/API/PostgreSQL/shared-contract implementation change is currently proven for AB-03.2.
+- live `main`: `d43fe2afe29b02093510177b921c0407e21a3de9`;
+- main reconciliation need: `NONE CURRENTLY`.
 
 ## Current phase
 
@@ -40,54 +27,33 @@ The latest proven `main` drift remains confined to Student frontend/PWA work; no
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
   - AB-03.2 Curriculum + Content + OCR — ACTIVE
-  - AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
-  - AB-03.2.4 Content operations compatibility facade retirement — CORRECTED / WAITING_FOR_CI
+  - AB-03.2.1 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+  - AB-03.2.2 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+  - AB-03.2.3 — DONE / EXACT-HEAD VERIFIED
+  - AB-03.2.4 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+  - AB-03.2.5 Content ingestion compatibility facade retirement — NEXT
 - AB-04..AB-08 — PENDING
-
-Canonical AB-03 record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ## Latest result
 
-Worker A sequence 55 retired the root Content operations compatibility facade, but exact-head Frontend Preparation `34906963113` exposed a real stale dependency: `apps/admin-web/src/content-operations-api.test.ts` still imported the deleted root module, causing TS2307 during Admin typecheck.
+Corrected AB-03.2.4 executable/source checkpoint `045c1e63b7b34121492c2a26b5017aab4ec35055` is now closed. Green evidence: Architecture Guard `34908457279`; Frontend Preparation `34908457311`; Admin AI `34908457270`; successor Combined `34909883950`; successor Stage13G Admin Operations / PostgreSQL / Chromium `34909884028`.
 
-Worker B sequence 56 corrected only that ownership defect:
-
-- moved the unchanged test to `apps/admin-web/src/features/content/api/content-operations-api.test.ts` beside its implementation owner;
-- deleted the stale root test path;
-- did not restore any root compatibility implementation;
-- did not change API paths, payload/response semantics, backend/PostgreSQL/security authority, routes, UI behavior or Student frontend implementation.
-
-Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
-
-Exact-head verification observed before documentation handoff:
-
-- Architecture Guard `34908457279` — SUCCESS;
-- Frontend Preparation `34908457311` — SUCCESS;
-- Admin AI Operations `34908457270` — IN PROGRESS;
-- Combined Integration `34908457265` — IN PROGRESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34908457306` — IN PROGRESS.
-
-Because required integration/PostgreSQL/Chromium evidence is incomplete, AB-03.2.4 is not DONE yet. Documentation-only pushes may supersede/cancel those runs; use source-tree-equivalent successors if required.
+Fresh Worker A sequence-58 discovery found one remaining evidence-backed Content-ingestion compatibility seam: `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` imports Content-ingestion functions/types from root `../../content-ingestion-api`, while that root module is only a compatibility re-export of feature-owned `features/content/public`.
 
 ## Exact continuation
 
-Do not start a new seam first. Verify/close **corrected AB-03.2.4** only:
+Execute only **AB-03.2.5 — Content ingestion compatibility facade retirement**:
 
-1. inspect the three remaining exact-source runs above and/or source-tree-equivalent successors after documentation-only pushes;
-2. preserve the already-green Architecture Guard and Frontend Preparation evidence;
-3. require Admin AI, Combined Integration and Stage13G/PostgreSQL/Chromium to finish green;
-4. if a gate fails, fix only the root cause within this same facade-retirement/test-ownership scope;
-5. if all required gates are green, mark AB-03.2.4 DONE and perform fresh AB-03.2 closure discovery before selecting any AI work;
-6. keep PR #52 Draft and unmerged.
-
-## Main reconciliation need
-
-`NONE CURRENTLY`. Current live `main` remains `d43fe2afe29b02093510177b921c0407e21a3de9`; no overlapping scoped drift is proven. Re-check before the next structural phase boundary or whenever Admin/API/PostgreSQL/shared-contract overlap appears.
+1. fetch live branch/main and respect the shared lease;
+2. inspect all remaining consumers/tests of root `content-ingestion-api.ts` on the live branch;
+3. repoint legitimate consumers to `features/content/public` without changing behavior/contracts;
+4. delete root facade only if no consumer remains;
+5. run Architecture Guard plus relevant Admin/API/PostgreSQL/integration/Chromium gates;
+6. if CI is pending, hand off `WAITING_FOR_CI`;
+7. do not start AI in the same increment.
 
 ## Remaining roadmap
 
-Close corrected AB-03.2.4 verification → fresh Content/OCR closure discovery → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+AB-03.2.5 → fresh Content/OCR closure discovery → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
