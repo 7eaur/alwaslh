@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ApiRequestError, isMissingSessionError } from "../../admin-api";
+import { ApiRequestError, isMissingSessionError } from "../../shared/api/client";
 import {
   type AdminLessonContentState,
   type LessonContentPublicationAction,
