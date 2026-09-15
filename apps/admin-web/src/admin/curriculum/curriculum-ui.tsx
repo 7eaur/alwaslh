@@ -1,5 +1,5 @@
 import type { FormEvent, ReactNode } from "react";
-import type { CurriculumRecordStatus } from "../../admin-api";
+import type { CurriculumRecordStatus } from "../../features/curriculum/public";
 
 export const curriculumStatusOptions: readonly CurriculumRecordStatus[] = ["active", "inactive", "archived"];
 
