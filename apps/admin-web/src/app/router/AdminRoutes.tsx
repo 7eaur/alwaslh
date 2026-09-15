@@ -58,17 +58,17 @@ const AdminOperationsHealthPage = lazy(() =>
   })),
 );
 const QuestionBankCreatePage = lazy(() =>
-  import("../../admin/questions/QuestionBankCreatePage").then((module) => ({
+  import("../../features/questions/public/QuestionBankCreatePage").then((module) => ({
     default: module.QuestionBankCreatePage,
   })),
 );
 const QuestionBankDetailPage = lazy(() =>
-  import("../../admin/questions/QuestionBankDetailPage").then((module) => ({
+  import("../../features/questions/public/QuestionBankDetailPage").then((module) => ({
     default: module.QuestionBankDetailPage,
   })),
 );
 const QuestionBankListPage = lazy(() =>
-  import("../../admin/questions/QuestionBankListPage").then((module) => ({
+  import("../../features/questions/public/QuestionBankListPage").then((module) => ({
     default: module.QuestionBankListPage,
   })),
 );

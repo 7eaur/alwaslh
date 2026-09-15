@@ -1,0 +1,1 @@
+export { QuestionBankListPage } from "../QuestionBankListPage";

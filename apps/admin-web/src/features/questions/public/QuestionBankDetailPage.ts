@@ -1,0 +1,1 @@
+export { QuestionBankDetailPage } from "../QuestionBankDetailPage";
