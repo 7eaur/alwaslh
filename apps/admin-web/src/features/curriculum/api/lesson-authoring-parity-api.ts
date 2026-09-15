@@ -1,4 +1,4 @@
-import { adminApiRequest } from "./admin-api";
+import { adminApiRequest } from "../../../shared/api/client";
 
 export type LessonHistorySource = "all" | "curriculum" | "question_bank" | "ai";
 

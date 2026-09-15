@@ -42,3 +42,12 @@ export type {
   OcrReviewStatus,
   OcrStatus,
 } from "../api/content-operations-api";
+
+export {
+  fetchLessonContentState,
+  transitionLessonContentPublication,
+} from "../api/lesson-content-api";
+export type {
+  AdminLessonContentState,
+  LessonContentPublicationAction,
+} from "../api/lesson-content-api";

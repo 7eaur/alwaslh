@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiRequestError, isMissingSessionError } from "../../shared/api/client";
-import { fetchAdminCurriculum, type CurriculumLesson } from "../../features/curriculum/public";
 import {
   exportLessonAuthoring,
+  fetchAdminCurriculum,
+  type CurriculumLesson,
   type LessonHistorySource,
   updateLessonSummary,
-} from "../../lesson-authoring-parity-api";
+} from "../../features/curriculum/public";
 import "../../stage13g-parity.css";
 
 function message(error: unknown): string {

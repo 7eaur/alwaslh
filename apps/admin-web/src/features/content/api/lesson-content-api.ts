@@ -1,4 +1,4 @@
-import { adminApiRequest } from "./admin-api";
+import { adminApiRequest } from "../../../shared/api/client";
 
 export type LessonContentPublicationAction = "submit_review" | "return_to_draft" | "publish";
 

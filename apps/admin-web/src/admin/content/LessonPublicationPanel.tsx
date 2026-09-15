@@ -5,7 +5,7 @@ import {
   type LessonContentPublicationAction,
   fetchLessonContentState,
   transitionLessonContentPublication,
-} from "../../lesson-content-api";
+} from "../../features/content/public";
 
 interface Props {
   lessonId: string;

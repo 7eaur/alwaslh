@@ -21,3 +21,12 @@ export type {
   CurriculumSubject,
   SubjectOffering,
 } from "../api/admin-curriculum-api";
+
+export {
+  exportLessonAuthoring,
+  updateLessonSummary,
+} from "../api/lesson-authoring-parity-api";
+export type {
+  LessonAuthoringExportBundle,
+  LessonHistorySource,
+} from "../api/lesson-authoring-parity-api";
