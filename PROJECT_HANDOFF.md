@@ -26,40 +26,44 @@ Owned: complete Super Admin, full Fastify backend/API, PostgreSQL/migrations/int
 - AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
-  - AB-03.2 Curriculum + Content + OCR — **DONE / EXACT-HEAD VERIFIED**
+  - AB-03.2 Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
   - AB-03.3 AI Jobs / Review / Authoring — **ACTIVE**
 - AB-04..AB-08 — PENDING
 
 ## Latest verified result
 
-AB-03.2 final executable/source checkpoint is `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
+Worker A sequence 75 established the initial AI feature owner and transferred the review presentation without changing behavior.
 
-Final closure moved the two remaining real root implementations into their feature owners:
+Latest executable/source checkpoint: `c4f44953a6d16473e24f8a4188eb36943452812c`.
 
-- lesson-content publication transport/test → `features/content/api`, exposed by `features/content/public`;
-- lesson summary/export transport → `features/curriculum/api`, exposed by `features/curriculum/public`.
+Current ownership:
 
-The transport moves were behavior-preserving renames with only shared-client import-path changes. Production consumers now use the public feature boundaries.
+- AI jobs/review application capability, transport, adapter and view-model implementations + tests → `apps/admin-web/src/features/ai/operations`;
+- public AI boundary → `apps/admin-web/src/features/ai/public`;
+- `AiOperationsPage.tsx` + `AiReviewWorkspace.tsx` → `apps/admin-web/src/features/ai`;
+- old `admin/reviews/AiOperationsPage.tsx` is now a one-line compatibility facade; old `AiReviewWorkspace.tsx` path was removed.
 
-Exact-head green evidence:
+The review presentation move reused the exact existing blobs. No UI copy/JSX/workflow logic, endpoint, payload, backend, database or security behavior changed.
 
-- Architecture Guard `34964996524`;
-- Frontend Preparation `34964996555`;
-- Admin AI `34964996466`;
-- Combined Integration `34964996488` including real Admin Chromium;
-- Stage13G `34964996480` including Admin UI, backend, PostgreSQL/security integrations, and Real API + PostgreSQL + Chromium.
+Exact-head green evidence on `c4f44953...`:
+
+- Architecture Guard `34989303067`;
+- Frontend Preparation `34989303106`;
+- Admin AI `34989303059`;
+- Combined Integration `34989303098` including real Admin Chromium;
+- Stage13G `34989303031` including Admin UI, backend, PostgreSQL/security integrations, and Real API + PostgreSQL + Chromium.
 
 ## Exact continuation
 
-Begin **AB-03.3.1 — AI operations frontend ownership** as a separate coherent increment:
+Next worker is **B**. Execute one smallest coherent increment: **AB-03.3.3 — compatibility-facade retirement + direct-owner consumption**.
 
-1. preserve current AI behavior/contracts and inspect all consumers/tests before mutation;
-2. establish `features/ai` ownership for AI jobs/review API plus its adapter/view-model/test family rather than leaving split root implementation ownership;
-3. expose only the narrow public surface needed by `AiOperationsPage` / review UI;
-4. repoint legitimate consumers, then remove root files only when proven unused;
-5. do not fold Question Bank or Quiz Builder transports into this increment—they have later canonical slices;
-6. keep AI authoring-specific application hooks separate if they cannot be moved coherently without mixing later domain ownership;
-7. run Architecture Guard, Admin quality, Admin AI, Combined and Stage13G/PostgreSQL/security/Chromium gates before declaring the increment closed.
+1. Re-read live state/HEAD and inspect all current consumers before mutation.
+2. Repoint legitimate consumers of root `ai-application-api.ts`, `ai-operations-api.ts`, `ai-operations-adapter.ts`, `ai-operations-view-model.ts` and the old `admin/reviews/AiOperationsPage.tsx` facade to the real `features/ai` owners/public boundary.
+3. `AiStructuredOutputEditor.tsx` is a known root consumer of AI operations/view-model contracts; handle it deliberately rather than deleting facades underneath it.
+4. Delete compatibility files only after a zero-consumer proof.
+5. Do not fold Question Bank or Quiz Builder transports into this cleanup. Keep mixed AI-authoring application hooks separate unless a root-cause ownership fix is possible without crossing those later canonical slices.
+6. Preserve all current behavior, routes, payloads, product copy and styles.
+7. Re-run Architecture Guard, Admin quality, Admin AI, Combined and Stage13G/PostgreSQL/security/Chromium gates.
 
 ## Remaining roadmap
 
