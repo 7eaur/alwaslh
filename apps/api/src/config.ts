@@ -32,7 +32,11 @@ const EnvSchema = z.object({
     .string()
     .url()
     .default("https://app-a8tauoehdn9d-api-VaOwP8E7dJqa.gateway.appmedo.com/v1beta"),
-  AI_GEMINI_MODEL: z.string().trim().regex(/^[A-Za-z0-9._-]+$/).default("gemini-2.5-flash"),
+  AI_GEMINI_MODEL: z
+    .string()
+    .trim()
+    .regex(/^[A-Za-z0-9._-]+$/)
+    .default("gemini-2.5-flash"),
   AI_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(2),
   AI_PROVIDER_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(300_000).default(120_000),
   AI_PROVIDER_MAX_INLINE_BYTES: z.coerce

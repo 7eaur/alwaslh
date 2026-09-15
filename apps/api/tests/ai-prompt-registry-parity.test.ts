@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildPromptEnvelope, getPromptDefinition } from "../src/ai/prompt-registry.js";
 import type { AiGenerationRequest } from "../src/ai/contracts.js";
+import { buildPromptEnvelope, getPromptDefinition } from "../src/ai/prompt-registry.js";
 
 const request: AiGenerationRequest = {
   mode: "question_generation",

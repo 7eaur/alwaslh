@@ -58,9 +58,7 @@ try {
       app.log.error({ err: error }, "AI generation worker stopped unexpectedly");
     });
   } else {
-    app.log.warn(
-      "AI generation worker disabled because INTEGRATIONS_API_KEY is not configured",
-    );
+    app.log.warn("AI generation worker disabled because INTEGRATIONS_API_KEY is not configured");
   }
 } catch (error) {
   app.log.fatal({ err: error }, "failed to start API");

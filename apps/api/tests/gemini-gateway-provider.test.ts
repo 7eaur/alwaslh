@@ -158,10 +158,7 @@ test("Gemini gateway provider resolves canonical ai media bytes for vision fallb
   let capturedBody = "";
   const database = fakeDatabase(async (text, values) => {
     assert.match(text, /kind = 'ai'/);
-    assert.deepEqual(values, [
-      "11111111-1111-4111-8111-111111111111",
-      "a".repeat(64),
-    ]);
+    assert.deepEqual(values, ["11111111-1111-4111-8111-111111111111", "a".repeat(64)]);
     return [
       {
         storage_key: "media/source/ai-v1.png",

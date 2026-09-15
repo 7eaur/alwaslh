@@ -7,8 +7,8 @@ import type {
   AiSourceChunk,
 } from "./contracts.js";
 import {
-  AiProviderError,
   type AiProviderAdapter,
+  AiProviderError,
   type AiProviderGenerateInput,
   type AiProviderGenerateResult,
 } from "./provider.js";
@@ -113,11 +113,7 @@ function renderPrompt(envelope: AiPromptEnvelope): string {
     "- Every generated/extracted question must include at least one sourceEvidence entry from the supplied sources.",
     "",
     "REQUEST_SETTINGS_JSON:",
-    JSON.stringify(
-      Object.fromEntries(
-        Object.entries(envelope.request).filter(([key]) => key !== "sourceChunks"),
-      ),
-    ),
+    JSON.stringify(Object.fromEntries(Object.entries(envelope.request).filter(([key]) => key !== "sourceChunks"))),
     "",
     "SOURCE_MANIFEST:",
     JSON.stringify(manifest),
@@ -129,7 +125,10 @@ function renderPrompt(envelope: AiPromptEnvelope): string {
 function extractJsonText(value: string): string {
   const trimmed = value.trim();
   if (!trimmed.startsWith("```")) return trimmed;
-  return trimmed.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+  return trimmed
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/, "")
+    .trim();
 }
 
 function parseRetryAfterMs(value: string | null): number | undefined {
