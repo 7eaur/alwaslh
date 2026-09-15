@@ -1,5 +1,5 @@
 import type { Database } from "../db.js";
-import type { MediaStorage } from "../media/storage.js";
+import type { MediaStorage } from "../media/public.js";
 import type {
   AiGenerationMode,
   AiGenerationOutputKind,

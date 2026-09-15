@@ -3,7 +3,7 @@ import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { runLegacyContentStartupBatch } from "./content/legacy-supabase-startup.js";
 import { createDatabase } from "./db.js";
-import { FileSystemMediaStorage } from "./media/storage.js";
+import { FileSystemMediaStorage } from "./media/public.js";
 
 const config = loadConfig();
 const database = createDatabase(config.DATABASE_URL, {

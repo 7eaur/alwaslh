@@ -1,6 +1,6 @@
 import type { AppConfig } from "../config.js";
 import type { Database } from "../db.js";
-import type { MediaStorage } from "../media/storage.js";
+import type { MediaStorage } from "../media/public.js";
 import { AiExecutionService } from "./execution-service.js";
 import { GeminiGatewayProvider } from "./gemini-gateway-provider.js";
 import { AiModelRouter } from "./router.js";
