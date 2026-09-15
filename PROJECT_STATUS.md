@@ -24,7 +24,7 @@ This workstream owns the complete Super Admin plus full Fastify backend/API, Pos
 
 ## Branch reconciliation
 
-Live `main` latest observation: `d43fe2afe29b02093510177b921c0407e21a3de9`. Current proven drift remains Student frontend/PWA only; no overlapping Admin/API/PostgreSQL/shared-contract implementation change is proven for AB-03.2.
+Live `main` latest observation: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672` (`feat(stage16): add authoritative offline content delta`). Main now contains authoritative offline-content API/PostgreSQL changes, so reconciliation is `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification. The current Admin import-boundary batch does not overlap those changes.
 
 ## AB-00 — DONE
 
@@ -44,32 +44,37 @@ Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
 ### AB-03.2 Curriculum + Content + OCR — ACTIVE
 
-#### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+- AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
+- AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
+- AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED.
+- AB-03.2.4 Content operations compatibility facade retirement — DONE / SOURCE-TREE-EQUIVALENT VERIFIED.
+- **AB-03.2.5 Content ingestion compatibility facade retirement — DONE / EXACT-HEAD VERIFIED.**
 
-Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
+AB-03.2.5 source checkpoint: `7f4a07ebd138106e1c7701bc9820bf978c233643`. The remaining production consumer was repointed from root `content-ingestion-api.ts` to `features/content/public`, the root facade was deleted, and the existing transport test already consumed the feature boundary. Exact-head Architecture Guard, Frontend Preparation, Admin AI, Combined Integration, and Stage13G including PostgreSQL/security/real Chromium all completed successfully on this checkpoint.
 
-#### AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+#### AB-03.2.6 Same-slice direct-owner consumption — IMPLEMENTED / WAITING_FOR_CI
 
-Corrected executable/source checkpoint: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
+Current executable/source checkpoint: `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`.
 
-#### AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
+The same Curriculum/Content/OCR ownership context was cleaned further without behavior changes:
 
-Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
+- Curriculum create/structure/UI type consumers now import from `features/curriculum/public` instead of root `admin-api.ts`.
+- Lesson authoring uses `shared/api/client` for generic transport/session errors and `features/curriculum/public` for Curriculum contracts.
+- OCR preview and lesson publication use `shared/api/client` directly for generic API/session helpers.
+- Diff from the last green checkpoint is import-boundary-only across six files; no UI/business/API/PostgreSQL/security behavior changed.
 
-#### AB-03.2.4 Content operations compatibility facade retirement — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+Exact-head evidence currently available on `2dd1ca2...`:
 
-Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
+- Architecture Guard `34963907236` — SUCCESS.
+- Frontend Preparation `34963907292` — SUCCESS.
+- Admin AI `34963907259` — PENDING at handoff.
+- Combined Integration `34963907267` — IN PROGRESS at handoff.
+- Stage13G Admin Operations / PostgreSQL / Chromium `34963907247` — IN PROGRESS at handoff.
 
-Green closure evidence: Architecture Guard `34908457279`; Frontend Preparation `34908457311`; Admin AI Operations `34908457270`; successor Combined Integration `34909883950`; successor Stage13G Admin Operations / PostgreSQL / Chromium `34909884028` — all SUCCESS. The Combined/Stage13G successors ran on documentation-only source-tree-equivalent head `a7dc026583e395a14fb06b5c9022cd091d35c07c`.
-
-#### Fresh AB-03.2 closure discovery — NEXT DEFECT SELECTED
-
-Worker A sequence 58 found one evidence-backed remaining Content-ingestion compatibility seam: `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` still imports Content-ingestion transport/types from root compatibility facade `apps/admin-web/src/content-ingestion-api.ts`, although implementation ownership already lives under `features/content/api` and is exported through `features/content/public`.
-
-Next smallest step: `AB-03.2.5 — Content ingestion compatibility facade retirement`: repoint the remaining legitimate Content-ingestion consumers to `features/content/public`, prove whether the root facade has any remaining consumer/test dependency, then delete it only when unused. Do not start AI in the same increment.
+AB-03.2 must not be declared closed until these required exact-head gates finish green. `ContentOperationsPage.tsx` still consumes only generic shared API helpers through root `admin-api.ts`; this is a compatibility dependency rather than Content transport ownership. Do not risk whole-file reconstruction solely to remove it; reassess after CI as part of fresh slice-closure evidence.
 
 ## Remaining roadmap
 
-AB-03.2.5 → fresh Content/OCR closure discovery → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Finish exact-head verification / closure of AB-03.2 → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
