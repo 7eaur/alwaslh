@@ -1,61 +1,43 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `WAITING_FOR_CI`
-Sequence: `73`
+Status: `RUNNING`
+Sequence: `74`
 Last worker: `A`
-Active worker: `—`
-Start time: `2026-09-15T14:19:49+03:00`
-End time: `2026-09-15T14:35:10+03:00`
-Observed starting HEAD: `8a3700e7977ca2206ad63f99590544cd282d2a80`
-Ending canonical-doc checkpoint before state seal: `6de208135ce2cc65a64f6d3bd26ce7c82e79dc59`
+Active worker: `A`
+Start time: `2026-09-15T14:40:52+03:00`
+End time: `—`
+Observed starting HEAD: `b59f400a894b34384ccf298e53032130392ced05`
+Ending canonical-doc checkpoint before state seal: `—`
 Ending executable/source HEAD: `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`
 Observed live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`
-Active task: `AB-03.2 Curriculum + Content + OCR — final ownership closure verification`
-Exact next batch: `Verify the latest source-tree-equivalent successor gates for executable checkpoint 2dd1ca2a94f03b8299bc2f8759f634c56fc10f78 after documentation commits. If all required Architecture Guard/Admin/Combined/Stage13G PostgreSQL/security/Chromium gates are green, perform a fresh AB-03.2 closure scan. Only patch ContentOperationsPage generic admin-api helper consumption if a mechanically safe edit is available; otherwise do not rebuild the large file for one compatibility import. Close AB-03.2 only with green evidence, then begin AI Jobs/Review/authoring as the next separate vertical slice.`
+Active task: `AB-03.2 Curriculum + Content + OCR — final direct-owner closure`
+Exact next batch: `Close the remaining proven root implementations in the same slice: move lesson-content publication transport under features/content, move lesson-authoring/export transport under features/curriculum, expose both through their public boundaries, repoint production/tests, remove obsolete root modules only when unused, then run Architecture Guard/Admin/Combined/Stage13G PostgreSQL/security/Chromium gates. Do not enter AI until this closure is green.`
 
-## Worker A sequence 73 — completed work
+## Worker A sequence 74 — running
+
+- Successor verification for the prior import-boundary batch is green: Admin AI `34964251627` SUCCESS, Combined Integration `34964251663` SUCCESS including real Chromium, and Stage13G `34964251606` SUCCESS for backend, Admin UI, PostgreSQL/security integrations, and real Chromium.
+- Fresh closure scan found two actual root-owned implementations still inside AB-03.2 scope:
+  - `apps/admin-web/src/lesson-content-api.ts` owns lesson-content publication transport and must move to `features/content`.
+  - `apps/admin-web/src/lesson-authoring-parity-api.ts` owns Curriculum lesson summary/export transport and must move to `features/curriculum`.
+- `ContentOperationsPage.tsx` still routes only generic shared API/session helpers through root `admin-api.ts`; do not reconstruct the large file solely for that compatibility import unless a mechanically safe edit is available.
+
+## Prior verified closure
 
 ### AB-03.2.5 — DONE / EXACT-HEAD VERIFIED
 
-- Safely repointed `ContentIngestionWorkspace.tsx` from root `content-ingestion-api.ts` to `features/content/public` without repeating the prior large-file drift.
-- Mechanically compared the change and corrected whitespace-only noise before facade deletion.
-- Confirmed the existing Content-ingestion transport test already consumed `features/content/public`.
-- Deleted obsolete root `apps/admin-web/src/content-ingestion-api.ts` after proving implementation ownership lived in `features/content/api` and no legitimate test depended on the facade.
-- Exact source checkpoint: `7f4a07ebd138106e1c7701bc9820bf978c233643`.
-- Exact-head Architecture Guard, Frontend Preparation, Admin AI, Combined Integration, Stage13G Admin/API/PostgreSQL/security and real Chromium all completed SUCCESS on this checkpoint.
+- Root Content-ingestion facade retired at exact source checkpoint `7f4a07ebd138106e1c7701bc9820bf978c233643`.
+- Exact-head Architecture Guard, Frontend Preparation, Admin AI, Combined Integration, Stage13G Admin/API/PostgreSQL/security and real Chromium all completed SUCCESS.
 
-### AB-03.2.6 — IMPLEMENTED / WAITING_FOR_CI
+### AB-03.2.6 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Same coherent Curriculum/Content/OCR ownership context was continued with import-boundary-only changes:
-
-- `CurriculumCreateActions.tsx`, `CurriculumStructure.tsx`, `curriculum-ui.tsx` → Curriculum contracts from `features/curriculum/public`.
-- `LessonAuthoringParityPanel.tsx` → generic API/session helpers from `shared/api/client`; Curriculum contracts from `features/curriculum/public`.
-- `OcrSourcePreview.tsx` and `LessonPublicationPanel.tsx` → generic API/session helpers from `shared/api/client`.
-- Compare `7f4a07e...` → `2dd1ca2...` shows exactly six files changed and import-boundary-only edits. No UI/business/API/PostgreSQL/security/Student-frontend behavior changed.
-
-## Verification / CI
-
-For executable/source HEAD `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`:
-
-- Architecture Guard `34963907236` — `SUCCESS`.
-- Frontend Preparation `34963907292` — `SUCCESS`.
-- Admin AI `34963907259` — cancelled by later documentation commits, not a source failure.
-- Combined Integration `34963907267` — was in progress and may be superseded/cancelled by later documentation commits.
-- Stage13G Admin Operations / PostgreSQL / Chromium `34963907247` — was in progress and may be superseded/cancelled by later documentation commits.
-
-Latest documentation-only source-tree-equivalent successor runs observed on checkpoint `6de208135ce2cc65a64f6d3bd26ce7c82e79dc59` include:
-
-- Stage13G `34964209006` — `PENDING` when recorded.
-- Admin AI `34964209032` — `PENDING` when recorded.
-- Additional successor gates may start on the final state-seal commit; inspect live Actions rather than assuming completion.
-
-Because the required final successor gates are still pending, this state is `WAITING_FOR_CI`, not DONE/READY.
+- Executable/source checkpoint: `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`.
+- Curriculum/Content/OCR consumers were repointed to direct feature/shared owners with import-boundary-only changes.
+- Source-tree-equivalent successor evidence on final documentation head: Admin AI `34964251627` SUCCESS; Combined `34964251663` SUCCESS; Stage13G `34964251606` SUCCESS including real Chromium.
 
 ## Risks / blockers
 
-- No source-code blocker remains for AB-03.2.5; the prior tooling problem was solved safely.
-- `ContentOperationsPage.tsx` still consumes only generic shared API/session helpers through root `admin-api.ts`; actual Content/OCR transport ownership is already feature-correct. Do not perform unsafe whole-file reconstruction solely to remove this compatibility import.
 - Main reconciliation remains `REQUIRED / DEFERRED`: live main `3646a63e...` includes authoritative offline-content API/PostgreSQL changes. Reconcile before overlapping backend/database mutation and before AB-08 final verification.
+- No backend/database mutation is planned in this frontend ownership batch.
 
 ## Safety constraints
 
