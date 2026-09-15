@@ -23,52 +23,49 @@ Live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. Main reconciliation is 
   - AB-03.2 Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
   - AB-03.3 AI Jobs / Review / Authoring — DONE / EXACT-SOURCE VERIFIED
   - AB-03.4 Question Bank — DONE / EXACT-HEAD VERIFIED
-  - AB-03.5 Quiz Builder — ACTIVE
-    - AB-03.5.1 feature-owner foundation — DONE / EXACT-HEAD VERIFIED
-    - AB-03.5.2 presentation ownership — DONE / EXACT-HEAD VERIFIED
-    - AB-03.5.3 specialized export/print ownership — DONE / EXACT-HEAD VERIFIED
-    - AB-03.5.4 compatibility retirement + closure scan — NEXT
+  - AB-03.5 Quiz Builder — DONE / EXACT-HEAD VERIFIED
+  - AB-03.6 Students — NEXT
 - AB-04..AB-08 — PENDING
 
 ## Latest verified result
 
-Worker C sequence 86 completed **AB-03.5.3 — Quiz Builder specialized export/print ownership**.
+Worker A sequence 87 completed **AB-03.5.4 — Quiz Builder compatibility retirement + closure scan** and therefore closed **AB-03.5 Quiz Builder**.
 
-Executable/source checkpoint: `da083efb41a08103edb402b4021ccfb792077384`.
+Final executable/source checkpoint: `f60a4b279fad9a011f9188005dd3ad075c7e3f00`.
 
-Verified result:
-- Quiz Builder specialized export/print contracts and transport now live under `features/quizzes/quiz-builder-specialized-export-api.ts`;
-- specialized URL/query unit coverage now lives in the Quiz Builder feature;
-- `features/quizzes/public/index.ts` exports those contracts/actions;
-- mixed root `admin-ai-authoring-api.ts` no longer implements the Quiz Builder specialized transport and only compatibility-reexports it for the still-real workspace consumer;
-- backend specialized routes were inspected and already had canonical admin auth, validation, bounded selected versions and print security headers;
-- no UI/backend/PostgreSQL behavior changed.
+Closure result:
+- four dead `admin/quizzes/*` page compatibility re-exports were deleted;
+- root `quiz-builder-api.ts` was retained because the feature-owned Quiz Builder pages still consume it; it is compatibility-only and owns no implementation;
+- mixed `admin-ai-authoring-api.ts` was retained because `AdminAiAuthoringWorkspace` remains a real consumer; Quiz Builder specialized implementation already lives in the feature;
+- no duplicate Quiz Builder implementation ownership remains;
+- no UX/UI/copy/CSS/route/backend/PostgreSQL behavior changed.
 
-Exact-head evidence on `da083efb41a08103edb402b4021ccfb792077384`:
-- Architecture Guard `35021257562` — SUCCESS.
-- Frontend Preparation `35021257744` — SUCCESS.
-- Admin AI `35021257706` — SUCCESS.
-- Combined Integration `35021257480` — SUCCESS including clean PostgreSQL/security regressions and real Admin Chromium.
-- Stage13G `35021257700` — SUCCESS including Real API + PostgreSQL + Chromium.
+Exact-head evidence on `f60a4b279fad9a011f9188005dd3ad075c7e3f00`:
+- Architecture Guard `35022098967` — SUCCESS.
+- Frontend Preparation `35022099016` — SUCCESS.
+- Admin AI `35022098946` — SUCCESS.
+- Combined Integration `35022098947` — SUCCESS including clean PostgreSQL/security regressions and real Admin Chromium.
+- Stage13G `35022099002` — SUCCESS including Admin backend/UI and Real API + PostgreSQL + Chromium.
 
 PR #52 remains Draft / unmerged / no auto-merge.
 
 ## Exact continuation
 
-Next worker is **A**. Execute one smallest coherent increment: **AB-03.5.4 — Quiz Builder compatibility retirement + closure scan**.
+Next worker is **B**. Execute one smallest coherent increment: **AB-03.6.1 — Students feature-owner foundation**.
 
 1. Re-read live branch/state/main and prove no collision.
-2. Fresh-map every remaining Quiz Builder compatibility consumer on the branch.
-3. The four feature-owned presentation files currently still import Quiz Builder API through root `../../quiz-builder-api`; switch them to the local canonical feature API only if the live scan confirms no boundary reason to keep root indirection.
-4. The old `admin/quizzes/*` page paths appear compatibility-only after router migration; delete them only if the live scan proves no consumers.
-5. Retire root `quiz-builder-api.ts` only if no real consumer remains after feature-internal import cleanup.
-6. Preserve mixed `admin-ai-authoring-api.ts` compatibility where `AdminAiAuthoringWorkspace` remains a real consumer; do not create unrelated AI churn just to delete a facade.
-7. Confirm there is no duplicate Quiz Builder implementation ownership and no backend/database defect.
-8. Run Architecture Guard + Frontend Preparation + Admin AI + Combined Integration + Stage13G exact-head verification.
-9. Only then mark AB-03.5 Quiz Builder fully DONE and hand off to Students.
+2. Fresh-scan `admin-student-access-api.ts`, its mixed test, `AdminStudentsPage`, `admin-access` backend and relevant auth/access mutation routes.
+3. Split only Student-owned contracts/actions out of the mixed root API into `features/students/admin-student-api.ts` (or equally narrow feature-local name).
+4. Move only the two Student-specific test groups: list/detail pagination and recovery/device-rebind/entitlement revoke.
+5. Expose a narrow `features/students/public` boundary.
+6. Preserve Access Code contracts/actions and their two tests in the current root owner for the later Access Codes slice.
+7. Keep root compatibility re-exports for Student symbols while `AdminStudentsPage` remains a real consumer in this increment.
+8. Preserve all URLs, query serialization, credentials, payloads and backend authority behavior.
+9. Do not redesign the Students UI or mutate backend/database absent new evidence.
+10. Run exact-head Architecture Guard + Frontend Preparation + Admin AI + Combined Integration + Stage13G before closure.
 
 ## Remaining roadmap
 
-Finish Quiz Builder closure → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
