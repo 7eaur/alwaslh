@@ -1,29 +1,34 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `WAITING_FOR_CI`
 Sequence: `62`
-Last worker: `A`
-Active worker: `B`
+Last worker: `B`
+Active worker: `—`
 Start time: `2026-09-15T04:18:31+03:00`
-End time: `—`
+End time: `2026-09-15T04:21:30+03:00`
 Observed starting HEAD: `9b10368d71f466eb3e9f322d9998e7fae670cc57`
-Ending canonical-doc checkpoint before state seal: `—`
-Ending executable/source HEAD: `39215680f03ff4f406cdc8d2b402d6085909935e`
+Ending canonical-doc checkpoint before state seal: `8a68e95abd288033e43510d968b3fca67e92cb38`
+Ending executable/source HEAD: `8a68e95abd288033e43510d968b3fca67e92cb38`
 Observed live `main`: `d43fe2afe29b02093510177b921c0407e21a3de9`
-Active task: `AB-03.2.5 — narrow Content ingestion compatibility facade retirement`
-Intended smallest next step: `Use the restored known-good ContentIngestionWorkspace behavior; change only its Content-ingestion transport/types import to features/content/public, migrate/retarget the root content-ingestion API test, prove no root-facade consumers remain, then delete the compatibility facade. Do not start AI.`
+Active task: `AB-03.2.5 — root content-ingestion API test consumer retired; workspace consumer remains`
+Intended smallest next step: `First close exact-head Admin Web quality/dependency checks for 8a68e95abd288033e43510d968b3fca67e92cb38. Then, in the next smallest ownership-only increment, preserve ContentIngestionWorkspace behavior and change only its transport/types import from ../../content-ingestion-api to ../../features/content/public. Re-scan consumers; delete the root compatibility facade only if no consumers remain. Do not start AI.`
 
-## Worker B sequence 62 — active lease
+## Worker B sequence 62 — handoff
 
-- Worker A rollback source `39215680f03ff4f406cdc8d2b402d6085909935e` is source-tree-equivalent to observed branch head `9b10368d71f466eb3e9f322d9998e7fae670cc57`; compare shows only this execution-state document changed.
-- Successor source-tree-equivalent evidence on `9b10368d...` is green for Admin AI, Combined Integration and Stage13G including real API + PostgreSQL + Chromium.
-- This run will not reuse the unsafe large rewrite from `fe511944...`; behavior must remain byte-for-byte equivalent except ownership imports/test placement and facade deletion.
-- PR #52 remains Draft and unmerged.
+- Startup branch head was `9b10368d71f466eb3e9f322d9998e7fae670cc57`; live `main` was `d43fe2afe29b02093510177b921c0407e21a3de9`.
+- Reconciled Worker A rollback: `39215680...` to `9b10368d...` changed only this execution-state document, while successor checks on `9b10368d...` were green for Admin AI, Combined Integration and Stage13G including real API + PostgreSQL + Chromium.
+- Per smallest-increment law, this run retired only the test-side dependency on the root compatibility facade. `apps/admin-web/src/content-ingestion-api.test.ts` now imports the feature-owned API from `./features/content/public` with all test behavior/assertions unchanged.
+- Executable checkpoint: `8a68e95abd288033e43510d968b3fca67e92cb38`.
+- Exact-head checks automatically triggered for that checkpoint: Admin Web quality workflow run `34916816112` / check `104216132084` and Dependency ratchet workflow run `34916816143` / check `104216131724`; both were QUEUED at handoff, so closure is not claimed.
+- `ContentIngestionWorkspace.tsx` remains the known production consumer of `../../content-ingestion-api`; the compatibility facade therefore remains intentionally present. No facade deletion occurred.
+- No backend/API/PostgreSQL/security/Student frontend behavior changed.
+- PR #52 remains Draft and unmerged; no milestone comment was added because AB-03.2.5 remains open.
 
 ## Risks / blockers
 
-- Root compatibility facade and root API test are intentionally still present at lease acquisition.
-- Any additional consumer discovered will stop facade deletion until explicitly migrated in a future smallest increment.
+- Required exact-head Admin checks for `8a68e95...` are pending.
+- Production workspace still consumes the compatibility facade, so deleting it now would be unsafe.
+- Main has Student/PWA drift already documented; no overlapping Admin/API/PostgreSQL/shared-contract reconciliation need was proven in this run.
 
 ## Safety constraints
 
