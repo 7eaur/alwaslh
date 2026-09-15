@@ -113,7 +113,9 @@ function renderPrompt(envelope: AiPromptEnvelope): string {
     "- Every generated/extracted question must include at least one sourceEvidence entry from the supplied sources.",
     "",
     "REQUEST_SETTINGS_JSON:",
-    JSON.stringify(Object.fromEntries(Object.entries(envelope.request).filter(([key]) => key !== "sourceChunks"))),
+    JSON.stringify(
+      Object.fromEntries(Object.entries(envelope.request).filter(([key]) => key !== "sourceChunks")),
+    ),
     "",
     "SOURCE_MANIFEST:",
     JSON.stringify(manifest),
