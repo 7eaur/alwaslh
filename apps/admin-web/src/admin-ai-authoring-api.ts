@@ -1,5 +1,8 @@
 import { adminApiRequest } from "./admin-api";
 
+export { applyApprovedLessonOutput, applyApprovedQuizOutput } from "./features/ai/operations/admin-ai-authoring-api";
+export type { LessonApplyResult, QuizApplyResult } from "./features/ai/operations/admin-ai-authoring-api";
+
 export type AiAuthoringSubjectDomain =
   | "general"
   | "arabic_language"
@@ -38,24 +41,6 @@ export interface AuthoringPlanResult {
   replayed: boolean;
 }
 
-export interface LessonApplyResult {
-  lessonId: string;
-  summaryApplied: boolean;
-  summaryReplayed: boolean;
-  questionBankItemIds: string[];
-  questionImportReplayed: boolean;
-}
-
-export interface QuizApplyResult {
-  quizId: string;
-  versionKey: string;
-  questionBankItemIds: string[];
-  questionImportReplayed: boolean;
-  readyForVersion: boolean;
-  versionId: string | null;
-  versionReplayed: boolean;
-}
-
 export type QuizPrintVariant =
   | "questions_options"
   | "questions_only"
@@ -84,18 +69,6 @@ export function enqueueLessonGeneration(input: {
   return adminApiRequest<AuthoringPlanResult>("/v1/admin/authoring/lessons/generate", {
     method: "POST",
     body: JSON.stringify(input),
-  });
-}
-
-export function applyApprovedLessonOutput(outputId: string): Promise<LessonApplyResult> {
-  return adminApiRequest<LessonApplyResult>(`/v1/admin/authoring/outputs/${outputId}/apply-lesson`, {
-    method: "POST",
-  });
-}
-
-export function applyApprovedQuizOutput(outputId: string): Promise<QuizApplyResult> {
-  return adminApiRequest<QuizApplyResult>(`/v1/admin/authoring/outputs/${outputId}/apply-quiz`, {
-    method: "POST",
   });
 }
 
