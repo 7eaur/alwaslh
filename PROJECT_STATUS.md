@@ -12,7 +12,7 @@ This workstream owns the complete Super Admin plus full Fastify backend/API, Pos
 
 ## Branch reconciliation
 
-Live `main` latest observation: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672` (`feat(stage16): add authoritative offline content delta`). Main reconciliation remains `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification. Current AB-03.4 opening work is frontend ownership unless fresh evidence proves a backend/database correction is required.
+Live `main` latest observation: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672` (`feat(stage16): add authoritative offline content delta`). Main reconciliation remains `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification.
 
 ## AB-00 — DONE
 ## AB-01 — DONE / EXACT-HEAD VERIFIED
@@ -25,39 +25,48 @@ Canonical AB-02 record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-1
 Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ### AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
-
 Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
 ### AB-03.2 Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
-
 Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 
 ### AB-03.3 AI Jobs / Review / Authoring — DONE / EXACT-SOURCE VERIFIED
 
-- **AB-03.3.1 AI operations feature-owner foundation — DONE / EXACT-HEAD VERIFIED.**
-- **AB-03.3.2 AI review presentation ownership transfer — DONE / EXACT-HEAD VERIFIED.**
-- **AB-03.3.3 compatibility-facade retirement + direct-owner consumption — DONE / EXACT-HEAD VERIFIED** at `d1e11bc7b99b50dff480e8f830812492a390983c`.
-- **AB-03.3.4 approved-output application ownership — DONE / EXACT-HEAD VERIFIED** at `26e461407d1508d86fc76b8a3b0151fab83531f9`.
-- **AB-03.3.5 AI lesson/quiz generation request ownership — DONE / EXACT-HEAD VERIFIED** at `9b38c9d2f803e220874a40e71ac06399e78435a3`.
-- **AB-03.3.6 AI slice closure scan — DONE / NO SOURCE MUTATION REQUIRED.**
-  - live scan confirmed root AI authoring only re-exports AI generation/application ownership;
-  - residual root implementations belong to later Question Bank and Quiz Builder slices;
-  - `admin/reviews/AiOperationsPage.tsx` is a compatibility route re-export, not an implementation owner;
-  - the mixed authoring workspace is an orchestration consumer and was not rewritten merely to remove a harmless import edge.
+Final executable/source checkpoint: `9b38c9d2f803e220874a40e71ac06399e78435a3`.
 
-Final AB-03.3 executable/source checkpoint remains `9b38c9d2f803e220874a40e71ac06399e78435a3`.
-
-Exact-source evidence on `9b38c9d2...`:
-
+Exact-source evidence:
 - Architecture Guard `34993541544` — SUCCESS.
-- Frontend Preparation `34993541613` — SUCCESS: lint + strict typecheck + unit tests + build.
-- Admin AI `34993541626` — SUCCESS: clean migrations + PostgreSQL contracts + authorization/observability/review-race/control + Stage12/auth regressions.
-- Combined Integration `34993541546` — SUCCESS including deterministic fixture and real Admin Chromium.
-- Stage13G `34993541607` — SUCCESS across Admin UI, backend, PostgreSQL/security/integrations and Real API + PostgreSQL + Chromium.
+- Frontend Preparation `34993541613` — SUCCESS.
+- Admin AI `34993541626` — SUCCESS.
+- Combined Integration `34993541546` — SUCCESS including real Admin Chromium.
+- Stage13G `34993541607` — SUCCESS including Real API + PostgreSQL + Chromium.
 
-### AB-03.4 Question Bank — NEXT
+### AB-03.4 Question Bank — ACTIVE
 
-Fresh topology shows there is no `features/questions` owner yet. First smallest coherent increment is **AB-03.4.1 — Question Bank feature-owner foundation**: map current Question Bank pages/API/tests/consumers and authoritative contracts, then move the narrow Question Bank API/application boundary behind `features/questions` with a public export while preserving behavior. Keep Quiz Builder, UI redesign and unrelated backend/database work out of this increment.
+#### AB-03.4.1 Question Bank feature-owner foundation — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+
+Executable/source checkpoint: `11fb063ebe513a6141bb67b6725b5f181d762907`.
+
+Worker C sequence 80:
+- created canonical `features/questions/question-bank-api.ts` owner for all existing Admin Question Bank frontend contracts and API/application functions;
+- added narrow `features/questions/public/index.ts` boundary;
+- reduced root `question-bank-api.ts` to a compatibility re-export;
+- preserved all endpoints, payloads, response shapes, authorization behavior, routes, UI, copy and CSS;
+- verified that backend Question Bank ownership already exists under `apps/api/src/question-bank/*`, so no backend/database mutation or main reconciliation was required for this increment;
+- kept Question Bank regeneration/archive and Quiz Builder export/print outside this slice.
+
+Verification:
+- Architecture Guard `34995311318` — SUCCESS on exact source `11fb063e...`.
+- Frontend Preparation `34995311313` — SUCCESS on exact source `11fb063e...`.
+- Admin AI `34995415758` — SUCCESS on source-tree-equivalent docs-only head `c6d36a2...`.
+- Combined Integration `34995415726` — SUCCESS on source-tree-equivalent `c6d36a2...`, including real Admin Chromium.
+- Stage13G `34995415760` — SUCCESS on source-tree-equivalent `c6d36a2...`, including Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+
+The source-head Stage13G run `34995311535` was cancelled by GitHub concurrency after the docs-only WAITING state commit superseded it; it was not a source failure.
+
+#### AB-03.4.2 Question Bank presentation ownership — NEXT
+
+The three Question Bank pages still live under `admin/questions/*`, and `AdminRoutes.tsx` lazy-loads those legacy locations. Worker A must move only presentation ownership to `features/questions`, expose a narrow route/page boundary, and switch app composition while preserving routes, props, UI states, copy, CSS and behavior. Question regeneration/archive ownership remains a separate later increment.
 
 ## Remaining roadmap
 
