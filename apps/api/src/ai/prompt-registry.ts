@@ -20,9 +20,17 @@ const COMMON_ARABIC_RULES = [
   "اكتب المحتوى التعليمي باللغة العربية الفصحى الواضحة، ولا تستخدم لغة إنجليزية مرئية إلا داخل الرموز والصيغ العلمية التي تتطلب ذلك.",
   "استخدم الأرقام العربية ٠١٢٣٤٥٦٧٨٩ في النص العربي المرئي عندما لا يكون الوضع نسخاً حرفياً للمصدر.",
   "حافظ على الأرقام والحروف الغربية داخل الصيغ الكيميائية والعلمية مثل H2O وFe3O4 وCO2.",
+  "عند إنشاء شرح أو طريقة حل جديدة استخدم الرموز الرياضية الواضحة + - × ÷ = ≠ > < ≥ ≤، واكتب أسماء الدوال المثلثية العربية جا وجتا وظا بدل الأسماء الإنجليزية متى كان ذلك مناسباً للمحتوى.",
   "لا تخترع معلومة أو إجابة غير مدعومة بالمصدر. إذا لم يثبت الدليل الإجابة فاستخدم answerStatus=unknown أو review_required ولا تضع correctOptionIndex تخمينياً.",
   "كل سؤال مولد أو مستخرج من كتاب يجب أن يحمل sourceEvidence يشير إلى mediaAssetId ورقم الصفحة الحقيقي.",
   "أرجع بنية البيانات المطلوبة فقط؛ لا تضف markdown أو شرحاً خارج العقد.",
+] as const;
+
+const GENERATED_QUESTION_QUALITY_RULES = [
+  "غطِّ المفاهيم والتعريفات والحقائق والأمثلة والتفاصيل المهمة في المصادر المختارة، ولا تجعل العناوين أو أرقام الصفحات نفسها مادة لسؤال.",
+  "قبل تثبيت إجابة سؤال ذي خيارات: حدّد الإجابة من المصدر، ثم حدّد موضعها في options، ثم اجعل correctOptionIndex يشير إلى هذا الموضع واجعل answerText مطابقاً لنص options[correctOptionIndex] حرفياً.",
+  "عندما تكون الإجابة known اكتب explanation يوضح لماذا الإجابة صحيحة اعتماداً على المصدر، واكتب method كخطوات عربية واضحة عندما يكون للسؤال مسار حل أو استدلال.",
+  "وزّع مواضع الإجابات الصحيحة بصورة طبيعية، ولا تجعل نفس الفهرس نمطاً ثابتاً داخل الدفعة.",
 ] as const;
 
 const DEFINITIONS: readonly AiPromptDefinition[] = [
@@ -40,7 +48,7 @@ const DEFINITIONS: readonly AiPromptDefinition[] = [
   },
   {
     key: "questions.generate",
-    version: "1.0.0",
+    version: "1.1.0",
     mode: "question_generation",
     outputKind: "question_set",
     exactSource: false,
@@ -50,23 +58,25 @@ const DEFINITIONS: readonly AiPromptDefinition[] = [
       "الاختيار من متعدد يملك أربعة خيارات بالضبط، والصح/الخطأ يملك [صح، خطأ] بالترتيب.",
       "نوّع الصعوبة دون تكرار السؤال أو إعادة صياغة نفس الفكرة بشكل قريب داخل الدفعة.",
       "كل إجابة known يجب أن تطابق option المشار إليه أو answerText في السؤال المباشر.",
+      ...GENERATED_QUESTION_QUALITY_RULES,
     ],
   },
   {
     key: "lesson.comprehensive",
-    version: "1.0.0",
+    version: "1.1.0",
     mode: "comprehensive_lesson_content",
     outputKind: "lesson_content",
     exactSource: false,
     requiresHumanReview: false,
     instructions: [
-      "أنشئ ملخصاً منظماً ثم الأسئلة المطلوبة بالضبط من نفس المصادر المعتمدة.",
+      "أنشئ ملخصاً منظماً يغطي المحتوى المهم ثم الأسئلة المطلوبة بالضبط من نفس المصادر المعتمدة.",
       "لا تعتبر كثرة المخرجات بديلاً عن صحة الإجابة والمصدر والصفحة.",
+      ...GENERATED_QUESTION_QUALITY_RULES,
     ],
   },
   {
     key: "quiz.multi_version",
-    version: "1.0.0",
+    version: "1.1.0",
     mode: "multi_version_quiz",
     outputKind: "multi_version_quiz",
     exactSource: false,
@@ -75,6 +85,7 @@ const DEFINITIONS: readonly AiPromptDefinition[] = [
       "أنشئ عدد النماذج المطلوب بالضبط، وكل نموذج يلتزم targetPerVersion حرفياً.",
       "لا تكرر السؤال نفسه أو سؤالاً شبه مطابق بين النماذج.",
       "كل نموذج يبقى ضمن نفس نطاق المصادر والصفحات المسموح بها.",
+      ...GENERATED_QUESTION_QUALITY_RULES,
     ],
   },
   {
@@ -117,7 +128,7 @@ const DEFINITIONS: readonly AiPromptDefinition[] = [
   },
   {
     key: "question.regenerate",
-    version: "1.0.0",
+    version: "1.1.0",
     mode: "regenerate_question",
     outputKind: "question_set",
     exactSource: false,
@@ -125,6 +136,7 @@ const DEFINITIONS: readonly AiPromptDefinition[] = [
     instructions: [
       "أعد صياغة سؤال واحد فقط بأسلوب مختلف، مع الحفاظ على نوعه ومستوى صعوبته ونطاق مصدره.",
       "يجب أن يكون السؤال الجديد مختلفاً فعلياً عن prompt الأصلي وألا يخرج عن المصدر.",
+      ...GENERATED_QUESTION_QUALITY_RULES,
     ],
   },
   {
