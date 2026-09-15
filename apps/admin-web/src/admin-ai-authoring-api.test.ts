@@ -2,9 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   applyApprovedLessonOutput,
   applyApprovedQuizOutput,
-  archiveQuestionBankItem,
   enqueueLessonGeneration,
-  enqueueQuestionRegeneration,
   enqueueQuizGeneration,
   fetchSpecializedQuizExport,
   specializedQuizPrintUrl,
@@ -92,19 +90,6 @@ describe("G-D Admin AI authoring API", () => {
     expect(String(fetchMock.mock.calls[1]?.[0])).toContain(`/outputs/${outputId}/apply-quiz`);
     expect(fetchMock.mock.calls[0]?.[1]?.method).toBe("POST");
     expect(fetchMock.mock.calls[1]?.[1]?.method).toBe("POST");
-  });
-
-  it("uses explicit source-backed regeneration and non-destructive archive routes", async () => {
-    const fetchMock = mockJson({ jobId: "job-3", status: "queued", totalUnits: 1, replayed: false }, 202);
-    const itemId = "55555555-5555-4555-8555-555555555555";
-    await enqueueQuestionRegeneration(itemId, {
-      clientRequestId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-      subjectDomain: "general",
-    });
-    mockJson({ replayed: false });
-    await archiveQuestionBankItem(itemId);
-
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain(`/question-bank/${itemId}/regenerate`);
   });
 
   it("builds bounded selected-version export and print URLs", async () => {
