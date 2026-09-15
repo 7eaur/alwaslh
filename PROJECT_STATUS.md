@@ -27,12 +27,10 @@ This workstream owns the complete Super Admin plus full Fastify backend/API, Pos
 Live `main` latest observation: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672` (`feat(stage16): add authoritative offline content delta`). Main contains authoritative offline-content API/PostgreSQL changes, so reconciliation is `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification. Current frontend ownership work does not mutate those backend/database areas.
 
 ## AB-00 — DONE
-
 ## AB-01 — DONE / EXACT-HEAD VERIFIED
-
 ## AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Canonical record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
+Canonical AB-02 record: `docs/workstreams/ADMIN_BACKEND_AB02_EXECUTION_2026-09-14.md`.
 
 ## AB-03 — ACTIVE
 
@@ -50,18 +48,19 @@ Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 
 - **AB-03.3.1 AI operations feature-owner foundation — DONE / EXACT-HEAD VERIFIED.** AI jobs/review application capability, transport, adapter, view-model and tests live under `features/ai/operations`.
 - **AB-03.3.2 AI review presentation ownership transfer — DONE / EXACT-HEAD VERIFIED.** Review page/workspace moved into the AI feature without behavior drift.
-- **AB-03.3.3 compatibility-facade retirement + direct-owner consumption — DONE / EXACT-HEAD VERIFIED.** Root AI operations facades were removed. `AiStructuredOutputEditor.tsx`, review UI and their CSS were relocated under `features/ai/operations` as 100% renames; two one-line internal bridges preserve generic API-error and approved-output application dependencies without reintroducing root ownership. Executable/source checkpoint: `d1e11bc7b99b50dff480e8f830812492a390983c`.
-- **AB-03.3.4 approved-output application ownership — NEXT.** Extract only the AI-owned approved lesson/quiz output application contracts/functions from mixed root `admin-ai-authoring-api.ts` into `features/ai`; keep Question Bank/Quiz Builder generation/export ownership in their later slices. Remove compatibility only after consumer proof.
+- **AB-03.3.3 compatibility-facade retirement + direct-owner consumption — DONE / EXACT-HEAD VERIFIED.** Root AI operations facades were removed and review/editor presentation is feature-owned. Executable/source checkpoint: `d1e11bc7b99b50dff480e8f830812492a390983c`.
+- **AB-03.3.4 approved-output application ownership — DONE / EXACT-HEAD VERIFIED.** `LessonApplyResult`, `QuizApplyResult`, `applyApprovedLessonOutput` and `applyApprovedQuizOutput` now have their real implementation owner at `features/ai/operations/admin-ai-authoring-api.ts`; the mixed root `admin-ai-authoring-api.ts` only re-exports these symbols for compatibility while retaining unrelated legacy authoring concerns. Executable/source checkpoint: `26e461407d1508d86fc76b8a3b0151fab83531f9`.
+- **AB-03.3.5 AI lesson/quiz generation request ownership — NEXT.** After a fresh consumer scan, extract only the shared AI generation contracts plus `enqueueLessonGeneration` and `enqueueQuizGeneration` from the mixed root authoring transport into `features/ai`. Keep question regeneration/archive and specialized quiz export/print in their later Question Bank/Quiz Builder slices.
 
-Exact-head evidence on `d1e11bc7...`:
+Exact-head evidence on `26e46140...`:
 
-- Architecture Guard `34990715628` — SUCCESS.
-- Frontend Preparation `34990715697` — SUCCESS: lint + strict typecheck + unit tests + build.
-- Admin AI `34990715543` — SUCCESS: clean migrations + PostgreSQL contracts + authorization/observability/review-race/control + Stage12/auth regressions.
-- Combined Integration `34990715804` — SUCCESS including deterministic fixture and real Admin Chromium.
-- Stage13G `34990715570` — SUCCESS across Admin UI, backend, PostgreSQL/security/integrations and Real API + PostgreSQL + Chromium.
+- Architecture Guard `34992100825` — SUCCESS.
+- Frontend Preparation `34992100806` — SUCCESS: lint + strict typecheck + unit tests + build.
+- Admin AI `34992100801` — SUCCESS: clean migrations + PostgreSQL contracts + authorization/observability/review-race/control + Stage12/auth regressions.
+- Combined Integration `34992100802` — SUCCESS including deterministic fixture and real Admin Chromium.
+- Stage13G `34992100781` — SUCCESS across Admin UI, backend, PostgreSQL/security/integrations and Real API + PostgreSQL + Chromium.
 
-No endpoint, payload, backend, PostgreSQL, authorization, route behavior, product copy, JSX behavior or styling behavior changed in AB-03.3.3.
+AB-03.3.4 changed frontend ownership only. Endpoints, payloads, backend, PostgreSQL, authorization, routes, product copy and styles were preserved.
 
 ## Remaining roadmap
 

@@ -32,39 +32,34 @@ Owned: complete Super Admin, full Fastify backend/API, PostgreSQL/migrations/int
 
 ## Latest verified result
 
-Worker B sequence 76 closed **AB-03.3.3 compatibility-facade retirement + direct-owner consumption**.
+Worker C sequence 77 completed **AB-03.3.4 — approved-output application ownership**.
 
-Latest executable/source checkpoint: `d1e11bc7b99b50dff480e8f830812492a390983c`.
+Latest executable/source checkpoint: `26e461407d1508d86fc76b8a3b0151fab83531f9`.
 
-Current AI operations/review ownership:
+Current result:
 
-- application capability, jobs/review transport, adapter, view-model + tests → `apps/admin-web/src/features/ai/operations`;
-- `AiStructuredOutputEditor.tsx` + its CSS → `features/ai/operations`;
-- AI review page/workspace → `features/ai/operations/ui/reviews`;
-- public AI boundary → `features/ai/public`;
-- root AI operations facades were deleted;
-- two one-line internal bridges retain generic API-error/session helpers and approved-output application hooks until their owners are separated deliberately.
+- `features/ai/operations/admin-ai-authoring-api.ts` is the canonical owner of `LessonApplyResult`, `QuizApplyResult`, `applyApprovedLessonOutput` and `applyApprovedQuizOutput`;
+- root `admin-ai-authoring-api.ts` only re-exports those four symbols/types for compatibility while still owning unrelated legacy authoring concerns;
+- the AI review UI continues to use its feature-local path directly, so no large JSX rewrite was needed;
+- endpoints/payloads/backend/PostgreSQL/security/routes/copy/styles are unchanged.
 
-The presentation/editor moves reused existing blobs and were recognized as 100% renames. No UI copy/JSX/workflow logic, endpoint, payload, backend, database or security behavior changed.
+Exact-head green evidence on `26e46140...`:
 
-Exact-head green evidence on `d1e11bc7...`:
-
-- Architecture Guard `34990715628`;
-- Frontend Preparation `34990715697`;
-- Admin AI `34990715543`;
-- Combined Integration `34990715804` including real Admin Chromium;
-- Stage13G `34990715570` including Admin UI, backend, PostgreSQL/security integrations, and Real API + PostgreSQL + Chromium.
+- Architecture Guard `34992100825`;
+- Frontend Preparation `34992100806`;
+- Admin AI `34992100801`;
+- Combined Integration `34992100802` including real Admin Chromium;
+- Stage13G `34992100781` including Admin UI, backend, PostgreSQL/security integrations, and Real API + PostgreSQL + Chromium.
 
 ## Exact continuation
 
-Next worker is **C**. Execute one smallest coherent increment: **AB-03.3.4 — approved-output application ownership**.
+Next worker is **A**. Execute one smallest coherent increment: **AB-03.3.5 — AI lesson/quiz generation request ownership**.
 
-1. Re-read live state/HEAD and inspect all consumers before mutation.
-2. Locate `applyApprovedLessonOutput`, `applyApprovedQuizOutput` and their result/input contracts in mixed root `admin-ai-authoring-api.ts`.
-3. Move only the AI-owned approved-output application capability into `features/ai` and repoint AI review consumers/internal bridge to that owner.
-4. Do **not** move lesson generation, quiz generation, question regeneration/archive, specialized quiz export/print, Question Bank or Quiz Builder concerns merely because they share the legacy file.
-5. Remove the temporary `features/ai/operations/admin-ai-authoring-api.ts` bridge only when its consumer is feature-local and direct.
-6. Preserve routes/endpoints/payloads/copy/styles and run Architecture Guard, Admin quality, Admin AI, Combined and Stage13G/PostgreSQL/security/Chromium gates.
+1. Re-read live state/HEAD and perform a fresh consumer scan before mutation.
+2. Extract only genuinely AI-owned generation contracts/functions from mixed root `admin-ai-authoring-api.ts`: `AiAuthoringSubjectDomain`, `LessonGenerationMode`, `QuizGenerationMode`, `AiQuestionTarget`, `AuthoringPlanResult`, `enqueueLessonGeneration`, `enqueueQuizGeneration`.
+3. Prefer `features/ai` ownership/public contracts for legitimate cross-feature consumption; do not move `AdminAiAuthoringWorkspace.tsx` wholesale merely because it consumes several domains.
+4. Keep `enqueueQuestionRegeneration`, `archiveQuestionBankItem`, `QuizPrintVariant`, `SpecializedExportBundle`, `fetchSpecializedQuizExport` and `specializedQuizPrintUrl` out of this increment for their later Question Bank/Quiz Builder ownership work.
+5. Preserve routes/endpoints/payloads/copy/styles and run Architecture Guard, Admin quality, Admin AI, Combined and Stage13G/PostgreSQL/security/Chromium gates.
 
 ## Remaining roadmap
 
