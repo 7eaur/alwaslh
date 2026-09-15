@@ -9,7 +9,7 @@ import {
 } from "../../auth-api";
 import { listOfflineLessonPackages } from "../../offline-content-store";
 import { getActiveOfflineScope } from "../../offline-session";
-import { StudentIcon } from "../../shared/icons/StudentIcon";
+import { StudentIcon, type StudentIconName } from "../../shared/icons/StudentIcon";
 import {
   getCachedStudentAttempts,
   getCachedStudentCurriculum,
@@ -18,9 +18,6 @@ import {
   peekCachedStudentCurriculum,
   peekCachedStudentQuizzes,
 } from "../../shared/data/student-runtime-cache";
-import { ListRow } from "../../shared/ui/ListRow";
-import { SectionHeader } from "../../shared/ui/SectionHeader";
-import { StatStrip } from "../../shared/ui/StatStrip";
 
 function subjectLessonCount(subject: StudentCurriculumSubject): number {
   return subject.unsectionedLessons.length + subject.sections.reduce((total, section) => total + section.lessons.length, 0);
@@ -44,6 +41,36 @@ function initialHomeSnapshot(profileId: string): HomeSnapshot {
   const quizzes = peekCachedStudentQuizzes(profileId);
   const attempts = peekCachedStudentAttempts(profileId, 8);
   return { curriculum, quizzes, attempts, downloadCount: null, loading: !curriculum && !quizzes && !attempts };
+}
+
+function HomeStat({ icon, value, label, pending = false }: {
+  icon: StudentIconName;
+  value: string;
+  label: string;
+  pending?: boolean;
+}) {
+  return (
+    <div className={`student-home-reference-stat${pending ? " is-pending" : ""}`}>
+      <span className="student-home-reference-stat__icon"><StudentIcon name={icon} /></span>
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function QuickAccessCard({ to, icon, label, tone }: {
+  to: string;
+  icon: StudentIconName;
+  label: string;
+  tone: "mint" | "green" | "blue" | "sand";
+}) {
+  return (
+    <Link className={`student-home-reference-quick is-${tone}`} to={to}>
+      <span className="student-home-reference-quick__icon"><StudentIcon name={icon} /></span>
+      <strong>{label}</strong>
+      <span className="student-home-reference-quick__arrow" aria-hidden="true"><StudentIcon name="chevron" /></span>
+    </Link>
+  );
 }
 
 export function StudentHomeOverview({ profileId, online, onSessionExpired }: {
@@ -99,83 +126,77 @@ export function StudentHomeOverview({ profileId, online, onSessionExpired }: {
 
   const subjects = allSubjects(snapshot.curriculum);
   const lessonTotal = subjects.reduce((total, item) => total + subjectLessonCount(item.subject), 0);
-  const subjectPreview = subjects.slice(0, 3);
+  const modelTotal = snapshot.quizzes?.reduce((total, quiz) => total + quiz.versions.length, 0) ?? null;
+  const firstSubject = subjects[0] ?? null;
   const lastAttempt = snapshot.attempts?.[0] ?? null;
   const number = new Intl.NumberFormat("ar-YE");
 
-  const quickStats = [
-    { key: "subjects", label: "المواد", value: snapshot.curriculum ? number.format(subjects.length) : "—", icon: <StudentIcon name="subjects" /> },
-    { key: "lessons", label: "الدروس", value: snapshot.curriculum ? number.format(lessonTotal) : "—", icon: <StudentIcon name="lessons" /> },
-    { key: "practice", label: "التدريبات", value: snapshot.quizzes ? number.format(snapshot.quizzes.length) : "—", icon: <StudentIcon name="practice" /> },
-  ];
-
   return (
-    <section className="student-home" aria-labelledby="student-home-title">
-      <header className="student-home__welcome">
-        <div className="student-home__welcome-copy">
+    <section className="student-home student-home-reference" aria-labelledby="student-home-title">
+      <header className="student-home-reference__welcome">
+        <div>
           <h1 id="student-home-title">مرحبًا بك</h1>
-          <p>مستمرون في رحلتك التعليمية.. خطوة صغيرة اليوم تصنع فرقًا غدًا.</p>
+          <p>رحلتك التعليمية مستمرة.. كل خطوة تصنع الفرق.</p>
         </div>
-        <p className="student-home__quote" aria-hidden="true">كل تعلّم اليوم<br />يقربك من غدٍ أفضل</p>
       </header>
 
-      <section className="student-home-section student-home-section--quick" aria-labelledby="home-quick-title">
-        <SectionHeader id="home-quick-title" title="نظرة سريعة" />
-        <StatStrip items={quickStats} ariaLabel="ملخص المحتوى المتاح" />
+      {firstSubject ? (
+        <Link className="student-home-reference__learning-card" to={`/app/learn/subjects/${encodeURIComponent(firstSubject.subject.id)}`}>
+          <span className="student-home-reference__learning-icon"><StudentIcon name="learn" /></span>
+          <span className="student-home-reference__learning-copy">
+            <small>ابدأ التعلّم</small>
+            <strong>{firstSubject.subject.name}</strong>
+            <span>{firstSubject.className} · {number.format(subjectLessonCount(firstSubject.subject))} درس</span>
+          </span>
+          <span className="student-home-reference__learning-arrow" aria-hidden="true"><StudentIcon name="chevron" /></span>
+        </Link>
+      ) : null}
+
+      <section className="student-home-reference__section" aria-labelledby="home-stats-title">
+        <header className="student-home-reference__section-heading">
+          <h2 id="home-stats-title">إحصائياتك</h2>
+          <StudentIcon name="progress" aria-hidden="true" />
+        </header>
+        <div className="student-home-reference__stats" aria-label="إحصائيات الطالب">
+          <HomeStat icon="lessons" value={snapshot.curriculum ? number.format(lessonTotal) : "—"} label="الدروس" />
+          <HomeStat icon="notes" value={modelTotal === null ? "—" : number.format(modelTotal)} label="النماذج" />
+          <HomeStat icon="saved" value="—" label="المحفوظات" pending />
+          <HomeStat icon="download" value={snapshot.downloadCount === null ? "—" : number.format(snapshot.downloadCount)} label="التنزيلات" />
+        </div>
       </section>
 
-      {snapshot.downloadCount !== null ? (
-        <section className="student-home-section" aria-labelledby="home-library-title">
-          <SectionHeader id="home-library-title" title="مكتبتي" action={<Link to="/app/library">كل التفاصيل</Link>} />
-          <ListRow
-            className="student-home-library-stat student-v2-surface"
-            to="/app/library/downloads"
-            leading={<span className="student-home-library-stat__icon"><StudentIcon name="download" /></span>}
-            title={number.format(snapshot.downloadCount)}
-            subtitle="تنزيلات محفوظة على هذا الجهاز"
-            trailing={<StudentIcon name="chevron" aria-hidden="true" />}
-          />
+      <section className="student-home-reference__section" aria-labelledby="home-quick-title">
+        <header className="student-home-reference__section-heading">
+          <h2 id="home-quick-title">الوصول السريع</h2>
+          <StudentIcon name="subjects" aria-hidden="true" />
+        </header>
+        <div className="student-home-reference__quick-grid">
+          <QuickAccessCard to="/app/learn" icon="learn" label="التعلّم" tone="mint" />
+          <QuickAccessCard to="/app/practice" icon="practice" label="التدريب" tone="green" />
+          <QuickAccessCard to="/app/practice" icon="notes" label="النماذج" tone="blue" />
+          <QuickAccessCard to="/app/library/saved" icon="saved" label="المحفوظات" tone="sand" />
+        </div>
+      </section>
+
+      {lastAttempt ? (
+        <section className="student-home-reference__section" aria-labelledby="home-activity-title">
+          <header className="student-home-reference__section-heading">
+            <h2 id="home-activity-title">آخر نشاط لك</h2>
+            <StudentIcon name="review" aria-hidden="true" />
+          </header>
+          <Link className="student-home-reference__activity" to={`/app/practice/attempts/${encodeURIComponent(lastAttempt.sessionId)}`}>
+            <span className="student-home-reference__activity-icon"><StudentIcon name="result" /></span>
+            <span className="student-home-reference__activity-copy">
+              <strong>{lastAttempt.quizTitle}</strong>
+              <small>{number.format(lastAttempt.correctCount)} من {number.format(lastAttempt.questionCount)} إجابة صحيحة</small>
+            </span>
+            <b>{number.format(lastAttempt.scorePercent)}٪</b>
+            <StudentIcon name="chevron" aria-hidden="true" />
+          </Link>
         </section>
       ) : null}
 
       {snapshot.loading ? <div className="student-home-inline-loading" role="status">جاري تجهيز ملخصك…</div> : null}
-
-      {subjectPreview.length > 0 ? (
-        <section className="student-home-section" aria-labelledby="home-subjects-title">
-          <SectionHeader
-            id="home-subjects-title"
-            title="موادك"
-            action={subjects.length > subjectPreview.length ? <Link to="/app/learn">عرض جميع المواد</Link> : undefined}
-          />
-          <div className="student-home-subjects student-v2-surface">
-            {subjectPreview.map(({ subject, className }) => (
-              <ListRow
-                key={subject.id}
-                className="student-home-subject"
-                to={`/app/learn/subjects/${encodeURIComponent(subject.id)}`}
-                leading={<span className="student-home-subject__icon"><StudentIcon name="learn" /></span>}
-                title={subject.name}
-                subtitle={`${className} · ${number.format(subjectLessonCount(subject))} درس`}
-                trailing={<StudentIcon name="chevron" />}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {lastAttempt ? (
-        <section className="student-home-section" aria-labelledby="home-attempt-title">
-          <SectionHeader id="home-attempt-title" title="آخر تدريب" />
-          <ListRow
-            className="student-home-attempt student-v2-surface"
-            to={`/app/practice/attempts/${encodeURIComponent(lastAttempt.sessionId)}`}
-            leading={<span className="student-home-attempt__icon"><StudentIcon name="result" /></span>}
-            title={lastAttempt.quizTitle}
-            subtitle={`${number.format(lastAttempt.correctCount)} من ${number.format(lastAttempt.questionCount)} إجابة صحيحة`}
-            trailing={<b>{number.format(lastAttempt.scorePercent)}٪</b>}
-          />
-        </section>
-      ) : null}
     </section>
   );
 }
