@@ -31,39 +31,34 @@ Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 Final executable/source checkpoint: `9b38c9d2f803e220874a40e71ac06399e78435a3`.
 
 ### AB-03.4 Question Bank — DONE / EXACT-HEAD VERIFIED
-
-- AB-03.4.1 feature-owner foundation — DONE / SOURCE-TREE-EQUIVALENT VERIFIED (`11fb063ebe513a6141bb67b6725b5f181d762907`).
-- AB-03.4.2 presentation ownership — DONE / EXACT-HEAD VERIFIED (`26ca9ab2835f72a169a7e602c4fd0657cfbb1eca`).
-- AB-03.4.3 regeneration/archive ownership — DONE / EXACT-HEAD VERIFIED (`5ff7028cb069561c5eb45466e9a0fb882fbf9131`).
-- AB-03.4.4 compatibility retirement + closure scan — DONE / EXACT-HEAD VERIFIED (`a5e76461234bd42a29984ffb5d1a587bdbc3092a`).
-
-AB-03.4.4 closure result:
-- removed dead legacy `admin/questions/*` presentation facades;
-- moved `question-bank-api.test.ts` into `features/questions` without behavior changes;
-- retained only compatibility boundaries that still have real consumers; they contain no duplicate Question Bank implementation ownership;
-- canonical frontend ownership is under `features/questions`, while backend authority remains under `apps/api/src/question-bank/*` plus the already-authoritative AI authoring endpoint module for regeneration/archive;
-- no UI redesign, route/payload/auth change, backend mutation or PostgreSQL mutation was required.
-
-Exact-head verification on `a5e76461234bd42a29984ffb5d1a587bdbc3092a`:
-- Architecture Guard `34999311596` — SUCCESS.
-- Frontend Preparation `34999311689` — SUCCESS.
-- Admin AI `34999311651` — SUCCESS.
-- Combined Integration `34999311611` — SUCCESS including real Admin Chromium.
-- Stage13G `34999311628` — SUCCESS including backend/UI, clean PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+Final executable/source checkpoint: `a5e76461234bd42a29984ffb5d1a587bdbc3092a`.
 
 ### AB-03.5 Quiz Builder — ACTIVE
 
-#### AB-03.5.1 Quiz Builder feature-owner foundation — NEXT
+#### AB-03.5.1 Quiz Builder feature-owner foundation — DONE / EXACT-HEAD VERIFIED
+Executable/source checkpoint: `2254cc8121fd319b17cbd626d683352b23dda229` (`refactor(admin): feature-own Quiz Builder API`).
 
-Fresh topology confirms:
-- canonical backend Quiz Builder ownership already exists under `apps/api/src/quiz-builder/*`, including authorization/validation/service/export boundaries;
-- Admin frontend API/application ownership is still at root `apps/admin-web/src/quiz-builder-api.ts` with `quiz-builder-api.test.ts`;
-- presentation remains under `admin/quizzes/*` and specialized export/print remains separate.
+Completed:
+- moved the Quiz Builder frontend API/application implementation from root into `features/quizzes/quiz-builder-api.ts`;
+- moved its unit test unchanged into `features/quizzes/quiz-builder-api.test.ts`;
+- exposed canonical ownership through `features/quizzes/public/index.ts`;
+- reduced root `quiz-builder-api.ts` to a compatibility re-export for existing consumers;
+- preserved every endpoint, payload, filter, authenticated transport and lifecycle behavior;
+- confirmed backend canonical ownership already exists under `apps/api/src/quiz-builder/*`, so no backend/database mutation or main reconciliation was required.
 
-Next increment: move only Quiz Builder frontend API/application implementation + its tests into `features/quizzes`, expose a narrow public boundary, preserve the root path only as a temporary compatibility facade for real consumers, and leave presentation plus specialized export/print for later increments.
+Exact-head verification on `2254cc8121fd319b17cbd626d683352b23dda229`:
+- Architecture Guard `35015668415` — SUCCESS.
+- Frontend Preparation `35015668182` — SUCCESS.
+- Admin AI `35015668395` — SUCCESS.
+- Combined Integration `35015668029` — SUCCESS including real Admin Chromium.
+- Stage13G `35015667909` — SUCCESS including Admin UI/backend, clean PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+
+#### AB-03.5.2 Quiz Builder presentation ownership — NEXT
+
+Move `QuizBuilderListPage`, `QuizBuilderCreatePage`, `QuizBuilderDetailPage` and `QuizMetadataPanel` into `features/quizzes` while preserving implementation/UI byte-for-byte where possible. Preserve route-level lazy chunks via page-specific public entries and switch only `AdminRoutes.tsx` imports. Keep legacy page paths as compatibility re-exports until closure scan proves them dead. Do not move specialized export/print yet.
 
 ## Remaining roadmap
 
-Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+Finish Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.

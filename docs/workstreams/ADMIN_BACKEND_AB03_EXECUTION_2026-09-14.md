@@ -21,47 +21,32 @@ Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 Final executable/source checkpoint: `9b38c9d2f803e220874a40e71ac06399e78435a3`.
 
 ## AB-03.4 — Question Bank — DONE / EXACT-HEAD VERIFIED
-
-### AB-03.4.1 feature-owner foundation — DONE
-Source: `11fb063ebe513a6141bb67b6725b5f181d762907`.
-
-### AB-03.4.2 presentation ownership — DONE / EXACT-HEAD VERIFIED
-Source: `26ca9ab2835f72a169a7e602c4fd0657cfbb1eca`.
-
-### AB-03.4.3 regeneration/archive ownership — DONE / EXACT-HEAD VERIFIED
-Source: `5ff7028cb069561c5eb45466e9a0fb882fbf9131`.
-
-### AB-03.4.4 compatibility retirement + closure scan — DONE / EXACT-HEAD VERIFIED
-Source: `a5e76461234bd42a29984ffb5d1a587bdbc3092a`.
-
-Worker C sequence 83 closure:
-- removed consumer-free legacy `admin/questions/*` page facades;
-- moved `question-bank-api.test.ts` unchanged under `features/questions`;
-- retained root compatibility boundaries only for real consumers and confirmed they do not own implementations;
-- preserved canonical feature/backend ownership and all behavior.
-
-Exact-head evidence on `a5e76461...`:
-- Architecture Guard `34999311596` — SUCCESS;
-- Frontend Preparation `34999311689` — SUCCESS;
-- Admin AI `34999311651` — SUCCESS;
-- Combined Integration `34999311611` — SUCCESS including real Admin Chromium;
-- Stage13G `34999311628` — SUCCESS including Real API + PostgreSQL + Chromium.
-
-Closure scan result: no genuine Question Bank implementation ownership remains outside `features/questions` and canonical backend modules. AB-03.4 is closed.
+Final executable/source checkpoint: `a5e76461234bd42a29984ffb5d1a587bdbc3092a`.
 
 ## AB-03.5 — Quiz Builder — ACTIVE
 
-### AB-03.5.1 Quiz Builder feature-owner foundation — NEXT
+### AB-03.5.1 Quiz Builder feature-owner foundation — DONE / EXACT-HEAD VERIFIED
+Source: `2254cc8121fd319b17cbd626d683352b23dda229`.
 
-Fresh evidence:
-- backend canonical ownership already exists under `apps/api/src/quiz-builder/*` (`http.ts`, `service.ts`, `candidates.ts`, export modules, specialized export modules);
-- the HTTP boundary already performs admin authorization and Zod request validation;
-- Admin frontend API/application implementation is root-owned at `apps/admin-web/src/quiz-builder-api.ts`;
-- root `quiz-builder-api.test.ts` covers list filters, candidates, version export, create/detail/version, replace/review/reject/publish routes;
-- presentation remains under `apps/admin-web/src/admin/quizzes/*` and must remain out of this foundation increment;
-- specialized export/print in the mixed authoring surface must remain out until a dedicated increment.
+Worker A sequence 84:
+- moved root Quiz Builder frontend API/application implementation into `features/quizzes/quiz-builder-api.ts`;
+- moved its test unchanged into the feature;
+- exposed `features/quizzes/public/index.ts`;
+- reduced root `quiz-builder-api.ts` to compatibility re-export only;
+- preserved endpoints/payloads/filters/credentials/lifecycle behavior;
+- kept presentation and specialized export/print outside the increment;
+- left backend/database untouched because `apps/api/src/quiz-builder/*` already owns the canonical Fastify contracts and authority.
 
-Worker A should move only the frontend API/application implementation and test into `features/quizzes`, expose a narrow public boundary, and reduce the root API file to a temporary compatibility re-export. Preserve endpoint/payload/auth behavior exactly; no backend/database mutation is currently justified.
+Exact-head evidence on `2254cc81...`:
+- Architecture Guard `35015668415` — SUCCESS;
+- Frontend Preparation `35015668182` — SUCCESS;
+- Admin AI `35015668395` — SUCCESS;
+- Combined Integration `35015668029` — SUCCESS including real Admin Chromium;
+- Stage13G `35015667909` — SUCCESS including Real API + PostgreSQL + Chromium.
+
+### AB-03.5.2 Quiz Builder presentation ownership — NEXT
+
+Move the four existing presentation implementations (`QuizBuilderListPage`, `QuizBuilderCreatePage`, `QuizBuilderDetailPage`, `QuizMetadataPanel`) to `features/quizzes` with behavior/UI/copy/CSS preserved. Add separate public page entry points, switch only the router lazy-import paths, and leave legacy page files as compatibility re-exports until closure cleanup. Specialized export/print remains out of this increment.
 
 ## Main reconciliation
 
