@@ -15,6 +15,7 @@ import {
   clearActiveOfflineLease,
   refreshOfflineLeaseForCurrentSession,
 } from "./offline-session";
+import { applyOfflineContentDelta } from "./offline-sync";
 
 export type OfflineRevalidationStatus = "verified" | "deferred" | "session_invalid";
 
@@ -86,8 +87,9 @@ function isSessionAuthorityError(error: unknown): boolean {
  * Revalidates locally stored protected lessons after connectivity returns.
  *
  * Server Auth/Device/Entitlement/Publication authority wins on reconnect.
- * Transient transport/service failures never destroy a still-time-bounded local package;
- * those packages remain governed by their existing signed authorization until a later retry.
+ * The revision delta is applied first and is idempotent; the manifest pass then
+ * rechecks every remaining package so a missed/old cursor can never weaken the
+ * existing Stage16 authorization boundary.
  */
 export async function revalidateOfflinePackagesForCurrentSession(
   profileId: string,
@@ -103,10 +105,24 @@ export async function revalidateOfflinePackagesForCurrentSession(
     return { status: "deferred", checked: 0, refreshed: 0, removed: 0, deferred: 0 };
   }
 
-  const packages = await listOfflineLessonPackages(lease.profileId, lease.deviceId);
-  let refreshed = 0;
   let removed = 0;
   let deferred = 0;
+  try {
+    const delta = await applyOfflineContentDelta(lease.profileId, lease.deviceId);
+    removed += delta.removed;
+    if (delta.hasMore) deferred += 1;
+  } catch (error) {
+    if (isSessionAuthorityError(error)) {
+      await clearActiveOfflineLease().catch(() => undefined);
+      return { status: "session_invalid", checked: 0, refreshed: 0, removed, deferred };
+    }
+    // The full manifest pass below remains authoritative. A transient delta
+    // failure therefore delays the cursor only; it never authorizes content.
+    deferred += 1;
+  }
+
+  const packages = await listOfflineLessonPackages(lease.profileId, lease.deviceId);
+  let refreshed = 0;
 
   for (const record of packages) {
     try {

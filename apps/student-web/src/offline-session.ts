@@ -5,6 +5,7 @@ import {
   saveOfflineLease,
   type StoredOfflineLease,
 } from "./offline-store";
+import { clearOfflineSyncCursor } from "./offline-sync-cursor";
 
 export type OfflineSessionSyncReason = "activation" | "login" | "device_rebind" | "restore";
 
@@ -104,6 +105,7 @@ export async function syncOfflineLeaseForSession(
     for (const stored of records) {
       if (stored.profileId === record.profileId && stored.deviceId !== record.deviceId) {
         await deleteOfflineScope(stored.profileId, stored.deviceId);
+        clearOfflineSyncCursor(stored.profileId, stored.deviceId);
       }
     }
   }
@@ -116,5 +118,6 @@ export async function clearActiveOfflineLease(): Promise<void> {
   const scope = readActiveOfflineScope();
   persistActiveOfflineScope(null);
   if (!scope) return;
+  clearOfflineSyncCursor(scope.profileId, scope.deviceId);
   await persistInOrder(() => deleteOfflineScope(scope.profileId, scope.deviceId));
 }

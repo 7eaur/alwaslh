@@ -14,6 +14,8 @@ on:
       - "apps/api/tests/offline-signing.test.ts"
       - "apps/api/tests/integration/student-offline.integration.test.ts"
       - "apps/api/tests/integration/student-offline-download.integration.test.ts"
+      - "apps/api/tests/integration/student-offline-sync.integration.test.ts"
+      - "database/migrations/0027_offline_content_delta.sql"
       - ".github/workflows/stage16-student-pwa.yml"
   pull_request:
     branches:
@@ -27,6 +29,8 @@ on:
       - "apps/api/tests/offline-signing.test.ts"
       - "apps/api/tests/integration/student-offline.integration.test.ts"
       - "apps/api/tests/integration/student-offline-download.integration.test.ts"
+      - "apps/api/tests/integration/student-offline-sync.integration.test.ts"
+      - "database/migrations/0027_offline_content_delta.sql"
       - ".github/workflows/stage16-student-pwa.yml"
   workflow_dispatch:
 
@@ -35,7 +39,7 @@ permissions:
 
 jobs:
   offline-lease:
-    name: Student offline · PostgreSQL lease/download contracts
+    name: Student offline · PostgreSQL lease/download/sync contracts
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -67,12 +71,13 @@ jobs:
         run: node --import tsx --test tests/offline-signing.test.ts
       - name: Apply clean PostgreSQL migrations
         run: npm run db:migrate --prefix apps/api
-      - name: Verify bounded Student offline lease and protected download contracts
+      - name: Verify bounded Student offline lease, download and content-delta contracts
         working-directory: apps/api
         run: >-
           node --import tsx --test --test-concurrency=1
           tests/integration/student-offline.integration.test.ts
           tests/integration/student-offline-download.integration.test.ts
+          tests/integration/student-offline-sync.integration.test.ts
 
   offline-client:
     name: Student offline · lifecycle/materialization/cold-start/reconnect · real Chromium

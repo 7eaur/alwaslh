@@ -92,10 +92,10 @@ test("Student offline lesson manifest is device-bound, publication-safe and revi
       summary: "ملخص صالح للتنزيل الصريح",
       status: "active",
     });
-    const contentRevision = 7;
+    const contentRevisionBeforeAssetPublication = 7;
     await db.query(
       "update lessons set content_revision = $2, published_at = now() - interval '1 minute' where id = $1",
-      [lesson.id, contentRevision],
+      [lesson.id, contentRevisionBeforeAssetPublication],
     );
 
     await db.query(
@@ -130,6 +130,10 @@ test("Student offline lesson manifest is device-bound, publication-safe and revi
     );
     const assetId = assetRows[0]?.id;
     assert.ok(assetId);
+
+    // A published asset changes the learner-visible signed package and therefore
+    // advances the canonical lesson content revision by one.
+    const contentRevision = contentRevisionBeforeAssetPublication + 1;
 
     const deviceId = await createStudentDevice(db, studentId);
     const cookie = await createSession(db, studentId, deviceId);
