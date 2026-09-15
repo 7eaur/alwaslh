@@ -7,93 +7,40 @@ Status: **ACTIVE — AB-03.2 Curriculum + Content + OCR**
 
 ## Scope and order
 
-AB-03 migrates complete Admin vertical slices in canonical order:
-
-1. Overview + Operations — DONE / EXACT-SOURCE VERIFIED
-2. Curriculum + Content + OCR — ACTIVE
-3. AI Jobs + AI Review + contextual authoring — PENDING
-4. Question Bank — PENDING
-5. Quiz Builder — PENDING
-6. Students — PENDING
-7. Access Codes — PENDING
+AB-03 migrates complete Admin vertical slices in canonical order: Overview + Operations → Curriculum + Content + OCR → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes.
 
 Each slice follows `job → DB/API/security → backend boundary correction → IA/states/actions → frontend owner → integration/browser parity → switch → delete legacy`.
 
 ## AB-03.1 — Overview + Operations — DONE / EXACT-SOURCE VERIFIED
 
-Final owners:
-
-- `apps/admin-web/src/admin/overview/AdminOverviewPage.tsx` remains the Overview presentation owner.
-- `apps/admin-web/src/admin/operations/*` remains Operations page/style presentation ownership.
-- `apps/admin-web/src/features/operations/api/admin-operations-api.ts` owns Operations transport/types.
-- `apps/admin-web/src/features/operations/model/operations-model.ts` owns Operations presentation/model policy.
-- `apps/admin-web/src/features/operations/public/index.ts` is the narrow consumer boundary.
-- `apps/api/src/admin-operations/http.ts` owns admin authorization and HTTP query validation.
-- `apps/api/src/admin-operations/attention-application.ts` owns attention orchestration.
-- `AdminOperationsService` remains PostgreSQL-backed operational/governance/audit authority.
-
 Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
-
-Authoritative green evidence: Architecture Guard `34876404251`; Frontend Preparation `34876404345`; Admin AI Operations `34876404287`; Combined Integration `34876404314`; Stage13G Admin Operations `34876404237`.
 
 ## AB-03.2 — Curriculum + Content + OCR — ACTIVE
 
 ### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Implementation ownership moved to `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts`, with narrow consumer access through `features/curriculum/public`.
-
-Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
-
-Required closure evidence: Architecture Guard `34887051028`; Frontend Preparation `34887051091`; Admin AI Operations `34887416193`; Combined Integration `34887416088`; Stage13G Admin Operations `34887416108` — all SUCCESS.
+Implementation ownership lives in `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts`, exposed through `features/curriculum/public`. Corrected source checkpoint `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
 
 ### AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Content ingestion transport/types implementation moved to `apps/admin-web/src/features/content/api/content-ingestion-api.ts`, exposed through `apps/admin-web/src/features/content/public/index.ts`.
-
-Corrected executable/source checkpoint: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
-
-Final green closure evidence: Architecture Guard `34891198234`; Admin AI Operations `34892857039`; Combined Integration `34892857011`; Stage13G Admin Operations / PostgreSQL / Chromium `34892857278`.
+Implementation ownership lives in `apps/admin-web/src/features/content/api/content-ingestion-api.ts`, exposed through `features/content/public`. Corrected source checkpoint `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
 
 ### AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
 
-Final ownership after this increment:
+Implementation/types live in `apps/admin-web/src/features/content/api/content-operations-api.ts`, exposed through `features/content/public`. Source checkpoint `866912f4640aa4696b896a1d897bff7ad67024f4`.
 
-- `apps/admin-web/src/features/content/api/content-operations-api.ts` owns Content operations/OCR transport and types;
-- `apps/admin-web/src/features/content/public/index.ts` exposes the narrow required consumer contract;
-- `apps/admin-web/src/OcrSourcePreview.tsx` consumes the feature boundary directly.
+### AB-03.2.4 Content operations compatibility facade retirement — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
+Worker A retired the root production facade; Worker B moved the stale root transport test beside its feature owner instead of restoring compatibility code. Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
 
-Exact-head green closure set: Architecture Guard `34898665849`; Frontend Preparation `34898665740`; Admin AI Operations `34898665783`; Combined Integration `34898665724`; Stage13G Admin Operations / PostgreSQL / Chromium `34898665675` — all SUCCESS.
+Closure evidence: Architecture Guard `34908457279`; Frontend Preparation `34908457311`; Admin AI Operations `34908457270`; successor Combined Integration `34909883950`; successor Stage13G Admin Operations / PostgreSQL / Chromium `34909884028` — all SUCCESS. The successor integration gates ran on documentation-only source-tree-equivalent head `a7dc026583e395a14fb06b5c9022cd091d35c07c`.
 
-### AB-03.2 closure discovery — DONE / DOC-ONLY
+### Worker A sequence 58 — fresh AB-03.2 closure discovery
 
-Worker C sequence 54 proved root `apps/admin-web/src/content-operations-api.ts` was a pure compatibility facade and that `ContentOperationsPage.tsx` was its remaining stale production consumer.
+No executable mutation was made. Inspection found the next concrete compatibility debt:
 
-### AB-03.2.4 Content operations compatibility facade retirement — CORRECTED / WAITING_FOR_CI
+- `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` still imports Content-ingestion transport/types from root `../../content-ingestion-api`;
+- root `apps/admin-web/src/content-ingestion-api.ts` contains no implementation and only re-exports `features/content/public`;
+- therefore implementation ownership is already feature-correct, but the compatibility facade still has a legitimate production consumer and cannot yet be deleted safely.
 
-Worker A sequence 55 executed the selected production seam:
-
-1. `apps/admin-web/src/admin/reviews/ContentOperationsPage.tsx` imports its Content operations/OCR functions and types from `../../features/content/public`;
-2. root `apps/admin-web/src/content-operations-api.ts` was deleted;
-3. no API path, payload/response contract, Fastify/PostgreSQL/security authority, route, visual behavior or Student frontend implementation changed.
-
-Exact-head Frontend Preparation `34906963113` then exposed one remaining ownership defect: root `apps/admin-web/src/content-operations-api.test.ts` still imported the deleted `./content-operations-api`, so Admin typecheck failed with TS2307.
-
-Worker B sequence 56 applied the smallest root correction inside the same seam:
-
-1. moved the unchanged transport test to `apps/admin-web/src/features/content/api/content-operations-api.test.ts`, beside the implementation it verifies;
-2. deleted the stale root test path;
-3. did not restore the compatibility facade or alter production behavior/contracts.
-
-Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
-
-Exact-head verification observed before documentation handoff:
-
-- Architecture Guard `34908457279` — SUCCESS;
-- Frontend Preparation `34908457311` — SUCCESS;
-- Admin AI Operations `34908457270` — IN PROGRESS;
-- Combined Integration `34908457265` — IN PROGRESS;
-- Stage13G Admin Operations / PostgreSQL / Chromium `34908457306` — IN PROGRESS.
-
-Required continuation: do not start another ownership seam until the remaining gates, or source-tree-equivalent successors after documentation-only pushes, finish green. Only then mark AB-03.2.4 DONE and perform fresh AB-03.2 closure discovery before any AI slice work.
+Selected next smallest increment: **AB-03.2.5 — Content ingestion compatibility facade retirement**. Repoint all remaining legitimate root-facade consumers/tests to `features/content/public`, then delete the facade only after proving it unused. No endpoint/payload/PostgreSQL/security/UI behavior change is intended. Do not start AI implementation in the same increment.
