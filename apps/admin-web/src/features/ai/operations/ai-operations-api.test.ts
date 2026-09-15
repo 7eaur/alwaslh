@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiRequestError } from "./admin-api";
+import { ApiRequestError } from "../../../shared/api/client";
 import {
   fetchAiJobDetail,
   fetchAiJobs,
