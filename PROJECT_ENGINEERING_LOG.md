@@ -2,7 +2,7 @@
 
 > Repository code, PostgreSQL migrations/schema, executable CI/tests and verified runtime evidence outrank prose.
 
-Last consolidated: **2026-09-15 — Worker A sequence 81 moved Question Bank presentation ownership into `features/questions` and passed exact-head verification.**
+Last consolidated: **2026-09-15 — Worker B sequence 82 moved Question Bank regeneration/archive ownership into `features/questions` and passed exact-head verification.**
 
 ## Durable invariants
 
@@ -32,51 +32,55 @@ Final executable/source checkpoint: `9b38c9d2f803e220874a40e71ac06399e78435a3`.
 
 ### AB-03.4 Question Bank — ACTIVE
 
-#### Sequence 80 — AB-03.4.1 Question Bank feature-owner foundation — DONE
-
+#### Sequence 80 — AB-03.4.1 feature-owner foundation — DONE
 Source commit: `11fb063ebe513a6141bb67b6725b5f181d762907`.
 
-- `features/questions/question-bank-api.ts` became the canonical Admin Question Bank API/application owner.
-- `features/questions/public/index.ts` became the narrow public boundary.
-- root `question-bank-api.ts` became compatibility-only.
-- backend inspection confirmed canonical ownership already exists in `apps/api/src/question-bank/*`; no backend/database mutation was required.
-- regeneration/archive and Quiz Builder concerns were deliberately deferred.
+`features/questions/question-bank-api.ts` became the canonical Admin Question Bank API/application owner; root `question-bank-api.ts` became compatibility-only. Backend standard Question Bank ownership already existed in `apps/api/src/question-bank/*`; no backend/database mutation was required.
 
-Verification:
-- Architecture Guard `34995311318` — SUCCESS exact-source.
-- Frontend Preparation `34995311313` — SUCCESS exact-source.
-- Admin AI `34995415758` — SUCCESS source-tree-equivalent.
-- Combined Integration `34995415726` — SUCCESS source-tree-equivalent including real Chromium.
-- Stage13G `34995415760` — SUCCESS source-tree-equivalent including Real API + PostgreSQL + Chromium.
+#### Sequence 81 — AB-03.4.2 presentation ownership — DONE / EXACT-HEAD VERIFIED
+Source commit: `26ca9ab2835f72a169a7e602c4fd0657cfbb1eca`.
 
-#### Sequence 81 — AB-03.4.2 Question Bank presentation ownership — DONE / EXACT-HEAD VERIFIED
+The three page implementations moved to `features/questions`, route composition switched to page-specific feature public entries, and legacy page paths became one-line compatibility re-exports. UI, routes, Arabic copy, CSS, accessibility and behavior were preserved.
 
-Source commit: `26ca9ab2835f72a169a7e602c4fd0657cfbb1eca` (`refactor(admin): feature-own Question Bank presentation`).
-
-Fresh inspection proved the three page implementations and the router were the only presentation ownership debt for this increment. The migration intentionally reused the exact existing page blobs at the same relative depth, so presentation behavior did not change.
-
-Completed:
-1. `QuestionBankListPage.tsx`, `QuestionBankCreatePage.tsx`, and `QuestionBankDetailPage.tsx` implementations now live under `features/questions`.
-2. Added page-specific public entry points so the router can keep each page as its own lazy-loaded boundary.
-3. `AdminRoutes.tsx` now lazy-loads `features/questions/public/QuestionBank{List,Create,Detail}Page` instead of `admin/questions/*`.
-4. Legacy `admin/questions/*` files are one-line compatibility re-exports only.
-5. Routes, props, loading/error/empty/success states, Arabic copy, accessibility semantics, CSS and behavior are unchanged.
-6. No backend/database/security mutation and no live-main reconciliation was required.
-7. `enqueueQuestionRegeneration` / `archiveQuestionBankItem` and Quiz Builder export/print remain intentionally outside this increment.
-
-Exact-head CI on `26ca9ab2835f72a169a7e602c4fd0657cfbb1eca`:
+Exact-head CI:
 - Architecture Guard `34996490917` — SUCCESS.
 - Frontend Preparation `34996491028` — SUCCESS.
 - Admin AI `34996491040` — SUCCESS.
-- Combined Integration `34996491059` — SUCCESS including deterministic fixture and real Admin Chromium.
-- Stage13G `34996491115` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+- Combined Integration `34996491059` — SUCCESS including real Chromium.
+- Stage13G `34996491115` — SUCCESS including Real API + PostgreSQL + Chromium.
 
-#### Exact next increment — AB-03.4.3 Question Bank regeneration/archive ownership
+#### Sequence 82 — AB-03.4.3 regeneration/archive ownership — DONE / EXACT-HEAD VERIFIED
 
-Fresh source inspection at the verified checkpoint shows:
-- `apps/admin-web/src/admin-ai-authoring-api.ts` still implements `enqueueQuestionRegeneration` and `archiveQuestionBankItem`;
-- both functions are Question Bank responsibilities, not generic AI authoring ownership;
-- `apps/admin-web/src/admin/ai-authoring/AdminAiAuthoringWorkspace.tsx` is the current real consumer;
-- the same mixed root file also owns Quiz Builder `fetchSpecializedQuizExport` / `specializedQuizPrintUrl`, which must remain untouched in this increment.
+Source commit: `5ff7028cb069561c5eb45466e9a0fb882fbf9131` (`refactor(admin): feature-own Question Bank regeneration`).
 
-Worker B must move only the regeneration/archive functions and their necessary contracts behind `features/questions` ownership, expose a narrow public boundary, preserve existing endpoints/payloads/response behavior, and keep the workspace behavior unchanged. Cross-feature AI types may be consumed only through an approved narrow public contract; do not introduce circular dependencies or move types merely for aesthetics.
+Fresh evidence before mutation:
+- root `admin-ai-authoring-api.ts` implemented `enqueueQuestionRegeneration` and `archiveQuestionBankItem` even though both are Question Bank responsibilities;
+- the real consumer was the mixed `AdminAiAuthoringWorkspace.tsx`;
+- backend endpoints already existed in `apps/api/src/ai/admin-authoring-http.ts` with admin authorization, Zod validation and authoring service authority;
+- no backend/database correction was required.
+
+Completed source work:
+1. Added `features/questions/question-bank-authoring-api.ts` as the sole implementation owner for regeneration/archive frontend application calls.
+2. The Question Bank feature imports `AiAuthoringSubjectDomain` / `AuthoringPlanResult` only through `features/ai/public`, satisfying the cross-feature architecture rule.
+3. Added a feature-owned test file asserting canonical regenerate/archive URLs, POST method, credentials and exact regeneration payload.
+4. Exported the two actions through `features/questions/public`.
+5. Removed their implementation and corresponding test block from root `admin-ai-authoring-api.*`.
+6. Kept only a temporary root compatibility re-export because `AdminAiAuthoringWorkspace.tsx` remains a real consumer; no duplicate implementation exists.
+7. Quiz Builder specialized export/print code and types remained untouched.
+8. No UI, copy, route, backend, database or security behavior changed.
+
+Exact-head CI on `5ff7028cb069561c5eb45466e9a0fb882fbf9131`:
+- Architecture Guard `34998332362` — SUCCESS.
+- Frontend Preparation `34998332394` — SUCCESS: Admin lint + strict typecheck + unit tests + build.
+- Admin AI `34998332370` — SUCCESS: lint/type/unit/build, clean PostgreSQL migrations/contracts, authorization/observability/review/control, Stage12 and auth security regression.
+- Combined Integration `34998332374` — SUCCESS including clean PostgreSQL, backend authority regressions, deterministic browser fixture and real Admin Chromium.
+- Stage13G `34998332377` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+
+#### Exact next increment — AB-03.4.4 Question Bank compatibility retirement + closure scan
+
+Fresh post-source inspection found compatibility seams that must be evaluated before declaring Question Bank closed:
+- root `question-bank-api.ts` is a one-line re-export and feature-owned pages still reference it from their inherited imports;
+- `AdminAiAuthoringWorkspace.tsx` still takes Question Bank actions/API through root compatibility facades;
+- `admin/questions/{List,Create,Detail}` are one-line presentation re-exports while `AdminRoutes.tsx` already consumes feature public page entry points.
+
+Worker C must fresh-map all consumers, switch safe consumers to canonical Question Bank ownership, delete only genuinely dead compatibility files/exports, and then perform a full Question Bank closure scan. Preserve behavior and keep all Quiz Builder concerns outside this increment. A compatibility boundary may remain only with documented real-consumer justification; do not retain dead facades for convenience.

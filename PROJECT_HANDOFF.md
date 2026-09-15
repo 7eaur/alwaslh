@@ -25,55 +25,53 @@ Live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. Main reconciliation is 
   - AB-03.4 Question Bank — ACTIVE
     - AB-03.4.1 feature-owner foundation — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
     - AB-03.4.2 presentation ownership — DONE / EXACT-HEAD VERIFIED
-    - AB-03.4.3 regeneration/archive ownership — NEXT
+    - AB-03.4.3 regeneration/archive ownership — DONE / EXACT-HEAD VERIFIED
+    - AB-03.4.4 compatibility retirement + closure scan — NEXT
 - AB-04..AB-08 — PENDING
 
 ## Latest verified result
 
-Worker A sequence 81 completed **AB-03.4.2 — Question Bank presentation ownership**.
+Worker B sequence 82 completed **AB-03.4.3 — Question Bank regeneration/archive ownership**.
 
-Executable/source checkpoint: `26ca9ab2835f72a169a7e602c4fd0657cfbb1eca`.
+Executable/source checkpoint: `5ff7028cb069561c5eb45466e9a0fb882fbf9131`.
 
 Verified result:
-- List/Create/Detail implementations now live under `features/questions`;
-- page-specific public entry points preserve route-level lazy loading;
-- `AdminRoutes.tsx` composes the Question Bank pages through feature-owned public boundaries;
-- old `admin/questions/*` files are compatibility re-exports only;
-- the actual page code was moved without changing JSX, Arabic copy, state handling, CSS, accessibility, props, routes or behavior;
-- no backend/database/security mutation was made;
-- Question Bank regeneration/archive and Quiz Builder export/print remain separate responsibilities.
+- `features/questions/question-bank-authoring-api.ts` now owns `enqueueQuestionRegeneration` and `archiveQuestionBankItem`;
+- its cross-feature AI types come only from `features/ai/public`;
+- feature-owned tests preserve regeneration/archive route, POST, credentials and regeneration payload contracts;
+- root `admin-ai-authoring-api.ts` no longer implements those actions and only re-exports them temporarily because the mixed authoring workspace remains a real consumer;
+- Quiz Builder specialized export/print ownership remained untouched;
+- backend endpoints were inspected in `apps/api/src/ai/admin-authoring-http.ts` and already enforce admin authorization, Zod validation and service authority, so no backend/database mutation or live-main reconciliation was required.
 
-Exact-head evidence on `26ca9ab2...`:
-- Architecture Guard `34996490917` — SUCCESS.
-- Frontend Preparation `34996491028` — SUCCESS.
-- Admin AI `34996491040` — SUCCESS.
-- Combined Integration `34996491059` — SUCCESS including real Admin Chromium.
-- Stage13G `34996491115` — SUCCESS including Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+Exact-head evidence on `5ff7028c...`:
+- Architecture Guard `34998332362` — SUCCESS.
+- Frontend Preparation `34998332394` — SUCCESS.
+- Admin AI `34998332370` — SUCCESS including clean PostgreSQL and security regressions.
+- Combined Integration `34998332374` — SUCCESS including real Admin Chromium.
+- Stage13G `34998332377` — SUCCESS including Real API + PostgreSQL + Chromium.
 
-PR #52 remains Draft, open, unmerged, with no auto-merge action.
+PR #52 remains Draft / unmerged / no auto-merge.
 
 ## Exact continuation
 
-Next worker is **B**. Execute one smallest coherent increment: **AB-03.4.3 — Question Bank regeneration/archive ownership**.
+Next worker is **C**. Execute one smallest coherent increment: **AB-03.4.4 — Question Bank compatibility retirement + closure scan**.
 
-1. Re-read live branch/state/main and prove no worker collision.
-2. Fresh-check:
-   - `apps/admin-web/src/admin-ai-authoring-api.ts`;
-   - `apps/admin-web/src/admin/ai-authoring/AdminAiAuthoringWorkspace.tsx`;
-   - `features/questions/public`;
-   - `features/ai/public` for any needed narrow AI contract dependency;
-   - relevant frontend tests and authoritative backend Question Bank regeneration/archive endpoints/tests.
-3. Move only `enqueueQuestionRegeneration` and `archiveQuestionBankItem` plus necessary Question Bank-side contracts to `features/questions` ownership.
-4. Preserve exact endpoint paths, payload shapes, response shapes, client-request semantics, authorization expectations and workspace behavior.
-5. Prefer narrow public-contract imports for any cross-feature AI types; do not create circular feature dependencies or move shared types without evidence.
-6. Keep root compatibility exports only if a real consumer still requires them; otherwise retire dead compatibility after consumer switch.
-7. Do **not** touch `fetchSpecializedQuizExport`, `specializedQuizPrintUrl`, `QuizPrintVariant`, `SpecializedExportBundle`, Quiz Builder UI, Question Bank redesign, or backend/database code unless fresh evidence proves a correction is required.
-8. If backend/database overlap becomes necessary, reconcile live main before mutation.
-9. Run Architecture Guard, Frontend Preparation/Admin quality, Admin AI, Combined Integration and Stage13G as appropriate; do not close while CI is pending.
-10. After verified closure, synchronize canonical docs/state and hand off the next smallest Question Bank increment to Worker C.
+1. Re-read live branch/state/main and prove no collision.
+2. Fresh-map all references to:
+   - root `question-bank-api.ts`;
+   - root Question Bank re-exports in `admin-ai-authoring-api.ts`;
+   - legacy `admin/questions/QuestionBank{List,Create,Detail}Page.tsx` facades;
+   - `features/questions/*` imports;
+   - `AdminAiAuthoringWorkspace.tsx` Question Bank imports.
+3. Switch same-feature Question Bank pages away from root compatibility and onto their canonical same-feature API owner.
+4. Switch the mixed authoring workspace's Question Bank API/actions to `features/questions/public` when the import-only change is safe; do not rewrite its JSX or redesign its flow.
+5. Delete or retire root/legacy facades only after proving no real consumers remain. Keep a facade only if a real consumer/evidence justifies it.
+6. Do not move Quiz Builder export/print or unrelated AI ownership into this increment.
+7. Perform a fresh closure scan after cleanup. If no genuine Question Bank ownership remains outside `features/questions` and backend canonical boundaries, close AB-03.4 and hand off Quiz Builder to Worker A. If real debt remains, document and take the next smallest Question Bank increment instead.
+8. Run Architecture Guard + Admin quality and any broader integration/Chromium gates appropriate to the changed source. Do not claim closure while CI is pending.
 
 ## Remaining roadmap
 
-Finish Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Finish Question Bank closure → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
