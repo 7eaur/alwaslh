@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ApiRequestError, isMissingSessionError } from "./admin-api";
+import { ApiRequestError, isMissingSessionError } from "./shared/api/client";
 import { fetchOcrSourcePreview } from "./features/content/public";
 
 interface Props {
