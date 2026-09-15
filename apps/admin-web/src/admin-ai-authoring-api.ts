@@ -1,45 +1,19 @@
 import { adminApiRequest } from "./admin-api";
+import type {
+  AiAuthoringSubjectDomain as AiAuthoringSubjectDomainType,
+  AuthoringPlanResult as AuthoringPlanResultType,
+} from "./features/ai/authoring/ai-generation-api";
 
 export { applyApprovedLessonOutput, applyApprovedQuizOutput } from "./features/ai/operations/admin-ai-authoring-api";
 export type { LessonApplyResult, QuizApplyResult } from "./features/ai/operations/admin-ai-authoring-api";
-
-export type AiAuthoringSubjectDomain =
-  | "general"
-  | "arabic_language"
-  | "religious"
-  | "mathematics"
-  | "physics"
-  | "chemistry"
-  | "biology"
-  | "history"
-  | "geography"
-  | "other";
-
-export type LessonGenerationMode =
-  | "lesson_summary"
-  | "question_generation"
-  | "comprehensive_lesson_content"
-  | "exact_question_extraction"
-  | "replica_question_extraction";
-
-export type QuizGenerationMode =
-  | "question_generation"
-  | "exact_question_extraction"
-  | "exact_exam_extraction"
-  | "replica_question_extraction";
-
-export interface AiQuestionTarget {
-  multipleChoice: number;
-  trueFalse: number;
-  direct: number;
-}
-
-export interface AuthoringPlanResult {
-  jobId: string;
-  status: string;
-  totalUnits: number;
-  replayed: boolean;
-}
+export { enqueueLessonGeneration, enqueueQuizGeneration } from "./features/ai/authoring/ai-generation-api";
+export type {
+  AiAuthoringSubjectDomain,
+  AiQuestionTarget,
+  AuthoringPlanResult,
+  LessonGenerationMode,
+  QuizGenerationMode,
+} from "./features/ai/authoring/ai-generation-api";
 
 export type QuizPrintVariant =
   | "questions_options"
@@ -58,47 +32,11 @@ export interface SpecializedExportBundle {
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/$/, "");
 
-export function enqueueLessonGeneration(input: {
-  lessonIds: string[];
-  mode: LessonGenerationMode;
-  subjectDomain: AiAuthoringSubjectDomain;
-  target?: AiQuestionTarget;
-  expectedQuestionCount?: number;
-  clientRequestId: string;
-}): Promise<AuthoringPlanResult> {
-  return adminApiRequest<AuthoringPlanResult>("/v1/admin/authoring/lessons/generate", {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-
-export function enqueueQuizGeneration(
-  quizId: string,
-  input: {
-    mode: QuizGenerationMode;
-    subjectDomain: AiAuthoringSubjectDomain;
-    versions: Array<{
-      key: string;
-      label: string;
-      lessonIds: string[];
-      shuffleOptions: boolean;
-      target?: AiQuestionTarget;
-      expectedQuestionCount?: number;
-    }>;
-    clientRequestId: string;
-  },
-): Promise<AuthoringPlanResult> {
-  return adminApiRequest<AuthoringPlanResult>(`/v1/admin/quizzes/${quizId}/generate`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
-}
-
 export function enqueueQuestionRegeneration(
   itemId: string,
-  input: { clientRequestId: string; subjectDomain: AiAuthoringSubjectDomain },
-): Promise<AuthoringPlanResult> {
-  return adminApiRequest<AuthoringPlanResult>(`/v1/admin/authoring/question-bank/${itemId}/regenerate`, {
+  input: { clientRequestId: string; subjectDomain: AiAuthoringSubjectDomainType },
+): Promise<AuthoringPlanResultType> {
+  return adminApiRequest<AuthoringPlanResultType>(`/v1/admin/authoring/question-bank/${itemId}/regenerate`, {
     method: "POST",
     body: JSON.stringify(input),
   });
