@@ -4,7 +4,7 @@
 
 **Active branch:** `rebuild/super-admin-foundation`  
 **Draft PR:** #52 — Draft / unmerged / no auto-merge.  
-**Current stage:** `AB-03 — End-to-end Admin vertical slices` — ACTIVE at `AB-03.6 Students`.
+**Current stage:** `OWNER PRIORITY OVERRIDE — AI generation operational closure`; ordered roadmap is paused immediately before `AB-03.6.1 Students` source implementation.
 
 ## Scope / permanent rules
 
@@ -18,7 +18,7 @@ Live `main` latest observation: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672` (`fea
 ## AB-01 — DONE / EXACT-HEAD VERIFIED
 ## AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-## AB-03 — ACTIVE
+## AB-03 — ACTIVE / TEMPORARILY PAUSED BEFORE AB-03.6.1 SOURCE MUTATION
 Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 ### AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
@@ -53,12 +53,30 @@ Exact-head verification on `f60a4b279fad9a011f9188005dd3ad075c7e3f00`:
 - Combined Integration `35022098947` — SUCCESS including clean PostgreSQL/security regressions and real Admin Chromium.
 - Stage13G `35022099002` — SUCCESS including Admin backend/UI and Real API + PostgreSQL + Chromium.
 
-### AB-03.6 Students — NEXT
+### AB-03.6 Students — DEFERRED BEFORE SOURCE MUTATION / EXACT RESUME POINT
 
-Fresh pre-scan shows the current Student Admin page is `admin/students/AdminStudentsPage.tsx` and its Student contracts/actions are mixed with Access Code contracts/actions inside root `admin-student-access-api.ts`. The backend already exposes the Student list/detail routes under canonical `apps/api/src/admin-access/*` with admin authorization and Zod validation, while Student recovery/device-rebind/entitlement actions use the existing auth/access authorities. The first Students increment should split only Student-owned frontend contracts/actions and their matching tests into `features/students`, expose a narrow public boundary, and leave Access Code ownership for its later slice. No backend/database rewrite is justified by current evidence.
+Sequence 88 opened `AB-03.6.1 — Students feature-owner foundation`, but no Student source implementation commit followed the sequence-open documentation commit. At the owner's explicit request on 2026-09-16, the ordered roadmap is temporarily paused here while AI question generation is made operational and verified end-to-end. When the generation closure is complete, the exact roadmap resume point remains `AB-03.6.1 — Students feature-owner foundation`; do not skip or silently replace it.
 
-## Remaining roadmap
+Previously established pre-scan remains useful only as resume context: the current Student Admin page is `admin/students/AdminStudentsPage.tsx` and its Student contracts/actions are mixed with Access Code contracts/actions inside root `admin-student-access-api.ts`. No implementation from that plan has been applied yet.
 
-Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+## Owner-priority workstream — AI generation operational closure — ACTIVE
+
+This temporary workstream exists to turn the already-architected AI/content/question capabilities into a verified development-time operator flow before the remaining roadmap continues.
+
+Definition of done:
+- Admin can inspect content/lesson context and the questions already linked to it;
+- Admin can request question generation from that canonical lesson/content;
+- real runtime provider binding/config is verified rather than inferred from test adapters;
+- prompt/rules/output schema are verified and compared against available old/original project generation evidence;
+- generated structured results are received and validated;
+- review/adopt/persist path stores accepted questions through canonical API/PostgreSQL authority with correct content linkage/provenance/authorization;
+- persisted questions can be observed again from Admin/Question Bank;
+- relevant unit/integration/security/PostgreSQL/Admin Chromium and exact-head CI are green.
+
+At workstream open, two facts remain explicitly `NOT YET VERIFIED`: real external-provider runtime execution/config and exact old/original prompt/rule parity. These must not be represented as complete until repository/runtime evidence proves them.
+
+## Remaining roadmap after generation closure
+
+Resume exactly at: `AB-03.6.1 Students feature-owner foundation` → remaining Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
