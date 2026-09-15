@@ -1,47 +1,59 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `READY_FOR_NEXT`
 Sequence: `82`
-Last worker: `A`
-Active worker: `B`
-Next worker: `—`
+Last worker: `B`
+Active worker: `—`
+Next worker: `C`
 Started at: `2026-09-15T19:50:59+03:00`
+Ended at: `2026-09-15T20:04:35+03:00`
 Observed starting HEAD: `3df3af90a2501e6526ed11912531a6a46a8b6087`
-Live main HEAD at open: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`
-Active task: `AB-03.4.3 — Question Bank regeneration/archive ownership`
-Exact next batch: `Fresh-check the mixed root authoring implementation, the real AdminAiAuthoringWorkspace consumer, features/questions public contracts, features/ai public contracts, and backend Question Bank regeneration/archive authority. Move only enqueueQuestionRegeneration and archiveQuestionBankItem plus necessary Question Bank-side contracts behind features/questions while preserving endpoints, payloads, responses and behavior. Keep Quiz Builder specialized export/print, UI redesign and backend/database mutation out unless new evidence requires it.`
-
-## Worker B sequence 82 — RUNNING
-
-### Scope guard
-
-- Question Bank regeneration/archive ownership only.
-- Preserve `POST /v1/admin/authoring/question-bank/:itemId/regenerate` and `/archive` behavior exactly.
-- Preserve clientRequestId / subjectDomain payload and replay response semantics.
-- Use narrow feature public contracts for cross-feature AI types; no circular feature dependencies.
-- Keep `QuizPrintVariant`, `SpecializedExportBundle`, `fetchSpecializedQuizExport`, `specializedQuizPrintUrl` and Quiz Builder ownership untouched.
-- Do not redesign `AdminAiAuthoringWorkspace`; only adjust imports/consumption needed for ownership.
-- No backend/database mutation unless fresh evidence requires it; reconcile live main first if overlap appears.
-- PR #52 remains Draft / unmerged / no auto-merge.
-
-## Previous checkpoint — Worker A sequence 81 CLOSED
-
-Ending canonical-doc checkpoint before state seal: `008f2b550141f4f2de31451575414d8c38ff2a9d`
-Ending executable/source HEAD: `26ca9ab2835f72a169a7e602c4fd0657cfbb1eca`
+Ending canonical-doc checkpoint before state seal: `6e621bef9e40c1635580ccd771124bdad0027c06`
+Ending executable/source HEAD: `5ff7028cb069561c5eb45466e9a0fb882fbf9131`
 Observed live main: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`
-Closed task: `AB-03.4.2 — Question Bank presentation ownership`
+Closed task: `AB-03.4.3 — Question Bank regeneration/archive ownership`
+Exact next task: `AB-03.4.4 — Question Bank compatibility retirement + closure scan`
 
-Exact-head verification:
-- Architecture Guard `34996490917` — SUCCESS.
-- Frontend Preparation `34996491028` — SUCCESS.
-- Admin AI `34996491040` — SUCCESS.
-- Combined Integration `34996491059` — SUCCESS including real Admin Chromium.
-- Stage13G `34996491115` — SUCCESS including Real API + PostgreSQL + Chromium.
+## Worker B sequence 82 — CLOSED
+
+### Completed source work
+
+Source commit: `5ff7028cb069561c5eb45466e9a0fb882fbf9131` — `refactor(admin): feature-own Question Bank regeneration`.
+
+1. Added canonical `apps/admin-web/src/features/questions/question-bank-authoring-api.ts` owner for `enqueueQuestionRegeneration` and `archiveQuestionBankItem`.
+2. Added feature-owned contract tests for regenerate/archive routes, POST semantics, credentials and regeneration payload.
+3. Exposed the actions through `features/questions/public`.
+4. Question Bank consumes required AI authoring types only through `features/ai/public`; Architecture Guard accepted the cross-feature boundary.
+5. Removed the duplicate Question Bank implementations and test block from root `admin-ai-authoring-api.*`; root now only temporarily re-exports the actions because `AdminAiAuthoringWorkspace.tsx` remains a real consumer.
+6. Left `QuizPrintVariant`, `SpecializedExportBundle`, `fetchSpecializedQuizExport`, `specializedQuizPrintUrl` and all Quiz Builder concerns untouched.
+7. Backend inspection confirmed `apps/api/src/ai/admin-authoring-http.ts` already owns the same regenerate/archive HTTP routes with admin authorization, Zod validation and authoring service authority; no backend/database mutation or live-main reconciliation was required.
+
+### Exact-head verification evidence
+
+On `5ff7028cb069561c5eb45466e9a0fb882fbf9131`:
+- Architecture Guard `34998332362` — SUCCESS.
+- Frontend Preparation `34998332394` — SUCCESS: lint + strict typecheck + unit tests + build.
+- Admin AI `34998332370` — SUCCESS: clean PostgreSQL migrations/contracts + authorization/observability/review/control + Stage12/auth security regressions.
+- Combined Integration `34998332374` — SUCCESS including clean PostgreSQL, backend authority regressions and real Admin Chromium.
+- Stage13G `34998332377` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+
+### Exact next worker C batch
+
+`AB-03.4.4 — Question Bank compatibility retirement + closure scan`
+
+Fresh topology at handoff:
+- root `apps/admin-web/src/question-bank-api.ts` is a one-line feature re-export;
+- feature-owned Question Bank pages still reference that root facade from their inherited imports;
+- `AdminAiAuthoringWorkspace.tsx` still consumes Question Bank API/actions through root compatibility facades;
+- legacy `admin/questions/QuestionBank{List,Create,Detail}Page.tsx` are one-line re-exports while `AdminRoutes.tsx` already composes feature public page entry points.
+
+Worker C must fresh-map all consumers, switch safe same-feature and mixed-workspace imports to canonical Question Bank boundaries, remove only facades proven consumer-free, and then perform a closure scan. Preserve all behavior and keep Quiz Builder ownership out of the increment. If no genuine Question Bank ownership remains outside `features/questions` and canonical backend boundaries, close AB-03.4 and hand off AB-03.5 Quiz Builder to Worker A.
 
 ## Risks / blockers
 
-- Main reconciliation remains `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification.
-- No current blocker for this frontend ownership increment.
+- Main reconciliation remains `REQUIRED / DEFERRED`: live main `3646a63e...` contains authoritative offline-content API/PostgreSQL changes. Reconcile before overlapping backend/database mutation and before AB-08 final verification.
+- PR #52 remains open, Draft, unmerged, with no auto-merge.
+- No active blocker for compatibility cleanup/closure scanning.
 
 ## Safety constraints
 
