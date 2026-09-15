@@ -16,7 +16,7 @@ import {
   linkContentIngestionTask,
   processContentIngestionTask,
   uploadContentIngestionItem,
-} from "../../content-ingestion-api";
+} from "../../features/content/public";
 import { LessonPublicationPanel } from "./LessonPublicationPanel";
 
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
@@ -357,7 +357,6 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
               </button>
             </form>
           </section>
-
           <LessonPublicationPanel
             lessonId={selectedLessonId}
             refreshToken={lessonContentRefreshToken}
