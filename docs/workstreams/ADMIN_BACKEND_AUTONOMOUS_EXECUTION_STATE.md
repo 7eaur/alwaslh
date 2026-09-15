@@ -1,47 +1,54 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `READY_FOR_NEXT`
 Sequence: `87`
-Last worker: `C`
-Active worker: `A`
-Next worker: `—`
+Last worker: `A`
+Active worker: `—`
+Next worker: `B`
 Started at: `2026-09-15T23:48:28+03:00`
+Closed at: `2026-09-15T23:55:15+03:00`
 Observed starting HEAD: `86a09498d9b11cf3ff0f4b4e9c43dda41690bd8f`
-Live main HEAD at open: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`
-Active task: `AB-03.5.4 — Quiz Builder compatibility retirement + closure scan`
-Exact next batch: `Fresh-map remaining Quiz Builder compatibility consumers; switch only feature-internal API imports to the local canonical owner where safe; delete only dead legacy page/API facades; preserve mixed AI-authoring compatibility while a real consumer exists; prove no duplicate implementation ownership remains; run exact-head gates; then mark AB-03.5 fully DONE only if closure is clean.`
-
-## Worker A sequence 87 — RUNNING
-
-### Scope guard
-
-- Quiz Builder compatibility retirement and closure only.
-- Fresh-map all remaining frontend compatibility consumers before deleting anything.
-- Feature-owned Quiz Builder presentation may consume its local canonical API directly.
-- Delete old `admin/quizzes/*` page facades only when proven dead.
-- Delete root `quiz-builder-api.ts` only if no real consumer remains after feature-internal cleanup.
-- Preserve mixed `admin-ai-authoring-api.ts` while `AdminAiAuthoringWorkspace` remains a real consumer; no unrelated AI cleanup.
-- No UX/UI/copy/CSS/route/backend/database mutation unless fresh evidence proves a defect.
-- PR #52 remains Draft / unmerged / no auto-merge.
-
-## Previous checkpoint — Worker C sequence 86 CLOSED
-
-Ending canonical-doc checkpoint before state seal: `47f441af3aeec5f4a0cdee3f6fb9c9c625c7b68c`
-Ending executable/source HEAD: `da083efb41a08103edb402b4021ccfb792077384`
+Ending canonical-doc checkpoint before state seal: `4160f42525ae02cd82d9baacd2a193e3512274a3`
+Ending executable/source HEAD: `f60a4b279fad9a011f9188005dd3ad075c7e3f00`
 Observed live main: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`
-Closed task: `AB-03.5.3 — Quiz Builder specialized export/print ownership`
+Closed task: `AB-03.5.4 — Quiz Builder compatibility retirement + closure scan`
+Closed vertical slice: `AB-03.5 — Quiz Builder — DONE / EXACT-HEAD VERIFIED`
+Next task: `AB-03.6.1 — Students feature-owner foundation`
 
-Exact-head verification:
-- Architecture Guard `35021257562` — SUCCESS.
-- Frontend Preparation `35021257744` — SUCCESS.
-- Admin AI `35021257706` — SUCCESS.
-- Combined Integration `35021257480` — SUCCESS including real Admin Chromium.
-- Stage13G `35021257700` — SUCCESS including Real API + PostgreSQL + Chromium.
+## Worker A sequence 87 — CLOSED
+
+Completed:
+- fresh-mapped remaining Quiz Builder compatibility consumers;
+- proved router no longer consumed legacy `admin/quizzes/*` page paths;
+- deleted only the four dead one-line page compatibility facades;
+- retained root `quiz-builder-api.ts` because the four feature-owned Quiz Builder pages remain real consumers; it is compatibility-only and owns no implementation;
+- retained mixed `admin-ai-authoring-api.ts` because `AdminAiAuthoringWorkspace` remains a real consumer; specialized Quiz Builder implementation remains feature-owned;
+- confirmed no duplicate Quiz Builder implementation ownership and no backend/database defect;
+- made no UX/UI/copy/CSS/route/backend/PostgreSQL behavior change.
+
+Exact-head verification on `f60a4b279fad9a011f9188005dd3ad075c7e3f00`:
+- Architecture Guard `35022098967` — SUCCESS.
+- Frontend Preparation `35022099016` — SUCCESS.
+- Admin AI `35022098946` — SUCCESS.
+- Combined Integration `35022098947` — SUCCESS including clean PostgreSQL/security regressions and real Admin Chromium.
+- Stage13G `35022099002` — SUCCESS including Admin backend/UI and Real API + PostgreSQL + Chromium.
+
+## Next exact batch — Worker B sequence 88
+
+Open `AB-03.6.1 — Students feature-owner foundation` only after fresh branch/state/main collision check.
+
+- Split only Student-owned frontend contracts/actions from mixed root `admin-student-access-api.ts` into `features/students`.
+- Move/split only Student-specific test coverage for list/detail pagination and recovery/device-rebind/entitlement revoke.
+- Expose a narrow Students public boundary.
+- Preserve Access Code contracts/actions/tests in the root owner for the later Access Codes slice.
+- Keep root compatibility re-exports for Student symbols while `AdminStudentsPage` remains a real consumer in this increment.
+- Preserve exact URLs, query serialization, credentials, payloads and existing backend authority behavior.
+- Do not redesign Students UI or mutate backend/database without new evidence.
 
 ## Risks / blockers
 
 - Main reconciliation remains `REQUIRED / DEFERRED` before overlapping backend/database mutation and before AB-08 final verification.
-- No current blocker for frontend-only Quiz Builder closure work.
+- No current blocker for the frontend-only Students owner foundation.
 
 ## Safety constraints
 
@@ -49,4 +56,5 @@ Exact-head verification:
 - Student frontend implementation is out of scope; Student-facing backend remains in scope.
 - Never weaken tests/security/validation.
 - Never force reset/force push shared history.
+- PR #52 remains Draft / unmerged / no auto-merge.
 - Repository truth wins over stale prose/chat.
