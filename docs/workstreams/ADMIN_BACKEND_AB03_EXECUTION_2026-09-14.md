@@ -3,7 +3,7 @@
 Date: **2026-09-14**  
 Branch: `rebuild/super-admin-foundation`  
 Draft PR: #52 — remain Draft / unmerged / no auto-merge.  
-Status: **ACTIVE — AB-03.3 AI Jobs / Review / Authoring; closure scan next**
+Status: **ACTIVE — AB-03.3 AI Jobs / Review / Authoring CLOSED; Question Bank next**
 
 ## Scope and order
 
@@ -17,7 +17,7 @@ Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 ## AB-03.2 — Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
 Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 
-## AB-03.3 — AI Jobs / Review / Authoring — ACTIVE
+## AB-03.3 — AI Jobs / Review / Authoring — DONE / EXACT-SOURCE VERIFIED
 
 ### AB-03.3.1 AI operations feature-owner foundation — DONE / EXACT-HEAD VERIFIED
 AI jobs/review application capability, transport, adapter, view-model and tests are owned by `features/ai/operations`.
@@ -37,11 +37,11 @@ Executable/source checkpoint: `9b38c9d2f803e220874a40e71ac06399e78435a3`.
 
 Worker A sequence 78 separated the genuinely AI-owned generation request capability from mixed root authoring ownership:
 
-- new canonical owner `features/ai/authoring/ai-generation-api.ts`;
+- canonical owner `features/ai/authoring/ai-generation-api.ts`;
 - owns `AiAuthoringSubjectDomain`, `LessonGenerationMode`, `QuizGenerationMode`, `AiQuestionTarget`, `AuthoringPlanResult`;
 - owns `enqueueLessonGeneration` and `enqueueQuizGeneration` with the existing POST endpoints/payloads unchanged;
-- `features/ai/public` now exports the generation surface;
-- root `admin-ai-authoring-api.ts` now re-exports those AI generation symbols instead of implementing them;
+- `features/ai/public` exports the generation surface;
+- root `admin-ai-authoring-api.ts` re-exports those AI generation symbols instead of implementing them;
 - the remaining implementations in root are deliberately later-domain responsibilities: Question Bank question regeneration/archive and Quiz Builder specialized export/print;
 - `AdminAiAuthoringWorkspace.tsx` was not rewritten solely to split a transitional import because that would add large JSX churn without changing implementation ownership.
 
@@ -55,9 +55,26 @@ Exact-head evidence on `9b38c9d2...`:
 - Combined Integration `34993541546` — SUCCESS including deterministic fixture and real Admin Chromium;
 - Stage13G `34993541607` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
 
-### AB-03.3.6 AI slice closure scan — NEXT
+### AB-03.3.6 AI slice closure scan — DONE / NO SOURCE MUTATION REQUIRED
 
-Next worker B must fresh-scan live topology for residual AI implementation outside `features/ai`, especially root `admin-ai-authoring-api.ts`, mixed `AdminAiAuthoringWorkspace.tsx`, any review route facade and remaining root `ai-*` modules. Compatibility re-exports and actual later-domain Question Bank/Quiz Builder implementations are not by themselves AI ownership debt. If no genuine AI-owned implementation remains outside `features/ai`, close AB-03.3 at verified source checkpoint `9b38c9d2...` and select the first Question Bank increment; do not manufacture a large-file cleanup solely to remove a legitimate transitional import.
+Worker B sequence 79 fresh-scanned the live branch after AB-03.3.5 and found no genuine AI implementation owner remaining outside `features/ai`:
+
+- root `admin-ai-authoring-api.ts` contains AI-owned generation/application **re-exports**, not duplicate AI implementations;
+- its executable residual functions are `enqueueQuestionRegeneration` / `archiveQuestionBankItem` (Question Bank) and specialized quiz export/print functions (Quiz Builder), which intentionally belong to later AB-03 slices;
+- `admin/reviews/AiOperationsPage.tsx` is a one-line compatibility route re-export to `features/ai/public`, not an implementation owner;
+- `AdminAiAuthoringWorkspace.tsx` is a mixed orchestration consumer spanning AI generation plus later Question Bank / Quiz Builder actions; splitting its import block alone would not improve ownership and would create unnecessary JSX churn;
+- root `ai-operations*.css` are styling assets only and do not constitute application ownership;
+- `features/ai` contains the canonical `authoring`, `operations` and `public` boundaries.
+
+Therefore AB-03.3 closes at the already verified executable/source checkpoint `9b38c9d2f803e220874a40e71ac06399e78435a3`; no source mutation or CI rerun was required for sequence 79 because the source tree did not change after that exact-source green evidence.
+
+## AB-03.4 — Question Bank — NEXT
+
+Fresh topology shows there is currently no `apps/admin-web/src/features/questions` owner. Question Bank presentation/API remain under legacy/root locations including `admin/questions/*`, root `question-bank-api.ts`, and Question Bank actions still embedded in mixed root `admin-ai-authoring-api.ts`.
+
+First smallest coherent increment for Worker C:
+
+**AB-03.4.1 — Question Bank feature-owner foundation.** Fresh-map Question Bank pages/API/tests/consumers and authoritative API/security contracts, then establish `features/questions` ownership starting with the narrow Question Bank API/application boundary and public export while preserving behavior. Do not mix Quiz Builder ownership, UI redesign, or backend/database mutation without evidence. If any required backend/database change overlaps live main, reconcile main first.
 
 ## Main reconciliation
 
