@@ -3,7 +3,7 @@
 Date: **2026-09-14**  
 Branch: `rebuild/super-admin-foundation`  
 Draft PR: #52 — remain Draft / unmerged / no auto-merge.  
-Status: **ACTIVE — AB-03.3 AI Jobs / Review / Authoring**
+Status: **ACTIVE — AB-03.3 AI Jobs / Review / Authoring; closure scan next**
 
 ## Scope and order
 
@@ -12,51 +12,52 @@ AB-03 migrates complete Admin vertical slices in canonical order: Overview + Ope
 Each slice follows `job → DB/API/security → backend boundary correction → IA/states/actions → frontend owner → integration/browser parity → switch → delete legacy`.
 
 ## AB-03.1 — Overview + Operations — DONE / EXACT-SOURCE VERIFIED
-
 Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
 ## AB-03.2 — Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
-
 Final executable/source checkpoint: `3a45d18d5e4e69ef77a818e4917450c9c2b94214`.
 
 ## AB-03.3 — AI Jobs / Review / Authoring — ACTIVE
 
 ### AB-03.3.1 AI operations feature-owner foundation — DONE / EXACT-HEAD VERIFIED
-
 AI jobs/review application capability, transport, adapter, view-model and tests are owned by `features/ai/operations`.
 
 ### AB-03.3.2 AI review presentation ownership transfer — DONE / EXACT-HEAD VERIFIED
-
-Executable/source checkpoint: `c4f44953a6d16473e24f8a4188eb36943452812c`. Review presentation moved into the AI feature without behavior drift.
+Executable/source checkpoint: `c4f44953a6d16473e24f8a4188eb36943452812c`.
 
 ### AB-03.3.3 Compatibility-facade retirement + direct-owner consumption — DONE / EXACT-HEAD VERIFIED
-
-Executable/source checkpoint: `d1e11bc7b99b50dff480e8f830812492a390983c`. Root AI operations facades were removed and review/editor presentation became feature-owned. Required Admin/API/PostgreSQL/security/Chromium gates all passed.
+Executable/source checkpoint: `d1e11bc7b99b50dff480e8f830812492a390983c`.
 
 ### AB-03.3.4 Approved-output application ownership — DONE / EXACT-HEAD VERIFIED
+Executable/source checkpoint: `26e461407d1508d86fc76b8a3b0151fab83531f9`. Approved lesson/quiz output application contracts/functions are feature-owned; root authoring only re-exports them for compatibility.
 
-Executable/source checkpoint: `26e461407d1508d86fc76b8a3b0151fab83531f9`.
+### AB-03.3.5 AI lesson/quiz generation request ownership — DONE / EXACT-HEAD VERIFIED
 
-Worker C sequence 77 separated the AI-owned approved-output application capability from mixed root authoring ownership:
+Executable/source checkpoint: `9b38c9d2f803e220874a40e71ac06399e78435a3`.
 
-- `features/ai/operations/admin-ai-authoring-api.ts` now owns `LessonApplyResult`, `QuizApplyResult`, `applyApprovedLessonOutput` and `applyApprovedQuizOutput`;
-- the two application endpoints remain exactly `/v1/admin/authoring/outputs/:outputId/apply-lesson` and `/apply-quiz`, using `POST`;
-- root `admin-ai-authoring-api.ts` no longer implements these capabilities and only re-exports them/types for compatibility while continuing to host unrelated generation/question-bank/export concerns;
-- the AI review consumer already resolves to the feature-local module, so no JSX or presentation rewrite was required.
+Worker A sequence 78 separated the genuinely AI-owned generation request capability from mixed root authoring ownership:
+
+- new canonical owner `features/ai/authoring/ai-generation-api.ts`;
+- owns `AiAuthoringSubjectDomain`, `LessonGenerationMode`, `QuizGenerationMode`, `AiQuestionTarget`, `AuthoringPlanResult`;
+- owns `enqueueLessonGeneration` and `enqueueQuizGeneration` with the existing POST endpoints/payloads unchanged;
+- `features/ai/public` now exports the generation surface;
+- root `admin-ai-authoring-api.ts` now re-exports those AI generation symbols instead of implementing them;
+- the remaining implementations in root are deliberately later-domain responsibilities: Question Bank question regeneration/archive and Quiz Builder specialized export/print;
+- `AdminAiAuthoringWorkspace.tsx` was not rewritten solely to split a transitional import because that would add large JSX churn without changing implementation ownership.
 
 No endpoint, payload, backend, PostgreSQL, authorization, routing, product-copy or styling behavior changed.
 
-Exact-head evidence on `26e46140...`:
+Exact-head evidence on `9b38c9d2...`:
 
-- Architecture Guard `34992100825` — SUCCESS;
-- Frontend Preparation `34992100806` — SUCCESS;
-- Admin AI `34992100801` — SUCCESS including clean migrations, PostgreSQL contracts, authorization/observability/review-race/control and Stage12/auth regressions;
-- Combined Integration `34992100802` — SUCCESS including deterministic fixture and real Admin Chromium;
-- Stage13G `34992100781` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+- Architecture Guard `34993541544` — SUCCESS;
+- Frontend Preparation `34993541613` — SUCCESS;
+- Admin AI `34993541626` — SUCCESS including clean migrations, PostgreSQL contracts, authorization/observability/review-race/control and Stage12/auth regressions;
+- Combined Integration `34993541546` — SUCCESS including deterministic fixture and real Admin Chromium;
+- Stage13G `34993541607` — SUCCESS across Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
 
-### AB-03.3.5 AI lesson/quiz generation request ownership — NEXT
+### AB-03.3.6 AI slice closure scan — NEXT
 
-Next worker A must perform a fresh consumer scan, then extract only the AI-owned generation contracts/functions from mixed root `admin-ai-authoring-api.ts`: `AiAuthoringSubjectDomain`, `LessonGenerationMode`, `QuizGenerationMode`, `AiQuestionTarget`, `AuthoringPlanResult`, `enqueueLessonGeneration`, `enqueueQuizGeneration`. Do not migrate the mixed authoring workspace wholesale and do not pull `enqueueQuestionRegeneration`, `archiveQuestionBankItem`, specialized export/print or their contracts into the AI feature; those remain later Question Bank/Quiz Builder ownership work. Preserve behavior and rerun the full exact-head gates.
+Next worker B must fresh-scan live topology for residual AI implementation outside `features/ai`, especially root `admin-ai-authoring-api.ts`, mixed `AdminAiAuthoringWorkspace.tsx`, any review route facade and remaining root `ai-*` modules. Compatibility re-exports and actual later-domain Question Bank/Quiz Builder implementations are not by themselves AI ownership debt. If no genuine AI-owned implementation remains outside `features/ai`, close AB-03.3 at verified source checkpoint `9b38c9d2...` and select the first Question Bank increment; do not manufacture a large-file cleanup solely to remove a legitimate transitional import.
 
 ## Main reconciliation
 
