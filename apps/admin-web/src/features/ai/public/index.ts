@@ -1,3 +1,4 @@
+export { AiOperationsPage } from "../AiOperationsPage";
 export * from "../operations/ai-application-api";
 export * from "../operations/ai-operations-api";
 export * from "../operations/ai-operations-adapter";
