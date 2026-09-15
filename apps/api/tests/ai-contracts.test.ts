@@ -62,7 +62,7 @@ test("prompt envelope is provider-neutral and keeps reproducible key/version met
   assert.ok(fixture);
   const envelope = buildPromptEnvelope(fixture.request);
   assert.equal(envelope.promptKey, "questions.generate");
-  assert.equal(envelope.promptVersion, "1.0.0");
+  assert.equal(envelope.promptVersion, "1.1.0");
   assert.equal(envelope.mode, "question_generation");
   assert.equal(envelope.outputKind, "question_set");
   assert.ok(envelope.systemInstructions.some((instruction) => instruction.includes("لا تخترع")));

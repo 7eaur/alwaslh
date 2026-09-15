@@ -119,7 +119,7 @@ function renderPrompt(envelope: AiPromptEnvelope, sources: readonly AiSourceChun
     "STRICT_OUTPUT_RULES:",
     "- Read the supplied SOURCE_IMAGE media directly. Do not expect or request OCR text.",
     "- Return one raw JSON object only. No markdown fences and no prose outside JSON.",
-    "- Copy mediaAssetId/pageNumber in sourceEvidence exactly from SOURCE_MANIFEST; omit ocrExtractionId and never invent identifiers.",
+    "- Copy only mediaAssetId/pageNumber in sourceEvidence exactly from SOURCE_MANIFEST; never invent identifiers.",
     "- For a known multiple-choice or true/false answer: answerText MUST exactly equal options[correctOptionIndex].",
     "- For direct questions: options MUST be [] and correctOptionIndex MUST be null.",
     "- If the source image does not prove an answer, use answerStatus=unknown or review_required and set answerText/correctOptionIndex to null.",
