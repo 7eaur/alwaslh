@@ -23,53 +23,54 @@ Live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. Main reconciliation is 
   - AB-03.2 Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
   - AB-03.3 AI Jobs / Review / Authoring — DONE / EXACT-SOURCE VERIFIED
   - AB-03.4 Question Bank — ACTIVE
-    - AB-03.4.1 feature-owner foundation — **DONE / SOURCE-TREE-EQUIVALENT VERIFIED**
-    - AB-03.4.2 presentation ownership — **NEXT**
+    - AB-03.4.1 feature-owner foundation — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
+    - AB-03.4.2 presentation ownership — DONE / EXACT-HEAD VERIFIED
+    - AB-03.4.3 regeneration/archive ownership — NEXT
 - AB-04..AB-08 — PENDING
 
 ## Latest verified result
 
-Worker C sequence 80 completed **AB-03.4.1 — Question Bank feature-owner foundation**.
+Worker A sequence 81 completed **AB-03.4.2 — Question Bank presentation ownership**.
 
-Executable/source checkpoint: `11fb063ebe513a6141bb67b6725b5f181d762907`.
+Executable/source checkpoint: `26ca9ab2835f72a169a7e602c4fd0657cfbb1eca`.
 
 Verified result:
-- `features/questions/question-bank-api.ts` is the canonical Admin Question Bank API/application owner;
-- `features/questions/public/index.ts` is the narrow public boundary;
-- root `question-bank-api.ts` is compatibility only;
-- backend was inspected and already has canonical modular ownership under `apps/api/src/question-bank/*`;
-- no backend/database change, route change, auth change, UI change, copy change or CSS change occurred;
-- Question Bank regeneration/archive and Quiz Builder export/print remain separate later responsibilities.
+- List/Create/Detail implementations now live under `features/questions`;
+- page-specific public entry points preserve route-level lazy loading;
+- `AdminRoutes.tsx` composes the Question Bank pages through feature-owned public boundaries;
+- old `admin/questions/*` files are compatibility re-exports only;
+- the actual page code was moved without changing JSX, Arabic copy, state handling, CSS, accessibility, props, routes or behavior;
+- no backend/database/security mutation was made;
+- Question Bank regeneration/archive and Quiz Builder export/print remain separate responsibilities.
 
-Verification evidence:
-- Architecture Guard `34995311318` — SUCCESS on exact source `11fb063e...`;
-- Frontend Preparation `34995311313` — SUCCESS on exact source `11fb063e...`;
-- Admin AI `34995415758` — SUCCESS on source-tree-equivalent docs-only head `c6d36a2...`;
-- Combined Integration `34995415726` — SUCCESS on source-tree-equivalent `c6d36a2...`, including real Admin Chromium;
-- Stage13G `34995415760` — SUCCESS on source-tree-equivalent `c6d36a2...`, including Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
+Exact-head evidence on `26ca9ab2...`:
+- Architecture Guard `34996490917` — SUCCESS.
+- Frontend Preparation `34996491028` — SUCCESS.
+- Admin AI `34996491040` — SUCCESS.
+- Combined Integration `34996491059` — SUCCESS including real Admin Chromium.
+- Stage13G `34996491115` — SUCCESS including Admin UI, backend, PostgreSQL/security integrations and Real API + PostgreSQL + Chromium.
 
-The exact-source Stage13G run `34995311535` was cancelled only because GitHub concurrency superseded it after the docs-only WAITING state commit; it was not a source failure.
-
-PR #52 was rechecked and remains open, Draft, unmerged, with no auto-merge action taken.
+PR #52 remains Draft, open, unmerged, with no auto-merge action.
 
 ## Exact continuation
 
-Next worker is **A**. Execute one smallest coherent increment: **AB-03.4.2 — Question Bank presentation ownership**.
+Next worker is **B**. Execute one smallest coherent increment: **AB-03.4.3 — Question Bank regeneration/archive ownership**.
 
 1. Re-read live branch/state/main and prove no worker collision.
-2. Fresh-check the three page implementations and router consumers:
-   - `admin/questions/QuestionBankListPage.tsx`;
-   - `admin/questions/QuestionBankCreatePage.tsx`;
-   - `admin/questions/QuestionBankDetailPage.tsx`;
-   - `app/router/AdminRoutes.tsx`.
-3. Move the page implementations behind `features/questions` ownership with the smallest coherent structure.
-4. Expose only the page entry points needed by app composition through the feature public boundary or the architecture-guard-approved feature entry point.
-5. Switch the app router away from implementation ownership under `admin/questions/*`.
-6. Preserve existing routes, props, lazy-loading behavior, loading/error/empty/success states, Arabic copy, CSS, accessibility and responsive behavior. This is ownership migration, not redesign.
-7. Do **not** move `enqueueQuestionRegeneration` or `archiveQuestionBankItem` in this increment; those belong to a separate Question Bank application-action slice.
-8. Do not touch Quiz Builder export/print or speculative backend/database concerns.
-9. Run the verification gates required by the touched surface; do not claim completion while CI is pending.
-10. After verified closure, update canonical docs/state and hand off the next Question Bank increment to Worker B per A → B → C rotation.
+2. Fresh-check:
+   - `apps/admin-web/src/admin-ai-authoring-api.ts`;
+   - `apps/admin-web/src/admin/ai-authoring/AdminAiAuthoringWorkspace.tsx`;
+   - `features/questions/public`;
+   - `features/ai/public` for any needed narrow AI contract dependency;
+   - relevant frontend tests and authoritative backend Question Bank regeneration/archive endpoints/tests.
+3. Move only `enqueueQuestionRegeneration` and `archiveQuestionBankItem` plus necessary Question Bank-side contracts to `features/questions` ownership.
+4. Preserve exact endpoint paths, payload shapes, response shapes, client-request semantics, authorization expectations and workspace behavior.
+5. Prefer narrow public-contract imports for any cross-feature AI types; do not create circular feature dependencies or move shared types without evidence.
+6. Keep root compatibility exports only if a real consumer still requires them; otherwise retire dead compatibility after consumer switch.
+7. Do **not** touch `fetchSpecializedQuizExport`, `specializedQuizPrintUrl`, `QuizPrintVariant`, `SpecializedExportBundle`, Quiz Builder UI, Question Bank redesign, or backend/database code unless fresh evidence proves a correction is required.
+8. If backend/database overlap becomes necessary, reconcile live main before mutation.
+9. Run Architecture Guard, Frontend Preparation/Admin quality, Admin AI, Combined Integration and Stage13G as appropriate; do not close while CI is pending.
+10. After verified closure, synchronize canonical docs/state and hand off the next smallest Question Bank increment to Worker C.
 
 ## Remaining roadmap
 
