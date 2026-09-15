@@ -23,6 +23,7 @@ import "./student-affordance.css";
 import "./student-motion.css";
 import "./student-visual-parity.css";
 import "./student-visual-parity-qa.css";
+import "./student-home-reference.css";
 import { registerStudentServiceWorker } from "./pwa";
 import { StudentRouter } from "./router";
 
