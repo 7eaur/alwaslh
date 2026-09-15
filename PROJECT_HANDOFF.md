@@ -16,8 +16,8 @@ Owned: complete Super Admin, full Fastify backend/API, PostgreSQL/migrations/int
 - branch: `rebuild/super-admin-foundation`;
 - PR #52 stays Draft and is never auto-merged;
 - never force-reset or force-push shared history;
-- live `main`: `d43fe2afe29b02093510177b921c0407e21a3de9`;
-- main reconciliation need: `NONE CURRENTLY`.
+- live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`;
+- main reconciliation: `REQUIRED / DEFERRED` because main contains authoritative offline-content API/PostgreSQL changes. Reconcile before overlapping backend/database mutation and before AB-08 final verification.
 
 ## Current phase
 
@@ -31,29 +31,35 @@ Owned: complete Super Admin, full Fastify backend/API, PostgreSQL/migrations/int
   - AB-03.2.2 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
   - AB-03.2.3 — DONE / EXACT-HEAD VERIFIED
   - AB-03.2.4 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
-  - AB-03.2.5 Content ingestion compatibility facade retirement — NEXT
+  - AB-03.2.5 — DONE / EXACT-HEAD VERIFIED
+  - AB-03.2.6 same-slice direct-owner consumption — IMPLEMENTED / WAITING_FOR_CI
 - AB-04..AB-08 — PENDING
 
 ## Latest result
 
-Corrected AB-03.2.4 executable/source checkpoint `045c1e63b7b34121492c2a26b5017aab4ec35055` is now closed. Green evidence: Architecture Guard `34908457279`; Frontend Preparation `34908457311`; Admin AI `34908457270`; successor Combined `34909883950`; successor Stage13G Admin Operations / PostgreSQL / Chromium `34909884028`.
+AB-03.2.5 was fixed safely and closed at exact source checkpoint `7f4a07ebd138106e1c7701bc9820bf978c233643`: `ContentIngestionWorkspace.tsx` now consumes `features/content/public`, the obsolete root `content-ingestion-api.ts` facade was deleted, and exact-head Architecture Guard, Frontend Preparation, Admin AI, Combined Integration, Stage13G/PostgreSQL/security and real Chromium all passed.
 
-Fresh Worker A sequence-58 discovery found one remaining evidence-backed Content-ingestion compatibility seam: `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` imports Content-ingestion functions/types from root `../../content-ingestion-api`, while that root module is only a compatibility re-export of feature-owned `features/content/public`.
+Worker A then used the same Curriculum/Content/OCR ownership context for one adjacent cleanup batch. Current executable/source checkpoint is `2dd1ca2a94f03b8299bc2f8759f634c56fc10f78`; compared with the last green checkpoint, only six files changed and all changes are import-boundary ownership corrections. No UI behavior, endpoint, payload, PostgreSQL, security or Student frontend implementation changed.
+
+Current exact-head CI for `2dd1ca2...`:
+
+- Architecture Guard `34963907236` — SUCCESS;
+- Frontend Preparation `34963907292` — SUCCESS;
+- Admin AI `34963907259` — PENDING at handoff;
+- Combined Integration `34963907267` — IN PROGRESS at handoff;
+- Stage13G Admin Operations / PostgreSQL / Chromium `34963907247` — IN PROGRESS at handoff.
 
 ## Exact continuation
 
-Execute only **AB-03.2.5 — Content ingestion compatibility facade retirement**:
-
-1. fetch live branch/main and respect the shared lease;
-2. inspect all remaining consumers/tests of root `content-ingestion-api.ts` on the live branch;
-3. repoint legitimate consumers to `features/content/public` without changing behavior/contracts;
-4. delete root facade only if no consumer remains;
-5. run Architecture Guard plus relevant Admin/API/PostgreSQL/integration/Chromium gates;
-6. if CI is pending, hand off `WAITING_FOR_CI`;
-7. do not start AI in the same increment.
+1. Fetch live branch/main and respect shared lease.
+2. Check the exact-head runs above or their exact-source successors if GitHub superseded them.
+3. If any gate fails, fix root cause only; do not weaken tests/security/validation.
+4. If all gates become green, perform fresh AB-03.2 closure inspection before entering AI.
+5. `ContentOperationsPage.tsx` still uses generic API/session helpers through `admin-api.ts`, while Content/OCR transport already comes from `features/content/public`. Treat this as a possible compatibility cleanup, not as evidence of split Content implementation ownership. Change it only via a mechanically safe patch; do not rebuild the large file merely to remove one import.
+6. Close AB-03.2 only when exact-head evidence and closure inspection support it; then begin the next canonical slice, AI Jobs/Review/authoring, in a separate coherent batch.
 
 ## Remaining roadmap
 
-AB-03.2.5 → fresh Content/OCR closure discovery → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Finish AB-03.2 verification/closure → AI Jobs/Review/authoring → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
