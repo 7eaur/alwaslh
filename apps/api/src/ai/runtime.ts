@@ -7,7 +7,7 @@ import { AiModelRouter } from "./router.js";
 import { AiWorkerRuntime } from "./worker-runtime.js";
 
 const GEMINI_ROUTE_KEY = "gemini-gateway-primary";
-const GEMINI_BENCHMARK_VERSION = "generation-contract-v1.1";
+const GEMINI_BENCHMARK_VERSION = "generation-contract-v1.2-direct-image";
 
 export function createConfiguredAiWorker(
   config: AppConfig,

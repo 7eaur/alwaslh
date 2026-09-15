@@ -5,7 +5,7 @@ import { GeminiGatewayProvider } from "../src/ai/gemini-gateway-provider.js";
 import { buildPromptEnvelope } from "../src/ai/prompt-registry.js";
 import { AiProviderError } from "../src/ai/provider.js";
 import type { Database, QueryExecutor } from "../src/db.js";
-import type { MediaStorage } from "../src/media/storage.js";
+import type { MediaStorage } from "../src/media/public.js";
 
 function fakeDatabase(
   queryImpl: (text: string, values: readonly unknown[]) => Promise<readonly Record<string, unknown>[]>,
@@ -54,7 +54,6 @@ function generatedOutput() {
           {
             mediaAssetId: "11111111-1111-4111-8111-111111111111",
             pageNumber: 12,
-            ocrExtractionId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
             quote: "الماء صيغته H2O",
           },
         ],
@@ -100,21 +99,51 @@ function request(sourceKind: "approved_ocr" | "vision_fallback"): AiGenerationRe
   };
 }
 
-test("Gemini gateway provider sends approved OCR grounding without loading image bytes", async () => {
+function mediaDatabase(onRead?: () => void): Database {
+  return fakeDatabase(async (text, values) => {
+    onRead?.();
+    assert.match(text, /kind = 'ai'/);
+    assert.deepEqual(values, ["11111111-1111-4111-8111-111111111111", "a".repeat(64)]);
+    return [
+      {
+        storage_key: "media/source/ai-v1.webp",
+        mime_type: "image/webp",
+        byte_size: "3",
+      },
+    ];
+  });
+}
+
+function mediaStorage(onRead?: (key: string) => void): MediaStorage {
+  return fakeStorage(async (key) => {
+    onRead?.(key);
+    return Buffer.from([1, 2, 3]);
+  });
+}
+
+function successResponse() {
+  return new Response(
+    JSON.stringify({
+      responseId: "response-1",
+      modelVersion: "gemini-2.5-flash",
+      candidates: [{ content: { parts: [{ text: JSON.stringify(generatedOutput()) }] } }],
+      usageMetadata: { promptTokenCount: 20, candidatesTokenCount: 30 },
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+}
+
+test("Gemini gateway provider sends canonical image directly even when approved OCR exists", async () => {
   let databaseReads = 0;
   let storageReads = 0;
   let capturedBody = "";
-  const database = fakeDatabase(async () => {
-    databaseReads += 1;
-    return [];
-  });
-  const storage = fakeStorage(async () => {
-    storageReads += 1;
-    return Buffer.alloc(0);
-  });
   const provider = new GeminiGatewayProvider(
-    database,
-    storage,
+    mediaDatabase(() => {
+      databaseReads += 1;
+    }),
+    mediaStorage(() => {
+      storageReads += 1;
+    }),
     {
       apiKey: "secret-test-key",
       baseUrl: "https://gateway.example/v1beta/",
@@ -125,15 +154,7 @@ test("Gemini gateway provider sends approved OCR grounding without loading image
       capturedBody = String(init?.body ?? "");
       const headers = new Headers(init?.headers);
       assert.equal(headers.get("X-Gateway-Authorization"), "Bearer secret-test-key");
-      return new Response(
-        JSON.stringify({
-          responseId: "response-1",
-          modelVersion: "gemini-2.5-flash",
-          candidates: [{ content: { parts: [{ text: JSON.stringify(generatedOutput()) }] } }],
-          usageMetadata: { promptTokenCount: 20, candidatesTokenCount: 30 },
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      );
+      return successResponse();
     },
   );
 
@@ -144,10 +165,14 @@ test("Gemini gateway provider sends approved OCR grounding without loading image
     credentialAlias: undefined,
   });
 
-  assert.equal(databaseReads, 0);
-  assert.equal(storageReads, 0);
-  assert.match(capturedBody, /الماء صيغته H2O/);
-  assert.doesNotMatch(capturedBody, /```/);
+  assert.equal(databaseReads, 1);
+  assert.equal(storageReads, 1);
+  assert.match(capturedBody, /GROUNDING_MODE: direct_canonical_images/);
+  assert.match(capturedBody, /SOURCE_IMAGE/);
+  assert.match(capturedBody, /AQID/);
+  assert.match(capturedBody, /image\/webp/);
+  assert.doesNotMatch(capturedBody, /الماء صيغته H2O\./);
+  assert.doesNotMatch(capturedBody, /ocrExtractionId/);
   assert.deepEqual(result.output, generatedOutput());
   assert.deepEqual(result.usage, { inputTokens: 20, outputTokens: 30 });
   assert.equal(result.providerRequestId, "response-1");
@@ -156,24 +181,11 @@ test("Gemini gateway provider sends approved OCR grounding without loading image
 test("Gemini gateway provider resolves canonical ai media bytes for vision fallback", async () => {
   let storageKey = "";
   let capturedBody = "";
-  const database = fakeDatabase(async (text, values) => {
-    assert.match(text, /kind = 'ai'/);
-    assert.deepEqual(values, ["11111111-1111-4111-8111-111111111111", "a".repeat(64)]);
-    return [
-      {
-        storage_key: "media/source/ai-v1.png",
-        mime_type: "image/png",
-        byte_size: "3",
-      },
-    ];
-  });
-  const storage = fakeStorage(async (key) => {
-    storageKey = key;
-    return Buffer.from([1, 2, 3]);
-  });
   const provider = new GeminiGatewayProvider(
-    database,
-    storage,
+    mediaDatabase(),
+    mediaStorage((key) => {
+      storageKey = key;
+    }),
     {
       apiKey: "secret-test-key",
       baseUrl: "https://gateway.example/v1beta",
@@ -182,12 +194,7 @@ test("Gemini gateway provider resolves canonical ai media bytes for vision fallb
     },
     async (_url, init) => {
       capturedBody = String(init?.body ?? "");
-      return new Response(
-        JSON.stringify({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(generatedOutput()) }] } }],
-        }),
-        { status: 200, headers: { "Content-Type": "application/json" } },
-      );
+      return successResponse();
     },
   );
 
@@ -198,16 +205,51 @@ test("Gemini gateway provider resolves canonical ai media bytes for vision fallb
     credentialAlias: undefined,
   });
 
-  assert.equal(storageKey, "media/source/ai-v1.png");
+  assert.equal(storageKey, "media/source/ai-v1.webp");
   assert.match(capturedBody, /SOURCE_IMAGE/);
   assert.match(capturedBody, /AQID/);
-  assert.match(capturedBody, /image\/png/);
+  assert.match(capturedBody, /image\/webp/);
+});
+
+test("Gemini gateway provider de-duplicates identical source images before sending them", async () => {
+  let databaseReads = 0;
+  let capturedBody = "";
+  const duplicateRequest = request("vision_fallback");
+  const firstSource = duplicateRequest.sourceChunks[0];
+  assert.ok(firstSource);
+  duplicateRequest.sourceChunks.push({ ...firstSource });
+  const provider = new GeminiGatewayProvider(
+    mediaDatabase(() => {
+      databaseReads += 1;
+    }),
+    mediaStorage(),
+    {
+      apiKey: "secret-test-key",
+      baseUrl: "https://gateway.example/v1beta",
+      timeoutMs: 10_000,
+      maxInlineBytes: 1_048_576,
+    },
+    async (_url, init) => {
+      capturedBody = String(init?.body ?? "");
+      return successResponse();
+    },
+  );
+
+  await provider.generate({
+    envelope: buildPromptEnvelope(duplicateRequest),
+    modelKey: "gemini-2.5-flash",
+    projectAlias: undefined,
+    credentialAlias: undefined,
+  });
+
+  assert.equal(databaseReads, 1);
+  assert.equal((capturedBody.match(/inlineData/g) ?? []).length, 1);
 });
 
 test("Gemini gateway provider classifies throttling as retryable without exposing credentials", async () => {
   const provider = new GeminiGatewayProvider(
-    fakeDatabase(async () => []),
-    fakeStorage(async () => Buffer.alloc(0)),
+    mediaDatabase(),
+    mediaStorage(),
     {
       apiKey: "super-secret-value",
       baseUrl: "https://gateway.example/v1beta",
@@ -241,8 +283,8 @@ test("Gemini gateway provider classifies throttling as retryable without exposin
 
 test("Gemini gateway provider treats authentication failure as non-retryable and secret-safe", async () => {
   const provider = new GeminiGatewayProvider(
-    fakeDatabase(async () => []),
-    fakeStorage(async () => Buffer.alloc(0)),
+    mediaDatabase(),
+    mediaStorage(),
     {
       apiKey: "super-secret-value",
       baseUrl: "https://gateway.example/v1beta",

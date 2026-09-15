@@ -1,23 +1,23 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildApp } from "../src/app.js";
-import type { AppConfig } from "../src/config.js";
+import { loadConfig } from "../src/config.js";
 import type { Database, QueryExecutor } from "../src/db.js";
 
-const config: AppConfig = {
+const config = loadConfig({
   NODE_ENV: "test",
   HOST: "127.0.0.1",
-  PORT: 3000,
+  PORT: "3000",
   LOG_LEVEL: "silent",
   DATABASE_URL: "postgresql://user:pass@localhost:5432/test",
   DATABASE_SSL: "disable",
-  DATABASE_POOL_MAX: 10,
+  DATABASE_POOL_MAX: "10",
   SESSION_COOKIE_NAME: "alwaslh_session",
-  SESSION_TTL_HOURS: 168,
+  SESSION_TTL_HOURS: "168",
   SESSION_COOKIE_SAME_SITE: "lax",
   ALLOWED_ORIGINS: "http://localhost:5173",
   MEDIA_STORAGE_ROOT: "./.test-media-storage",
-};
+});
 
 function fakeDatabase(options: { ready?: boolean; onClose?: () => void | Promise<void> } = {}): Database {
   const executor: QueryExecutor = {

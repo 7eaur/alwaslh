@@ -67,10 +67,10 @@ function temperatureFor(mode: AiGenerationMode): number {
 
 function outputContract(kind: AiGenerationOutputKind): string {
   if (kind === "summary") {
-    return '{"kind":"summary","summary":"...","sourceEvidence":[{"mediaAssetId":"uuid","pageNumber":1,"ocrExtractionId":"uuid-or-omit","quote":"optional exact source quote"}]}';
+    return '{"kind":"summary","summary":"...","sourceEvidence":[{"mediaAssetId":"uuid","pageNumber":1,"quote":"optional exact source quote"}]}';
   }
   if (kind === "question_set") {
-    return '{"kind":"question_set","questions":[{"prompt":"...","type":"multiple_choice|true_false|direct","options":["..."],"correctOptionIndex":0,"answerText":"...","answerStatus":"known|unknown|review_required","difficulty":"easy|medium|hard","explanation":"...","method":"...","sourceEvidence":[{"mediaAssetId":"uuid","pageNumber":1,"ocrExtractionId":"uuid-or-omit","quote":"optional source quote"}]}]}';
+    return '{"kind":"question_set","questions":[{"prompt":"...","type":"multiple_choice|true_false|direct","options":["..."],"correctOptionIndex":0,"answerText":"...","answerStatus":"known|unknown|review_required","difficulty":"easy|medium|hard","explanation":"...","method":"...","sourceEvidence":[{"mediaAssetId":"uuid","pageNumber":1,"quote":"optional source quote"}]}]}';
   }
   if (kind === "multi_version_quiz") {
     return '{"kind":"multi_version_quiz","versions":[{"label":"...","questions":[{"prompt":"...","type":"multiple_choice|true_false|direct","options":["..."],"correctOptionIndex":0,"answerText":"...","answerStatus":"known|unknown|review_required","difficulty":"easy|medium|hard","explanation":"...","method":"...","sourceEvidence":[{"mediaAssetId":"uuid","pageNumber":1,"quote":"optional source quote"}]}]}]}';
@@ -81,23 +81,35 @@ function outputContract(kind: AiGenerationOutputKind): string {
   return '{"kind":"page_detection","title":"...","pageNumber":1,"contentPreview":"...","sourceEvidence":[{"mediaAssetId":"uuid","pageNumber":1,"quote":"optional source quote"}]}';
 }
 
+function sourceKey(source: AiSourceChunk): string {
+  return `${source.mediaAssetId}:${source.pageNumber}:${source.inputChecksumSha256}`;
+}
+
+function uniqueSources(sources: readonly AiSourceChunk[]): AiSourceChunk[] {
+  const seen = new Set<string>();
+  const result: AiSourceChunk[] = [];
+  for (const source of sources) {
+    const key = sourceKey(source);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(source);
+  }
+  return result;
+}
+
 function sourceManifest(source: AiSourceChunk): Record<string, unknown> {
   return {
     mediaAssetId: source.mediaAssetId,
     pageNumber: source.pageNumber,
-    inputChecksumSha256: source.inputChecksumSha256,
-    inputKind: source.inputKind,
-    ocrExtractionId: source.ocrExtractionId,
-    contentSourceAssetId: source.contentSourceAssetId ?? null,
-    ...(source.inputKind === "approved_ocr" ? { approvedText: source.approvedText } : {}),
   };
 }
 
-function renderPrompt(envelope: AiPromptEnvelope): string {
-  const manifest = envelope.request.sourceChunks.map(sourceManifest);
+function renderPrompt(envelope: AiPromptEnvelope, sources: readonly AiSourceChunk[]): string {
+  const manifest = sources.map(sourceManifest);
   return [
     `PROMPT_ID: ${envelope.promptKey}@${envelope.promptVersion}`,
     `MODE: ${envelope.mode}`,
+    "GROUNDING_MODE: direct_canonical_images",
     "SYSTEM_RULES:",
     ...envelope.systemInstructions.map((instruction, index) => `${index + 1}. ${instruction}`),
     "",
@@ -105,12 +117,13 @@ function renderPrompt(envelope: AiPromptEnvelope): string {
     outputContract(envelope.outputKind),
     "",
     "STRICT_OUTPUT_RULES:",
+    "- Read the supplied SOURCE_IMAGE media directly. Do not expect or request OCR text.",
     "- Return one raw JSON object only. No markdown fences and no prose outside JSON.",
-    "- Copy mediaAssetId/pageNumber/ocrExtractionId in sourceEvidence exactly from SOURCE_MANIFEST; never invent identifiers.",
+    "- Copy mediaAssetId/pageNumber in sourceEvidence exactly from SOURCE_MANIFEST; omit ocrExtractionId and never invent identifiers.",
     "- For a known multiple-choice or true/false answer: answerText MUST exactly equal options[correctOptionIndex].",
     "- For direct questions: options MUST be [] and correctOptionIndex MUST be null.",
-    "- If the source does not prove an answer, use answerStatus=unknown or review_required and set answerText/correctOptionIndex to null.",
-    "- Every generated/extracted question must include at least one sourceEvidence entry from the supplied sources.",
+    "- If the source image does not prove an answer, use answerStatus=unknown or review_required and set answerText/correctOptionIndex to null.",
+    "- Every generated/extracted question must include at least one sourceEvidence entry from the supplied images.",
     "",
     "REQUEST_SETTINGS_JSON:",
     JSON.stringify(
@@ -120,7 +133,7 @@ function renderPrompt(envelope: AiPromptEnvelope): string {
     "SOURCE_MANIFEST:",
     JSON.stringify(manifest),
     "",
-    "Images tagged as SOURCE_IMAGE below are canonical ai media variants for vision_fallback sources.",
+    "Each SOURCE_IMAGE below is the canonical ai media variant for the matching manifest entry.",
   ].join("\n");
 }
 
@@ -173,11 +186,11 @@ export class GeminiGatewayProvider implements AiProviderAdapter {
   }
 
   async generate(input: AiProviderGenerateInput): Promise<AiProviderGenerateResult> {
-    const parts: GeminiPart[] = [{ text: renderPrompt(input.envelope) }];
+    const sources = uniqueSources(input.envelope.request.sourceChunks);
+    const parts: GeminiPart[] = [{ text: renderPrompt(input.envelope, sources) }];
     let inlineBytes = 0;
 
-    for (const source of input.envelope.request.sourceChunks) {
-      if (source.inputKind !== "vision_fallback") continue;
+    for (const source of sources) {
       const rows = await this.database.query<MediaVariantRow>(
         `select storage_key, mime_type, byte_size
          from media_variants
@@ -220,7 +233,6 @@ export class GeminiGatewayProvider implements AiProviderAdapter {
         text: `SOURCE_IMAGE ${JSON.stringify({
           mediaAssetId: source.mediaAssetId,
           pageNumber: source.pageNumber,
-          inputChecksumSha256: source.inputChecksumSha256,
         })}`,
       });
       parts.push({
