@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ApiRequestError,
-  fetchAdminCurriculum,
-  isMissingSessionError,
-  type CurriculumLesson,
-} from "../../admin-api";
+import { ApiRequestError, isMissingSessionError } from "../../shared/api/client";
+import { fetchAdminCurriculum, type CurriculumLesson } from "../../features/curriculum/public";
 import {
   exportLessonAuthoring,
   type LessonHistorySource,
