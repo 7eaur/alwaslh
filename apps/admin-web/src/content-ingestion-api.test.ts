@@ -4,7 +4,7 @@ import {
   fetchContentIngestionHistory,
   transitionContentPublication,
   uploadContentIngestionItem,
-} from "./content-ingestion-api";
+} from "./features/content/public";
 
 function response(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
