@@ -122,6 +122,9 @@ jobs:
       - name: Seed real Stage13F browser fixtures
         working-directory: apps/api
         run: node --import tsx tests/fixtures/stage13f-question-bank-e2e-seed.ts
+      - name: Seed generation-closure browser fixture
+        working-directory: apps/api
+        run: node --import tsx tests/fixtures/stage13f-generation-closure-e2e-seed.ts
       - name: Verify browser fixture invariants
         run: |
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_items")" = "33"
@@ -132,8 +135,13 @@ jobs:
           test "$(psql "$DATABASE_URL" -Atqc "select action::text from ai_output_review_events where ai_output_id='$STAGE13F_E2E_OUTPUT_ID' order by revision desc limit 1")" = "approve"
           test "$(psql "$DATABASE_URL" -Atqc "select action::text from ai_output_review_events where ai_output_id='$STAGE13F_E2E_REGEN_OUTPUT_ID' order by revision desc limit 1")" = "approve"
           test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_ai_imports where ai_output_id in ('$STAGE13F_E2E_OUTPUT_ID','$STAGE13F_E2E_REGEN_OUTPUT_ID')")" = "0"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from ai_jobs where job_type='stage13f_e2e_generation_closure' and status='completed'")" = "1"
+          test "$(psql "$DATABASE_URL" -Atqc "select action::text from ai_output_review_events where ai_output_id='13000000-0000-4000-8000-000000000010' order by revision desc limit 1")" = "approve"
+          test "$(psql "$DATABASE_URL" -Atqc "select count(*) from question_bank_ai_imports where ai_output_id='13000000-0000-4000-8000-000000000010'")" = "0"
       - name: Install Chromium
         run: npx --prefix apps/admin-web playwright install --with-deps chromium
       - name: Run Stage13F real Admin Chromium suite
         working-directory: apps/admin-web
-        run: npx playwright test e2e/question-bank.e2e.spec.mjs
+        run: |
+          npx playwright test e2e/question-bank.e2e.spec.mjs
+          npx playwright test e2e/generation-closure.e2e.spec.mjs
