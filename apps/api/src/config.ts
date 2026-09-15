@@ -27,6 +27,20 @@ const EnvSchema = z.object({
   ALLOWED_ORIGINS: z.string().default("http://localhost:5173,http://localhost:5174"),
   MEDIA_STORAGE_ROOT: z.string().trim().min(1).default("./.media-storage"),
   OFFLINE_AUTH_SIGNING_PRIVATE_KEY_PEM_B64: z.string().trim().min(1).optional(),
+  INTEGRATIONS_API_KEY: z.string().trim().min(1).optional(),
+  AI_GATEWAY_BASE_URL: z
+    .string()
+    .url()
+    .default("https://app-a8tauoehdn9d-api-VaOwP8E7dJqa.gateway.appmedo.com/v1beta"),
+  AI_GEMINI_MODEL: z.string().trim().regex(/^[A-Za-z0-9._-]+$/).default("gemini-2.5-flash"),
+  AI_WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(8).default(2),
+  AI_PROVIDER_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(300_000).default(120_000),
+  AI_PROVIDER_MAX_INLINE_BYTES: z.coerce
+    .number()
+    .int()
+    .min(1_048_576)
+    .max(64 * 1_048_576)
+    .default(16 * 1_048_576),
 });
 
 export type AppConfig = z.infer<typeof EnvSchema>;
