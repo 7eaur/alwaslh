@@ -30,23 +30,48 @@ Source: `2254cc8121fd319b17cbd626d683352b23dda229`.
 
 Worker A sequence 84:
 - moved root Quiz Builder frontend API/application implementation into `features/quizzes/quiz-builder-api.ts`;
-- moved its test unchanged into the feature;
+- moved its test into the feature;
 - exposed `features/quizzes/public/index.ts`;
 - reduced root `quiz-builder-api.ts` to compatibility re-export only;
 - preserved endpoints/payloads/filters/credentials/lifecycle behavior;
-- kept presentation and specialized export/print outside the increment;
-- left backend/database untouched because `apps/api/src/quiz-builder/*` already owns the canonical Fastify contracts and authority.
+- left backend/database untouched because `apps/api/src/quiz-builder/*` already owns canonical Fastify contracts and authority.
 
-Exact-head evidence on `2254cc81...`:
+Exact-head evidence:
 - Architecture Guard `35015668415` — SUCCESS;
 - Frontend Preparation `35015668182` — SUCCESS;
 - Admin AI `35015668395` — SUCCESS;
 - Combined Integration `35015668029` — SUCCESS including real Admin Chromium;
 - Stage13G `35015667909` — SUCCESS including Real API + PostgreSQL + Chromium.
 
-### AB-03.5.2 Quiz Builder presentation ownership — NEXT
+### AB-03.5.2 Quiz Builder presentation ownership — DONE / EXACT-HEAD VERIFIED
+Source: `4c389e87872621dd70781401d85fadc7df6338b6`.
 
-Move the four existing presentation implementations (`QuizBuilderListPage`, `QuizBuilderCreatePage`, `QuizBuilderDetailPage`, `QuizMetadataPanel`) to `features/quizzes` with behavior/UI/copy/CSS preserved. Add separate public page entry points, switch only the router lazy-import paths, and leave legacy page files as compatibility re-exports until closure cleanup. Specialized export/print remains out of this increment.
+Worker B sequence 85:
+- moved `QuizBuilderListPage`, `QuizBuilderCreatePage`, `QuizBuilderDetailPage` and `QuizMetadataPanel` to `features/quizzes` using the original implementation blobs;
+- added separate public entries for the four route surfaces to preserve lazy chunk boundaries;
+- switched only the four Quiz Builder lazy imports in `AdminRoutes.tsx` to the feature public entries;
+- converted old `admin/quizzes/*` page paths into compatibility re-exports pending closure scan;
+- preserved all UI/copy/CSS/props/routes/actions/accessibility behavior;
+- made no backend or database mutation.
+
+Exact-head evidence on `4c389e87872621dd70781401d85fadc7df6338b6`:
+- Architecture Guard `35020423714` — SUCCESS;
+- Frontend Preparation `35020423729` — SUCCESS;
+- Admin AI `35020423669` — SUCCESS;
+- Combined Integration `35020423630` — SUCCESS including clean PostgreSQL/security regressions and real Admin Chromium;
+- Stage13G `35020423618` — SUCCESS including Admin UI/backend and Real API + PostgreSQL + Chromium.
+
+### AB-03.5.3 Quiz Builder specialized export/print ownership — NEXT
+
+Fresh scan confirms the remaining Quiz Builder-specific implementation debt is isolated inside root `admin-ai-authoring-api.ts`:
+- `QuizPrintVariant`;
+- `SpecializedExportBundle`;
+- `fetchSpecializedQuizExport`;
+- `specializedQuizPrintUrl`.
+
+`AdminAiAuthoringWorkspace` is a real consumer through the mixed root facade, and `admin-ai-authoring-api.test.ts` still contains the specialized export/print URL/query assertion. The next increment must move only these Quiz Builder-specific contracts/actions and matching tests into `features/quizzes`, expose them through the feature public boundary, preserve exact route/query behavior, and avoid unrelated AI/QBank/UI changes.
+
+A later Quiz Builder closure scan will retire only compatibility facades proven dead before AB-03.5 is marked fully done.
 
 ## Main reconciliation
 
