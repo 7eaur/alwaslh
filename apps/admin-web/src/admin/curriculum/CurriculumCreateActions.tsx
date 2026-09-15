@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import type { AdminCurriculumSnapshot, CurriculumSection } from "../../admin-api";
+import type { AdminCurriculumSnapshot, CurriculumSection } from "../../features/curriculum/public";
 import { fieldNumber, fieldString } from "./curriculum-ui";
 
 export function CurriculumRootCreateActions({
