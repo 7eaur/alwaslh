@@ -21,24 +21,27 @@ Live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`. Main reconciliation is 
 - AB-03 — ACTIVE
   - AB-03.1 Overview + Operations — DONE / EXACT-SOURCE VERIFIED
   - AB-03.2 Curriculum + Content + OCR — DONE / EXACT-HEAD VERIFIED
-  - AB-03.3 AI Jobs / Review / Authoring — **ACTIVE; closure scan next**
+  - AB-03.3 AI Jobs / Review / Authoring — **DONE / EXACT-SOURCE VERIFIED**
+  - AB-03.4 Question Bank — **NEXT**
 - AB-04..AB-08 — PENDING
 
 ## Latest verified result
 
-Worker A sequence 78 completed **AB-03.3.5 — AI lesson/quiz generation request ownership**.
+Worker B sequence 79 completed **AB-03.3.6 — AI slice closure scan** without source mutation.
 
-Latest executable/source checkpoint: `9b38c9d2f803e220874a40e71ac06399e78435a3`.
+Final AB-03.3 executable/source checkpoint: `9b38c9d2f803e220874a40e71ac06399e78435a3`.
 
-Current AI authoring ownership:
+Closure scan verified:
 
 - `features/ai/operations` owns jobs/review/application capability, approved-output application, review editor/UI and supporting contracts/tests;
 - `features/ai/authoring/ai-generation-api.ts` owns lesson/quiz generation request contracts/functions;
 - `features/ai/public` exposes the narrow AI operations/generation surface;
 - root `admin-ai-authoring-api.ts` only re-exports AI-owned generation/application symbols while retaining actual later-domain Question Bank regeneration/archive and Quiz Builder specialized export/print implementations;
-- `AdminAiAuthoringWorkspace.tsx` remains a mixed orchestration consumer and was not rewritten solely to split imports, avoiding unnecessary JSX drift.
+- `admin/reviews/AiOperationsPage.tsx` is a one-line compatibility re-export into the feature, not a duplicate owner;
+- `AdminAiAuthoringWorkspace.tsx` remains a mixed orchestration consumer and does not justify a risky import-only JSX rewrite;
+- remaining root `ai-operations*.css` assets do not constitute application ownership.
 
-Exact-head green evidence on `9b38c9d2...`:
+Exact-source green evidence on `9b38c9d2...`:
 
 - Architecture Guard `34993541544`;
 - Frontend Preparation `34993541613`;
@@ -48,17 +51,23 @@ Exact-head green evidence on `9b38c9d2...`:
 
 ## Exact continuation
 
-Next worker is **B**. Execute one smallest coherent increment: **AB-03.3.6 — AI slice closure scan**.
+Next worker is **C**. Execute one smallest coherent increment: **AB-03.4.1 — Question Bank feature-owner foundation**.
 
 1. Re-read live branch/state/main and prove no worker collision.
-2. Fresh-scan residual AI/root files and consumers, including root `admin-ai-authoring-api.ts`, `admin/ai-authoring/AdminAiAuthoringWorkspace.tsx`, the old review route facade and any remaining root `ai-*` modules.
-3. Distinguish real implementation ownership from compatibility re-exports and from actual Question Bank / Quiz Builder implementations that intentionally remain for later slices.
-4. Do not manufacture a risky large-file import rewrite solely to delete a harmless compatibility edge.
-5. If no genuine AI-owned implementation remains outside `features/ai`, close AB-03.3 at executable checkpoint `9b38c9d2...`, update canonical docs/state, and select the first Question Bank increment from the live topology. If a real AI ownership seam remains, fix only the smallest proven seam and rerun the required gates.
-6. Do not start broad Question Bank source mutation in the same worker if this increment is used to close AI; hand off a precise next step.
+2. Fresh-map Question Bank topology and consumers, including:
+   - `admin/questions/*`;
+   - root `question-bank-api.ts` + tests;
+   - Question Bank regeneration/archive functions currently inside root `admin-ai-authoring-api.ts`;
+   - app-router Question Bank routes;
+   - relevant API/backend/security contracts and tests.
+3. Confirm whether the first increment can remain frontend ownership-only. If a backend/database change is actually required and overlaps main, reconcile live main before mutation.
+4. Establish the smallest coherent `features/questions` owner, starting with the Question Bank API/application boundary and a narrow public export, while preserving endpoints/payloads/authorization/behavior.
+5. Do not mix Quiz Builder ownership, UI redesign, styles/copy changes, or unrelated backend/database work into this increment.
+6. Run the verification gates required by the actual touched surface; do not claim completion while exact-head CI is pending.
+7. After verified closure, update canonical docs/state and hand off the next Question Bank increment to Worker A per A → B → C rotation.
 
 ## Remaining roadmap
 
-AI closure scan → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
+Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy removal/hard enforcement → AB-08 final verification/reconciliation.
 
 After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
