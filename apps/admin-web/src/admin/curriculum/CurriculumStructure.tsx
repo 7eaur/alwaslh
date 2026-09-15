@@ -2,7 +2,7 @@ import type {
   CurriculumLesson,
   CurriculumRecordStatus,
   CurriculumSection,
-} from "../../admin-api";
+} from "../../features/curriculum/public";
 import {
   CurriculumPositionForm,
   CurriculumRenameForm,
