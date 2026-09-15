@@ -1,28 +1,39 @@
 # Admin + Backend Autonomous Execution State
 
-Status: `RUNNING`
+Status: `READY_FOR_NEXT`
 Sequence: `65`
-Last worker: `A`
-Active worker: `B`
+Last worker: `B`
+Active worker: `—`
 Start time: `2026-09-15T05:18:01+03:00`
-End time: `—`
+End time: `2026-09-15T05:27:00+03:00`
 Observed starting HEAD: `43460b91878d441a7353b9cd9a5815301b20e67d`
-Ending canonical-doc checkpoint before state seal: `—`
+Ending canonical-doc checkpoint before state seal: `e2fc0b7dac72a0812624b77f4581eb51966477b0`
 Ending executable/source HEAD: `8a68e95abd288033e43510d968b3fca67e92cb38`
 Observed live `main`: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`
-Active task: `AB-03.2.5 — retire Content ingestion compatibility facade`
-Intended smallest next step: `Preserve ContentIngestionWorkspace behavior and change only its import source from ../../content-ingestion-api to ../../features/content/public using a safe patch-capable workflow; re-scan consumers; delete the root compatibility facade only if no consumers remain; then run required exact-source gates. Do not start AI.`
+Active task: `AB-03.2.5 — production workspace consumer remains; patch-capable mutation still required`
+Intended smallest next step: `Preserve ContentIngestionWorkspace byte-for-byte behavior and change only its import source from ../../content-ingestion-api to ../../features/content/public using a patch-capable/local checkout workflow. Re-scan consumers; delete the root compatibility facade only if no consumers remain. Then run exact-source Architecture Guard and relevant Admin/API/PostgreSQL/integration/Chromium gates. Do not start AI.`
 
-## Worker B sequence 65 — active lease
+## Worker B sequence 65 — handoff
 
-- Startup branch HEAD: `43460b91878d441a7353b9cd9a5815301b20e67d`.
-- Live main: `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`.
-- Previous state was `READY_FOR_NEXT`, active worker empty; no anti-collision conflict detected.
-- Worker B is executing only the inherited AB-03.2.5 seam.
+- Startup branch HEAD was `43460b91878d441a7353b9cd9a5815301b20e67d`; previous state was `READY_FOR_NEXT` with no active worker, so no anti-collision conflict existed.
+- Live `main` remains `3646a63e36d9d9d967bdeb0c8a97ee65055cd672`.
+- Re-read mandatory state/status/log/handoff/protocol and reconfirmed the inherited AB-03.2.5 seam.
+- Reconfirmed `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` still imports Content-ingestion transport/types from `../../content-ingestion-api`.
+- Reconfirmed root `apps/admin-web/src/content-ingestion-api.ts` is only a transitional compatibility re-export of `features/content/public`.
+- No executable mutation was made. The available GitHub write action replaces the entire large TSX file; the safe requested change is one import-line patch. A full-file reconstruction is not justified for this seam and risks behavior drift. Continue with a patch-capable/local checkout workflow rather than widening the mutation.
+- No backend/API/PostgreSQL/security/Student frontend behavior changed. PR #52 remains Draft/unmerged; no milestone comment was warranted.
 
-## Main reconciliation
+## Verification / CI
 
-`REQUIRED / DEFERRED FROM THIS IMPORT-ONLY INCREMENT`: live main includes API/PostgreSQL offline-content changes. Reconcile before any overlapping backend/database mutation and mandatorily before AB-08 final verification.
+- No source tree changed, so no new closure CI was launched.
+- Existing prerequisite evidence remains Stage13E Frontend Preparation `34916816112` SUCCESS and Admin + Backend Architecture Guard `34916816143` SUCCESS on executable checkpoint `8a68e95...`.
+- Full relevant exact-source CI remains required after the production import/facade mutation.
+
+## Risks / blockers
+
+- Tooling limitation prevented the safe one-line source patch in this run; this is not a product/repository blocker and should not be worked around with a risky whole-file rewrite.
+- Facade deletion remains conditional on a fresh consumer scan after the production import change.
+- Main reconciliation need: `REQUIRED / DEFERRED FROM THIS IMPORT-ONLY INCREMENT` because live main contains API + PostgreSQL offline-content changes. Reconcile before overlapping backend/database mutation and mandatorily before AB-08 final verification.
 
 ## Safety constraints
 
