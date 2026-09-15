@@ -357,6 +357,7 @@ export function ContentIngestionWorkspace({ onSessionExpired }: { onSessionExpir
               </button>
             </form>
           </section>
+
           <LessonPublicationPanel
             lessonId={selectedLessonId}
             refreshToken={lessonContentRefreshToken}
