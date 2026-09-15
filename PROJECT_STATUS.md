@@ -10,12 +10,6 @@
 
 This workstream owns the complete Super Admin plus full Fastify backend/API, PostgreSQL/migrations/integrity, security and server/shared contracts consumed by Admin or Student. The only structural exclusion is `apps/student-web` frontend implementation itself.
 
-## Continuation authority
-
-Read first: `docs/workstreams/ADMIN_BACKEND_AUTONOMOUS_EXECUTION_STATE.md`, then the autonomous protocol, `PROJECT_ENGINEERING_LOG.md`, `PROJECT_HANDOFF.md`, and the active workstream record.
-
-Workers A/B/C share one branch and ordered roadmap. Never overlap an active worker. Every run performs one smallest coherent increment.
-
 ## Permanent rules
 
 - PostgreSQL/API are canonical business authority.
@@ -30,17 +24,11 @@ Workers A/B/C share one branch and ordered roadmap. Never overlap an active work
 
 ## Branch reconciliation
 
-Live `main` latest observation: `d43fe2afe29b02093510177b921c0407e21a3de9`.
-
-Comparison from the prior Admin/backend reconciliation baseline `62a148e76bd15f52c7e2b05d325cf0a1d6ac8cd0` to current live `main` remains confined to Student frontend/PWA workflow files under `apps/student-web` plus `.github/workflows/stage16-student-pwa.yml`. No overlapping Admin/API/PostgreSQL/shared-contract implementation change is currently proven for AB-03.2.
+Live `main` latest observation: `d43fe2afe29b02093510177b921c0407e21a3de9`. Current proven drift remains Student frontend/PWA only; no overlapping Admin/API/PostgreSQL/shared-contract implementation change is proven for AB-03.2.
 
 ## AB-00 — DONE
 
-Architecture baseline, inventories, guardrails and readiness gate are closed.
-
 ## AB-01 — DONE / EXACT-HEAD VERIFIED
-
-Shared Admin transport/session/product-state foundations, bounded backend app-composition seams and shared request-validation ownership are closed.
 
 ## AB-02 — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
@@ -54,46 +42,34 @@ Canonical record: `docs/workstreams/ADMIN_BACKEND_AB03_EXECUTION_2026-09-14.md`.
 
 Final executable source checkpoint: `7eda86fbbd7cbdcd5f2197ef35db7557c0d210dc`.
 
-Authoritative green evidence: Architecture Guard `34876404251`; Frontend Preparation `34876404345`; Admin AI Operations `34876404287`; Combined Integration `34876404314`; Stage13G Admin Operations `34876404237`.
-
 ### AB-03.2 Curriculum + Content + OCR — ACTIVE
 
 #### AB-03.2.1 Curriculum frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Feature implementation ownership lives in `apps/admin-web/src/features/curriculum/api/admin-curriculum-api.ts` with narrow consumer access through `features/curriculum/public`. The root Curriculum compatibility re-export facade remains intentionally transitional for legitimate later-slice consumers; it is compatibility debt only, not duplicate implementation ownership.
-
 Corrected executable source checkpoint: `4cd3daf2408d91c5bafaaec559220d402ee169bb`.
-
-Green closure evidence: Architecture Guard `34887051028`; Frontend Preparation `34887051091`; Admin AI Operations `34887416193`; Combined Integration `34887416088`; Stage13G Admin Operations `34887416108`.
 
 #### AB-03.2.2 Content ingestion frontend API ownership — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
-Content ingestion transport/types implementation lives in `apps/admin-web/src/features/content/api/content-ingestion-api.ts`, exposed through `apps/admin-web/src/features/content/public/index.ts`. Root `apps/admin-web/src/content-ingestion-api.ts` is a transitional compatibility facade only; API paths, payloads, response contracts and behavior are unchanged.
-
 Corrected executable/source checkpoint: `4ba7106f910098841a7026114dcfa2f2cd1f83bf`.
-
-Green closure evidence: Architecture Guard `34891198234`; Admin AI Operations `34892857039`; Combined Integration `34892857011`; Stage13G Admin Operations / PostgreSQL / Chromium `34892857278`.
 
 #### AB-03.2.3 Content operations + OCR frontend API ownership — DONE / EXACT-HEAD VERIFIED
 
-The implementation/types live in `apps/admin-web/src/features/content/api/content-operations-api.ts` and the feature public boundary exposes the required contract. `OcrSourcePreview.tsx` consumes the feature boundary directly. Root `apps/admin-web/src/content-operations-api.ts` was compatibility-only before AB-03.2.4.
-
 Executable/source checkpoint: `866912f4640aa4696b896a1d897bff7ad67024f4`.
 
-Exact-head green closure evidence: Architecture Guard `34898665849`; Frontend Preparation `34898665740`; Admin AI Operations `34898665783`; Combined Integration `34898665724`; Stage13G Admin Operations / PostgreSQL / Chromium `34898665675`.
-
-#### AB-03.2.4 Content operations compatibility facade retirement — CORRECTED / WAITING_FOR_CI
-
-Worker A retired the root production compatibility facade, but exact-head Frontend Preparation `34906963113` exposed one real remaining root dependency: `apps/admin-web/src/content-operations-api.test.ts` still imported the deleted `./content-operations-api`, causing TS2307 during Admin typecheck.
-
-Worker B sequence 56 applied the smallest root fix inside the same ownership seam: the unchanged transport test now lives beside its owner at `apps/admin-web/src/features/content/api/content-operations-api.test.ts`; the stale root test path is deleted. No production endpoint, payload/response contract, Fastify/PostgreSQL/security authority, route, UI behavior or Student frontend implementation changed.
+#### AB-03.2.4 Content operations compatibility facade retirement — DONE / SOURCE-TREE-EQUIVALENT VERIFIED
 
 Corrected executable/source checkpoint: `045c1e63b7b34121492c2a26b5017aab4ec35055`.
 
-Exact-head verification observed so far: Architecture Guard `34908457279` — SUCCESS; Frontend Preparation `34908457311` — SUCCESS; Admin AI Operations `34908457270` — IN PROGRESS; Combined Integration `34908457265` — IN PROGRESS; Stage13G Admin Operations / PostgreSQL / Chromium `34908457306` — IN PROGRESS. Do not mark AB-03.2.4 DONE until remaining required gates are green.
+Green closure evidence: Architecture Guard `34908457279`; Frontend Preparation `34908457311`; Admin AI Operations `34908457270`; successor Combined Integration `34909883950`; successor Stage13G Admin Operations / PostgreSQL / Chromium `34909884028` — all SUCCESS. The Combined/Stage13G successors ran on documentation-only source-tree-equivalent head `a7dc026583e395a14fb06b5c9022cd091d35c07c`.
+
+#### Fresh AB-03.2 closure discovery — NEXT DEFECT SELECTED
+
+Worker A sequence 58 found one evidence-backed remaining Content-ingestion compatibility seam: `apps/admin-web/src/admin/content/ContentIngestionWorkspace.tsx` still imports Content-ingestion transport/types from root compatibility facade `apps/admin-web/src/content-ingestion-api.ts`, although implementation ownership already lives under `features/content/api` and is exported through `features/content/public`.
+
+Next smallest step: `AB-03.2.5 — Content ingestion compatibility facade retirement`: repoint the remaining legitimate Content-ingestion consumers to `features/content/public`, prove whether the root facade has any remaining consumer/test dependency, then delete it only when unused. Do not start AI in the same increment.
 
 ## Remaining roadmap
 
-Close corrected AB-03.2.4 exact-head/source-tree-equivalent verification, then perform fresh Content/OCR closure discovery before advancing to AI → Question Bank → Quiz Builder → Students → Access Codes. Then AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
+AB-03.2.5 → fresh Content/OCR closure discovery → AI → Question Bank → Quiz Builder → Students → Access Codes → AB-04 backend normalization → AB-05 UX/UI convergence → AB-06 performance/delivery → AB-07 legacy deletion/hard enforcement → AB-08 final verification + live-main reconciliation.
 
 No merge/readiness before AB-08 exact-head green. After verified AB-08 completion and shared state `COMPLETE`, disable all three scheduled workers.
